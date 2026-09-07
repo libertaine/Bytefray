@@ -4,6 +4,39 @@ This changelog records notable user- and developer-visible changes to Bytefray.
 
 ## [Unreleased]
 
+## [4.0.0-rc2] - 2026-09-07
+
+### Bytefray v4.0 — release candidate 2
+
+RC2 adds a self-contained Linux distribution and closes out the
+pygame-ce/Python 3.14 migration alongside the `V4 Quorum` advanced example.
+No gameplay, Agent API, Ruleset, or replay-schema change is included; RC1's
+stable v4 contract (`bytefray-rules-4`) is unchanged.
+
+* **Self-contained Linux binary distribution.** `tools/build_linux.sh`
+  produces the same four frozen PyInstaller onedir applications
+  (`bytefray`, `bytefray-cli`, `bytefray-agent-designer`,
+  `bytefray-replay-viewer`) as the existing Windows build, packaged as
+  `bytefray-4.0.0-rc2-linux-x86_64.tar.gz`. No system Python or pip install
+  is required to run it.
+* **Official Ubuntu 24.04 Linux build baseline.** A dedicated
+  `.github/workflows/linux-package.yml` CI job builds and qualifies the
+  Linux archive on an explicitly pinned `ubuntu-24.04` runner (not
+  `ubuntu-latest`) with Python 3.14, gating on native shared-library
+  resolution, the fixed-seed `v4_quorum` reference match, and a headless
+  replay smoke. The built archive was additionally verified byte-for-byte
+  on Ubuntu 26.04 with no source-repository or build-venv dependency. The
+  measured maximum requirement is `GLIBC_2.38`; the archive is not
+  qualified against Ubuntu 22.04 or Debian 12 and does not claim universal
+  Linux compatibility. See
+  `docs/research/v4/V4_RC2_LINUX_RELEASE_BASELINE_QUALIFICATION.md`.
+* **Frozen Linux subprocess-launch portability fix.** Every code path that
+  relaunches the frozen executable as a subprocess (`agents validate`/
+  `test`, tournament resume, Designer development-test/replay launch)
+  unconditionally looked for a `.exe`-suffixed sibling, which made every
+  relaunch fail on a Linux onedir build whose launcher has no extension.
+  The suffix now resolves per-platform (`.exe` on `win32`, none
+  elsewhere).
 * **Replay/GUI dependency migrated from classic Pygame to pygame-ce**
   (`replay`/`gui` extras now declare `pygame-ce>=2.5.8` instead of
   `pygame>=2.5`). pygame-ce is a maintained, actively-released fork that

@@ -1184,8 +1184,8 @@ replay-only.
 
 ### v4.0.0-rc1 — Release Candidate
 
-**Status: published prerelease, current.** The first v4.0 release
-candidate, published September 4, 2026 — see
+**Status: published prerelease; superseded by v4.0.0-rc2 below.** The first
+v4.0 release candidate, published September 4, 2026 — see
 [CHANGELOG.md](../CHANGELOG.md#400-rc1---2026-09-03) and the RC-path
 qualification reports under [docs/research/v4/](research/v4/). Promotes
 `bytefray-rules-4` to the permanent, stable v4 gameplay Ruleset (proven
@@ -1199,6 +1199,20 @@ distribution qualification of already-qualified source, independently
 qualified on both Windows and native-Wayland Linux. Historical
 `bytefray-rules-4-alpha1`/`-alpha2` remain unchanged and explicitly
 selectable.
+
+### v4.0.0-rc2 — Release Candidate
+
+**Status: published prerelease, current.** The second v4.0 release
+candidate — see
+[CHANGELOG.md](../CHANGELOG.md#400-rc2---2026-09-07) and the RC-path
+qualification reports under [docs/research/v4/](research/v4/). Adds a
+self-contained Linux binary distribution built and qualified on an official
+Ubuntu 24.04 baseline (byte-for-byte verified, unrebuilt, on Ubuntu 26.04;
+measured maximum requirement `GLIBC_2.38`), migrates the replay/GUI
+dependency from classic Pygame to pygame-ce, formally qualifies Python
+3.14, and bundles the `V4 Quorum` (Advanced Example) agent. No new gameplay
+mechanic, Agent API redesign, Ruleset change, or replay schema bump over
+RC1 — `bytefray-rules-4` remains unchanged.
 
 ## After v1.0
 

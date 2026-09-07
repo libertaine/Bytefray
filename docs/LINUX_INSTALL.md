@@ -1,17 +1,50 @@
-# Bytefray Linux wheel installation
+# Bytefray Linux installation
 
-Bytefray supports Python 3.10 through 3.14. The Linux release artifact is a
-Python wheel; no PyInstaller, AppImage, Debian, or Flatpak artifact is currently
+Bytefray supports Python 3.10 through 3.14 and offers two Linux distribution
+paths: a self-contained binary archive (no local Python required) and a
+Python wheel/source install. No AppImage, Debian, or Flatpak artifact is
 provided. (See [README.md](../README.md#-downloads) for the current release;
-the exact wheel filename below tracks that latest tag as later versions ship.)
+exact filenames below track that latest tag as later versions ship.)
 
-Create an isolated environment and install the wheel:
+## Self-contained Linux binary distribution
+
+Download `bytefray-4.0.0-rc2-linux-x86_64.tar.gz` from the release and
+extract it; do not copy only the top-level executables, since their
+adjacent shared libraries, Qt plugins, and resources are required:
+
+```bash
+tar -xzf bytefray-4.0.0-rc2-linux-x86_64.tar.gz
+./bytefray/bytefray --version
+```
+
+This produces four self-contained onedir applications (`bytefray`,
+`bytefray-cli`, `bytefray-agent-designer`, `bytefray-replay-viewer`); no
+local Python interpreter, `pip`, or virtual environment is required. As with
+the Windows portable ZIP, each application defaults its writable data to its
+own directory beside its executable unless `BYTEFRAY_ROOT` is set once to a
+shared directory before launching any of them.
+
+**Official release-build baseline.** The frozen artifact is built on
+**Ubuntu 24.04 LTS** (not a newer or arbitrary Ubuntu release) and qualified
+byte-for-byte, unrebuilt, on **Ubuntu 26.04**. The measured maximum required
+glibc symbol version is `GLIBC_2.38`. Ubuntu 22.04 LTS (glibc 2.35) and
+Debian 12 "Bookworm" (glibc 2.36) are **not** claimed as compatible, and no
+universal Linux compatibility is claimed; only the two Ubuntu releases
+actually tested are called out above. See
+[`docs/research/v4/V4_RC2_LINUX_RELEASE_BASELINE_QUALIFICATION.md`](research/v4/V4_RC2_LINUX_RELEASE_BASELINE_QUALIFICATION.md)
+for the full qualification record.
+
+## Python wheel installation
+
+Advanced/development users can instead install the wheel or an editable
+source checkout on a supported Python version. Create an isolated
+environment and install the wheel:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install ./bytefray-4.0.0rc1-py3-none-any.whl
+python -m pip install ./bytefray-4.0.0rc2-py3-none-any.whl
 ```
 
 The core install supports native matches and headless replay. Optional desktop
@@ -87,31 +120,3 @@ Select one console-only executable path without fixed arguments:
 PMARS_CMD=/absolute/path/to/pmars bytefray run --mode redcode94 \
   --red-a path/to/a.red --red-b path/to/b.red
 ```
-
-## Looking ahead: RC2 self-contained Linux distribution
-
-RC2 (not yet published; current downloads remain the RC1 wheel above) adds a
-second, self-contained distribution path alongside the Python package install
-described above. Once RC2 ships, Linux users will be able to choose either:
-
-- **Self-contained binary distribution.** Download and extract a Linux
-  tar.gz containing the frozen `bytefray`, `bytefray-cli`,
-  `bytefray-agent-designer`, and `bytefray-replay-viewer` applications, then
-  run them directly. No local Python interpreter, `pip`, or virtual
-  environment is required.
-- **Python package installation.** Advanced/development users can continue
-  installing the wheel or an editable source checkout on a supported Python
-  version, exactly as documented above.
-
-**Official release-build baseline.** The self-contained Linux artifact is
-built on **Ubuntu 24.04 LTS** (not a newer or arbitrary Ubuntu release);
-newer Ubuntu releases are qualified against the exact bytes that baseline
-produces, rather than being rebuilt on those newer releases. As actually
-measured on the Ubuntu 24.04 RC2-development baseline build, the frozen
-bundle's maximum required glibc symbol version is `GLIBC_2.38`, which
-post-dates Ubuntu 22.04 LTS (glibc 2.35) and Debian 12 "Bookworm" (glibc
-2.36). Neither of those, nor any other distribution, is claimed as supported
-unless it is actually tested and found compatible with this measured glibc
-requirement. See
-[`docs/research/v4/V4_RC2_LINUX_RELEASE_BASELINE_QUALIFICATION.md`](research/v4/V4_RC2_LINUX_RELEASE_BASELINE_QUALIFICATION.md)
-for the full qualification record.
