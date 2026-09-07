@@ -203,11 +203,12 @@ jobs:
           done
           exit $fail
 
-      - name: Package canonical RC2-development archive
+      - name: Package canonical release archive
         id: package
         run: |
           set -euo pipefail
-          ARCHIVE_NAME="bytefray-4.0.0-rc2-dev-linux-x86_64.tar.gz"
+          VERSION=$(python3 -c "import re,pathlib; print(re.search(r'^version = \"([^\"]+)\"\$', pathlib.Path('pyproject.toml').read_text(), re.M).group(1))")
+          ARCHIVE_NAME="bytefray-${VERSION}-linux-x86_64.tar.gz"
           mkdir -p dist/release
           tar -C dist/linux -czf "dist/release/${ARCHIVE_NAME}" \
             bytefray bytefray-cli bytefray-agent-designer bytefray-replay-viewer
@@ -254,7 +255,7 @@ jobs:
       - name: Upload release archive artifact
         uses: actions/upload-artifact@v6
         with:
-          name: bytefray-linux-x86_64-rc2-dev
+          name: bytefray-linux-x86_64
           path: |
             dist/release/${{ steps.package.outputs.archive_name }}
             dist/release/${{ steps.package.outputs.archive_name }}.sha256

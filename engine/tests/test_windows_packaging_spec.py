@@ -55,6 +55,7 @@ REPLAY_VIEWER_SPEC = ROOT / "tools" / "replay_viewer.spec"
 ALL_SPECS = (BYTEFRAY_SPEC, BYTEFRAY_CLI_SPEC, AGENT_DESIGNER_SPEC, REPLAY_VIEWER_SPEC)
 BUILD_WIN_SCRIPT = ROOT / "tools" / "build_win.ps1"
 INSTALLER_SCRIPT = ROOT / "tools" / "installer.iss"
+LINUX_PACKAGE_WORKFLOW = ROOT / ".github" / "workflows" / "linux-package.yml"
 
 
 def test_installer_versions_match_package_and_release_tag() -> None:
@@ -75,6 +76,27 @@ def test_installer_versions_match_package_and_release_tag() -> None:
     assert release_tag is not None
     assert app_version.group(1) == distribution_version("bytefray")
     assert release_tag.group(1) == project_version.group(1)
+
+
+def test_linux_release_archive_name_derives_from_project_version() -> None:
+    """Prevent the Linux release archive name from silently drifting from pyproject.toml.
+
+    RC2's development workflow hardcoded its archive filename
+    (``bytefray-4.0.0-rc2-dev-linux-x86_64.tar.gz``), which would have gone
+    on silently disagreeing with the package version after a real version
+    bump. The release-capable workflow instead computes the archive name
+    from ``pyproject.toml`` at build time, so the two cannot drift apart.
+    """
+
+    workflow = LINUX_PACKAGE_WORKFLOW.read_text(encoding="utf-8")
+    assert "pyproject.toml" in workflow, (
+        "linux-package.yml must derive its release archive version from "
+        "pyproject.toml rather than a hardcoded version literal"
+    )
+    assert "rc2-dev-linux-x86_64" not in workflow, (
+        "the release-capable Linux workflow must not package or upload the "
+        "development-only 'rc2-dev' artifact"
+    )
 
 
 class _BuildStub:
