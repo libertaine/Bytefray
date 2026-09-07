@@ -125,7 +125,7 @@ See the [v4 alpha2 gameplay contract](docs/V4_ALPHA2_DESIGN.md),
 ## Agent Designer
 
 <p align="center">
-  <img src="docs/screenshots/v3-agent-designer.png" alt="Bytefray Agent Designer Agent Development tab showing the Raider starter's source with Ruleset v2 explicitly selected for its development test" width="800">
+  <img src="docs/screenshots/v4-agent-designer.png" alt="Bytefray Agent Designer Advanced tab with V4 Quorum (Advanced Example) and V4 Defender Scout selected under Ruleset v4 (Agent API v2)" width="800">
 </p>
 
 **Agent Designer** — create, test, and evaluate Python agents with explicit
@@ -161,7 +161,8 @@ bytefray design
 ## Replay Viewer
 
 <p align="center">
-  <img src="docs/screenshots/v3-replay-viewer.png" alt="Bytefray Replay Viewer showing the Raider starter capturing Claimer's core, with the active CORE CAPTURED callout, whole-match timeline, and territory HUD" width="640">
+  <img src="docs/screenshots/v4-replay-broadcast.png" alt="Bytefray Replay Viewer showing a v4_quorum vs v4_defender_scout Ruleset v4 match in Broadcast view, with Quorum's six processes spread across the arena and both sides' territory HUD" width="48%">
+  <img src="docs/screenshots/v4-replay-perspective.png" alt="Bytefray Replay Viewer showing the same match through Entrant A's Perspective Cam, with the opponent's stats hidden as UNKNOWN and CURRENT/STALE contact markers aged by tick" width="48%">
 </p>
 
 **Replay Viewer** — canonical Broadcast playback plus the full spectator
@@ -312,10 +313,10 @@ default so a non-returning agent call can be contained. This is development
 hang containment, not a security sandbox: Python agents are ordinary executable
 code and should be treated accordingly.
 
-Fresh installations include seven Python examples plus four VM starters
-(`runner`, `writer`, `seeker`, and `spiral`). Each Python starter documents
-its strategy and is intended to be read, copied, modified, tested, and
-evaluated.
+Fresh installations include bundled Agent API v1 and Agent API v2 Python
+examples, plus four VM starters (`runner`, `writer`, `seeker`, and `spiral`).
+Each Python starter documents its strategy and is intended to be read,
+copied, modified, tested, and evaluated.
 
 Five teach the fundamentals of claiming territory — `claimer` (a blind
 fixed-stride sweep), `strider` (the same sweep plus periodic re-defense of
@@ -338,11 +339,13 @@ territory than the pure expanders — that trade-off is the lesson. Try
 `bytefray agents test raider --opponent claimer --ruleset bytefray-rules-2`
 and watch the replay.
 
-The five `v4_*` starters demonstrate the v4 process model. In particular,
-`v4_defender_scout` declares two co-located processes with equal shares,
-while the other four provide single-process controls. Their `READ`/`WRITE`
-operands are absolute arena addresses and their `MOVE` operands are signed
-relative deltas.
+The `v4_*` starters demonstrate the v4 process model. `v4_defender_scout`
+declares two co-located processes with equal shares, while most of the
+others provide single-process controls; their `READ`/`WRITE` operands are
+absolute arena addresses and their `MOVE` operands are signed relative
+deltas. `v4_quorum` is the advanced example: it coordinates six declared
+processes with different reach/share roles to demonstrate a substantially
+richer Agent API v2 strategy.
 
 See [Writing Agents](docs/AGENT_AUTHORING.md), the
 [Agent API v2 contract](docs/AGENT_API_V2.md), the
@@ -518,3 +521,7 @@ Bytefray is released under the [MIT License](LICENSE).
 
 pMARS is separate GPL-licensed interoperability software; distributions that
 bundle it preserve the applicable materials under `third_party_licenses/`.
+
+---
+
+☕🍕 If Bytefray has been useful or entertaining, you can [buy me a coffee or pizza via PayPal](https://www.paypal.com/donate/?hosted_button_id=DRJD388WT8DAL). Contributions are entirely optional.
