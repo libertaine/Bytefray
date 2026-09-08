@@ -13,7 +13,7 @@ CLI/service semantics for the three outcome shapes (completed match,
 initialization failure, tool failure -- Sec 11/Sec 12 of the Designer
 spec). Development Test's own "Open Replay" reuses the existing external
 Pygame launcher (``app/services/engine_commands.py``); it is deliberately
-independent of the Designer's Simple/Advanced "Open Last Replay" state
+independent of the Designer's Simple/Advanced "View Last Match" state
 (Sec 13 of the spec).
 """
 
@@ -487,7 +487,7 @@ class AgentDevelopmentPanel(QWidget):
 
         Independent of ``AgentDesigner._last_replay`` (Sec 13 of the Phase
         4 spec): a development test's replay is never promoted to the
-        Designer's Simple/Advanced "Open Last Replay" target, so switching
+        Designer's Simple/Advanced "View Last Match" target, so switching
         tabs never surprises a user with a replay they did not expect.
         """
         return self._last_test_replay

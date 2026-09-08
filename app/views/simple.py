@@ -84,13 +84,18 @@ class SimplePanel(QWidget):
         grid.addWidget(agent_b_label, 3, 2)
         grid.addWidget(self.agentB, 4, 2, 1, 2)
 
-        grid_label = QLabel("Grid")
+        arena_size_label = QLabel("Arena Size")
         self.gridSize = QComboBox()
         for k in GRID_PRESETS:
             self.gridSize.addItem(k)
         self.gridSize.setCurrentIndex(1)  # Medium
-        grid_label.setBuddy(self.gridSize)
-        grid.addWidget(grid_label, 5, 0)
+        self.gridSize.setToolTip(
+            "How large a square arena the match runs in. A larger arena gives "
+            "agents more room to maneuver and hide; a smaller one forces "
+            "conflict sooner."
+        )
+        arena_size_label.setBuddy(self.gridSize)
+        grid.addWidget(arena_size_label, 5, 0)
         grid.addWidget(self.gridSize, 6, 0, 1, 2)
 
         ticks_label = QLabel("Ticks")
@@ -113,10 +118,10 @@ class SimplePanel(QWidget):
         self.btnRun.setFont(run_font)
         self.btnRun.setMinimumWidth(120)
         self.btnRun.setAccessibleDescription(
-            "Run a match using the selected agents, grid, and tick limit."
+            "Run a match using the selected agents, arena size, and tick limit."
         )
         self.btnStop = QPushButton("Stop")
-        self.btnOpen = QPushButton("Open Last Replay")
+        self.btnOpen = QPushButton("View Last Match")
         self.btnOpen.setEnabled(False)
         self.btnRefresh = QPushButton("Refresh Agents")
 

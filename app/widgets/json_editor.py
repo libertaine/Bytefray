@@ -23,7 +23,10 @@ class JsonEditor(QWidget):
         root = QVBoxLayout(self)
         root.addWidget(QLabel(title))
         self.text = QPlainTextEdit()
-        self.text.setPlaceholderText('{\n  "speed": 1.0,\n  "aggression": 0.2\n}')
+        self.text.setPlaceholderText(
+            '{\n  "param_name": value\n}\n\n'
+            "Keys are defined by the selected agent, not by Bytefray."
+        )
         root.addWidget(self.text)
         self.btn = QPushButton("Validate JSON")
         self.btn.clicked.connect(self._validate)

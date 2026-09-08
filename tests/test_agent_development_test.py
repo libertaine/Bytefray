@@ -4,7 +4,7 @@ Covers: out-of-process (QProcess) development-test execution, Test Options
 (opponent/seed/ticks), structured-result presentation (completed / agent
 initialization failure / tool failure), forfeit rendering, replay-path
 capture and "Open Replay" handoff (independent of the Designer's
-Simple/Advanced "Open Last Replay"), busy/state transitions shared with
+Simple/Advanced "View Last Match"), busy/state transitions shared with
 match/tournament/validate, stale-result clearing on selection change, and
 process isolation for a hanging development test.
 
@@ -1201,7 +1201,7 @@ def test_open_test_replay_uses_existing_replay_launcher(monkeypatch, tmp_path):
         designer._on_open_test_replay()
 
         assert captured == [(designer.data_root, replay_path)]
-        # Independent of Simple/Advanced "Open Last Replay" (Sec 13).
+        # Independent of Simple/Advanced "View Last Match" (Sec 13).
         assert designer._last_replay is None
     finally:
         designer.deleteLater()

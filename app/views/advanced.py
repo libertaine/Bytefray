@@ -76,43 +76,83 @@ class AdvancedPanel(QWidget):
         self.arena = QSpinBox()
         self.arena.setRange(64, 8192)
         self.arena.setValue(512)
-        form.addRow("Arena", self.arena)
+        self.arena.setToolTip(
+            "Side length of the square arena, in cells. A larger arena gives "
+            "agents more room to maneuver; a smaller one forces conflict "
+            f"sooner. GUI limit: {self.arena.minimum()}-{self.arena.maximum()}; "
+            "the engine itself only requires an arena larger than 1 cell."
+        )
+        form.addRow("Arena Size", self.arena)
 
         self.ticks = QSpinBox()
         self.ticks.setRange(1, 100000)
         self.ticks.setValue(600)
+        self.ticks.setToolTip(
+            "Maximum number of simulation ticks before the match ends, "
+            "subject to the selected Ruleset's win condition."
+        )
         form.addRow("Ticks", self.ticks)
 
         self.alive_w = QDoubleSpinBox()
         self.alive_w.setRange(0.0, 1000.0)
         self.alive_w.setDecimals(3)
         self.alive_w.setValue(1.0)
+        self.alive_w.setToolTip(
+            "Points added to a surviving agent's score every tick. Higher "
+            "values reward staying alive longer. Starting value shown here: "
+            f"{self.alive_w.value():g}."
+        )
         self.kill_w = QDoubleSpinBox()
         self.kill_w.setRange(0.0, 1000.0)
         self.kill_w.setDecimals(3)
         self.kill_w.setValue(1.0)
+        self.kill_w.setToolTip(
+            "Points awarded to an agent immediately when it eliminates an "
+            "opponent. Starting value shown here: "
+            f"{self.kill_w.value():g}."
+        )
         self.territory_w = QDoubleSpinBox()
         self.territory_w.setRange(0.0, 1000.0)
         self.territory_w.setDecimals(3)
         self.territory_w.setValue(1.0)
-        form.addRow("alive_w", self.alive_w)
-        form.addRow("kill_w", self.kill_w)
-        form.addRow("territory_w", self.territory_w)
+        self.territory_w.setToolTip(
+            "Points added every tick for each Territory Bucket Size worth of "
+            "arena cells an agent owns, whether or not that agent is still "
+            "alive. Set to 0 to turn off territory scoring entirely. "
+            f"Starting value shown here: {self.territory_w.value():g}."
+        )
+        form.addRow("Survival Weight", self.alive_w)
+        form.addRow("Kill Weight", self.kill_w)
+        form.addRow("Territory Weight", self.territory_w)
 
         self.territory_bucket = QSpinBox()
         self.territory_bucket.setRange(1, 4096)
         self.territory_bucket.setValue(32)
-        form.addRow("territory_bucket", self.territory_bucket)
+        self.territory_bucket.setToolTip(
+            "Number of owned arena cells that make up one territory-scoring "
+            "block. Smaller values convert owned territory into points more "
+            "readily; larger values require controlling more cells before "
+            f"Territory Weight points accrue. Starting value shown here: "
+            f"{self.territory_bucket.value()}."
+        )
+        form.addRow("Territory Bucket Size", self.territory_bucket)
 
         self.seed = QSpinBox()
         self.seed.setRange(0, 1_000_000)
         self.seed.setValue(0)
-        form.addRow("Seed (0=random)", self.seed)
+        self.seed.setToolTip(
+            "Sets the deterministic seed for this match's randomness. Using "
+            "the same configuration and seed reproduces the same match. A "
+            "value of 0 does not pick a fresh random seed -- it uses the "
+            "engine's own built-in default seed, so repeated runs left at 0 "
+            "are still reproducible, not randomized."
+        )
+        form.addRow("Random Seed (0 = default)", self.seed)
 
         btns = QHBoxLayout()
         self.btnRun = QPushButton("Run Match")
         self.btnStop = QPushButton("Stop")
-        self.btnOpen = QPushButton("Open Last Replay")
+        self.btnOpen = QPushButton("View Last Match")
         self.btnOpen.setEnabled(False)
         self.btnRefresh = QPushButton("Refresh Agents")
         btns.addWidget(self.btnRun)
@@ -126,6 +166,14 @@ class AdvancedPanel(QWidget):
         # ---- Agent Params ----
         params = QWidget()
         pv = QVBoxLayout(params)
+        paramsIntro = QLabel(
+            "Optional settings that change how supported agents behave "
+            "during a match. Not every agent reads these -- an agent that "
+            "does not use parameters simply ignores them. Leave a field "
+            "empty for that agent's own defaults."
+        )
+        paramsIntro.setWordWrap(True)
+        pv.addWidget(paramsIntro)
         self.editorA = JsonEditor(title="Agent A Params (JSON)")
         self.editorB = JsonEditor(title="Agent B Params (JSON)")
         pv.addWidget(self.editorA)
@@ -135,10 +183,16 @@ class AdvancedPanel(QWidget):
         # ---- Replay Browser ----
         replay = QWidget()
         rl = QVBoxLayout(replay)
+        replayIntro = QLabel(
+            "Browse saved Bytefray match replays. Select a replay file, "
+            "then view it in the Replay Viewer."
+        )
+        replayIntro.setWordWrap(True)
+        rl.addWidget(replayIntro)
         row = QHBoxLayout()
         self.lblReplay = QLabel(str(self._paths.replay_path))
-        self.btnChooseReplay = QPushButton("Choose .jsonl…")
-        self.btnOpenReplay = QPushButton("Open in Pygame")
+        self.btnChooseReplay = QPushButton("Choose Replay…")
+        self.btnOpenReplay = QPushButton("View Replay")
         row.addWidget(self.lblReplay, 1)
         row.addWidget(self.btnChooseReplay)
         row.addWidget(self.btnOpenReplay)

@@ -639,7 +639,7 @@ class AgentDesigner(QMainWindow):
         QMessageBox.critical(self, f"{label} Failed", message)
 
     def _on_open_replay(self):
-        # "Open Last Replay" intentionally stays enabled while a new run is
+        # "View Last Match" intentionally stays enabled while a new run is
         # busy (Option A): each run now writes to its own directory
         # (new_match_run_directory), and the stale-process guards above
         # ensure self._last_replay only ever names a genuinely completed
@@ -1206,11 +1206,11 @@ class AgentDesigner(QMainWindow):
         self.development.show_test_result(presentation)
 
     def _on_open_test_replay(self) -> None:
-        """Open a development test's own replay -- independent of "Open Last Replay".
+        """Open a development test's own replay -- independent of "View Last Match".
 
         Deliberately does not touch ``self._last_replay`` (Sec 13 of the
         Phase 4 spec): a development test's replay must never silently
-        become the Simple/Advanced "Open Last Replay" target, since a user
+        become the Simple/Advanced "View Last Match" target, since a user
         bouncing between tabs should never be surprised by which replay
         that button opens.
         """
