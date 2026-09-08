@@ -112,6 +112,21 @@ class SimplePanel(QWidget):
         grid.setColumnStretch(3, 1)
         controls_layout.addLayout(grid)
 
+        # UX-28: Simple stays deliberately 2-agent (UX-27) -- this is the
+        # one small, unobtrusive pointer to where a larger roster is
+        # actually configured, not a feature Simple itself gains. Every
+        # Ruleset Simple offers supports a third agent in Advanced (Phase 4
+        # roster ceiling is CLI-derived, not Ruleset-derived), so the hint
+        # can say "Advanced" plainly rather than hedge per Ruleset.
+        self.multiAgentHint = QLabel(
+            "Simple runs 2-agent matches. Use Advanced to add a third agent."
+        )
+        self.multiAgentHint.setWordWrap(True)
+        hint_font = self.multiAgentHint.font()
+        hint_font.setItalic(True)
+        self.multiAgentHint.setFont(hint_font)
+        controls_layout.addWidget(self.multiAgentHint)
+
         self.btnRun = QPushButton("Run Match")
         run_font = self.btnRun.font()
         run_font.setBold(True)

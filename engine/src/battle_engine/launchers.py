@@ -102,21 +102,33 @@ def build_designer_match_arguments(
     ruleset_id: object,
     a_blob: object | None = None,
     b_blob: object | None = None,
+    c_type: object | None = None,
+    c_blob: object | None = None,
     alive_w: object | None = None,
     kill_w: object | None = None,
     territory_w: object | None = None,
     territory_bucket: object | None = None,
     seed: object | None = None,
 ) -> list[str]:
-    """Build Designer match options without importing a GUI toolkit."""
+    """Build Designer match options without importing a GUI toolkit.
+
+    ``c_type``/``c_blob`` are optional and forward to the CLI's existing
+    ``--c-type``/``--c-blob`` third-entrant flags (``cli.py``'s ``run``
+    subcommand has supported a third slot since before this parameter
+    existed); omitting ``c_type`` produces byte-identical output to a
+    caller that has never heard of it, so this is additive for every
+    existing two-agent caller.
+    """
     arguments = [
         "--ticks", str(ticks),
         "--arena", str(arena),
         "--a-type", str(a_type),
         "--b-type", str(b_type),
-        "--ruleset", str(ruleset_id),
     ]
-    for flag, value in (("--a-blob", a_blob), ("--b-blob", b_blob)):
+    if c_type:
+        arguments.extend(("--c-type", str(c_type)))
+    arguments.extend(("--ruleset", str(ruleset_id)))
+    for flag, value in (("--a-blob", a_blob), ("--b-blob", b_blob), ("--c-blob", c_blob)):
         if value:
             arguments.extend((flag, str(value)))
     optional = (

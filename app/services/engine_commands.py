@@ -29,6 +29,12 @@ class RunConfig:
     seed: int | None = None
     a_params: dict[str, Any] | None = None
     b_params: dict[str, Any] | None = None
+    # Optional third entrant (Phase 4 dynamic Advanced roster, min 2/max 3 --
+    # the exact slot count the CLI's --a/--b/--c-type flags already support).
+    # None means "not part of this match", matching every pre-existing
+    # two-agent caller (Simple, and Advanced before this field existed).
+    c_type: str | None = None
+    c_params: dict[str, Any] | None = None
 
 
 def _source_environment(root: Path) -> dict[str, str]:

@@ -31,6 +31,7 @@ from app.services.ruleset_options import (
     agent_row_supported_by_ruleset,
 )
 from app.widgets.agent_combo import (
+    repopulate_additional_agent_combo,
     repopulate_paired_agent_combos,
     selected_agent_kind,
     selected_agent_name,
@@ -48,6 +49,17 @@ from app.widgets.ruleset_combo import (
 # explicitly in _open_replay_browser so that case gets its own clear message
 # rather than a "Replay not found: No replay selected yet." dialog.
 _NO_REPLAY_SELECTED = "No replay selected yet."
+
+# Phase 4: Advanced's roster minimum/maximum. Not an arbitrary GUI choice --
+# it is exactly the entrant-slot ceiling ``bytefray run``'s CLI already
+# implements today (``--a-type``/``--b-type``/``--c-type``, cli.py). The
+# engine's own match representation (``MatchRequest.entrants``) has no
+# fixed maximum, but the single-match CLI surface the Designer launches
+# through does; going past three would mean adding new CLI flags that do
+# not exist yet, which is out of scope for exposing this already-wired
+# capability. See the Phase 4 completion report for the full rationale.
+ADVANCED_MIN_ROSTER = 2
+ADVANCED_MAX_ROSTER = 3
 
 
 class AdvancedPanel(QWidget):
@@ -96,6 +108,35 @@ class AdvancedPanel(QWidget):
         self.agentB = QComboBox()
         form.addRow("Agent A", self.agentA)
         form.addRow("Agent B", self.agentB)
+
+        # Phase 4 UX-29/UX-30/UX-31: Advanced's roster beyond the required
+        # Agent A/B pair. Modeled as one additional named slot (Agent C)
+        # rather than a general list widget -- ADVANCED_MAX_ROSTER is 3, so
+        # a single optional slot is the smallest safe transition (preserves
+        # every existing test's `panel.agentA`/`panel.agentB` attributes
+        # unchanged) that still reaches the real roster ceiling. Hidden by
+        # default: the minimum 2-agent state must not show a Remove button
+        # that cannot be used.
+        self.agentC = QComboBox()
+        self._agentCContainer = QWidget()
+        agent_c_row = QHBoxLayout(self._agentCContainer)
+        agent_c_row.setContentsMargins(0, 0, 0, 0)
+        self.btnRemoveAgentC = QPushButton("Remove")
+        agent_c_row.addWidget(self.agentC, 1)
+        agent_c_row.addWidget(self.btnRemoveAgentC)
+        form.addRow("Agent C", self._agentCContainer)
+        self._agentCLabel = form.labelForField(self._agentCContainer)
+
+        self.btnAddAgent = QPushButton("+ Add Agent")
+        form.addRow("", self.btnAddAgent)
+
+        # Start hidden directly (rather than via _set_agent_c_visible,
+        # which also toggles self.editorC -- not created until the Agent
+        # Params tab below is built).
+        self._agent_c_visible = False
+        self._agentCContainer.setVisible(False)
+        if self._agentCLabel is not None:
+            self._agentCLabel.setVisible(False)
 
         self.arena = QSpinBox()
         self.arena.setRange(64, 8192)
@@ -205,8 +246,11 @@ class AdvancedPanel(QWidget):
         pv.addWidget(paramsIntro)
         self.editorA = JsonEditor(title="Agent A Params (JSON)")
         self.editorB = JsonEditor(title="Agent B Params (JSON)")
+        self.editorC = JsonEditor(title="Agent C Params (JSON)")
         pv.addWidget(self.editorA)
         pv.addWidget(self.editorB)
+        pv.addWidget(self.editorC)
+        self.editorC.setVisible(False)
         self.tabs.addTab(params, "Agent Params")
 
         # ---- Replay Browser ----
@@ -256,6 +300,13 @@ class AdvancedPanel(QWidget):
         self.btnOpenReplay.clicked.connect(self._open_replay_browser)
         self.ruleset.currentIndexChanged.connect(self._on_ruleset_changed)
         self.agentA.currentIndexChanged.connect(self._on_agent_a_changed)
+        self.btnAddAgent.clicked.connect(self._add_agent_slot)
+        self.btnRemoveAgentC.clicked.connect(self._remove_agent_slot)
+
+    @property
+    def roster_size(self) -> int:
+        """How many entrant slots are currently visible: 2 or 3 (Phase 4)."""
+        return ADVANCED_MAX_ROSTER if self._agent_c_visible else ADVANCED_MIN_ROSTER
 
     # API for MainWindow
     def setAgents(self, rows: list[AgentRow]) -> None:
@@ -267,23 +318,42 @@ class AdvancedPanel(QWidget):
 
     def _on_agent_a_changed(self, _index: int) -> None:
         sync_compatible_b_choices(self.agentA, self.agentB)
+        if self._agent_c_visible:
+            sync_compatible_b_choices(self.agentA, self.agentC)
         self._update_ruleset_explanation()
 
     def _refilter_agents(self) -> None:
-        """Populate Agent A/B from the selected Ruleset's compatible agents.
+        """Populate every visible roster slot from the Ruleset's compatible agents.
 
         The Ruleset is the controlling selector (UX-15/UX-16): changing it
         never happens as a side effect of an agent choice, only the
         reverse. ``repopulate_paired_agent_combos`` is the same shared
-        helper Simple uses (UX-19 parity): it preserves each combo's own
-        selection when it remains eligible and steers Agent B to a
-        deterministic opponent distinct from Agent A otherwise. Within the
-        Ruleset-compatible roster, ``sync_compatible_b_choices`` still
-        applies the pre-existing runtime-kind restriction on Agent B: Ruleset
-        v1 is the one identity that admits both Python and VM/blob agents,
-        which still may not be mixed in the same match
+        helper Simple uses (UX-19 parity) for Agent A/B: it preserves each
+        combo's own selection when it remains eligible and steers Agent B
+        to a deterministic opponent distinct from Agent A otherwise. Agent
+        C (UX-32/UX-33), when present, is refiltered from the identical
+        ``eligible`` roster via ``repopulate_additional_agent_combo``, so
+        it can never offer a Ruleset-incompatible choice the same way
+        Agent A/B cannot. ``sync_compatible_b_choices`` still applies the
+        pre-existing runtime-kind restriction against Agent A for every
+        slot: Ruleset v1 is the one identity that admits both Python and
+        VM/blob agents, which still may not be mixed in the same match
         (``validate_homogeneous`` at launch), so that check is layered on
-        top rather than replaced.
+        top rather than replaced -- and generalizes to Agent C by simply
+        calling the same pairwise helper against Agent A a second time,
+        since "all entrants share Agent A's kind" is transitively "every
+        entrant is compatible with Agent A".
+
+        Duplicate *agents* across slots remain a legal, unrestricted
+        choice (only per-slot entrant identity must be unique, which the
+        Agent A/B/C letters already guarantee) -- so a Ruleset with only
+        one compatible discovered agent still leaves the whole roster
+        launchable, not just the minimum two slots. There is accordingly
+        no "reduce the roster" step here: Advanced's roster ceiling (3) is
+        fixed by the CLI contract, not derived per-Ruleset, so a Ruleset
+        change can only ever replace incompatible *selections* within the
+        roster the user already has, never shrink how many slots are
+        offered.
         """
 
         ruleset_id = selected_ruleset_id(self.ruleset)
@@ -294,6 +364,14 @@ class AdvancedPanel(QWidget):
         ]
         repopulate_paired_agent_combos(self.agentA, self.agentB, eligible)
         sync_compatible_b_choices(self.agentA, self.agentB)
+        if self._agent_c_visible:
+            avoid = {
+                name
+                for name in (selected_agent_name(self.agentA), selected_agent_name(self.agentB))
+                if name is not None
+            }
+            repopulate_additional_agent_combo(self.agentC, eligible, avoid=avoid)
+            sync_compatible_b_choices(self.agentA, self.agentC)
 
         self._has_eligible_agents = bool(eligible)
         self.btnRun.setEnabled(self._has_eligible_agents)
@@ -305,18 +383,51 @@ class AdvancedPanel(QWidget):
                 "No compatible agents were found for this Ruleset. "
                 "Create or import a compatible agent, then refresh."
             )
-        elif "vm" in (selected_agent_kind(self.agentA), selected_agent_kind(self.agentB)):
-            # Only Ruleset v1 offers both kinds; explains why some Agent B
-            # entries are grayed out when a VM/blob agent is selected.
+            return
+        kinds = [selected_agent_kind(self.agentA), selected_agent_kind(self.agentB)]
+        if self._agent_c_visible:
+            kinds.append(selected_agent_kind(self.agentC))
+        if "vm" in kinds:
+            # Only Ruleset v1 offers both kinds; explains why some Agent
+            # B/C entries are grayed out when a VM/blob agent is selected.
             self.rulesetExplanation.setText(VM_RULESET_EXPLANATION)
         else:
             self.rulesetExplanation.clear()
+
+    # ---- Phase 4 dynamic roster (UX-29/UX-30/UX-31) ----
+    def _set_agent_c_visible(self, visible: bool) -> None:
+        self._agent_c_visible = visible
+        self._agentCContainer.setVisible(visible)
+        if self._agentCLabel is not None:
+            self._agentCLabel.setVisible(visible)
+        self.editorC.setVisible(visible)
+        # UX-30 item 5 / UX-31: the Add control disappears once the
+        # runtime/CLI-derived maximum (ADVANCED_MAX_ROSTER) is reached, and
+        # returns as soon as a slot is removed -- never merely disabled,
+        # so the minimum 2-agent state has nothing extra to look at either.
+        self.btnAddAgent.setVisible(not visible)
+
+    def _add_agent_slot(self) -> None:
+        if self._agent_c_visible:
+            return  # Already at ADVANCED_MAX_ROSTER; the control should be hidden.
+        self._set_agent_c_visible(True)
+        self._refilter_agents()
+
+    def _remove_agent_slot(self) -> None:
+        if not self._agent_c_visible:
+            return
+        self._set_agent_c_visible(False)
+        # Agent A/B selections and their JSON params are untouched -- only
+        # the removed slot's own state stops being read by _emit_run.
 
     def setBusy(self, busy: bool) -> None:
         for w in (
             self.btnRefresh,
             self.agentA,
             self.agentB,
+            self.agentC,
+            self.btnAddAgent,
+            self.btnRemoveAgentC,
             self.arena,
             self.ticks,
             self.alive_w,
@@ -370,13 +481,28 @@ class AdvancedPanel(QWidget):
                 self.table.setItem(r, 1, QTableWidgetItem(str(data[k])))
 
     def show_result(self, result) -> None:
-        """Display the small canonical-result subset useful during normal runs."""
-        values = (
+        """Display the small canonical-result subset useful during normal runs.
+
+        Phase 4 UX-34: ``result.entrants`` (``MatchPresentation.entrants``)
+        is already however many entrants the match actually had --
+        looping over it, rather than reading fixed A/B fields, is what
+        makes this table correct for a 3-agent match without special-
+        casing the count.
+        """
+        values = [
             ("winner", result.winner),
             ("termination_reason", result.termination_reason),
             ("result", result.result_path),
             ("replay", result.replay_path or "not available"),
-        )
+        ]
+        for entrant in result.entrants:
+            status = "alive" if entrant.alive else "eliminated"
+            values.append(
+                (
+                    f"entrant {entrant.agent_id}",
+                    f"{entrant.name} — {status}, score={entrant.score:g}",
+                )
+            )
         self.table.setRowCount(0)
         for key, value in values:
             row = self.table.rowCount()
@@ -399,6 +525,11 @@ class AdvancedPanel(QWidget):
             seed=int(self.seed.value()) or None,
             a_params=self.editorA.get_data_or_none(),
             b_params=self.editorB.get_data_or_none(),
+            # Only present when the Agent C slot is actually visible -- a
+            # hidden slot's stale selection/params must never reach a
+            # RunConfig the user cannot see (UX-31/Agent Params contract).
+            c_type=selected_agent_name(self.agentC) if self._agent_c_visible else None,
+            c_params=self.editorC.get_data_or_none() if self._agent_c_visible else None,
         )
         self.runRequested.emit(cfg)
 

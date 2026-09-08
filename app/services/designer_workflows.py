@@ -56,11 +56,29 @@ class DesignerValidationError(ValueError):
 
 
 @dataclass(frozen=True)
+class EntrantResultPresentation:
+    """One ``result.json`` entrant record, projected for display.
+
+    ``result.entrants`` (``ResultEnvelope.entrants``) is already an
+    arbitrary-length tuple at the engine layer -- this presentation carries
+    exactly that list through to the Designer's Results tab (Phase 4
+    UX-34), rather than the two hardcoded score fields the tab used to
+    read from the legacy, unused ``summary.json`` adapter.
+    """
+
+    agent_id: str
+    name: str
+    alive: bool
+    score: float
+
+
+@dataclass(frozen=True)
 class MatchPresentation:
     winner: str
     termination_reason: str
     result_path: Path
     replay_path: Path | None
+    entrants: tuple[EntrantResultPresentation, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -175,11 +193,21 @@ def read_match_presentation(result_path: Path) -> MatchPresentation:
         candidate = Path(result.replay.filename)
         replay = candidate if candidate.is_absolute() else path.parent / candidate
         replay = replay.resolve()
+    entrants = tuple(
+        EntrantResultPresentation(
+            agent_id=str(entrant.get("agent_id", "")),
+            name=str(entrant.get("name", "")),
+            alive=bool(entrant.get("alive", False)),
+            score=float(entrant.get("score", 0.0)),
+        )
+        for entrant in result.entrants
+    )
     return MatchPresentation(
         winner=result.winner,
         termination_reason=result.termination_reason,
         result_path=path,
         replay_path=replay,
+        entrants=entrants,
     )
 
 

@@ -141,6 +141,44 @@ def test_designer_v4_match_produces_full_spectator_artifact_set(tmp_path, monkey
     assert document.decisions
 
 
+def test_designer_three_agent_match_runs_real_and_presents_all_entrants(tmp_path, monkeypatch):
+    """Phase 4 UX-34: a genuine 3-agent match launched through the exact
+    argument-construction path Advanced's dynamic roster now uses (Agent
+    C's ``c_type``/``c_blob`` forwarded to ``--c-type``/``--c-blob``, the
+    CLI's pre-existing third-entrant flags) must produce a real
+    result.json/replay.jsonl pair, and ``read_match_presentation`` --
+    the same adapter ``AdvancedPanel.show_result`` consumes -- must surface
+    all three entrants, not just two. This is the "real 3-agent match
+    through the actual Advanced path" proof the phase requires, not a
+    mocked signal test.
+    """
+    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
+
+    run_directory = new_match_run_directory(tmp_path)
+    result_path, replay_path = match_artifact_paths(run_directory / "replay.jsonl")
+
+    arguments = build_designer_match_arguments(
+        ticks=3,
+        arena=128,
+        a_type="v4_claimer",
+        b_type="v4_scout",
+        ruleset_id=BYTEFRAY_RULESET_V4_ALPHA2_ID,
+        c_type="v4_quorum",
+    )
+    arguments.extend(("--replay", str(replay_path)))
+
+    assert run_cli(arguments) == 0
+    assert result_path.is_file()
+    assert replay_path.is_file()
+
+    shown = read_match_presentation(result_path)
+
+    assert len(shown.entrants) == 3
+    assert {entrant.agent_id for entrant in shown.entrants} == {"A", "B", "C"}
+    assert all(isinstance(entrant.score, float) for entrant in shown.entrants)
+    assert shown.winner  # a non-empty winner id or the "tie" sentinel
+
+
 def test_match_artifacts_and_canonical_replay_reference(tmp_path):
     result_path, replay_path = match_artifact_paths(tmp_path / "replay.jsonl")
     result_path.write_text(json.dumps({

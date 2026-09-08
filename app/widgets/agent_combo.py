@@ -120,6 +120,36 @@ def repopulate_paired_agent_combos(
                 break
 
 
+def repopulate_additional_agent_combo(
+    combo: QComboBox, eligible: list[AgentRow], *, avoid: set[str] = frozenset()
+) -> None:
+    """Populate an Advanced roster slot beyond Agent A/B (Phase 4 UX-30).
+
+    Mirrors ``repopulate_paired_agent_combos``' Agent B default-selection
+    policy for a slot that has no fixed partner of its own: the combo's own
+    current selection is preserved by identifier when it remains eligible;
+    otherwise it is steered to the first eligible entry whose identifier is
+    not in ``avoid`` (typically the other already-selected roster slots) so
+    a freshly added slot does not default to visibly duplicating an
+    existing one, even though an explicit duplicate selection remains a
+    legal, unrestricted choice (the engine only requires unique per-slot
+    entrant ids, never unique underlying agent names -- see
+    ``NativeMatchService.run``'s duplicate-``agent_id`` check). Falls back
+    to whatever ``populate_agent_combo`` already selected when every
+    eligible entry collides with ``avoid``.
+    """
+    eligible_ids = {row.agent_id or row.name for row in eligible}
+    previous = selected_agent_name(combo)
+    populate_agent_combo(combo, eligible)
+    if previous in eligible_ids:
+        return
+    for index in range(combo.count()):
+        candidate = combo.itemData(index, _NAME_ROLE)
+        if candidate is not None and candidate not in avoid:
+            combo.setCurrentIndex(index)
+            return
+
+
 def sync_compatible_b_choices(combo_a: QComboBox, combo_b: QComboBox) -> None:
     """Disable Agent B entries incompatible with Agent A, repairing an
     incompatible current B selection deterministically.

@@ -335,6 +335,7 @@ class AgentDesigner(QMainWindow):
         # Accept multiple possible field names from the Advanced panel
         a_name = self._cfgget(cfg, "a_type", "aType", "a", "agentA", "a_kind", "aName")
         b_name = self._cfgget(cfg, "b_type", "bType", "b", "agentB", "b_kind", "bName")
+        c_name = self._cfgget(cfg, "c_type", "cType", "c", "agentC", "c_kind", "cName")
         arena  = self._cfgget(cfg, "arena", "map_size", "board", default=256)
         ticks  = self._cfgget(cfg, "ticks", "steps", "frames", default=200)
 
@@ -352,10 +353,15 @@ class AgentDesigner(QMainWindow):
         if not rowA or not rowB:
             self.advanced.appendLog(f"[RunMatch] could not resolve agents: A='{a_name}' B='{b_name}'\n")
             return
+        rowC = self._resolve_agent_row(rows, c_name) if c_name else None
+        if c_name and not rowC:
+            self.advanced.appendLog(f"[RunMatch] could not resolve agents: C='{c_name}'\n")
+            return
+        roster_rows = (rowA, rowB) + ((rowC,) if rowC else ())
         try:
-            validate_homogeneous((rowA, rowB))
-            validate_designer_ruleset(cfg.ruleset_id, {agent_kind(rowA), agent_kind(rowB)})
-            validate_designer_agent_rows(cfg.ruleset_id, (rowA, rowB))
+            validate_homogeneous(roster_rows)
+            validate_designer_ruleset(cfg.ruleset_id, {agent_kind(row) for row in roster_rows})
+            validate_designer_agent_rows(cfg.ruleset_id, roster_rows)
         except (DesignerValidationError, ValueError) as exc:
             self.advanced.appendLog(f"[RunMatch] {exc}\n")
             QMessageBox.warning(self, "Unsupported Match", str(exc))
@@ -363,6 +369,9 @@ class AgentDesigner(QMainWindow):
 
         a_type = rowA.agent_id or (rowA.meta.get("name") if isinstance(getattr(rowA, "meta", None), dict) else None) or Path(rowA.path).name or a_name
         b_type = rowB.agent_id or (rowB.meta.get("name") if isinstance(getattr(rowB, "meta", None), dict) else None) or Path(rowB.path).name or b_name
+        c_type = None
+        if rowC:
+            c_type = rowC.agent_id or (rowC.meta.get("name") if isinstance(getattr(rowC, "meta", None), dict) else None) or Path(rowC.path).name or c_name
 
         run_directory = new_match_run_directory(self.data_root)
         result_path, replay_path = match_artifact_paths(run_directory / "replay.jsonl")
@@ -374,6 +383,8 @@ class AgentDesigner(QMainWindow):
             ruleset_id=cfg.ruleset_id,
             a_blob=getattr(rowA, "blob_path", None),
             b_blob=getattr(rowB, "blob_path", None),
+            c_type=c_type,
+            c_blob=(getattr(rowC, "blob_path", None) if rowC else None),
             alive_w=alive_w,
             kill_w=kill_w,
             territory_w=terr_w,
@@ -427,17 +438,21 @@ class AgentDesigner(QMainWindow):
         # locally and dropped. cli.py's _resolve_agent reads these exact names.
         a_params = self._cfgget(cfg, "a_params", "aParams")
         b_params = self._cfgget(cfg, "b_params", "bParams")
+        c_params = self._cfgget(cfg, "c_params", "cParams")
         if a_params is not None:
             env.insert("BYTEFRAY_AGENT_A_PARAMS_JSON", json.dumps(a_params))
         if b_params is not None:
             env.insert("BYTEFRAY_AGENT_B_PARAMS_JSON", json.dumps(b_params))
+        if rowC and c_params is not None:
+            env.insert("BYTEFRAY_AGENT_C_PARAMS_JSON", json.dumps(c_params))
 
         proc = self._start_process(command, env, root, label="RunMatch")
 
+        c_log = f"  C={c_name} -> type='{c_type}' blob='{getattr(rowC, 'blob_path', None)}'" if rowC else ""
         self.advanced.appendLog(
             f"[RunMatch] A={a_name} -> type='{a_type}' blob='{getattr(rowA,'blob_path',None)}'  "
-            f"B={b_name} -> type='{b_type}' blob='{getattr(rowB,'blob_path',None)}'  "
-            f"ticks={ticks} arena={arena} seed={seed} "
+            f"B={b_name} -> type='{b_type}' blob='{getattr(rowB,'blob_path',None)}'{c_log}\n"
+            f"[RunMatch] ticks={ticks} arena={arena} seed={seed} "
             f"alive_w={alive_w} kill_w={kill_w} territory_w={terr_w} bucket={bucket}\n"
             f"[RunMatch] output: {run_directory}\n"
         )

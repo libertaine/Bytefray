@@ -246,6 +246,49 @@ def test_designer_match_arguments_preserve_simple_and_advanced_options(tmp_path)
     )
 
 
+def test_designer_match_arguments_forward_optional_third_entrant(tmp_path):
+    """Phase 4: Advanced's dynamic roster forwards a third entrant through
+    the exact ``--c-type``/``--c-blob`` flags ``cli.py``'s ``run`` subcommand
+    has supported since before this parameter existed -- this is additive
+    forwarding, not a new CLI surface."""
+    c_blob = tmp_path / "Agent C" / "model three.blob"
+
+    arguments = launchers.build_designer_match_arguments(
+        ticks=600,
+        arena=512,
+        a_type="alpha",
+        b_type="beta",
+        ruleset_id="bytefray-rules-2",
+        c_type="gamma",
+        c_blob=c_blob,
+    )
+
+    assert arguments == [
+        "--ticks", "600",
+        "--arena", "512",
+        "--a-type", "alpha",
+        "--b-type", "beta",
+        "--c-type", "gamma",
+        "--ruleset", "bytefray-rules-2",
+        "--c-blob", str(c_blob),
+    ]
+
+
+def test_designer_match_arguments_omit_third_entrant_by_default():
+    """A caller that never heard of Agent C (every pre-Phase-4 call site,
+    and Simple today) must get byte-identical output to before."""
+    arguments = launchers.build_designer_match_arguments(
+        ticks=600,
+        arena=512,
+        a_type="alpha",
+        b_type="beta",
+        ruleset_id="bytefray-rules-2",
+    )
+
+    assert "--c-type" not in arguments
+    assert "--c-blob" not in arguments
+
+
 def test_engine_runner_uses_shared_match_builder_and_preserves_config(monkeypatch, tmp_path):
     python = tmp_path / "Python With Spaces" / "python.exe"
     _set_source(monkeypatch, python)
