@@ -112,9 +112,10 @@ place cores from the match seed and select processes in rotation; alpha1
 instead uses a fixed evenly-spread seat layout and declared-list-priority
 selection.
 
-The engine and evaluation model support multiple entrants. Quick Match in the
-Designer remains intentionally two-entrant; **Group Evaluation** is the
-Designer workflow for 3+ entrants.
+The engine and evaluation model support multiple entrants. In the Designer,
+Simple supports two-agent quick matches; Advanced supports two- or three-agent
+matches. **Group Evaluation** remains the Ruleset-v2 workflow for evaluating a
+focus agent with a roster across layouts, seat assignments, and seeds.
 
 See the [v4 alpha2 gameplay contract](docs/V4_ALPHA2_DESIGN.md),
 [v4 alpha1 design](docs/V4_ALPHA1_DESIGN.md),
@@ -134,7 +135,8 @@ Ruleset selection.
 Agent Designer provides a native PySide6 workflow for configuring matches and
 developing Python agents:
 
-- Simple and Advanced two-entrant match setup with explicit Ruleset selection
+- Simple two-agent and Advanced two- or three-agent match setup with explicit
+  Ruleset selection
 - Python-agent discovery and canonical-ID-safe selection
 - New Agent scaffolding and package import/export
 - read-only inspection of the selected agent's `agent.py` and `agent.yaml`
