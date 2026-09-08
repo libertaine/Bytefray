@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TypeVar
 
+from battle_engine.config import Weights
 from battle_engine.paths import canonical_replay_directory
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
@@ -49,6 +51,39 @@ from app.widgets.ruleset_combo import (
 # explicitly in _open_replay_browser so that case gets its own clear message
 # rather than a "Replay not found: No replay selected yet." dialog.
 _NO_REPLAY_SELECTED = "No replay selected yet."
+
+# Phase 5B: the canonical scoring defaults, read from the engine's own
+# ``Weights`` dataclass rather than restated as GUI literals. Advanced
+# previously hard-coded kill_w=1.0 and territory_bucket=32 -- values that
+# never matched an engine default at any point in this repository's history
+# -- and submitted them on every run, so merely opening Advanced scored the
+# match differently from Simple and from a bare ``bytefray run``, changing
+# scores and every derived match/replay/result identity with no user
+# action. Reading the dataclass here means the displayed starting values
+# cannot drift from the engine again. Weights are per-match configuration
+# and explicitly *not* Ruleset identity (see ``rules.py``'s "Configuration
+# values are not Ruleset identity"), so this one default set is correct for
+# every Ruleset the Designer offers.
+ENGINE_DEFAULT_WEIGHTS = Weights()
+
+_Number = TypeVar("_Number", float, int)
+
+
+def _weight_override(value: _Number, default: _Number) -> _Number | None:
+    """Return ``value``, or ``None`` when it still equals ``default``.
+
+    Advanced sends a scoring flag only when the user has actually moved
+    that field off the engine's own default. When it matches, the flag is
+    omitted entirely and ``bytefray run`` applies its canonical default --
+    byte-identical to Simple, which never sends these flags at all, and to
+    a bare CLI invocation. Comparing against the default rather than
+    tracking an "edited" flag also means typing the default value back in
+    restores exact default behavior, with no stale dirty state to get
+    wrong, and keeps programmatic ``setValue`` (tests, future presets)
+    behaving the same as a human edit.
+    """
+    return None if value == default else value
+
 
 # Phase 4: Advanced's roster minimum/maximum. Not an arbitrary GUI choice --
 # it is exactly the entrant-slot ceiling ``bytefray run``'s CLI already
@@ -161,30 +196,33 @@ class AdvancedPanel(QWidget):
         self.alive_w = QDoubleSpinBox()
         self.alive_w.setRange(0.0, 1000.0)
         self.alive_w.setDecimals(3)
-        self.alive_w.setValue(1.0)
+        self.alive_w.setValue(ENGINE_DEFAULT_WEIGHTS.alive)
         self.alive_w.setToolTip(
             "Points added to a surviving agent's score every tick. Higher "
-            "values reward staying alive longer. Starting value shown here: "
-            f"{self.alive_w.value():g}."
+            "values reward staying alive longer. Bytefray's default is "
+            f"{ENGINE_DEFAULT_WEIGHTS.alive:g}; left at that value, the match "
+            "runs with the engine's own default."
         )
         self.kill_w = QDoubleSpinBox()
         self.kill_w.setRange(0.0, 1000.0)
         self.kill_w.setDecimals(3)
-        self.kill_w.setValue(1.0)
+        self.kill_w.setValue(ENGINE_DEFAULT_WEIGHTS.kill)
         self.kill_w.setToolTip(
             "Points awarded to an agent immediately when it eliminates an "
-            "opponent. Starting value shown here: "
-            f"{self.kill_w.value():g}."
+            "opponent. Bytefray's default is "
+            f"{ENGINE_DEFAULT_WEIGHTS.kill:g}; left at that value, the match "
+            "runs with the engine's own default."
         )
         self.territory_w = QDoubleSpinBox()
         self.territory_w.setRange(0.0, 1000.0)
         self.territory_w.setDecimals(3)
-        self.territory_w.setValue(1.0)
+        self.territory_w.setValue(ENGINE_DEFAULT_WEIGHTS.territory)
         self.territory_w.setToolTip(
             "Points added every tick for each Territory Bucket Size worth of "
             "arena cells an agent owns, whether or not that agent is still "
             "alive. Set to 0 to turn off territory scoring entirely. "
-            f"Starting value shown here: {self.territory_w.value():g}."
+            f"Bytefray's default is {ENGINE_DEFAULT_WEIGHTS.territory:g}; left "
+            "at that value, the match runs with the engine's own default."
         )
         form.addRow("Survival Weight", self.alive_w)
         form.addRow("Kill Weight", self.kill_w)
@@ -192,13 +230,14 @@ class AdvancedPanel(QWidget):
 
         self.territory_bucket = QSpinBox()
         self.territory_bucket.setRange(1, 4096)
-        self.territory_bucket.setValue(32)
+        self.territory_bucket.setValue(ENGINE_DEFAULT_WEIGHTS.territory_bucket)
         self.territory_bucket.setToolTip(
             "Number of owned arena cells that make up one territory-scoring "
             "block. Smaller values convert owned territory into points more "
             "readily; larger values require controlling more cells before "
-            f"Territory Weight points accrue. Starting value shown here: "
-            f"{self.territory_bucket.value()}."
+            "Territory Weight points accrue. Bytefray's default is "
+            f"{ENGINE_DEFAULT_WEIGHTS.territory_bucket}; left at that value, "
+            "the match runs with the engine's own default."
         )
         form.addRow("Territory Bucket Size", self.territory_bucket)
 
@@ -518,10 +557,23 @@ class AdvancedPanel(QWidget):
             ruleset_id=selected_ruleset_id(self.ruleset),
             arena=int(self.arena.value()),
             ticks=int(self.ticks.value()),
-            alive_w=float(self.alive_w.value()),
-            kill_w=float(self.kill_w.value()),
-            territory_w=float(self.territory_w.value()),
-            territory_bucket=int(self.territory_bucket.value()),
+            # Phase 5B: each weight is forwarded only when the user has
+            # moved it off the engine default; otherwise the flag is
+            # omitted so the engine applies its own canonical value,
+            # exactly as Simple and a bare CLI run already do.
+            alive_w=_weight_override(
+                float(self.alive_w.value()), ENGINE_DEFAULT_WEIGHTS.alive
+            ),
+            kill_w=_weight_override(
+                float(self.kill_w.value()), ENGINE_DEFAULT_WEIGHTS.kill
+            ),
+            territory_w=_weight_override(
+                float(self.territory_w.value()), ENGINE_DEFAULT_WEIGHTS.territory
+            ),
+            territory_bucket=_weight_override(
+                int(self.territory_bucket.value()),
+                ENGINE_DEFAULT_WEIGHTS.territory_bucket,
+            ),
             seed=int(self.seed.value()) or None,
             a_params=self.editorA.get_data_or_none(),
             b_params=self.editorB.get_data_or_none(),

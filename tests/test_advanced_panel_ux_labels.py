@@ -134,7 +134,7 @@ def test_advanced_panel_scoring_labels_and_tooltips(tmp_path):
 
 
 @pytest.mark.gui
-def test_advanced_panel_numeric_ranges_and_defaults_unchanged(tmp_path):
+def test_advanced_panel_numeric_ranges_match_engine_defaults(tmp_path):
     _make_app()
     from app.views.advanced import AdvancedPanel
 
@@ -150,13 +150,28 @@ def test_advanced_panel_numeric_ranges_and_defaults_unchanged(tmp_path):
             100000,
             600,
         )
-        for spin in (panel.alive_w, panel.kill_w, panel.territory_w):
-            assert (spin.minimum(), spin.maximum(), spin.value()) == (0.0, 1000.0, 1.0)
+        # Phase 5B: the starting scoring values are the engine's own
+        # defaults, asserted against ``Weights()`` rather than restated as
+        # literals here -- if the engine ever retunes them, this test
+        # follows automatically instead of pinning a stale GUI copy.
+        from battle_engine.config import Weights
+
+        engine_defaults = Weights()
+        for spin, expected in (
+            (panel.alive_w, engine_defaults.alive),
+            (panel.kill_w, engine_defaults.kill),
+            (panel.territory_w, engine_defaults.territory),
+        ):
+            assert (spin.minimum(), spin.maximum(), spin.value()) == (
+                0.0,
+                1000.0,
+                expected,
+            )
         assert (
             panel.territory_bucket.minimum(),
             panel.territory_bucket.maximum(),
             panel.territory_bucket.value(),
-        ) == (1, 4096, 32)
+        ) == (1, 4096, engine_defaults.territory_bucket)
         assert (panel.seed.minimum(), panel.seed.maximum(), panel.seed.value()) == (
             0,
             1_000_000,
