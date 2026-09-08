@@ -16,10 +16,21 @@ loop opens and closes cleanly rather than hanging.
 from __future__ import annotations
 
 import json
+import sys
+from types import SimpleNamespace
 
 import pytest
 from battle_client import cli
 from battle_engine.cli import main as engine_main
+
+
+@pytest.fixture
+def fake_pygame(monkeypatch):
+    # _run_interactive_empty_state only calls pygame.quit() on the module
+    # it imports; the picker itself is monkeypatched separately below.
+    pygame = SimpleNamespace(quit=lambda: None)
+    monkeypatch.setitem(sys.modules, "pygame", pygame)
+    return pygame
 
 
 def _make_valid_replay(tmp_path, name="replay.jsonl"):
@@ -112,7 +123,7 @@ def test_malformed_replay_argument_reports_error_and_returns_1(tmp_path, capsys)
 # ---------------------------------------------------------------------------
 
 
-def test_empty_state_valid_pick_reuses_the_same_finish_path(tmp_path, monkeypatch):
+def test_empty_state_valid_pick_reuses_the_same_finish_path(tmp_path, monkeypatch, fake_pygame):
     replay = _make_valid_replay(tmp_path)
     picks = iter([replay])
 
@@ -138,7 +149,9 @@ def test_empty_state_valid_pick_reuses_the_same_finish_path(tmp_path, monkeypatc
     assert finish_captured["session_loaded"] is True
 
 
-def test_empty_state_malformed_pick_retries_instead_of_crashing(tmp_path, monkeypatch, capsys):
+def test_empty_state_malformed_pick_retries_instead_of_crashing(
+    tmp_path, monkeypatch, capsys, fake_pygame
+):
     malformed = tmp_path / "malformed.jsonl"
     malformed.write_text(json.dumps({"tick": 0, "agents": []}) + "\n", encoding="utf-8")
     picks = iter([malformed, None])  # bad pick, then the user closes the window
@@ -167,7 +180,7 @@ def test_empty_state_malformed_pick_retries_instead_of_crashing(tmp_path, monkey
     assert seen_messages[1] != "" and malformed.name in seen_messages[1]
 
 
-def test_empty_state_cancel_without_picking_returns_cleanly(monkeypatch):
+def test_empty_state_cancel_without_picking_returns_cleanly(monkeypatch, fake_pygame):
     monkeypatch.setattr(
         "battle_client.renderers.replay_picker.run_empty_state",
         lambda pg, *, title, initial_directory, message="": None,
