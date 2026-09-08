@@ -2,7 +2,37 @@
 
 This changelog records notable user- and developer-visible changes to Bytefray.
 
-## [Unreleased]
+## [4.0.0] - 2026-09-08
+
+### Spatial Multi-Process Platform & Spectator Intelligence
+
+Bytefray 4.0 promotes the qualified `v4.0.0-rc2` candidate and its post-UX
+polish to the stable 4.0 line. No gameplay, Agent API, or wire-schema changes
+have been made since RC2 — this release finalizes the spatial multi-process
+runtime, spectator presentation suite, and multi-platform packaging.
+
+* **Ruleset-first Advanced configuration.** Agent Designer's Advanced tab
+  organizes match setup around explicit Ruleset selection, presenting
+  context-aware controls and user-facing guidance tailored to the active
+  Ruleset.
+* **User-facing Advanced labels and inline guidance.** Refreshed terminology
+  and inline descriptions across Advanced match setup, clarifying parameter
+  boundaries and operational effects.
+* **Improved replay workflow.** Streamlined Replay Viewer opening, empty-state
+  guidance for empty launches, and automatic spectator trace recording from
+  both Simple and Advanced Designer match launches.
+* **Advanced 2–3 agent matches.** Native multi-agent setup in the Designer
+  supporting two- or three-agent matches with dynamic entrant cards,
+  canonical scoring defaults, and multi-entrant replay playback.
+* **Scoring defaults aligned with engine defaults.** Advanced match setup
+  strictly defers unconfigured scoring weights to the engine's canonical
+  defaults (`alive=1.0`, `kill=5.0`, `territory=1.0`, `territory_bucket=64`).
+* **Self-contained Linux binary distribution.** Four frozen onedir
+  applications built on Ubuntu 24.04 with pygame-ce and Python 3.14,
+  requiring no system Python.
+* **Complete spectator presentation.** Perspective Cam, Spectator Director,
+  and Fight Night event ribbon providing first-person entrant knowledge
+  boundaries, dynamic playback pacing, and contextual combat feeds.
 
 ## [4.0.0-rc2] - 2026-09-07
 

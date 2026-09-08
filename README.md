@@ -4,7 +4,7 @@
   <img src="assets/branding/bytefray-logo-horizontal.png" alt="Bytefray logo" width="420">
 </p>
 
-> **Note: Bytefray v4.0.0-rc2 is now available as a release candidate.** RC2 adds a self-contained Linux binary distribution and an official Ubuntu 24.04 build baseline, migrates the replay/GUI dependency to pygame-ce, formally qualifies Python 3.14, and bundles the `V4 Quorum` advanced example agent, on top of RC1's stable gameplay Ruleset `bytefray-rules-4` (Agent API v2, spatial multi-process combat), spectator presentation suite (Perspective Cam, Spectator Director, Fight Night), and seeded-placement evaluation methodology. We welcome gameplay and viewer feedback!
+> **Note: Bytefray is currently preparing the v4.0.0 final release.** Promoted from the qualified `v4.0.0-rc2` candidate and post-UX polish: RC1 established stable `bytefray-rules-4` gameplay and the spectator presentation suite (Perspective Cam, Spectator Director, Fight Night); RC2 added the self-contained Linux binary distribution, pygame-ce, Python 3.14, and the `V4 Quorum` example agent; and post-UX polish finalized Ruleset-first Advanced configuration, multi-agent setup, and scoring defaults.
 
 **Bytefray** is a deterministic programmable-agent combat simulator in which
 agents compete over a shared circular memory arena. Bytefray v4 adds a
@@ -16,14 +16,13 @@ available for compatibility.
 Bytefray includes an Agent Designer, an interactive Replay Viewer, reproducible
 evaluation and tournament tools, and a complete command-line workflow.
 
-[![GitHub prerelease](https://img.shields.io/github/v/release/libertaine/Bytefray?include_prereleases&label=prerelease)](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0-rc2)
+[![GitHub release](https://img.shields.io/github/v/release/libertaine/Bytefray?label=release)](https://github.com/libertaine/Bytefray/releases)
 [![Python 3.10–3.14](https://img.shields.io/badge/Python-3.10%E2%80%933.14-blue)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Current pre-release:** [Bytefray v4.0.0-rc2](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0-rc2)
+**Current release:** [Bytefray v4.0.0](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0)
 — see [Downloads](#downloads) below. Earlier [v3.0.0](https://github.com/libertaine/Bytefray/releases/tag/v3.0.0)
-remains the current stable release for users who do not want v4 gameplay or
-Agent API v2 changes.
+remains available for historical Ruleset-v2 workflows.
 
 ## What is Bytefray?
 
@@ -231,7 +230,11 @@ environment variables, see [Installation](INSTALL.md).
 
 ## Downloads
 
-**Current pre-release:** [Bytefray v4.0.0-rc2](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0-rc2)
+**Bytefray v4.0.0 final release:** promoted from the qualified `v4.0.0-rc2`
+candidate and post-UX polish; in final artifact qualification, not yet
+published.
+
+**Current published prerelease:** [Bytefray v4.0.0-rc2](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0-rc2)
 — the second v4.0 **release candidate**. RC2 adds a self-contained Linux
 binary distribution built and qualified on an official Ubuntu 24.04
 baseline (measured maximum requirement `GLIBC_2.38`; not qualified against
@@ -492,17 +495,17 @@ multi-entrant work, together with explicit Designer Ruleset selection,
 read-only agent-source inspection, refreshed onboarding, and current product
 screenshots.
 
-Bytefray v3.0.0 remains the stable product on top of Ruleset v2. Bytefray
-v4.0.0-rc2 is the current pre-release: the second v4.0 release candidate,
-building on RC1's promotion of `bytefray-rules-4` to a permanent, stable
-gameplay Ruleset alongside the qualified spectator intelligence suite
-(Perspective Cam, Spectator Director, Fight Night) and the seeded-placement
-evaluation methodology, independently qualified on both Windows and
-native-Wayland Linux. RC2 adds a self-contained Linux binary distribution
-and an official Ubuntu 24.04 build baseline; it carries no new gameplay
-mechanic, Agent API redesign, or replay schema bump over RC1; historical
-alpha1/alpha2 identities and wire formats remain distinct, selectable, and
-readable.
+Bytefray v3.0.0 remains available for historical Ruleset-v2 workflows. Bytefray
+v4.0.0 is the current stable release: building on RC1's promotion of
+`bytefray-rules-4` to a permanent, stable gameplay Ruleset alongside the
+qualified spectator intelligence suite (Perspective Cam, Spectator Director,
+Fight Night) and the seeded-placement evaluation methodology, independently
+qualified on both Windows and native-Wayland Linux. RC2 added a self-contained
+Linux binary distribution and an official Ubuntu 24.04 build baseline with
+pygame-ce and Python 3.14 support; post-UX polish finalized Ruleset-first
+Advanced configuration, multi-agent match setup, and scoring defaults.
+Historical alpha1/alpha2 identities and wire formats remain distinct,
+selectable, and readable.
 
 The earlier BATTLE2 name and migration history are preserved in
 [Project History](docs/PROJECT_HISTORY.md); all current product commands,

@@ -1202,8 +1202,8 @@ selectable.
 
 ### v4.0.0-rc2 — Release Candidate
 
-**Status: published prerelease, current.** The second v4.0 release
-candidate — see
+**Status: published prerelease; superseded by v4.0.0 final below.** The second
+v4.0 release candidate — see
 [CHANGELOG.md](../CHANGELOG.md#400-rc2---2026-09-07) and the RC-path
 qualification reports under [docs/research/v4/](research/v4/). Adds a
 self-contained Linux binary distribution built and qualified on an official
@@ -1213,6 +1213,28 @@ dependency from classic Pygame to pygame-ce, formally qualifies Python
 3.14, and bundles the `V4 Quorum` (Advanced Example) agent. No new gameplay
 mechanic, Agent API redesign, Ruleset change, or replay schema bump over
 RC1 — `bytefray-rules-4` remains unchanged.
+
+## v4.0.0 — Spatial Multi-Process Platform & Spectator Intelligence
+
+**Status: qualified and pending publication.** `v4.0.0` promotes the
+qualified `v4.0.0-rc2` post-UX candidate to the stable 4.0 line with no
+engine, schema, or evaluation-methodology change since RC2 — a version/
+documentation-only release. `bytefray-rules-4` becomes v4.0's permanent
+active gameplay identity (Agent API v2, movable process anchors, bounded
+reach, seeded placement, round-robin process selection); the spectator
+presentation pipeline (Perspective Cam, Spectator Director, Fight Night) is
+fully integrated; Agent Designer provides Ruleset-first Advanced configuration
+with two- or three-agent matches; and the distribution matrix includes
+Windows AMD64 installer, portable ZIP, self-contained Linux archive (Ubuntu
+24.04 baseline), and pure Python wheel/sdist supporting Python 3.10–3.14.
+Agent API v1, Ruleset v1/v2 compatibility, and pMARS external interoperability
+are all preserved.
+
+See [V4_RC2_POST_UX_WINDOWS_QUALIFICATION.md](research/v4/V4_RC2_POST_UX_WINDOWS_QUALIFICATION.md)
+and [V4_RC2_POST_UX_LINUX_PACKAGED_QUALIFICATION.md](research/v4/V4_RC2_POST_UX_LINUX_PACKAGED_QUALIFICATION.md)
+for the candidate qualification records. `v4.0.0-alpha1` through `-alpha4`,
+`v4.0.0-rc1`, and `v4.0.0-rc2` remain published, immutable prereleases; none
+was moved, retagged, or rewritten by this promotion.
 
 ## After v1.0
 
