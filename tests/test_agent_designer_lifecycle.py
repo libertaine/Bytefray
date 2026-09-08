@@ -44,14 +44,14 @@ def _argument_value(command: list[str], flag: str) -> str:
 
 @pytest.mark.gui
 @pytest.mark.parametrize(
-    ("panel_name", "agent_a", "agent_b"),
+    ("panel_name", "agent_a", "agent_b", "ruleset_id"),
     [
-        ("simple", "adaptive", "hunter"),
-        ("advanced", "runner", "writer"),
+        ("simple", "adaptive", "hunter", None),
+        ("advanced", "runner", "writer", "bytefray-rules-1"),
     ],
 )
 def test_designer_panels_launch_starter_agents_by_discovery_id(
-    monkeypatch, tmp_path, panel_name, agent_a, agent_b
+    monkeypatch, tmp_path, panel_name, agent_a, agent_b, ruleset_id
 ):
     """The combo's canonical discovery ids must cross the Designer boundary."""
     pytest.importorskip("PySide6")
@@ -65,6 +65,14 @@ def test_designer_panels_launch_starter_agents_by_discovery_id(
     designer = AgentDesigner()
     captured = _capture_match_launch(monkeypatch, designer)
     panel = getattr(designer, panel_name)
+
+    if ruleset_id is not None:
+        # Advanced (Phase 2): its VM/blob starter agents ("runner"/"writer")
+        # only appear once Ruleset v1 -- the one identity that supports
+        # them -- is selected, mirroring the intended Ruleset-first UX
+        # (selecting the Ruleset no longer happens as a side effect of
+        # picking an agent).
+        panel.ruleset.setCurrentIndex(panel.ruleset.findData(ruleset_id))
 
     panel.agentA.setCurrentIndex(panel.agentA.findData(agent_a))
     panel.agentB.setCurrentIndex(panel.agentB.findData(agent_b))

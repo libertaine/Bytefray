@@ -89,6 +89,37 @@ def selected_agent_meta(combo: QComboBox) -> object | None:
     return combo.itemData(combo.currentIndex(), _META_ROLE)
 
 
+def repopulate_paired_agent_combos(
+    combo_a: QComboBox, combo_b: QComboBox, eligible: list[AgentRow]
+) -> None:
+    """Populate both match selectors from one already-filtered roster.
+
+    The one shared implementation Simple and Advanced both call (Phase 2's
+    UX-19 parity) to repopulate their Agent A/B combos from the agents a
+    selected Ruleset actually supports. Each combo's own current selection
+    is preserved by identifier when it remains in ``eligible`` (via
+    ``populate_agent_combo``); when Agent B's selection does not survive,
+    it is steered to a deterministic opponent distinct from Agent A rather
+    than left on whatever the repopulation happened to default to -- the
+    default-selection policy Simple established first. An explicit,
+    still-eligible self-match (Agent A == Agent B) is left alone; this
+    function only *chooses* a distinct opponent when B's own prior
+    selection needs replacing.
+    """
+
+    eligible_ids = {row.agent_id or row.name for row in eligible}
+    previous_b = selected_agent_name(combo_b)
+    populate_agent_combo(combo_a, eligible)
+    populate_agent_combo(combo_b, eligible)
+
+    if previous_b not in eligible_ids and len(eligible) > 1:
+        selected_a = selected_agent_name(combo_a)
+        for index in range(combo_b.count()):
+            if combo_b.itemData(index) != selected_a:
+                combo_b.setCurrentIndex(index)
+                break
+
+
 def sync_compatible_b_choices(combo_a: QComboBox, combo_b: QComboBox) -> None:
     """Disable Agent B entries incompatible with Agent A, repairing an
     incompatible current B selection deterministically.

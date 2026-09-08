@@ -19,7 +19,7 @@ from app.services.ruleset_options import (
     agent_row_supported_by_ruleset,
 )
 from app.widgets.agent_combo import (
-    populate_agent_combo,
+    repopulate_paired_agent_combos,
     selected_agent_name,
 )
 from app.widgets.designer_presentation import MatchOutputView
@@ -169,24 +169,12 @@ class SimplePanel(QWidget):
         """Populate both selectors from the current Ruleset's eligible rows."""
 
         ruleset_id = selected_ruleset_id(self.ruleset)
-        previous_b = selected_agent_name(self.agentB)
         eligible = [
             row
             for row in self._all_rows
             if agent_row_supported_by_ruleset(row, ruleset_id)
         ]
-        eligible_ids = {row.agent_id or row.name for row in eligible}
-        populate_agent_combo(self.agentA, eligible)
-        populate_agent_combo(self.agentB, eligible)
-
-        # When B could not be preserved, prefer a deterministic opponent
-        # distinct from A.  An explicit, still-valid self-match is retained.
-        if previous_b not in eligible_ids and len(eligible) > 1:
-            selected_a = selected_agent_name(self.agentA)
-            for index in range(self.agentB.count()):
-                if self.agentB.itemData(index) != selected_a:
-                    self.agentB.setCurrentIndex(index)
-                    break
+        repopulate_paired_agent_combos(self.agentA, self.agentB, eligible)
 
         self._has_eligible_agents = bool(eligible)
         self.btnRun.setEnabled(self._has_eligible_agents)

@@ -67,96 +67,136 @@ def _offered(combo) -> set[str]:
 # ---------------------------------------------------------------------------
 # Advanced
 # ---------------------------------------------------------------------------
+#
+# Phase 2 (RC2->final) inverted Advanced's selection order: the Ruleset is
+# now the controlling selector, exactly like Simple, instead of being
+# derived from whichever agents happened to be selected. The tests below pin
+# that inverted model (UX-14 through UX-19); the pre-Phase-2 "agents choose
+# the Ruleset" behavior they replace remains visible in git history.
 
 
 @pytest.mark.gui
 @pytest.mark.parametrize(
-    ("api_version", "expected_offered"),
+    ("ruleset_id", "expected_agents"),
     [
-        (1, {BYTEFRAY_RULESET_V2_ID, BYTEFRAY_RULESET_ID}),
-        (2, ALL_V4_IDENTITIES),
+        (BYTEFRAY_RULESET_V2_ID, ["legacy"]),
+        (BYTEFRAY_RULESET_V4_ID, ["proc"]),
+        (BYTEFRAY_RULESET_ID, ["legacy", "vm_agent"]),
     ],
 )
-def test_advanced_offers_only_rulesets_the_selected_agents_can_run(
-    tmp_path, api_version, expected_offered
+def test_advanced_offers_only_agents_the_selected_ruleset_can_run(
+    tmp_path, ruleset_id, expected_agents
 ):
+    """UX-15/UX-16: Agent A/B are derived from the selected Ruleset via the
+    same ``agent_row_supported_by_ruleset`` predicate Simple already uses
+    (UX-19 parity), not from a hand-maintained Advanced-only matrix."""
+
     _make_app()
     from app.views.advanced import AdvancedPanel
 
     panel = AdvancedPanel(catalog=None, data_root=tmp_path)
     try:
-        panel.setAgents([_row("a", "python", api_version), _row("b", "python", api_version)])
-        assert _offered(panel.ruleset) == expected_offered
-        assert panel.ruleset.currentData() in expected_offered
+        panel.setAgents(
+            [
+                _row("legacy", "python", 1),
+                _row("proc", "python", 2),
+                _row("vm_agent", "builtin"),
+            ]
+        )
+        panel.ruleset.setCurrentIndex(panel.ruleset.findData(ruleset_id))
+        listed = [panel.agentA.itemData(i) for i in range(panel.agentA.count())]
+        assert listed == expected_agents
         assert panel.btnRun.isEnabled()
     finally:
         panel.deleteLater()
 
 
 @pytest.mark.gui
-def test_advanced_keeps_a_compatible_selection_and_repairs_an_incompatible_one(tmp_path):
+def test_advanced_preserves_compatible_agent_and_replaces_only_the_incompatible_one(tmp_path):
+    """UX-17 items 2/3: Ruleset v1 admits both Python API v1 and VM/blob
+    agents, so a mixed A/B selection survives it; switching to the
+    Python-only Ruleset v2 must then replace only the now-incompatible VM
+    entrant, leaving the still-compatible Python one untouched."""
+
     _make_app()
     from app.views.advanced import AdvancedPanel
 
     panel = AdvancedPanel(catalog=None, data_root=tmp_path)
     try:
-        panel.setAgents([_row("legacy", "python", 1), _row("legacy2", "python", 1)])
-        # Ruleset v1 is compatible with Agent API v1, so an explicit choice
-        # of it must survive a re-sync rather than snapping back to v2.
+        panel.setAgents([_row("legacy", "python", 1), _row("vm_agent", "builtin")])
         panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_ID))
-        panel.setAgents([_row("legacy", "python", 1), _row("legacy2", "python", 1)])
-        assert panel.ruleset.currentData() == BYTEFRAY_RULESET_ID
+        panel.agentA.setCurrentIndex(panel.agentA.findData("legacy"))
+        panel.agentB.setCurrentIndex(panel.agentB.findData("vm_agent"))
 
-        # Switching to Agent API v2 agents makes that selection incompatible;
-        # it is replaced by the deterministic first compatible option, never
-        # left on an incompatible one.
-        panel.setAgents([_row("proc", "python", 2), _row("proc2", "python", 2)])
-        # The deterministic first compatible option, which is the current,
-        # permanent v4 Ruleset -- not merely "a v4 Ruleset". Advanced still
-        # offers alpha2/alpha1 beside it for reproducing historical
-        # prerelease matches.
-        assert panel.ruleset.currentData() == BYTEFRAY_RULESET_V4_ID
-        assert _offered(panel.ruleset) == ALL_V4_IDENTITIES
+        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
+        assert panel.agentA.currentData() == "legacy"  # preserved
+        assert panel.agentB.currentData() not in (None, "vm_agent")  # replaced
+        assert panel.btnRun.isEnabled()
     finally:
         panel.deleteLater()
 
 
 @pytest.mark.gui
-def test_advanced_disables_running_when_no_ruleset_supports_the_pairing(tmp_path):
+def test_advanced_replaces_both_selections_when_neither_remains_compatible(tmp_path):
+    """UX-17 items 4/5: an Agent API v1 pair has no representative under an
+    Agent API v2 Ruleset, so both selections -- not just one -- are replaced
+    by the deterministic first compatible option."""
+
     _make_app()
     from app.views.advanced import AdvancedPanel
 
     panel = AdvancedPanel(catalog=None, data_root=tmp_path)
     try:
-        panel.setAgents([_row("legacy", "python", 1), _row("proc", "python", 2)])
-        panel.agentA.setCurrentIndex(0)
-        panel.agentB.setCurrentIndex(1)
+        panel.setAgents(
+            [
+                _row("legacy", "python", 1),
+                _row("legacy2", "python", 1),
+                _row("proc", "python", 2),
+                _row("proc2", "python", 2),
+            ]
+        )
+        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
+        panel.agentA.setCurrentIndex(panel.agentA.findData("legacy"))
+        panel.agentB.setCurrentIndex(panel.agentB.findData("legacy2"))
 
-        assert _offered(panel.ruleset) == set()
+        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
+        assert panel.agentA.currentData() == "proc"
+        assert panel.agentB.currentData() == "proc2"
+        assert panel.btnRun.isEnabled()
+    finally:
+        panel.deleteLater()
+
+
+@pytest.mark.gui
+def test_advanced_handles_zero_compatible_agents_without_crashing_or_stale_selection(tmp_path):
+    """UX-18 / the empty-degenerate case: a Ruleset with no discovered
+    compatible agent must disable Run, show an explanation, and never
+    retain a stale selection from before the Ruleset change. Returning to
+    the previous Ruleset must recover cleanly (F.6)."""
+
+    _make_app()
+    from app.views.advanced import AdvancedPanel
+
+    panel = AdvancedPanel(catalog=None, data_root=tmp_path)
+    try:
+        panel.setAgents([_row("legacy", "python", 1)])
+        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
+        assert panel.btnRun.isEnabled()
+
+        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
         assert not panel.btnRun.isEnabled()
-        assert panel.rulesetExplanation.isVisibleTo(panel)
-        assert "No available Ruleset" in panel.rulesetExplanation.text()
+        assert panel.agentA.itemText(0) == "(none found)"
+        assert panel.agentB.itemText(0) == "(none found)"
+        assert "No compatible agents" in panel.rulesetExplanation.text()
 
         # Becoming idle must not quietly re-enable an impossible match.
         panel.setBusy(True)
         panel.setBusy(False)
         assert not panel.btnRun.isEnabled()
-    finally:
-        panel.deleteLater()
 
-
-@pytest.mark.gui
-def test_advanced_vm_selection_keeps_its_existing_ruleset_v1_behavior(tmp_path):
-    _make_app()
-    from app.views.advanced import AdvancedPanel
-
-    panel = AdvancedPanel(catalog=None, data_root=tmp_path)
-    try:
-        panel.setAgents([_row("runner", "builtin"), _row("writer", "builtin")])
-        assert _offered(panel.ruleset) == {BYTEFRAY_RULESET_ID}
-        assert panel.ruleset.currentData() == BYTEFRAY_RULESET_ID
+        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
         assert panel.btnRun.isEnabled()
-        assert "VM/blob agents run under Ruleset v1 only" in panel.rulesetExplanation.text()
+        assert panel.agentA.currentData() == "legacy"
     finally:
         panel.deleteLater()
 

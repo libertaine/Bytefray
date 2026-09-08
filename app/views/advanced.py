@@ -24,8 +24,13 @@ from PySide6.QtWidgets import (
 from app.services.agent_catalog import AgentRow
 from app.services.engine import RunConfig
 from app.services.osutil import get_default_paths
+from app.services.ruleset_options import (
+    VM_RULESET_EXPLANATION,
+    agent_row_supported_by_ruleset,
+)
 from app.widgets.agent_combo import (
-    populate_agent_combo,
+    repopulate_paired_agent_combos,
+    selected_agent_kind,
     selected_agent_name,
     sync_compatible_b_choices,
 )
@@ -33,7 +38,6 @@ from app.widgets.json_editor import JsonEditor
 from app.widgets.ruleset_combo import (
     populate_ruleset_combo,
     selected_ruleset_id,
-    sync_ruleset_choices,
 )
 
 
@@ -49,9 +53,10 @@ class AdvancedPanel(QWidget):
         super().__init__()
         self._catalog = catalog
         self._paths = get_default_paths(data_root)
-        # Whether the current entrant selection has any compatible Ruleset;
-        # recomputed by _sync_ruleset and respected by setBusy.
-        self._has_compatible_ruleset = True
+        self._all_rows: list[AgentRow] = []
+        # Whether the selected Ruleset has any compatible discovered agent;
+        # recomputed by _refilter_agents and respected by setBusy.
+        self._has_eligible_agents = False
 
         root = QVBoxLayout(self)
         self.tabs = QTabWidget()
@@ -61,17 +66,21 @@ class AdvancedPanel(QWidget):
         setup = QWidget()
         form = QFormLayout(setup)
 
-        self.agentA = QComboBox()
-        self.agentB = QComboBox()
-        form.addRow("Agent A", self.agentA)
-        form.addRow("Agent B", self.agentB)
-
+        # Ruleset is the controlling selector (UX-14/UX-15): it is
+        # established before Agent A/B so a first-time user learns the same
+        # "Ruleset determines which Agents can participate" rule Simple
+        # already teaches, rather than the reverse.
         self.ruleset = QComboBox()
         populate_ruleset_combo(self.ruleset)
         self.rulesetExplanation = QLabel()
         self.rulesetExplanation.setWordWrap(True)
         form.addRow("Ruleset", self.ruleset)
         form.addRow("", self.rulesetExplanation)
+
+        self.agentA = QComboBox()
+        self.agentB = QComboBox()
+        form.addRow("Agent A", self.agentA)
+        form.addRow("Agent B", self.agentB)
 
         self.arena = QSpinBox()
         self.arena.setRange(64, 8192)
@@ -224,29 +233,63 @@ class AdvancedPanel(QWidget):
         self.btnRefresh.clicked.connect(self.refreshAgentsRequested.emit)
         self.btnChooseReplay.clicked.connect(self._choose_replay)
         self.btnOpenReplay.clicked.connect(self._open_replay_browser)
+        self.ruleset.currentIndexChanged.connect(self._on_ruleset_changed)
         self.agentA.currentIndexChanged.connect(self._on_agent_a_changed)
-        self.agentB.currentIndexChanged.connect(self._sync_ruleset)
 
     # API for MainWindow
     def setAgents(self, rows: list[AgentRow]) -> None:
-        populate_agent_combo(self.agentA, rows)
-        populate_agent_combo(self.agentB, rows)
-        sync_compatible_b_choices(self.agentA, self.agentB)
-        self._sync_ruleset()
+        self._all_rows = list(rows)
+        self._refilter_agents()
+
+    def _on_ruleset_changed(self, _index: int) -> None:
+        self._refilter_agents()
 
     def _on_agent_a_changed(self, _index: int) -> None:
         sync_compatible_b_choices(self.agentA, self.agentB)
-        self._sync_ruleset()
+        self._update_ruleset_explanation()
 
-    def _sync_ruleset(self, _index: int | None = None) -> None:
-        # Fail closed in the UI rather than after launch: when the selected
-        # agents share no compatible Ruleset (an Agent API v1 and an Agent
-        # API v2 agent, say), Run is disabled and the reason is shown, so
-        # the engine never has to reject a match the UI presented as valid.
-        self._has_compatible_ruleset = sync_ruleset_choices(
-            self.ruleset, self.agentA, self.agentB, self.rulesetExplanation
-        )
-        self.btnRun.setEnabled(self._has_compatible_ruleset)
+    def _refilter_agents(self) -> None:
+        """Populate Agent A/B from the selected Ruleset's compatible agents.
+
+        The Ruleset is the controlling selector (UX-15/UX-16): changing it
+        never happens as a side effect of an agent choice, only the
+        reverse. ``repopulate_paired_agent_combos`` is the same shared
+        helper Simple uses (UX-19 parity): it preserves each combo's own
+        selection when it remains eligible and steers Agent B to a
+        deterministic opponent distinct from Agent A otherwise. Within the
+        Ruleset-compatible roster, ``sync_compatible_b_choices`` still
+        applies the pre-existing runtime-kind restriction on Agent B: Ruleset
+        v1 is the one identity that admits both Python and VM/blob agents,
+        which still may not be mixed in the same match
+        (``validate_homogeneous`` at launch), so that check is layered on
+        top rather than replaced.
+        """
+
+        ruleset_id = selected_ruleset_id(self.ruleset)
+        eligible = [
+            row
+            for row in self._all_rows
+            if agent_row_supported_by_ruleset(row, ruleset_id)
+        ]
+        repopulate_paired_agent_combos(self.agentA, self.agentB, eligible)
+        sync_compatible_b_choices(self.agentA, self.agentB)
+
+        self._has_eligible_agents = bool(eligible)
+        self.btnRun.setEnabled(self._has_eligible_agents)
+        self._update_ruleset_explanation()
+
+    def _update_ruleset_explanation(self) -> None:
+        if not self._has_eligible_agents:
+            self.rulesetExplanation.setText(
+                "No compatible agents were found for this Ruleset. "
+                "Create or import a compatible agent, then refresh."
+            )
+        elif "vm" in (selected_agent_kind(self.agentA), selected_agent_kind(self.agentB)):
+            # Only Ruleset v1 offers both kinds; explains why some Agent B
+            # entries are grayed out when a VM/blob agent is selected.
+            self.rulesetExplanation.setText(VM_RULESET_EXPLANATION)
+        else:
+            self.rulesetExplanation.clear()
 
     def setBusy(self, busy: bool) -> None:
         for w in (
@@ -263,9 +306,9 @@ class AdvancedPanel(QWidget):
             self.ruleset,
         ):
             w.setEnabled(not busy)
-        # Run stays disabled while no compatible Ruleset exists, so becoming
-        # idle never re-enables launching an incompatible selection.
-        self.btnRun.setEnabled(not busy and self._has_compatible_ruleset)
+        # Run stays disabled while no compatible agents exist, so becoming
+        # idle never re-enables launching an invalid selection.
+        self.btnRun.setEnabled(not busy and self._has_eligible_agents)
         self.btnStop.setEnabled(busy)
 
     def enableOpenReplay(self, enable: bool) -> None:

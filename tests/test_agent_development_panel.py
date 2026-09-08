@@ -589,10 +589,14 @@ def test_invalidate_agent_state_also_refreshes_the_stale_preview(tmp_path):
 def test_match_selectors_and_development_receive_their_intended_catalogs(
     monkeypatch, tmp_path
 ):
-    """Simple filters by Ruleset while Advanced/Development keep their scope."""
+    """Simple filters by Ruleset; Development keeps its established
+    all-Python scope; Advanced (Phase 2) now filters by Ruleset too, using
+    the same default Ruleset (v2) Simple starts on."""
     _make_app()
     data_root = tmp_path / "data"
     monkeypatch.setenv("BYTEFRAY_ROOT", str(data_root))
+
+    from battle_engine.rules import BYTEFRAY_RULESET_ID
 
     from app.agent_designer import AgentDesigner
 
@@ -606,9 +610,6 @@ def test_match_selectors_and_development_receive_their_intended_catalogs(
         non_python_ids = {row.agent_id for row in catalog_rows if row.meta.get("kind") != "python"}
         assert non_python_ids, "expected at least one non-Python (VM) starter agent"
 
-        # Development keeps its established all-Python catalog. Advanced keeps
-        # the full historical catalog, including VM starters. Simple defaults
-        # to Ruleset v2 and therefore shows only Agent API v1 Python agents.
         dev_ids = {agent_id for _, agent_id in designer.development.python_agent_names()}
         simple_ids = {
             designer.simple.agentA.itemData(index)
@@ -622,6 +623,25 @@ def test_match_selectors_and_development_receive_their_intended_catalogs(
         assert dev_ids == python_ids
         assert dev_ids.isdisjoint(non_python_ids)
         assert simple_ids == v2_ids
-        assert designer.advanced.agentA.count() == len(catalog_rows)
+
+        # Advanced defaults to the same Ruleset v2 Simple starts on (index 0
+        # of the shared Designer Ruleset options), so its initial roster is
+        # the same v2-compatible set -- not the whole discovered catalog.
+        advanced_ids = {
+            designer.advanced.agentA.itemData(index)
+            for index in range(designer.advanced.agentA.count())
+        }
+        assert advanced_ids == v2_ids
+
+        # The full historical catalog, including VM starters, remains
+        # reachable in Advanced by selecting Ruleset v1.
+        designer.advanced.ruleset.setCurrentIndex(
+            designer.advanced.ruleset.findData(BYTEFRAY_RULESET_ID)
+        )
+        advanced_v1_ids = {
+            designer.advanced.agentA.itemData(index)
+            for index in range(designer.advanced.agentA.count())
+        }
+        assert non_python_ids <= advanced_v1_ids
     finally:
         designer.deleteLater()

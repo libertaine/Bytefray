@@ -333,21 +333,30 @@ def test_simple_one_agent_allows_self_match_and_empty_state_prevents_launch():
 
 @pytest.mark.gui
 def test_advanced_panel_matches_simple_panel_behavior(tmp_path):
+    """Phase 2: Advanced now filters Agent A/B by the selected Ruleset first
+    (UX-15/UX-16), exactly like Simple. Ruleset v1 is the one identity whose
+    Ruleset-compatible roster still spans both runtime kinds, so it is the
+    one case where the pre-existing ``sync_compatible_b_choices`` kind
+    restriction (mixed VM/Python matches remain rejected by
+    ``validate_homogeneous`` at launch) still has anything to disable."""
+
     _make_app()
     from app.services.ruleset_options import VM_RULESET_EXPLANATION
     from app.views.advanced import AdvancedPanel
 
     panel = AdvancedPanel(catalog=None, data_root=tmp_path)
     panel.setAgents(_rows())
+    panel.ruleset.setCurrentIndex(panel.ruleset.findData("bytefray-rules-1"))
+
+    texts = [panel.agentA.itemText(i) for i in range(panel.agentA.count())]
+    assert texts == ["claimer [Python]", "runner [VM]", "hunter [Python]"]
+
     panel.agentA.setCurrentIndex(1)  # runner [VM]
 
     model = panel.agentB.model()
     assert model.item(0).isEnabled() is False  # claimer [Python]
     assert model.item(1).isEnabled() is True  # runner [VM]
     assert model.item(2).isEnabled() is False  # hunter [Python]
-
-    texts = [panel.agentA.itemText(i) for i in range(panel.agentA.count())]
-    assert texts == ["claimer [Python]", "runner [VM]", "hunter [Python]"]
 
     captured = []
     panel.runRequested.connect(captured.append)
@@ -357,8 +366,6 @@ def test_advanced_panel_matches_simple_panel_behavior(tmp_path):
     assert captured[0].a_type == "runner"
     assert captured[0].b_type == "runner"  # self-match: the only compatible B
     assert captured[0].ruleset_id == "bytefray-rules-1"
-    v2_index = panel.ruleset.findData("bytefray-rules-2")
-    assert panel.ruleset.model().item(v2_index).isEnabled() is False
     # v3.0.0-alpha2 replaced "Ruleset v1 is required for VM/blob matches."
     # with copy that also states the converse (v2 is Python-only), so a
     # reader learns the whole compatibility rule rather than half of it.
@@ -368,12 +375,20 @@ def test_advanced_panel_matches_simple_panel_behavior(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# Regression: the exact user-discovered scenario (task Sec 16)
+# Phase 2 parity: Simple and Advanced now converge on one Ruleset-first model
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.gui
-def test_regression_simple_filters_while_advanced_keeps_historical_catalog(tmp_path):
+def test_simple_and_advanced_now_expose_the_same_ruleset_filtered_roster(tmp_path):
+    """Before Phase 2, Simple filtered Agent A/B by the selected Ruleset
+    while Advanced showed the full discovered catalog regardless of
+    Ruleset -- the exact backward "Agents -> Ruleset" model this phase
+    corrects (see the Phase 2 task's background section). Both tabs must
+    now expose the same effective compatible roster for an Agent-API-v1
+    Ruleset (UX-19); Advanced additionally offers Ruleset v1, under which it
+    also lists the VM/blob agent Simple never offers a Ruleset for."""
+
     _make_app()
     from app.views.advanced import AdvancedPanel
     from app.views.simple import SimplePanel
@@ -389,10 +404,15 @@ def test_regression_simple_filters_while_advanced_keeps_historical_catalog(tmp_p
     ]
 
     advanced.setAgents(rows)
+    advanced.ruleset.setCurrentIndex(advanced.ruleset.findData("bytefray-rules-2"))
+    assert [advanced.agentA.itemData(i) for i in range(advanced.agentA.count())] == [
+        "claimer",
+        "hunter",
+    ]
+
+    advanced.ruleset.setCurrentIndex(advanced.ruleset.findData("bytefray-rules-1"))
     assert [advanced.agentA.itemData(i) for i in range(advanced.agentA.count())] == [
         "claimer",
         "runner",
         "hunter",
     ]
-    advanced.agentA.setCurrentIndex(1)
-    assert advanced.ruleset.currentData() == "bytefray-rules-1"
