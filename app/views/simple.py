@@ -123,6 +123,11 @@ class SimplePanel(QWidget):
         self.btnStop = QPushButton("Stop")
         self.btnOpen = QPushButton("View Last Match")
         self.btnOpen.setEnabled(False)
+        self.btnOpen.setToolTip(
+            "Opens the replay from your most recently completed successful "
+            "match. Stays on that match's replay if a later match fails, so "
+            "it never opens a replay a failed run does not actually have."
+        )
         self.btnRefresh = QPushButton("Refresh Agents")
 
         actions = QHBoxLayout()

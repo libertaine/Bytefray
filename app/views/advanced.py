@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from battle_engine.paths import canonical_replay_directory
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QComboBox,
@@ -11,6 +12,7 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QMessageBox,
     QPlainTextEdit,
     QPushButton,
     QSpinBox,
@@ -40,6 +42,13 @@ from app.widgets.ruleset_combo import (
     selected_ruleset_id,
 )
 
+# Placeholder shown in the Replay Browser's path label before any replay has
+# been chosen -- deliberately not a real path (so accidentally treating it as
+# one is harmless: Path(...).is_file() is False for it) and checked for
+# explicitly in _open_replay_browser so that case gets its own clear message
+# rather than a "Replay not found: No replay selected yet." dialog.
+_NO_REPLAY_SELECTED = "No replay selected yet."
+
 
 class AdvancedPanel(QWidget):
     """Advanced mode with tabs: Setup, Agent Params, Replay Browser, Results."""
@@ -53,6 +62,12 @@ class AdvancedPanel(QWidget):
         super().__init__()
         self._catalog = catalog
         self._paths = get_default_paths(data_root)
+        # The current Designer session's most recently completed successful
+        # match replay, if any -- purely a hint for the Replay Browser's
+        # initial directory (UX-24 priority #2), set by note_completed_replay.
+        # Independent of "View Last Match" (enableOpenReplay), which is
+        # driven by AgentDesigner's own _last_replay.
+        self._session_replay_path: Path | None = None
         self._all_rows: list[AgentRow] = []
         # Whether the selected Ruleset has any compatible discovered agent;
         # recomputed by _refilter_agents and respected by setBusy.
@@ -163,6 +178,11 @@ class AdvancedPanel(QWidget):
         self.btnStop = QPushButton("Stop")
         self.btnOpen = QPushButton("View Last Match")
         self.btnOpen.setEnabled(False)
+        self.btnOpen.setToolTip(
+            "Opens the replay from your most recently completed successful "
+            "match. Stays on that match's replay if a later match fails, so "
+            "it never opens a replay a failed run does not actually have."
+        )
         self.btnRefresh = QPushButton("Refresh Agents")
         btns.addWidget(self.btnRun)
         btns.addWidget(self.btnStop)
@@ -193,13 +213,14 @@ class AdvancedPanel(QWidget):
         replay = QWidget()
         rl = QVBoxLayout(replay)
         replayIntro = QLabel(
-            "Browse saved Bytefray match replays. Select a replay file, "
-            "then view it in the Replay Viewer."
+            "Browse saved Bytefray match replays. Agent Designer creates one "
+            "automatically each time you run a match. Select a replay file, "
+            "then view it here."
         )
         replayIntro.setWordWrap(True)
         rl.addWidget(replayIntro)
         row = QHBoxLayout()
-        self.lblReplay = QLabel(str(self._paths.replay_path))
+        self.lblReplay = QLabel(_NO_REPLAY_SELECTED)
         self.btnChooseReplay = QPushButton("Choose Replay…")
         self.btnOpenReplay = QPushButton("View Replay")
         row.addWidget(self.lblReplay, 1)
@@ -314,6 +335,14 @@ class AdvancedPanel(QWidget):
     def enableOpenReplay(self, enable: bool) -> None:
         self.btnOpen.setEnabled(enable)
 
+    def note_completed_replay(self, path: Path | None) -> None:
+        """Record the current session's most recently completed successful
+        match replay -- used only to steer Choose Replay's initial directory
+        (UX-24 priority #2) toward a replay the user just produced, never to
+        change what "View Last Match" opens (that stays AgentDesigner's own
+        responsibility)."""
+        self._session_replay_path = Path(path) if path else None
+
     def appendLog(self, line: str) -> None:
         self.log.appendPlainText(line.rstrip("\n"))
 
@@ -373,12 +402,31 @@ class AdvancedPanel(QWidget):
         )
         self.runRequested.emit(cfg)
 
+    def _initial_replay_directory(self) -> Path:
+        """Where Choose Replay should start browsing (UX-24).
+
+        Priority: 1) the directory of the currently selected replay, if it
+        still exists; 2) the directory of this session's own most recent
+        successful match replay (note_completed_replay); 3) Bytefray's
+        canonical replay/run directory; 4) the writable data root itself --
+        the latter two both handled by canonical_replay_directory, which
+        never returns a nonexistent path.
+        """
+        current_text = self.lblReplay.text().strip()
+        if current_text and current_text != _NO_REPLAY_SELECTED:
+            current = Path(current_text)
+            if current.is_file():
+                return current.parent
+        if self._session_replay_path is not None and self._session_replay_path.is_file():
+            return self._session_replay_path.parent
+        return canonical_replay_directory(self._paths.root)
+
     def _choose_replay(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
             self,
             "Choose Replay",
-            str(self._paths.replay_path.parent),
-            "Replay JSONL (*.jsonl)",
+            str(self._initial_replay_directory()),
+            "Bytefray Replays (*.jsonl)",
         )
         if path:
             self.lblReplay.setText(path)
@@ -386,5 +434,15 @@ class AdvancedPanel(QWidget):
     def _open_replay_browser(self) -> None:
         from app.services.engine import open_pygame_client_direct
 
-        p = Path(self.lblReplay.text())
-        open_pygame_client_direct(self._paths.root, p)
+        text = self.lblReplay.text().strip()
+        if not text or text == _NO_REPLAY_SELECTED:
+            QMessageBox.information(self, "No Replay Selected", "Choose a replay first.")
+            return
+        path = Path(text)
+        if not path.is_file():
+            QMessageBox.critical(self, "Replay Not Found", f"Replay not found:\n{path}")
+            return
+        try:
+            open_pygame_client_direct(self._paths.root, path)
+        except (FileNotFoundError, OSError) as exc:
+            QMessageBox.critical(self, "Replay Launch Failed", str(exc))

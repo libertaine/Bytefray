@@ -6,6 +6,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from battle_engine.paths import canonical_replay_directory, get_data_root
 from battle_engine.replay import ReplayFormatError
 
 from battle_client.player import DEFAULT_TICK_INTERVAL, SPEEDS, ReplayPlayer
@@ -53,7 +54,17 @@ def main(argv: list[str] | None = None) -> int:
         prog="bytefray replay",
         description="Bytefray replay client -- presentation only (replay visualizer)",
     )
-    p.add_argument("--replay", required=True, help="Path to replay.jsonl")
+    p.add_argument(
+        "--replay",
+        required=False,
+        default=None,
+        help=(
+            "Path to a Bytefray replay file. Omitting this with "
+            "--renderer pygame opens the interactive viewer's empty state, "
+            "which lets the user pick one; every other renderer still "
+            "requires it up front."
+        ),
+    )
     p.add_argument(
         "--renderer",
         default="headless",
@@ -118,6 +129,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = p.parse_args(argv)
 
+    if args.replay is None:
+        # Only the interactive Pygame viewer has a "no replay yet" state to
+        # show (UX-20/21/22) -- a one-shot streaming renderer has nothing
+        # to stream without a path, so its --replay requirement stays as
+        # strict as it always was.
+        if args.renderer != "pygame":
+            p.error("--replay is required for --renderer " + args.renderer)
+        return _run_interactive_empty_state(args)
+
     replay_path = Path(args.replay).expanduser().resolve()
     if not replay_path.exists():
         p.error(f"Replay not found: {replay_path}")
@@ -151,18 +171,83 @@ def _run_streaming(args: argparse.Namespace, replay_path: Path) -> int:
     return 0
 
 
-def _run_interactive(args: argparse.Namespace, replay_path: Path) -> int:
-    """The interactive Pygame path: ReplaySession + PlaybackController,
-    bypassing ReplayPlayer's forward-only stream entirely (see
-    battle_client.player's module docstring for why).
+def _load_session_or_error(replay_path: Path) -> tuple[ReplaySession | None, str | None]:
+    """Load ``replay_path`` into a fresh ``ReplaySession``, or report why not.
+
+    Shared by both the direct ``--replay <path>`` entry point and the
+    empty-state "Open Replay..." picker (``_run_interactive_empty_state``)
+    so there is exactly one replay-loading call site for the interactive
+    viewer, not two subtly different ones.
     """
     session = ReplaySession()
     try:
         session.load(replay_path)
     except (ReplaySessionError, ReplayFormatError) as e:
-        print(f"[battle_client] error: {e}", file=sys.stderr)
-        return 1
+        return None, str(e)
+    return session, None
 
+
+def _run_interactive(args: argparse.Namespace, replay_path: Path) -> int:
+    """The interactive Pygame path: ReplaySession + PlaybackController,
+    bypassing ReplayPlayer's forward-only stream entirely (see
+    battle_client.player's module docstring for why).
+    """
+    session, error = _load_session_or_error(replay_path)
+    if session is None:
+        print(f"[battle_client] error: {error}", file=sys.stderr)
+        return 1
+    return _run_interactive_with_session(args, replay_path, session)
+
+
+def _run_interactive_empty_state(args: argparse.Namespace) -> int:
+    """No ``--replay`` was given: show the empty state and let the user
+    pick one (UX-20/21/22), reusing the exact same loading/playback path a
+    direct ``--replay <path>`` invocation uses once a path is chosen.
+
+    Returns 0 if the user closes the picker window without choosing a
+    replay -- a normal, non-error outcome, not a failure to report.
+    """
+    try:
+        import pygame
+    except ImportError as e:
+        print(
+            "[battle_client] dependency error: Pygame not available. "
+            "Install pygame or choose --renderer headless.",
+            file=sys.stderr,
+        )
+        raise SystemExit(2) from e
+
+    from battle_client.renderers.replay_picker import run_empty_state
+
+    initial_directory = canonical_replay_directory(get_data_root())
+    message = ""
+    while True:
+        chosen = run_empty_state(
+            pygame,
+            title="Bytefray - Replay Viewer",
+            initial_directory=initial_directory,
+            message=message,
+        )
+        if chosen is None:
+            pygame.quit()
+            return 0
+        session, error = _load_session_or_error(chosen)
+        if session is None:
+            # Stay in the empty-state loop rather than exiting, and show the
+            # reason *in the reopened window* (not just stderr): a Windows
+            # user launched from the Start Menu has no terminal to read a
+            # stderr message from, so an invalid pick must be recoverable
+            # and explained in the window itself, not silently retried.
+            print(f"[battle_client] error: {error}", file=sys.stderr)
+            message = f"Couldn't open {chosen.name}: not a valid Bytefray replay."
+            initial_directory = chosen.parent
+            continue
+        return _run_interactive_with_session(args, chosen, session)
+
+
+def _run_interactive_with_session(
+    args: argparse.Namespace, replay_path: Path, session: ReplaySession
+) -> int:
     tick_interval = args.tick_delay if args.tick_delay > 0 else DEFAULT_TICK_INTERVAL
     RendererClass = _resolve_renderer("pygame")
     renderer = RendererClass()  # type: ignore[call-arg]

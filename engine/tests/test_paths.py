@@ -221,3 +221,46 @@ def test_default_paths_normalize_their_writable_root(monkeypatch, tmp_path):
     assert defaults.root == (tmp_path / "data root").resolve()
     assert defaults.replay_path == defaults.root / "runs" / "_loose" / "replay.jsonl"
     assert defaults.summary_path == defaults.root / "runs" / "_loose" / "summary.json"
+
+
+# ---------------------------------------------------------------------------
+# canonical_replay_directory (UX-24: Replay Browser's initial directory)
+# ---------------------------------------------------------------------------
+
+
+def test_canonical_replay_directory_prefers_designer_run_tree(tmp_path):
+    """Agent Designer matches always land under runs/_designer -- that beats
+    runs/_loose (populated only by a bare CLI run with no --replay path)
+    whenever both happen to exist."""
+    (tmp_path / "runs" / "_designer").mkdir(parents=True)
+    (tmp_path / "runs" / "_loose").mkdir(parents=True)
+
+    assert paths.canonical_replay_directory(tmp_path) == tmp_path / "runs" / "_designer"
+
+
+def test_canonical_replay_directory_falls_back_to_loose_cli_default(tmp_path):
+    (tmp_path / "runs" / "_loose").mkdir(parents=True)
+
+    assert paths.canonical_replay_directory(tmp_path) == tmp_path / "runs" / "_loose"
+
+
+def test_canonical_replay_directory_falls_back_to_runs_parent(tmp_path):
+    (tmp_path / "runs").mkdir(parents=True)
+
+    assert paths.canonical_replay_directory(tmp_path) == tmp_path / "runs"
+
+
+def test_canonical_replay_directory_falls_back_to_data_root(tmp_path):
+    """A freshly created data root with no runs/ tree at all yet (e.g. a
+    just-installed Bytefray that has never run a match) still returns a
+    directory that exists, never a guessed nonexistent path."""
+    assert paths.canonical_replay_directory(tmp_path) == tmp_path
+
+
+def test_canonical_replay_directory_normalizes_a_relative_root(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "data root" / "runs" / "_designer").mkdir(parents=True)
+
+    assert paths.canonical_replay_directory(Path("data root")) == (
+        tmp_path / "data root" / "runs" / "_designer"
+    ).resolve()

@@ -152,6 +152,31 @@ def get_data_root(environ: Mapping[str, str] | None = None) -> Path:
 
     return installed_data_root(values)
 
+def canonical_replay_directory(data_root: Path) -> Path:
+    """Best starting directory for browsing Bytefray's own saved replays.
+
+    Preferred order: the Agent Designer's own per-run replay tree
+    (``runs/_designer`` -- every Designer match writes there, one fresh
+    timestamped subdirectory per run; see
+    ``app.services.designer_workflows.new_match_run_directory``), then the
+    plain engine CLI's undecorated default location (``runs/_loose``,
+    populated only when ``bytefray run``/``bytefray-cli`` is invoked without
+    an explicit ``--replay`` path -- see ``battle_engine.cli``'s
+    ``DEFAULT_REPLAY_RELATIVE_PATH``), then the shared ``runs`` parent, then
+    ``data_root`` itself as a safe last resort that always exists once the
+    writable data root has been created at all.
+
+    Never raises and never creates a directory -- this is a read-only "where
+    would replays already be" lookup for a file chooser's initial location,
+    not a guarantee any candidate actually contains a replay yet.
+    """
+    root = data_root.expanduser().resolve()
+    for candidate in (root / "runs" / "_designer", root / "runs" / "_loose", root / "runs"):
+        if candidate.is_dir():
+            return candidate
+    return root
+
+
 def contained_path(base_dir: Path, relative: str | os.PathLike[str]) -> Path | None:
     """Resolve ``relative`` beneath ``base_dir``, or ``None`` if it escapes.
 

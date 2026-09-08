@@ -23,7 +23,7 @@ from battle_engine.launchers import (
     build_designer_match_arguments,
     build_match_command,
 )
-from battle_engine.paths import get_branding_icon_path, get_data_root
+from battle_engine.paths import canonical_replay_directory, get_branding_icon_path, get_data_root
 from battle_engine.project_info import get_project_info
 from battle_engine.starters import describe_bootstrap_errors, ensure_starter_agents
 from PySide6.QtCore import QProcess, QProcessEnvironment, QTimer, QUrl, Slot
@@ -608,6 +608,8 @@ class AgentDesigner(QMainWindow):
             try:
                 result = read_match_presentation(self._result_path)
                 self._last_replay = result.replay_path
+                if hasattr(self, "advanced"):
+                    self.advanced.note_completed_replay(self._last_replay)
                 self._log_target.appendLog(
                     f"[Result] winner={result.winner}; termination={result.termination_reason}\n"
                     f"[Result] canonical result: {result.result_path}\n"
@@ -647,10 +649,23 @@ class AgentDesigner(QMainWindow):
         # writing. If either guarantee is ever relaxed, this button should
         # move back into setBusy()'s disabled set.
         path = None
-        if self._last_replay and Path(self._last_replay).exists():
-            path = self._last_replay
+        if self._last_replay:
+            if Path(self._last_replay).exists():
+                path = self._last_replay
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Replay Not Found",
+                    "The replay from your last match is no longer available.\n\n"
+                    "Choose a saved replay instead.",
+                )
         if not path:
-            path, _ = QFileDialog.getOpenFileName(self, "Open Replay", str(self.data_root), "All Files (*.*)")
+            path, _ = QFileDialog.getOpenFileName(
+                self,
+                "Open Replay",
+                str(canonical_replay_directory(self.data_root)),
+                "Bytefray Replays (*.jsonl)",
+            )
         if path:
             try:
                 open_pygame_client_direct(self.data_root, Path(path))
