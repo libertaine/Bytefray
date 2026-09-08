@@ -95,6 +95,40 @@ BYTEFRAY_RULESET_V4_ALPHA2_ID = "bytefray-rules-4-alpha2"
 BYTEFRAY_RULESET_V4_ID = "bytefray-rules-4"
 
 
+# V5 research Phase R1's experimental identity (see
+# docs/research/v5/V5_R1_PROCESS_MORTALITY.md). Tests whether finite,
+# permanent process-integrity attrition -- a hostile applied write to a
+# process's current anchor costs it one integrity point, and the process
+# permanently stops acting once integrity reaches zero -- breaks the
+# repair/disruption stalemates Phase 0 measured under V4's zero-mortality
+# design, without destabilizing multi-process coordination.
+#
+# Spelled ``-r1-alpha1``, never a bare ``bytefray-rules-5``: this is a
+# single-phase research hypothesis under test, not a matured contract, and
+# per the v3/v5 research-integrity constraints this module must never let an
+# unproven experimental guess masquerade as a durable compatibility promise
+# (docs/RULES.md's bump policy). A null or rejected R1 result leaves this
+# identity retired in place, exactly like every other experimental identity
+# in this file; a promising result is promoted under its own new identity,
+# never by mutating this one's semantics in place.
+#
+# Every non-mortality gameplay semantic (scheduling, termination, core
+# size/placement, process selection, Q=8, D=1 disruption) is byte-identical
+# to ``bytefray-rules-4`` -- see ``ruleset_policy.RULESET_V5_R1_ALPHA1``,
+# copied field-by-field from ``RULESET_V4``. The mortality mechanic itself
+# lives entirely in ``battle_engine.process_runtime`` (gated on this exact
+# ``ruleset_id`` value via ``PROCESS_MORTALITY_RULESET_IDS``); this module
+# and ``ruleset_policy.py`` carry no knowledge of it, exactly as they carry
+# none of the locality or vulnerable-core mechanics before it.
+#
+# Deliberately absent from ``ruleset_policy.OMITTED_RULESET_CANDIDATES``: an
+# omitted Ruleset must keep resolving Agent API v2 rosters to stable
+# ``bytefray-rules-4``, never to this identity, so R1 experiments are only
+# ever reachable by explicit selection and can never contaminate the V5
+# program's scientific control.
+BYTEFRAY_RULESET_V5_R1_ALPHA1_ID = "bytefray-rules-5-r1-alpha1"
+
+
 # v0.10 Phase 4: a finite, explicit historical-alias table -- deliberately
 # not a generic "normalize any evaluation-rules-N-shaped string" function.
 # Each entry records a relationship actually established by git-history
@@ -159,6 +193,7 @@ __all__ = [
     "BYTEFRAY_RULESET_V4_ALPHA1_ID",
     "BYTEFRAY_RULESET_V4_ALPHA2_ID",
     "BYTEFRAY_RULESET_V4_ID",
+    "BYTEFRAY_RULESET_V5_R1_ALPHA1_ID",
     "RulesetConfidence",
     "RulesetProvenance",
     "normalize_ruleset_id",

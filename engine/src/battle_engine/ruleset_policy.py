@@ -38,6 +38,7 @@ from battle_engine.rules import (
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V5_R1_ALPHA1_ID,
 )
 from battle_engine.scheduler import StateT, run_chunked_quota
 
@@ -439,6 +440,31 @@ RULESET_V4 = RulesetPolicy(
 )
 
 
+# V5 research Phase R1's experimental identity (see
+# ``rules.BYTEFRAY_RULESET_V5_R1_ALPHA1_ID`` for the full rationale). Every
+# field below is deliberately copied verbatim from ``RULESET_V4`` -- not
+# re-derived -- so the two policies can never independently drift on any
+# scheduling/termination/placement/process-selection semantic: this Ruleset
+# changes exactly one thing relative to stable V4, permanent finite process
+# integrity, and that mechanic is gated entirely in
+# ``battle_engine.process_runtime`` on this exact ``ruleset_id`` (via
+# ``PROCESS_MORTALITY_RULESET_IDS``/``has_process_mortality``), never on
+# anything this policy object exposes. A release-blocking equivalence test
+# (mirroring ``test_v4_stable_ruleset_equivalence.py``'s pattern) asserts
+# every non-identity field of this policy equals ``RULESET_V4``'s, field by
+# field.
+RULESET_V5_R1_ALPHA1 = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V5_R1_ALPHA1_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seeded",
+    process_selection="round_robin",
+)
+
+
 # Which Ruleset identities execute on the Agent API v2 process runtime
 # (``battle_engine.process_runtime.ProcessMatchController``) rather than the
 # Agent API v1 ``PythonEntrantController``. A finite, explicit set for the
@@ -447,7 +473,12 @@ RULESET_V4 = RulesetPolicy(
 # never means hunting down scattered ``== BYTEFRAY_RULESET_V4_ALPHA1_ID``
 # comparisons.
 PROCESS_RULESET_IDS: frozenset[str] = frozenset(
-    {BYTEFRAY_RULESET_V4_ALPHA1_ID, BYTEFRAY_RULESET_V4_ALPHA2_ID, BYTEFRAY_RULESET_V4_ID}
+    {
+        BYTEFRAY_RULESET_V4_ALPHA1_ID,
+        BYTEFRAY_RULESET_V4_ALPHA2_ID,
+        BYTEFRAY_RULESET_V4_ID,
+        BYTEFRAY_RULESET_V5_R1_ALPHA1_ID,
+    }
 )
 
 
@@ -489,6 +520,7 @@ _RULESET_POLICIES: Mapping[str, RulesetPolicy] = {
     RULESET_V4_ALPHA1.ruleset_id: RULESET_V4_ALPHA1,
     RULESET_V4_ALPHA2.ruleset_id: RULESET_V4_ALPHA2,
     RULESET_V4.ruleset_id: RULESET_V4,
+    RULESET_V5_R1_ALPHA1.ruleset_id: RULESET_V5_R1_ALPHA1,
 }
 
 
@@ -797,6 +829,7 @@ __all__ = [
     "RULESET_V4",
     "RULESET_V4_ALPHA1",
     "RULESET_V4_ALPHA2",
+    "RULESET_V5_R1_ALPHA1",
     "NoCompatibleRulesetError",
     "RulesetPolicy",
     "TerminationDecision",

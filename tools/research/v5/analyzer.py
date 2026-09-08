@@ -46,7 +46,7 @@ class MatchAnalysis:
     agent_names: dict[str, str]
     final_scores: dict[str, float]
     territory_pct_final: dict[str, float]
-    
+
     # Layer B: Process economy
     declared_process_count: dict[str, int]
     process_ids_by_entrant: dict[str, list[str]]
@@ -55,7 +55,22 @@ class MatchAnalysis:
     distinct_disrupted_ticks: dict[str, int]
     max_displacement_from_core: dict[str, int]
 
-    # Layer C: Strategic activity and conversion
+    # Layer C: Strategic activity and conversion.
+    #
+    # R1 measurement-refinement note (docs/research/v5/
+    # V5_R1_PROCESS_MORTALITY.md Section C): ``core_health_series``,
+    # ``final_core_health``, ``core_damage_dealt``, and
+    # ``core_damage_events`` are Phase 0's ORIGINAL activity-layer metrics,
+    # kept byte-identical in name and computation for backward compatibility.
+    # They count cumulative victim-to-attacker cell OWNERSHIP-FLIP EVENTS,
+    # not true simultaneous ownership. Because they never increment back up
+    # on repair, a single cell that is damaged and repaired repeatedly is
+    # counted as repeated "damage" even though the victim's actual
+    # simultaneous deficit returns to 0 after every repair -- exactly the
+    # transient-vs-durable conflation R1 was chartered to resolve. Use
+    # ``core_owned_cells_series``/``core_deficit_series`` and their derived
+    # fields below for true durable-pressure analysis; treat the legacy
+    # fields in this block as an *activity* signal only.
     core_base_by_entrant: dict[str, int]
     core_health_series: dict[str, list[int]]  # core health (0..8) per tick
     final_core_health: dict[str, int]
@@ -73,6 +88,36 @@ class MatchAnalysis:
     combat_conversion_rate: dict[str, float]
     progress_density_per_100t: dict[str, float]
     lead_changes: int
+
+    # R1 State/Progress Layer: true simultaneous core ownership, reconstructed
+    # from live cell-ownership state (a set that gains cells back on repair),
+    # never a monotonic loss counter. ``core_owned_cells_series[e][t]`` is
+    # exactly ``len({c in e's 8 core cells : vm.writer[c] == e})`` at tick
+    # ``t``; ``core_deficit_series[e][t] == 8 - core_owned_cells_series[e][t]``.
+    core_owned_cells_series: dict[str, list[int]]
+    core_deficit_series: dict[str, list[int]]
+    max_core_deficit: dict[str, int]
+    final_core_deficit: dict[str, int]
+    core_deficit_area: dict[str, int]  # sum of core deficit over ticks
+    full_core_return_count: dict[str, int]  # returns to 8/8 after damage
+    repair_latencies_ticks: dict[str, list[int]]  # ticks-to-full-repair, per repair completed
+    longest_damaged_interval_ticks: dict[str, int]  # longest run with deficit > 0
+    deficit_ever_reached_full: dict[str, bool]  # True iff owned_cells ever hit 0
+    core_capture_outcome: dict[str, str]  # "captured" | "survived"
+
+    # R1 Process Metrics Layer: derived from replay ``ProcessState.alive``
+    # (V5 research Phase R1's additive per-tick field -- always ``True`` and
+    # constant under every non-mortality Ruleset, so these fields degenerate
+    # to "no deaths, no extinction" for every Phase 0 / stable-V4 match).
+    live_process_count_series: dict[str, list[int]]
+    process_deaths: dict[str, int]
+    process_death_events: list[dict[str, Any]]  # [{tick, entrant_id, process_id}]
+    process_extinction_tick: dict[str, int | None]
+    mutual_process_extinction: bool
+    entrant_zero_process_ticks: dict[str, int]
+    entrant_ever_alive_with_zero_processes: dict[str, bool]
+    ticks_first_process_death_to_own_core_capture: dict[str, int | None]
+    ticks_full_extinction_to_own_core_capture: dict[str, int | None]
 
     # Trace Layer (Optional)
     trace_available: bool
@@ -196,6 +241,49 @@ def analyze_match(
     # Track process anchor locations per tick
     prev_disrupted_status: dict[tuple[str, str], bool] = {}
 
+    # R1 State/Progress Layer: true simultaneous ownership, re-derived from
+    # ``cell_owners`` (already the ground truth end-of-tick ownership map)
+    # every tick rather than accumulated as a one-way loss counter, so a
+    # repaired cell is reflected as owned again the very tick it is
+    # reclaimed. See MatchAnalysis's field docstring for why this differs
+    # from the legacy ``core_health_series``.
+    core_owned_cells_series: dict[str, list[int]] = {e: [8] for e in entrants}
+    core_deficit_series: dict[str, list[int]] = {e: [0] for e in entrants}
+    max_core_deficit: dict[str, int] = {e: 0 for e in entrants}
+    core_deficit_area: dict[str, int] = {e: 0 for e in entrants}
+    full_core_return_count: dict[str, int] = {e: 0 for e in entrants}
+    repair_latencies_ticks: dict[str, list[int]] = {e: [] for e in entrants}
+    longest_damaged_interval_ticks: dict[str, int] = {e: 0 for e in entrants}
+    current_damaged_run: dict[str, int] = {e: 0 for e in entrants}
+    deficit_ever_reached_full: dict[str, bool] = {e: False for e in entrants}
+    own_core_captured_tick: dict[str, int | None] = {e: None for e in entrants}
+
+    # R1 Process Metrics Layer: derived from ``ProcessState.alive`` per tick.
+    live_process_count_series: dict[str, list[int]] = {
+        e: [declared_count[e]] for e in entrants
+    }
+    process_deaths: dict[str, int] = {e: 0 for e in entrants}
+    process_death_events: list[dict[str, Any]] = []
+    process_extinction_tick: dict[str, int | None] = {e: None for e in entrants}
+    entrant_zero_process_ticks: dict[str, int] = {e: 0 for e in entrants}
+    first_process_death_tick: dict[str, int | None] = {e: None for e in entrants}
+    prev_process_alive: dict[tuple[str, str], bool] = {
+        (p.entrant_id, p.process_id): True
+        for p in tick0.processes
+        if p.entrant_id in entrants
+    }
+
+    # R1 fix: true ownership must expand each diff's full [address, address
+    # + length) run, not just its start address, otherwise a repair/capture
+    # folded into the middle of a same-tick merged run-length diff (see
+    # ``replay.MemoryDiff.length``) is silently missed. The legacy
+    # ``cell_owners`` dict above is deliberately left untouched by this fix
+    # (it drives ``core_health_series``/``core_damage_dealt``, which must
+    # stay byte-identical to Phase 0's published computation for
+    # continuity); this is a separate, correctly range-aware ownership map
+    # used only by the new true-ownership fields below.
+    true_cell_owners: dict[int, str] = dict(cell_owners)
+
     for t_idx, snap in enumerate(ticks[1:], start=1):
         tick_num = snap.tick
         damage_this_tick = False
@@ -229,6 +317,8 @@ def analyze_match(
 
             old_owner = cell_owners.get(addr)
             cell_owners[addr] = writer
+            for offset in range(max(1, diff.length)):
+                true_cell_owners[(addr + offset) % arena_size] = writer
 
             # Check if targeting enemy core
             for victim in entrants:
@@ -267,6 +357,60 @@ def analyze_match(
 
         for e in entrants:
             core_health_series[e].append(current_health[e])
+
+        # R1 State/Progress Layer: true simultaneous ownership, re-derived
+        # from ``cell_owners`` (already updated above for every diff this
+        # tick, including an owner's own repair write) rather than
+        # accumulated as a one-way loss counter.
+        for e in entrants:
+            owned_now = sum(1 for c in core_cells[e] if true_cell_owners.get(c) == e)
+            core_owned_cells_series[e].append(owned_now)
+            deficit = 8 - owned_now
+            core_deficit_series[e].append(deficit)
+            max_core_deficit[e] = max(max_core_deficit[e], deficit)
+            core_deficit_area[e] += deficit
+            if owned_now == 0:
+                deficit_ever_reached_full[e] = True
+                if own_core_captured_tick[e] is None:
+                    own_core_captured_tick[e] = tick_num
+            if deficit > 0:
+                current_damaged_run[e] += 1
+                longest_damaged_interval_ticks[e] = max(
+                    longest_damaged_interval_ticks[e], current_damaged_run[e]
+                )
+            else:
+                if current_damaged_run[e] > 0:
+                    repair_latencies_ticks[e].append(current_damaged_run[e])
+                    full_core_return_count[e] += 1
+                current_damaged_run[e] = 0
+
+        # R1 Process Metrics Layer: live count and death-transition detection.
+        live_count_this_tick: dict[str, int] = {e: 0 for e in entrants}
+        for p in snap.processes:
+            e_id = p.entrant_id
+            if e_id not in entrants:
+                continue
+            if p.alive:
+                live_count_this_tick[e_id] += 1
+            key = (e_id, p.process_id)
+            was_alive = prev_process_alive.get(key, True)
+            if was_alive and not p.alive:
+                process_deaths[e_id] += 1
+                process_death_events.append(
+                    {"tick": tick_num, "entrant_id": e_id, "process_id": p.process_id}
+                )
+                if first_process_death_tick[e_id] is None:
+                    first_process_death_tick[e_id] = tick_num
+            prev_process_alive[key] = p.alive
+        for e in entrants:
+            live_process_count_series[e].append(live_count_this_tick[e])
+            if live_count_this_tick[e] == 0 and process_extinction_tick[e] is None:
+                process_extinction_tick[e] = tick_num
+            entrant_alive_this_tick = next(
+                (a.alive for a in snap.agents if a.agent_id == e), True
+            )
+            if entrant_alive_this_tick and live_count_this_tick[e] == 0:
+                entrant_zero_process_ticks[e] += 1
 
         if damage_this_tick:
             no_progress_streak = 0
@@ -332,6 +476,36 @@ def analyze_match(
         cd = core_damage_dealt[e]
         combat_conv_rate[e] = round(cd / max(1, cw), 4)
         prog_density[e] = round(cd / max(1.0, actual_ticks / 100.0), 3)
+
+    # R1 State/Progress and Process Metrics: final/derived aggregates.
+    final_core_deficit: dict[str, int] = {e: core_deficit_series[e][-1] for e in entrants}
+    core_capture_outcome: dict[str, str] = {
+        e: ("captured" if core_owned_cells_series[e][-1] == 0 else "survived") for e in entrants
+    }
+    mutual_process_extinction = bool(entrants) and all(
+        process_extinction_tick[e] is not None for e in entrants
+    )
+    entrant_ever_alive_with_zero_processes: dict[str, bool] = {
+        e: entrant_zero_process_ticks[e] > 0 for e in entrants
+    }
+    ticks_first_process_death_to_own_core_capture: dict[str, int | None] = {}
+    ticks_full_extinction_to_own_core_capture: dict[str, int | None] = {}
+    for e in entrants:
+        captured_tick = own_core_captured_tick[e]
+        death_tick = first_process_death_tick[e]
+        extinction_tick = process_extinction_tick[e]
+        ticks_first_process_death_to_own_core_capture[e] = (
+            captured_tick - death_tick
+            if captured_tick is not None and death_tick is not None and captured_tick >= death_tick
+            else None
+        )
+        ticks_full_extinction_to_own_core_capture[e] = (
+            captured_tick - extinction_tick
+            if captured_tick is not None
+            and extinction_tick is not None
+            and captured_tick >= extinction_tick
+            else None
+        )
 
     # Optional Trace Analysis
     trace_applied: dict[str, int] = {e: 0 for e in entrants}
@@ -417,6 +591,25 @@ def analyze_match(
         combat_conversion_rate=combat_conv_rate,
         progress_density_per_100t=prog_density,
         lead_changes=lead_changes,
+        core_owned_cells_series=core_owned_cells_series,
+        core_deficit_series=core_deficit_series,
+        max_core_deficit=max_core_deficit,
+        final_core_deficit=final_core_deficit,
+        core_deficit_area=core_deficit_area,
+        full_core_return_count=full_core_return_count,
+        repair_latencies_ticks=repair_latencies_ticks,
+        longest_damaged_interval_ticks=longest_damaged_interval_ticks,
+        deficit_ever_reached_full=deficit_ever_reached_full,
+        core_capture_outcome=core_capture_outcome,
+        live_process_count_series=live_process_count_series,
+        process_deaths=process_deaths,
+        process_death_events=process_death_events,
+        process_extinction_tick=process_extinction_tick,
+        mutual_process_extinction=mutual_process_extinction,
+        entrant_zero_process_ticks=entrant_zero_process_ticks,
+        entrant_ever_alive_with_zero_processes=entrant_ever_alive_with_zero_processes,
+        ticks_first_process_death_to_own_core_capture=ticks_first_process_death_to_own_core_capture,
+        ticks_full_extinction_to_own_core_capture=ticks_full_extinction_to_own_core_capture,
         trace_available=trace_found,
         trace_applied_actions=trace_applied,
         trace_rejected_out_of_reach=trace_rejected_reach,

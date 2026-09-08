@@ -51,6 +51,7 @@ from battle_engine.python_runtime import (
     diagnose_load_failure,
     diagnose_reset_failure,
 )
+from battle_engine.rules import BYTEFRAY_RULESET_V5_R1_ALPHA1_ID
 from battle_engine.ruleset_policy import RULESET_V4, RulesetPolicy
 from battle_engine.scoring import ScoreMap, ScoringPolicy
 from battle_engine.statistics import StatisticsCollector, StatisticsMap
@@ -65,6 +66,31 @@ class ProcessRole(str, enum.Enum):
     ATTACKER = "attacker"
     EXPANDER = "expander"
     GENERALIST = "generalist"
+
+
+# V5 research Phase R1: which Ruleset identities activate finite process
+# integrity/mortality. A finite, explicit set for the same reason every
+# other mechanic-gating set in this codebase is (see
+# ``python_runtime.VULNERABLE_CORE_RULESET_IDS``/``LOCALITY_RULESET_IDS``):
+# adding a future mortality-bearing Ruleset means extending this set, never
+# hunting down scattered ``== BYTEFRAY_RULESET_V5_R1_ALPHA1_ID`` comparisons.
+PROCESS_MORTALITY_RULESET_IDS: frozenset[str] = frozenset(
+    {BYTEFRAY_RULESET_V5_R1_ALPHA1_ID}
+)
+
+# The cumulative hostile-anchor-hit count a process survives before dying,
+# used only when a caller selects a mortality Ruleset without naming an
+# explicit ``process_integrity``. 8 mirrors V4's process core size (one hit
+# per core cell) as the least arbitrary default; R1 itself tests 8, 4, 2,
+# and 1 explicitly rather than relying on this fallback (see
+# docs/research/v5/V5_R1_PROCESS_MORTALITY.md).
+DEFAULT_PROCESS_INTEGRITY = 8
+
+
+def has_process_mortality(ruleset_id: str) -> bool:
+    """Whether ``ruleset_id`` activates finite process-integrity mortality."""
+
+    return ruleset_id in PROCESS_MORTALITY_RULESET_IDS
 
 
 @dataclass
@@ -82,6 +108,11 @@ class ProcessTelemetry:
     positions_visited: set[int] = field(default_factory=set)
     addresses_read: set[int] = field(default_factory=set)
     addresses_written: set[int] = field(default_factory=set)
+    # V5 research Phase R1: the tick this process permanently died on
+    # (integrity reached zero from a hostile applied anchor hit), or
+    # ``None`` if it never died -- always ``None`` under every Ruleset
+    # without ``has_process_mortality``.
+    died_tick: int | None = None
 
 
 class ProcessInstance:
@@ -108,6 +139,15 @@ class ProcessInstance:
         self.local_state: dict[str, Any] = {}
         self.telemetry = ProcessTelemetry(process_id=process_id, role=role.value)
         self.disrupted_until_tick = 0
+        # V5 research Phase R1: ``alive`` is permanently ``False`` once
+        # integrity reaches zero under a mortality Ruleset; ``integrity`` is
+        # ``None`` (never tracked, never decremented) under every other
+        # Ruleset, including this one's own pre-match declaration stage
+        # before the controller resolves and assigns an initial value in
+        # ``ProcessMatchController.__init__``. Neither field is read by any
+        # non-mortality code path.
+        self.alive = True
+        self.integrity: int | None = None
         if initial_position is not None:
             self.telemetry.positions_visited.add(initial_position)
 
@@ -117,6 +157,7 @@ class ProcessInstance:
     def reset(self) -> None:
         self.local_state.clear()
         self.disrupted_until_tick = 0
+        self.alive = True
         if self.position is not None:
             self.telemetry.positions_visited.add(self.position)
 
@@ -318,6 +359,7 @@ class ProcessMatchController:
         ruleset_policy: RulesetPolicy = RULESET_V4,
         agent_call_timeout: float | None = None,
         trace_writer: TraceWriter | None = None,
+        process_integrity: int | None = None,
     ) -> ProcessMatchController:
         """Load API-v2 entrants and consume their declarations before tick zero."""
 
@@ -586,6 +628,7 @@ class ProcessMatchController:
                 max_ticks,
                 ruleset_policy=ruleset_policy,
                 trace_writer=trace_writer,
+                process_integrity=process_integrity,
             )
             controller._worker_handles = worker_handles
             return controller
@@ -602,6 +645,7 @@ class ProcessMatchController:
         ruleset_policy: RulesetPolicy | None = None,
         max_move_delta: int = 64,
         trace_writer: TraceWriter | None = None,
+        process_integrity: int | None = None,
         **kwargs
     ):
         self.config = config
@@ -611,6 +655,24 @@ class ProcessMatchController:
         self.disruption_duration = 1
         self.max_move_delta = max_move_delta
         self.trace_writer = trace_writer
+        # V5 research Phase R1: resolved once here, never re-derived, mirroring
+        # ``PythonEntrantController``'s own ``self.locality_reach`` resolution
+        # precedent. ``False``/``None`` for every non-mortality Ruleset even if
+        # a caller supplied ``process_integrity``, so a stray parameter can
+        # never switch on mortality semantics under stable ``bytefray-rules-4``.
+        # A mortality Ruleset given no explicit integrity falls back to
+        # ``DEFAULT_PROCESS_INTEGRITY`` rather than running immortal.
+        self.mortality_active = has_process_mortality(self.ruleset_policy.ruleset_id)
+        self.process_integrity: int | None = (
+            (DEFAULT_PROCESS_INTEGRITY if process_integrity is None else process_integrity)
+            if self.mortality_active
+            else None
+        )
+        if self.mortality_active and (self.process_integrity is None or self.process_integrity < 1):
+            raise ValueError(
+                f"Ruleset {self.ruleset_policy.ruleset_id!r} requires a positive "
+                f"process_integrity; received {self.process_integrity!r}"
+            )
         # v4 alpha2's round-robin process-selection cursor: for each entrant,
         # the index its next intra-entrant selection scan starts from. Alpha1
         # (``process_selection == "priority"``) never reads it. See
@@ -687,6 +749,7 @@ class ProcessMatchController:
             # Reset processes
             for p in spec.processes:
                 p.reset()
+                p.integrity = self.process_integrity
                 if p.position is None:
                     p.position = start
                 else:
@@ -722,13 +785,13 @@ class ProcessMatchController:
             if spec.agent_id != observer_spec.agent_id
             and self._states_by_agent_id[spec.agent_id].alive
             for process in spec.processes
-            if process.position is not None
+            if process.position is not None and process.alive
         }
 
         observers = [
             process
             for process in observer_spec.processes
-            if process.position is not None and not process.is_disrupted(tick)
+            if process.position is not None and process.alive and not process.is_disrupted(tick)
         ]
         visible: set[int] = set()
         for enemy_position in enemy_positions:
@@ -765,7 +828,7 @@ class ProcessMatchController:
                 limits_by_id[process.process_id] = limits_by_id.get(process.process_id, 0) + limit
             return {process: limits_by_id[process.process_id] for process in allocations}
 
-        eligible = [p for p in spec.processes if not p.is_disrupted(tick)]
+        eligible = [p for p in spec.processes if p.alive and not p.is_disrupted(tick)]
         if not eligible:
             return {}
 
@@ -889,17 +952,26 @@ class ProcessMatchController:
         return action
 
     def _process_snapshots(self, tick: int) -> list[dict[str, Any]]:
-        return [
-            {
-                "process_id": process.process_id,
-                "entrant_id": spec.agent_id,
-                "anchor": process.position if process.position is not None else 0,
-                "disrupted": process.is_disrupted(tick),
-                "reach": process.reach if process.reach is not None else 0,
-            }
-            for spec in self.entrant_specs
-            for process in spec.processes
-        ]
+        snapshots: list[dict[str, Any]] = []
+        for spec in self.entrant_specs:
+            for process in spec.processes:
+                snap: dict[str, Any] = {
+                    "process_id": process.process_id,
+                    "entrant_id": spec.agent_id,
+                    "anchor": process.position if process.position is not None else 0,
+                    "disrupted": process.is_disrupted(tick),
+                    "reach": process.reach if process.reach is not None else 0,
+                }
+                # V5 research Phase R1: omitted (not written as false/null)
+                # under every non-mortality Ruleset, so a stable V4 replay's
+                # process records stay byte-identical to one written before
+                # this field existed.
+                if not process.alive:
+                    snap["alive"] = False
+                if self.mortality_active and process.integrity is not None:
+                    snap["integrity"] = process.integrity
+                snapshots.append(snap)
+        return snapshots
 
     def close(self) -> None:
         for handle in self._worker_handles:
@@ -1214,11 +1286,32 @@ class ProcessMatchController:
                             if not self._states_by_agent_id[other_spec.agent_id].alive:
                                 continue
                             for other_p in other_spec.processes:
+                                if not other_p.alive:
+                                    # V5 research Phase R1: a dead process
+                                    # cannot be disrupted again and cannot
+                                    # revive -- this hostile write has no
+                                    # further effect on it.
+                                    continue
                                 if other_p.position is not None and other_p.position == target_addr:
                                     other_p.disrupted_until_tick = _tick + self.disruption_duration
                                     other_p.telemetry.disruption_hits_received += 1
                                     other_p.telemetry.total_disrupted_ticks += self.disruption_duration
                                     other_p.telemetry.disrupted_match_ticks.add(_tick)
+                                    # V5 research Phase R1: this exact hostile
+                                    # applied write -- already proven above to
+                                    # target the victim's live current anchor,
+                                    # never a stale one, an out-of-reach
+                                    # attempt, or a friendly write -- is the
+                                    # sole integrity-loss trigger. Inert under
+                                    # every non-mortality Ruleset because
+                                    # ``self.mortality_active`` is only ever
+                                    # ``True`` when the Ruleset selected
+                                    # ``has_process_mortality``.
+                                    if self.mortality_active and other_p.integrity is not None:
+                                        other_p.integrity -= 1
+                                        if other_p.integrity <= 0:
+                                            other_p.alive = False
+                                            other_p.telemetry.died_tick = _tick
 
                 last_obs_results[st.agent_id][active_proc.process_id] = res_info
                 
@@ -1308,7 +1401,7 @@ class ProcessMatchController:
             spec = next(s for s in self.entrant_specs if s.agent_id == st.agent_id)
             proc_stats = {}
             for p in spec.processes:
-                proc_stats[p.process_id] = {
+                stats: dict[str, Any] = {
                     "role": p.role.value,
                     "actions": p.telemetry.total_actions,
                     "moves": p.telemetry.total_moves,
@@ -1322,6 +1415,14 @@ class ProcessMatchController:
                     "reads_count": len(p.telemetry.addresses_read),
                     "writes_count": len(p.telemetry.addresses_written),
                 }
+                # V5 research Phase R1: omitted under every non-mortality
+                # Ruleset, so a stable V4 ``summary``/``result.json`` process
+                # entry is unchanged from before this field existed.
+                if self.mortality_active:
+                    stats["alive"] = p.alive
+                    stats["integrity_remaining"] = p.integrity
+                    stats["died_tick"] = p.telemetry.died_tick
+                proc_stats[p.process_id] = stats
             entrants_summary[st.agent_id] = {
                 "name": spec.name,
                 "alive": st.alive,

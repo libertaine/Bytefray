@@ -53,8 +53,15 @@ def run_single_match(
     max_ticks: int = STANDARD_V4_MAX_TICKS,
     ruleset_id: str = RULESET_V4_STABLE,
     with_trace: bool = False,
+    process_integrity: int | None = None,
 ) -> tuple[Path, Path, Path | None]:
-    """Execute one match and return (replay_path, result_path, trace_path)."""
+    """Execute one match and return (replay_path, result_path, trace_path).
+
+    ``process_integrity`` is V5 research Phase R1's experimental parameter
+    (see ``battle_engine.process_runtime.has_process_mortality``). Ignored
+    entirely unless ``ruleset_id`` is a mortality Ruleset, so every existing
+    caller of this function (Phase 0's stable-V4 corpus) is unaffected.
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
     replay_path = output_dir / "replay.jsonl"
     trace_path = (output_dir / "trace.jsonl") if with_trace else None
@@ -81,6 +88,7 @@ def run_single_match(
         trace_path=trace_path,
         verbose=False,
         ruleset_id=ruleset_id,
+        process_integrity=process_integrity,
     )
     result = NativeMatchService().run(request)
     assert result.result_path is not None
