@@ -28,6 +28,7 @@ from battle_engine.entrant_identity import EntrantIdentity
 from battle_engine.process_runtime import (
     DEFAULT_PROCESS_INTEGRITY,
     ProcessMatchController,
+    has_objective_target_oracle,
     has_process_mortality,
 )
 from battle_engine.python_runtime import (
@@ -184,6 +185,18 @@ class MatchRequest:
     # artifacts (see ``_reproducibility``), so an R1 result always
     # discloses the integrity value it actually ran under.
     process_integrity: int | None = None
+    # V5 research Phase R2's experimental objective-target oracle opt-in.
+    # ``False`` -- the default, and what every non-R2 caller passes -- means
+    # "off". It is *ignored entirely* unless ``ruleset_id`` resolves to a
+    # Ruleset that permits the oracle
+    # (``process_runtime.has_objective_target_oracle``), so setting it on a
+    # request for stable ``bytefray-rules-4`` can never switch the
+    # instrument on. The *resolved* value enters this request's
+    # ``reproducibility`` block (and therefore ``match_id``/``result_id``/
+    # ``replay_id``) only when it resolves ``True``, so an oracle run is
+    # always distinguishable from an otherwise-identical non-oracle run
+    # while every pre-R2 match identity stays byte-identical.
+    objective_target_oracle: bool = False
 
 
 
@@ -472,6 +485,20 @@ def _resolve_process_integrity(request: MatchRequest) -> int | None:
     )
 
 
+def _resolve_objective_target_oracle(request: MatchRequest) -> bool:
+    """Whether ``request`` actually executes/executed with the R2 oracle on.
+
+    ``False`` for every Ruleset without ``has_objective_target_oracle``,
+    whatever ``request.objective_target_oracle`` says -- the oracle analog of
+    :func:`_resolve_process_integrity`. Two keys must both turn: the Ruleset
+    must permit the instrument and the caller must ask for it.
+    """
+
+    if not has_objective_target_oracle(_resolve_ruleset_id(request)):
+        return False
+    return bool(request.objective_target_oracle)
+
+
 def _reproducibility(request: MatchRequest) -> dict[str, Any]:
     """The per-match configuration block both identity and artifacts use.
 
@@ -504,6 +531,12 @@ def _reproducibility(request: MatchRequest) -> dict[str, Any]:
     resolved_integrity = _resolve_process_integrity(request)
     if resolved_integrity is not None:
         payload["process_integrity"] = resolved_integrity
+    # Written only when the oracle actually ran, never as an explicit
+    # ``false``: an R1 mortality match with the oracle disabled must keep the
+    # exact ``match_id``/``replay_id``/``result_id`` it had before R2
+    # existed, while an oracle run must never be mistakable for one.
+    if _resolve_objective_target_oracle(request):
+        payload["objective_target_oracle"] = True
     return payload
 
 
@@ -854,6 +887,7 @@ def _run_v4_process_match(
             agent_call_timeout=request.agent_call_timeout,
             trace_writer=trace_writer,
             process_integrity=_resolve_process_integrity(request),
+            objective_target_oracle=_resolve_objective_target_oracle(request),
         )
         replay_path.parent.mkdir(parents=True, exist_ok=True)
         descriptor, temporary_name = tempfile.mkstemp(

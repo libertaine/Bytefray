@@ -54,6 +54,7 @@ def run_single_match(
     ruleset_id: str = RULESET_V4_STABLE,
     with_trace: bool = False,
     process_integrity: int | None = None,
+    objective_target_oracle: bool = False,
 ) -> tuple[Path, Path, Path | None]:
     """Execute one match and return (replay_path, result_path, trace_path).
 
@@ -61,6 +62,12 @@ def run_single_match(
     (see ``battle_engine.process_runtime.has_process_mortality``). Ignored
     entirely unless ``ruleset_id`` is a mortality Ruleset, so every existing
     caller of this function (Phase 0's stable-V4 corpus) is unaffected.
+
+    ``objective_target_oracle`` is V5 research Phase R2's experimental
+    diagnostic instrument (see
+    ``battle_engine.process_runtime.has_objective_target_oracle``). Ignored
+    entirely unless ``ruleset_id`` permits it, so Phase 0's and R1's existing
+    callers are equally unaffected.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
     replay_path = output_dir / "replay.jsonl"
@@ -89,6 +96,7 @@ def run_single_match(
         verbose=False,
         ruleset_id=ruleset_id,
         process_integrity=process_integrity,
+        objective_target_oracle=objective_target_oracle,
     )
     result = NativeMatchService().run(request)
     assert result.result_path is not None

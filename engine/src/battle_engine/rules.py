@@ -129,6 +129,43 @@ BYTEFRAY_RULESET_V4_ID = "bytefray-rules-4"
 BYTEFRAY_RULESET_V5_R1_ALPHA1_ID = "bytefray-rules-5-r1-alpha1"
 
 
+# V5 research Phase R2's experimental identity: stable V4 gameplay plus the
+# opt-in *objective-target oracle*, a diagnostic instrument that exposes each
+# living enemy entrant's core base as a persistent strategic target address
+# independent of process liveness or sensor reach.
+#
+# This identity carries NO process mortality -- that stays gated on
+# ``BYTEFRAY_RULESET_V5_R1_ALPHA1_ID`` alone. R2's 2x2 causal design needs
+# oracle-without-mortality (Arm B) as a distinct configuration from
+# mortality-with-oracle (Arm D, which runs under R1's identity with the
+# oracle option enabled), so the two mechanics are deliberately carried by
+# two different Ruleset identities rather than by one identity with two
+# switches. That also means R1's own semantics are reproduced exactly when
+# R2's oracle option is left disabled: R1 predates this identity entirely.
+#
+# Spelled ``-r2-alpha1`` for the same reason ``-r1-alpha1`` is: a
+# single-phase research hypothesis under test, never a matured contract.
+# The oracle is explicitly a DIAGNOSTIC INSTRUMENT, not a proposed shipping
+# mechanic -- a positive R2 result would establish that persistent strategic
+# objective information is causally important, not that always-visible cores
+# are the mechanism by which players should obtain it.
+#
+# Every gameplay semantic other than the oracle (scheduling, termination,
+# core size/placement, process selection, Q=8, D=1 disruption, repair,
+# victory conditions) is copied field-by-field from ``bytefray-rules-4`` --
+# see ``ruleset_policy.RULESET_V5_R2_ALPHA1``. The oracle itself lives
+# entirely in ``battle_engine.process_runtime`` (gated on
+# ``OBJECTIVE_TARGET_ORACLE_RULESET_IDS``/``has_objective_target_oracle``
+# plus an explicit per-request opt-in); this module and ``ruleset_policy.py``
+# carry no knowledge of it.
+#
+# Deliberately absent from ``ruleset_policy.OMITTED_RULESET_CANDIDATES``: an
+# omitted Ruleset must keep resolving Agent API v2 rosters to stable
+# ``bytefray-rules-4``, so normal CLI/GUI use can never silently activate an
+# R2 experiment.
+BYTEFRAY_RULESET_V5_R2_ALPHA1_ID = "bytefray-rules-5-r2-alpha1"
+
+
 # v0.10 Phase 4: a finite, explicit historical-alias table -- deliberately
 # not a generic "normalize any evaluation-rules-N-shaped string" function.
 # Each entry records a relationship actually established by git-history
@@ -194,6 +231,7 @@ __all__ = [
     "BYTEFRAY_RULESET_V4_ALPHA2_ID",
     "BYTEFRAY_RULESET_V4_ID",
     "BYTEFRAY_RULESET_V5_R1_ALPHA1_ID",
+    "BYTEFRAY_RULESET_V5_R2_ALPHA1_ID",
     "RulesetConfidence",
     "RulesetProvenance",
     "normalize_ruleset_id",

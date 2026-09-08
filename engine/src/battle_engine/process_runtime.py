@@ -51,7 +51,10 @@ from battle_engine.python_runtime import (
     diagnose_load_failure,
     diagnose_reset_failure,
 )
-from battle_engine.rules import BYTEFRAY_RULESET_V5_R1_ALPHA1_ID
+from battle_engine.rules import (
+    BYTEFRAY_RULESET_V5_R1_ALPHA1_ID,
+    BYTEFRAY_RULESET_V5_R2_ALPHA1_ID,
+)
 from battle_engine.ruleset_policy import RULESET_V4, RulesetPolicy
 from battle_engine.scoring import ScoreMap, ScoringPolicy
 from battle_engine.statistics import StatisticsCollector, StatisticsMap
@@ -91,6 +94,39 @@ def has_process_mortality(ruleset_id: str) -> bool:
     """Whether ``ruleset_id`` activates finite process-integrity mortality."""
 
     return ruleset_id in PROCESS_MORTALITY_RULESET_IDS
+
+
+# V5 research Phase R2: which Ruleset identities may activate the
+# *objective-target oracle* -- a DIAGNOSTIC INSTRUMENT, not a proposed
+# shipping mechanic (see docs/research/v5/V5_R2_TARGET_PERSISTENCE.md). The
+# oracle exposes each living enemy entrant's core base as a persistent
+# strategic target address that does not depend on distance, sensor reach,
+# surviving friendly processes, or surviving enemy processes.
+#
+# Membership here only makes the oracle *available*: it is additionally
+# gated on an explicit per-request opt-in
+# (``match_service.MatchRequest.objective_target_oracle``), so even these
+# identities run with the oracle OFF unless a caller names it. That two-key
+# design is what lets R1's mortality identity take part in R2's 2x2 design
+# (Arm D) while reproducing R1's published semantics exactly whenever the
+# oracle is left disabled (Arm C).
+#
+# Stable ``bytefray-rules-4`` is deliberately absent, so no amount of
+# request-level opt-in can switch the oracle on under the permanent control
+# Ruleset.
+OBJECTIVE_TARGET_ORACLE_RULESET_IDS: frozenset[str] = frozenset(
+    {BYTEFRAY_RULESET_V5_R1_ALPHA1_ID, BYTEFRAY_RULESET_V5_R2_ALPHA1_ID}
+)
+
+
+def has_objective_target_oracle(ruleset_id: str) -> bool:
+    """Whether ``ruleset_id`` may activate the R2 objective-target oracle.
+
+    Availability only -- the oracle additionally requires an explicit
+    per-request opt-in. See :data:`OBJECTIVE_TARGET_ORACLE_RULESET_IDS`.
+    """
+
+    return ruleset_id in OBJECTIVE_TARGET_ORACLE_RULESET_IDS
 
 
 @dataclass
@@ -360,6 +396,7 @@ class ProcessMatchController:
         agent_call_timeout: float | None = None,
         trace_writer: TraceWriter | None = None,
         process_integrity: int | None = None,
+        objective_target_oracle: bool = False,
     ) -> ProcessMatchController:
         """Load API-v2 entrants and consume their declarations before tick zero."""
 
@@ -629,6 +666,7 @@ class ProcessMatchController:
                 ruleset_policy=ruleset_policy,
                 trace_writer=trace_writer,
                 process_integrity=process_integrity,
+                objective_target_oracle=objective_target_oracle,
             )
             controller._worker_handles = worker_handles
             return controller
@@ -646,6 +684,7 @@ class ProcessMatchController:
         max_move_delta: int = 64,
         trace_writer: TraceWriter | None = None,
         process_integrity: int | None = None,
+        objective_target_oracle: bool = False,
         **kwargs
     ):
         self.config = config
@@ -673,6 +712,16 @@ class ProcessMatchController:
                 f"Ruleset {self.ruleset_policy.ruleset_id!r} requires a positive "
                 f"process_integrity; received {self.process_integrity!r}"
             )
+        # V5 research Phase R2: resolved once here, never re-derived, exactly
+        # like ``mortality_active`` above. Two keys must both turn for the
+        # oracle to run -- the Ruleset must permit it AND the caller must ask
+        # for it -- so a stray ``objective_target_oracle=True`` can never
+        # switch the instrument on under stable ``bytefray-rules-4``, and an
+        # R1 mortality match reproduces its published R1 semantics exactly
+        # whenever the flag is left at its default.
+        self.oracle_active = bool(objective_target_oracle) and has_objective_target_oracle(
+            self.ruleset_policy.ruleset_id
+        )
         # v4 alpha2's round-robin process-selection cursor: for each entrant,
         # the index its next intra-entrant selection scan starts from. Alpha1
         # (``process_selection == "priority"``) never reads it. See
@@ -777,6 +826,31 @@ class ProcessMatchController:
         making the resulting spatial fact entrant-wide without exposing which
         sensor observed it. Co-located enemies collapse to one occupied
         address; identities and structural metadata remain private.
+
+        V5 research Phase R2 (``self.oracle_active`` only -- inert under
+        every other configuration, including stable ``bytefray-rules-4``):
+        each living enemy entrant's **core base** is appended as a persistent
+        strategic target address. This is a DIAGNOSTIC INSTRUMENT and a
+        deliberate compatibility adapter, not a proposed production semantic:
+        a core base is not a process anchor, and this function's normal
+        contract is "currently occupied enemy addresses". It is injected into
+        this channel specifically because every bundled V4 agent already
+        reacts to ``visible_enemy_anchor_addresses`` and to nothing else, so
+        the oracle can be tested without editing a single agent's source or
+        strategic logic (docs/research/v5/V5_R2_TARGET_PERSISTENCE.md
+        Sections F/G).
+
+        Oracle addresses are appended **after** the sorted live-anchor tuple
+        rather than merged into it, so an agent that reads only element
+        ``[0]`` keeps seeing exactly the live anchor it would have seen
+        without the oracle, and reaches the oracle target only when genuine
+        contact is unavailable. That makes the oracle strictly additive to
+        the information an agent already had: it never displaces or
+        suppresses a real sighting. The oracle target deliberately does not
+        depend on distance, sensor reach, surviving friendly processes, or
+        surviving enemy processes -- persistent objective knowledge is the
+        exact variable R2 tests -- and disappears the moment the enemy
+        entrant is eliminated.
         """
 
         enemy_positions = {
@@ -805,7 +879,19 @@ class ProcessMatchController:
                 ):
                     visible.add(enemy_position)
                     break
-        return tuple(sorted(visible))
+        detected = tuple(sorted(visible))
+        if not self.oracle_active:
+            return detected
+
+        oracle_targets = sorted(
+            self._states_by_agent_id[spec.agent_id].core_base
+            for spec in self.entrant_specs
+            if spec.agent_id != observer_spec.agent_id
+            and self._states_by_agent_id[spec.agent_id].alive
+        )
+        return detected + tuple(
+            address for address in oracle_targets if address not in visible
+        )
 
     def _effective_process_quotas(
         self,

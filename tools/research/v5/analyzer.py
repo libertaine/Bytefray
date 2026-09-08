@@ -119,6 +119,29 @@ class MatchAnalysis:
     ticks_first_process_death_to_own_core_capture: dict[str, int | None]
     ticks_full_extinction_to_own_core_capture: dict[str, int | None]
 
+    # R2 Follow-through Layer (docs/research/v5/V5_R2_TARGET_PERSISTENCE.md
+    # Section 12): does an attacker resume pressure on the *actual victory
+    # objective* after its target's processes are gone? Every field below is
+    # keyed by the entrant whose processes went extinct (the victim), and
+    # measures what happened to THAT entrant's core after its own
+    # ``process_extinction_tick``. ``None``/0 for every entrant that never
+    # reached extinction -- so these degenerate to "nothing to report" for
+    # every stable-V4 and every non-mortality match, exactly like the R1
+    # process fields before them.
+    #
+    # This is R2's central measurement: R1 found that mortality converts
+    # matches into zero-process, intact-core stalemates because the attacker
+    # loses its target. "Did the attacker resume objective pressure?" is
+    # therefore the question, not merely "did it capture?" -- capture
+    # additionally requires flipping all 8 core cells, which several bundled
+    # single-address-writing agents structurally cannot do against one fixed
+    # target address (Section F).
+    post_extinction_core_attack_writes: dict[str, int]
+    post_extinction_core_ownership_losses: dict[str, int]
+    ticks_extinction_to_first_core_attack: dict[str, int | None]
+    target_loss_interval_ticks: dict[str, int | None]
+    attacker_resumes_objective_pressure: dict[str, bool]
+
     # Trace Layer (Optional)
     trace_available: bool
     trace_applied_actions: dict[str, int]
@@ -267,6 +290,17 @@ def analyze_match(
     process_extinction_tick: dict[str, int | None] = {e: None for e in entrants}
     entrant_zero_process_ticks: dict[str, int] = {e: 0 for e in entrants}
     first_process_death_tick: dict[str, int | None] = {e: None for e in entrants}
+
+    # R2 Follow-through Layer accumulators. Keyed by victim (the entrant
+    # whose processes went extinct). Counted only at ticks strictly *after*
+    # that entrant's ``process_extinction_tick`` -- memory diffs are read
+    # earlier in this same loop body than the liveness block that sets the
+    # extinction tick, so the extinction tick itself is never counted as
+    # "after", which is the intended semantic.
+    post_ext_core_attacks: dict[str, int] = {e: 0 for e in entrants}
+    post_ext_core_losses: dict[str, int] = {e: 0 for e in entrants}
+    first_post_ext_core_attack_tick: dict[str, int | None] = {e: None for e in entrants}
+    first_post_ext_core_loss_tick: dict[str, int | None] = {e: None for e in entrants}
     prev_process_alive: dict[tuple[str, str], bool] = {
         (p.entrant_id, p.process_id): True
         for p in tick0.processes
@@ -328,6 +362,18 @@ def analyze_match(
                     core_attack_writes[writer] += 1
                     total_combat_writes[writer] += 1
                     combat_writes_this_tick += 1
+                    # R2: hostile pressure on a victim that has already lost
+                    # every process -- the exact follow-through R1 found
+                    # missing.
+                    victim_extinct_at = process_extinction_tick[victim]
+                    if victim_extinct_at is not None and tick_num > victim_extinct_at:
+                        post_ext_core_attacks[victim] += 1
+                        if first_post_ext_core_attack_tick[victim] is None:
+                            first_post_ext_core_attack_tick[victim] = tick_num
+                        if old_owner == victim:
+                            post_ext_core_losses[victim] += 1
+                            if first_post_ext_core_loss_tick[victim] is None:
+                                first_post_ext_core_loss_tick[victim] = tick_num
                     if old_owner == victim:
                         # Core damage dealt!
                         current_health[victim] = max(0, current_health[victim] - 1)
@@ -507,6 +553,33 @@ def analyze_match(
             else None
         )
 
+    # R2 Follow-through Layer: derived intervals. Both intervals are
+    # measured from the victim's own extinction tick; the "first core
+    # attack" interval counts any hostile core-targeting write, while
+    # ``target_loss_interval_ticks`` counts only an attack that actually took
+    # a core cell away from the victim (a *meaningful* attack, per Section 12
+    # of the R2 charter) -- a distinction that matters because an agent can
+    # re-write a cell it already owns indefinitely without making progress.
+    ticks_extinction_to_first_core_attack: dict[str, int | None] = {}
+    target_loss_interval_ticks: dict[str, int | None] = {}
+    for e in entrants:
+        extinction_tick = process_extinction_tick[e]
+        attack_tick = first_post_ext_core_attack_tick[e]
+        loss_tick = first_post_ext_core_loss_tick[e]
+        ticks_extinction_to_first_core_attack[e] = (
+            attack_tick - extinction_tick
+            if extinction_tick is not None and attack_tick is not None
+            else None
+        )
+        target_loss_interval_ticks[e] = (
+            loss_tick - extinction_tick
+            if extinction_tick is not None and loss_tick is not None
+            else None
+        )
+    attacker_resumes_objective_pressure: dict[str, bool] = {
+        e: post_ext_core_attacks[e] > 0 for e in entrants
+    }
+
     # Optional Trace Analysis
     trace_applied: dict[str, int] = {e: 0 for e in entrants}
     trace_rejected_reach: dict[str, int] = {e: 0 for e in entrants}
@@ -610,6 +683,11 @@ def analyze_match(
         entrant_ever_alive_with_zero_processes=entrant_ever_alive_with_zero_processes,
         ticks_first_process_death_to_own_core_capture=ticks_first_process_death_to_own_core_capture,
         ticks_full_extinction_to_own_core_capture=ticks_full_extinction_to_own_core_capture,
+        post_extinction_core_attack_writes=post_ext_core_attacks,
+        post_extinction_core_ownership_losses=post_ext_core_losses,
+        ticks_extinction_to_first_core_attack=ticks_extinction_to_first_core_attack,
+        target_loss_interval_ticks=target_loss_interval_ticks,
+        attacker_resumes_objective_pressure=attacker_resumes_objective_pressure,
         trace_available=trace_found,
         trace_applied_actions=trace_applied,
         trace_rejected_out_of_reach=trace_rejected_reach,
