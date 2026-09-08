@@ -4,7 +4,7 @@
   <img src="assets/branding/bytefray-logo-horizontal.png" alt="Bytefray logo" width="420">
 </p>
 
-> **Note: Bytefray is currently preparing the v4.0.0 final release.** Promoted from the qualified `v4.0.0-rc2` candidate and post-UX polish: RC1 established stable `bytefray-rules-4` gameplay and the spectator presentation suite (Perspective Cam, Spectator Director, Fight Night); RC2 added the self-contained Linux binary distribution, pygame-ce, Python 3.14, and the `V4 Quorum` example agent; and post-UX polish finalized Ruleset-first Advanced configuration, multi-agent setup, and scoring defaults.
+> **Bytefray v4.0.0 is the current stable release.** Promoted from the qualified candidate and post-UX polish: RC1 established stable `bytefray-rules-4` gameplay and the spectator presentation suite (Perspective Cam, Spectator Director, Fight Night); RC2 added the self-contained Linux binary distribution baseline, pygame-ce, Python 3.14, and the `V4 Quorum` example agent; and post-UX polish finalized Ruleset-first Advanced configuration, multi-agent setup, and scoring defaults.
 
 **Bytefray** is a deterministic programmable-agent combat simulator in which
 agents compete over a shared circular memory arena. Bytefray v4 adds a
@@ -40,8 +40,8 @@ Bytefray is both a game and a deterministic experimentation platform:
 2. **Starter Agents**: Explore the bundled v4 agents in `agents/v4_claimer`, `agents/v4_scout`, etc., to see examples of spatial mechanics.
 3. **Run a Match**: Start the Agent Designer with `bytefray design`, or run a
    headless match with `bytefray run` and inspect it with `bytefray replay`.
-4. **Feedback**: As this is a release candidate, please open an issue to share
-   feedback on the spatial gameplay and the spectator experience.
+4. **Feedback**: Please open an issue on GitHub to share feedback on the
+   spatial gameplay, UX, installation, or replay experience.
 
 ## Bytefray v4
 
@@ -148,7 +148,7 @@ v4 matches launched from the Agent Designer (Simple or Advanced) automatically
 record the spectator trace used by Perspective Cam, Spectator Director, and
 Fight Night, so **Open Replay** has them available without any extra setup.
 
-Source viewing is deliberately read-only in the 2.0 release. Use
+Source viewing in Agent Designer is deliberately read-only. Use
 **Open Folder** to edit an agent with your preferred editor. See the
 [Agent Authoring Guide](docs/AGENT_AUTHORING.md) and
 [Agent Designer workflow reference](docs/specs/agent_designer_workflow.md).
@@ -230,46 +230,43 @@ environment variables, see [Installation](INSTALL.md).
 
 ## Downloads
 
-**Bytefray v4.0.0 final release:** promoted from the qualified `v4.0.0-rc2`
-candidate and post-UX polish; in final artifact qualification, not yet
-published.
-
-**Current published prerelease:** [Bytefray v4.0.0-rc2](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0-rc2)
-— the second v4.0 **release candidate**. RC2 adds a self-contained Linux
-binary distribution built and qualified on an official Ubuntu 24.04
-baseline (measured maximum requirement `GLIBC_2.38`; not qualified against
-Ubuntu 22.04 or Debian 12), migrates the replay/GUI dependency from classic
-Pygame to pygame-ce, formally qualifies Python 3.14, and bundles the
-`V4 Quorum` advanced example agent. No gameplay, Agent API, Ruleset, or
-replay-schema change over RC1 — `bytefray-rules-4` remains the permanent,
-stable v4 gameplay Ruleset RC1 promoted it to, unchanged. See
-[CHANGELOG.md](CHANGELOG.md#400-rc2---2026-09-07) for the full release
-notes.
+**Current stable release:** [Bytefray v4.0.0](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0)
+— establishes the permanent `bytefray-rules-4` gameplay ruleset, Agent API v2,
+the full spectator presentation suite (Perspective Cam, Spectator Director,
+Fight Night), and refreshed Ruleset-first Agent Designer workflows. See
+[CHANGELOG.md](CHANGELOG.md#400---2026-09-08) for the full release notes.
 
 | Package | Download | Notes |
 |---|---|---|
-| Windows installer | [Bytefray-Setup-4.0.0-rc2.exe](https://github.com/libertaine/Bytefray/releases/download/v4.0.0-rc2/Bytefray-Setup-4.0.0-rc2.exe) | Administrative AMD64/x64 installation; unsigned, see [Installation](INSTALL.md) |
-| Portable Windows applications | [bytefray-4.0.0-rc2-windows.zip](https://github.com/libertaine/Bytefray/releases/download/v4.0.0-rc2/bytefray-4.0.0-rc2-windows.zip) | AMD64 onedir applications for the Bytefray CLI, Agent Designer, and Replay Viewer workflows |
-| Self-contained Linux archive | [bytefray-4.0.0-rc2-linux-x86_64.tar.gz](https://github.com/libertaine/Bytefray/releases/download/v4.0.0-rc2/bytefray-4.0.0-rc2-linux-x86_64.tar.gz) | x86_64 onedir applications, built on Ubuntu 24.04; no system Python required, see [Linux installation](docs/LINUX_INSTALL.md) |
-| Python wheel | [bytefray-4.0.0rc2-py3-none-any.whl](https://github.com/libertaine/Bytefray/releases/download/v4.0.0-rc2/bytefray-4.0.0rc2-py3-none-any.whl) | Pure Python 3.10–3.14 package; no pMARS binary |
-| Source archive | [bytefray-4.0.0rc2.tar.gz](https://github.com/libertaine/Bytefray/releases/download/v4.0.0-rc2/bytefray-4.0.0rc2.tar.gz) | Python/source workflows |
-| Checksums | [SHA256SUMS.txt](https://github.com/libertaine/Bytefray/releases/download/v4.0.0-rc2/SHA256SUMS.txt) | SHA-256 values for all published rc2 assets |
+| Windows installer | [Bytefray-Setup-4.0.0.exe](https://github.com/libertaine/Bytefray/releases/download/v4.0.0/Bytefray-Setup-4.0.0.exe) | Administrative AMD64/x64 installation; unsigned, see [Installation](INSTALL.md) |
+| Portable Windows applications | [bytefray-4.0.0-windows.zip](https://github.com/libertaine/Bytefray/releases/download/v4.0.0/bytefray-4.0.0-windows.zip) | AMD64 onedir applications for the Bytefray CLI, Agent Designer, and Replay Viewer workflows |
+| Python wheel | [bytefray-4.0.0-py3-none-any.whl](https://github.com/libertaine/Bytefray/releases/download/v4.0.0/bytefray-4.0.0-py3-none-any.whl) | Pure Python 3.10–3.14 package; no pMARS binary |
+| Source archive | [bytefray-4.0.0.tar.gz](https://github.com/libertaine/Bytefray/releases/download/v4.0.0/bytefray-4.0.0.tar.gz) | Python/source workflows |
+| Checksums | [SHA256SUMS.txt](https://github.com/libertaine/Bytefray/releases/download/v4.0.0/SHA256SUMS.txt) | SHA-256 values for all published v4.0.0 assets |
 
-The prior [v4.0.0-rc1](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0-rc1)
-release remains published for reference — see
-[CHANGELOG.md](CHANGELOG.md#400-rc1---2026-09-03) for what it shipped.
+Linux users can install via the Python wheel or source distribution; see
+[Linux installation](docs/LINUX_INSTALL.md) for headless and GUI setup. (A
+standalone self-contained Linux archive was qualified and published with the
+[v4.0.0-rc2](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0-rc2)
+prerelease.)
+
+The prior release candidates [v4.0.0-rc2](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0-rc2)
+and [v4.0.0-rc1](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0-rc1)
+remain published for reference — see
+[CHANGELOG.md](CHANGELOG.md#400-rc2---2026-09-07) and
+[CHANGELOG.md](CHANGELOG.md#400-rc1---2026-09-03) for what they shipped.
 
 The earlier [v4.0.0-alpha4](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0-alpha4)
 release remains published for reference; it shipped the same gameplay under
 the `bytefray-rules-4-alpha2` identity plus the Designer trace-recording
 follow-up RC1 also carries forward unchanged.
 
-**Current stable release:** [Bytefray v3.0.0](https://github.com/libertaine/Bytefray/releases/tag/v3.0.0)
+**Earlier major release:** [Bytefray v3.0.0](https://github.com/libertaine/Bytefray/releases/tag/v3.0.0)
 remains available for users who do not want v4 gameplay or Agent API v2
 changes.
 
 Use the [GitHub Releases page](https://github.com/libertaine/Bytefray/releases)
-for the prereleases that led up to v3.0.0.
+for historical releases and prereleases.
 
 **Previous major release:** [Bytefray v2.0.0](https://github.com/libertaine/Bytefray/releases/tag/v2.0.0)
 — Vulnerable Core. Promotes the qualified `v2.0.0-rc2` candidate with no
