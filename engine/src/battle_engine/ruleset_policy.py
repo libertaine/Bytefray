@@ -602,6 +602,22 @@ class NoCompatibleRulesetError(ValueError):
 # ``_RULESET_POLICIES``, explicitly selectable by name from every CLI and
 # Designer surface, and are still what every persisted alpha1/alpha2
 # artifact resolves to -- see docs/COMPATIBILITY.md's v4 identity section.
+#
+# V5 research constraint (pre-Phase-0 baseline remediation). An experimental
+# V5 Ruleset must require *explicit* selection: it must not be added to this
+# tuple, and must never become what an existing Agent API v2 roster receives
+# when the Ruleset is omitted. Stable ``bytefray-rules-4`` is the immutable
+# scientific control the V5 program measures against, so silently
+# reassigning the omitted-selection slot to an experimental identity would
+# contaminate every comparison made against it -- the same class of defect
+# as the ``ProcessMatchController`` alpha1 fallback corrected alongside this
+# note (see test_v4_runtime_default_ruleset.py). The v4 promotion precedent
+# above is not a counter-example: alpha1 -> alpha2 -> stable moved this slot
+# only between identities that were already the *current shipped* v4
+# gameplay contract, never onto an experimental one.
+# ``test_automatic_resolution_never_selects_an_experimental_identity`` and
+# ``test_omitted_ruleset_resolves_from_runtime_kind_and_api_version`` in
+# engine/tests/test_ruleset_policy.py already enforce both halves of this.
 OMITTED_RULESET_CANDIDATES: tuple[str, ...] = (
     BYTEFRAY_RULESET_V2_ID,
     BYTEFRAY_RULESET_V4_ID,

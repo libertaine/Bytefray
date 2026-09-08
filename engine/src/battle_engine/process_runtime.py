@@ -51,7 +51,7 @@ from battle_engine.python_runtime import (
     diagnose_load_failure,
     diagnose_reset_failure,
 )
-from battle_engine.ruleset_policy import RULESET_V4_ALPHA1, RulesetPolicy
+from battle_engine.ruleset_policy import RULESET_V4, RulesetPolicy
 from battle_engine.scoring import ScoreMap, ScoringPolicy
 from battle_engine.statistics import StatisticsCollector, StatisticsMap
 from battle_engine.telemetry import ReplayPublisher, ReplaySink
@@ -315,7 +315,7 @@ class ProcessMatchController:
         entrants: tuple[Any, ...],
         max_ticks: int,
         *,
-        ruleset_policy: RulesetPolicy = RULESET_V4_ALPHA1,
+        ruleset_policy: RulesetPolicy = RULESET_V4,
         agent_call_timeout: float | None = None,
         trace_writer: TraceWriter | None = None,
     ) -> ProcessMatchController:
@@ -326,7 +326,7 @@ class ProcessMatchController:
                 code="match_configuration_invalid",
                 stage="configuration",
                 message=(
-                    "Bytefray Ruleset v4 alpha1 fixes the entrant action quota at Q=8; "
+                    "Bytefray Ruleset v4 fixes the entrant action quota at Q=8; "
                     f"received {config.instr_per_tick}."
                 ),
             )
@@ -607,7 +607,7 @@ class ProcessMatchController:
         self.config = config
         self.entrant_specs = entrant_specs
         self.max_ticks = max_ticks
-        self.ruleset_policy = ruleset_policy or RULESET_V4_ALPHA1
+        self.ruleset_policy = ruleset_policy or RULESET_V4
         self.disruption_duration = 1
         self.max_move_delta = max_move_delta
         self.trace_writer = trace_writer
