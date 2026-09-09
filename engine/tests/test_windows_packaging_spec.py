@@ -45,6 +45,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from battle_engine.agent_scaffold import TEMPLATE_DIRECTORIES_BY_API_VERSION
 from battle_engine.starters import STARTER_AGENT_NAMES
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -302,6 +303,63 @@ def test_every_registered_starter_reaches_the_frozen_tree(spec_path: Path, monke
         f"{spec_path.name} bundles {source_dir}, which is missing registered "
         f"starter agents: {missing}"
     )
+
+
+SCAFFOLD_TEMPLATE_DIRECTORIES = sorted(
+    {
+        directory
+        for templates in TEMPLATE_DIRECTORIES_BY_API_VERSION.values()
+        for directory in templates.values()
+    }
+)
+
+# The two specs whose executables reach battle_engine.agent_scaffold:
+# tools/bytefray.spec (`bytefray agents create`) and
+# tools/agent_designer.spec (the Designer's in-process "New Agent" workflow).
+# tools/bytefray_cli.spec and tools/replay_viewer.spec deliberately bundle no
+# template -- bytefray-cli's parser exposes no `agents` subcommand and the
+# replay viewer only reads replays -- so requiring the resource of them would
+# add dead weight, not coverage.
+SCAFFOLD_CAPABLE_SPECS = (BYTEFRAY_SPEC, AGENT_DESIGNER_SPEC)
+
+
+@pytest.mark.parametrize(
+    "spec_path", SCAFFOLD_CAPABLE_SPECS, ids=lambda path: path.stem
+)
+@pytest.mark.parametrize("template_dir_name", SCAFFOLD_TEMPLATE_DIRECTORIES)
+def test_every_supported_scaffold_template_reaches_the_frozen_tree(
+    spec_path: Path, template_dir_name: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Every template the product supports must be in the spec's ``datas``.
+
+    The two tests above pin the specific ``agent_template`` and
+    ``agent_template_annotated`` directories, each added after that exact
+    directory shipped missing. This test closes the class of defect instead
+    of one more instance of it: the expected set is derived from
+    ``agent_scaffold.TEMPLATE_DIRECTORIES_BY_API_VERSION``, the same
+    inventory ``bytefray agents create`` selects from, so a template that
+    exists in the product but in no spec fails here.
+
+    It is the guard that was missing when the Agent API v2 template pair was
+    added: the 17 packaging tests then in this module all named v1
+    directories, so ``agent_template_v2``/``agent_template_v2_annotated``
+    were absent from the frozen executable with a fully green suite, and
+    both ``--api-version 2`` scaffold commands failed with exit code 2 from
+    the built application.
+    """
+
+    datas = _exec_spec_datas(spec_path, monkeypatch)
+    destination = f"battle_engine/data/{template_dir_name}"
+    entries = [entry for entry in datas if entry[1] == destination]
+
+    assert entries, (
+        f"{spec_path.name}'s `datas` must bundle {destination}, which "
+        "battle_engine.agent_scaffold offers as a supported template; found "
+        f"only: {sorted(entry[1] for entry in datas)}"
+    )
+    source_dir = Path(entries[0][0])
+    assert source_dir.is_dir(), f"{spec_path.name} bundles missing {source_dir}"
+    assert {"agent.yaml", "agent.py"} <= {path.name for path in source_dir.iterdir()}
 
 
 def test_bytefray_spec_bundles_designer_branding_icon(monkeypatch):
