@@ -1,0 +1,9 @@
+{
+  "name": "v5_region_attacker",
+  "display": "V5 Region Attacker (Starter)",
+  "description": "V5 starter: presses a bounded region around a legitimately observed contact instead of one address forever.",
+  "kind": "python",
+  "api_version": 2,
+  "entrypoint": "agent.py:create_agent",
+  "version": "1.0.0"
+}

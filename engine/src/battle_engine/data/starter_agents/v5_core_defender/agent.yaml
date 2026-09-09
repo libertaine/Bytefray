@@ -1,0 +1,9 @@
+{
+  "name": "v5_core_defender",
+  "display": "V5 Core Defender (Starter)",
+  "description": "V5 starter: inspects its own core with READ, repairs cells it can prove were taken, and never lets offence starve its inspection duty.",
+  "kind": "python",
+  "api_version": 2,
+  "entrypoint": "agent.py:create_agent",
+  "version": "1.0.0"
+}

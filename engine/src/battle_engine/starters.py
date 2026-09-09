@@ -28,6 +28,15 @@ from battle_engine.paths import get_data_root, get_resource_root
 # core mechanic itself -- attacking a core and defending one -- which no
 # expansion starter exercises, and they stay freely maintainable precisely
 # because they carry no benchmark identity.
+#
+# The four v5_* starters (added in v5.0.0a1, V5 Alpha 1 Phase C -- see
+# docs/research/v5/V5_ALPHA1_PHASE_C_STARTER_AGENTS.md) are the Agent API
+# v2 educational ladder: regional offense, search-and-strike movement,
+# READ-driven core defense, and a two-process team. They are ADDITIVE. The
+# six v4_* entries above them keep their historical behavior byte for byte
+# -- replays, evaluation records and the Phase 0/R3/R4 research corpora all
+# refer to those IDs, so a v5_* redesign gets a new ID rather than silently
+# replacing an old one.
 STARTER_AGENT_NAMES = (
     "runner",
     "writer",
@@ -46,6 +55,10 @@ STARTER_AGENT_NAMES = (
     "v4_local_defender",
     "v4_scout",
     "v4_quorum",
+    "v5_region_attacker",
+    "v5_scout_striker",
+    "v5_core_defender",
+    "v5_dual_team",
 )
 
 
