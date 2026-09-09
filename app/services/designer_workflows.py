@@ -7,7 +7,7 @@ import secrets
 import time
 import uuid
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any
@@ -86,7 +86,15 @@ class EntrantResultPresentation:
     # so no existing artifact needs to change and the replay schema is not
     # touched. The authoring *schema* is deliberately not here: it belongs
     # with the agent package, not in a match record.
-    parameters: Mapping[str, Any] = MappingProxyType({})
+    #
+    # field(default_factory=...) rather than a bare `= MappingProxyType({})`
+    # class attribute (Phase F3): Python 3.11 generalized dataclasses'
+    # mutable-default check from "is this a list/dict/set" to "is this
+    # unhashable", and a mappingproxy is unhashable, so the bare form raised
+    # ValueError at class-definition time under Python 3.11 -- before any
+    # Designer code ran. See battle_engine.match_service.MatchEntrant for the
+    # sibling instance of this same defect class.
+    parameters: Mapping[str, Any] = field(default_factory=lambda: MappingProxyType({}))
 
 
 @dataclass(frozen=True)

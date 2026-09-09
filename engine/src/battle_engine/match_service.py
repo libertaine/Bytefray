@@ -99,7 +99,21 @@ class MatchEntrant:
     #: Carried on the request rather than resolved inside the runtime so
     #: that an invalid parameter fails before any agent code is imported or
     #: executed.
-    parameters: Mapping[str, Any] = MappingProxyType({})
+    #:
+    #: ``field(default_factory=...)`` rather than a bare ``= MappingProxyType({})``
+    #: class attribute (Phase F3): this class sets ``init=False`` and never
+    #: lets the dataclass-generated ``__init__`` read this default (the
+    #: hand-written ``__init__`` below always calls ``object.__setattr__``
+    #: itself), but ``dataclasses`` still inspects every field's default
+    #: while building the class, regardless of ``init``. Python 3.11
+    #: generalized that check from "is this a list/dict/set" to "is this
+    #: unhashable", and a ``mappingproxy`` is unhashable, so a bare mutable
+    #: default here raised ``ValueError: mutable default ... for field
+    #: parameters is not allowed`` on import under Python 3.11 -- before any
+    #: match ever ran. ``NativeAgentResult.metadata`` and
+    #: ``agent_api.MatchContextV2.parameters`` already use this same
+    #: ``default_factory`` form for an identical empty-mapping default.
+    parameters: Mapping[str, Any] = field(default_factory=lambda: MappingProxyType({}))
 
     def __init__(
         self,

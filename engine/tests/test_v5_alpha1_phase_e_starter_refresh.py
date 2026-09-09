@@ -22,7 +22,7 @@ developer's real ``BYTEFRAY_ROOT``.
 from __future__ import annotations
 
 import json
-import subprocess
+import shutil
 from pathlib import Path
 
 import pytest
@@ -48,6 +48,21 @@ V4_STARTERS = (
 )
 PHASE_C_COMMIT = "69fc958"
 
+#: Committed byte-for-byte copy of what V5 Alpha 1 Phase C (commit
+#: ``69fc958``) actually bundled for each V5 starter -- see
+#: :data:`~battle_engine.starters.SUPERSEDED_STARTER_DIGESTS`'s comment for
+#: that commit reference. Fixed as ordinary committed test data (Phase F3),
+#: not read out of Git history at test time: a historical commit is not
+#: guaranteed reachable from every checkout that runs this suite (a shallow
+#: CI clone, a `git archive` export, an sdist-built source tree), so a test
+#: whose correctness depended on `git ls-tree`/`git cat-file` against a fixed
+#: SHA would fail in exactly those environments regardless of product
+#: correctness. Each fixture's digest is asserted against the pinned
+#: allowlist below (`test_phase_c_starter_digests_are_the_recorded_superseded_ones`),
+#: so this file is proven -- not merely trusted -- to still be that release's
+#: actual bytes.
+_PHASE_C_FIXTURE_ROOT = Path(__file__).resolve().parent / "fixtures" / "phase_c_v5_starters"
+
 
 def _resource_root() -> Path:
     return Path(__file__).resolve().parents[2]
@@ -66,43 +81,22 @@ def _bundled_dir(name: str) -> Path:
 
 
 def _seed_phase_c_starter(agents_dir: Path, name: str) -> Path:
-    """Reconstruct one starter exactly as V5 Alpha 1 Phase C bundled it.
+    """Reproduce one starter exactly as V5 Alpha 1 Phase C bundled it.
 
-    Read out of Git rather than hand-written, so "an untouched 1.0.0 install"
-    means the bytes that release actually shipped -- the thing the refresh
-    policy claims to recognize -- not a fixture that merely resembles it.
+    Copied from the committed fixture in ``_PHASE_C_FIXTURE_ROOT`` rather than
+    read out of Git history, so "an untouched 1.0.0 install" means the bytes
+    that release actually shipped -- the thing the refresh policy claims to
+    recognize -- without requiring the historical commit to be reachable from
+    the checkout running this test.
     """
 
-    repository = _resource_root()
-    prefix = f"engine/src/battle_engine/data/starter_agents/{name}/"
-    listing = subprocess.run(
-        [
-            "git",
-            "--no-optional-locks",
-            "ls-tree",
-            "-r",
-            "--name-only",
-            PHASE_C_COMMIT,
-            prefix,
-        ],
-        cwd=repository,
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout.split()
-    assert listing, f"Phase C commit has no bundled files for {name}"
+    source_dir = _PHASE_C_FIXTURE_ROOT / name
+    assert source_dir.is_dir(), f"missing Phase C fixture for {name}: {source_dir}"
 
     agent_dir = agents_dir / name
-    for tracked in listing:
-        blob = subprocess.run(
-            ["git", "--no-optional-locks", "cat-file", "-p", f"{PHASE_C_COMMIT}:{tracked}"],
-            cwd=repository,
-            capture_output=True,
-            check=True,
-        ).stdout
-        destination = agent_dir / tracked.split(prefix, 1)[1]
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(blob)
+    agent_dir.mkdir(parents=True, exist_ok=True)
+    for source in sorted(source_dir.iterdir()):
+        shutil.copy2(source, agent_dir / source.name)
     return agent_dir
 
 
@@ -215,7 +209,7 @@ def test_no_superseded_digest_is_also_a_current_one() -> None:
 
 def test_phase_c_starter_digests_are_the_recorded_superseded_ones(tmp_path: Path) -> None:
     """The allowlist entries really are the Phase C release's content, checked
-    against Git rather than against themselves."""
+    against the committed Phase C fixture rather than against themselves."""
 
     for name in V5_STARTERS:
         agent_dir = _seed_phase_c_starter(tmp_path, name)

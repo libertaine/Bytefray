@@ -1,0 +1,9 @@
+{
+  "name": "v5_dual_team",
+  "display": "V5 Dual Team (Starter)",
+  "description": "V5 starter: two declared processes with distinct roles and a shared contact memory - a raider that fights and a keeper that holds the core.",
+  "kind": "python",
+  "api_version": 2,
+  "entrypoint": "agent.py:create_agent",
+  "version": "1.0.0"
+}

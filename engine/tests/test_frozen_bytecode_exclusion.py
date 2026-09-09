@@ -65,10 +65,17 @@ ALLOWED_PATHS = (
     # frozen payload would remove a real, loadable binary, so the rule here
     # is deliberately narrower than the wheel's.
     "extension.pyd",
+    "pkg/native.pyd",
     # Bytecode is identified by path role, not by substring: a file merely
     # *named* like a cache is ordinary content.
     "pycache_notes.md",
     "__pycache__.txt",
+    # Phase F3: explicit Windows-spelled (backslash) legitimate paths, tested
+    # directly against an expected value -- not only checked for agreement
+    # with their forward-slash sibling (see
+    # test_filter_agrees_across_windows_and_posix_separators below), which
+    # would pass just as easily if both spellings were wrong the same way.
+    "pkg\\data.bin",
 )
 
 REJECTED_PATHS = (
@@ -82,6 +89,21 @@ REJECTED_PATHS = (
     # Case-insensitive on the suffix, for a checkout that came through a
     # case-preserving copy or archive.
     "agent.PYC",
+    # Phase F3: explicit Windows-spelled (backslash) rejected paths, tested
+    # directly against an expected value for the same reason as the
+    # ALLOWED_PATHS addition above. These specifically reproduce the Phase F3
+    # regression: on a POSIX host, the pre-fix classifier built a
+    # host-default ``pathlib.Path`` (``PurePosixPath`` behaviour there, which
+    # does not split on ``\\``), so ``pkg\\__pycache__\\x.cpython-313.pyc``
+    # was seen as one opaque filename component ending in ``.pyc`` -- still
+    # correctly rejected only because the *suffix* check happened to also
+    # match. ``pkg\\__pycache__\\readme.txt`` has no bytecode suffix, so only
+    # the directory-component check can reject it, which is exactly the case
+    # that silently passed as "allowed" before the fix.
+    "pkg\\__pycache__\\x.cpython-313.pyc",
+    "pkg\\__pycache__\\readme.txt",
+    "pkg\\x.pyc",
+    "pkg\\x.pyo",
 )
 
 

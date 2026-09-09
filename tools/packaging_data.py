@@ -55,17 +55,30 @@ BYTECODE_SUFFIXES = frozenset({".pyc", ".pyo"})
 def is_python_bytecode(relative_path: str | Path) -> bool:
     """Return whether ``relative_path`` names Python bytecode or a cache entry.
 
-    ``relative_path`` is interpreted as a path, not as text, so the rule holds
-    for both ``nested/__pycache__/x.pyc`` and Windows' ``nested\\__pycache__\\x.pyc``
-    without any separator-specific string matching. A path is rejected when
-    **any** component is a ``__pycache__`` directory (catching the whole cache
-    subtree regardless of what it contains) or when the final component's
-    suffix is one of :data:`BYTECODE_SUFFIXES` (catching loose ``.pyc``/``.pyo``
-    files dropped outside a cache directory, which ``-B``/legacy layouts and
-    stray copies both produce).
+    The rule holds for both ``nested/__pycache__/x.pyc`` and Windows'
+    ``nested\\__pycache__\\x.pyc`` **regardless of the host platform this
+    function runs on** -- not merely regardless of which style the path
+    happens to use. A path is rejected when **any** component is a
+    ``__pycache__`` directory (catching the whole cache subtree regardless of
+    what it contains) or when the final component's suffix is one of
+    :data:`BYTECODE_SUFFIXES` (catching loose ``.pyc``/``.pyo`` files dropped
+    outside a cache directory, which ``-B``/legacy layouts and stray copies
+    both produce).
+
+    Component-splitting deliberately does **not** use the host's default
+    :class:`pathlib.Path`: that resolves to ``PurePosixPath`` behaviour on a
+    POSIX host, which does not treat ``\\`` as a separator, so a
+    Windows-spelled path would be seen as one opaque filename component
+    instead of a ``__pycache__`` directory plus a file -- silently defeating
+    this exact check on the one platform (Linux) that lints and tests this
+    repository, even though the paths it must classify come from a Windows
+    release build. Both separators are normalized to ``/`` first and the
+    result is always parsed with :class:`~pathlib.PurePosixPath`, so the
+    answer no longer depends on which OS is running the classifier.
     """
 
-    path = Path(relative_path)
+    normalized = str(relative_path).replace("\\", "/")
+    path = PurePosixPath(normalized)
     if any(part == CACHE_DIRECTORY_NAME for part in path.parts):
         return True
     return path.suffix.lower() in BYTECODE_SUFFIXES
