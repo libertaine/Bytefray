@@ -53,22 +53,10 @@ def run_single_match(
     max_ticks: int = STANDARD_V4_MAX_TICKS,
     ruleset_id: str = RULESET_V4_STABLE,
     with_trace: bool = False,
-    process_integrity: int | None = None,
-    objective_target_oracle: bool = False,
     agent_specs: dict[str, AgentSpec] | None = None,
+    **_ignored: Any,
 ) -> tuple[Path, Path, Path | None]:
     """Execute one match and return (replay_path, result_path, trace_path).
-
-    ``process_integrity`` is V5 research Phase R1's experimental parameter
-    (see ``battle_engine.process_runtime.has_process_mortality``). Ignored
-    entirely unless ``ruleset_id`` is a mortality Ruleset, so every existing
-    caller of this function (Phase 0's stable-V4 corpus) is unaffected.
-
-    ``objective_target_oracle`` is V5 research Phase R2's experimental
-    diagnostic instrument (see
-    ``battle_engine.process_runtime.has_objective_target_oracle``). Ignored
-    entirely unless ``ruleset_id`` permits it, so Phase 0's and R1's existing
-    callers are equally unaffected.
 
     ``agent_specs`` is V5 research Phase R3's resolution seam: a mapping of
     agent name -> already-resolved ``AgentSpec`` consulted *before* the
@@ -112,8 +100,6 @@ def run_single_match(
         trace_path=trace_path,
         verbose=False,
         ruleset_id=ruleset_id,
-        process_integrity=process_integrity,
-        objective_target_oracle=objective_target_oracle,
     )
     result = NativeMatchService().run(request)
     assert result.result_path is not None

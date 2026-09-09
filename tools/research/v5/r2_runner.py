@@ -33,10 +33,13 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from battle_engine.rules import (
-    BYTEFRAY_RULESET_V5_R1_ALPHA1_ID,
-    BYTEFRAY_RULESET_V5_R2_ALPHA1_ID,
-)
+# HISTORICAL RESEARCH RUNNER:
+# This script was used during V5 Phase R2 research to evaluate target persistence.
+# The experimental rulesets `bytefray-rules-5-r1-alpha1` and `bytefray-rules-5-r2-alpha1`
+# and the target oracle mechanic were evaluated, rejected, and isolated in Phase B.
+# Rerunning this experiment against the original experimental engine requires checking out commit 26e0816.
+BYTEFRAY_RULESET_V5_R1_ALPHA1_ID = "bytefray-rules-5-r1-alpha1"
+BYTEFRAY_RULESET_V5_R2_ALPHA1_ID = "bytefray-rules-5-r2-alpha1"
 from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
 
 from tools.research.v5.analyzer import analyze_match

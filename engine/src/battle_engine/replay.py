@@ -38,17 +38,10 @@ class ProcessState:
     anchor: int
     disrupted: bool
     reach: int
-    # V5 research Phase R1: whether this process is still alive (finite
-    # process-integrity mortality). Always ``True`` -- and omitted from
-    # serialized output -- under every Ruleset without
-    # ``process_runtime.has_process_mortality``, so a stable V4 (or any
-    # earlier) replay's process records stay byte-identical to one written
-    # before this field existed. Additive to schema version 4, exactly like
-    # ``AgentState.locus`` before it.
+    # Passive-compatibility fields: retained for reading historical research
+    # replays (V5 Phase R1/R2) without errors. Production writers never emit
+    # these fields.
     alive: bool = True
-    # V5 research Phase R1: this process's remaining hostile-anchor-hit
-    # budget under a mortality Ruleset, or ``None`` (omitted) under every
-    # other Ruleset and for every non-mortality process.
     integrity: int | None = None
 
 
@@ -435,21 +428,13 @@ def record_to_dict(record: ReplayRecord) -> dict[str, Any]:
 
 
 def _process_to_dict(process: ProcessState) -> dict[str, Any]:
-    payload: dict[str, Any] = {
+    return {
         "process_id": process.process_id,
         "entrant_id": process.entrant_id,
         "anchor": process.anchor,
         "disrupted": process.disrupted,
         "reach": process.reach,
     }
-    # V5 research Phase R1: omitted (not written as false/null) unless a
-    # mortality Ruleset actually populated them, so a stable V4 process
-    # record is byte-identical to one written before these fields existed.
-    if not process.alive:
-        payload["alive"] = False
-    if process.integrity is not None:
-        payload["integrity"] = process.integrity
-    return payload
 
 
 def _agent_to_dict(agent: AgentState) -> dict[str, Any]:

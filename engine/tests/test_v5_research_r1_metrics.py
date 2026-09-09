@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-"""V5 research Phase R1: analyzer measurement-refinement tests.
+"""V5 research Phase R1: analyzer core deficit measurement tests.
 
 Proves the distinction Section 4 of the R1 charter requires: a repeated
 damage -> repair -> damage -> repair cycle on one core cell must not be
 misreported by the true simultaneous-deficit metrics as steadily
-accumulating progress toward capture, even though the legacy Phase 0
+accumulating progress toward capture, even though legacy Phase 0
 activity counters (kept for backward compatibility) do accumulate
-monotonically. Also covers the new process-economy metrics (deaths,
-extinction, zero-process-while-alive) derived from real mortality-enabled
-matches, using the same low-level ProcessEntrantSpec construction style as
-engine/tests/test_v4_process_semantics.py and test_process_mortality.py.
+monotonically. Also covers run-length expanded diff handling.
 """
 
 from pathlib import Path
@@ -24,7 +21,6 @@ from battle_engine.process_runtime import (
     ProcessMatchController,
     ProcessRole,
 )
-from battle_engine.ruleset_policy import RULESET_V5_R1_ALPHA1
 from battle_engine.telemetry import JSONLSink
 
 from tools.research.v5.analyzer import analyze_match
@@ -128,128 +124,3 @@ def test_true_ownership_expands_merged_run_length_diffs(tmp_path: Path) -> None:
     # start address.
     assert m["core_owned_cells_series"]["B"][-1] == 6
     assert m["core_deficit_series"]["B"][-1] == 2
-
-
-def test_process_death_metrics_from_a_real_mortality_match(tmp_path: Path) -> None:
-    """A full-quota attacker kills B's lone process within tick 1 (H=1);
-    B's core is never targeted, so B must survive with zero live processes
-    -- the exact pathology R1 Section 6 requires be recorded explicitly."""
-
-    spec_a = ProcessEntrantSpec("A", "attacker", [
-        ProcessInstance("pA", ProcessRole.ATTACKER, initial_position=0, reach=None, quota_share=8,
-                         logic=lambda obs, state: AgentAction(ActionKindV2.WRITE, 500, 0x11))
-    ])
-    spec_b = ProcessEntrantSpec("B", "victim", [
-        ProcessInstance("pB", ProcessRole.DEFENDER, initial_position=500, reach=None, quota_share=8,
-                         logic=lambda obs, state: AgentAction(ActionKind.NOP))
-    ], start=500)
-
-    replay_path = _run_low_level(
-        [spec_a, spec_b], tmp_path=tmp_path, max_ticks=10,
-        ruleset_policy=RULESET_V5_R1_ALPHA1, process_integrity=1,
-    )
-    m = analyze_match(replay_path)
-
-    assert m["process_deaths"] == {"A": 0, "B": 1}
-    assert m["process_death_events"] == [{"tick": 1, "entrant_id": "B", "process_id": "pB"}]
-    assert m["process_extinction_tick"]["B"] == 1
-    assert m["process_extinction_tick"]["A"] is None
-    assert m["mutual_process_extinction"] is False
-    assert m["live_process_count_series"]["B"] == [1] + [0] * 10
-    # B's core was never touched, so it stays alive with zero processes --
-    # the "alive entrant + intact core + zero processes" pathology.
-    assert m["entrant_zero_process_ticks"]["B"] == 10
-    assert m["entrant_ever_alive_with_zero_processes"]["B"] is True
-    assert m["entrant_ever_alive_with_zero_processes"]["A"] is False
-    assert m["core_capture_outcome"]["B"] == "survived"
-    assert m["ticks_full_extinction_to_own_core_capture"]["B"] is None
-
-
-def test_symmetric_mutual_attack_produces_asymmetric_kill_by_schedule_order(tmp_path: Path) -> None:
-    """Two single-process entrants that simultaneously target each other's
-    anchors under H=1: this does NOT produce mutual extinction. The
-    chunked round-robin scheduler (docs/research/v5/
-    V5_R1_PROCESS_MORTALITY.md Section K) executes A's full chunk before
-    B's, so A kills B before B's process ever gets to act -- a genuine,
-    order-dependent first-mover advantage under extreme (low-H) mortality
-    that R1's failure-mode analysis must report, not an analyzer defect."""
-
-    spec_a = ProcessEntrantSpec("A", "attacker", [
-        ProcessInstance("pA", ProcessRole.ATTACKER, initial_position=0, reach=None, quota_share=8,
-                         logic=lambda obs, state: AgentAction(ActionKindV2.WRITE, 500, 0x11))
-    ])
-    spec_b = ProcessEntrantSpec("B", "counter_attacker", [
-        ProcessInstance("pB", ProcessRole.ATTACKER, initial_position=500, reach=None, quota_share=8,
-                         logic=lambda obs, state: AgentAction(ActionKindV2.WRITE, 0, 0x11))
-    ], start=500)
-
-    replay_path = _run_low_level(
-        [spec_a, spec_b], tmp_path=tmp_path, max_ticks=5,
-        ruleset_policy=RULESET_V5_R1_ALPHA1, process_integrity=1,
-    )
-    m = analyze_match(replay_path)
-
-    assert m["process_deaths"] == {"A": 0, "B": 1}
-    assert m["mutual_process_extinction"] is False
-    assert m["entrant_ever_alive_with_zero_processes"] == {"A": False, "B": True}
-    assert m["core_capture_outcome"] == {"A": "survived", "B": "survived"}
-
-
-def test_mutual_process_extinction_detected(tmp_path: Path) -> None:
-    """A third bystander entrant kills both A's and B's lone process within
-    the same tick by alternating its target address every call (its local
-    state counter, not the shared match tick, drives the alternation) --
-    decoupling each kill from the other's turn order and producing genuine
-    simultaneous mutual extinction for both A and B."""
-
-    def bystander_logic(obs: ObservationV2, state: dict[str, Any]) -> AgentAction:
-        state["i"] = state.get("i", 0) + 1
-        target = 0 if state["i"] % 2 == 1 else 500
-        return AgentAction(ActionKindV2.WRITE, target, 0x11)
-
-    spec_a = ProcessEntrantSpec("A", "quiet_a", [
-        ProcessInstance("pA", ProcessRole.DEFENDER, initial_position=0, reach=None, quota_share=8,
-                         logic=lambda obs, state: AgentAction(ActionKind.NOP))
-    ])
-    spec_b = ProcessEntrantSpec("B", "quiet_b", [
-        ProcessInstance("pB", ProcessRole.DEFENDER, initial_position=500, reach=None, quota_share=8,
-                         logic=lambda obs, state: AgentAction(ActionKind.NOP))
-    ], start=500)
-    spec_c = ProcessEntrantSpec("C", "bystander", [
-        ProcessInstance("pC", ProcessRole.ATTACKER, initial_position=250, reach=None, quota_share=8,
-                         logic=bystander_logic)
-    ], start=250)
-
-    replay_path = _run_low_level(
-        [spec_a, spec_b, spec_c], tmp_path=tmp_path, max_ticks=3,
-        ruleset_policy=RULESET_V5_R1_ALPHA1, process_integrity=4,
-    )
-    m = analyze_match(replay_path)
-
-    assert m["process_deaths"]["A"] == 1
-    assert m["process_deaths"]["B"] == 1
-    assert m["process_extinction_tick"]["A"] == 1
-    assert m["process_extinction_tick"]["B"] == 1
-    assert m["entrant_ever_alive_with_zero_processes"]["A"] is True
-    assert m["entrant_ever_alive_with_zero_processes"]["B"] is True
-    assert m["core_capture_outcome"]["A"] == "survived"
-    assert m["core_capture_outcome"]["B"] == "survived"
-
-
-def test_analyzer_deterministic_with_r1_fields(tmp_path: Path) -> None:
-    spec_a = ProcessEntrantSpec("A", "attacker", [
-        ProcessInstance("pA", ProcessRole.ATTACKER, initial_position=0, reach=None, quota_share=8,
-                         logic=lambda obs, state: AgentAction(ActionKindV2.WRITE, 500, 0x11))
-    ])
-    spec_b = ProcessEntrantSpec("B", "victim", [
-        ProcessInstance("pB", ProcessRole.DEFENDER, initial_position=500, reach=None, quota_share=8,
-                         logic=lambda obs, state: AgentAction(ActionKind.NOP))
-    ], start=500)
-    replay_path = _run_low_level(
-        [spec_a, spec_b], tmp_path=tmp_path, max_ticks=8,
-        ruleset_policy=RULESET_V5_R1_ALPHA1, process_integrity=3,
-    )
-    import json
-    m1 = analyze_match(replay_path)
-    m2 = analyze_match(replay_path)
-    assert json.dumps(m1, sort_keys=True) == json.dumps(m2, sort_keys=True)

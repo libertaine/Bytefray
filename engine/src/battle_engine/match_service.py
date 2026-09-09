@@ -25,12 +25,7 @@ from battle_engine.agent_trace import (
 from battle_engine.config import Config
 from battle_engine.core import Kernel
 from battle_engine.entrant_identity import EntrantIdentity
-from battle_engine.process_runtime import (
-    DEFAULT_PROCESS_INTEGRITY,
-    ProcessMatchController,
-    has_objective_target_oracle,
-    has_process_mortality,
-)
+from battle_engine.process_runtime import ProcessMatchController
 from battle_engine.python_runtime import (
     DEFAULT_LOCALITY_REACH,
     PythonEntrantController,
@@ -173,30 +168,6 @@ class MatchRequest:
     locality_reach: int | None = None
     scheduler_chunk_size: int | None = None
     scheduler_rotate_start: bool = False
-    # V5 research Phase R1's experimental finite process-integrity value.
-    # ``None`` -- the default, and what every non-R1 caller passes -- means
-    # "not specified"; it is *ignored entirely* unless ``ruleset_id``
-    # resolves to a mortality Ruleset
-    # (``process_runtime.has_process_mortality``), so setting it on a
-    # request for any other Ruleset can never switch on mortality
-    # semantics. Under a mortality Ruleset, ``None`` resolves to
-    # ``process_runtime.DEFAULT_PROCESS_INTEGRITY``; the *resolved* value is
-    # what enters this request's ``reproducibility`` block and persisted
-    # artifacts (see ``_reproducibility``), so an R1 result always
-    # discloses the integrity value it actually ran under.
-    process_integrity: int | None = None
-    # V5 research Phase R2's experimental objective-target oracle opt-in.
-    # ``False`` -- the default, and what every non-R2 caller passes -- means
-    # "off". It is *ignored entirely* unless ``ruleset_id`` resolves to a
-    # Ruleset that permits the oracle
-    # (``process_runtime.has_objective_target_oracle``), so setting it on a
-    # request for stable ``bytefray-rules-4`` can never switch the
-    # instrument on. The *resolved* value enters this request's
-    # ``reproducibility`` block (and therefore ``match_id``/``result_id``/
-    # ``replay_id``) only when it resolves ``True``, so an oracle run is
-    # always distinguishable from an otherwise-identical non-oracle run
-    # while every pre-R2 match identity stays byte-identical.
-    objective_target_oracle: bool = False
 
 
 
@@ -468,37 +439,6 @@ def _resolve_locality_reach(request: MatchRequest) -> int | None:
     )
 
 
-def _resolve_process_integrity(request: MatchRequest) -> int | None:
-    """The finite process-integrity value ``request`` actually executes/executed under.
-
-    ``None`` for every Ruleset without ``has_process_mortality``, whatever
-    ``request.process_integrity`` says -- the mortality analog of
-    :func:`_resolve_locality_reach`.
-    """
-
-    if not has_process_mortality(_resolve_ruleset_id(request)):
-        return None
-    return (
-        DEFAULT_PROCESS_INTEGRITY
-        if request.process_integrity is None
-        else request.process_integrity
-    )
-
-
-def _resolve_objective_target_oracle(request: MatchRequest) -> bool:
-    """Whether ``request`` actually executes/executed with the R2 oracle on.
-
-    ``False`` for every Ruleset without ``has_objective_target_oracle``,
-    whatever ``request.objective_target_oracle`` says -- the oracle analog of
-    :func:`_resolve_process_integrity`. Two keys must both turn: the Ruleset
-    must permit the instrument and the caller must ask for it.
-    """
-
-    if not has_objective_target_oracle(_resolve_ruleset_id(request)):
-        return False
-    return bool(request.objective_target_oracle)
-
-
 def _reproducibility(request: MatchRequest) -> dict[str, Any]:
     """The per-match configuration block both identity and artifacts use.
 
@@ -528,15 +468,6 @@ def _reproducibility(request: MatchRequest) -> dict[str, Any]:
     resolved_reach = _resolve_locality_reach(request)
     if resolved_reach is not None:
         payload["locality_reach"] = resolved_reach
-    resolved_integrity = _resolve_process_integrity(request)
-    if resolved_integrity is not None:
-        payload["process_integrity"] = resolved_integrity
-    # Written only when the oracle actually ran, never as an explicit
-    # ``false``: an R1 mortality match with the oracle disabled must keep the
-    # exact ``match_id``/``replay_id``/``result_id`` it had before R2
-    # existed, while an oracle run must never be mistakable for one.
-    if _resolve_objective_target_oracle(request):
-        payload["objective_target_oracle"] = True
     return payload
 
 
@@ -800,20 +731,6 @@ def _build_process_result(
                                 "process_id": process.process_id,
                                 "reach": process.reach,
                                 "share": float(process.quota_share),
-                                # V5 research Phase R1: only present under a
-                                # mortality Ruleset, so a stable V4 (or any
-                                # earlier) result's process metadata is
-                                # byte-identical to one built before these
-                                # keys existed.
-                                **(
-                                    {
-                                        "alive": process.alive,
-                                        "integrity_remaining": process.integrity,
-                                        "died_tick": process.telemetry.died_tick,
-                                    }
-                                    if controller.mortality_active
-                                    else {}
-                                ),
                             }
                             for process in spec.processes
                         ],
@@ -886,8 +803,6 @@ def _run_v4_process_match(
             ruleset_policy=ruleset_policy,
             agent_call_timeout=request.agent_call_timeout,
             trace_writer=trace_writer,
-            process_integrity=_resolve_process_integrity(request),
-            objective_target_oracle=_resolve_objective_target_oracle(request),
         )
         replay_path.parent.mkdir(parents=True, exist_ok=True)
         descriptor, temporary_name = tempfile.mkstemp(
