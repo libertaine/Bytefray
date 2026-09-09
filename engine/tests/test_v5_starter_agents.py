@@ -374,12 +374,14 @@ def test_v5_starter_manifest_is_a_valid_current_schema_v2_manifest(name: str) ->
     assert manifest["kind"] == "python"
     assert manifest["api_version"] == 2
     assert manifest["entrypoint"] == "agent.py:create_agent"
-    assert manifest["version"] == "1.0.0"
+    # 1.1.0 in V5 Alpha 1 Phase D: every starter gained a declared
+    # ``parameters`` section and reads its resolved values. Behaviour at the
+    # declared defaults is unchanged from Phase C -- proved by
+    # ``test_v5_starter_defaults_reproduce_the_phase_c_gameplay_digest`` in
+    # ``test_v5_agent_parameters.py``, not by this manifest literal.
+    assert manifest["version"] == "1.1.0"
     assert manifest["display"].startswith("V5 ")
     assert manifest["display"].endswith("(Starter)")
-    # Phase D owns parameter schemas; a Phase C manifest must not pre-empt it.
-    assert "parameters" not in manifest
-    assert "presets" not in manifest
 
 
 @pytest.mark.parametrize("name", V5_STARTER_NAMES)

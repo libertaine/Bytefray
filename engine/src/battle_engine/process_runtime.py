@@ -17,6 +17,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from fractions import Fraction
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, cast
 
 from battle_engine.agent_api import (
@@ -373,6 +374,13 @@ class ProcessMatchController:
                         arena_size=config.arena_size,
                         tick_limit=max_ticks,
                         rng=random.Random(seed),
+                        # V5 Alpha 1 Phase D: already resolved and validated
+                        # against the agent's declared schema before the
+                        # request reached the runtime, so there is nothing
+                        # left to check here -- an invalid parameter has
+                        # already failed the match without importing agent
+                        # code. Empty for every agent without a schema.
+                        parameters=MappingProxyType(dict(entrant.parameters)),
                     )
                     instance = cast(AgentV2, loaded.instance)
                     reset_start = time.perf_counter()
@@ -451,6 +459,7 @@ class ProcessMatchController:
                         tick_limit=max_ticks,
                         action_budget=config.instr_per_tick,
                         timeout=agent_call_timeout,
+                        parameters=entrant.parameters,
                     )
                     if trace_writer is not None:
                         trace_writer.write_reset(ResetRecord(

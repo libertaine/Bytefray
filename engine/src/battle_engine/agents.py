@@ -8,6 +8,11 @@ from typing import Any
 import yaml
 
 from battle_engine.agent_api import AgentManifestError
+from battle_engine.agent_parameters import (
+    EMPTY_PARAMETER_SCHEMA,
+    AgentParameterSchema,
+    parse_parameter_schema,
+)
 
 __all__ = [
     "AgentSpec",
@@ -32,6 +37,13 @@ class AgentSpec:
     source_path: Path | None = None
     entry_point: str | None = None
     manifest: dict[str, Any] = field(default_factory=dict)
+    #: The agent's declared parameter schema (V5 Alpha 1 Phase D). Empty --
+    #: never ``None`` -- for every manifest without a ``parameters`` section,
+    #: so callers can always ask a spec what it exposes without first
+    #: checking whether it exposes anything. ``defaults`` above remains the
+    #: legacy free-form block and is unchanged; a manifest may declare one or
+    #: the other, not both (see ``agent_parameters.parse_parameter_schema``).
+    parameter_schema: AgentParameterSchema = EMPTY_PARAMETER_SCHEMA
 
 
 def agent_runtime_label(spec: AgentSpec) -> str:
@@ -177,6 +189,12 @@ def _spec_from_dir(agent_dir: Path) -> AgentSpec | None:
         module_value = entry_point.partition(":")[0]
         source_path = (agent_dir / module_value).resolve() if module_value else None
 
+    # Parsed here rather than lazily on first use so a malformed schema is
+    # reported the same way every other manifest defect already is: at
+    # discovery/resolution, as an AgentManifestError naming the file, long
+    # before any agent code is imported or executed.
+    parameter_schema = parse_parameter_schema(meta, path=yaml_path if meta else None)
+
     return AgentSpec(
         name=name,
         display=display,
@@ -189,6 +207,7 @@ def _spec_from_dir(agent_dir: Path) -> AgentSpec | None:
         source_path=source_path,
         entry_point=entry_point,
         manifest=dict(meta),
+        parameter_schema=parameter_schema,
     )
 
 

@@ -89,6 +89,17 @@ class MatchEntrant:
     code: bytes | None
     kind: str = "vm"
     python_spec: Any | None = None
+    #: This entrant's fully resolved agent parameters (V5 Alpha 1 Phase D),
+    #: already validated by ``agent_parameters.resolve_parameters`` before a
+    #: request is built. Empty for every entrant that declares no parameter
+    #: schema and is given no overrides -- which is every entrant that
+    #: existed before Phase D, and why every historical ``match_id`` is
+    #: unaffected (see ``canonical_match_id``).
+    #:
+    #: Carried on the request rather than resolved inside the runtime so
+    #: that an invalid parameter fails before any agent code is imported or
+    #: executed.
+    parameters: Mapping[str, Any] = MappingProxyType({})
 
     def __init__(
         self,
@@ -98,12 +109,16 @@ class MatchEntrant:
         code: bytes | None,
         kind: str = "vm",
         python_spec: Any | None = None,
+        parameters: Mapping[str, Any] | None = None,
     ) -> None:
         object.__setattr__(self, "identity", EntrantIdentity(agent_id=agent_id, name=name))
         object.__setattr__(self, "start", start)
         object.__setattr__(self, "code", code)
         object.__setattr__(self, "kind", kind)
         object.__setattr__(self, "python_spec", python_spec)
+        object.__setattr__(
+            self, "parameters", MappingProxyType(dict(parameters or {}))
+        )
 
     @property
     def agent_id(self) -> str:
@@ -114,8 +129,15 @@ class MatchEntrant:
         return self.identity.name
 
     @classmethod
-    def python(cls, agent_id: str, name: str, start: int, spec: Any) -> MatchEntrant:
-        return cls(agent_id, name, start, None, "python", spec)
+    def python(
+        cls,
+        agent_id: str,
+        name: str,
+        start: int,
+        spec: Any,
+        parameters: Mapping[str, Any] | None = None,
+    ) -> MatchEntrant:
+        return cls(agent_id, name, start, None, "python", spec, parameters)
 
 
 @dataclass(frozen=True)
@@ -675,13 +697,16 @@ def _build_process_result(
     summary: Mapping[str, Any],
     config: Config,
     replay_path: Path,
+    entrant_parameters: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> NativeMatchResult:
     """Convert the canonical v4 controller state into the native result model."""
 
     arena_size = config.arena_size
+    parameters_by_agent = entrant_parameters or {}
     specs = {spec.agent_id: spec for spec in controller.entrant_specs}
     results: list[NativeAgentResult] = []
     for state in controller.states:
+        resolved_parameters = parameters_by_agent.get(state.agent_id) or {}
         statistics = controller.statistics[state.agent_id]
         territory_sum = int(statistics.get("territory_sum", 0) or 0)
         territory_last = int(statistics.get("territory_last", 0) or 0)
@@ -734,6 +759,24 @@ def _build_process_result(
                             }
                             for process in spec.processes
                         ],
+                        # V5 Alpha 1 Phase D: the concrete resolved parameter
+                        # values this entrant actually ran with -- what a
+                        # reader needs to reproduce the match. The authoring
+                        # *schema* (types, bounds, descriptions, presets)
+                        # stays with the agent package and is deliberately
+                        # never copied into an artifact.
+                        #
+                        # Purely additive to this already free-form metadata
+                        # dict, on the same seam `entry_point`, the two
+                        # fingerprints and `processes` use, and omitted
+                        # entirely when empty -- so no pre-Phase-D
+                        # `result.json`, and therefore no `result_id`,
+                        # changes, and the replay schema needs no bump.
+                        **(
+                            {"parameters": dict(resolved_parameters)}
+                            if resolved_parameters
+                            else {}
+                        ),
                     }
                 ),
             )
@@ -816,7 +859,17 @@ def _run_v4_process_match(
         recorded_path = temporary_path
         temporary_path = None
         
-        return _build_process_result(controller, summary, request.config, recorded_path)
+        return _build_process_result(
+            controller,
+            summary,
+            request.config,
+            recorded_path,
+            entrant_parameters={
+                entrant.agent_id: entrant.parameters
+                for entrant in request.entrants
+                if entrant.parameters
+            },
+        )
     except PythonEntrantInitializationError:
         _remove_python_artifacts(replay_path, summary_path)
         raise
@@ -1047,6 +1100,21 @@ def canonical_match_id(request: MatchRequest) -> str:
             # trusting the stale id).
             if entrant.start != 0:
                 metadata["start"] = entrant.start
+            # V5 Alpha 1 Phase D: resolved agent parameters are a genuine
+            # gameplay-relevant identity input -- an agent handed a different
+            # sweep width plays a different match -- so two requests differing
+            # only by parameters must not share a match_id.
+            #
+            # Gated on non-empty exactly like `start` above, and for the same
+            # reason: before Phase D no Python entrant could carry parameters
+            # at all, so an empty mapping omits the key entirely and every
+            # historical match_id, result_id and replay_id stays byte-for-byte
+            # what this build computed before. Sorted so a caller's dict
+            # ordering can never change the hash.
+            if entrant.parameters:
+                metadata["parameters"] = {
+                    key: entrant.parameters[key] for key in sorted(entrant.parameters)
+                }
         entrant_identities.append(
             {"agent_id": entrant.agent_id, "name": entrant.name, "metadata": metadata}
         )

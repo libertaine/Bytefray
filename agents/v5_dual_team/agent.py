@@ -27,6 +27,14 @@ READ THIS ONE AFTER THE OTHER THREE
     each do one job with one process.  This one is the smallest example
     that combines two of them; ``v4_quorum`` is the advanced six-process
     version and is much harder to read.
+
+ITS ONE PARAMETER
+    ``agent.yaml`` declares ``raider_share``, and the engine hands its
+    resolved value to ``reset`` on ``context.parameters``.  The keeper takes
+    whatever is left, so the two shares still total exactly 1.0 whatever
+    the parameter says -- which is the point.  How you divide a fixed quota
+    between roles is the decision this whole example exists to show, so it
+    is the thing worth making adjustable.  See docs/AGENT_API_V2.md.
 """
 
 from battle_engine.agent_api import (
@@ -42,8 +50,9 @@ from battle_engine.agent_api import (
 # entrant quota gives each process four actions per tick.
 RAIDER_REACH = 32
 KEEPER_REACH = 12
+
+# The raider's default slice of the quota; the keeper always gets the rest.
 RAIDER_SHARE = 0.5
-KEEPER_SHARE = 0.5
 
 SIGNATURE = 0x6B
 
@@ -60,6 +69,11 @@ class DualTeamAgent:
         self.context = context
         self.arena = context.arena_size
         self.signature = SIGNATURE
+        # Already validated and coerced against the schema in agent.yaml --
+        # bounded to [0.0, 1.0] there, which is what keeps the pair of
+        # shares below legal without any checking in this file.  The
+        # fallback is that schema's own declared default.
+        self.raider_share = float(context.parameters.get("raider_share", RAIDER_SHARE))
         # Shared between both processes -- this is the cooperation channel.
         self.last_contact: int | None = None
         self.last_contact_tick = -1
@@ -68,12 +82,17 @@ class DualTeamAgent:
         self.keep_cursor = 0
 
     def declare_processes(self) -> list[ProcessDeclaration]:
+        # The keeper's share is derived rather than declared separately, so
+        # the pair can never drift out of the required total of 1.0 however
+        # ``raider_share`` was set.
         return [
             ProcessDeclaration(
-                id="raider", reach=self._reach(RAIDER_REACH), share=RAIDER_SHARE
+                id="raider", reach=self._reach(RAIDER_REACH), share=self.raider_share
             ),
             ProcessDeclaration(
-                id="keeper", reach=self._reach(KEEPER_REACH), share=KEEPER_SHARE
+                id="keeper",
+                reach=self._reach(KEEPER_REACH),
+                share=1.0 - self.raider_share,
             ),
         ]
 

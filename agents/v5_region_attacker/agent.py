@@ -28,6 +28,19 @@ WHY THE SWEEP IS AS WIDE AS OUR OWN CORE
     is an honest guess a human player would also make -- and it keeps a
     bare literal ``8`` out of this file, so the agent still behaves
     sensibly if the core width ever changes.
+
+THE ONE PARAMETER
+    ``agent.yaml`` declares a single knob, ``attacker_reach``, and the
+    engine hands its resolved value to ``reset`` on ``context.parameters``;
+    ``declare_processes`` then declares the process with it.  Reach is the
+    one number worth experimenting with here, because it is the trade-off
+    the whole agent turns on: it is simultaneously how far we can sense a
+    contact and how far we can write once we have one.  Raising it finds
+    opponents sooner and lets us strike from further out; lowering it makes
+    contact rare but keeps the process close to what it hits.  Note what
+    does NOT change with it -- the sweep is always one core width either
+    side of the contact, because that is the width of the objective, not a
+    matter of taste.  See docs/AGENT_API_V2.md.
 """
 
 from battle_engine.agent_api import (
@@ -39,9 +52,12 @@ from battle_engine.agent_api import (
 )
 
 # Reach is both our write radius and our sensor radius, so it is a real
-# trade-off rather than a free parameter: wider reach covers more of the
-# region in one place, narrower reach makes contact rarer.  16 comfortably
-# covers a core-width sweep on either side of a contact.
+# trade-off rather than a free knob: wider reach covers more of the region
+# in one place and senses further, narrower reach makes contact rarer.
+# 16 comfortably covers a core-width sweep on either side of a contact.
+# This is also the default of the declared ``attacker_reach`` parameter,
+# repeated here so the file still runs correctly if it is ever loaded
+# without its manifest -- ``agent.yaml`` declares the same number.
 ATTACKER_REACH = 16
 
 # The byte we stamp on every cell we take.  Cells are owned by whoever
@@ -61,6 +77,13 @@ class RegionAttackerAgent:
         self.context = context
         self.arena = context.arena_size
         self.signature = SIGNATURE
+        # Parameters arrive already validated and coerced against the schema
+        # in agent.yaml, so there is nothing to check here -- an illegal
+        # value failed the match before this agent was even imported.  The
+        # fallback is the manifest's own declared default.
+        self.attacker_reach = int(
+            context.parameters.get("attacker_reach", ATTACKER_REACH)
+        )
         # The only state this agent keeps: how far along the sweep we are.
         # It never resets, so the sweep keeps rotating over the region
         # instead of restarting at the centre on every new contact.
@@ -69,7 +92,7 @@ class RegionAttackerAgent:
     def declare_processes(self) -> list[ProcessDeclaration]:
         return [
             ProcessDeclaration(
-                id="attacker", reach=self._reach(ATTACKER_REACH), share=1.0
+                id="attacker", reach=self._reach(self.attacker_reach), share=1.0
             )
         ]
 
@@ -108,8 +131,11 @@ class RegionAttackerAgent:
 
         The sweep runs one core width either side of the contact, so an
         anchor within ``reach - core_size`` of it can legally write every
-        address in that window.  ATTACKER_REACH is comfortably more than a
-        core width, which is what makes this margin positive.
+        address in that window.  A reach comfortably larger than a core
+        width is what makes this margin positive -- and it is why the
+        declared ``attacker_reach`` has a floor: below one core width there
+        is no margin left and the sweep can only ever reach part of its own
+        window.
         """
 
         return max(0, observation.self_reach - max(1, observation.own_core_size))

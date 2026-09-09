@@ -5,5 +5,28 @@
   "kind": "python",
   "api_version": 2,
   "entrypoint": "agent.py:create_agent",
-  "version": "1.0.0"
+  "version": "1.1.0",
+  "parameters": {
+    "attacker_reach": {
+      "type": "integer",
+      "default": 16,
+      "minimum": 10,
+      "maximum": 64,
+      "description": "The reach this agent declares for its single process: simultaneously how far it can sense an enemy anchor and how far it can write. Raising it finds contacts sooner and lets the sweep run from further away; lowering it makes contact rare. The floor is 10 because the sweep spans a whole core width either side of the contact, and a reach at or below 8 would leave no room to cover it."
+    }
+  },
+  "presets": {
+    "standard": {
+      "description": "The declared default. Wide enough to cover a core-width sweep either side of a contact, narrow enough that this stays an agent that closes with its target.",
+      "values": {
+        "attacker_reach": 16
+      }
+    },
+    "far_sighted": {
+      "description": "Double reach. Detects an opponent much earlier and can press the region from a distance, at the cost of being a far larger, more obvious presence that commits to contacts it has barely approached.",
+      "values": {
+        "attacker_reach": 32
+      }
+    }
+  }
 }

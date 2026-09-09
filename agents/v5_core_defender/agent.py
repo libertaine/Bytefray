@@ -21,6 +21,13 @@ WHAT THIS AGENT IS ALLOWED TO KNOW
     opponent's core, which is exactly why this agent is a defender and not
     an attacker.  Everything else comes from its own READs and from the
     ordinary ``visible_enemy_anchor_addresses`` sensor channel.
+
+ITS ONE PARAMETER
+    ``agent.yaml`` declares ``inspections_per_tick``, the size of that
+    reserved duty, and the engine hands its resolved value to ``reset`` on
+    ``context.parameters``.  It is the whole lesson expressed as a number:
+    set it to 0 and the agent keeps refreshing cells but can no longer tell
+    which ones it has actually lost.  See docs/AGENT_API_V2.md.
 """
 
 from battle_engine.agent_api import (
@@ -54,11 +61,16 @@ class CoreDefenderAgent:
         self.context = context
         self.arena = context.arena_size
         self.signature = SIGNATURE
+        # Already validated and coerced against the schema in agent.yaml;
+        # the fallback is that schema's own declared default.
+        self.inspections_per_tick = int(
+            context.parameters.get("inspections_per_tick", INSPECTIONS_PER_TICK)
+        )
         self.repair_queue: list[int] = []
         self.inspect_cursor = 0
         self.pending_read: int | None = None
         self.tick_marker = -1
-        self.inspect_budget = INSPECTIONS_PER_TICK
+        self.inspect_budget = self.inspections_per_tick
 
     def declare_processes(self) -> list[ProcessDeclaration]:
         return [
@@ -142,7 +154,7 @@ class CoreDefenderAgent:
     def _refresh_budget(self, tick: int) -> None:
         if tick != self.tick_marker:
             self.tick_marker = tick
-            self.inspect_budget = INSPECTIONS_PER_TICK
+            self.inspect_budget = self.inspections_per_tick
 
     # -- geometry --------------------------------------------------------
 

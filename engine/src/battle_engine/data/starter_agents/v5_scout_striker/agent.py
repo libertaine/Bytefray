@@ -23,6 +23,14 @@ HOW IT DIFFERS FROM ``v5_region_attacker``
     reach, crosses the arena in deliberate strides, remembers a contact
     for a bounded number of ticks, and scans its strike window from the
     low address upward rather than expanding outward from the centre.
+
+ITS TWO PARAMETERS
+    ``agent.yaml`` declares the two numbers this strategy is actually
+    built out of -- how long a sighting stays worth attacking
+    (``contact_memory_ticks``) and how far each search step moves
+    (``search_stride_divisor``) -- and the engine hands their resolved
+    values to ``reset`` on ``context.parameters``.  The defaults are
+    exactly the constants below.  See docs/AGENT_API_V2.md.
 """
 
 from battle_engine.agent_api import (
@@ -46,6 +54,10 @@ SIGNATURE = 0x5B
 # ground for the rest of the match.
 CONTACT_MEMORY_TICKS = 60
 
+# Divides the search stride.  1 means one full reach per action, so
+# consecutive actions sense adjacent, non-overlapping bands.
+SEARCH_STRIDE_DIVISOR = 1
+
 MAX_MOVE_DELTA = 64
 
 
@@ -56,6 +68,15 @@ class ScoutStrikerAgent:
         self.context = context
         self.arena = context.arena_size
         self.signature = SIGNATURE
+        # Parameters arrive already validated and coerced against the schema
+        # in agent.yaml; the fallbacks are that schema's own declared
+        # defaults, so this file behaves identically with or without one.
+        self.contact_memory_ticks = int(
+            context.parameters.get("contact_memory_ticks", CONTACT_MEMORY_TICKS)
+        )
+        self.search_stride_divisor = int(
+            context.parameters.get("search_stride_divisor", SEARCH_STRIDE_DIVISOR)
+        )
         # Three small pieces of state: what we last saw, when we saw it,
         # and how far through the strike window we are.
         self.last_contact: int | None = None
@@ -76,11 +97,12 @@ class ScoutStrikerAgent:
         # SEARCH: nothing known, so cover new ground.  A stride of one full
         # reach means consecutive actions sense adjacent, non-overlapping
         # bands, and always in the same direction so the search is a
-        # predictable lap of the arena rather than a random walk.
+        # predictable lap of the arena rather than a random walk.  Dividing
+        # the stride trades ground covered for a second look at each band.
         if target is None:
             return AgentAction(
                 kind=ActionKindV2.MOVE,
-                operand=self._clamp(max(1, observation.self_reach)),
+                operand=self._clamp(self._search_stride(observation)),
             )
 
         # APPROACH: close until the whole strike window is inside reach,
@@ -98,6 +120,11 @@ class ScoutStrikerAgent:
             operand=self._next_strike_address(observation, target),
             value=self.signature,
         )
+
+    def _search_stride(self, observation: ObservationV2) -> int:
+        """How far one search step moves, always at least one cell."""
+
+        return max(1, observation.self_reach // self.search_stride_divisor)
 
     # -- memory ----------------------------------------------------------
 
@@ -117,7 +144,7 @@ class ScoutStrikerAgent:
 
         if self.last_contact is None:
             return None
-        if tick - self.last_contact_tick > CONTACT_MEMORY_TICKS:
+        if tick - self.last_contact_tick > self.contact_memory_ticks:
             return None
         return self.last_contact
 

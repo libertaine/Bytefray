@@ -1,9 +1,40 @@
 {
   "name": "v5_scout_striker",
   "display": "V5 Scout Striker (Starter)",
-  "description": "V5 starter: crosses the arena in deliberate strides, remembers a legitimately detected contact, then strikes a bounded window around it.",
+  "description": "V5 starter: strides across the arena searching, remembers a contact, and keeps striking it until the memory goes stale.",
   "kind": "python",
   "api_version": 2,
   "entrypoint": "agent.py:create_agent",
-  "version": "1.0.0"
+  "version": "1.1.0",
+  "parameters": {
+    "contact_memory_ticks": {
+      "type": "integer",
+      "default": 60,
+      "minimum": 0,
+      "maximum": 1000,
+      "description": "How many ticks a sighting stays worth attacking after it was last seen. 0 forgets immediately and never attacks a contact it cannot currently see; large values keep bombarding ground the opponent may have left."
+    },
+    "search_stride_divisor": {
+      "type": "integer",
+      "default": 1,
+      "minimum": 1,
+      "maximum": 8,
+      "description": "Divides the search stride. 1 moves a full reach per action, so consecutive actions sense adjacent, non-overlapping bands; larger values step more slowly and re-sense ground already covered."
+    }
+  },
+  "presets": {
+    "standard": {
+      "description": "The declared defaults: full-reach strides, a 60-tick memory.",
+      "values": {
+        "contact_memory_ticks": 60,
+        "search_stride_divisor": 1
+      }
+    },
+    "persistent": {
+      "description": "Holds a sighting four times as long. Better against an opponent that stays near its core, worse against one that moves away.",
+      "values": {
+        "contact_memory_ticks": 240
+      }
+    }
+  }
 }

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from battle_engine.agent_api import AgentValidationError
+from battle_engine.agent_parameters import EMPTY_PARAMETER_SCHEMA, resolve_parameters
 from battle_engine.agents import agent_runtime_label, discover_agents, resolve_agent
 from battle_engine.builtins import SUPPORTED, build_agent
 from battle_engine.core import Config, Weights
@@ -128,6 +129,101 @@ def _merge_params(
     merged = dict(defaults or {})
     merged.update(overrides or {})
     return merged
+
+
+def _parse_param_assignment(raw: str) -> tuple[str, str]:
+    """Split one ``--a-param KEY=VALUE`` flag into its two halves.
+
+    The value is left as text on purpose. Every type decision belongs to the
+    agent's declared schema, applied once by
+    ``agent_parameters.resolve_parameters`` -- the CLI must not guess that
+    ``8`` means an integer and ``0.25`` a float, because only the manifest
+    knows which the parameter actually is.
+    """
+
+    key, separator, value = raw.partition("=")
+    if not separator or not key.strip():
+        raise SystemExit(
+            f"Invalid --*-param value {raw!r}: expected KEY=VALUE, e.g. "
+            f"'sweep_span_cores=2'."
+        )
+    return key.strip(), value
+
+
+def _parameter_overrides(letter: str, args: argparse.Namespace) -> dict[str, Any]:
+    """One slot's explicit parameter overrides, from every CLI source.
+
+    ``BYTEFRAY_AGENT_{letter}_PARAMS_JSON`` (the pre-existing path the Agent
+    Designer already exports and the only one that existed before V5 Alpha 1
+    Phase D) first, then repeated ``--{letter}-param KEY=VALUE`` flags over
+    the top: an explicitly typed flag beats an ambient environment variable.
+
+    This is the *override* layer only. Schema defaults and any selected
+    preset are applied underneath it by the canonical resolver, never here.
+    """
+
+    overrides: dict[str, Any] = dict(_parse_env_json(f"BYTEFRAY_AGENT_{letter}_PARAMS_JSON"))
+    for raw in getattr(args, f"{letter.lower()}_param", None) or []:
+        key, value = _parse_param_assignment(raw)
+        overrides[key] = value
+    return overrides
+
+
+def _resolve_entrant_parameters(
+    letter: str, spec: Any, args: argparse.Namespace
+) -> dict[str, Any]:
+    """Resolve one Python entrant's parameters before the match is built.
+
+    Deliberately called from ``main`` rather than from inside the runtime, so
+    an unknown key or an out-of-range value fails the invocation with a
+    presentable diagnostic *before* any agent module is imported.
+    """
+
+    schema = getattr(spec, "parameter_schema", EMPTY_PARAMETER_SCHEMA)
+    overrides = _parameter_overrides(letter, args)
+    preset = getattr(args, f"{letter.lower()}_preset", None)
+
+    # Resolved parameters are delivered as MatchContextV2.parameters, which
+    # only an Agent API v2 agent receives.
+    if getattr(spec, "api_version", None) != 2:
+        if preset is not None:
+            # `--*-preset` is new in Phase D, so refusing it here breaks no
+            # existing invocation, and a silently-ignored preset name would
+            # be indistinguishable from one that worked.
+            raise SystemExit(
+                f"Agent {letter}: --{letter.lower()}-preset was given, but "
+                f"{getattr(spec, 'name', '<unknown>')!r} declares Agent API "
+                f"{getattr(spec, 'api_version', None)!r}. Only Agent API v2 "
+                f"agents declare parameter schemas and presets."
+            )
+        if overrides:
+            # Free-form overrides for a v1 agent are the pre-existing
+            # behaviour and must stay a no-op: the Agent Designer's Agent
+            # Params field exports $BYTEFRAY_AGENT_*_PARAMS_JSON for whatever
+            # agent is selected, and a v1 agent has always ignored it. Making
+            # that an error would break a working path to enforce a rule that
+            # arrived after it. Warn instead of failing, and instead of
+            # staying silent as this did before Phase D.
+            print(
+                f"WARNING: agent {letter} parameters "
+                f"({_keys_preview(overrides)}) were ignored: "
+                f"{getattr(spec, 'name', '<unknown>')!r} declares Agent API "
+                f"{getattr(spec, 'api_version', None)!r}, and only Agent API "
+                f"v2 agents receive resolved parameters.",
+                file=sys.stderr,
+            )
+        return {}
+
+    try:
+        return resolve_parameters(
+            schema,
+            legacy_defaults=getattr(spec, "defaults", None),
+            preset=preset,
+            overrides=overrides,
+            path=getattr(spec, "dir", None),
+        )
+    except AgentValidationError as exc:
+        raise SystemExit(f"Agent {letter}: {exc}") from exc
 
 
 def _keys_preview(d: dict[str, Any]) -> str:
@@ -291,6 +387,28 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     p.add_argument("--b-start", type=int, default=None)
     p.add_argument("--c-start", type=int, default=None)
 
+    # Per-agent schema-driven parameters (V5 Alpha 1 Phase D). Both are
+    # optional and inert for an agent that declares no `parameters` section
+    # in its agent.yaml -- see docs/AGENT_API_V2.md's "Parameters and
+    # presets". Values are text here and are typed by the agent's own
+    # declared schema, so `--a-param sweep_span_cores=2` and a JSON `2` in
+    # $BYTEFRAY_AGENT_A_PARAMS_JSON resolve identically.
+    for _letter in ("a", "b", "c"):
+        p.add_argument(
+            f"--{_letter}-param",
+            action="append",
+            metavar="KEY=VALUE",
+            help=(
+                f"override one declared parameter of agent {_letter.upper()}; "
+                f"repeatable"
+            ),
+        )
+        p.add_argument(
+            f"--{_letter}-preset",
+            metavar="NAME",
+            help=f"select a declared parameter preset for agent {_letter.upper()}",
+        )
+
     # Common agent params
     p.add_argument(
         "--byte",
@@ -417,9 +535,14 @@ def _resolve_agent(
         spec_obj = None
 
     if spec_obj is not None:
-        side_env = _parse_env_json(f"BYTEFRAY_AGENT_{letter}_PARAMS_JSON")
+        side_env = _parameter_overrides(letter, args)
 
         if spec_obj.kind == "python":
+            # A Python entrant's parameters are resolved against its declared
+            # schema in `main` (`_resolve_entrant_parameters`) and travel on
+            # the MatchEntrant, because only the schema can say what
+            # `sweep_span_cores=2` means. The VM branches below keep their
+            # historical free-form kwargs path unchanged.
             return None, agent_name, start, spec_obj
 
         env_blob = side_env.get("blob_path")
@@ -453,7 +576,7 @@ def _resolve_agent(
 
     # 4) built-in fallback
     if agent_name in SUPPORTED:
-        side_env = _parse_env_json(f"BYTEFRAY_AGENT_{letter}_PARAMS_JSON")
+        side_env = _parameter_overrides(letter, args)
         code = build_agent(agent_name, start, **_merge_params(common_kwargs, side_env))
         return code, agent_name, start, None
 
@@ -788,38 +911,34 @@ def main(argv: Iterable[str] | None = None) -> int:
         "C", env_spec, spec_dir, args, cfg, common_kwargs
     )
 
+    # A Python entrant's parameters are resolved here, before any agent
+    # module is imported: an unknown key, an out-of-range value or an unknown
+    # preset must fail the invocation rather than the match. Empty for every
+    # agent that declares no schema and is given no overrides.
+    paramsA = _resolve_entrant_parameters("A", pythonA, args) if pythonA else {}
+    paramsB = _resolve_entrant_parameters("B", pythonB, args) if pythonB else {}
+    paramsC = _resolve_entrant_parameters("C", pythonC, args) if pythonC else {}
+
     try:
-        root = _data_root()
-        a_env = _parse_env_json("BYTEFRAY_AGENT_A_PARAMS_JSON")
-        b_env = _parse_env_json("BYTEFRAY_AGENT_B_PARAMS_JSON")
-        c_env = _parse_env_json("BYTEFRAY_AGENT_C_PARAMS_JSON")
+        resolved_preview = {"A": paramsA, "B": paramsB, "C": paramsC}
 
-        def _try_resolve(name: str | None):
-            if not name:
-                return None
-            try:
-                return resolve_agent(root, name)
-            except (SystemExit, AgentValidationError):
-                return None
-
-        a_spec = _try_resolve(args.a_type)
-        b_spec = _try_resolve(args.b_type)
-        c_spec = _try_resolve(args.c_type)
-
-        def keys(d: dict[str, Any]) -> str:
-            return _keys_preview(d or {})
+        def preview(letter: str, name: str) -> str:
+            # For a Python entrant this reports the values that were actually
+            # resolved and will actually reach the agent. For a VM entrant it
+            # reports the free-form kwargs its program is built from, which is
+            # the only parameter notion that path has ever had.
+            resolved = resolved_preview[letter]
+            if resolved:
+                return " ".join(
+                    f"{key}={resolved[key]!r}" for key in resolved
+                )
+            return _keys_preview(_parameter_overrides(letter, args))
 
         print("Agents:")
-        print(
-            f" A: {nameA} params={keys((a_spec.defaults if a_spec else {}) | (a_env or {}))}"
-        )
-        print(
-            f" B: {nameB} params={keys((b_spec.defaults if b_spec else {}) | (b_env or {}))}"
-        )
+        print(f" A: {nameA} params={preview('A', nameA)}")
+        print(f" B: {nameB} params={preview('B', nameB)}")
         if nameC:
-            print(
-                f" C: {nameC} params={keys((c_spec.defaults if c_spec else {}) | (c_env or {}))}"
-            )
+            print(f" C: {nameC} params={preview('C', nameC)}")
     except Exception:
         pass
 
@@ -834,19 +953,19 @@ def main(argv: Iterable[str] | None = None) -> int:
     # otherwise an invalid invocation could truncate an existing replay.
     entrants = [
         (
-            MatchEntrant.python("A", nameA, startA, pythonA)
+            MatchEntrant.python("A", nameA, startA, pythonA, paramsA)
             if pythonA is not None
             else MatchEntrant("A", nameA, startA, codeA)
         ),
         (
-            MatchEntrant.python("B", nameB, startB, pythonB)
+            MatchEntrant.python("B", nameB, startB, pythonB, paramsB)
             if pythonB is not None
             else MatchEntrant("B", nameB, startB, codeB)
         ),
     ]
     if nameC and (codeC is not None or pythonC is not None):
         entrants.append(
-            MatchEntrant.python("C", nameC, startC, pythonC)
+            MatchEntrant.python("C", nameC, startC, pythonC, paramsC)
             if pythonC is not None
             else MatchEntrant("C", nameC, startC, codeC)
         )

@@ -1,9 +1,32 @@
 {
   "name": "v5_core_defender",
   "display": "V5 Core Defender (Starter)",
-  "description": "V5 starter: inspects its own core with READ, repairs cells it can prove were taken, and never lets offence starve its inspection duty.",
+  "description": "V5 starter: READs its own core in rotation and repairs the cells it has proof it lost.",
   "kind": "python",
   "api_version": 2,
   "entrypoint": "agent.py:create_agent",
-  "version": "1.0.0"
+  "version": "1.1.0",
+  "parameters": {
+    "inspections_per_tick": {
+      "type": "integer",
+      "default": 4,
+      "minimum": 0,
+      "maximum": 8,
+      "description": "Actions per tick reserved for READing our own core, out of the entrant's eight. This budget is a reserved duty that offence may not spend. 0 disables inspection entirely, which leaves the agent blindly refreshing cells it cannot tell it has lost; 8 spends the whole quota looking."
+    }
+  },
+  "presets": {
+    "standard": {
+      "description": "The declared default: half the quota inspects, half stays free for repair and disruption.",
+      "values": {
+        "inspections_per_tick": 4
+      }
+    },
+    "vigilant": {
+      "description": "Every action inspects when there is nothing to repair. Detects a loss sooner, but leaves nothing for pushing an intruder off.",
+      "values": {
+        "inspections_per_tick": 8
+      }
+    }
+  }
 }
