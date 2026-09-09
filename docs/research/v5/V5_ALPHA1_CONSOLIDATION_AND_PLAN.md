@@ -342,3 +342,4 @@ The single next implementation phase to execute is:
 > **PHASE B — PRODUCTION ENGINE HYGIENE & REJECTED-EXPERIMENT ISOLATION**
 
 *Phase B Objective:* Purge experimental R1/R2 ruleset identities, process mortality, and target oracle hooks from production engine modules (`rules.py`, `ruleset_policy.py`, `process_runtime.py`, `replay.py`, `match_service.py`), bump project version to `5.0.0a1`, and isolate historical research tests, establishing a clean, production-grade V5 foundation.
+
