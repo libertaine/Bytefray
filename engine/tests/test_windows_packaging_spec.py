@@ -41,7 +41,7 @@ import re
 import sys
 import types
 from importlib.metadata import version as distribution_version
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 import pytest
@@ -208,6 +208,27 @@ def _exec_spec_datas(spec_path: Path, monkeypatch: pytest.MonkeyPatch) -> list[t
     return list(namespace["datas"])  # type: ignore[arg-type]
 
 
+def _frozen_tree(spec_path: Path, monkeypatch: pytest.MonkeyPatch) -> set[str]:
+    """Project a spec's ``datas`` into the destination paths it produces.
+
+    Since Phase F2 the specs expand their own repository directories through
+    ``tools.packaging_data.collect_data_tree`` (which drops ``__pycache__``/
+    ``.pyc``/``.pyo``) instead of appending ``(directory, destination)``
+    tuples for PyInstaller to collect wholesale, so ``datas`` is now a list of
+    per-file ``(source_file, destination_directory)`` entries. Asserting
+    against the resulting destination paths is both what survives that change
+    and a strictly stronger check than the directory-tuple assertions these
+    tests used before: "a tuple naming this directory is present" only proved
+    the spec *mentioned* the resource, whereas these paths are the actual
+    layout the frozen ``_internal`` tree receives.
+    """
+
+    return {
+        str(PurePosixPath(destination) / Path(source).name)
+        for source, destination in _exec_spec_datas(spec_path, monkeypatch)
+    }
+
+
 def test_bytefray_spec_bundles_the_agent_template_directory(monkeypatch):
     """Regression test for a real, previously-shipped packaging defect.
 
@@ -222,19 +243,16 @@ def test_bytefray_spec_bundles_the_agent_template_directory(monkeypatch):
     directory not found" error end to end against the real frozen exe.
     """
 
-    datas = _exec_spec_datas(BYTEFRAY_SPEC, monkeypatch)
-    template_entries = [
-        entry for entry in datas if entry[1] == "battle_engine/data/agent_template"
-    ]
-    assert template_entries, (
+    tree = _frozen_tree(BYTEFRAY_SPEC, monkeypatch)
+    expected = {
+        "battle_engine/data/agent_template/agent.yaml",
+        "battle_engine/data/agent_template/agent.py",
+    }
+    assert expected <= tree, (
         "tools/bytefray.spec's `datas` must bundle "
         "battle_engine/data/agent_template (needed by `bytefray agents "
-        "create` in the frozen build); found only: "
-        f"{[entry[1] for entry in datas]}"
+        f"create` in the frozen build); missing: {sorted(expected - tree)}"
     )
-    source_dir = Path(template_entries[0][0])
-    assert source_dir.is_dir()
-    assert {"agent.yaml", "agent.py"} <= {path.name for path in source_dir.iterdir()}
 
 
 def test_bytefray_spec_bundles_the_annotated_agent_template_directory(monkeypatch):
@@ -251,26 +269,24 @@ def test_bytefray_spec_bundles_the_annotated_agent_template_directory(monkeypatc
     guards for the original "blank" template.
     """
 
-    datas = _exec_spec_datas(BYTEFRAY_SPEC, monkeypatch)
-    template_entries = [
-        entry for entry in datas if entry[1] == "battle_engine/data/agent_template_annotated"
-    ]
-    assert template_entries, (
+    tree = _frozen_tree(BYTEFRAY_SPEC, monkeypatch)
+    expected = {
+        "battle_engine/data/agent_template_annotated/agent.yaml",
+        "battle_engine/data/agent_template_annotated/agent.py",
+    }
+    assert expected <= tree, (
         "tools/bytefray.spec's `datas` must bundle "
         "battle_engine/data/agent_template_annotated (needed by `bytefray "
-        "agents create --template annotated` in the frozen build); found "
-        f"only: {[entry[1] for entry in datas]}"
+        "agents create --template annotated` in the frozen build); missing: "
+        f"{sorted(expected - tree)}"
     )
-    source_dir = Path(template_entries[0][0])
-    assert source_dir.is_dir()
-    assert {"agent.yaml", "agent.py"} <= {path.name for path in source_dir.iterdir()}
 
 
 def test_bytefray_spec_still_bundles_starter_agents(monkeypatch):
     """Confirms adding the agent_template entry did not disturb starter_agents."""
 
-    datas = _exec_spec_datas(BYTEFRAY_SPEC, monkeypatch)
-    assert any(entry[1] == "battle_engine/data/starter_agents" for entry in datas)
+    tree = _frozen_tree(BYTEFRAY_SPEC, monkeypatch)
+    assert any(path.startswith("battle_engine/data/starter_agents/") for path in tree)
 
 
 @pytest.mark.parametrize(
@@ -290,17 +306,12 @@ def test_every_registered_starter_reaches_the_frozen_tree(spec_path: Path, monke
     future starter cannot be registered without also being packaged.
     """
 
-    datas = _exec_spec_datas(spec_path, monkeypatch)
-    starter_entries = [
-        entry for entry in datas if entry[1] == "battle_engine/data/starter_agents"
-    ]
-    assert starter_entries, f"{spec_path.name} must bundle battle_engine/data/starter_agents"
-    source_dir = Path(starter_entries[0][0])
-    assert source_dir.is_dir()
-    packaged = {path.name for path in source_dir.iterdir() if path.is_dir()}
+    tree = _frozen_tree(spec_path, monkeypatch)
+    prefix = "battle_engine/data/starter_agents/"
+    packaged = {path[len(prefix) :].split("/")[0] for path in tree if path.startswith(prefix)}
     missing = sorted(set(STARTER_AGENT_NAMES) - packaged)
     assert not missing, (
-        f"{spec_path.name} bundles {source_dir}, which is missing registered "
+        f"{spec_path.name} places no file in the frozen tree for registered "
         f"starter agents: {missing}"
     )
 
@@ -348,32 +359,25 @@ def test_every_supported_scaffold_template_reaches_the_frozen_tree(
     the built application.
     """
 
-    datas = _exec_spec_datas(spec_path, monkeypatch)
+    tree = _frozen_tree(spec_path, monkeypatch)
     destination = f"battle_engine/data/{template_dir_name}"
-    entries = [entry for entry in datas if entry[1] == destination]
+    expected = {f"{destination}/agent.yaml", f"{destination}/agent.py"}
 
-    assert entries, (
+    assert expected <= tree, (
         f"{spec_path.name}'s `datas` must bundle {destination}, which "
-        "battle_engine.agent_scaffold offers as a supported template; found "
-        f"only: {sorted(entry[1] for entry in datas)}"
+        "battle_engine.agent_scaffold offers as a supported template; "
+        f"missing: {sorted(expected - tree)}"
     )
-    source_dir = Path(entries[0][0])
-    assert source_dir.is_dir(), f"{spec_path.name} bundles missing {source_dir}"
-    assert {"agent.yaml", "agent.py"} <= {path.name for path in source_dir.iterdir()}
 
 
 def test_bytefray_spec_bundles_designer_branding_icon(monkeypatch):
     """The unified ``bytefray.exe design`` path must retain Beta3 branding."""
 
-    datas = _exec_spec_datas(BYTEFRAY_SPEC, monkeypatch)
-    branding_entries = [entry for entry in datas if entry[1] == "assets/branding"]
-    assert branding_entries, (
+    tree = _frozen_tree(BYTEFRAY_SPEC, monkeypatch)
+    assert "assets/branding/bytefray-icon.png" in tree, (
         "tools/bytefray.spec's `datas` must bundle the package-local "
-        "branding directory used by the Beta3 Designer identity header"
+        "branding icon used by the Beta3 Designer identity header"
     )
-    source_dir = Path(branding_entries[0][0])
-    assert source_dir.is_dir()
-    assert (source_dir / "bytefray-icon.png").is_file()
 
 
 def test_agent_designer_spec_bundles_the_agent_template_directory(monkeypatch):
@@ -391,19 +395,17 @@ def test_agent_designer_spec_bundles_the_agent_template_directory(monkeypatch):
     class of bug already fixed for ``bytefray.exe`` above.
     """
 
-    datas = _exec_spec_datas(AGENT_DESIGNER_SPEC, monkeypatch)
-    template_entries = [
-        entry for entry in datas if entry[1] == "battle_engine/data/agent_template"
-    ]
-    assert template_entries, (
+    tree = _frozen_tree(AGENT_DESIGNER_SPEC, monkeypatch)
+    expected = {
+        "battle_engine/data/agent_template/agent.yaml",
+        "battle_engine/data/agent_template/agent.py",
+    }
+    assert expected <= tree, (
         "tools/agent_designer.spec's `datas` must bundle "
         "battle_engine/data/agent_template (needed by the Designer's "
-        "in-process 'New Agent' workflow in the frozen build); found only: "
-        f"{[entry[1] for entry in datas]}"
+        "in-process 'New Agent' workflow in the frozen build); missing: "
+        f"{sorted(expected - tree)}"
     )
-    source_dir = Path(template_entries[0][0])
-    assert source_dir.is_dir()
-    assert {"agent.yaml", "agent.py"} <= {path.name for path in source_dir.iterdir()}
 
 
 def test_agent_designer_spec_bundles_the_annotated_agent_template_directory(monkeypatch):
@@ -419,19 +421,17 @@ def test_agent_designer_spec_bundles_the_annotated_agent_template_directory(monk
     "blank" template already worked.
     """
 
-    datas = _exec_spec_datas(AGENT_DESIGNER_SPEC, monkeypatch)
-    template_entries = [
-        entry for entry in datas if entry[1] == "battle_engine/data/agent_template_annotated"
-    ]
-    assert template_entries, (
+    tree = _frozen_tree(AGENT_DESIGNER_SPEC, monkeypatch)
+    expected = {
+        "battle_engine/data/agent_template_annotated/agent.yaml",
+        "battle_engine/data/agent_template_annotated/agent.py",
+    }
+    assert expected <= tree, (
         "tools/agent_designer.spec's `datas` must bundle "
         "battle_engine/data/agent_template_annotated (needed by the "
         "Designer's New Agent 'Annotated Example' choice in the frozen "
-        f"build); found only: {[entry[1] for entry in datas]}"
+        f"build); missing: {sorted(expected - tree)}"
     )
-    source_dir = Path(template_entries[0][0])
-    assert source_dir.is_dir()
-    assert {"agent.yaml", "agent.py"} <= {path.name for path in source_dir.iterdir()}
 
 
 def test_agent_designer_spec_still_bundles_starter_agents(monkeypatch):
@@ -444,9 +444,8 @@ def test_agent_designer_spec_still_bundles_starter_agents(monkeypatch):
     to guard.)
     """
 
-    datas = _exec_spec_datas(AGENT_DESIGNER_SPEC, monkeypatch)
-    entries = {entry[1] for entry in datas}
-    assert "battle_engine/data/starter_agents" in entries
+    tree = _frozen_tree(AGENT_DESIGNER_SPEC, monkeypatch)
+    assert any(path.startswith("battle_engine/data/starter_agents/") for path in tree)
 
 
 class _RecordingAnalysis:
@@ -573,3 +572,35 @@ def test_windows_build_waits_for_gui_smokes_and_requires_temp_cleanup() -> None:
     create_block = source[create_start:create_end]
     assert "Remove-Item -LiteralPath $SmokeRoot -Recurse -Force -ErrorAction Stop" in create_block
     assert "if (Test-Path -LiteralPath $SmokeRoot)" in create_block
+
+
+def test_windows_build_verifies_payloads_are_free_of_bytecode() -> None:
+    """The release build must check its own output for cache/bytecode debris.
+
+    ``tools/packaging_data.py`` is what actually keeps bytecode out of the
+    payload, and ``engine/tests/test_frozen_bytecode_exclusion.py`` is what
+    proves it. This guard exists for the case neither covers: a *new*
+    collection path added to a spec later that appends a raw
+    ``(directory, destination)`` tuple instead of going through the shared
+    collector. That would reintroduce the Phase F1 leak silently, and the
+    build is the last place it can be caught before an artifact ships.
+
+    The guard must stay non-destructive. Deleting caches from the checkout
+    would restore exactly the property Phase F2 removed -- a build that is
+    only correct because something swept the tree first -- so this test also
+    pins that the build script does not clean bytecode out of the source
+    tree, and that it never reaches for ``git clean``.
+    """
+
+    source = BUILD_WIN_SCRIPT.read_text(encoding="utf-8")
+    start = source.index("# Verify no Python bytecode/cache reached any distributable tree.")
+    end = source.index("# Beta3's Designer identity header", start)
+    guard = source[start:end]
+
+    assert '$_.Name -eq "__pycache__"' in guard
+    assert '$_.Extension -in ".pyc", ".pyo"' in guard
+    assert "throw" in guard
+    # Non-destructive: the guard inspects the built distribution only.
+    assert "$DistDir" in guard
+    assert "Remove-Item" not in guard
+    assert "git clean" not in source

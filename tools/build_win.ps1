@@ -74,6 +74,38 @@ foreach ($Artifact in $Artifacts) {
   if (-not (Test-Path $ExePath)) { throw "Expected artifact was not produced: $ExePath" }
 }
 
+# Verify no Python bytecode/cache reached any distributable tree.
+#
+# This build runs from the live repository checkout, and the engine imports
+# agent modules out of battle_engine/data at runtime, so CPython writes
+# __pycache__ directories next to shipped product data as a normal
+# consequence of running the product. The specs used to hand those
+# directories to PyInstaller as (directory, destination) tuples, which it
+# expands by collecting everything beneath them -- Phase F1's first
+# remediation build bundled five stale .pyc files that way and was only made
+# clean by sweeping the checkout by hand.
+#
+# tools/packaging_data.py now excludes bytecode by construction, so this is a
+# non-destructive backstop rather than the fix: it deliberately does NOT
+# delete anything from the checkout (the build must be correct from a dirty
+# tree, not merely after a cleanup step), and instead fails the build if a
+# future collection path is ever added that bypasses the shared collector.
+foreach ($Artifact in $Artifacts) {
+  $ArtifactDir = Join-Path $DistDir $Artifact.Name
+  $Debris = @(
+    Get-ChildItem -LiteralPath $ArtifactDir -Recurse -Force -ErrorAction SilentlyContinue |
+      Where-Object {
+        ($_.PSIsContainer -and $_.Name -eq "__pycache__") -or
+        (-not $_.PSIsContainer -and $_.Extension -in ".pyc", ".pyo")
+      }
+  )
+  if ($Debris.Count -gt 0) {
+    $Listing = ($Debris | ForEach-Object { $_.FullName }) -join "`n  "
+    throw "Python bytecode/cache reached the frozen payload for $($Artifact.Name):`n  $Listing"
+  }
+}
+Write-Host "[build] Frozen payloads contain no Python bytecode/cache."
+
 # Beta3's Designer identity header uses the shared square branding icon. The
 # unified dispatcher imports the Designer dynamically, so prove its frozen
 # tree contains the same runtime resource as the standalone GUI build.

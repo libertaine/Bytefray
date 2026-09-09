@@ -21,7 +21,10 @@ starter_agents_dir = os.path.join(engine_src, "battle_engine", "data", "starter_
 # behind a newly added template or Agent API generation.
 if engine_src not in sys.path:
     sys.path.insert(0, engine_src)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 from battle_engine.agent_scaffold import TEMPLATE_DIRECTORIES_BY_API_VERSION
+from tools.packaging_data import collect_data_tree
 
 agent_template_dirs = sorted(
     {
@@ -35,11 +38,13 @@ icon_path    = os.path.join(project_root, "assets", "branding", "bytefray-icon.i
 
 block_cipher = None
 hiddenimports = collect_submodules("battle_engine") + collect_submodules("battle_client")
+# Expanded per-file through the shared bytecode-filtering collector for the
+# reason documented in tools/bytefray.spec's equivalent block: a
+# `(directory, destination)` tuple collects the whole tree unfiltered, and
+# this build runs from the live repository checkout.
 datas = []
-if os.path.isdir(assets_dir):
-    datas.append((assets_dir, "assets"))
-if os.path.isdir(starter_agents_dir):
-    datas.append((starter_agents_dir, "battle_engine/data/starter_agents"))
+datas += collect_data_tree(assets_dir, "assets")
+datas += collect_data_tree(starter_agents_dir, "battle_engine/data/starter_agents")
 for template_dir_name in agent_template_dirs:
     template_dir = os.path.join(engine_src, "battle_engine", "data", template_dir_name)
     if not os.path.isdir(template_dir):
@@ -47,7 +52,9 @@ for template_dir_name in agent_template_dirs:
             f"Scaffold template resource directory {template_dir!r} is missing; "
             "the Designer's 'New Agent' workflow would fail in the frozen build."
         )
-    datas.append((template_dir, f"battle_engine/data/{template_dir_name}"))
+    datas += collect_data_tree(
+        template_dir, f"battle_engine/data/{template_dir_name}", required=True
+    )
 
 a = Analysis(
     [script_path],

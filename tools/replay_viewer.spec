@@ -1,5 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 import os
+import sys
 from PyInstaller.utils.hooks import collect_submodules
 from PyInstaller.building.build_main import Analysis, PYZ
 from PyInstaller.building.api import EXE, COLLECT
@@ -11,11 +12,16 @@ assets_dir   = os.path.join(project_root, "assets")
 script_path  = os.path.join(project_root, "app", "replay_viewer.py")  # ABSOLUTE
 icon_path    = os.path.join(project_root, "assets", "branding", "bytefray-icon.ico")
 
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+from tools.packaging_data import collect_data_tree
+
 block_cipher = None
 hiddenimports = collect_submodules("battle_engine") + collect_submodules("battle_client")
+# Expanded per-file through the shared bytecode-filtering collector -- see
+# tools/bytefray.spec's equivalent block for the shipped defect this prevents.
 datas = []
-if os.path.isdir(assets_dir):
-    datas.append((assets_dir, "assets"))
+datas += collect_data_tree(assets_dir, "assets")
 
 a = Analysis(
     [script_path],

@@ -9,7 +9,13 @@ script_path = os.path.join(engine_src, "battle_engine", "cli.py")
 pmars_dir = os.path.join(project_root, "pmars", "windows")
 icon_path = os.path.join(project_root, "assets", "branding", "bytefray-icon.ico")
 starter_agents_dir = os.path.join(engine_src, "battle_engine", "data", "starter_agents")
-# See tools/bytefray.spec for why pmars/windows is bundled only on Windows.
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+from tools.packaging_data import collect_data_tree
+
+# See tools/bytefray.spec for why pmars/windows is bundled only on Windows,
+# and for why starter_agents is expanded per-file through the shared
+# bytecode-filtering collector instead of being passed as a directory tuple.
 datas = []
 if sys.platform == "win32" and os.path.isdir(pmars_dir):
     datas.extend(
@@ -18,8 +24,7 @@ if sys.platform == "win32" and os.path.isdir(pmars_dir):
             (os.path.join(pmars_dir, "COPYING"), "pmars/windows"),
         ]
     )
-if os.path.isdir(starter_agents_dir):
-    datas.append((starter_agents_dir, "battle_engine/data/starter_agents"))
+datas += collect_data_tree(starter_agents_dir, "battle_engine/data/starter_agents")
 
 a = Analysis(
     [script_path],
