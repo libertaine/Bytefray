@@ -142,6 +142,70 @@ class MatchAnalysis:
     target_loss_interval_ticks: dict[str, int | None]
     attacker_resumes_objective_pressure: dict[str, bool]
 
+    # R3 Attack-Geometry Layer (docs/research/v5/V5_R3_AGENT_COMPETENCE.md
+    # Section H). R3 asks whether an attacker's writes COVER A REGION or
+    # merely repeat one point, so every field here separates "lots of
+    # writes" from "broad useful coverage".
+    #
+    # Two measurement corrections make this layer necessary rather than
+    # cosmetic, and both are why R3's tables never quote the legacy
+    # ``core_attack_writes``/``core_damage_dealt`` figures for a sweeping
+    # agent:
+    #
+    # 1. RUN EXPANSION. ``replay.MemoryDiff`` merges adjacent same-owner
+    #    writes issued back-to-back within one tick into one run-length
+    #    record (``vm._wr8``). Phase 0's counters read only ``diff.address``,
+    #    so an agent that writes T, T+1, T+2 consecutively is counted as
+    #    ONE write while an agent that writes T, T, T is counted as three.
+    #    That bias runs directly against the hypothesis R3 tests. Every
+    #    counter in this layer expands the full ``[address, address+length)``
+    #    run instead. The legacy fields above are deliberately left
+    #    unchanged so Phase 0's published numbers stay reproducible.
+    # 2. DISTINCT-CELL vs EVENT accounting. ``core_damage_dealt`` counts
+    #    ownership-flip *events*; ``unique_enemy_core_cells_damaged`` counts
+    #    how many DIFFERENT core cells were ever taken, which is what the
+    #    8-cell simultaneous capture condition actually requires.
+    writes_expanded: dict[str, int]
+    unique_write_addresses: dict[str, int]
+    hostile_writes_expanded: dict[str, int]
+    unique_hostile_write_addresses: dict[str, int]
+    enemy_core_writes_expanded: dict[str, int]
+    unique_enemy_core_cells_targeted: dict[str, int]
+    unique_enemy_core_cells_damaged: dict[str, int]
+    # An "attack episode" is a maximal run of consecutive ticks in which the
+    # entrant wrote at least one cell of some enemy's core; the per-episode
+    # measure is how many DISTINCT enemy core cells it wrote during that run.
+    attack_episodes: dict[str, int]
+    max_distinct_core_cells_per_attack_episode: dict[str, int]
+    mean_distinct_core_cells_per_attack_episode: dict[str, float]
+
+    # Core coverage and conversion geometry, keyed by the VICTIM entrant:
+    # how much of its own 8-cell core was ever taken, and how fast.
+    # ``distinct_own_core_cells_ever_lost`` is cumulative and never
+    # decreases on repair, which is exactly why it must be read alongside
+    # ``max_core_deficit`` (simultaneous) -- an entrant can lose all 8 cells
+    # one at a time, repairing each, and never once be at risk of capture.
+    distinct_own_core_cells_ever_lost: dict[str, int]
+    first_own_core_hit_tick: dict[str, int | None]
+    tick_2_distinct_own_core_cells_lost: dict[str, int | None]
+    tick_4_distinct_own_core_cells_lost: dict[str, int | None]
+    tick_8_distinct_own_core_cells_lost: dict[str, int | None]
+    first_full_core_deficit_tick: dict[str, int | None]
+    ticks_first_core_hit_to_core_capture: dict[str, int | None]
+
+    # Contact, reconstructed geometrically from replay anchors/reaches by
+    # re-implementing the engine's entrant-wide sensor-fusion rule
+    # (``process_runtime._visible_enemy_anchors``). Replay records
+    # END-OF-TICK anchors and disruption flags, while the engine evaluates
+    # visibility immediately before each callback, so these are tick-resolution
+    # approximations of a within-tick fact -- adequate for "when did contact
+    # begin" and "how often did the aim point move", not for exact
+    # per-callback sensor state (use ``trace.jsonl`` for that).
+    first_contact_tick_by_entrant: dict[str, int | None]
+    first_geometric_contact_tick: int | None
+    ticks_contact_to_first_core_damage: dict[str, int | None]
+    visible_target_changes: dict[str, int]
+
     # Trace Layer (Optional)
     trace_available: bool
     trace_applied_actions: dict[str, int]
@@ -318,10 +382,35 @@ def analyze_match(
     # used only by the new true-ownership fields below.
     true_cell_owners: dict[int, str] = dict(cell_owners)
 
+    # R3 Attack-Geometry Layer accumulators. All write counters below are
+    # run-expanded (see MatchAnalysis's field docstring); none of them feed
+    # any Phase 0 / R1 / R2 field.
+    r3_writes: dict[str, int] = {e: 0 for e in entrants}
+    r3_write_addresses: dict[str, set[int]] = {e: set() for e in entrants}
+    r3_hostile_writes: dict[str, int] = {e: 0 for e in entrants}
+    r3_hostile_addresses: dict[str, set[int]] = {e: set() for e in entrants}
+    r3_core_writes: dict[str, int] = {e: 0 for e in entrants}
+    r3_core_cells_targeted: dict[str, set[int]] = {e: set() for e in entrants}
+    r3_core_cells_damaged: dict[str, set[int]] = {e: set() for e in entrants}
+    r3_own_core_cells_lost: dict[str, set[int]] = {e: set() for e in entrants}
+    r3_first_own_core_hit: dict[str, int | None] = {e: None for e in entrants}
+    r3_tick_2_cells_lost: dict[str, int | None] = {e: None for e in entrants}
+    r3_tick_4_cells_lost: dict[str, int | None] = {e: None for e in entrants}
+    r3_tick_8_cells_lost: dict[str, int | None] = {e: None for e in entrants}
+    r3_first_core_damage_by: dict[str, int | None] = {e: None for e in entrants}
+    r3_episode_counts: dict[str, int] = {e: 0 for e in entrants}
+    r3_episode_open: dict[str, bool] = {e: False for e in entrants}
+    r3_episode_current: dict[str, set[int]] = {e: set() for e in entrants}
+    r3_episode_sizes: dict[str, list[int]] = {e: [] for e in entrants}
+    r3_first_contact: dict[str, int | None] = {e: None for e in entrants}
+    r3_target_changes: dict[str, int] = {e: 0 for e in entrants}
+    r3_prev_primary_target: dict[str, int | None] = {e: None for e in entrants}
+
     for t_idx, snap in enumerate(ticks[1:], start=1):
         tick_num = snap.tick
         damage_this_tick = False
         combat_writes_this_tick = 0
+        r3_core_write_this_tick: dict[str, bool] = {e: False for e in entrants}
 
         # Update process anchor displacements and disruptions
         current_anchors_by_cell: dict[int, list[tuple[str, str]]] = defaultdict(list)
@@ -350,6 +439,45 @@ def analyze_match(
                 continue
 
             old_owner = cell_owners.get(addr)
+
+            # R3 Attack-Geometry Layer: expand the merged run and account
+            # every physical write separately, reading each cell's PRE-write
+            # owner from ``true_cell_owners`` before the update below
+            # overwrites it. Placed here, ahead of that update, precisely so
+            # a repair/capture folded into the middle of a merged run is
+            # attributed to the right prior owner.
+            for offset in range(max(1, diff.length)):
+                cell = (addr + offset) % arena_size
+                prior_owner = true_cell_owners.get(cell)
+                r3_writes[writer] += 1
+                r3_write_addresses[writer].add(cell)
+                if prior_owner is not None and prior_owner != writer:
+                    r3_hostile_writes[writer] += 1
+                    r3_hostile_addresses[writer].add(cell)
+                for victim_e in entrants:
+                    if victim_e == writer or cell not in core_cells[victim_e]:
+                        continue
+                    r3_core_writes[writer] += 1
+                    r3_core_cells_targeted[writer].add(cell)
+                    r3_core_write_this_tick[writer] = True
+                    r3_episode_current[writer].add(cell)
+                    if prior_owner == victim_e:
+                        r3_core_cells_damaged[writer].add(cell)
+                        if r3_first_core_damage_by[writer] is None:
+                            r3_first_core_damage_by[writer] = tick_num
+                        lost = r3_own_core_cells_lost[victim_e]
+                        if cell not in lost:
+                            lost.add(cell)
+                            distinct_lost = len(lost)
+                            if distinct_lost == 1:
+                                r3_first_own_core_hit[victim_e] = tick_num
+                            elif distinct_lost == 2:
+                                r3_tick_2_cells_lost[victim_e] = tick_num
+                            elif distinct_lost == 4:
+                                r3_tick_4_cells_lost[victim_e] = tick_num
+                            elif distinct_lost == 8:
+                                r3_tick_8_cells_lost[victim_e] = tick_num
+
             cell_owners[addr] = writer
             for offset in range(max(1, diff.length)):
                 true_cell_owners[(addr + offset) % arena_size] = writer
@@ -458,6 +586,63 @@ def analyze_match(
             if entrant_alive_this_tick and live_count_this_tick[e] == 0:
                 entrant_zero_process_ticks[e] += 1
 
+        # R3 Attack-Geometry Layer: episode bookkeeping and geometric
+        # contact reconstruction.
+        for e in entrants:
+            if r3_core_write_this_tick[e]:
+                if not r3_episode_open[e]:
+                    r3_episode_open[e] = True
+                    r3_episode_counts[e] += 1
+            elif r3_episode_open[e]:
+                r3_episode_sizes[e].append(len(r3_episode_current[e]))
+                r3_episode_current[e] = set()
+                r3_episode_open[e] = False
+
+        # Re-implements ``process_runtime._visible_enemy_anchors``' fusion
+        # rule against end-of-tick replay state: any live, non-disrupted
+        # friendly process within its own reach of a live enemy process's
+        # anchor makes that anchor visible to the whole entrant.
+        entrants_alive_now = {a.agent_id for a in snap.agents if a.alive}
+        anchors_by_entrant: dict[str, list[tuple[int, int, bool]]] = {
+            e: [] for e in entrants
+        }
+        for p_state in snap.processes:
+            if p_state.entrant_id in entrants and p_state.alive:
+                anchors_by_entrant[p_state.entrant_id].append(
+                    (p_state.anchor, p_state.reach, p_state.disrupted)
+                )
+        for observer_e in entrants:
+            observers = [
+                (anchor_addr, reach)
+                for anchor_addr, reach, disrupted in anchors_by_entrant[observer_e]
+                if not disrupted
+            ]
+            enemy_anchor_addresses = {
+                anchor_addr
+                for other_e in entrants
+                if other_e != observer_e and other_e in entrants_alive_now
+                for anchor_addr, _reach, _disrupted in anchors_by_entrant[other_e]
+            }
+            visible_now = {
+                enemy_anchor
+                for enemy_anchor in enemy_anchor_addresses
+                if any(
+                    _circular_dist(observer_anchor, enemy_anchor, arena_size) <= reach
+                    for observer_anchor, reach in observers
+                )
+            }
+            if visible_now and r3_first_contact[observer_e] is None:
+                r3_first_contact[observer_e] = tick_num
+            # The address an ``[0]``-reading agent would aim at: the engine
+            # hands out ``tuple(sorted(visible))``, so element [0] is the
+            # minimum. Counting how often it moves measures target churn --
+            # acquisition and loss included, both of which reset a
+            # point-target agent's aim exactly as a switch does.
+            primary_target = min(visible_now) if visible_now else None
+            if primary_target != r3_prev_primary_target[observer_e]:
+                r3_target_changes[observer_e] += 1
+                r3_prev_primary_target[observer_e] = primary_target
+
         if damage_this_tick:
             no_progress_streak = 0
         else:
@@ -478,6 +663,47 @@ def analyze_match(
                 lead_changes += 1
             if current_leader:
                 prev_leader = current_leader
+
+    # R3 Attack-Geometry Layer: close any episode still open at match end,
+    # then derive the reported aggregates.
+    for e in entrants:
+        if r3_episode_open[e]:
+            r3_episode_sizes[e].append(len(r3_episode_current[e]))
+            r3_episode_current[e] = set()
+            r3_episode_open[e] = False
+
+    r3_max_episode_cells: dict[str, int] = {
+        e: (max(r3_episode_sizes[e]) if r3_episode_sizes[e] else 0) for e in entrants
+    }
+    r3_mean_episode_cells: dict[str, float] = {
+        e: (
+            round(sum(r3_episode_sizes[e]) / len(r3_episode_sizes[e]), 3)
+            if r3_episode_sizes[e]
+            else 0.0
+        )
+        for e in entrants
+    }
+    r3_ticks_first_hit_to_capture: dict[str, int | None] = {}
+    r3_ticks_contact_to_first_damage: dict[str, int | None] = {}
+    for e in entrants:
+        captured_tick = own_core_captured_tick[e]
+        first_hit = r3_first_own_core_hit[e]
+        r3_ticks_first_hit_to_capture[e] = (
+            captured_tick - first_hit
+            if captured_tick is not None and first_hit is not None and captured_tick >= first_hit
+            else None
+        )
+        contact_tick = r3_first_contact[e]
+        first_damage = r3_first_core_damage_by[e]
+        r3_ticks_contact_to_first_damage[e] = (
+            first_damage - contact_tick
+            if contact_tick is not None
+            and first_damage is not None
+            and first_damage >= contact_tick
+            else None
+        )
+    r3_contact_ticks = [t for t in r3_first_contact.values() if t is not None]
+    r3_first_geometric_contact = min(r3_contact_ticks) if r3_contact_ticks else None
 
     actual_ticks = len(ticks) - 1
     max_ticks = header.config.arena_size if header.config.instr_per_tick == 0 else 1000
@@ -688,6 +914,35 @@ def analyze_match(
         ticks_extinction_to_first_core_attack=ticks_extinction_to_first_core_attack,
         target_loss_interval_ticks=target_loss_interval_ticks,
         attacker_resumes_objective_pressure=attacker_resumes_objective_pressure,
+        writes_expanded=r3_writes,
+        unique_write_addresses={e: len(v) for e, v in r3_write_addresses.items()},
+        hostile_writes_expanded=r3_hostile_writes,
+        unique_hostile_write_addresses={
+            e: len(v) for e, v in r3_hostile_addresses.items()
+        },
+        enemy_core_writes_expanded=r3_core_writes,
+        unique_enemy_core_cells_targeted={
+            e: len(v) for e, v in r3_core_cells_targeted.items()
+        },
+        unique_enemy_core_cells_damaged={
+            e: len(v) for e, v in r3_core_cells_damaged.items()
+        },
+        attack_episodes=r3_episode_counts,
+        max_distinct_core_cells_per_attack_episode=r3_max_episode_cells,
+        mean_distinct_core_cells_per_attack_episode=r3_mean_episode_cells,
+        distinct_own_core_cells_ever_lost={
+            e: len(v) for e, v in r3_own_core_cells_lost.items()
+        },
+        first_own_core_hit_tick=r3_first_own_core_hit,
+        tick_2_distinct_own_core_cells_lost=r3_tick_2_cells_lost,
+        tick_4_distinct_own_core_cells_lost=r3_tick_4_cells_lost,
+        tick_8_distinct_own_core_cells_lost=r3_tick_8_cells_lost,
+        first_full_core_deficit_tick=own_core_captured_tick,
+        ticks_first_core_hit_to_core_capture=r3_ticks_first_hit_to_capture,
+        first_contact_tick_by_entrant=r3_first_contact,
+        first_geometric_contact_tick=r3_first_geometric_contact,
+        ticks_contact_to_first_core_damage=r3_ticks_contact_to_first_damage,
+        visible_target_changes=r3_target_changes,
         trace_available=trace_found,
         trace_applied_actions=trace_applied,
         trace_rejected_out_of_reach=trace_rejected_reach,

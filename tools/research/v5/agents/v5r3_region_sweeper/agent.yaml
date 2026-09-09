@@ -1,0 +1,9 @@
+{
+  "name": "v5r3_region_sweeper",
+  "display": "V5 R3 Region Sweeper (research only)",
+  "description": "RESEARCH ONLY -- v4_concentrated_attacker with region-sweep address selection, the single experimental object of V5 research Phase R3. Not a starter or shipped example.",
+  "kind": "python",
+  "api_version": 2,
+  "entrypoint": "agent.py:create_agent",
+  "version": "1.0.0"
+}

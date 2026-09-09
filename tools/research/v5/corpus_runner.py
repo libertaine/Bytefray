@@ -20,7 +20,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from battle_engine.agent_revisions import agent_revision_fingerprint
-from battle_engine.agents import resolve_agent
+from battle_engine.agents import AgentSpec, resolve_agent
 from battle_engine.config import Config
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
 from battle_engine.placement import resolve_direct_match_starts
@@ -55,6 +55,7 @@ def run_single_match(
     with_trace: bool = False,
     process_integrity: int | None = None,
     objective_target_oracle: bool = False,
+    agent_specs: dict[str, AgentSpec] | None = None,
 ) -> tuple[Path, Path, Path | None]:
     """Execute one match and return (replay_path, result_path, trace_path).
 
@@ -68,13 +69,29 @@ def run_single_match(
     ``battle_engine.process_runtime.has_objective_target_oracle``). Ignored
     entirely unless ``ruleset_id`` permits it, so Phase 0's and R1's existing
     callers are equally unaffected.
+
+    ``agent_specs`` is V5 research Phase R3's resolution seam: a mapping of
+    agent name -> already-resolved ``AgentSpec`` consulted *before* the
+    normal ``resolve_agent`` catalog lookup. R3's research-only agents live
+    under ``tools/research/v5/agents/`` deliberately, so that no product
+    code path (CLI, Designer, GUI, tournament, evaluation, starter install)
+    can reach them; this parameter is how the R3 runner hands them to the
+    shared match seam without copying them into the ``agents/`` catalog.
+    ``None`` (every Phase 0 / R1 / R2 caller) resolves every name through
+    ``resolve_agent`` exactly as before.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
     replay_path = output_dir / "replay.jsonl"
     trace_path = (output_dir / "trace.jsonl") if with_trace else None
 
-    spec_a = resolve_agent(data_root, agent_a_name)
-    spec_b = resolve_agent(data_root, agent_b_name)
+    overrides = agent_specs or {}
+
+    def _resolve(name: str) -> AgentSpec:
+        override = overrides.get(name)
+        return override if override is not None else resolve_agent(data_root, name)
+
+    spec_a = _resolve(agent_a_name)
+    spec_b = _resolve(agent_b_name)
 
     starts = resolve_direct_match_starts(
         ruleset_id=ruleset_id,

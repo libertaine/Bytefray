@@ -1,0 +1,9 @@
+{
+  "name": "v5r3_point_control",
+  "display": "V5 R3 Point Control (research only)",
+  "description": "RESEARCH ONLY -- behavioural clone of v4_concentrated_attacker, used as R3's paired-construction control. Not a starter or shipped example.",
+  "kind": "python",
+  "api_version": 2,
+  "entrypoint": "agent.py:create_agent",
+  "version": "1.0.0"
+}

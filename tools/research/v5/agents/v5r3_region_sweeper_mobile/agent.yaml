@@ -1,0 +1,9 @@
+{
+  "name": "v5r3_region_sweeper_mobile",
+  "display": "V5 R3 Region Sweeper, mobile (research only)",
+  "description": "RESEARCH ONLY -- V5 research Phase R3 secondary variant: the same region sweep, repositioning to reach sweep addresses instead of skipping them. Not a starter or shipped example.",
+  "kind": "python",
+  "api_version": 2,
+  "entrypoint": "agent.py:create_agent",
+  "version": "1.0.0"
+}
