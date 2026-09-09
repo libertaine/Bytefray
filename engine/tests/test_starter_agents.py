@@ -7,7 +7,11 @@ from pathlib import Path
 import pytest
 from battle_engine import cli, paths, tournament_cli
 from battle_engine.agents import discover_agents, resolve_agent
-from battle_engine.starters import STARTER_AGENT_NAMES, ensure_starter_agents
+from battle_engine.starters import (
+    STARTER_AGENT_NAMES,
+    ensure_starter_agents,
+    starter_content_files,
+)
 
 from app.services.agent_catalog import AgentCatalog
 
@@ -27,15 +31,21 @@ def _expected_starter_files(data_root: Path) -> set[Path]:
     starters (added in v0.6.1) also ship ``agent.py`` -- computed from the
     actual source tree rather than hard-coded, so this stays correct
     regardless of which starters carry how many files.
+
+    Enumerated through ``starter_content_files``, the same helper the
+    installer itself uses, so "what a starter ships" has one definition. It
+    excludes ``__pycache__``: a source checkout accumulates bytecode under
+    the bundled tree whenever a starter runs, and ``pyproject.toml`` already
+    excludes it from the wheel, so counting it here would make this
+    expectation depend on whether an agent happened to have been imported.
     """
 
     expected: set[Path] = set()
     for name in STARTER_AGENT_NAMES:
         source_dir = _starter_source_dir(name)
-        for source in source_dir.rglob("*"):
-            if source.is_file():
-                relative = source.relative_to(source_dir)
-                expected.add((data_root / "agents" / name / relative).resolve())
+        for source in starter_content_files(source_dir):
+            relative = source.relative_to(source_dir.resolve())
+            expected.add((data_root / "agents" / name / relative).resolve())
     return expected
 
 

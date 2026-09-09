@@ -25,7 +25,11 @@ from battle_engine.launchers import (
 )
 from battle_engine.paths import canonical_replay_directory, get_branding_icon_path, get_data_root
 from battle_engine.project_info import get_project_info
-from battle_engine.starters import describe_bootstrap_errors, ensure_starter_agents
+from battle_engine.starters import (
+    describe_bootstrap_errors,
+    describe_starter_refresh,
+    ensure_starter_agents,
+)
 from PySide6.QtCore import QProcess, QProcessEnvironment, QTimer, QUrl, Slot
 from PySide6.QtGui import QDesktopServices, QIcon
 from PySide6.QtWidgets import (
@@ -59,6 +63,7 @@ from app.services.designer_workflows import (
     read_evaluation_presentation,
     read_match_presentation,
     read_tournament_presentation,
+    validate_entrant_parameters,
     validate_homogeneous,
 )
 from app.services.engine import open_pygame_client_direct
@@ -110,6 +115,12 @@ class AgentDesigner(QMainWindow):
 
         # Build data_root and shared catalog
         data_root = _resolve_data_root()
+        # What the starter refresh did, or deliberately declined to do (V5
+        # Alpha 1 Phase E0). Held until the panels exist and then written to
+        # the Advanced engine log rather than raised as a dialog: an upgraded
+        # catalog is normal, and a customized starter is a standing condition
+        # that would otherwise interrupt every single launch.
+        self._starter_refresh_notice: str | None = None
         try:
             bootstrap = ensure_starter_agents(data_root=data_root)
         except (FileNotFoundError, OSError) as exc:
@@ -122,6 +133,7 @@ class AgentDesigner(QMainWindow):
             warning = describe_bootstrap_errors(bootstrap)
             if warning:
                 QMessageBox.warning(self, "Some Starter Agents Unavailable", warning)
+            self._starter_refresh_notice = describe_starter_refresh(bootstrap)
         self.data_root = data_root            # <-- keep for later
         self._proc = None                         # <-- init process handle
         self._last_replay = None                  # <-- init replay capture
@@ -201,6 +213,12 @@ class AgentDesigner(QMainWindow):
 
         # Initial population of agent lists
         self.refresh_agents()
+
+        if self._starter_refresh_notice is not None:
+            advanced = getattr(self, "advanced", None)
+            if advanced is not None:
+                for line in self._starter_refresh_notice.splitlines():
+                    advanced.appendLog(f"[Starters] {line}")
 
     def _build_menus(self) -> None:
         tools = self.menuBar().addMenu("Tools")
@@ -362,6 +380,22 @@ class AgentDesigner(QMainWindow):
             validate_homogeneous(roster_rows)
             validate_designer_ruleset(cfg.ruleset_id, {agent_kind(row) for row in roster_rows})
             validate_designer_agent_rows(cfg.ruleset_id, roster_rows)
+            # V5 Alpha 1 Phase E1: the authoritative pre-launch parameter
+            # gate, at the one place every Advanced match is actually
+            # started. The panel already blocks Run on the same canonical
+            # resolver, but a RunConfig can also arrive programmatically, and
+            # no route into a match may start a subprocess that is only going
+            # to fail once the agent is imported. Non-v2 agents are
+            # deliberately not checked here -- they never receive resolved
+            # parameters, and cli.py warns about and ignores whatever is
+            # supplied, which is the behaviour the Designer has always had.
+            for slot, row, params in (
+                ("A", rowA, self._cfgget(cfg, "a_params", "aParams")),
+                ("B", rowB, self._cfgget(cfg, "b_params", "bParams")),
+                ("C", rowC, self._cfgget(cfg, "c_params", "cParams")),
+            ):
+                if row is not None:
+                    validate_entrant_parameters(row, params, slot=slot)
         except (DesignerValidationError, ValueError) as exc:
             self.advanced.appendLog(f"[RunMatch] {exc}\n")
             QMessageBox.warning(self, "Unsupported Match", str(exc))

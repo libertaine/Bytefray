@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TypeVar
 
+from battle_engine.agent_parameters import EMPTY_PARAMETER_SCHEMA
 from battle_engine.config import Weights
 from battle_engine.paths import canonical_replay_directory
 from PySide6.QtCore import Signal
@@ -26,6 +27,11 @@ from PySide6.QtWidgets import (
 )
 
 from app.services.agent_catalog import AgentRow
+from app.services.designer_workflows import (
+    agent_parameter_schema,
+    describe_effective_parameters,
+    random_match_seed,
+)
 from app.services.engine import RunConfig
 from app.services.osutil import get_default_paths
 from app.services.ruleset_options import (
@@ -39,6 +45,7 @@ from app.widgets.agent_combo import (
     selected_agent_name,
     sync_compatible_b_choices,
 )
+from app.widgets.agent_parameters import AgentParameterForm
 from app.widgets.json_editor import JsonEditor
 from app.widgets.ruleset_combo import (
     populate_ruleset_combo,
@@ -119,6 +126,11 @@ class AdvancedPanel(QWidget):
         # Whether the selected Ruleset has any compatible discovered agent;
         # recomputed by _refilter_agents and respected by setBusy.
         self._has_eligible_agents = False
+        # Held so the three inputs to "may this match be launched" -- an
+        # eligible roster, a running match, and valid agent parameters -- are
+        # combined in one place (``_update_run_enabled``) instead of three
+        # call sites each re-deciding part of the answer.
+        self._busy = False
 
         root = QVBoxLayout(self)
         self.tabs = QTabWidget()
@@ -251,7 +263,31 @@ class AdvancedPanel(QWidget):
             "engine's own built-in default seed, so repeated runs left at 0 "
             "are still reproducible, not randomized."
         )
-        form.addRow("Random Seed (0 = default)", self.seed)
+        # V5 Alpha 1 Phase E2. Randomness is an explicit action, never an
+        # ambient one: the generated value lands in the field above, in plain
+        # view, and from that moment is an ordinary typed seed. Nothing here
+        # randomizes on its own, so a match is still reproducible from what
+        # the user can see.
+        self._seedRow = QWidget()
+        seed_layout = QHBoxLayout(self._seedRow)
+        seed_layout.setContentsMargins(0, 0, 0, 0)
+        self.btnRandomizeSeed = QPushButton("Randomize")
+        self.btnRandomizeSeed.setToolTip(
+            "Pick a new random seed and put it in the field, so this match "
+            "uses a fresh arrangement. The generated value stays visible and "
+            "editable: running again with the same number reproduces the same "
+            "match."
+        )
+        seed_layout.addWidget(self.seed, 1)
+        seed_layout.addWidget(self.btnRandomizeSeed)
+        form.addRow("Random Seed (0 = default)", self._seedRow)
+        # The row is a layout container, not the input. Point the generated
+        # label at the spin box itself so the label still names the field a
+        # screen reader (and every existing label assertion) resolves through
+        # its buddy, rather than at the box that happens to hold it.
+        _seedLabel = form.labelForField(self._seedRow)
+        if _seedLabel is not None:
+            _seedLabel.setBuddy(self.seed)
 
         btns = QHBoxLayout()
         self.btnRun = QPushButton("Run Match")
@@ -276,19 +312,37 @@ class AdvancedPanel(QWidget):
         params = QWidget()
         pv = QVBoxLayout(params)
         paramsIntro = QLabel(
-            "Optional settings that change how supported agents behave "
-            "during a match. Not every agent reads these -- an agent that "
-            "does not use parameters simply ignores them. Leave a field "
-            "empty for that agent's own defaults."
+            "Optional settings that change how the selected agents behave "
+            "during a match. An agent that declares parameters in its "
+            "manifest gets controls generated from that declaration, with its "
+            "own defaults, ranges and presets. An agent that declares none "
+            "keeps the free-form field below it; leave that empty, and leave "
+            "any generated control alone, for the agent's own defaults."
         )
         paramsIntro.setWordWrap(True)
         pv.addWidget(paramsIntro)
+        # Two surfaces per slot, exactly one visible at a time (V5 Alpha 1
+        # Phase E1): generated controls for an agent that declares a schema,
+        # and the pre-existing free-form JSON editor for one that does not.
+        # The legacy editor is kept rather than replaced -- Agent API v1
+        # agents, VM/blob agents and any un-migrated v2 agent still use it,
+        # and forcing them through a schema they never declared would break a
+        # working path.
+        self.schemaA = AgentParameterForm("Agent A Parameters")
+        self.schemaB = AgentParameterForm("Agent B Parameters")
+        self.schemaC = AgentParameterForm("Agent C Parameters")
         self.editorA = JsonEditor(title="Agent A Params (JSON)")
         self.editorB = JsonEditor(title="Agent B Params (JSON)")
         self.editorC = JsonEditor(title="Agent C Params (JSON)")
-        pv.addWidget(self.editorA)
-        pv.addWidget(self.editorB)
-        pv.addWidget(self.editorC)
+        for schema_form, editor in (
+            (self.schemaA, self.editorA),
+            (self.schemaB, self.editorB),
+            (self.schemaC, self.editorC),
+        ):
+            pv.addWidget(schema_form)
+            pv.addWidget(editor)
+            schema_form.setVisible(False)
+        self.schemaC.setVisible(False)
         self.editorC.setVisible(False)
         self.tabs.addTab(params, "Agent Params")
 
@@ -335,12 +389,21 @@ class AdvancedPanel(QWidget):
         self.btnStop.clicked.connect(self.stopRequested.emit)
         self.btnOpen.clicked.connect(self.openReplayRequested.emit)
         self.btnRefresh.clicked.connect(self.refreshAgentsRequested.emit)
+        self.btnRandomizeSeed.clicked.connect(self.randomize_seed)
         self.btnChooseReplay.clicked.connect(self._choose_replay)
         self.btnOpenReplay.clicked.connect(self._open_replay_browser)
         self.ruleset.currentIndexChanged.connect(self._on_ruleset_changed)
         self.agentA.currentIndexChanged.connect(self._on_agent_a_changed)
         self.btnAddAgent.clicked.connect(self._add_agent_slot)
         self.btnRemoveAgentC.clicked.connect(self._remove_agent_slot)
+        # Every slot re-targets its own parameter surface when its selection
+        # changes; Agent A additionally re-syncs the other slots' compatible
+        # choices, which is why it keeps its own richer handler.
+        for combo in (self.agentA, self.agentB, self.agentC):
+            combo.currentIndexChanged.connect(self._on_agent_selection_changed)
+        for schema_form in (self.schemaA, self.schemaB, self.schemaC):
+            schema_form.changed.connect(self._update_run_enabled)
+        self._sync_parameter_surfaces()
 
     @property
     def roster_size(self) -> int:
@@ -360,6 +423,87 @@ class AdvancedPanel(QWidget):
         if self._agent_c_visible:
             sync_compatible_b_choices(self.agentA, self.agentC)
         self._update_ruleset_explanation()
+
+    # ---- Phase E1: schema-driven agent parameters ----
+    def _on_agent_selection_changed(self, _index: int) -> None:
+        self._sync_parameter_surfaces()
+
+    def _row_for_slot(self, combo: QComboBox) -> AgentRow | None:
+        """The catalog row behind one slot's current selection.
+
+        Matched on the discovery identifier stored under the combo's user
+        role, never on display text -- the same rule ``agent_combo`` states
+        for every other consumer of these selectors.
+        """
+
+        identifier = selected_agent_name(combo)
+        if identifier is None:
+            return None
+        for row in self._all_rows:
+            if (row.agent_id or row.name) == identifier:
+                return row
+        return None
+
+    def _parameter_slots(
+        self,
+    ) -> tuple[tuple[QComboBox, AgentParameterForm, JsonEditor, bool], ...]:
+        return (
+            (self.agentA, self.schemaA, self.editorA, True),
+            (self.agentB, self.schemaB, self.editorB, True),
+            (self.agentC, self.schemaC, self.editorC, self._agent_c_visible),
+        )
+
+    def _sync_parameter_surfaces(self) -> None:
+        """Point each slot at the right parameter surface for its agent.
+
+        A slot shows generated controls when its agent declares a schema and
+        the pre-existing free-form JSON editor when it does not, so a legacy
+        or Agent API v1 agent keeps exactly the surface it always had.
+
+        The form is only re-targeted when the *agent* changed. Repopulating
+        the combos (a Ruleset change, a catalog refresh) re-enters here with
+        the same selection, and rebuilding then would silently discard the
+        values a user had already set.
+        """
+
+        for combo, schema_form, editor, slot_visible in self._parameter_slots():
+            row = self._row_for_slot(combo)
+            identifier = (row.agent_id or row.name) if row is not None else None
+            if identifier != schema_form.agent_id:
+                schema_form.set_agent(
+                    identifier,
+                    agent_parameter_schema(row) if row is not None else EMPTY_PARAMETER_SCHEMA,
+                )
+            has_schema = schema_form.has_schema()
+            schema_form.setVisible(slot_visible and has_schema)
+            editor.setVisible(slot_visible and not has_schema)
+        self._update_run_enabled()
+
+    def parameter_validation_errors(self) -> list[str]:
+        """Every reason the current parameter selection cannot be launched.
+
+        Sourced entirely from the canonical Phase D resolver via
+        ``AgentParameterForm.validation_error`` -- the Designer contributes no
+        validation rule of its own.
+        """
+
+        errors: list[str] = []
+        for slot, (_combo, schema_form, _editor, slot_visible) in zip(
+            ("A", "B", "C"), self._parameter_slots(), strict=True
+        ):
+            if not slot_visible:
+                continue
+            message = schema_form.validation_error()
+            if message:
+                errors.append(f"Agent {slot}: {message}")
+        return errors
+
+    def _update_run_enabled(self) -> None:
+        self.btnRun.setEnabled(
+            not self._busy
+            and self._has_eligible_agents
+            and not self.parameter_validation_errors()
+        )
 
     def _refilter_agents(self) -> None:
         """Populate every visible roster slot from the Ruleset's compatible agents.
@@ -413,8 +557,10 @@ class AdvancedPanel(QWidget):
             sync_compatible_b_choices(self.agentA, self.agentC)
 
         self._has_eligible_agents = bool(eligible)
-        self.btnRun.setEnabled(self._has_eligible_agents)
         self._update_ruleset_explanation()
+        # After the selections settle, not before: each slot's parameter
+        # surface follows whichever agent it actually ended up on.
+        self._sync_parameter_surfaces()
 
     def _update_ruleset_explanation(self) -> None:
         if not self._has_eligible_agents:
@@ -439,7 +585,10 @@ class AdvancedPanel(QWidget):
         self._agentCContainer.setVisible(visible)
         if self._agentCLabel is not None:
             self._agentCLabel.setVisible(visible)
-        self.editorC.setVisible(visible)
+        # Which of Agent C's two parameter surfaces is the visible one
+        # depends on the selected agent, so the slot's visibility is applied
+        # through the same sync that makes that decision everywhere else.
+        self._sync_parameter_surfaces()
         # UX-30 item 5 / UX-31: the Add control disappears once the
         # runtime/CLI-derived maximum (ADVANCED_MAX_ROSTER) is reached, and
         # returns as soon as a slot is removed -- never merely disabled,
@@ -460,6 +609,7 @@ class AdvancedPanel(QWidget):
         # the removed slot's own state stops being read by _emit_run.
 
     def setBusy(self, busy: bool) -> None:
+        self._busy = busy
         for w in (
             self.btnRefresh,
             self.agentA,
@@ -474,13 +624,34 @@ class AdvancedPanel(QWidget):
             self.territory_w,
             self.territory_bucket,
             self.seed,
+            self.btnRandomizeSeed,
             self.ruleset,
+            self.schemaA,
+            self.schemaB,
+            self.schemaC,
         ):
             w.setEnabled(not busy)
-        # Run stays disabled while no compatible agents exist, so becoming
-        # idle never re-enables launching an invalid selection.
-        self.btnRun.setEnabled(not busy and self._has_eligible_agents)
+        # Run stays disabled while no compatible agents exist or a parameter
+        # is invalid, so becoming idle never re-enables launching a selection
+        # the engine would reject.
+        self._update_run_enabled()
         self.btnStop.setEnabled(busy)
+
+    def randomize_seed(self) -> int:
+        """Put a freshly generated seed in the seed field and return it.
+
+        The field's own range is the source of truth for what is legal, so the
+        generated value is always one the user could have typed. Its floor is
+        raised past 0 because Advanced reads 0 as "use the engine default
+        seed", which is the opposite of randomizing.
+        """
+
+        seed = random_match_seed(
+            minimum=max(1, int(self.seed.minimum())),
+            maximum=int(self.seed.maximum()),
+        )
+        self.seed.setValue(seed)
+        return seed
 
     def enableOpenReplay(self, enable: bool) -> None:
         self.btnOpen.setEnabled(enable)
@@ -542,6 +713,20 @@ class AdvancedPanel(QWidget):
                     f"{entrant.name} — {status}, score={entrant.score:g}",
                 )
             )
+            # V5 Alpha 1 Phase E4. Phase D already records each entrant's
+            # resolved parameters in result.json; this closes the loop, so the
+            # values a user chose before the run are still visible after it,
+            # in the same table they read the outcome from. Added only when
+            # the match actually had parameters, so a row never claims a run
+            # was configured when it was not -- which is every result written
+            # before Phase D, and every default run since.
+            if entrant.parameters:
+                values.append(
+                    (
+                        f"entrant {entrant.agent_id} parameters",
+                        describe_effective_parameters(entrant.parameters),
+                    )
+                )
         self.table.setRowCount(0)
         for key, value in values:
             row = self.table.rowCount()
@@ -550,7 +735,30 @@ class AdvancedPanel(QWidget):
             self.table.setItem(row, 1, QTableWidgetItem(str(value)))
 
     # Helpers
+    def _slot_parameters(
+        self, schema_form: AgentParameterForm, editor: JsonEditor
+    ) -> dict | None:
+        """One slot's parameters, read from whichever surface is in use.
+
+        Exactly one of the two is authoritative for a given agent, so a stale
+        value left in the other can never travel: switching from a legacy
+        agent to a schema agent must not smuggle the old free-form JSON into a
+        schema-validated match, and vice versa.
+        """
+
+        if schema_form.has_schema():
+            return schema_form.launch_overrides()
+        return editor.get_data_or_none()
+
     def _emit_run(self) -> None:
+        # The launch gate. Values are checked by the canonical Phase D
+        # resolver before a subprocess exists, so a schema violation is a
+        # message here rather than an agent failing several seconds later
+        # inside a match the user then has to interpret.
+        problems = self.parameter_validation_errors()
+        if problems:
+            QMessageBox.warning(self, "Invalid Agent Parameters", "\n".join(problems))
+            return
         cfg = RunConfig(
             a_type=selected_agent_name(self.agentA) or "runner",
             b_type=selected_agent_name(self.agentB) or "writer",
@@ -575,13 +783,17 @@ class AdvancedPanel(QWidget):
                 ENGINE_DEFAULT_WEIGHTS.territory_bucket,
             ),
             seed=int(self.seed.value()) or None,
-            a_params=self.editorA.get_data_or_none(),
-            b_params=self.editorB.get_data_or_none(),
+            a_params=self._slot_parameters(self.schemaA, self.editorA),
+            b_params=self._slot_parameters(self.schemaB, self.editorB),
             # Only present when the Agent C slot is actually visible -- a
             # hidden slot's stale selection/params must never reach a
             # RunConfig the user cannot see (UX-31/Agent Params contract).
             c_type=selected_agent_name(self.agentC) if self._agent_c_visible else None,
-            c_params=self.editorC.get_data_or_none() if self._agent_c_visible else None,
+            c_params=(
+                self._slot_parameters(self.schemaC, self.editorC)
+                if self._agent_c_visible
+                else None
+            ),
         )
         self.runRequested.emit(cfg)
 

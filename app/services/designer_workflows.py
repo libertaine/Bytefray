@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import json
+import secrets
 import time
 import uuid
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from types import MappingProxyType
+from typing import Any
 
+from battle_engine.agent_api import AgentValidationError
 from battle_engine.agent_evaluation import (
     EVALUATION_ARENA_ALIGNMENT_MODE,
     ORIENTATION_CANDIDATE_FIRST,
@@ -25,6 +29,11 @@ from battle_engine.agent_evaluation import (
     parse_seed_range,
     read_evaluation,
     rerun_command,
+)
+from battle_engine.agent_parameters import (
+    EMPTY_PARAMETER_SCHEMA,
+    AgentParameterSchema,
+    resolve_parameters,
 )
 from battle_engine.config import Config
 from battle_engine.evaluation_analysis import EvaluationAnalysis
@@ -70,6 +79,14 @@ class EntrantResultPresentation:
     name: str
     alive: bool
     score: float
+    # The resolved parameter values this entrant actually ran with, read from
+    # the free-form entrant metadata Phase D already records in
+    # ``result.json`` (V5 Alpha 1 Phase E4). Empty for every entrant that ran
+    # without parameters, which is every entrant in every pre-Phase-D result,
+    # so no existing artifact needs to change and the replay schema is not
+    # touched. The authoring *schema* is deliberately not here: it belongs
+    # with the agent package, not in a match record.
+    parameters: Mapping[str, Any] = MappingProxyType({})
 
 
 @dataclass(frozen=True)
@@ -122,6 +139,151 @@ def decorate_agent_display(row: AgentRow) -> str:
     it by stripping the ``[Python]``/``[VM]`` suffix back off this string.
     """
     return f"{row.name} [{agent_runtime_label(row)}]"
+
+
+# ---------------------------------------------------------------------------
+# Match seed (V5 Alpha 1 Phase E2)
+# ---------------------------------------------------------------------------
+
+# The largest seed the Designer will generate. Matches the ceiling Advanced's
+# own seed spin box already offered before Phase E, so randomizing can only
+# ever produce a value the field could already hold and a user could already
+# have typed.
+_SEED_CEILING = 1_000_000
+
+
+def random_match_seed(minimum: int = 1, maximum: int = _SEED_CEILING) -> int:
+    """A fresh, explicitly requested match seed (V5 Alpha 1 Phase E2).
+
+    The Designer's seed is deliberately *not* randomized on every run --
+    Bytefray's whole determinism story depends on a seed being a visible,
+    reproducible input. This exists so a user can ask for a new one, see it
+    land in the seed field, and rerun that exact match afterwards.
+
+    ``minimum`` defaults to 1 because Advanced treats 0 as "use the engine's
+    own default seed" rather than as a seed of its own, so generating 0 would
+    silently mean the opposite of randomizing.
+
+    Uses ``secrets`` rather than ``random``: choosing a seed is a one-off UI
+    action with no reproducibility requirement of its own, and drawing it from
+    the process-wide ``random`` module would perturb any other consumer of
+    that shared stream. This is unrelated to, and must not be confused with, a
+    match's own deterministic ``MatchContextV2.rng``.
+    """
+
+    if maximum < minimum:
+        raise ValueError(f"Seed range is empty: [{minimum}, {maximum}].")
+    return minimum + secrets.randbelow(maximum - minimum + 1)
+
+
+# ---------------------------------------------------------------------------
+# Agent parameters (V5 Alpha 1 Phase E1)
+# ---------------------------------------------------------------------------
+#
+# Every parameter decision the Designer makes routes through
+# ``agent_parameters.resolve_parameters`` -- the canonical Phase D resolver the
+# CLI and the match runtime already call. The Designer deliberately implements
+# no coercion, no bounds checking and no ``defaults < preset < overrides``
+# rule of its own: a second, subtly different notion of what an override means
+# is exactly the failure this layer exists to prevent.
+
+
+def agent_api_version(row: AgentRow) -> int | None:
+    """The Agent API version one catalog row declares, if it declares one."""
+
+    value = row.meta.get("api_version") if isinstance(row.meta, dict) else None
+    return value if isinstance(value, int) else None
+
+
+def agent_parameter_schema(row: AgentRow) -> AgentParameterSchema:
+    """One row's declared parameter schema, empty when it declares none."""
+
+    schema = getattr(row, "parameter_schema", None)
+    return schema if isinstance(schema, AgentParameterSchema) else EMPTY_PARAMETER_SCHEMA
+
+
+def agent_receives_parameters(row: AgentRow) -> bool:
+    """Whether resolved parameters would actually reach this agent.
+
+    Only Agent API v2 agents receive ``MatchContextV2.parameters``. Everything
+    else keeps the historical free-form path, where supplied parameters are
+    warned about and ignored by ``cli.py`` -- not rejected, because the
+    Designer has always exported its Agent Params field for whatever agent was
+    selected and breaking that would break a working user path.
+    """
+
+    return agent_api_version(row) == 2
+
+
+def resolve_agent_parameters(
+    schema: AgentParameterSchema,
+    *,
+    preset: str | None = None,
+    overrides: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """``defaults < preset < overrides``, through the canonical resolver."""
+
+    return resolve_parameters(schema, preset=preset, overrides=overrides)
+
+
+def parameter_launch_overrides(
+    schema: AgentParameterSchema, effective: Mapping[str, Any]
+) -> dict[str, Any]:
+    """The subset of ``effective`` the Designer needs to send to the match.
+
+    Only values the user has actually moved off the agent's own declared
+    default travel, which is the identical policy Advanced already applies to
+    the scoring weights (``_weight_override``): a run left entirely at
+    defaults produces a command byte-identical to a bare ``bytefray run``, and
+    therefore the same match identity, rather than one that merely happens to
+    resolve to the same numbers.
+
+    Resolution is unaffected either way. The child CLI applies the same
+    schema's defaults underneath these overrides, reading the same manifest
+    from the same installed agent directory, so the two cannot disagree.
+    """
+
+    defaults = schema.defaults()
+    return {
+        key: value
+        for key, value in effective.items()
+        if key not in defaults or defaults[key] != value
+    }
+
+
+def describe_effective_parameters(effective: Mapping[str, Any]) -> str:
+    """A compact ``key=value`` statement of what a match will actually use."""
+
+    return ", ".join(f"{key}={value!r}" for key, value in effective.items())
+
+
+def validate_entrant_parameters(
+    row: AgentRow, parameters: Mapping[str, Any] | None, *, slot: str
+) -> None:
+    """Reject parameters the agent's schema cannot accept, before launching.
+
+    The single authoritative gate on the Designer's launch path, so no route
+    into a match -- generated controls, the legacy free-form editor, or a
+    programmatically constructed run -- can start a subprocess that is only
+    going to fail once the agent is imported.
+
+    An agent that is not Agent API v2 is deliberately not validated: it never
+    receives resolved parameters at all, and ``cli.py`` warns about and
+    ignores whatever was supplied. Enforcing a schema rule there would break
+    the pre-existing Designer path that exports Agent Params for Agent API v1
+    agents, which have always ignored them.
+    """
+
+    if not parameters or not agent_receives_parameters(row):
+        return
+    try:
+        resolve_parameters(
+            agent_parameter_schema(row),
+            overrides=parameters,
+            path=Path(row.path) if row.path else None,
+        )
+    except AgentValidationError as exc:
+        raise DesignerValidationError(f"Agent {slot}: {exc}") from exc
 
 
 def validate_homogeneous(rows: Iterable[AgentRow], *, minimum: int = 2) -> str:
@@ -185,6 +347,24 @@ def new_match_run_directory(data_root: Path) -> Path:
     return data_root.expanduser().resolve() / "runs" / "_designer" / label
 
 
+def _entrant_parameters(entrant: Mapping[str, Any]) -> Mapping[str, Any]:
+    """One entrant's recorded resolved parameters, or an empty mapping.
+
+    Read defensively from free-form metadata: a result written before Phase D
+    has no ``parameters`` key at all, and every other reader of this block
+    already treats a missing key as "this run did not have that". Never
+    raises, so an older or hand-edited artifact still opens.
+    """
+
+    metadata = entrant.get("metadata")
+    if not isinstance(metadata, Mapping):
+        return MappingProxyType({})
+    parameters = metadata.get("parameters")
+    if not isinstance(parameters, Mapping):
+        return MappingProxyType({})
+    return MappingProxyType(dict(parameters))
+
+
 def read_match_presentation(result_path: Path) -> MatchPresentation:
     path = result_path.expanduser().resolve()
     result = read_result(path)
@@ -199,6 +379,7 @@ def read_match_presentation(result_path: Path) -> MatchPresentation:
             name=str(entrant.get("name", "")),
             alive=bool(entrant.get("alive", False)),
             score=float(entrant.get("score", 0.0)),
+            parameters=_entrant_parameters(entrant),
         )
         for entrant in result.entrants
     )

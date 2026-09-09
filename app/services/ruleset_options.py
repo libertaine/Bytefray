@@ -138,14 +138,6 @@ def ruleset_supports_runtime_kinds(ruleset_id: str, kinds: set[str]) -> bool:
     return not policy.unsupported_runtime_kinds(kinds)
 
 
-def best_designer_ruleset(kinds: set[str]) -> str:
-    """Return the first product-preferred Ruleset compatible with ``kinds``."""
-    for option in DESIGNER_RULESET_OPTIONS:
-        if ruleset_supports_runtime_kinds(option.ruleset_id, kinds):
-            return option.ruleset_id
-    return BYTEFRAY_RULESET_ID
-
-
 def ruleset_supports_agent_metadata(
     ruleset_id: str, metadata: Iterable[object]
 ) -> bool:

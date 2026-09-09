@@ -16,7 +16,6 @@ from app.services.ruleset_options import (
     SIMPLE_RULESET_OPTIONS,
     agent_row_metadata,
     agent_row_supported_by_ruleset,
-    best_designer_ruleset,
     best_designer_ruleset_for_agents,
     ruleset_supports_agent_metadata,
     ruleset_supports_runtime_kinds,
@@ -50,7 +49,16 @@ def test_product_options_include_all_v4_identities_without_changing_default_pref
         BYTEFRAY_RULESET_V2_ID,
         BYTEFRAY_RULESET_V4_ID,
     ]
-    assert best_designer_ruleset({"python"}) == BYTEFRAY_RULESET_V2_ID
+    # Preference order is what an unset selection resolves through, asked of
+    # the metadata-aware chooser: a Python agent alone says nothing about
+    # which Ruleset it can run under, and every option below is Python-only
+    # except v1.
+    assert best_designer_ruleset_for_agents(({"kind": "python", "api_version": 1},)) == (
+        BYTEFRAY_RULESET_V2_ID
+    )
+    assert best_designer_ruleset_for_agents(({"kind": "python", "api_version": 2},)) == (
+        BYTEFRAY_RULESET_V4_ID
+    )
 
 
 def test_the_three_v4_options_are_distinguishable_to_a_reader() -> None:
@@ -68,8 +76,20 @@ def test_the_three_v4_options_are_distinguishable_to_a_reader() -> None:
 
 
 def test_python_composition_prefers_v2_and_vm_composition_prefers_v1() -> None:
-    assert best_designer_ruleset({"python"}) == BYTEFRAY_RULESET_V2_ID
-    assert best_designer_ruleset({"vm"}) == BYTEFRAY_RULESET_ID
+    """V5 Alpha 1 Phase E3.
+
+    This used to assert ``best_designer_ruleset({"python"})``, a chooser that
+    saw only the runtime kind. Every Python-only Ruleset looks alike on that
+    axis, so it answered ``bytefray-rules-2`` for an Agent API v2 agent --
+    a Ruleset that agent cannot run under. No production code ever called it
+    and it has been removed; the question it was asked is answered here by
+    the metadata-aware chooser every Designer surface actually uses.
+    """
+
+    assert best_designer_ruleset_for_agents(({"kind": "python", "api_version": 1},)) == (
+        BYTEFRAY_RULESET_V2_ID
+    )
+    assert best_designer_ruleset_for_agents(({"kind": "vm"},)) == BYTEFRAY_RULESET_ID
     assert ruleset_supports_runtime_kinds(BYTEFRAY_RULESET_V2_ID, {"python"})
     assert not ruleset_supports_runtime_kinds(BYTEFRAY_RULESET_V2_ID, {"vm"})
 

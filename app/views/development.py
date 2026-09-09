@@ -57,6 +57,7 @@ from PySide6.QtWidgets import (
 from app.services.agent_catalog import AgentRow
 from app.services.agent_source import load_agent_source
 from app.services.agent_workflows import DevelopmentTestPresentation, ValidationPresentation
+from app.services.designer_workflows import random_match_seed
 from app.services.ruleset_options import RULESET_DESCRIPTION, agent_row_metadata
 from app.widgets.ruleset_combo import (
     populate_ruleset_combo,
@@ -301,7 +302,24 @@ class AgentDevelopmentPanel(QWidget):
         self.seedSpin = QSpinBox()
         self.seedSpin.setRange(0, _MAX_SPINBOX_INT)
         self.seedSpin.setValue(_DEFAULT_TEST_SEED)
+        self.seedSpin.setToolTip(
+            "The deterministic seed for this test match. The same agent, "
+            "opponent, tick count and seed always produce the same match."
+        )
         options_row.addWidget(self.seedSpin)
+        # V5 Alpha 1 Phase E2: the same explicit randomization Advanced's
+        # match seed offers, on the surface an author actually iterates in.
+        # Testing an agent against one fixed arrangement is how a fragile
+        # agent looks finished, so asking for a different one has to be one
+        # click -- while the value stays visible, editable and reproducible.
+        self.btnRandomizeSeed = QPushButton("Randomize")
+        self.btnRandomizeSeed.setToolTip(
+            "Pick a new random seed for this test. The generated value stays "
+            "visible and editable: testing again with the same number "
+            "reproduces the same match."
+        )
+        self.btnRandomizeSeed.clicked.connect(self.randomize_seed)
+        options_row.addWidget(self.btnRandomizeSeed)
         options_row.addWidget(QLabel("Ticks"))
         self.ticksSpin = QSpinBox()
         self.ticksSpin.setRange(1, _MAX_SPINBOX_INT)
@@ -460,6 +478,20 @@ class AgentDevelopmentPanel(QWidget):
         """The ``--opponent`` value to pass, or ``None`` for the internal reference."""
         return self.opponentCombo.currentData()
 
+    def randomize_seed(self) -> int:
+        """Put a freshly generated seed in the test seed field and return it.
+
+        Generated within the field's own range, so the result is always a
+        value the author could have typed and can type again.
+        """
+
+        seed = random_match_seed(
+            minimum=max(1, int(self.seedSpin.minimum())),
+            maximum=int(self.seedSpin.maximum()),
+        )
+        self.seedSpin.setValue(seed)
+        return seed
+
     def selected_seed(self) -> int:
         return self.seedSpin.value()
 
@@ -568,6 +600,7 @@ class AgentDevelopmentPanel(QWidget):
         self.btnReloadSource.setEnabled(not busy)
         self.opponentCombo.setEnabled(not busy)
         self.seedSpin.setEnabled(not busy)
+        self.btnRandomizeSeed.setEnabled(not busy)
         self.ticksSpin.setEnabled(not busy)
         self.timeoutSpin.setEnabled(not busy)
         self.rulesetCombo.setEnabled(not busy)

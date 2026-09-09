@@ -583,8 +583,10 @@ run, read, or copy.
 `claimer`, `strider`, `hunter`, `wanderer`, `adaptive` — each a full
 Agent API v1 agent (`agent.yaml` + `agent.py`) bundled under
 `battle_engine/data/starter_agents/<name>/`, discovered and copied into
-the writable catalog by the same `ensure_starter_agents()` non-destructive
-mechanism the native VM starters already use; no new discovery, catalog,
+the writable catalog by the same `ensure_starter_agents()` mechanism the
+native VM starters already use (which, since V5 Alpha 1 Phase E, installs a
+missing starter, refreshes one whose content is provably an untouched copy of
+a superseded bundled release, and otherwise preserves what is there); no new discovery, catalog,
 or packaging concept was introduced; `[tool.setuptools.package-data]`'s
 existing `battle_engine = ["data/**/*"]` glob already covers the new
 subdirectories. Each agent's module docstring is a self-contained

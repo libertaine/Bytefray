@@ -14,7 +14,6 @@ from app.services.ruleset_options import (
     best_designer_ruleset_for_agents,
     ruleset_supports_agent_metadata,
 )
-from app.widgets.agent_combo import selected_agent_meta
 
 # Shown next to a Ruleset selector when the current entrant selection has no
 # compatible Ruleset at all. Deliberately states the cause (the selection,
@@ -100,18 +99,3 @@ def sync_ruleset_choices_for_metadata(
             explanation.setText("")
             explanation.setVisible(False)
     return replacement_id is not None
-
-
-def sync_ruleset_choices(
-    combo: QComboBox,
-    agent_a: QComboBox,
-    agent_b: QComboBox,
-    explanation: QLabel,
-) -> bool:
-    """Match-selector wrapper: sync one Ruleset combo to two agent combos."""
-
-    return sync_ruleset_choices_for_metadata(
-        combo,
-        (selected_agent_meta(agent_a), selected_agent_meta(agent_b)),
-        explanation,
-    )

@@ -69,7 +69,12 @@ Non-negotiable constraints carried over from Phases 1–3 and from
    (`FileNotFoundError`/`OSError`); a malformed individual starter is instead
    reported via a non-blocking `QMessageBox.warning` naming it, and every
    other bundled starter still installs. Startup continues regardless
-   (non-fatal either way).
+   (non-fatal either way). Since V5 Alpha 1 Phase E the same call also
+   refreshes any installed starter whose content is provably an untouched
+   copy of a superseded bundled release, and reports both that and any
+   starter it preserved as user-modified through
+   `describe_starter_refresh()`, which the Designer writes into the Advanced
+   engine log once the panels exist rather than raising as a dialog.
 3. Constructs one `AgentCatalog(battle_root)` (`app/services/agent_catalog.py`)
    shared by both tabs.
 4. Constructs `SimplePanel` and `AdvancedPanel`, wiring their

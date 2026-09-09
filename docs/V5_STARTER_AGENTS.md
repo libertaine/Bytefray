@@ -30,6 +30,35 @@ says what each starter exposes and why.
 parameters existed.** Nothing about how these agents play changed when they
 gained a schema, and a test asserts it against digests captured beforehand.
 
+## Setting parameters in the Agent Designer
+
+Select a starter in Advanced's **Agent Params** tab and Bytefray generates a
+control for each parameter its manifest declares: a bounded spin box for a
+number, a menu for a choice, a checkbox for a switch. Each control carries the
+parameter's description, its legal range and its default, and a preset
+selector loads a declared preset in one step. A line under the controls always
+states the values the match will actually use, so a preset name never hides
+what it resolved to, and **Reset to Defaults** returns everything to the
+manifest's own values. Leaving every control alone runs the agent exactly as a
+bare `bytefray run` would — the Designer sends only values you have changed.
+
+An agent that declares no parameters — every `v4_*` starter, every Agent API
+v1 agent, every VM agent — keeps the free-form JSON field it has always had.
+
+## Upgrading an existing installation
+
+Bundled starters are copied into your writable `agents/` catalog the first
+time Bytefray runs, and that catalog is yours to edit. When a newer Bytefray
+ships a changed starter, it updates your copy **only** if that copy is still
+byte-for-byte the version some earlier release installed. If you have edited a
+starter, your version is kept and Bytefray tells you which ones it kept and
+that deleting or renaming one gets you the bundled version. Line-ending
+differences alone do not count as an edit.
+
+This is why an installation created before `5.0.0a1`'s parameter schemas
+existed picks the new manifests up automatically, while a starter you have
+been working on does not get overwritten from under you.
+
 ## Why the objective is a region
 
 An entrant loses when it owns **none** of the cells of its own core. Under

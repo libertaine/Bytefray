@@ -36,7 +36,11 @@ from battle_engine.ruleset_policy import (
     NoCompatibleRulesetError,
     resolve_omitted_ruleset_for_agents,
 )
-from battle_engine.starters import describe_bootstrap_errors, ensure_starter_agents
+from battle_engine.starters import (
+    describe_bootstrap_errors,
+    describe_starter_refresh,
+    ensure_starter_agents,
+)
 
 DEFAULT_REPLAY_RELATIVE_PATH = Path("runs") / "_loose" / "replay.jsonl"
 
@@ -654,6 +658,13 @@ def main(argv: Iterable[str] | None = None) -> int:
         warning = describe_bootstrap_errors(bootstrap)
         if warning:
             print(f"WARNING: {warning}", file=sys.stderr)
+        # Reported on the discovery command rather than on every match: a
+        # customized starter is a standing condition, so `bytefray run` would
+        # repeat it forever, while listing agents is exactly where a user is
+        # asking what their catalog contains (V5 Alpha 1 Phase E0).
+        refresh = describe_starter_refresh(bootstrap)
+        if refresh:
+            print(f"NOTE: {refresh}", file=sys.stderr)
         try:
             specs = discover_agents(root)
         except AgentValidationError as exc:
