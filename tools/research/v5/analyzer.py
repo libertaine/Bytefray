@@ -193,6 +193,13 @@ class MatchAnalysis:
     first_full_core_deficit_tick: dict[str, int | None]
     ticks_first_core_hit_to_core_capture: dict[str, int | None]
 
+    # V5 R4 Defensive-Coverage Layer (strictly additive). How many DISTINCT
+    # cells of its own core an entrant wrote itself over the whole match --
+    # the direct measure of whether a defender defends its objective region
+    # or, like the bundled ``v4_local_defender``, only two addresses of it
+    # (R3 Section C.1). Independent of whether those cells were ever lost.
+    distinct_own_core_cells_written: dict[str, int]
+
     # Contact, reconstructed geometrically from replay anchors/reaches by
     # re-implementing the engine's entrant-wide sensor-fusion rule
     # (``process_runtime._visible_enemy_anchors``). Replay records
@@ -393,6 +400,12 @@ def analyze_match(
     r3_core_cells_targeted: dict[str, set[int]] = {e: set() for e in entrants}
     r3_core_cells_damaged: dict[str, set[int]] = {e: set() for e in entrants}
     r3_own_core_cells_lost: dict[str, set[int]] = {e: set() for e in entrants}
+    # R4 Defensive-Coverage accumulator (strictly additive; feeds no Phase 0
+    # / R1 / R2 / R3 field). Distinct cells of an entrant's OWN core that it
+    # wrote itself -- the measure R3 Section C.1 needed to show that the
+    # bundled ``v4_local_defender`` touches two addresses and never inspects
+    # or repairs the other six cells of its own core.
+    r4_own_core_cells_written: dict[str, set[int]] = {e: set() for e in entrants}
     r3_first_own_core_hit: dict[str, int | None] = {e: None for e in entrants}
     r3_tick_2_cells_lost: dict[str, int | None] = {e: None for e in entrants}
     r3_tick_4_cells_lost: dict[str, int | None] = {e: None for e in entrants}
@@ -454,6 +467,8 @@ def analyze_match(
                 if prior_owner is not None and prior_owner != writer:
                     r3_hostile_writes[writer] += 1
                     r3_hostile_addresses[writer].add(cell)
+                if cell in core_cells[writer]:
+                    r4_own_core_cells_written[writer].add(cell)
                 for victim_e in entrants:
                     if victim_e == writer or cell not in core_cells[victim_e]:
                         continue
@@ -939,6 +954,9 @@ def analyze_match(
         tick_8_distinct_own_core_cells_lost=r3_tick_8_cells_lost,
         first_full_core_deficit_tick=own_core_captured_tick,
         ticks_first_core_hit_to_core_capture=r3_ticks_first_hit_to_capture,
+        distinct_own_core_cells_written={
+            e: len(v) for e, v in r4_own_core_cells_written.items()
+        },
         first_contact_tick_by_entrant=r3_first_contact,
         first_geometric_contact_tick=r3_first_geometric_contact,
         ticks_contact_to_first_core_damage=r3_ticks_contact_to_first_damage,
