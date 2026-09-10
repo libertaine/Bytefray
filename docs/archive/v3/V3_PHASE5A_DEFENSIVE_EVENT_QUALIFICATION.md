@@ -4,7 +4,7 @@ Branch: `v3-research-phase5`, cut from `v3-research-phase4` at `27676a3`.
 Status: research complete, not merged, not tagged, not published.
 
 Phase 5A qualifies the candidate defensive-success event proposed in
-`docs/V3_PHASE5_DEFENSIVE_EVENT_DESIGN_PROPOSAL.md` **before** any score
+`docs/archive/v3/V3_PHASE5_DEFENSIVE_EVENT_DESIGN_PROPOSAL.md` **before** any score
 depends on it. It changes no scoring, weight, Ruleset, agent, or default,
 and executes no match: every figure is reconstructed from committed Phase 1
 artifacts.
@@ -269,7 +269,7 @@ program's discipline is that a null is a complete outcome.
 |---|---|
 | `engine/src/battle_engine/data/benchmarks/v3_phase5a_defensive_event_gates.json` | **new** — gates, declared at `8bbaad6` before measurement |
 | `tools/v3_phase5a_qualification.py` | **new** — qualification harness (measurement only) |
-| `docs/V3_PHASE5A_DEFENSIVE_EVENT_QUALIFICATION.md` | **new** — this report |
+| `docs/archive/v3/V3_PHASE5A_DEFENSIVE_EVENT_QUALIFICATION.md` | **new** — this report |
 
 ## Validation
 

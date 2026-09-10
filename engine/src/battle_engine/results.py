@@ -29,7 +29,7 @@ class HasAgentIdentity(Protocol):
     ``agent_id`` is declared read-only (a property, not a plain attribute)
     because both concrete state classes expose it as a compatibility
     property backed by their stored ``EntrantIdentity`` -- see
-    ``docs/V1_5_PHASE5_ENTRANT_IDENTITY_EXECUTION_STATE.md``. A plain
+    ``docs/archive/v1/V1_5_PHASE5_ENTRANT_IDENTITY_EXECUTION_STATE.md``. A plain
     ``agent_id: str`` attribute declaration here would reject that read-only
     property under structural typing even though the runtime value is
     identical.
@@ -63,7 +63,7 @@ def resolve_winner(
     ``score``) but are excluded from winner eligibility. With zero alive,
     there is no survivor to prefer, so comparison falls back to every
     entrant, dead or alive, exactly as it always has -- see
-    ``docs/V2_0_ALPHA4_1_WINNER_SEMANTICS.md`` for why the zero-survivor
+    ``docs/archive/v2/V2_0_ALPHA4_1_WINNER_SEMANTICS.md`` for why the zero-survivor
     case is deliberately not given its own special rule.
     """
 

@@ -22,7 +22,7 @@ has one obvious place to obtain Ruleset-owned scheduling/termination
 semantics instead of duplicating them per runtime, and so an unrecognized
 Ruleset ID fails before any gameplay executes rather than silently running
 as v1. Scoring, statistics, and winner resolution are not yet
-Ruleset-policy-owned -- see ``docs/V1_5_PHASE4_TERMINATION_POLICY.md`` for
+Ruleset-policy-owned -- see ``docs/archive/v1/V1_5_PHASE4_TERMINATION_POLICY.md`` for
 what remains outside this seam and why.
 """
 
@@ -49,7 +49,7 @@ class TerminationReason(str, Enum):
     A ``str`` subclass so its ``.value`` -- the persisted/serialized form
     used in ``result.json`` and the golden corpus -- is exactly its member
     name's lowercase spelling; this representation predates Phase 4 and is
-    unchanged by it (see ``docs/V1_5_PHASE4_TERMINATION_POLICY.md``'s
+    unchanged by it (see ``docs/archive/v1/V1_5_PHASE4_TERMINATION_POLICY.md``'s
     "Reason representation").
     """
 
@@ -221,7 +221,7 @@ class RulesetPolicy:
         three integers, and is called both mid-match (to decide whether a
         runtime should keep ticking, using only ``.terminated``) and once a
         match has already stopped (to obtain the final ``.reason``) -- see
-        ``docs/V1_5_PHASE4_TERMINATION_POLICY.md`` for exactly where each
+        ``docs/archive/v1/V1_5_PHASE4_TERMINATION_POLICY.md`` for exactly where each
         runtime calls this.
         """
 
@@ -314,7 +314,7 @@ RULESET_V2_ALPHA11 = RulesetPolicy(ruleset_id=BYTEFRAY_RULESET_V2_ALPHA11_ID)
 # entrant, their exact pre-existing historical behavior, deliberately
 # preserved), a VM entrant requested under this permanent identity is
 # rejected by ``NativeMatchService`` before any entrant executes -- see
-# ``docs/V2_0_BETA1_PHASE2_PRODUCT_EXECUTION.md``. This is an execution
+# ``docs/archive/v2/V2_0_BETA1_PHASE2_PRODUCT_EXECUTION.md``. This is an execution
 # compatibility boundary, not a gameplay change: the frozen semantics this
 # policy's ``run_scheduler``/``resolve_termination`` expose are untouched.
 BYTEFRAY_RULESET_V2_ID = "bytefray-rules-2"
@@ -476,7 +476,7 @@ class UnknownRulesetError(LookupError):
 # from which ID a persisted artifact may be *attributed* to. A historical
 # artifact identity alias is not evidence that runtime dispatch should
 # execute the aliased ID as today's Ruleset v1 -- see
-# ``docs/V1_5_PHASE3_RULESET_POLICY_DISPATCH.md``'s "Resolver design".
+# ``docs/archive/v1/V1_5_PHASE3_RULESET_POLICY_DISPATCH.md``'s "Resolver design".
 #
 # ``bytefray-rules-2-alpha1``, ``bytefray-rules-2-alpha11``,
 # ``bytefray-rules-2``, and ``bytefray-rules-3-alpha1`` are each registered

@@ -2,10 +2,10 @@
 
 This is the working plan for `v2.0.0-beta1`, the first beta task on
 `v2.0-beta1-development` (branched from `v2.0-development`'s alpha-closeout
-commit — see `docs/V2_0_ALPHA_RESEARCH_SUMMARY.md`). It records the
+commit — see `docs/archive/v2/V2_0_ALPHA_RESEARCH_SUMMARY.md`). It records the
 semantic contract this phase freezes and the phases that follow it. It is
 not a roadmap duplicate — see `docs/ROADMAP.md` for shipped-milestone
-history and `docs/V2_0_RULESET_V2_CANDIDATE.md` for the full evidence-backed
+history and `docs/archive/v2/V2_0_RULESET_V2_CANDIDATE.md` for the full evidence-backed
 semantic definition this plan promotes.
 
 The central transition this document exists to record:
@@ -18,7 +18,7 @@ The central transition this document exists to record:
 Everything below is adopted **as validated by alpha.11**, not redesigned.
 Where this section says "unchanged," it means byte-identical to
 `bytefray-rules-2-alpha11` as documented in
-`docs/V2_0_RULESET_V2_CANDIDATE.md`.
+`docs/archive/v2/V2_0_RULESET_V2_CANDIDATE.md`.
 
 ### Vulnerable Core
 
@@ -203,7 +203,7 @@ removed.
 
 ## 5. Documentation delivered in this phase
 
-- `docs/V2_0_ALPHA_RESEARCH_SUMMARY.md` — durable alpha-series synthesis,
+- `docs/archive/v2/V2_0_ALPHA_RESEARCH_SUMMARY.md` — durable alpha-series synthesis,
   alpha research formally closed.
 - `docs/ROADMAP.md` — replaced the stale "v2.x research boundary" framing
   with "v2.0 Alpha Research — Complete" plus the beta1–rc1 path.
@@ -322,7 +322,7 @@ merge/push are a separate, later task — not part of this plan.
 ### v2.0.0-beta2 — Evaluation & Multi-Entrant Methodology
 
 Ruleset-v2 evaluation methodology (order/placement/seed balancing per
-`docs/V2_0_RULESET_V2_CANDIDATE.md` §12's requirements), scheduler/order
+`docs/archive/v2/V2_0_RULESET_V2_CANDIDATE.md` §12's requirements), scheduler/order
 balancing tooling, the multi-entrant evaluation/productization decision
 (officially support 2-entrant and 3-entrant product/evaluation workflows if
 qualification stays clean — recorded as a beta2 recommendation, not

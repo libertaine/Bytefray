@@ -173,7 +173,7 @@ BYTEFRAY_RULESET_V2_ID = "bytefray-rules-2"
 defined in `battle_engine.ruleset_policy`, resolved through the same
 fail-closed `resolve_ruleset_policy` seam as every other identity. See
 [RULES_V2.md](RULES_V2.md) for the full Ruleset v2 gameplay contract and
-`docs/V2_0_BETA1_PLAN.md`/`docs/V2_0_RULESET_V2_CANDIDATE.md` for the
+`docs/archive/v2/V2_0_BETA1_PLAN.md`/`docs/archive/v2/V2_0_RULESET_V2_CANDIDATE.md` for the
 evidence behind it.
 
 - **Status: permanent, stable semantic identity** as of `v2.0.0`, promoted

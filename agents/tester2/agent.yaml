@@ -1,4 +1,0 @@
-kind: python
-api_version: 1
-entrypoint: agent.py:create_agent
-version: "0.1.0"

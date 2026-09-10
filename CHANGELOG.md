@@ -1098,7 +1098,7 @@ package schema, evaluation methodology, or gameplay behavior.
   statistics, ownership/memory fingerprints, and normalized canonical replay
   content remain unchanged.
 - Added a reproducible non-CI scaling benchmark and recorded before/after and
-  replay measurements in `docs/performance/V1_4_SCALING.md`. Current backward
+  replay measurements in `docs/archive/v1/V1_4_SCALING.md`. Current backward
   seek performance did not justify checkpoint/index complexity.
 - Qualified existing homogeneous three-entrant VM/Python execution without
   changing pairwise tournament/evaluation methodology or gameplay semantics.

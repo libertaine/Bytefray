@@ -416,7 +416,7 @@ class EvaluationPlacement:
     baseline cell's "subject" is the baseline, not the candidate, and
     placement must describe *where the subject starts* regardless of role.
     Deliberately 1v1-scoped (two named fields, not a generic seat map) --
-    see ``docs/V2_0_BETA2_PHASE1_EVALUATION_METHODOLOGY.md``'s multi-entrant
+    see ``docs/archive/v2/V2_0_BETA2_PHASE1_EVALUATION_METHODOLOGY.md``'s multi-entrant
     extension seam for how this generalizes to N seats in Beta2 Phase 2.
     """
 

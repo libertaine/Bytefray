@@ -13,7 +13,7 @@ Deliberately kept out of ``battle_engine.starters.STARTER_AGENT_NAMES``:
 these agents exist to exercise Vulnerable-Core-family Rulesets
 (``bytefray-rules-2-alpha1``, ``bytefray-rules-2-alpha11``, and, as of
 v2.0.0-beta1, the permanent ``bytefray-rules-2`` -- see
-``docs/V2_0_ALPHA_ARCHITECTURE.md`` and ``docs/V2_0_BETA1_PLAN.md``), not to
+``docs/archive/v2/V2_0_ALPHA_ARCHITECTURE.md`` and ``docs/archive/v2/V2_0_BETA1_PLAN.md``), not to
 join Bytefray's permanent default roster shown to every ``bytefray agents
 create``/Designer user regardless of which Ruleset they run.
 ``reactive_core_defender`` (added for alpha.2,

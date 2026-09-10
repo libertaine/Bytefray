@@ -18,8 +18,8 @@ Verified before any change:
 
 - Branch `v3.0-development`, HEAD `26484d0` ("feat: add Replay Viewer
   core-capture callouts"), working tree clean.
-- Read `docs/V3_PRODUCT_SCOPE.md` (thesis, compatibility freeze, phase
-  plan, non-goals) and `docs/V3_CORE_CAPTURE_CALLOUT.md` (the immediately
+- Read `docs/archive/v3/V3_PRODUCT_SCOPE.md` (thesis, compatibility freeze, phase
+  plan, non-goals) and `docs/archive/v3/V3_CORE_CAPTURE_CALLOUT.md` (the immediately
   preceding fun feature, so this one would not duplicate it).
 - Inspected `client/src/battle_client/` (`pygame_renderer.py`,
   `hud_layout.py`, `player.py`, `session.py`, `analysis.py`), `app/`
@@ -87,7 +87,7 @@ timeline was deliberately shaped not to overlap either:
 | `client/tests/test_analysis.py` | 10 new tests (mark derivation, tick snapping) |
 | `client/tests/test_pygame_renderer.py` | 15 new tests; `_FakeDraw` now records rects so overlay geometry is assertable |
 | `docs/screenshots/v3-match-timeline/*.png` | **new** — 4 real screenshots (§F) |
-| `docs/V3_MATCH_TIMELINE.md` | **new** — this report |
+| `docs/archive/v3/V3_MATCH_TIMELINE.md` | **new** — this report |
 
 No engine file was touched. No Ruleset, Agent API, scoring, scheduler, or
 replay-schema file was touched.

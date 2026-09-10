@@ -1,5 +1,5 @@
 """Bridges evaluation-history's ``AdaptedCell`` to Phase 5 behavior refs
-(``docs/V1_6_PHASE5_BEHAVIOR_ANALYSIS.md``).
+(``docs/archive/v1/V1_6_PHASE5_BEHAVIOR_ANALYSIS.md``).
 
 Deliberately a separate module from ``models.py``/``cli.py``: it is the one
 place ``evaluation_history`` composes its own path-containment discipline

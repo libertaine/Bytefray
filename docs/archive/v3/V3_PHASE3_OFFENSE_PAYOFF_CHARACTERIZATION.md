@@ -649,7 +649,7 @@ skip it" instruction.
 attribution of a scale effect to fixed `CORE_SIZE` is contradicted by
 Phase 1's own capture-caused data — holds up under direct inspection of
 Phase 1's own published constant-density diagonals
-(`docs/V3_PHASE1_ARENA_ACTION_DENSITY.md` §9's table).
+(`docs/archive/v3/V3_PHASE1_ARENA_ACTION_DENSITY.md` §9's table).
 
 §9.1 predicted that a fixed 8-cell core against a scaling absolute action
 budget should let search *afford more investigations* as the diagonal's
@@ -682,7 +682,7 @@ dynamics at those low-density, large-arena conditions, which this phase
 did not further investigate since it is secondary to the payoff question.
 
 Recorded here as a prospective correction, with its evidence, per Ruling 5.
-`docs/V3_PHASE1_ARENA_ACTION_DENSITY.md` is not edited.
+`docs/archive/v3/V3_PHASE1_ARENA_ACTION_DENSITY.md` is not edited.
 
 ---
 
@@ -806,7 +806,7 @@ deprioritized.
 | `tools/v3_phase3_corpus.py` | **new** — Phase 3H/3F corpus builder + Phase 1 tooling reuse |
 | `tools/v3_phase3_killer_bystander.py` | **new** — Phase 3J killer/bystander + attribution analysis |
 | `tools/v3_phase3_rubric.py` | **new** — Phase 3J §17/2A-2B/pairwise-negative-control scoring |
-| `docs/V3_PHASE3_OFFENSE_PAYOFF_CHARACTERIZATION.md` | **new** — this report |
+| `docs/archive/v3/V3_PHASE3_OFFENSE_PAYOFF_CHARACTERIZATION.md` | **new** — this report |
 
 ## Validation
 

@@ -608,7 +608,7 @@ class GroupEntrantSpec:
     preserves the same given-order execution ``run_sequential_quota`` used
     to provide directly, with no separate "seat" concept at the engine
     level, so seat order *is* scheduler order (see
-    ``docs/V2_0_BETA2_PHASE2_MULTI_ENTRANT_EVALUATION.md``). Ruleset v4
+    ``docs/archive/v2/V2_0_BETA2_PHASE2_MULTI_ENTRANT_EVALUATION.md``). Ruleset v4
     alpha1 is the one exception -- it uses ``run_chunked_quota`` with a
     rotating start (``chunk_size=2``), so declared seat order and a given
     tick's execution order diverge there.

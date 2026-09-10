@@ -13,7 +13,7 @@ class Agent:
 
     References the entrant's :class:`~battle_engine.entrant_identity.
     EntrantIdentity` rather than storing ``agent_id`` as an independent
-    field -- see ``docs/V1_5_PHASE5_ENTRANT_IDENTITY_EXECUTION_STATE.md``.
+    field -- see ``docs/archive/v1/V1_5_PHASE5_ENTRANT_IDENTITY_EXECUTION_STATE.md``.
     ``agent_id`` remains a read-only compatibility property so the many
     ownership/writer-tracking/scoring/statistics/kill-attribution/replay
     call sites that read ``agent.agent_id`` are unaffected.

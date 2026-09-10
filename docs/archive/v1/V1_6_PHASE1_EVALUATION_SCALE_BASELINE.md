@@ -9,7 +9,7 @@ presets, statistics, or behavior-profile code is implemented here.**
 Everything below is either read directly from the current source tree or
 measured directly against it; nothing is projected without evidence.
 
-Written in the same spirit as `docs/V1_5_PHASE1_RULESET_V1_BASELINE.md`: a
+Written in the same spirit as `docs/archive/v1/V1_5_PHASE1_RULESET_V1_BASELINE.md`: a
 pre-Phase-2 snapshot, not a design document to be silently superseded —
 Phase 2 should cite this document rather than re-deriving its findings.
 

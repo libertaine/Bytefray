@@ -8,7 +8,7 @@ froze the gameplay semantics; Phase 2 made the permanent identity safely
 selectable through product CLI surfaces. Neither is touched here, and
 neither is this phase's own concern: this phase does not change gameplay
 semantics, does not touch `battle_engine.python_runtime`'s core mechanics,
-and does not render anything. See `docs/V2_0_BETA1_PLAN.md` for the overall
+and does not render anything. See `docs/archive/v2/V2_0_BETA1_PLAN.md` for the overall
 phase sequence.
 
 ## 1. Starting repository state
@@ -572,7 +572,7 @@ run.
 
 ## 22. Documentation
 
-This document, plus a progress-only update to `docs/V2_0_BETA1_PLAN.md`
+This document, plus a progress-only update to `docs/archive/v2/V2_0_BETA1_PLAN.md`
 (§7: Phase 3 marked complete, Phase 4 recorded as next) — no other
 documentation file required a change: `docs/RULES_V2.md`/`docs/RULES.md`
 describe gameplay semantics, which this phase does not touch;
@@ -585,7 +585,7 @@ which moved.
 Explicitly not started by this phase, per the governing task's scope
 exclusions: Replay Viewer HUD rendering, HUD panels, battlefield resizing,
 new colors/fonts/icons, Designer UI changes, multi-entrant product
-controls. Phase 4's job, as scoped by `docs/V2_0_BETA1_PLAN.md` §7, is to
+controls. Phase 4's job, as scoped by `docs/archive/v2/V2_0_BETA1_PLAN.md` §7, is to
 consume `battle_client.replay_status.get_entrant_statuses` from the exact
 integration seam documented in §17 above and render it — alive/dead, core
 integrity/status, capture attribution, and existing score/territory —

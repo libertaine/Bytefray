@@ -1,12 +1,12 @@
 """Post-Phase-4 evidence: core-ownership trajectories from committed replays.
 
 Produces every number cited in the dated addendum to
-``docs/V3_PHASE4_DEFENSE_PAYOFF_CHARACTERIZATION.md``, so those claims are
+``docs/archive/v3/V3_PHASE4_DEFENSE_PAYOFF_CHARACTERIZATION.md``, so those claims are
 reproducible from the repository rather than resting on a transcript.
 
 This is **measurement only**. It changes no scoring, no Ruleset, and no
 default, and it is deliberately *not* the Phase 5A qualification harness
-(see ``docs/V3_PHASE5_DEFENSIVE_EVENT_DESIGN_PROPOSAL.md``, which has not
+(see ``docs/archive/v3/V3_PHASE5_DEFENSIVE_EVENT_DESIGN_PROPOSAL.md``, which has not
 been implemented): it samples 6 of the 11 committed group rosters at the
 default condition, whereas Phase 5A's own gates require the full 594-cell
 corpus plus other density conditions.

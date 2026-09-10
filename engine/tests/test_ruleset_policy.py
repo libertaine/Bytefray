@@ -162,7 +162,7 @@ def test_unknown_ruleset_id_fails_closed_rather_than_resolving_to_v1(
     alias ``evaluation-rules-1`` -- may silently execute as Ruleset v1.
     Runtime dispatch and historical artifact-identity attribution
     (``rules.normalize_ruleset_id``) are deliberately different concerns;
-    see ``docs/V1_5_PHASE3_RULESET_POLICY_DISPATCH.md``.
+    see ``docs/archive/v1/V1_5_PHASE3_RULESET_POLICY_DISPATCH.md``.
     """
 
     with pytest.raises(UnknownRulesetError) as excinfo:

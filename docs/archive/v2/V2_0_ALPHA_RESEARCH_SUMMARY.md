@@ -201,7 +201,7 @@ returned A-PASS**, so **Resolution B (deterministic territory maintenance)
 was correctly never entered** — no decay or maintenance mechanic was
 designed, implemented, parameterized, or executed anywhere in this alpha.
 **Resolution C returned GO** for a separate v2 beta-planning phase, with the
-resulting candidate semantics recorded in `docs/V2_0_RULESET_V2_CANDIDATE.md`
+resulting candidate semantics recorded in `docs/archive/v2/V2_0_RULESET_V2_CANDIDATE.md`
 under the still-experimental `bytefray-rules-2-alpha11` identity — deliberately
 not yet promoted to a permanent `bytefray-rules-2` identity, which alpha.11
 explicitly left as a beta-planning decision.
@@ -211,10 +211,10 @@ explicitly left as a beta-planning decision.
 Alpha.11 §26 records these explicitly, and this summary does not repeat
 their evidence, only their disposition: whether `CORE_SIZE`/
 `CORE_BEACON_BYTE` should ever become Ruleset-versioned parameters (beta1
-freezes them as fixed constants — see `docs/V2_0_BETA1_PLAN.md`); Core
+freezes them as fixed constants — see `docs/archive/v2/V2_0_BETA1_PLAN.md`); Core
 Tracker's ~21-action self-core false-positive inefficiency (beta1 cleans
 this up as reference-agent maintenance, not rebalancing — see
-`docs/V2_0_BETA1_PLAN.md`); scheduler-order sensitivity in contested cells
+`docs/archive/v2/V2_0_BETA1_PLAN.md`); scheduler-order sensitivity in contested cells
 (accepted as strategy, with an evaluation-methodology obligation for beta);
 the seed-methodology widening that a search-based agent's presence now
 requires; pre-existing seat/orientation confounds from alpha.5–alpha.10,
@@ -243,7 +243,7 @@ territory-maintenance mechanic, Agent API v2, multiprocess/replicated
 entrants, or any other idea catalogued in `docs/FUTURE_PLANS.md` — belongs
 to **post-2.0 v2.x research**, or to a **future, explicitly versioned
 Ruleset experiment**, not to an extension of this alpha sequence. Beta work
-beginning now (`docs/V2_0_BETA1_PLAN.md`) converts the evidence-backed
+beginning now (`docs/archive/v2/V2_0_BETA1_PLAN.md`) converts the evidence-backed
 `bytefray-rules-2-alpha11` candidate into the permanent, compatibility-honest
 `bytefray-rules-2` identity — it does not reopen the questions this program
 already closed.

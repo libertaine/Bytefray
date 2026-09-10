@@ -37,8 +37,8 @@ Branched from the verified alpha.6 baseline, commit `ff3132f` on
   Per the governing task's explicit instruction, this alpha did not
   merge, rebase, cherry-pick, or otherwise reconcile with it — it is
   simply a different, unrelated branch off the same shared ancestor.
-- `docs/V2_0_ALPHA5_MULTI_ENTRANT_SCORING_ACTIVATION.md` and
-  `docs/V2_0_ALPHA6_CORE_SEEKER_TIMING.md` were read in full before any
+- `docs/archive/v2/V2_0_ALPHA5_MULTI_ENTRANT_SCORING_ACTIVATION.md` and
+  `docs/archive/v2/V2_0_ALPHA6_CORE_SEEKER_TIMING.md` were read in full before any
   new work began.
 - Read directly, not inferred: `core_seeker/agent.py`, `core_defender/
   agent.py`, `reactive_core_defender/agent.py`, `claimer/agent.py`,
@@ -91,7 +91,7 @@ experimental variable is entrant start position.
 
 ## 4. Alpha.6's predictive model, reused not re-derived (Phase 3 intro)
 
-Recapped from `docs/V2_0_ALPHA6_CORE_SEEKER_TIMING.md` (full detail
+Recapped from `docs/archive/v2/V2_0_ALPHA6_CORE_SEEKER_TIMING.md` (full detail
 there): Core Seeker's scan cursor starts at `arena_size // 3 = 1365`,
 advances by a fixed stride `1565` (coprime to 4096, so a full-period
 permutation), one scan every 3rd action; a lock fires via an **echo**

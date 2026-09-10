@@ -36,7 +36,7 @@ territory, kills) is read entirely from ``battle_client.replay_status.
 get_entrant_statuses`` (the Phase-3 status model) -- this module never
 derives core addresses, ownership, capture state, death state, killer, or
 Ruleset semantics from raw replay structures itself. See
-``docs/V2_0_BETA1_PHASE4_REPLAY_HUD.md`` for the full design record.
+``docs/archive/v2/V2_0_BETA1_PHASE4_REPLAY_HUD.md`` for the full design record.
 """
 
 from __future__ import annotations

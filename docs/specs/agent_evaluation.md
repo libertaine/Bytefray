@@ -27,7 +27,7 @@ on. The `classify()` outcome-rank comparator this spec designs (§11) is,
 unchanged, the exact same comparator `docs/V1_6_PHASE4_EVALUATION_
 ANALYSIS.md`'s paired statistical evidence is built on — Phase 4 adds
 interpretation on top of it, never a second concept of "improvement."
-`docs/V1_6_PHASE5_BEHAVIOR_ANALYSIS.md`'s behavior profile is a separate,
+`docs/archive/v1/V1_6_PHASE5_BEHAVIOR_ANALYSIS.md`'s behavior profile is a separate,
 independent derived layer over the same `EvaluationCell`/per-cell
 `result.json` data this spec establishes — it never reads `outcome` or
 either score field this spec defines, by construction, so it does not

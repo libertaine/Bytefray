@@ -483,7 +483,7 @@ battle_client` both ran clean (see "Validation").
 
 ## 18. Documentation changes
 
-- `docs/V1_5_PHASE6_ARCHITECTURE_EQUIVALENCE.md` (new, this document).
+- `docs/archive/v1/V1_5_PHASE6_ARCHITECTURE_EQUIVALENCE.md` (new, this document).
 - `docs/ROADMAP.md` -- v1.5 section updated with Phase 6 status (below the
   existing Phase 5 paragraph).
 - `README.md`, `docs/RULES.md`, `docs/COMPATIBILITY.md`,
@@ -575,7 +575,7 @@ both before this phase's one comment edit and after.
 
 - `engine/src/battle_engine/match_service.py` -- one comment updated (see
   "Dead/redundant code findings"); no behavioral change.
-- `docs/V1_5_PHASE6_ARCHITECTURE_EQUIVALENCE.md` (new, this document).
+- `docs/archive/v1/V1_5_PHASE6_ARCHITECTURE_EQUIVALENCE.md` (new, this document).
 - `docs/ROADMAP.md` -- v1.5 section updated with Phase 6 status.
 
 No other file changed. No test file changed. No other source file

@@ -224,7 +224,7 @@ tofu-box text on this environment), driving a real backend evaluation run
 | `engine/tests/test_evaluation_history_cli.py` | +1 Defect 2 regression test |
 | `engine/tests/test_evaluation_history_workflows.py` | ambiguous-group test rewritten for the Defect 1 fix |
 | `docs/screenshots/v3-phase3-baseline/*.png` | **new** — the three images in §6 |
-| `docs/V3_PHASE3_STRATEGY_ANALYSIS.md` | **new** — this report |
+| `docs/archive/v3/V3_PHASE3_STRATEGY_ANALYSIS.md` | **new** — this report |
 
 ## Validation
 

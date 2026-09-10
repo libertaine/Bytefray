@@ -1,6 +1,6 @@
 """Characterization tests for v1.5 Phase 5's entrant-identity/execution-state split.
 
-See ``docs/V1_5_PHASE5_ENTRANT_IDENTITY_EXECUTION_STATE.md``. These tests
+See ``docs/archive/v1/V1_5_PHASE5_ENTRANT_IDENTITY_EXECUTION_STATE.md``. These tests
 protect the specific structural risks that refactor introduced -- that
 ``EntrantIdentity`` is the sole authoritative store on ``MatchEntrant``/
 ``Agent``/``PythonEntrantState`` rather than a value duplicated alongside

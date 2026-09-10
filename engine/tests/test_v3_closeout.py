@@ -7,7 +7,7 @@ These are hermetic unit tests against synthetic inputs or the real,
 deterministic agent classes -- not real match executions. The broader
 empirical results (full-corpus D1 blind-timer ratio, the blind-versus-
 reactive discriminant, the turtle-probe corpus, and the constant-density
-scheduler analysis) are reported in ``docs/V3_RESEARCH_CLOSEOUT.md``,
+scheduler analysis) are reported in ``docs/archive/v3/V3_RESEARCH_CLOSEOUT.md``,
 which this module does not duplicate.
 """
 

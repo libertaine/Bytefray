@@ -26,7 +26,7 @@ Confirmed directly, not assumed:
 - `main`: `5593d287f95a24996bb3b105befbc625a00795db`, unchanged.
 - Local branch was 3 commits ahead of `origin/v2.0-development`; nothing
   pushed.
-- `docs/V2_0_ALPHA4_MULTI_ENTRANT_FEASIBILITY.md`, `results.py`
+- `docs/archive/v2/V2_0_ALPHA4_MULTI_ENTRANT_FEASIBILITY.md`, `results.py`
   (winner resolution), `ruleset_policy.py` (termination policy and its own
   module docstring on winner-resolution ownership), `scoring.py`,
   `test_v2_alpha4_multi_entrant.py`, and `test_match_services.py`'s existing

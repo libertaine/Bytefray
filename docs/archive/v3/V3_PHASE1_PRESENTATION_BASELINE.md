@@ -33,7 +33,7 @@ Python starter entrants under `bytefray-rules-2` at the shipped default
 method the interactive viewer calls every frame — was then called directly
 against those replays under `SDL_VIDEODRIVER=dummy`/`SDL_AUDIODRIVER=dummy`
 and saved via `pygame.image.save()`. This driver pattern has direct
-precedent in this repository: `docs/V2_0_BETA1_PHASE5_INTEGRATED_QUALIFICATION.md`
+precedent in this repository: `docs/archive/v2/V2_0_BETA1_PHASE5_INTEGRATED_QUALIFICATION.md`
 § used the identical dummy-driver approach for visual QA.
 
 **Agent Designer (PySide6).** The real `AgentDesigner` main window was
@@ -96,7 +96,7 @@ No `hud_layout.py` geometry changed — that module's pure, pygame-free
 band/rect calculations (and its own test suite) are untouched. The icon is
 drawn entirely inside `pygame_renderer.py`'s existing drawing code, which
 is where this project's own architectural rule
-(`docs/V2_0_BETA1_PHASE4_REPLAY_HUD.md`) places all presentation work.
+(`docs/archive/v2/V2_0_BETA1_PHASE4_REPLAY_HUD.md`) places all presentation work.
 
 ## 4. Validation
 
@@ -117,7 +117,7 @@ is where this project's own architectural rule
 | `client/src/battle_client/renderers/pygame_renderer.py` | header-band branding icon: two new constants, `self._header_icon` state, `_load_header_icon()`, `_draw_top_band()` updated to draw it and reserve its width |
 | `docs/screenshots/replay-viewer.png` | recaptured — the prior image predated this phase's icon addition and was stale, per this project's own precedent of recapturing an affected README screenshot when the source UI changes |
 | `docs/screenshots/v3-phase1-baseline/*.png` | **new** — the six baseline images in §2 |
-| `docs/V3_PHASE1_PRESENTATION_BASELINE.md` | **new** — this report |
+| `docs/archive/v3/V3_PHASE1_PRESENTATION_BASELINE.md` | **new** — this report |
 
 ## 6. Deferred, not addressed by this increment
 

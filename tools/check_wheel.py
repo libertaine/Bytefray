@@ -40,6 +40,15 @@ EXPECTED_FILES = {
     "battle_engine/data/starter_agents/v4_local_defender/agent.py",
     "battle_engine/data/starter_agents/v4_scout/agent.yaml",
     "battle_engine/data/starter_agents/v4_scout/agent.py",
+    # Agent API v2 educational ladder added in v5.0.0a1 (V5 Alpha 1 Phase C).
+    "battle_engine/data/starter_agents/v5_region_attacker/agent.yaml",
+    "battle_engine/data/starter_agents/v5_region_attacker/agent.py",
+    "battle_engine/data/starter_agents/v5_scout_striker/agent.yaml",
+    "battle_engine/data/starter_agents/v5_scout_striker/agent.py",
+    "battle_engine/data/starter_agents/v5_core_defender/agent.yaml",
+    "battle_engine/data/starter_agents/v5_core_defender/agent.py",
+    "battle_engine/data/starter_agents/v5_dual_team/agent.yaml",
+    "battle_engine/data/starter_agents/v5_dual_team/agent.py",
     "battle_engine/data/agent_template/agent.yaml",
     "battle_engine/data/agent_template/agent.py",
 }

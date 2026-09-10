@@ -14,17 +14,26 @@ __pycache__/
 # Venvs
 .venv/
 venv/
+.venv-*/
 
 # VSCode (share later if desired)
 .vscode/
 
 # Project artifacts
 runs/
-engine/src/battle_engine/runs/
 agents_build/
 agent_revisions/
 *.blob
 *.jsonl
+
+# Source checkouts use root agents/ as the writable runtime catalogue.
+# Canonical starter agents live under battle_engine/data/starter_agents/.
+# Existing tracked historical/reproducibility fixtures remain tracked.
+/agents/
+
+# Qualification run scratch/output (ad hoc per-run names, e.g. rc2-final-win-*)
+*-junit.xml
+*-scratch/
 
 # Committed-by-accident PyInstaller scratch/output trees (not the canonical
 # /build/ and /dist/ paths tools/build_win.ps1 actually writes to)
@@ -42,9 +51,6 @@ tools/local_ai/local-ai-results/
 *.orig
 
 summary.json
-replay.jsonl
-runs/
-runs/_loose/
 engine/src/battle_engine/cli.py.*
 
 /build/

@@ -4,7 +4,7 @@
 This is a byte-for-byte copy of ``reference_agents/core_tracker/agent.py``
 (the real, frozen ``v2-baseline`` population member) with exactly one
 behavioral line changed, to isolate one causal question raised by
-``docs/V3_PHASE6_ACTIVE_DEFENSIVE_INTERVENTION_QUALIFICATION.md`` Sec 15/20:
+``docs/archive/v3/V3_PHASE6_ACTIVE_DEFENSIVE_INTERVENTION_QUALIFICATION.md`` Sec 15/20:
 
 Phase 6 found that at ``instr_per_tick=32``, real Core Tracker's own
 ``expand_cursor`` starts at exactly its own ``core_start`` with **no
@@ -25,7 +25,7 @@ measured between this agent and real Core Tracker is attributable to this
 one line, not to a bundle of changes.
 
 This agent is disposable research tooling for Phase 7's confound-isolation
-experiment (see ``docs/V3_PHASE7_HIGH_BUDGET_CONFOUND_ISOLATION.md`` and
+experiment (see ``docs/archive/v3/V3_PHASE7_HIGH_BUDGET_CONFOUND_ISOLATION.md`` and
 ``tools/v3_phase7_confound_isolation.py``), never registered in any
 ``BenchmarkPopulation`` manifest, never pinned via content-addressed
 revision, and never substituted into ``v2_baseline_corpus.json`` or any

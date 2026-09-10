@@ -1,1 +1,10 @@
 global-exclude *.py[cod]
+
+# The sdist is a buildable/installable source distribution, not a full
+# development checkout -- it ships engine/src, client/src, and app/, not
+# any test suite. Root tests/ (Designer/GUI tests) was previously included
+# by setuptools' sdist defaults while engine/tests/, client/tests/, and
+# pytest.ini were not, which is a non-runnable partial fragment either way.
+# Exclude root tests/ rather than adding the missing pieces to make the
+# accidental partial inclusion internally consistent.
+prune tests

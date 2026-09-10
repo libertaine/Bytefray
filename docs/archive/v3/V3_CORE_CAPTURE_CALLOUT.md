@@ -79,7 +79,7 @@ model; no new schema field was needed:
 | `client/src/battle_client/renderers/pygame_renderer.py` | New pure detection/formatting/fade functions, new `PygameRenderer` transient-callout state, `_advance_capture_callout`, `_draw_capture_callout`; `_draw_top_band` now returns the entrant statuses it computed (avoids a second lookup) |
 | `client/tests/test_pygame_renderer.py` | 30 new focused tests (pure functions, queue/lifetime bookkeeping, end-to-end real-replay driving, rendered-content/geometry) |
 | `docs/screenshots/v3-core-capture-callout/*.png` | **new** — 4 real screenshots (see §H) |
-| `docs/V3_CORE_CAPTURE_CALLOUT.md` | **new** — this report |
+| `docs/archive/v3/V3_CORE_CAPTURE_CALLOUT.md` | **new** — this report |
 
 No other file changed. No Ruleset, Agent API, scoring, scheduler, or
 replay-schema file was touched.
@@ -267,7 +267,7 @@ entrants: `Hunter` — idle, `Core Seeker` — a scripted writer that captures
 Hunter's core, `Wanderer` — idle bystander that keeps the match alive well
 past the capture) — not a hand-built fixture, not a stub. This mirrors the
 v3 Phase 1 dummy-driver precedent
-(`docs/V3_PHASE1_PRESENTATION_BASELINE.md` §1). The driver script was
+(`docs/archive/v3/V3_PHASE1_PRESENTATION_BASELINE.md` §1). The driver script was
 disposable, run from a scratch directory outside the repository.
 
 | file | shows |

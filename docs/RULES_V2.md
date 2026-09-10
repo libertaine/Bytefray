@@ -5,8 +5,8 @@ gameplay-semantics identity introduced in `v2.0.0-beta1` and stable as of
 `v2.0.0`. It describes the game as it plays today — how a match differs from
 Ruleset v1 and what stays the same — not how the research that produced it
 was conducted. For that evidence trail, see
-`docs/V2_0_ALPHA_RESEARCH_SUMMARY.md` and
-`docs/V2_0_RULESET_V2_CANDIDATE.md`.
+`docs/archive/v2/V2_0_ALPHA_RESEARCH_SUMMARY.md` and
+`docs/archive/v2/V2_0_RULESET_V2_CANDIDATE.md`.
 
 `docs/RULES.md` remains the frozen, unmodified Ruleset v1 reference. This
 document does not replace it and does not repeat material that is genuinely
@@ -136,7 +136,7 @@ as a real, disclosed competitive property (the same kind of first-mover
 advantage Ruleset v1 already documents), not a defect. It does create an
 obligation for how Ruleset v2 matches should be *evaluated* — an evaluation
 must balance scheduler order rather than sample it once — but that is a
-beta2 methodology concern (see `docs/V2_0_BETA1_PLAN.md`), not a Ruleset v2
+beta2 methodology concern (see `docs/archive/v2/V2_0_BETA1_PLAN.md`), not a Ruleset v2
 gameplay rule.
 
 ## What remains unchanged?
@@ -164,7 +164,7 @@ Everything not named above, without exception:
 - **Multi-entrant behavior.** The native match/scheduling stack is already
   entrant-count generic; every rule in this document is written to be
   well-defined for any entrant count. Not a required product workflow in
-  beta1 — see `docs/V2_0_BETA1_PLAN.md`.
+  beta1 — see `docs/archive/v2/V2_0_BETA1_PLAN.md`.
 
 ## Which runtime is supported?
 
@@ -176,7 +176,7 @@ where the mechanic happens to be implemented: **a match requested under
 `bytefray-rules-2` with any VM entrant is rejected before any entrant
 executes**, with a typed, actionable error naming the Ruleset and pointing
 to `bytefray-rules-1` for VM play — see
-`docs/V2_0_BETA1_PHASE2_PRODUCT_EXECUTION.md`. Bytefray never dispatches a
+`docs/archive/v2/V2_0_BETA1_PHASE2_PRODUCT_EXECUTION.md`. Bytefray never dispatches a
 VM entrant under this identity and silently runs a core-less game; it fails
 closed instead. VM parity is not claimed and is not part of this beta.
 
@@ -214,7 +214,7 @@ Both are **Ruleset constants** — part of `bytefray-rules-2`'s semantic
 identity, not per-match configuration, and there is no CLI/config knob for
 either. A future experiment that needs a different value for either
 constant requires its own, distinct Ruleset identity — see
-`docs/V2_0_BETA1_PLAN.md`'s "Fixed constants decision".
+`docs/archive/v2/V2_0_BETA1_PLAN.md`'s "Fixed constants decision".
 
 ## Ruleset identity and history
 
@@ -230,6 +230,6 @@ persistence/comparison/resume behavior this implies.
 
 `bytefray-rules-2-alpha1` and `bytefray-rules-2-alpha11` remain executable,
 historical, uncorrected evidence records of the research that produced this
-Ruleset — see `docs/V2_0_ALPHA_RESEARCH_SUMMARY.md` for how they got here.
+Ruleset — see `docs/archive/v2/V2_0_ALPHA_RESEARCH_SUMMARY.md` for how they got here.
 This document describes the stable game; the alpha reports describe how it
 was found.

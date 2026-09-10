@@ -1,4 +1,0 @@
-name: replicator
-blob_path: agents/replicator/model.blob
-defaults:
-  aggression: 0.6

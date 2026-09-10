@@ -2,19 +2,20 @@
 
 ## Windows installer
 
-Download `Bytefray-Setup-4.0.0-rc2.exe` from the
-[v4.0.0-rc2 release](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0-rc2)
-(see [README.md](README.md#-downloads) for the current release; the exact
-filenames below track that latest tag as later versions ship). It installs
-four onedir applications beneath `C:\Program Files\Bytefray\bin`: `bytefray`,
-`bytefray-cli`, `bytefray-agent-designer`, and `bytefray-replay-viewer`. The
-v0.1 `match-runner` command was removed in v0.3; use
-`bytefray-replay-viewer` (or
+Download the Windows installer, `Bytefray-Setup-<version>.exe`, from the
+[current release](https://github.com/libertaine/Bytefray/releases) (see the
+"Windows" section of [README.md](README.md#windows) for the exact current
+filename and download link, which is kept up to date on every release). It
+installs four onedir applications beneath `C:\Program Files\Bytefray\bin`:
+`bytefray`, `bytefray-cli`, `bytefray-agent-designer`, and
+`bytefray-replay-viewer`. The v0.1 `match-runner` command was removed in
+v0.3; use `bytefray-replay-viewer` (or
 `bytefray replay --renderer pygame`) instead. The release archive containing
 the corresponding portable
-application trees is `bytefray-4.0.0-rc2-windows.zip`. Extract the entire ZIP
-for portable use; do not copy only the top-level executables because their
-adjacent DLLs, Qt plugins, resources, and pMARS files are required.
+application trees is named `bytefray-<version>-windows.zip`. Extract the
+entire ZIP for portable use; do not copy only the top-level executables
+because their adjacent DLLs, Qt plugins, resources, and pMARS files are
+required.
 
 The installer sets `BYTEFRAY_ROOT` to `%ProgramData%\Bytefray` and does not
 modify `PATH`.
@@ -42,10 +43,12 @@ The installed executables remain available by their full paths, for example:
 
 ## Portable Windows applications
 
-Download `bytefray-4.0.0-rc2-windows.zip` from the release (see
-[README.md](README.md#-downloads) for the current release) and extract the
-entire archive; do not copy only the top-level executables, since their
-adjacent DLLs, Qt plugins, resources, and pMARS files are required.
+Download the portable application archive, `bytefray-<version>-windows.zip`,
+from the [current release](https://github.com/libertaine/Bytefray/releases)
+(see the "Windows" section of [README.md](README.md#windows) for the exact
+current filename and download link) and extract the entire archive; do not
+copy only the top-level executables, since their adjacent DLLs, Qt plugins,
+resources, and pMARS files are required.
 
 Each of the four extracted applications (`bytefray`, `bytefray-cli`,
 `bytefray-agent-designer`, `bytefray-replay-viewer`) is self-contained and, with
@@ -72,12 +75,14 @@ same process and therefore already shares its own adjacent data directory.
 
 ## Python wheel on Windows
 
-Python users can install the release wheel into an isolated environment:
+Python users can install the release wheel into an isolated environment (see
+the "Python" section of [README.md](README.md#python) for the exact current
+wheel filename and download link):
 
 ```powershell
 py -3.13 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install .\bytefray-4.0.0rc2-py3-none-any.whl
+python -m pip install .\bytefray-<version>-py3-none-any.whl
 bytefray --help
 ```
 

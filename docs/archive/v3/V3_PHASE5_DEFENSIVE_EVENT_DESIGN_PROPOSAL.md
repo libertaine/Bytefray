@@ -7,8 +7,8 @@ a later phase can test it against criteria declared *before* results
 exist, and to record the evidence that motivates it and the risks that
 could sink it.
 
-Predecessors: `docs/V3_PHASE3_OFFENSE_PAYOFF_CHARACTERIZATION.md` (offense
-payoff, `PROMISING`), `docs/V3_PHASE4_DEFENSE_PAYOFF_CHARACTERIZATION.md`
+Predecessors: `docs/archive/v3/V3_PHASE3_OFFENSE_PAYOFF_CHARACTERIZATION.md` (offense
+payoff, `PROMISING`), `docs/archive/v3/V3_PHASE4_DEFENSE_PAYOFF_CHARACTERIZATION.md`
 (defense payoff, `NOT VALIDATED` for existing levers) and that report's
 dated post-Phase-4 addendum, which carries the evidence summarized in §2
 and states exactly what it does and does not correct.

@@ -26,7 +26,7 @@ Confirmed directly, not assumed:
 - Recent log matches the governing task's description exactly (alpha.2
   reactive-defense evaluation as HEAD, alpha.1 Vulnerable Core and its
   architecture doc immediately prior).
-- `docs/V2_0_ALPHA1_EVALUATION.md`, `docs/V2_0_ALPHA2_REACTIVE_DEFENSE.md`,
+- `docs/archive/v2/V2_0_ALPHA1_EVALUATION.md`, `docs/archive/v2/V2_0_ALPHA2_REACTIVE_DEFENSE.md`,
   `engine/src/battle_engine/scoring.py`, `engine/src/battle_engine/config.py`,
   `engine/src/battle_engine/results.py`, `engine/src/battle_engine/statistics.py`,
   `engine/src/battle_engine/match.py`, and `engine/src/battle_engine/python_runtime.py`

@@ -288,7 +288,7 @@ def resolve_direct_match_starts(
     Ruleset identity other than the permanent Ruleset v2 one (including the
     historical ``bytefray-rules-2-alpha1``/``-alpha11`` identities, whose
     execution semantics this RC2 fix deliberately leaves untouched -- see
-    ``docs/V1_5_PHASE3_RULESET_POLICY_DISPATCH.md``'s identity-separation
+    ``docs/archive/v1/V1_5_PHASE3_RULESET_POLICY_DISPATCH.md``'s identity-separation
     rationale): every omitted start resolves to ``0``, exactly the historical
     default this function's introduction does not change for those
     identities.

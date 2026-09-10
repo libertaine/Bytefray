@@ -11,7 +11,7 @@ explicitly justified set of shared domain helpers imported from
 ``battle_engine.python_runtime`` (never the reverse -- ``battle_engine``
 never imports ``battle_client``).
 
-See ``docs/V2_0_BETA1_PHASE3_REPLAY_SEMANTICS.md`` for the full audit this
+See ``docs/archive/v2/V2_0_BETA1_PHASE3_REPLAY_SEMANTICS.md`` for the full audit this
 model is built on. Three points from that audit matter most while reading
 this module:
 
@@ -208,7 +208,7 @@ def get_entrant_statuses(
     Works identically for any entrant count -- there is no two-slot
     assumption anywhere in this function; a 3+-entrant replay returns one
     ``EntrantReplayStatus`` per entrant, in order, exactly like a 2-entrant
-    one (see ``docs/V2_0_BETA1_PHASE3_REPLAY_SEMANTICS.md``'s N-entrant
+    one (see ``docs/archive/v2/V2_0_BETA1_PHASE3_REPLAY_SEMANTICS.md``'s N-entrant
     qualification).
 
     ``match_events``, if supplied, must be ``battle_client.analysis.
@@ -298,7 +298,7 @@ def get_entrant_statuses(
 def resolve_match_ruleset_label(header: ReplayHeader) -> str:
     """A short, confidence-qualified display label for a replay's Ruleset
     identity (Beta1 Phase 4's "is this v1 or v2" requirement -- see
-    ``docs/V2_0_BETA1_PHASE4_REPLAY_HUD.md``).
+    ``docs/archive/v2/V2_0_BETA1_PHASE4_REPLAY_HUD.md``).
 
     Thin presentation wrapper around ``resolve_replay_ruleset`` -- the same
     confidence-qualified resolution ``_core_status`` already uses -- kept in

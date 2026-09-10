@@ -239,7 +239,7 @@ generic, §1) is the sole authority:
 - A strict top-score tie among eligible entrants → no winner (tie).
 - Zero alive → falls back to comparing every entrant, dead or alive
   (deliberately no special rule for this case — see
-  `docs/V2_0_ALPHA4_1_WINNER_SEMANTICS.md`).
+  `docs/archive/v2/V2_0_ALPHA4_1_WINNER_SEMANTICS.md`).
 
 `EvaluationService._cell_from_match_result_group`/`_cell_from_envelope_
 group` map this into the candidate-centric `win`/`loss`/`tie` vocabulary

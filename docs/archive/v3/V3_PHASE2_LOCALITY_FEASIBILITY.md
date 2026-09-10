@@ -33,7 +33,7 @@ Verified before any change:
 | `v2.0.0` tag | annotated `5c525ce`, still targets `965d2f6` |
 | working tree | clean |
 | frozen Phase-0 benchmark population | 9/9 members verify against their pinned `agent_revision_id` |
-| Phase 1 committed grid + report | present (`v3_phase1_arena_action_grid.json`, `docs/V3_PHASE1_ARENA_ACTION_DENSITY.md`) |
+| Phase 1 committed grid + report | present (`v3_phase1_arena_action_grid.json`, `docs/archive/v3/V3_PHASE1_ARENA_ACTION_DENSITY.md`) |
 | Phase 1 corpus artifacts | present under `runs/research_v3_phase1` (14 GB, 20 conditions) |
 
 Every historical v1/v2 branch and tag is untouched. Work proceeded on a new
@@ -1187,7 +1187,7 @@ phase set out to find it.
 | `engine/tests/test_ruleset_v2_alpha11.py` | pre-existing test updated — see §6 |
 | `engine/tests/test_v2_alpha2_reactive_defender.py` | pre-existing test updated — see §6 |
 | `engine/tests/test_v2_alpha8_core_tracker.py` | pre-existing test updated — see §6 |
-| `docs/V3_PHASE2_LOCALITY_FEASIBILITY.md` | **new** — this report |
+| `docs/archive/v3/V3_PHASE2_LOCALITY_FEASIBILITY.md` | **new** — this report |
 
 ## 26. Validation
 

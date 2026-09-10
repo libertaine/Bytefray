@@ -78,7 +78,7 @@ class MatchEntrant:
     ``start``/``code``/``kind``/``python_spec`` (how this entrant
     participates in *this* match) -- rather than storing ``agent_id``/
     ``name`` as independent fields. See
-    ``docs/V1_5_PHASE5_ENTRANT_IDENTITY_EXECUTION_STATE.md``. ``agent_id``/
+    ``docs/archive/v1/V1_5_PHASE5_ENTRANT_IDENTITY_EXECUTION_STATE.md``. ``agent_id``/
     ``name`` remain read-only compatibility properties so the many call
     sites across the engine, CLI, tournament service, and tests that
     construct or read them are unaffected.
@@ -173,7 +173,7 @@ class MatchRequest:
     boundary to trace or supervise.
 
     ``ruleset_id`` is v2.0.0-alpha.1's one additive selector (see
-    ``docs/V2_0_ALPHA_ARCHITECTURE.md`` Sec 6): ``None`` continues to
+    ``docs/archive/v2/V2_0_ALPHA_ARCHITECTURE.md`` Sec 6): ``None`` continues to
     resolve to ``BYTEFRAY_RULESET_ID`` exactly as before this field
     existed, so every existing caller is unaffected. Never persisted on
     ``MatchRequest`` itself -- the *resolved* identity (this value, or the
@@ -306,7 +306,7 @@ class RulesetRuntimeUnsupportedError(ValueError):
     error rejects an otherwise-homogeneous composition whose single runtime
     kind the *requested Ruleset* itself does not support -- currently only
     ``bytefray-rules-2``, which supports Python entrants only (Beta1
-    Phase 2; see ``docs/V2_0_BETA1_PHASE2_PRODUCT_EXECUTION.md``). Raised by
+    Phase 2; see ``docs/archive/v2/V2_0_BETA1_PHASE2_PRODUCT_EXECUTION.md``). Raised by
     ``NativeMatchService.run`` before any entrant executes and before any
     replay/result artifact is written.
     """

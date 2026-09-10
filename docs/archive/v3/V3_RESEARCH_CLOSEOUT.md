@@ -199,7 +199,7 @@ inspection of the underlying per-episode data).
 The Phase 5 design proposal declared, but never ran, an "E8 turtle
 control" gate: *"A deliberately passive/immobile probe agent (analogous
 to Phase 2's `local_camper`) must not become competitive at any tested
-`w_defense`"* (`docs/V3_PHASE5_DEFENSIVE_EVENT_DESIGN_PROPOSAL.md`
+`w_defense`"* (`docs/archive/v3/V3_PHASE5_DEFENSIVE_EVENT_DESIGN_PROPOSAL.md`
 Sec 5B.3). Phase 5B — the scoring experiment this gate was declared
 for — never ran, because Phase 5A itself failed qualification first, so
 there is no `w_defense` scoring Ruleset to test competitiveness against.
@@ -367,7 +367,7 @@ four conditions' 594-cell group corpora were already committed by
 Phase 1.
 
 Phase 1's own default-density diagonal (`S ≈ 0.781`,
-`docs/V3_PHASE1_ARENA_ACTION_DENSITY.md` Sec 3.3):
+`docs/archive/v3/V3_PHASE1_ARENA_ACTION_DENSITY.md` Sec 3.3):
 
 | condition | arena | `instr_per_tick` | `S` |
 |---|---:|---:|---:|
@@ -578,7 +578,7 @@ intervals alongside point estimates, disclose denominator units
 explicitly when combining rates across different aggregation levels, and
 describe an implementation's actual generality in its own frozen prose
 declaration — not to reopen or soften Phase 6's own verdict, which
-stands unchanged (Sec 8 of `docs/V3_PHASE6_ACTIVE_DEFENSIVE_INTERVENTION_QUALIFICATION.md`
+stands unchanged (Sec 8 of `docs/archive/v3/V3_PHASE6_ACTIVE_DEFENSIVE_INTERVENTION_QUALIFICATION.md`
 §19).
 
 ---
@@ -847,7 +847,7 @@ threshold):
 1. Closeout measurement tools and tests (`tools/v3_closeout_*.py`,
    `engine/tests/test_v3_closeout.py`, the disposable
    `turtle_core_refresher` probe agent).
-2. This report (`docs/V3_RESEARCH_CLOSEOUT.md`).
+2. This report (`docs/archive/v3/V3_RESEARCH_CLOSEOUT.md`).
 
 Nothing merged to `main`. Nothing tagged. Nothing pushed.
 

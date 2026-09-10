@@ -286,7 +286,7 @@ def test_play_at_final_tick_restarts_and_plays(tmp_path):
 # Beta1 Phase 4 replaced the single flat ``build_hud_lines`` text blob with
 # band-based rendering (top HUD + footer) that formats over the Phase-3
 # ``battle_client.replay_status`` status model -- see
-# ``battle_client.hud_layout``/``docs/V2_0_BETA1_PHASE4_REPLAY_HUD.md``.
+# ``battle_client.hud_layout``/``docs/archive/v2/V2_0_BETA1_PHASE4_REPLAY_HUD.md``.
 # These tests exercise the same pure formatting functions the renderer's
 # footer/header drawing calls, with the tick/status/speed/winner facts read
 # straight off ``session``/``controller`` exactly like the renderer does.

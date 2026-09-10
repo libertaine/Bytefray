@@ -36,8 +36,8 @@ Branched from the verified alpha.7 baseline, commit `7244823` on
   exits 1) — and, per the governing task's explicit instruction, was not
   merged, rebased, cherry-picked, or otherwise reconciled at any point in
   this alpha.
-- `docs/V2_0_ALPHA6_CORE_SEEKER_TIMING.md` and
-  `docs/V2_0_ALPHA7_SPATIAL_CHARACTERIZATION.md` were read in full before
+- `docs/archive/v2/V2_0_ALPHA6_CORE_SEEKER_TIMING.md` and
+  `docs/archive/v2/V2_0_ALPHA7_SPATIAL_CHARACTERIZATION.md` were read in full before
   any new work began.
 - Read directly, not inferred: `core_seeker/agent.py`, `core_defender/
   agent.py`, `reactive_core_defender/agent.py`, `claimer/agent.py`,

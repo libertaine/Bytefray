@@ -1,19 +1,25 @@
 # Bytefray Linux installation
 
-Bytefray supports Python 3.10 through 3.14 and offers two Linux distribution
-paths: a self-contained binary archive (no local Python required) and a
-Python wheel/source install. No AppImage, Debian, or Flatpak artifact is
-provided. (See [README.md](../README.md#-downloads) for the current release;
-exact filenames below track that latest tag as later versions ship.)
+Bytefray supports Python 3.10 through 3.14. Two Linux distribution paths
+exist in principle: a self-contained binary archive (no local Python
+required) and a Python wheel/source install. No AppImage, Debian, or Flatpak
+artifact is provided. Not every release's asset list includes a
+self-contained Linux archive; check the
+[release page](https://github.com/libertaine/Bytefray/releases) (see also
+the "Quick Start" section of [README.md](../README.md#quick-start)) for what
+the current release actually ships before following the corresponding
+section below.
 
 ## Self-contained Linux binary distribution
 
-Download `bytefray-4.0.0-rc2-linux-x86_64.tar.gz` from the release and
-extract it; do not copy only the top-level executables, since their
-adjacent shared libraries, Qt plugins, and resources are required:
+When a release provides one, download the self-contained archive,
+`bytefray-<version>-linux-x86_64.tar.gz`, from the
+[release page](https://github.com/libertaine/Bytefray/releases) and extract
+it; do not copy only the top-level executables, since their adjacent shared
+libraries, Qt plugins, and resources are required:
 
 ```bash
-tar -xzf bytefray-4.0.0-rc2-linux-x86_64.tar.gz
+tar -xzf bytefray-<version>-linux-x86_64.tar.gz
 ./bytefray/bytefray --version
 ```
 
@@ -44,7 +50,7 @@ environment and install the wheel:
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install ./bytefray-4.0.0rc2-py3-none-any.whl
+python -m pip install ./bytefray-<version>-py3-none-any.whl
 ```
 
 The core install supports native matches and headless replay. Optional desktop

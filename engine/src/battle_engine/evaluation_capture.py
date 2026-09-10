@@ -1,5 +1,5 @@
 """v2.0.0-beta2 Phase 1 capture/core-interaction analysis
-(``docs/V2_0_BETA2_PHASE1_EVALUATION_METHODOLOGY.md`` Sec Capture).
+(``docs/archive/v2/V2_0_BETA2_PHASE1_EVALUATION_METHODOLOGY.md`` Sec Capture).
 
 Sibling of ``evaluation_analysis.py`` (outcome/win-rate evidence) and
 ``evaluation_behavior.py`` (behavior profile) -- not a replacement or

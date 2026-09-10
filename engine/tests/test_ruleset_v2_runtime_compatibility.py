@@ -1,6 +1,6 @@
 """Beta1 Phase 2 -- authoritative Ruleset/runtime-kind compatibility boundary.
 
-Covers ``docs/V2_0_BETA1_PHASE2_PRODUCT_EXECUTION.md``'s core requirement:
+Covers ``docs/archive/v2/V2_0_BETA1_PHASE2_PRODUCT_EXECUTION.md``'s core requirement:
 permanent ``bytefray-rules-2`` executes Python entrants only, and any VM
 entrant is rejected by ``NativeMatchService.run`` -- the one authoritative
 seam every production caller (CLI, tournament, Agent Lab) inherits --

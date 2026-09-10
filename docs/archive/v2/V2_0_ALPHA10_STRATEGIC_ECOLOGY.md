@@ -33,8 +33,8 @@ Branched from the verified alpha.9 baseline, commit `f1dce52` on
   151866c HEAD` (non-ancestor) and `git log --oneline
   origin/v2.0-development`. Not merged, rebased, cherry-picked, or
   otherwise reconciled anywhere in this alpha.
-- `docs/V2_0_ALPHA8_PLACEMENT_AGNOSTIC_OFFENSE.md` and
-  `docs/V2_0_ALPHA9_DEFENSE_ROBUSTNESS.md` were read in full before any
+- `docs/archive/v2/V2_0_ALPHA8_PLACEMENT_AGNOSTIC_OFFENSE.md` and
+  `docs/archive/v2/V2_0_ALPHA9_DEFENSE_ROBUSTNESS.md` were read in full before any
   new work began, together with the full alpha.1–alpha.7 findings already
   summarized in the governing research prompt.
 - Read directly, not inferred: `claimer/agent.py`, `hunter/agent.py`,
@@ -930,8 +930,8 @@ governing task's own "avoid huge replay collections" instruction.
 ## 44. Documentation
 
 This document. Cross-references `docs/V2_0_ALPHA7_SPATIAL_
-CHARACTERIZATION.md`, `docs/V2_0_ALPHA8_PLACEMENT_AGNOSTIC_OFFENSE.md`,
-and `docs/V2_0_ALPHA9_DEFENSE_ROBUSTNESS.md` throughout rather than
+CHARACTERIZATION.md`, `docs/archive/v2/V2_0_ALPHA8_PLACEMENT_AGNOSTIC_OFFENSE.md`,
+and `docs/archive/v2/V2_0_ALPHA9_DEFENSE_ROBUSTNESS.md` throughout rather than
 restating their own findings in full.
 
 ## 45. Regression qualification (Phase 34)
@@ -979,7 +979,7 @@ having changed anywhere in this alpha.
 Committed locally on `v2.0-development` only. No merge, rebase,
 cherry-pick, tag, or push performed. `origin/v2.0-development`'s unrelated
 commit `151866c` left untouched throughout. The only tracked change is
-this document (`docs/V2_0_ALPHA10_STRATEGIC_ECOLOGY.md`) — no source,
+this document (`docs/archive/v2/V2_0_ALPHA10_STRATEGIC_ECOLOGY.md`) — no source,
 test, or config file was modified; `runs/v2_0_alpha10_strategic_ecology/`
 remains gitignored, matching every prior alpha's own precedent.
 

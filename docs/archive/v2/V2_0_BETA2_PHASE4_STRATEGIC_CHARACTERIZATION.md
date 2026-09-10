@@ -569,7 +569,7 @@ production/test code changed in this phase.
 `README.md`, `run_corpus.py`, `analyze_corpus.py`, `results/*`
 (11 group + 6 pairwise evaluation artifacts), `summary.txt`.
 
-**Documentation**: this file (new); `docs/V2_0_BETA2_PLAN.md`,
+**Documentation**: this file (new); `docs/archive/v2/V2_0_BETA2_PLAN.md`,
 `docs/ROADMAP.md` updated.
 
 ## 26. Commits

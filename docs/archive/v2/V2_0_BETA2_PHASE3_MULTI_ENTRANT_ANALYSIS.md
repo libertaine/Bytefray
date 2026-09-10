@@ -5,7 +5,7 @@ Status: implementation complete, not yet released.
 
 Phase 2 answered: *can Bytefray reliably schedule, identify, resume, and
 compare a genuine multi-entrant evaluation?* Yes — see
-`docs/V2_0_BETA2_PHASE2_MULTI_ENTRANT_EVALUATION.md`. Phase 2 deliberately
+`docs/archive/v2/V2_0_BETA2_PHASE2_MULTI_ENTRANT_EVALUATION.md`. Phase 2 deliberately
 stopped there: multi-entrant behavior/capture aggregate analysis was
 explicitly deferred rather than computed with 1v1-shaped assumptions.
 
@@ -340,7 +340,7 @@ candidate simply marked `(candidate)`. Both read from the identical
 
 ## 14. Designer
 
-Not touched this phase. `docs/V2_0_BETA2_PLAN.md`'s Phase 3 sketch listed
+Not touched this phase. `docs/archive/v2/V2_0_BETA2_PLAN.md`'s Phase 3 sketch listed
 "show group evaluation summaries" / "show entrant list" / "show seat/
 layout sensitivity summary" as *possible* low-risk Designer improvements,
 gated on the CLI/history/analysis model actually being complete and
@@ -604,7 +604,7 @@ and its formatting helpers).
 tests), `engine/tests/test_agent_evaluation_group_analysis_integration.py`
 (new, 7 tests).
 
-**Docs**: this file (new); `docs/V2_0_BETA2_PLAN.md`, `docs/ROADMAP.md`
+**Docs**: this file (new); `docs/archive/v2/V2_0_BETA2_PLAN.md`, `docs/ROADMAP.md`
 updated (§26).
 
 ## 24. Remaining limitations

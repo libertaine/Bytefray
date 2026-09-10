@@ -24,9 +24,9 @@ Confirmed directly, not assumed:
 - `main`: `5593d287f95a24996bb3b105befbc625a00795db`, unchanged.
 - Local branch was 4 commits ahead of `origin/v2.0-development`; nothing
   pushed.
-- `docs/V2_0_ALPHA4_MULTI_ENTRANT_FEASIBILITY.md`,
-  `docs/V2_0_ALPHA4_1_WINNER_SEMANTICS.md`, and
-  `docs/V2_0_ALPHA3_SCORING_SENSITIVITY.md` were read in full before any
+- `docs/archive/v2/V2_0_ALPHA4_MULTI_ENTRANT_FEASIBILITY.md`,
+  `docs/archive/v2/V2_0_ALPHA4_1_WINNER_SEMANTICS.md`, and
+  `docs/archive/v2/V2_0_ALPHA3_SCORING_SENSITIVITY.md` were read in full before any
   code was written.
 - `results.py` (`resolve_winner`), `scoring.py` (`ScoringPolicy`),
   `config.py` (`Config`/`Weights` defaults), `python_runtime.py`
@@ -83,7 +83,7 @@ tick (`scoring.py`'s `score_alive`/`score_kill`/`score_territory`).
 for-byte unmodified, at this alpha's starting commit. All 12 matches
 reproduced the exact winners, terminations, and tick counts already on
 disk. The two known capture matches were checked field-by-field against
-`docs/V2_0_ALPHA4_1_WINNER_SEMANTICS.md` §10's documented table and matched
+`docs/archive/v2/V2_0_ALPHA4_1_WINNER_SEMANTICS.md` §10's documented table and matched
 exactly:
 
 | Match | A (`reactive_core_defender`) | B (victim, dead) | C (`core_seeker`, winner) |

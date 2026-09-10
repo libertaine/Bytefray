@@ -4,7 +4,7 @@ Phase 5A qualified a *same-tick* defensive-success event and found it
 measures "was assaulted and survived" rather than "defended": expansion
 agents absorb bursts constantly and often survive them, and the event goes
 inert whenever ``instr_per_tick`` is too small for an attacker to concentrate
-its assault into one tick (``docs/V3_PHASE5A_DEFENSIVE_EVENT_QUALIFICATION.md``
+its assault into one tick (``docs/archive/v3/V3_PHASE5A_DEFENSIVE_EVENT_QUALIFICATION.md``
 Sec 3, Sec 5 C3). Its own post-hoc Sec 6 found that requiring the victim to
 *actively reclaim* a cell restores near-perfect selectivity, but that result
 was same-tick only, unvalidated at low action budgets, and explicitly not
