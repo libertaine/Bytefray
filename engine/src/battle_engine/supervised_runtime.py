@@ -289,6 +289,12 @@ class SupervisedPythonEntrantController:
             action_budget=self.config.instr_per_tick,
             locality_reach=self.locality_reach,
             timeout=self.agent_call_timeout,
+            # V5 Alpha 1 Post-Release Hardening H1 (FIND-02): the same
+            # already-resolved parameter mapping process_runtime.py's own
+            # worker branch already forwards, so a supervised match hands
+            # the agent exactly what an equivalent unsupervised run does
+            # instead of silently substituting {}.
+            parameters=entrant.parameters,
         )
         if reset_result.status is not WorkerCallStatus.OK:
             diagnostic = self._diagnostic_for_failure(

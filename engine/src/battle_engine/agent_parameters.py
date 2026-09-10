@@ -56,6 +56,7 @@ __all__ = [
     "ParameterPreset",
     "ParameterValue",
     "parse_parameter_schema",
+    "resolve_entrant_parameters",
     "resolve_parameters",
 ]
 
@@ -690,3 +691,42 @@ def resolve_parameters(
         return merged
 
     return dict(schema.resolve(preset=preset, overrides=overrides, path=path))
+
+
+def resolve_entrant_parameters(
+    *,
+    api_version: int | None,
+    schema: AgentParameterSchema = EMPTY_PARAMETER_SCHEMA,
+    legacy_defaults: Mapping[str, Any] | None = None,
+    preset: str | None = None,
+    overrides: Mapping[str, Any] | None = None,
+    path: Path | None = None,
+) -> dict[str, Any]:
+    """Resolve one Python entrant's effective, *deliverable* parameters.
+
+    The one canonical boundary every real frontend that constructs a Python
+    ``MatchEntrant`` -- ``bytefray run``, ``bytefray tournament``, ``agents
+    test`` and ``agents evaluate`` -- must call, so that "no explicit
+    overrides" resolves to the agent's declared schema defaults everywhere
+    rather than to an empty mapping on some surfaces and the defaults on
+    others (V5 Alpha 1 Post-Release Hardening H1, FIND-01).
+
+    ``MatchContextV2.parameters`` is an Agent API v2-only field
+    (docs/research/v5/V5_ALPHA1_PHASE_D_AUTHORING_AND_PARAMETERS.md Sec D):
+    an agent declaring any other API version -- or none -- always receives
+    ``{}`` here, regardless of ``overrides`` or ``legacy_defaults``, exactly
+    as it did before Phase D. A caller that accepts free-form overrides for
+    a non-v2 agent is responsible for telling its own user the value was
+    ignored; this function only guarantees it is never delivered to the
+    agent or hashed into match identity.
+    """
+
+    if api_version != 2:
+        return {}
+    return resolve_parameters(
+        schema,
+        legacy_defaults=legacy_defaults,
+        preset=preset,
+        overrides=overrides,
+        path=path,
+    )

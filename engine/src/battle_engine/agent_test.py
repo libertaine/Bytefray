@@ -37,6 +37,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from battle_engine.agent_api import AgentValidationError
+from battle_engine.agent_parameters import resolve_entrant_parameters
 from battle_engine.agent_scaffold import template_resource_dir
 from battle_engine.agents import AgentSpec, resolve_agent
 from battle_engine.config import Config, Weights
@@ -218,6 +219,34 @@ def _resolve_python_entrant(
             ),
         )
     return spec
+
+
+def _resolve_default_parameters(spec: AgentSpec, *, role: str) -> dict[str, object]:
+    """Resolve ``spec``'s effective parameters with no override or preset.
+
+    ``agents test`` has no per-entrant override/preset surface, so this is
+    always the "no explicit overrides" case -- but that must still resolve
+    to the agent's declared schema defaults through the same canonical
+    boundary every other frontend uses (V5 Alpha 1 Post-Release Hardening
+    H1, FIND-01), rather than to an empty mapping: a schema-enabled agent's
+    ``MatchContextV2.parameters`` and match identity must agree with an
+    equivalent ``bytefray run`` invocation with no ``--*-param``/
+    ``--*-preset`` flags.
+    """
+
+    try:
+        return resolve_entrant_parameters(
+            api_version=spec.api_version,
+            schema=spec.parameter_schema,
+            legacy_defaults=spec.defaults,
+            path=spec.dir,
+        )
+    except AgentValidationError as exc:
+        raise _tool_error(
+            stage="discovery",
+            code="agent_manifest_invalid",
+            message=f"{role.capitalize()} {spec.name!r}: {exc}",
+        ) from exc
 
 
 def _run_label(opponent_name: str) -> str:
@@ -451,10 +480,18 @@ def _test_agent(
         config=match_config,
         entrants=(
             MatchEntrant.python(
-                TESTED_AGENT_SLOT, agent_id, effective_agent_start, tested_spec
+                TESTED_AGENT_SLOT,
+                agent_id,
+                effective_agent_start,
+                tested_spec,
+                _resolve_default_parameters(tested_spec, role="test agent"),
             ),
             MatchEntrant.python(
-                OPPONENT_SLOT, opponent_name, effective_opponent_start, opponent_spec
+                OPPONENT_SLOT,
+                opponent_name,
+                effective_opponent_start,
+                opponent_spec,
+                _resolve_default_parameters(opponent_spec, role="opponent"),
             ),
         ),
         max_ticks=effective_ticks,
@@ -748,7 +785,13 @@ def _test_agents(
             ),
         ),
         entrants=tuple(
-            MatchEntrant.python(entrant.seat, entrant.agent_id, entrant.start, spec)
+            MatchEntrant.python(
+                entrant.seat,
+                entrant.agent_id,
+                entrant.start,
+                spec,
+                _resolve_default_parameters(spec, role=f"entrant {entrant.seat}"),
+            )
             for entrant, spec in zip(entrants, specs, strict=True)
         ),
         max_ticks=effective_ticks,

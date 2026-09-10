@@ -454,6 +454,14 @@ class TournamentService:
                 first.code,
                 first.kind,
                 first.python_spec,
+                # V5 Alpha 1 Post-Release Hardening H1 (FIND-01 sibling):
+                # re-placement must carry the entrant's already-resolved
+                # parameters forward, or every seeded-placement Ruleset
+                # (which includes the permanent, default bytefray-rules-4)
+                # would silently re-derive it back to {} here, undoing
+                # tournament_cli's own resolution before the match ever
+                # runs.
+                first.parameters,
             ),
             MatchEntrant(
                 second.agent_id,
@@ -462,6 +470,7 @@ class TournamentService:
                 second.code,
                 second.kind,
                 second.python_spec,
+                second.parameters,
             ),
         )
 
