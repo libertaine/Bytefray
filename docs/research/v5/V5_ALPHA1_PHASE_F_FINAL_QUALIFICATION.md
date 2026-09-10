@@ -1,5 +1,11 @@
 # Bytefray V5 Alpha 1 — Phase F Final Qualification
 
+> **Publication update:** [Bytefray 5.0.0 Alpha 1](https://github.com/libertaine/Bytefray/releases/tag/b5.0.0-alpha1)
+> was published as a prerelease on 2026-09-10 UTC (2026-09-09 local time).
+> Sections A–W and the end-of-run safety record below retain the original
+> qualification evidence and its pre-publication status. The publication
+> addendum at the end records the subsequent authorized publication.
+
 ## Verdict
 
     ALPHA 1 PUBLICATION GATE SATISFIED — READY TO PUBLISH
@@ -457,3 +463,96 @@ and hashes in section S; do not rebuild or substitute them.
 - Final `.git/index`: `95,507` bytes; last write unchanged at
   `2026-09-09 16:29:02` local time
 - Final `.git/index.lock`: absent
+
+## Publication addendum — 2026-09-10 UTC
+
+    BYTEFRAY 5.0.0 ALPHA 1 PUBLISHED
+
+Publication was explicitly authorized in a separate procedure after Phase F.
+The qualification report had already been committed as
+`a22446906c5d2fbd616e86a0c616743934ac814e`; the initial publication checkout
+was clean and local/remote `v5-research` both pointed to that documentation
+descendant. The qualified source identity remained unchanged.
+
+### Release identity
+
+- Qualified source and annotated tag target:
+  `28a10b8f8fd47bf32ec9281dcc21b0645276962c`
+- Product version at that exact commit: `5.0.0a1`
+- Tag: `b5.0.0-alpha1`
+- Annotated tag object: `0fe39722baec14fb09d0b36c84e1daded873e340`
+- Tag annotation and release title: `Bytefray 5.0.0 Alpha 1`
+- GitHub repository: `libertaine/Bytefray`
+- Release classification: prerelease YES; draft NO
+- Published at: `2026-09-10T03:06:57Z`
+- Verified URL: <https://github.com/libertaine/Bytefray/releases/tag/b5.0.0-alpha1>
+- Stable gameplay remains `bytefray-rules-4`; no Ruleset v5 was introduced.
+
+### Exact publication inputs
+
+All paths are relative to `D:\Projects\BATTLE2`. The bytes and full SHA-256
+values in section S remain the canonical inventory; every value was recomputed
+and matched immediately before upload.
+
+| Asset | Qualified local path |
+|---|---|
+| `bytefray-5.0.0a1-py3-none-any.whl` | `dist/phase-f-28a10b8-20260909/python/bytefray-5.0.0a1-py3-none-any.whl` |
+| `bytefray-5.0.0a1.tar.gz` | `dist/phase-f-28a10b8-20260909/python/bytefray-5.0.0a1.tar.gz` |
+| `bytefray.exe` | `dist/windows/bytefray/bytefray.exe` |
+| `bytefray-cli.exe` | `dist/windows/bytefray-cli/bytefray-cli.exe` |
+| `bytefray-agent-designer.exe` | `dist/windows/bytefray-agent-designer/bytefray-agent-designer.exe` |
+| `bytefray-replay-viewer.exe` | `dist/windows/bytefray-replay-viewer/bytefray-replay-viewer.exe` |
+| `Bytefray-Setup-5.0.0a1.exe` | `dist/installer/Bytefray-Setup-5.0.0a1.exe` |
+
+Exactly these seven assets were attached. No ZIP, checksum-file asset,
+research report, or proof-only build was added. Checksums are included in the
+release notes. GitHub's automatic source archive links are distinct from the
+seven uploaded assets and the qualified Python sdist.
+
+### Independent publication verification
+
+- GitHub release page: HTTP `200`.
+- GitHub release metadata: exact title/tag, prerelease YES, draft NO.
+- Remote annotated tag was inspected through both Git and the GitHub API;
+  its peeled commit and annotation matched the values above.
+- Asset inventory: exactly seven expected filenames, no missing or extra
+  uploaded assets; all byte sizes and GitHub SHA-256 digests matched section S.
+- Every published asset was independently downloaded into
+  `build/publication-b5-alpha1/downloaded/`. Recomputed SHA-256 and byte size
+  matched the corresponding qualified local artifact for all seven files.
+- Wheel published: YES. Sdist published: YES. Four frozen executables
+  published: YES. Installer published: YES.
+- The individual executable assets require their matching PyInstaller runtime
+  directories/resources. Release notes and README direct Windows users to the
+  installer for complete application layouts.
+- No publication input was rebuilt, replaced, or substituted. Existing
+  qualification results remain attributed to their original operators;
+  publication verification above was performed during this publication run.
+
+### Post-publication documentation
+
+After publication and asset verification, README was rewritten around V5,
+linked directly to the verified release, and substantially shortened. It
+retains stable V4 gameplay and API-v1 compatibility facts, current authoring
+and installation examples, the MIT license, and the existing support link.
+This report's qualification evidence is preserved with this separate addendum.
+The documentation update changes only README and this report; no product
+source, version, gameplay, or release-tag target is changed.
+
+Documentation validation performed during publication:
+
+- README reduced from 529 to 237 lines and from 3,277 to 1,232 words.
+- All 32 local Markdown/image targets resolved; the linked parameters anchor
+  exists and fenced code blocks are balanced. Markdown structure was reviewed.
+  No dedicated repository Markdown/link checker is configured.
+- All seven README CLI examples passed against the unchanged qualified unified
+  executable using an isolated working/data root: catalog, V5 match, headless
+  replay, API-v2 annotated scaffold, validation, development test, and
+  preset-plus-override match. The catalog command is `bytefray agents`.
+- Both example matches completed under the omitted-ruleset default
+  `bytefray-rules-4`; the parameterized result recorded `attacker_reach=24`.
+- All seven original publication inputs were rehashed after these checks and
+  still matched section S. No build or installation command was run during
+  this publication procedure.
+- Product tests/type checks were not rerun for this documentation-only change;
+  their candidate qualification results remain recorded in section C.
