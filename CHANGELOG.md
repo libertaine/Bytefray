@@ -272,9 +272,9 @@ Agent API v2 observation contract (visible anchors, plus `READ` search using
 historical `hydra` and `Nemesis` are unchanged.
 
 See [docs/V4_ALPHA2_DESIGN.md](docs/V4_ALPHA2_DESIGN.md) for the full contract,
-[docs/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md](docs/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md)
+[docs/archive/v4/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md](docs/archive/v4/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md)
 for the evidence, and
-[docs/V4_ALPHA2_PHASE5_QUALIFICATION.md](docs/V4_ALPHA2_PHASE5_QUALIFICATION.md)
+[docs/archive/v4/V4_ALPHA2_PHASE5_QUALIFICATION.md](docs/archive/v4/V4_ALPHA2_PHASE5_QUALIFICATION.md)
 for the release qualification record.
 
 ## [4.0.0-alpha1] - 2026-08-31

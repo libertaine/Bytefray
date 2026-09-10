@@ -2,7 +2,7 @@
 
 Product branch: `v4-alpha2-development` (off `main`@`855f7379e1309ec60760d960fff54e7da9648e59`)
 Research input: [V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md](V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md)
-Contract produced: [V4_ALPHA2_DESIGN.md](V4_ALPHA2_DESIGN.md)
+Contract produced: [V4_ALPHA2_DESIGN.md](../../V4_ALPHA2_DESIGN.md)
 
 ---
 

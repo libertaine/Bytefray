@@ -195,8 +195,8 @@ abbreviated.
 | Bytefray Ruleset v1 (gameplay semantics, historical/frozen) | [docs/RULES.md](docs/RULES.md) |
 | Bytefray Ruleset v2 beta (gameplay semantics, historical/frozen) | [docs/RULES_V2.md](docs/RULES_V2.md) |
 | Bytefray Ruleset v4 alpha1 design/semantics -- frozen historical behavior for this alpha, not a live target for further gameplay iteration | [docs/V4_ALPHA1_DESIGN.md](docs/V4_ALPHA1_DESIGN.md) |
-| Bytefray Ruleset v4 alpha2 gameplay contract (current v4 prerelease; written as a delta against the alpha1 freeze) | [docs/V4_ALPHA2_DESIGN.md](docs/V4_ALPHA2_DESIGN.md) |
-| Evidence behind the alpha2 rule changes (Phase 4 controlled gameplay study) | [docs/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md](docs/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md) |
+| Bytefray Ruleset v4 alpha2 gameplay contract (frozen supported alpha identity; written as a delta against the alpha1 freeze) | [docs/V4_ALPHA2_DESIGN.md](docs/V4_ALPHA2_DESIGN.md) |
+| Evidence behind the alpha2 rule changes (Phase 4 controlled gameplay study) | [docs/archive/v4/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md](docs/archive/v4/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md) |
 | Result schema | [docs/RESULT_SCHEMA.md](docs/RESULT_SCHEMA.md) |
 | Replay schema | [docs/REPLAY_SCHEMA.md](docs/REPLAY_SCHEMA.md) |
 | Headless tournaments | [docs/TOURNAMENTS.md](docs/TOURNAMENTS.md) |

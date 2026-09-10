@@ -3,7 +3,7 @@
 > **Provenance note (added when this report was cherry-picked onto the Phase 5
 > product branch; no finding, number, or claim below was altered).** This
 > report is the evidence base for the `bytefray-rules-4-alpha2` gameplay
-> contract — see [V4_ALPHA2_DESIGN.md](V4_ALPHA2_DESIGN.md) for what Phase 5
+> contract — see [V4_ALPHA2_DESIGN.md](../../V4_ALPHA2_DESIGN.md) for what Phase 5
 > actually adopted from it, which is deliberately less than everything it
 > tested. The harness and probe sources it cites
 > (`tools/v4_alpha2_gameplay_study.py`,

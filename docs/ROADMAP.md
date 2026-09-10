@@ -1,15 +1,12 @@
 # Bytefray Roadmap
 
-This document records Bytefray's shipped milestones and the current boundary
-from v1.4 through future 2.x gameplay research. It
-complements, rather than replaces,
-[CHANGELOG.md](../CHANGELOG.md) (what actually shipped, release by release)
-and the compact version table in [README.md](../README.md#roadmap). Ideas
-that are deliberately **out of** the v1.0 scope — accessible authoring,
-agent sharing, richer evaluation statistics, arena/combat research, and so
-on — are catalogued separately in [FUTURE_PLANS.md](FUTURE_PLANS.md) so they
-stay recorded without turning v1.0 into a checklist of every interesting
-feature anyone has proposed.
+This document preserves Bytefray's shipped milestone roadmap from v0.10
+through v4 and records the boundary into the V5 era. It is historical context,
+not a schedule of V5 commitments. See [README.md](../README.md) for the current
+product generation, [CHANGELOG.md](../CHANGELOG.md) for what shipped release by
+release, and [`docs/research/v5/`](research/v5/) for current V5 research and
+development records. Long-range ideas remain catalogued separately in
+[FUTURE_PLANS.md](FUTURE_PLANS.md).
 
 ## Terminology
 
@@ -25,33 +22,21 @@ Status words below are used consistently and are not interchangeable:
   anyone could responsibly commit to a design.
 - **Unscheduled** — real, retained, not actively planned.
 
-None of these are promises. They describe how seriously an idea is being
-held, not when — or whether — it ships.
+These labels explain the retained milestone text below. They are not current
+V5 promises and do not imply when — or whether — an idea ships.
 
-## Where Bytefray is now
+## Current V5 boundary
 
-**Bytefray has shipped `v1.0.0`** (see the version table in
-[README.md](../README.md#roadmap) for the full milestone-by-milestone
-history). v0.10's theme, **Platform Stabilization / v1.0 Readiness**,
-answered the question below (all six numbered items are closed): the
-Bytefray 1.0 gameplay Ruleset is frozen as `bytefray-rules-1`, the entrant-
-orientation-vs-translation evaluation-methodology question is decided
-(fixed arena alignment, translation deliberately deferred), the stable
-Agent API v1 contract and compatibility model are documented, Ruleset
-identity is now persisted directly into native result/replay artifacts and
-folded into canonical match identity, and release qualification
-(Windows/Linux/wheel install paths, upgrade/uninstall behavior,
-first-user workflow) is complete. No gameplay, Agent API, or evaluation
-schema change shipped beyond what is recorded as closed below.
+**Bytefray 5 is the current development generation, and `5.0.0a1` has been
+published.** V5 builds on the stable `bytefray-rules-4` gameplay foundation;
+the supported V4 Ruleset and Alpha1/Alpha2 design contracts remain current
+supporting documentation.
 
-The required pre-1.0 branding/visual-integration gate (see below) landed
-across `v1.0.0-rc1`/`v1.0.0-rc2`, and RC-level qualification — full
-installer lifecycle qualification, portable ZIP and wheel qualification, a
-full RC-version test pass, and a final pre-tag sweep that repaired seven
-pre-existing stale-test-debt GUI failures — completed against `v1.0.0-rc2`
-before `v1.0.0` itself was tagged and published. No gameplay, Agent API,
-Ruleset, or evaluation-schema change shipped between `v1.0.0-rc2` and the
-final `v1.0.0` tag.
+V5 development is deliberately evidence-led and research-driven rather than
+committed to a feature-by-feature release schedule. The V5 research record is
+under [`docs/research/v5/`](research/v5/). The v0.10 through v4 sections below
+are retained as milestone history, and the broader archive boundary is
+documented in [`docs/archive/README.md`](archive/README.md).
 
 ## v0.10.0 — Platform Stabilization / v1.0 Readiness
 
@@ -1216,7 +1201,8 @@ RC1 — `bytefray-rules-4` remains unchanged.
 
 ## v4.0.0 — Spatial Multi-Process Platform & Spectator Intelligence
 
-**Status: qualified and pending publication.** `v4.0.0` promotes the
+**Status: published September 8, 2026; superseded as the current development
+generation by V5.** `v4.0.0` promotes the
 qualified `v4.0.0-rc2` post-UX candidate to the stable 4.0 line with no
 engine, schema, or evaluation-methodology change since RC2 — a version/
 documentation-only release. `bytefray-rules-4` becomes v4.0's permanent
@@ -1236,9 +1222,11 @@ for the candidate qualification records. `v4.0.0-alpha1` through `-alpha4`,
 `v4.0.0-rc1`, and `v4.0.0-rc2` remain published, immutable prereleases; none
 was moved, retagged, or rewritten by this promotion.
 
-## After v1.0
+## Long-range material retained from the post-v1.0 roadmap
 
-Substantial work is intentionally kept out of the required v1.0 scope:
+The following paragraph is retained as historical planning context, not as a
+current V5 commitment. Substantial work was intentionally kept out of the
+required v1.0 scope:
 accessible agent-authoring (a small, deterministic DSL compiling to the
 Agent API), richer evaluation and statistical analysis, evaluation
 performance/scaling, and deeper simulation/combat research (arena-size

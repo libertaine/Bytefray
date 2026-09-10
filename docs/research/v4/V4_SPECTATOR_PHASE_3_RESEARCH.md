@@ -285,7 +285,7 @@ observable benefit at this phase, and the same text-mode property exists in
 
 `write_replay` also uses a text-mode stream, so **the canonical replay's
 `replay_sha256` is itself platform-dependent** — a pre-existing property
-already recorded in `docs/V4_ALPHA2_PHASE5_QUALIFICATION.md` ("Raw replay bytes
+already recorded in `docs/archive/v4/V4_ALPHA2_PHASE5_QUALIFICATION.md` ("Raw replay bytes
 differ between platforms only by line endings ... a pre-existing property
 affecting every Ruleset equally"). Phase 3 does not change it: §4 of the brief
 forbids modifying canonical replay identity for spectator purposes, and doing

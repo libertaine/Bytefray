@@ -819,7 +819,7 @@ class ProcessMatchController:
         declaration order an undocumented priority ranking distinct from the
         ``share`` each process actually declares. Phase 4 measured that
         accidental lever at up to ~14 percentage points of win rate
-        (docs/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md Section G1).
+        (docs/archive/v4/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md Section G1).
 
         ``"round_robin"`` (v4 alpha2): scan from ``self._process_cursor``
         instead, and advance the cursor to just past whichever process was

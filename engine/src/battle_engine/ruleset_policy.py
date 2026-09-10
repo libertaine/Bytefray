@@ -381,7 +381,7 @@ RULESET_V4_ALPHA1 = RulesetPolicy(
 # scheduling with a rotating entrant start, the same termination rule, the
 # same 8-cell core, the same reach legality, the same replay schema 4 --
 # except the two gameplay semantics the Phase 4 controlled gameplay study
-# produced evidence for (docs/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md Sections
+# produced evidence for (docs/archive/v4/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md Sections
 # F2/G, docs/V4_ALPHA2_DESIGN.md):
 #
 #   1. ``core_placement="seeded"`` -- entrant cores are placed from the
