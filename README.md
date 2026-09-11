@@ -6,31 +6,21 @@
 
 Bytefray is a deterministic shared-memory programming game where Python agents compete for control of a circular arena.
 
-Bytefray takes inspiration from Core War's shared-memory competitive programming model but is not a Redcode implementation or compatibility layer. It replaces vintage virtual machine architectures with a modern Python execution environment, structured agent APIs, full-match replay recording, and graphical tooling. Matches execute discrete ticks where agents maneuver processes, inspect and rewrite memory cells, defend their assigned cores, and attempt to eliminate opponents.
+You write the agents: they maneuver, inspect, and rewrite memory while defending their own core. Matches between Python agents can be replayed and analyzed, and deterministic execution makes the same configuration reproducible.
 
 [![Python 3.10–3.14](https://img.shields.io/badge/Python-3.10%E2%80%933.14-blue)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## Technical Snapshot
-
-| Dimension | Specification |
-|---|---|
-| **Runtime** | Python 3.10–3.14 (CPython; qualified on Windows AMD64 and Linux x86_64) |
-| **Dependencies** | PyYAML for core engine; optional `pygame-ce` (replays) and `PySide6` (designer) |
-| **Arena Model** | Circular array of discrete memory cells (default 4096); 1-byte value (`0..255`) + last-writer ownership |
-| **Simulation** | Discrete-tick deterministic engine; chunked quota scheduling (`K = 2`, `Q = 8`) |
-| **Stable Ruleset** | `bytefray-rules-4` (spatial multi-process, seed-derived core placement, round-robin process selection) |
-| **Agent API** | Agent API v2 (`reset`, `declare_processes`, `act`) |
-| **Action Vocabulary** | `READ` (absolute address), `WRITE` (absolute address), `MOVE` (relative delta `[-64, 64]`) |
-| **Elimination Condition** | Core capture: an entrant is eliminated when it owns 0 cells of its 8-cell core at tick end |
-| **Artifact Formats** | `battle2.result` (schema v1 JSON), `battle2.replay` (schema v4 JSONL) |
-| **Execution Model** | Local trusted Python execution; worker subprocesses with per-call timeouts for hang containment |
-| **Tooling** | Headless CLI, interactive Pygame replay visualizer, PySide6 visual Agent Designer |
-
 <p align="center">
-  <img src="docs/screenshots/v4-replay-broadcast.png" alt="Bytefray Pygame Replay Viewer showing a live match" width="720">
+  <img src="docs/screenshots/v5-replay-showcase.gif" alt="Animated Bytefray replay showing two Python agents competing in the arena and a core capture" width="900">
 </p>
-<p align="center"><em>Interactive replay viewer displaying a multi-process match under <code>bytefray-rules-4</code>, showing process anchors, reach zones, arena memory, territory distribution, and playback timeline.</em></p>
+<p align="center"><em>A deterministic Bytefray match replayed in the Pygame viewer.</em></p>
+
+With Bytefray, you can:
+
+* **Write Python agents** with structured APIs and configurable parameters.
+* **Run deterministic matches and tournaments** from the command line or Agent Designer.
+* **Replay and analyze results** with canonical artifacts and interactive tooling.
 
 ---
 
@@ -88,72 +78,23 @@ bytefray replay --replay runs/demo/replay.jsonl --renderer headless
 bytefray replay --replay runs/demo/replay.jsonl --renderer pygame
 ```
 
-### 4. Create Your First Agent
+---
 
-An Agent API v2 agent implements a factory returning an object with three methods: `reset`, `declare_processes`, and `act`.
+## Technical Snapshot
 
-Scaffold a new agent using the CLI:
-
-```bash
-bytefray agents create my_agent --api-version 2 --template blank
-```
-
-This writes an `agent.yaml` manifest and an `agent.py` starter into your writable agents catalog:
-
-```python
-"""Starting point for a Bytefray Agent API v2 process agent."""
-
-from battle_engine.agent_api import (
-    ActionKindV2,
-    AgentAction,
-    MatchContextV2,
-    ObservationV2,
-    ProcessDeclaration,
-)
-
-
-class Agent:
-    def reset(self, context: MatchContextV2) -> None:
-        """Called once before tick 0. Store match context and seeded RNG."""
-        self.rng = context.rng
-        self.signature = 0xA5
-
-    def declare_processes(self) -> list[ProcessDeclaration]:
-        """Declare processes and divide your per-tick action quota (shares must sum to 1.0)."""
-        return [ProcessDeclaration(id="main", reach=1, share=1.0)]
-
-    def act(self, observation: ObservationV2) -> AgentAction:
-        """Called for each allocated action slot. Returns READ, WRITE, or MOVE."""
-        return AgentAction(
-            kind=ActionKindV2.WRITE,
-            operand=observation.self_anchor,
-            value=self.signature,
-        )
-
-
-def create_agent() -> Agent:
-    return Agent()
-```
-
-### 5. Run Your Custom Agent
-
-Execute a match with your new agent against any reference opponent:
-
-```bash
-bytefray run --a-type my_agent --b-type v5_region_attacker --seed 42 --ticks 200
-```
-
-### 6. Validate and Test
-
-Use Agent Lab commands to verify lifecycle compliance and test against opponents with hang containment:
-
-```bash
-# Dry-run validation (verifies factory, reset, process declaration, and one act call)
-bytefray agents validate my_agent
-
-# Run a supervised development match with timeout protection
-bytefray agents test my_agent --opponent v5_region_attacker
-```
+| Dimension | Specification |
+|---|---|
+| **Runtime** | Python 3.10–3.14 (CPython; qualified on Windows AMD64 and Linux x86_64) |
+| **Dependencies** | PyYAML for core engine; optional `pygame-ce` (replays) and `PySide6` (designer) |
+| **Arena Model** | Circular array of discrete memory cells (default 4096); 1-byte value (`0..255`) + last-writer ownership |
+| **Simulation** | Discrete-tick deterministic engine; chunked quota scheduling (`K = 2`, `Q = 8`) |
+| **Stable Ruleset** | `bytefray-rules-4` (spatial multi-process, seed-derived core placement, round-robin process selection) |
+| **Agent API** | Agent API v2 (`reset`, `declare_processes`, `act`) |
+| **Action Vocabulary** | `READ` (absolute address), `WRITE` (absolute address), `MOVE` (relative delta `[-64, 64]`) |
+| **Elimination Condition** | Core capture: an entrant is eliminated when it owns 0 cells of its 8-cell core at tick end |
+| **Artifact Formats** | `battle2.result` (schema v1 JSON), `battle2.replay` (schema v4 JSONL) |
+| **Execution Model** | Local trusted Python execution; worker subprocesses with per-call timeouts for hang containment |
+| **Tooling** | Headless CLI, interactive Pygame replay visualizer, PySide6 visual Agent Designer |
 
 ---
 
@@ -210,6 +151,78 @@ Each simulation tick resolves through five deterministic phases:
 ---
 
 ## Writing an Agent
+
+### Create Your First Agent
+
+An Agent API v2 agent implements a factory returning an object with three methods: `reset`, `declare_processes`, and `act`.
+
+Scaffold a new agent using the CLI:
+
+```bash
+bytefray agents create my_agent --api-version 2 --template blank
+```
+
+This writes an `agent.yaml` manifest and an `agent.py` starter into your writable agents catalog. Edit those files to define the agent; the generated Python entry point begins:
+
+```python
+"""Starting point for a Bytefray Agent API v2 process agent."""
+
+from battle_engine.agent_api import (
+    ActionKindV2,
+    AgentAction,
+    MatchContextV2,
+    ObservationV2,
+    ProcessDeclaration,
+)
+
+
+class Agent:
+    def reset(self, context: MatchContextV2) -> None:
+        """Called once before tick 0. Store match context and seeded RNG."""
+        self.rng = context.rng
+        self.signature = 0xA5
+
+    def declare_processes(self) -> list[ProcessDeclaration]:
+        """Declare processes and divide your per-tick action quota (shares must sum to 1.0)."""
+        return [ProcessDeclaration(id="main", reach=1, share=1.0)]
+
+    def act(self, observation: ObservationV2) -> AgentAction:
+        """Called for each allocated action slot. Returns READ, WRITE, or MOVE."""
+        return AgentAction(
+            kind=ActionKindV2.WRITE,
+            operand=observation.self_anchor,
+            value=self.signature,
+        )
+
+
+def create_agent() -> Agent:
+    return Agent()
+```
+
+### Run Your Custom Agent
+
+Execute a match with your new agent against any reference opponent:
+
+```bash
+bytefray run --a-type my_agent --b-type v5_region_attacker --seed 42 --ticks 200
+```
+
+### Validate and Test
+
+Use Agent Lab commands to verify lifecycle compliance and test against opponents with hang containment:
+
+```bash
+# Dry-run validation (verifies factory, reset, process declaration, and one act call)
+bytefray agents validate my_agent
+
+# Run a supervised development match with timeout protection
+bytefray agents test my_agent --opponent v5_region_attacker
+```
+
+<p align="center">
+  <img src="docs/screenshots/v5-agent-designer.png" alt="Bytefray Agent Designer showing a V5 Python agent, validation status, and development test configuration" width="720">
+</p>
+<p align="center"><em>The PySide6 Agent Designer provides a graphical workflow for creating, inspecting, validating, and development-testing agents while retaining direct access to the Python source. Agents remain plain Python, and every step above works from the CLI without it.</em></p>
 
 ### Agent API v2 Interface
 
@@ -312,11 +325,16 @@ Bytefray includes a modular tool suite separating headless simulation from prese
   * `evaluate`: Run pairwise or group evaluation matrices across seeds.
 
 ### 2. Pygame Replay Viewer
-Launched via `bytefray replay --renderer pygame <path>` or `bytefray-replay-viewer`. Features:
+Launched via `bytefray replay --replay <path> --renderer pygame` or `bytefray-replay-viewer`. Features:
 * Broadcast and perspective viewing modes.
 * Visual process anchors, reach perimeters, and disruption indicators.
 * Memory ownership overlays with territory tracking bars.
 * Interactive playback controls: scrub timeline, step tick-by-tick, adjust speed.
+
+<p align="center">
+  <img src="docs/screenshots/v4-replay-broadcast.png" alt="Bytefray Pygame Replay Viewer showing a live match in broadcast mode" width="720">
+</p>
+<p align="center"><em>Broadcast-mode view of the replay viewer, showing process anchors, reach zones, memory ownership, and the playback timeline.</em></p>
 
 ### 3. PySide6 Agent Designer
 Launched via `bytefray design` or `bytefray-agent-designer`. Features:
