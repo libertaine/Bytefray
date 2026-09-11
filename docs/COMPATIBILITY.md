@@ -2,16 +2,41 @@
 
 This is a concise policy/reference document, not a duplicate of every
 schema specification: it names the independent compatibility axes Bytefray
-maintains, says what is a stable-candidate contract for the 1.x series
-versus explicitly unsupported/experimental, and gives a worked table for
+maintains, distinguishes supported contracts from historical experiments,
+and gives a worked table for
 deciding which axis a given change actually requires bumping. For the full
 wire-level detail behind each axis, follow the links below rather than
 expecting this document to repeat them.
 
+## Current V5 product boundary
+
+Bytefray `5.0.0a1` is the V5 product release; its process-agent gameplay
+continues to use permanent `bytefray-rules-4` and Agent API v2. There is no
+production Ruleset 5. Product versions, gameplay identities, Agent API
+versions, and replay/result schemas are independent compatibility axes.
+
+For ordinary CLI matches, an omitted ruleset selects v4 for an API v2
+Python roster, v2 for an API v1 Python roster, and v1 for VM/blob entrants.
+Mixed Python/VM matches and mixed API generations remain unsupported.
+Both V4 alpha identities remain explicitly selectable for historical
+reproduction. Designer Simple offers v2/v4; Advanced, Development, and
+pairwise Evaluation also offer v4 alpha2, v4 alpha1, and v1. Group evaluation
+requires v2. Development and Evaluation name workflows, not different
+gameplay rulesets; V4 evaluation uses the same permanent gameplay with its
+documented seeded-placement methodology.
+
+Recorded replay playback reconstructs stored state without re-executing
+agents. Keeping an identity readable and preserving its interpretation is
+distinct from offering it for new matches; historical execution is also
+retained for agent compatibility, tests, and reproducibility. The complete
+inventory and proposed future presentation are in the
+[Phase 4 audit](research/v5/V5_ALPHA1_MAINTENANCE_PHASE4_RELEASE_SURFACE_AUDIT.md).
+
 ## Stable-candidate contracts for 1.x
 
-The following are candidates for a stable-contract declaration at 1.0 —
-see `docs/ROADMAP.md` for the release criterion this feeds into:
+This section preserves the earlier 1.x contract inventory and its subsequent
+additions. Its milestone terminology is historical; the current V5 boundary
+is above, and the version-specific sections below define retained contracts.
 
 - **Ruleset v1** (`bytefray-rules-1`) — the gameplay semantics described in
   [RULES.md](RULES.md).

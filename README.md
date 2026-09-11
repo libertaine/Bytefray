@@ -414,6 +414,8 @@ Bytefray's codebase emphasizes strict reproducibility, version isolation, and ar
 
 Bytefray maintains independent, versioned compatibility axes across releases, rulesets, and schemas (see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)).
 
+Bytefray 5.x is the current product and research line. Its Agent API v2 gameplay continues to use permanent Ruleset 4; V5 Alpha 1 introduces no Ruleset 5.
+
 ### Active Gameplay Ruleset: `bytefray-rules-4`
 The current permanent stable ruleset is `bytefray-rules-4`. An omitted `--ruleset` flag for Agent API v2 entrants resolves to this ruleset automatically. It defines:
 * Spatial multi-process execution with round-robin process selection.
@@ -421,11 +423,13 @@ The current permanent stable ruleset is `bytefray-rules-4`. An omitted `--rulese
 * Fixed ruleset constants: `CORE_SIZE = 8`, `Q = 8` actions/tick, `D = 1` disruption duration, move clamp `[-64, 64]`.
 
 ### Historical Rulesets
-Earlier gameplay contracts are preserved unchanged for historical replay and research validation:
+Earlier gameplay contracts remain executable and explicitly selectable for compatible agents, including historical reproduction:
 * `bytefray-rules-4-alpha2`: Semantic predecessor of Ruleset v4, preserved as a research milestone.
 * `bytefray-rules-4-alpha1`: Initial v4 alpha with evenly spaced core placement and priority process selection.
-* `bytefray-rules-2`: Historical Agent API v1 Python ruleset with single-actor execution.
-* `bytefray-rules-1`: Historical VM / pMARS Redcode ruleset.
+* `bytefray-rules-2`: Permanent single-actor Python gameplay; still the omitted-ruleset default for Agent API v1 agents.
+* `bytefray-rules-1`: Historical Python Agent API v1 and native VM/blob gameplay. Mixed Python/VM matches remain unsupported.
+
+pMARS Redcode uses a separate backend and does not execute under a Bytefray ruleset. Designer Simple offers permanent v2 and v4; Advanced, Development, and pairwise Evaluation also expose historical choices. Group evaluation requires Ruleset v2.
 
 ### Scope Discipline
 Mechanics such as fixed process rosters and circular core sizes are ruleset-specific gameplay specifications (`RulesetPolicy`), not immutable project-wide engine constraints.

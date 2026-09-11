@@ -18,6 +18,19 @@ User agents live under the configured writable data root in
 
 ## Recommended: scaffold a starting agent
 
+For current V5 process-agent authoring, select Agent API v2 explicitly:
+
+```bash
+bytefray agents create my_process_agent --api-version 2 --template annotated
+```
+
+This agent uses permanent `bytefray-rules-4` when the ruleset is omitted.
+V5 introduces no separate Ruleset 5. The examples below that omit
+`--api-version` retain the CLI's default of **Agent API v1**, which uses
+`bytefray-rules-2` for an omitted ruleset. Choose opponents with the same
+API generation; API v1 and v2 agents cannot share a match. See
+[V5_STARTER_AGENTS.md](V5_STARTER_AGENTS.md) for current API v2 examples.
+
 The fastest way to get a valid, immediately-discoverable Python agent is
 `bytefray agents create`:
 
@@ -123,10 +136,11 @@ bytefray replay --replay <reported-replay-path>
 See [AGENT_API_V1.md](AGENT_API_V1.md) for the full loading, lifecycle, and
 action contract the generated files satisfy.
 
-The scaffold command currently creates Agent API v1 examples. To author a v4
-agent, start from one of the packaged `v4_*` agents, set `api_version: 2`, and
-implement `reset(context)`, `declare_processes()`, and `act(observation)` as
-specified in [AGENT_API_V2.md](AGENT_API_V2.md). Omitting `--ruleset` resolves
+The scaffold command supports both API generations; the commands above use
+its API v1 default. For an API v2 process agent, use `--api-version 2` or
+study the packaged `v5_*` and `v4_*` agents, which implement `reset(context)`,
+`declare_processes()`, and `act(observation)` as specified in
+[AGENT_API_V2.md](AGENT_API_V2.md). Omitting `--ruleset` resolves
 automatically to `bytefray-rules-4`, the stable v4 gameplay contract, from
 your agent's own declared `api_version: 2`; pass an explicit
 `--ruleset bytefray-rules-4-alpha1` or `bytefray-rules-4-alpha2` only to
@@ -187,9 +201,9 @@ already-claimed cells (`Observation` carries no ownership map), capturing
 `pc`/`JUMP` as an explicit phase state machine. There is no
 separate "start from example" scaffold option -- copy one of these
 directories into a new agent id under `agents/` and edit `agent.py`
-directly; the file is the whole starting point. See the main
-[README](../README.md#-try-the-bundled-agents) for compelling matchups to
-try first and an `agents evaluate` example.
+directly; the file is the whole starting point. See
+[Agent Lab](AGENT_LAB.md#evaluating-a-candidate) for an `agents evaluate`
+example using compatible Python opponents.
 
 ## Development-test your agent
 

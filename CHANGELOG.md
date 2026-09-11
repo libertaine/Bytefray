@@ -2,6 +2,42 @@
 
 This changelog records notable user- and developer-visible changes to Bytefray.
 
+## [5.0.0a1] - 2026-09-10
+
+### V5 Alpha 1 — agent authoring and Designer workflows
+
+Published as `b5.0.0-alpha1` from
+`28a10b8f8fd47bf32ec9281dcc21b0645276962c`. V5 continues to use permanent
+`bytefray-rules-4` gameplay and Agent API v2; no Ruleset 5 was introduced.
+
+* **Four educational API v2 starters:** `v5_region_attacker`,
+  `v5_scout_striker`, `v5_core_defender`, and `v5_dual_team`, demonstrating
+  region attacks, remembered contacts, observed defense, and process teams.
+  Existing V4 and historical starters remain available.
+* **Agent parameter schemas and presets.** API v2 manifests can declare
+  typed parameters, bounds, defaults, and named presets. Direct matches
+  resolve defaults, then a selected preset, then explicit overrides, and
+  record the effective parameters in match artifacts.
+* **Designer parameter controls.** Advanced's Agent Params generates controls
+  from the selected agent's schema, with preset selection, effective-value
+  feedback, validation, and Reset to Defaults. Results display effective
+  parameters; agents without schemas retain the existing free-form field.
+* **Randomize Seed** in Advanced and the Development test panel writes a
+  visible, reusable seed without changing match seed semantics.
+* **Starter refresh on upgrade** updates recognized, unedited older bundled
+  starters while preserving customized copies and reporting them to users.
+* **Frozen packaging fixes** include both API generations' blank/annotated
+  scaffold resources and exclude Python bytecode/cache debris. The release
+  includes a wheel, sdist, four Windows executable assets, and the Windows
+  installer; no frozen Linux archive was published for this Alpha 1.
+
+Release and qualification evidence:
+[publication record](docs/research/v5/V5_ALPHA1_PHASE_F_FINAL_QUALIFICATION.md#publication-addendum--2026-09-10-utc).
+Replay History was deferred. Spectator features inherited from V4 are not
+new Alpha 1 features. Subsequent parameter-consistency fixes, core-capture
+presentation changes, and maintenance Phases 0–4 on `v5-research` are
+post-release work and are not included in this published tag's feature list.
+
 ## [4.0.0] - 2026-09-08
 
 ### Spatial Multi-Process Platform & Spectator Intelligence

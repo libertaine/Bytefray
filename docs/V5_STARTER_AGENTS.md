@@ -6,7 +6,7 @@ be read straight through in a couple of minutes.
 
 They run under the stable gameplay ruleset `bytefray-rules-4`, they use only
 the public Agent API v2, and they are installed into your writable `agents/`
-catalog like every other bundled agent — so `bytefray agents list`, the CLI
+catalog like every other bundled agent — so `bytefray agents`, the CLI
 and the Agent Designer all show them without any extra step.
 
 | Read it | Agent | The one idea | Its parameters |
