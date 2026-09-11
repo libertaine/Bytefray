@@ -49,6 +49,7 @@ from pathlib import Path
 from typing import Any
 
 from battle_engine.paths import get_branding_icon_path
+from battle_engine.python_runtime import core_addresses
 from battle_engine.replay import AgentEvent, AgentState, EngineEvent, KillDeathEvent, RuntimeEvent
 
 from battle_client.analysis import (
@@ -104,7 +105,7 @@ from battle_client.perspective import (
     PerspectiveManager,
     PerspectiveState,
 )
-from battle_client.player import PlaybackController
+from battle_client.player import PlaybackController, PlaybackMovement, PlaybackMovementKind
 from battle_client.renderers.base import RendererDependencyError
 from battle_client.replay_status import (
     EntrantReplayStatus,
@@ -236,6 +237,27 @@ CAPTURE_CALLOUT_BG: tuple[int, int, int] = (20, 16, 10)
 CAPTURE_CALLOUT_MAX_WIDTH = 360
 CAPTURE_CALLOUT_MARGIN = 40
 
+# Phase 2 core-destruction presentation. Every duration is wall-clock based:
+# pausing playback or reaching the terminal tick does not freeze the effect.
+# The complete envelope is 700ms at 1x, with bounded speed scaling that keeps
+# high-speed playback legible without turning slow playback into a long scene.
+CORE_DESTRUCTION_BASE_DURATION_SECONDS = 0.70
+CORE_DESTRUCTION_FLASH_END_SECONDS = 0.09
+CORE_DESTRUCTION_RING_END_SECONDS = 0.46
+CORE_DESTRUCTION_RAYS_END_SECONDS = 0.56
+CORE_DESTRUCTION_MIN_SPEED_SCALE = 0.65
+CORE_DESTRUCTION_MAX_SPEED_SCALE = 1.25
+CORE_DESTRUCTION_RAY_DIRECTIONS: tuple[tuple[float, float], ...] = (
+    (1.0, 0.0),
+    (0.7071, 0.7071),
+    (0.0, 1.0),
+    (-0.7071, 0.7071),
+    (-1.0, 0.0),
+    (-0.7071, -0.7071),
+    (0.0, -1.0),
+    (0.7071, -0.7071),
+)
+
 # Fight Night chrome (Phase 8). Deliberately one fixed accent pair, not the
 # per-entrant OWNERSHIP_TINT/AGENT_COLORS palette: a ribbon entry tinted with
 # its subject's own color would let a viewer associate an anonymous on-arena
@@ -267,6 +289,69 @@ class CoreCaptureAttribution:
     killer: str | None
 
 
+@dataclass
+class CoreDestructionEffect:
+    """One wall-clock visual envelope anchored to a captured core."""
+
+    victim: str
+    killer: str | None
+    capture_tick: int
+    core_addresses: tuple[int, ...]
+    duration_seconds: float
+    elapsed_seconds: float = 0.0
+
+
+@dataclass(frozen=True)
+class CoreDestructionVisualState:
+    """Renderer-independent component strengths for one effect frame."""
+
+    flash_alpha: float
+    ring_progress: float
+    ring_alpha: float
+    rays_progress: float
+    rays_alpha: float
+    afterglow_alpha: float
+
+
+def core_destruction_duration(speed: float) -> float:
+    """Bounded inverse-square-root duration scaling for playback speed."""
+
+    safe_speed = max(0.01, speed)
+    scale = max(
+        CORE_DESTRUCTION_MIN_SPEED_SCALE,
+        min(CORE_DESTRUCTION_MAX_SPEED_SCALE, 1.0 / math.sqrt(safe_speed)),
+    )
+    return CORE_DESTRUCTION_BASE_DURATION_SECONDS * scale
+
+
+def core_destruction_visual_state(
+    elapsed_seconds: float, duration_seconds: float
+) -> CoreDestructionVisualState:
+    """Deterministic staged visual strengths for one wall-clock instant."""
+
+    duration = max(0.001, duration_seconds)
+    elapsed = max(0.0, min(elapsed_seconds, duration))
+    timeline_scale = duration / CORE_DESTRUCTION_BASE_DURATION_SECONDS
+    flash_end = CORE_DESTRUCTION_FLASH_END_SECONDS * timeline_scale
+    ring_end = CORE_DESTRUCTION_RING_END_SECONDS * timeline_scale
+    rays_end = CORE_DESTRUCTION_RAYS_END_SECONDS * timeline_scale
+
+    flash_alpha = max(0.0, 1.0 - elapsed / flash_end)
+    ring_progress = min(1.0, elapsed / ring_end)
+    ring_alpha = max(0.0, 1.0 - elapsed / ring_end)
+    rays_progress = min(1.0, elapsed / rays_end)
+    rays_alpha = max(0.0, 1.0 - elapsed / rays_end)
+    afterglow_alpha = max(0.0, 1.0 - elapsed / duration)
+    return CoreDestructionVisualState(
+        flash_alpha=flash_alpha,
+        ring_progress=ring_progress,
+        ring_alpha=ring_alpha,
+        rays_progress=rays_progress,
+        rays_alpha=rays_alpha,
+        afterglow_alpha=afterglow_alpha,
+    )
+
+
 def core_captures_at_tick(
     events: Sequence[tuple[int, EngineEvent]],
     tick: int,
@@ -294,6 +379,32 @@ def core_captures_at_tick(
         if agent_state is not None and agent_state.termination_reason == CORE_CAPTURE_TERMINATION_REASON:
             captures.append(CoreCaptureAttribution(victim=event.victim, killer=event.killer))
     return tuple(captures)
+
+
+def replay_core_addresses(session: ReplaySession) -> dict[str, tuple[int, ...]]:
+    """Recover fixed entrant core cells from existing tick-0 replay facts.
+
+    Every core-bearing Python Ruleset records core seeding before the first
+    action: the first positive-length tick-0 memory diff owned by an entrant
+    begins at that entrant's core base. This is the same persisted-fact
+    derivation used by ``battle_client.replay_status`` for its supported
+    historical status models, applied directly here so schema-4 v4 replays
+    need no new field and no gameplay-side dependency.
+    """
+
+    if session.header is None or session.header.runtime_kind != "python":
+        return {}
+    if 0 not in session.recorded_ticks:
+        return {}
+    arena_size = session.header.config.arena_size
+    starts: dict[str, int] = {}
+    for diff in session.memory_diffs_at_tick(0):
+        if diff.owner is not None and diff.length > 0 and diff.owner not in starts:
+            starts[diff.owner] = diff.address
+    return {
+        agent_id: core_addresses(start, arena_size)
+        for agent_id, start in starts.items()
+    }
 
 
 def _perspective_safe_captures(
@@ -852,6 +963,12 @@ class PygameRenderer:
         self._active_capture_callout: tuple[int, tuple[CoreCaptureAttribution, ...]] | None = None
         self._capture_callout_expires_after_tick = 0
 
+        # The fixed replay-derived core cells are cached once per loaded
+        # session; active envelopes contain only presentation state and age
+        # in wall-clock seconds, including while paused or at match end.
+        self._core_addresses_by_agent: dict[str, tuple[int, ...]] = {}
+        self._core_destruction_effects: list[CoreDestructionEffect] = []
+
         # Entrant Perspective Cam state (Phase 5).
         self._perspective_manager: PerspectiveManager | None = None
         self._perspective_debug: bool = False
@@ -996,6 +1113,8 @@ class PygameRenderer:
         # Scans every recorded tick once; see _match_events's docstring in
         # __init__ for why this is cached rather than redone per frame.
         self._match_events = collect_match_events(session)
+        self._core_addresses_by_agent = replay_core_addresses(session)
+        self._core_destruction_effects.clear()
         # Reduces the already-collected events above to their timeline
         # marks; no additional pass over the replay.
         self._timeline_marks = timeline_event_marks(self._match_events)
@@ -1269,7 +1388,12 @@ class PygameRenderer:
                 director_runtime.update(controller, elapsed_ms / 1000.0)
             else:
                 controller.update(elapsed_ms / 1000.0)
-            self._advance_transient_effects(controller.session.current_state)
+            self._advance_transient_effects(
+                controller.session.current_state,
+                movements=controller.consume_movements(),
+                elapsed_seconds=elapsed_ms / 1000.0,
+                speed=controller.speed,
+            )
             self._redraw(controller)
             pg.display.flip()
 
@@ -1286,11 +1410,9 @@ class PygameRenderer:
         The footer's event message takes priority over the arena when both
         could apply: a click resolving to its (single) event tick seeks and
         returns immediately, without also touching cell selection.
-        ``ReplaySession.seek`` is called directly rather than through
-        ``PlaybackController`` because seeking to an arbitrary already-
-        recorded tick isn't one of the controller's own navigation
-        primitives (see ``player.py``'s module docstring on why
-        ``ReplaySession`` stays the sole source of reconstructed state).
+        Arbitrary recorded-tick seeking goes through ``PlaybackController``
+        so presentation code receives an explicit navigation report; replay
+        reconstruction itself still remains entirely in ``ReplaySession``.
 
         Otherwise, if the click lands on a valid arena cell (translated into
         the arena band's own local coordinates -- see ``_arena_rect``), it
@@ -1314,8 +1436,7 @@ class PygameRenderer:
                 pos,
             )
             if tick is not None:
-                controller.pause()
-                controller.session.seek(tick)
+                controller.seek_to(tick)
                 return
 
         if self.screen is None or self.grid_cols <= 0 or self.grid_rows <= 0:
@@ -1328,7 +1449,14 @@ class PygameRenderer:
 
     # ---------- transient (visual-only) effect bookkeeping ----------
 
-    def _advance_transient_effects(self, state: ReplayState) -> None:
+    def _advance_transient_effects(
+        self,
+        state: ReplayState,
+        *,
+        movements: Sequence[PlaybackMovement] | None = None,
+        elapsed_seconds: float = 0.0,
+        speed: float = 1.0,
+    ) -> None:
         """Update flashes/trails/recent-activity for the newly-current
         ``state``.
 
@@ -1347,7 +1475,15 @@ class PygameRenderer:
         actually observed happen tick-by-tick, not a claim about the
         replay's full history, so "nothing recently observed yet at the
         new position" is an honest, deterministic state, not a gap.
+
+        Live playback always supplies the controller's explicit ``movements``
+        report. ``None`` retains the historical tick-delta behavior for
+        callers of this private helper, while the core-capture presentation
+        itself no longer has to infer whether an exact +1 change was a step
+        or a direct seek in the real viewer loop.
         """
+        if movements is None:
+            movements = self._legacy_movements_for_state(state)
         is_linear_step = (
             self._last_rendered_tick is not None and state.tick == self._last_rendered_tick + 1
         )
@@ -1396,15 +1532,85 @@ class PygameRenderer:
         for xy in expired:
             del self._flash[xy]
 
-        self._advance_capture_callout(state)
+        self._advance_core_destruction_lifetimes(elapsed_seconds)
+        self._advance_capture_presentations(state, movements, speed=speed)
 
         self._last_rendered_tick = state.tick
         self._last_owners = state.owners
 
-    def _advance_capture_callout(self, state: ReplayState) -> None:
-        """Advance the core-capture callout queue for the newly-current
-        ``state`` (v3.0 "fun feature" -- see
-        docs/V3_CORE_CAPTURE_CALLOUT.md).
+    def _legacy_movements_for_state(
+        self, state: ReplayState
+    ) -> tuple[PlaybackMovement, ...]:
+        """Compatibility adapter for direct calls to this private helper."""
+
+        last = self._last_rendered_tick
+        if last is None or state.tick == last:
+            return ()
+        if state.tick == last + 1:
+            return (
+                PlaybackMovement(
+                    PlaybackMovementKind.STEP_FORWARD,
+                    last,
+                    state.tick,
+                    (state.tick,),
+                ),
+            )
+        kind = (
+            PlaybackMovementKind.SEEK_BACKWARD
+            if state.tick < last
+            else PlaybackMovementKind.SEEK_FORWARD
+        )
+        return (PlaybackMovement(kind, last, state.tick),)
+
+    def _advance_core_destruction_lifetimes(self, elapsed_seconds: float) -> None:
+        """Age and expire active effects in real time, independent of ticks."""
+
+        elapsed = max(0.0, elapsed_seconds)
+        for effect in self._core_destruction_effects:
+            effect.elapsed_seconds += elapsed
+        self._core_destruction_effects = [
+            effect
+            for effect in self._core_destruction_effects
+            if effect.elapsed_seconds < effect.duration_seconds
+        ]
+
+    def _visible_capture_batches(
+        self,
+        state: ReplayState,
+        movement: PlaybackMovement,
+    ) -> tuple[tuple[int, tuple[CoreCaptureAttribution, ...]], ...]:
+        """Perspective-safe captures on genuinely played-through ticks."""
+
+        if not movement.presents_forward_events:
+            return ()
+        batches: list[tuple[int, tuple[CoreCaptureAttribution, ...]]] = []
+        for tick in movement.crossed_ticks:
+            captures = core_captures_at_tick(self._match_events, tick, state.agents)
+            if not captures:
+                continue
+            selected_entrant_id, is_terminal = self._perspective_card_knowledge_basis(tick)
+            visible = _perspective_safe_captures(
+                captures,
+                selected_entrant_id=selected_entrant_id,
+                is_terminal=is_terminal,
+            )
+            if visible:
+                batches.append((tick, visible))
+        return tuple(batches)
+
+    def _clear_capture_presentations(self) -> None:
+        self._capture_callout_queue.clear()
+        self._active_capture_callout = None
+        self._core_destruction_effects.clear()
+
+    def _advance_capture_presentations(
+        self,
+        state: ReplayState,
+        movements: Sequence[PlaybackMovement],
+        *,
+        speed: float,
+    ) -> None:
+        """Advance the retained callout and the core-destruction envelope.
 
         Captures are filtered through ``_perspective_safe_captures`` (Phase
         8.5) before being queued, so a capture the selected entrant has no
@@ -1413,48 +1619,37 @@ class PygameRenderer:
         candidate for the queue for that Perspective mode, the same
         filter-before-assembly discipline Fight Night's ribbon already uses.
 
-        Deliberately does **not** reuse ``is_linear_step`` as computed
-        above in ``_advance_transient_effects``: that check treats "the
-        tick hasn't changed since the last call" (an entirely ordinary
-        *paused* frame -- this renderer re-renders at up to 60fps while
-        ``state.tick`` sits still) the same as "the tick jumped" --
-        harmless for the flash/trail/activity effects above (each is
-        already re-derived from scratch on every linear step, and their
-        own lifetimes are sub-second regardless), but wrong for a callout
-        meant to stay visible, unchanged, across a multi-second *pause*.
-        This method instead compares ``state.tick`` against
-        ``self._last_rendered_tick`` (still the *previous* call's tick --
-        read here before ``_advance_transient_effects`` overwrites it) and
-        only ever advances the queue on an exact ``+1`` step: genuine
-        continuous forward playback, whether driven by auto-play or a
-        single manual step. A delta of exactly ``0`` is a deliberate
-        no-op -- the active callout and queue are left exactly as they
-        are, so pausing freezes the callout in place for free. Any other
-        delta (backward, or a forward jump of more than one tick -- a
-        seek, restart, or jump-to-end) clears both: seeking reconstructs
-        state without replaying every transient notification, so a
-        callout is never shown merely because the playhead crossed an old
-        capture tick.
+        Explicit movement kinds, rather than tick deltas, are the authority:
+        automatic playback and a manual forward step present every recorded
+        tick in ``crossed_ticks``; seek, backward step, restart, and
+        jump-to-end clear stale presentation without retriggering anything.
+        An empty movement sequence is an ordinary paused frame. The callout
+        remains tick-denominated as before, while the arena effect ages by
+        wall clock in ``_advance_core_destruction_lifetimes``.
 
         Multiple entrants captured on the very same tick are already
         bundled into one queue entry by ``core_captures_at_tick`` (see its
         own docstring); this method never splits or drops them.
         """
-        last = self._last_rendered_tick
-        if last is not None and state.tick == last + 1:
-            captures = core_captures_at_tick(self._match_events, state.tick, state.agents)
-            if captures:
-                selected_entrant_id, is_terminal = self._perspective_card_knowledge_basis(
-                    state.tick
-                )
-                captures = _perspective_safe_captures(
-                    captures, selected_entrant_id=selected_entrant_id, is_terminal=is_terminal
-                )
-            if captures:
-                self._capture_callout_queue.append((state.tick, captures))
-        elif last is not None and state.tick != last:
-            self._capture_callout_queue.clear()
-            self._active_capture_callout = None
+        for movement in movements:
+            if not movement.presents_forward_events:
+                self._clear_capture_presentations()
+                continue
+            for capture_tick, captures in self._visible_capture_batches(state, movement):
+                self._capture_callout_queue.append((capture_tick, captures))
+                duration = core_destruction_duration(speed)
+                for capture in captures:
+                    core_addresses = self._core_addresses_by_agent.get(capture.victim)
+                    if core_addresses:
+                        self._core_destruction_effects.append(
+                            CoreDestructionEffect(
+                                victim=capture.victim,
+                                killer=capture.killer,
+                                capture_tick=capture_tick,
+                                core_addresses=core_addresses,
+                                duration_seconds=duration,
+                            )
+                        )
 
         if self._active_capture_callout is None and self._capture_callout_queue:
             self._active_capture_callout = self._capture_callout_queue.pop(0)
@@ -1522,6 +1717,7 @@ class PygameRenderer:
             ax, ay, aw, ah = self._arena_rect()
             scaled = pg.transform.scale(gs, (max(1, aw), max(1, ah)))
             self.screen.blit(scaled, (ax, ay))
+            self._draw_core_destruction_effects(state.tick)
 
             if self.trails_enabled:
                 for agent_id, points in self._trail_points.items():
@@ -1579,6 +1775,7 @@ class PygameRenderer:
             ax, ay, aw, ah = self._arena_rect()
             scaled = pg.transform.scale(gs, (max(1, aw), max(1, ah)))
             self.screen.blit(scaled, (ax, ay))
+            self._draw_core_destruction_effects(state.tick)
 
             # 3. Own process anchors and sensor reach
             for proc in perspective_state.own_processes:
@@ -1617,6 +1814,108 @@ class PygameRenderer:
         self._draw_fight_night(controller, statuses)
         self._draw_capture_callout(controller, statuses)
         self._draw_footer(controller)
+
+    def _draw_core_destruction_effects(self, current_tick: int) -> None:
+        """Draw active core flashes, rings, fixed rays, and afterglow.
+
+        The overlay is composited after the arena cells and before process
+        markers. Geometry comes only from recorded core addresses and the
+        fixed eight-direction table above; there is no random sampling and
+        no persistent arena mutation.
+        """
+
+        if not self._core_destruction_effects:
+            return
+        ax, ay, aw, ah = self._arena_rect()
+        if aw <= 0 or ah <= 0 or self.grid_cols <= 0 or self.grid_rows <= 0:
+            return
+
+        overlay = self.pg.Surface((aw, ah), flags=self.pg.SRCALPHA)
+        cell_w = aw / self.grid_cols
+        cell_h = ah / self.grid_rows
+        cell_radius = max(2, int(min(cell_w, cell_h) * 0.75))
+        max_radius = max(18, min(52, int(min(aw, ah) * 0.09)))
+
+        selected_entrant_id, is_terminal = self._perspective_card_knowledge_basis(
+            current_tick
+        )
+        for effect in self._core_destruction_effects:
+            visible = _perspective_safe_captures(
+                (CoreCaptureAttribution(effect.victim, effect.killer),),
+                selected_entrant_id=selected_entrant_id,
+                is_terminal=is_terminal,
+            )
+            if not visible:
+                continue
+            visual = core_destruction_visual_state(
+                effect.elapsed_seconds, effect.duration_seconds
+            )
+            victim_color = AGENT_COLORS.get(effect.victim, DEFAULT_AGENT_COLOR)
+            burst_color = self._blend(victim_color, (255, 255, 255), 0.60)
+
+            for address in effect.core_addresses:
+                xy = self._to_xy(address)
+                if xy is None:
+                    continue
+                left = int(xy[0] * cell_w)
+                top = int(xy[1] * cell_h)
+                right = max(left + 1, int((xy[0] + 1) * cell_w))
+                bottom = max(top + 1, int((xy[1] + 1) * cell_h))
+                rect = self.pg.Rect(left, top, right - left, bottom - top)
+                if visual.afterglow_alpha > 0.0:
+                    self.pg.draw.rect(
+                        overlay,
+                        (*victim_color, int(105 * visual.afterglow_alpha)),
+                        rect,
+                    )
+                if visual.flash_alpha > 0.0:
+                    self.pg.draw.rect(
+                        overlay,
+                        (255, 255, 255, int(245 * visual.flash_alpha)),
+                        rect,
+                    )
+
+            anchor = self._to_xy(effect.core_addresses[len(effect.core_addresses) // 2])
+            if anchor is None:
+                continue
+            center = (
+                int((anchor[0] + 0.5) * cell_w),
+                int((anchor[1] + 0.5) * cell_h),
+            )
+
+            if visual.ring_alpha > 0.0:
+                radius = cell_radius + int(max_radius * visual.ring_progress)
+                self.pg.draw.circle(
+                    overlay,
+                    (*burst_color, int(225 * visual.ring_alpha)),
+                    center,
+                    radius,
+                    max(1, min(3, cell_radius // 2)),
+                )
+
+            if visual.rays_alpha > 0.0:
+                ray_start = cell_radius + int(max_radius * 0.18 * visual.rays_progress)
+                ray_end = cell_radius + int(max_radius * visual.rays_progress)
+                ray_color = (*burst_color, int(210 * visual.rays_alpha))
+                ray_width = max(1, min(3, cell_radius // 2))
+                for direction_x, direction_y in CORE_DESTRUCTION_RAY_DIRECTIONS:
+                    start = (
+                        center[0] + int(direction_x * ray_start),
+                        center[1] + int(direction_y * ray_start),
+                    )
+                    end = (
+                        center[0] + int(direction_x * ray_end),
+                        center[1] + int(direction_y * ray_end),
+                    )
+                    self.pg.draw.lines(
+                        overlay,
+                        ray_color,
+                        False,
+                        (start, end),
+                        ray_width,
+                    )
+
+        self.screen.blit(overlay, (ax, ay))
 
     def _blend(
         self, a: tuple[int, int, int], b: tuple[int, int, int], alpha: float
@@ -1940,7 +2239,7 @@ class PygameRenderer:
         target = nearest_recorded_tick(recorded, requested)
         controller.pause()
         if target is not None and target != session.current_tick:
-            session.seek(target)
+            controller.seek_to(target)
         return True
 
     def _draw_footer_graph(self, state: ReplayState, rect: tuple[int, int, int, int]) -> None:

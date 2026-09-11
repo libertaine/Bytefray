@@ -9,27 +9,33 @@ from battle_client.analysis import (
     timeline_event_marks,
 )
 from battle_client.hud_layout import FOOTER_HEIGHT, MIN_VIEWER_SIZE, calculate_layout
-from battle_client.player import PlaybackController
+from battle_client.player import PlaybackController, PlaybackMovement, PlaybackMovementKind
 from battle_client.renderers.pygame_renderer import (
     ACTIVITY_WINDOW_TICKS,
     AGENT_COLORS,
     CAPTURE_CALLOUT_DURATION_TICKS,
     CAPTURE_CALLOUT_FADE_TICKS,
+    CORE_DESTRUCTION_BASE_DURATION_SECONDS,
+    CORE_DESTRUCTION_RAY_DIRECTIONS,
     HELP_TEXT,
     HUD_CHAR_WIDTH_PX,
     TIMELINE_PLAYHEAD_COLOR,
     TIMELINE_TRACK_COLOR,
     CoreCaptureAttribution,
+    CoreDestructionEffect,
     PygameRenderer,
     activity_intensity,
     capture_callout_alpha,
     choose_initial_window_scale,
     core_captures_at_tick,
+    core_destruction_duration,
+    core_destruction_visual_state,
     downsample_series,
     format_core_capture_callout_lines,
     format_event_line,
     format_inspector_lines,
     integer_scale_to_fit,
+    replay_core_addresses,
     resolve_event_click,
     screen_pos_to_address,
     select_history_window,
@@ -720,6 +726,8 @@ class _FakeDraw:
         # is (surface, color, rect, width); older tests that only need
         # "does not raise" simply ignore it.
         self.rects = []
+        self.line_groups = []
+        self.circles = []
 
     def rect(self, surface, color, rect, width=0):
         self.rects.append((surface, color, rect, width))
@@ -728,10 +736,10 @@ class _FakeDraw:
         pass
 
     def lines(self, surface, color, closed, points, width=1):
-        pass
+        self.line_groups.append((surface, color, closed, points, width))
 
     def circle(self, surface, color, center, radius, width=0):
-        pass
+        self.circles.append((surface, color, center, radius, width))
 
 
 class _FakePygame:
@@ -836,6 +844,29 @@ def _v2_two_entrant_session(tmp_path, *, unattributed=False):
     )
     name = "v2_unattributed.jsonl" if unattributed else "v2_capture.jsonl"
     return _load(tmp_path, name, [header, tick0, tick1, tick2])
+
+
+def test_replay_core_addresses_recovers_schema4_v4_core_cells(tmp_path):
+    header = ReplayHeader(
+        MatchConfiguration(arena_size=32),
+        runtime_kind="python",
+        ruleset_id="bytefray-rules-4",
+        entrants=(
+            {"agent_id": "A", "name": "Alpha"},
+            {"agent_id": "B", "name": "Beta"},
+        ),
+    )
+    tick0 = TickSnapshot(
+        0,
+        agents=(_agent("A", pc=5), _agent("B", pc=21)),
+        memory_diffs=_core_seed_diff("A", 5, 32) + _core_seed_diff("B", 21, 32),
+    )
+    session = _load(tmp_path, "v4_core_addresses.jsonl", [header, tick0])
+
+    assert replay_core_addresses(session) == {
+        "A": tuple(range(5, 13)),
+        "B": (21, 22, 23, 24, 25, 26, 27, 28),
+    }
 
 
 def _v2_three_entrant_session(tmp_path):
@@ -1485,6 +1516,289 @@ def test_capture_callout_alpha_zero_outside_its_window():
 
 
 # ---------------------------------------------------------------------------
+# Phase 2 core-destruction envelope: deterministic geometry/timing and
+# explicit navigation semantics.
+# ---------------------------------------------------------------------------
+def _capture_effect_renderer(*, capture_tick=1, victim="A", killer="B"):
+    renderer = PygameRenderer()
+    renderer.arena, renderer.grid_cols, renderer.grid_rows = 32, 8, 4
+    renderer._match_events = [
+        (capture_tick, KillDeathEvent("kill", victim, killer)),
+    ]
+    renderer._core_addresses_by_agent = {victim: tuple(range(8))}
+    return renderer
+
+
+def _captured_agents(*agent_ids):
+    return {
+        agent_id: AgentState(
+            agent_id=agent_id,
+            pc=0,
+            alive=False,
+            termination_reason="core_captured",
+        )
+        for agent_id in agent_ids
+    }
+
+
+def test_core_destruction_timing_is_staged_and_speed_scaling_is_bounded():
+    assert core_destruction_duration(1.0) == pytest.approx(
+        CORE_DESTRUCTION_BASE_DURATION_SECONDS
+    )
+    assert core_destruction_duration(0.25) == pytest.approx(
+        CORE_DESTRUCTION_BASE_DURATION_SECONDS * 1.25
+    )
+    assert core_destruction_duration(8.0) == pytest.approx(
+        CORE_DESTRUCTION_BASE_DURATION_SECONDS * 0.65
+    )
+
+    start = core_destruction_visual_state(0.0, CORE_DESTRUCTION_BASE_DURATION_SECONDS)
+    post_flash = core_destruction_visual_state(
+        0.10, CORE_DESTRUCTION_BASE_DURATION_SECONDS
+    )
+    post_ring = core_destruction_visual_state(0.50, CORE_DESTRUCTION_BASE_DURATION_SECONDS)
+    end = core_destruction_visual_state(
+        CORE_DESTRUCTION_BASE_DURATION_SECONDS,
+        CORE_DESTRUCTION_BASE_DURATION_SECONDS,
+    )
+
+    assert start.flash_alpha == 1.0
+    assert post_flash.flash_alpha == 0.0
+    assert post_flash.ring_alpha > 0.0
+    assert post_ring.ring_alpha == 0.0
+    assert post_ring.rays_alpha > 0.0
+    assert end.afterglow_alpha == 0.0
+    assert len(CORE_DESTRUCTION_RAY_DIRECTIONS) == 8
+    assert len(set(CORE_DESTRUCTION_RAY_DIRECTIONS)) == 8
+
+
+def test_core_destruction_draws_one_fixed_eight_ray_burst_below_the_hud():
+    renderer = _band_renderer((640, 480), entrant_count=2, arena_size=32)
+    renderer._core_destruction_effects = [
+        CoreDestructionEffect(
+            victim="A",
+            killer="B",
+            capture_tick=1,
+            core_addresses=tuple(range(8)),
+            duration_seconds=CORE_DESTRUCTION_BASE_DURATION_SECONDS,
+            elapsed_seconds=0.20,
+        )
+    ]
+
+    renderer._draw_core_destruction_effects(current_tick=1)
+
+    assert len(renderer.pg.draw.line_groups) == 8
+    assert len(renderer.pg.draw.circles) == 1
+    assert len(renderer.pg.draw.rects) == 8  # one afterglow cell per core cell
+
+
+@pytest.mark.parametrize(
+    "kind",
+    (PlaybackMovementKind.AUTOMATIC, PlaybackMovementKind.STEP_FORWARD),
+)
+def test_natural_forward_and_manual_step_trigger_core_destruction(kind):
+    renderer = _capture_effect_renderer()
+    state = _state_with_owners(1, ("B",) * 32, agents=_captured_agents("A"))
+    movement = PlaybackMovement(kind, 0, 1, (1,))
+
+    renderer._advance_transient_effects(state, movements=(movement,), speed=1.0)
+
+    assert renderer._core_destruction_effects == [
+        CoreDestructionEffect(
+            victim="A",
+            killer="B",
+            capture_tick=1,
+            core_addresses=tuple(range(8)),
+            duration_seconds=CORE_DESTRUCTION_BASE_DURATION_SECONDS,
+        )
+    ]
+    assert renderer._active_capture_callout == (
+        1,
+        (CoreCaptureAttribution("A", "B"),),
+    )
+
+
+def test_exact_plus_one_direct_seek_does_not_trigger_core_destruction():
+    renderer = _capture_effect_renderer()
+    state = _state_with_owners(1, ("B",) * 32, agents=_captured_agents("A"))
+    seek = PlaybackMovement(PlaybackMovementKind.SEEK_FORWARD, 0, 1)
+
+    renderer._advance_transient_effects(state, movements=(seek,))
+
+    assert renderer._core_destruction_effects == []
+    assert renderer._active_capture_callout is None
+
+
+def test_automatic_multi_tick_crossing_triggers_every_capture_tick():
+    renderer = PygameRenderer()
+    renderer.arena, renderer.grid_cols, renderer.grid_rows = 32, 8, 4
+    renderer._match_events = [
+        (2, KillDeathEvent("kill", "A", "C")),
+        (4, KillDeathEvent("kill", "B", "C")),
+    ]
+    renderer._core_addresses_by_agent = {
+        "A": tuple(range(8)),
+        "B": tuple(range(16, 24)),
+    }
+    state = _state_with_owners(
+        5,
+        ("C",) * 32,
+        agents=_captured_agents("A", "B"),
+    )
+    movement = PlaybackMovement(
+        PlaybackMovementKind.AUTOMATIC,
+        0,
+        5,
+        (1, 2, 3, 4, 5),
+    )
+
+    renderer._advance_transient_effects(state, movements=(movement,))
+
+    assert [(effect.capture_tick, effect.victim) for effect in renderer._core_destruction_effects] == [
+        (2, "A"),
+        (4, "B"),
+    ]
+    assert renderer._active_capture_callout == (
+        2,
+        (CoreCaptureAttribution("A", "C"),),
+    )
+    assert renderer._capture_callout_queue == [
+        (4, (CoreCaptureAttribution("B", "C"),)),
+    ]
+
+
+@pytest.mark.parametrize(
+    "kind",
+    (
+        PlaybackMovementKind.STEP_BACKWARD,
+        PlaybackMovementKind.SEEK_FORWARD,
+        PlaybackMovementKind.SEEK_BACKWARD,
+        PlaybackMovementKind.RESTART,
+        PlaybackMovementKind.JUMP_TO_END,
+    ),
+)
+def test_discontinuous_navigation_clears_without_retriggering(kind):
+    renderer = _capture_effect_renderer()
+    renderer._core_destruction_effects = [
+        CoreDestructionEffect("A", "B", 1, tuple(range(8)), 0.7)
+    ]
+    renderer._active_capture_callout = (
+        1,
+        (CoreCaptureAttribution("A", "B"),),
+    )
+    state = _state_with_owners(1, ("B",) * 32, agents=_captured_agents("A"))
+
+    renderer._advance_transient_effects(
+        state,
+        movements=(PlaybackMovement(kind, 1, 1),),
+    )
+
+    assert renderer._core_destruction_effects == []
+    assert renderer._active_capture_callout is None
+
+
+def test_initial_start_tick_seek_does_not_trigger_historical_capture():
+    renderer = _capture_effect_renderer()
+    state = _state_with_owners(5, ("B",) * 32, agents=_captured_agents("A"))
+
+    renderer._advance_transient_effects(
+        state,
+        movements=(
+            PlaybackMovement(PlaybackMovementKind.SEEK_FORWARD, 0, 5),
+        ),
+    )
+
+    assert renderer._core_destruction_effects == []
+
+
+def test_playing_forward_after_a_backward_seek_retriggers_the_effect():
+    renderer = _capture_effect_renderer()
+    alive = _state_with_owners(0, ("A",) * 32, agents={"A": _agent("A")})
+    captured = _state_with_owners(1, ("B",) * 32, agents=_captured_agents("A"))
+    forward = PlaybackMovement(PlaybackMovementKind.AUTOMATIC, 0, 1, (1,))
+
+    renderer._advance_transient_effects(captured, movements=(forward,))
+    assert len(renderer._core_destruction_effects) == 1
+
+    renderer._advance_transient_effects(
+        alive,
+        movements=(
+            PlaybackMovement(PlaybackMovementKind.SEEK_BACKWARD, 1, 0),
+        ),
+    )
+    assert renderer._core_destruction_effects == []
+
+    renderer._advance_transient_effects(captured, movements=(forward,))
+    assert len(renderer._core_destruction_effects) == 1
+    assert renderer._core_destruction_effects[0].capture_tick == 1
+
+
+def test_core_destruction_finishes_by_wall_clock_while_paused_at_terminal():
+    renderer = _capture_effect_renderer()
+    state = _state_with_owners(1, ("B",) * 32, agents=_captured_agents("A"))
+    renderer._advance_transient_effects(
+        state,
+        movements=(
+            PlaybackMovement(PlaybackMovementKind.STEP_FORWARD, 0, 1, (1,)),
+        ),
+    )
+    assert renderer._core_destruction_effects
+
+    renderer._advance_transient_effects(
+        state,
+        movements=(),
+        elapsed_seconds=CORE_DESTRUCTION_BASE_DURATION_SECONDS,
+    )
+
+    assert renderer._core_destruction_effects == []
+    assert renderer._active_capture_callout is not None
+
+
+def test_hidden_perspective_capture_never_creates_an_effect():
+    renderer = _capture_effect_renderer()
+
+    class HiddenPerspective:
+        available = True
+        mode = "C"
+        derivation = None
+
+    renderer._perspective_manager = HiddenPerspective()
+    state = _state_with_owners(1, ("B",) * 32, agents=_captured_agents("A"))
+
+    renderer._advance_transient_effects(
+        state,
+        movements=(
+            PlaybackMovement(PlaybackMovementKind.AUTOMATIC, 0, 1, (1,)),
+        ),
+    )
+
+    assert renderer._core_destruction_effects == []
+    assert renderer._active_capture_callout is None
+
+
+def test_victim_perspective_effect_strips_hidden_killer_identity():
+    renderer = _capture_effect_renderer()
+
+    class VictimPerspective:
+        available = True
+        mode = "A"
+        derivation = None
+
+    renderer._perspective_manager = VictimPerspective()
+    state = _state_with_owners(1, ("B",) * 32, agents=_captured_agents("A"))
+
+    renderer._advance_transient_effects(
+        state,
+        movements=(
+            PlaybackMovement(PlaybackMovementKind.STEP_FORWARD, 0, 1, (1,)),
+        ),
+    )
+
+    assert len(renderer._core_destruction_effects) == 1
+    assert renderer._core_destruction_effects[0].killer is None
+
+
+# ---------------------------------------------------------------------------
 # PygameRenderer._advance_capture_callout: queue/lifetime bookkeeping,
 # driven directly through _advance_transient_effects exactly like the
 # existing _recent_changes tests above (same _state_with_owners fixture).
@@ -1916,6 +2230,9 @@ def test_timeline_click_seeks_to_the_tick_under_the_cursor(tmp_path):
 
     assert handled is True
     assert controller.session.current_tick == 2  # the replay's final tick
+    assert controller.consume_movements() == (
+        PlaybackMovement(PlaybackMovementKind.SEEK_FORWARD, 0, 2),
+    )
 
 
 def test_timeline_click_at_the_left_edge_seeks_to_the_first_tick(tmp_path):

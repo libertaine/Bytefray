@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import pytest
 from battle_client.hud_layout import format_match_header_lines, format_playback_line
-from battle_client.player import SPEEDS, PlaybackController
+from battle_client.player import (
+    SPEEDS,
+    PlaybackController,
+    PlaybackMovement,
+    PlaybackMovementKind,
+)
 from battle_client.renderers.pygame_renderer import (
     KeyAction,
     dispatch_key,
@@ -185,6 +190,68 @@ def test_seek_relative_snaps_into_range_on_sparse_replay(tmp_path):
     controller = PlaybackController(session)
     state = controller.seek_relative(3)  # target 3 falls in the 0..5 gap
     assert state.tick == 5
+
+
+def test_automatic_movement_reports_every_crossed_recorded_tick(tmp_path):
+    session = _sparse_session(tmp_path)
+    controller = PlaybackController(session, tick_interval=0.1, playing=True)
+
+    controller.update(0.25)
+
+    assert controller.consume_movements() == (
+        PlaybackMovement(
+            PlaybackMovementKind.AUTOMATIC,
+            from_tick=0,
+            to_tick=9,
+            crossed_ticks=(5, 9),
+        ),
+    )
+    assert controller.consume_movements() == ()
+
+
+def test_manual_step_and_exact_plus_one_seek_have_distinct_reports(tmp_path):
+    session = _five_tick_session(tmp_path)
+    controller = PlaybackController(session, playing=False)
+
+    controller.step_forward()
+    assert controller.consume_movements() == (
+        PlaybackMovement(PlaybackMovementKind.STEP_FORWARD, 0, 1, (1,)),
+    )
+
+    controller.seek_to(2)
+    assert controller.consume_movements() == (
+        PlaybackMovement(PlaybackMovementKind.SEEK_FORWARD, 1, 2),
+    )
+
+
+def test_backward_restart_and_jump_to_end_have_distinct_reports(tmp_path):
+    session = _five_tick_session(tmp_path)
+    controller = PlaybackController(session, playing=False)
+    controller.seek_to(3)
+    controller.consume_movements()
+
+    controller.step_backward()
+    controller.restart()
+    controller.jump_to_end()
+
+    assert controller.consume_movements() == (
+        PlaybackMovement(PlaybackMovementKind.STEP_BACKWARD, 3, 2),
+        PlaybackMovement(PlaybackMovementKind.RESTART, 2, 0),
+        PlaybackMovement(PlaybackMovementKind.JUMP_TO_END, 0, 4),
+    )
+
+
+def test_backward_seek_report_is_distinct_from_a_backward_step(tmp_path):
+    session = _five_tick_session(tmp_path)
+    controller = PlaybackController(session, playing=False)
+    controller.seek_to(4)
+    controller.consume_movements()
+
+    controller.seek_relative(-3)
+
+    assert controller.consume_movements() == (
+        PlaybackMovement(PlaybackMovementKind.SEEK_BACKWARD, 4, 1),
+    )
 
 
 def test_restart_returns_to_first_tick_and_pauses(tmp_path):
