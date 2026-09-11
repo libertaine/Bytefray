@@ -150,7 +150,10 @@ function Invoke-InstalledSmoke {
     }
   }
 
-  foreach ($WritableDirectory in @("agents", "replays", "logs", "runs\_loose")) {
+  # No "replays" entry: the installer no longer creates it (V5 Alpha 1
+  # Maintenance Phase 2 -- see tools/installer.iss's [Dirs] comment); it was
+  # always created empty and never written to by any runtime code.
+  foreach ($WritableDirectory in @("agents", "logs", "runs\_loose")) {
     $Directory = Join-Path $DataRoot $WritableDirectory
     if (-not (Test-Path -LiteralPath $Directory -PathType Container)) {
       throw "Writable data directory missing: $Directory"

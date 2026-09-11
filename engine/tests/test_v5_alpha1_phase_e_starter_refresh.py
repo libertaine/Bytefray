@@ -162,6 +162,31 @@ def test_digest_ignores_bytecode_written_by_running_the_agent(tmp_path: Path) ->
     assert all("__pycache__" not in p.parts for p in starter_content_files(agent_dir))
 
 
+def test_digest_ignores_loose_bytecode_and_case_variant_cache_dirs(tmp_path: Path) -> None:
+    """FIND-04 (V5 Alpha 1 Post-Release Hardening Audit): a loose ``.pyc``/
+    ``.pyo`` dropped directly in a starter's root, or a case-variant
+    ``__pycache__`` directory name, must not affect the digest either --
+    the original filter only rejected the exact-case directory component,
+    letting either variant corrupt the digest and falsely classify an
+    untouched starter as user-customized."""
+
+    agent_dir = tmp_path / "agent"
+    agent_dir.mkdir()
+    agent_dir.joinpath("agent.py").write_text("x = 1\n", encoding="utf-8")
+    before = starter_content_digest(agent_dir)
+
+    agent_dir.joinpath("stale.pyc").write_bytes(b"\x00compiled")
+    agent_dir.joinpath("legacy.PYO").write_bytes(b"\x00compiled")
+    case_variant_cache = agent_dir / "__PyCache__"
+    case_variant_cache.mkdir()
+    case_variant_cache.joinpath("agent.cpython-311.pyc").write_bytes(b"\x00compiled")
+
+    assert starter_content_digest(agent_dir) == before
+    files = starter_content_files(agent_dir)
+    assert all(path.suffix.lower() not in (".pyc", ".pyo") for path in files)
+    assert all("__pycache__" not in {part.lower() for part in path.parts} for path in files)
+
+
 def test_absent_or_empty_directory_has_no_digest(tmp_path: Path) -> None:
     empty = tmp_path / "empty"
     empty.mkdir()

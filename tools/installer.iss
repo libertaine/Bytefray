@@ -47,9 +47,12 @@ Name: "desktopicons"; Description: "Create desktop shortcuts"; GroupDescription:
 [Dirs]
 ; This is writable shared application data, not a bundled-resource directory.
 ; /BYTEFRAYDATAROOT=... is supported for isolated validation installations.
+; No "\replays" entry: no runtime code has ever written there (replays live
+; under "runs\_loose"/"runs\_designer" -- see canonical_replay_directory in
+; engine/src/battle_engine/paths.py); it was always created empty and never
+; used (V5 Alpha 1 Maintenance Phase 2, dead installer handling cleanup).
 Name: "{code:GetDataRoot}"; Permissions: users-modify
 Name: "{code:GetDataRoot}\agents"
-Name: "{code:GetDataRoot}\replays"
 Name: "{code:GetDataRoot}\logs"
 Name: "{code:GetDataRoot}\runs\_loose"
 

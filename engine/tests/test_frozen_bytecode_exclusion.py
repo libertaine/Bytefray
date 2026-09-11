@@ -104,6 +104,13 @@ REJECTED_PATHS = (
     "pkg\\__pycache__\\readme.txt",
     "pkg\\x.pyc",
     "pkg\\x.pyo",
+    # FIND-07 (V5 Alpha 1 Post-Release Hardening Audit): the cache-directory
+    # component check must not be case-sensitive. A tool or archive that
+    # case-folds or renames the directory (e.g. `__PYCACHE__`) must still have
+    # its non-bytecode contents excluded by the directory-component rule, not
+    # rely on the (unrelated) suffix check to catch it.
+    "__PYCACHE__/notes.txt",
+    "nested/__PyCache__/agent.cpython-313.pyc",
 )
 
 

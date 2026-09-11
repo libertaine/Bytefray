@@ -9,7 +9,7 @@ from PyInstaller.building.api import EXE, COLLECT
 project_root = os.path.abspath(".")
 engine_src   = os.path.join(project_root, "engine", "src")
 client_src   = os.path.join(project_root, "client", "src")
-assets_dir   = os.path.join(project_root, "assets")
+branding_dir = os.path.join(project_root, "app", "assets", "branding")
 starter_agents_dir = os.path.join(engine_src, "battle_engine", "data", "starter_agents")
 
 # Derived from the product's canonical scaffold inventory, never re-listed by
@@ -42,8 +42,16 @@ hiddenimports = collect_submodules("battle_engine") + collect_submodules("battle
 # reason documented in tools/bytefray.spec's equivalent block: a
 # `(directory, destination)` tuple collects the whole tree unfiltered, and
 # this build runs from the live repository checkout.
+#
+# Only the runtime branding icon is bundled here, matching tools/bytefray.spec
+# -- not the full repository-root assets/ directory, which also holds
+# documentation/marketing images (a brand sheet, a horizontal logo) that no
+# runtime code ever loads. The destination "assets/branding" is unchanged:
+# it is the same path battle_engine.paths.get_branding_icon_path() already
+# checks first, so the frozen executable resolves its window icon identically
+# to before (FIND-06, V5 Alpha 1 Post-Release Hardening Audit).
 datas = []
-datas += collect_data_tree(assets_dir, "assets")
+datas += collect_data_tree(branding_dir, "assets/branding")
 datas += collect_data_tree(starter_agents_dir, "battle_engine/data/starter_agents")
 for template_dir_name in agent_template_dirs:
     template_dir = os.path.join(engine_src, "battle_engine", "data", template_dir_name)

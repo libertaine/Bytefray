@@ -79,7 +79,7 @@ def is_python_bytecode(relative_path: str | Path) -> bool:
 
     normalized = str(relative_path).replace("\\", "/")
     path = PurePosixPath(normalized)
-    if any(part == CACHE_DIRECTORY_NAME for part in path.parts):
+    if any(part.lower() == CACHE_DIRECTORY_NAME for part in path.parts):
         return True
     return path.suffix.lower() in BYTECODE_SUFFIXES
 

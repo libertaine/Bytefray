@@ -132,6 +132,13 @@ _TEXT_SUFFIXES = frozenset(
 )
 
 
+#: File suffixes treated as Python bytecode, matched case-insensitively.
+#: Excluded for the same reason as ``__pycache__`` below: loose bytecode next
+#: to a starter's source (e.g. a legacy ``-B``-less layout, or a stray copy)
+#: must not contaminate the digest used to detect a user's own edits.
+_BYTECODE_SUFFIXES = frozenset({".pyc", ".pyo"})
+
+
 def starter_content_files(agent_dir: Path) -> list[Path]:
     """Every file that makes up one starter, deterministically ordered.
 
@@ -140,7 +147,10 @@ def starter_content_files(agent_dir: Path) -> list[Path]:
     tree*, and ``pyproject.toml``'s ``exclude-package-data`` already keeps it
     out of the wheel and sdist. Enumerating it here would make the same
     release's content depend on whether an agent happened to have run before
-    the copy -- and would install stale bytecode into a user's catalog.
+    the copy -- and would install stale bytecode into a user's catalog. The
+    directory-name check and the loose-file suffix check are both
+    case-insensitive, so a case-preserving copy or archive (``__PyCache__``,
+    a stray ``.PYC``) cannot smuggle bytecode into the digest either.
 
     A symlinked entry resolving outside ``agent_dir`` is skipped rather than
     followed, matching ``agent_api.local_source_fingerprint``'s containment
@@ -152,7 +162,9 @@ def starter_content_files(agent_dir: Path) -> list[Path]:
     base = agent_dir.resolve()
     files: list[Path] = []
     for candidate in base.rglob("*"):
-        if "__pycache__" in candidate.parts:
+        if any(part.lower() == "__pycache__" for part in candidate.parts):
+            continue
+        if candidate.suffix.lower() in _BYTECODE_SUFFIXES:
             continue
         try:
             resolved = candidate.resolve()

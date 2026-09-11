@@ -380,6 +380,41 @@ def test_bytefray_spec_bundles_designer_branding_icon(monkeypatch):
     )
 
 
+@pytest.mark.parametrize("spec_path", (AGENT_DESIGNER_SPEC, REPLAY_VIEWER_SPEC), ids=lambda p: p.stem)
+def test_standalone_gui_specs_bundle_only_the_branding_icon(spec_path: Path, monkeypatch):
+    """FIND-06 (V5 Alpha 1 Post-Release Hardening Audit).
+
+    Before this fix, ``tools/agent_designer.spec`` and
+    ``tools/replay_viewer.spec`` each bundled the entire repository-root
+    ``assets/`` directory (``collect_data_tree(assets_dir, "assets")``)
+    instead of just ``app/assets/branding`` the way ``tools/bytefray.spec``
+    already does, so both standalone GUI executables shipped an unused
+    1.16MB marketing brand sheet and a 190KB horizontal logo alongside the
+    one branding icon (``bytefray-icon.png``) either application's window
+    icon (``battle_engine.paths.get_branding_icon_path``) actually loads.
+    The fix must still bundle that icon at the exact same destination path
+    (``assets/branding/bytefray-icon.png``) so runtime icon resolution is
+    unaffected; only the unused marketing assets are dropped.
+    """
+
+    tree = _frozen_tree(spec_path, monkeypatch)
+    assert "assets/branding/bytefray-icon.png" in tree, (
+        f"{spec_path.name}'s `datas` must still bundle the branding icon "
+        "at assets/branding/bytefray-icon.png, the path "
+        "battle_engine.paths.get_branding_icon_path() checks first"
+    )
+    unused_marketing_assets = {
+        "assets/bytefray-brand-sheet.png",
+        "assets/branding/bytefray-brand-sheet.png",
+        "assets/bytefray-logo-horizontal.png",
+        "assets/branding/bytefray-logo-horizontal.png",
+    }
+    assert not (unused_marketing_assets & tree), (
+        f"{spec_path.name}'s `datas` must not bundle unused documentation/"
+        f"marketing assets; found: {sorted(unused_marketing_assets & tree)}"
+    )
+
+
 def test_agent_designer_spec_bundles_the_agent_template_directory(monkeypatch):
     """Regression test for the Phase 4a packaging blocker (agent_designer_workflow.md Sec 17.3).
 

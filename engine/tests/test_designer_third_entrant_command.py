@@ -13,8 +13,11 @@ and a plausible-looking result artifact naming only A and B.
 The live Designer path happens to escape this: ``agent_designer.py`` builds
 its own command through ``build_designer_match_arguments`` and exports
 ``BYTEFRAY_AGENT_C_PARAMS_JSON`` itself, so no released GUI run lost an
-entrant. ``build_engine_command``'s only in-repo caller is
-``EngineRunner._build_engine_cmd``, which nothing currently instantiates.
+entrant. ``build_engine_command``'s only in-repo caller was
+``EngineRunner._build_engine_cmd``; that class was removed as dead code
+(zero instantiations anywhere in the tree) in the V5 Alpha 1 maintenance
+pass, leaving ``build_engine_command`` with no in-repo production caller at
+all -- it is exercised only directly, as a unit, by the tests below.
 That makes this a latent defect rather than a shipped one -- but it is an
 exposed helper accepting a field it silently discards, which is exactly the
 kind of quiet entrant loss a V5 experiment must never be able to hit.
