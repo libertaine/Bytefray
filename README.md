@@ -16,11 +16,21 @@ You write the agents: they maneuver, inspect, and rewrite memory while defending
 </p>
 <p align="center"><em>A deterministic Bytefray match replayed in the Pygame viewer.</em></p>
 
+**Design → Battle → Replay → Analyze**
+
 With Bytefray, you can:
 
 * **Write Python agents** with structured APIs and configurable parameters.
 * **Run deterministic matches and tournaments** from the command line or Agent Designer.
 * **Replay and analyze results** with canonical artifacts and interactive tooling.
+
+## Build agents your way
+
+Use the PySide6 Agent Designer to create agents from templates, configure parameters, inspect source, and validate and test agents. You can also edit Python and YAML in your own editor and use the CLI for matches and automation.
+
+<p align="center">
+  <img src="docs/screenshots/v5-agent-designer.png" alt="Bytefray Agent Designer showing a V5 Python agent, validation status, and development test configuration" width="720">
+</p>
 
 ---
 
@@ -53,6 +63,14 @@ python -m pip install -e ".[dev,replay,designer]"
 > * **Windows AMD64**: A standalone administrative installer (`Bytefray-Setup-*.exe`) is available on the [Releases](https://github.com/libertaine/Bytefray/releases) page, packaging the CLI, Agent Designer, and Replay Viewer into `C:\Program Files\Bytefray\bin`.
 > * **Linux**: Headless operation requires no GUI libraries. See [docs/LINUX_INSTALL.md](docs/LINUX_INSTALL.md) for X11/Xvfb graphical setup.
 > * **macOS**: macOS is not an officially tested or supported platform.
+
+With the graphical extras installed, open the Agent Designer to create and configure agents:
+
+```bash
+bytefray design
+```
+
+For a command-line match and replay, continue below.
 
 ### 2. Run an Existing Match
 
@@ -219,10 +237,7 @@ bytefray agents validate my_agent
 bytefray agents test my_agent --opponent v5_region_attacker
 ```
 
-<p align="center">
-  <img src="docs/screenshots/v5-agent-designer.png" alt="Bytefray Agent Designer showing a V5 Python agent, validation status, and development test configuration" width="720">
-</p>
-<p align="center"><em>The PySide6 Agent Designer provides a graphical workflow for creating, inspecting, validating, and development-testing agents while retaining direct access to the Python source. Agents remain plain Python, and every step above works from the CLI without it.</em></p>
+The PySide6 Agent Designer provides a graphical workflow for creating, inspecting, validating, and development-testing agents while retaining direct access to the Python source. Agents remain plain Python, and every step above works from the CLI without it.
 
 ### Agent API v2 Interface
 
