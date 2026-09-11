@@ -51,9 +51,15 @@ Name: "desktopicons"; Description: "Create desktop shortcuts"; GroupDescription:
 ; under "runs\_loose"/"runs\_designer" -- see canonical_replay_directory in
 ; engine/src/battle_engine/paths.py); it was always created empty and never
 ; used (V5 Alpha 1 Maintenance Phase 2, dead installer handling cleanup).
+; No "\logs" entry either, for the same reason (V5 Alpha 1 Maintenance
+; Phase 3): the installed product writes no persistent log file anywhere --
+; this directory's only consumer was tools/smoke_after_install.ps1's own
+; release-validation diagnostics, which now default to the process
+; temporary directory instead of the installed data root (see that script's
+; -LogDir parameter). It was always created empty and never written to by
+; any runtime code.
 Name: "{code:GetDataRoot}"; Permissions: users-modify
 Name: "{code:GetDataRoot}\agents"
-Name: "{code:GetDataRoot}\logs"
 Name: "{code:GetDataRoot}\runs\_loose"
 
 [Files]

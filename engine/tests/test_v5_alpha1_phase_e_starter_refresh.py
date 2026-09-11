@@ -26,6 +26,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+from battle_engine import starters
 from battle_engine.agents import discover_agents
 from battle_engine.starters import (
     CURRENT_STARTER_DIGESTS,
@@ -508,3 +509,170 @@ def test_refreshed_starter_is_byte_identical_to_the_bundled_one(
     bundled_names = {p.relative_to(bundled).as_posix() for p in starter_content_files(bundled)}
     assert installed_names == bundled_names
     assert starter_content_digest(agent_dir) == starter_content_digest(bundled)
+
+
+# ---------------------------------------------------------------------------
+# FIND-03 (V5 Alpha 1 Post-Release Hardening Audit) -- interrupted-refresh
+# recovery, re-opened and resolved in V5 Alpha 1 Maintenance Phase 3.
+#
+# The audit's own suggested fix (stage a replacement directory, atomically
+# rename/replace it into place) was deferred in Phase 2 because no directory
+# -level atomic replace exists on both Windows and POSIX for a non-empty
+# destination. The fix implemented here instead makes the *interrupted
+# state* recoverable via a small marker file (a single-file atomic rename,
+# a primitive both platforms already guarantee) that lets
+# ``ensure_starter_agents`` resume ``_mirror_bundled`` -- which is already
+# idempotent -- instead of the resulting hybrid digest being classified as a
+# user edit. These tests simulate interruption deterministically (a targeted
+# monkeypatch failure, or a hand-built hybrid state) rather than depending on
+# real process-kill timing, per the phase's explicit testability requirement.
+# ---------------------------------------------------------------------------
+
+
+def test_write_failure_mid_mirror_records_a_marker_and_resumes_on_retry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A real interruption (crash, kill, disk error, power loss) partway
+    through ``_mirror_bundled`` must not permanently trap the starter as
+    ``CUSTOMIZED``. Simulated here by making exactly one file's write fail on
+    its first attempt -- deterministic, not timing-dependent."""
+
+    agents_dir = tmp_path / "agents"
+    agent_dir = _seed_phase_c_starter(agents_dir, "v5_region_attacker")
+    original_manifest_bytes = agent_dir.joinpath("agent.yaml").read_bytes()
+
+    real_write_bytes = Path.write_bytes
+    already_failed = False
+
+    def flaky_write_bytes(self: Path, data: bytes) -> int:
+        nonlocal already_failed
+        # "agent.py" sorts before "agent.yaml" (starter_content_files orders
+        # deterministically), so by the time this fires, agent.py has
+        # already been rewritten to the new bundled bytes -- the exact
+        # hybrid state FIND-03 describes.
+        if not already_failed and self.parent == agent_dir and self.name == "agent.yaml":
+            already_failed = True
+            raise OSError("simulated interruption mid-mirror")
+        return real_write_bytes(self, data)
+
+    monkeypatch.setattr(Path, "write_bytes", flaky_write_bytes)
+
+    with pytest.raises(OSError, match="simulated interruption"):
+        ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
+
+    marker = starters._refresh_marker_path(tmp_path, "v5_region_attacker")
+    assert marker.is_file(), "the marker must survive the interruption for recovery to work"
+    assert agent_dir.joinpath("agent.yaml").read_bytes() == original_manifest_bytes
+    hybrid_digest = starter_content_digest(agent_dir)
+    assert hybrid_digest not in SUPERSEDED_STARTER_DIGESTS["v5_region_attacker"]
+    assert hybrid_digest != CURRENT_STARTER_DIGESTS["v5_region_attacker"]
+
+    result = ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
+
+    assert {entry.name for entry in result.refreshed} == {"v5_region_attacker"}
+    assert result.customized == ()
+    assert not marker.exists(), "the marker must be cleared once the resumed mirror completes"
+    assert starter_content_digest(agent_dir) == CURRENT_STARTER_DIGESTS["v5_region_attacker"]
+    manifest = _manifest(agent_dir)
+    assert manifest["version"] == "1.1.0"
+    assert manifest["parameters"]
+
+
+def test_interruption_before_any_file_write_still_resumes_cleanly(tmp_path: Path) -> None:
+    """The marker is written before ``_mirror_bundled`` touches anything, so
+    an interruption in that gap (killed after the marker write, before the
+    first file write) must resume exactly like any other interruption."""
+
+    agents_dir = tmp_path / "agents"
+    agent_dir = _seed_phase_c_starter(agents_dir, "v5_dual_team")
+    pristine_bytes = {
+        path.name: path.read_bytes() for path in starter_content_files(agent_dir)
+    }
+    bundled_digest = starter_content_digest(_bundled_dir("v5_dual_team"))
+    assert bundled_digest is not None
+
+    starters._write_refresh_marker(tmp_path, "v5_dual_team", target_digest=bundled_digest)
+    marker = starters._refresh_marker_path(tmp_path, "v5_dual_team")
+    assert marker.is_file()
+    # Nothing has actually changed on disk yet -- the true "before the first
+    # write" interruption point.
+    assert {p.name: p.read_bytes() for p in starter_content_files(agent_dir)} == pristine_bytes
+
+    result = ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
+
+    assert {entry.name for entry in result.refreshed} == {"v5_dual_team"}
+    assert not marker.exists()
+    assert starter_content_digest(agent_dir) == CURRENT_STARTER_DIGESTS["v5_dual_team"]
+
+
+def test_stale_marker_from_a_since_superseded_bundled_release_is_discarded(
+    tmp_path: Path,
+) -> None:
+    """A marker can outlive its own relevance if the *product itself* is
+    upgraded in the gap between the interruption and the next launch (the
+    bundled digest it targeted is no longer "current"). Blindly resuming
+    toward a target that is no longer the current bundled release would be
+    wrong, so the marker must be discarded and the starter classified
+    normally against whatever is actually on disk."""
+
+    agents_dir = tmp_path / "agents"
+    agent_dir = _seed_phase_c_starter(agents_dir, "v5_scout_striker")
+
+    starters._write_refresh_marker(
+        tmp_path, "v5_scout_striker", target_digest="not-the-current-bundled-digest"
+    )
+    marker = starters._refresh_marker_path(tmp_path, "v5_scout_striker")
+    assert marker.is_file()
+
+    result = ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
+
+    # The marker is stale, so this falls through to ordinary classification:
+    # the on-disk content is still a recognized pristine Phase C copy, so it
+    # is refreshed normally -- just not via marker-driven resume.
+    assert {entry.name for entry in result.refreshed} == {"v5_scout_striker"}
+    assert not marker.exists()
+    assert starter_content_digest(agent_dir) == CURRENT_STARTER_DIGESTS["v5_scout_striker"]
+
+
+def test_refresh_state_directory_is_never_visible_to_agent_discovery(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Invariant 3: temporary/marker artifacts must not appear as
+    user-selectable agents. The marker directory lives beside ``agents/``,
+    never inside it, so this holds structurally -- verified here against a
+    real interrupted-and-not-yet-recovered state, not just by inspection.
+
+    Interrupts the *last* name in ``STARTER_AGENT_NAMES`` (``v5_dual_team``)
+    specifically, so every other bundled starter has already been installed
+    by the time the simulated failure fires -- the catalog-completeness
+    assertion below would otherwise be confounded by starters the loop
+    simply had not reached yet, which is a property of iteration order, not
+    of the marker being (correctly) invisible to discovery.
+    """
+
+    assert STARTER_AGENT_NAMES[-1] == "v5_dual_team"
+    agents_dir = tmp_path / "agents"
+    agent_dir = _seed_phase_c_starter(agents_dir, "v5_dual_team")
+
+    real_write_bytes = Path.write_bytes
+    already_failed = False
+
+    def flaky_write_bytes(self: Path, data: bytes) -> int:
+        nonlocal already_failed
+        if not already_failed and self.parent == agent_dir and self.name == "agent.yaml":
+            already_failed = True
+            raise OSError("simulated interruption mid-mirror")
+        return real_write_bytes(self, data)
+
+    monkeypatch.setattr(Path, "write_bytes", flaky_write_bytes)
+    with pytest.raises(OSError, match="simulated interruption"):
+        ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
+
+    marker = starters._refresh_marker_path(tmp_path, "v5_dual_team")
+    assert marker.is_file()
+    assert marker.parent != agents_dir
+    assert not marker.parent.is_relative_to(agents_dir)
+
+    catalog = discover_agents(tmp_path)
+    assert set(catalog) == set(STARTER_AGENT_NAMES)
+    assert starters._REFRESH_STATE_DIRNAME not in catalog

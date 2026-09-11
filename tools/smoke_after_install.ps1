@@ -7,12 +7,22 @@ Post-install smoke:
 Full isolated lifecycle validation:
   pwsh tools/smoke_after_install.ps1 -InstallerPath dist\installer\Bytefray-Setup-2.0.0.exe `
     -AppDir "D:\Bytefray Test\Application" -DataRoot "D:\Bytefray Test\Data" -Lifecycle
+
+This script's own diagnostics (its running log and the post-install file
+listing) are release-validation tooling output, not product runtime data --
+Bytefray itself writes no persistent log file anywhere (see
+V5_ALPHA1_MAINTENANCE_PHASE3_INSTALLER_QUALIFICATION.md, "Installer logs/
+disposition"). They default to the process temporary directory rather than
+the installed data root, so running this script never requires the installer
+to create a product `logs\` directory purely on this script's behalf. Pass
+-LogDir to redirect them (for example to a CI artifact directory).
 #>
 [CmdletBinding()]
 param(
   [string]$AppDir = "$Env:ProgramFiles\Bytefray",
   [string]$DataRoot = "$Env:ProgramData\Bytefray",
   [string]$InstallerPath,
+  [string]$LogDir,
   [int]$GuiHoldSeconds = 5,
   [switch]$SkipGui,
   [switch]$Lifecycle
@@ -29,7 +39,11 @@ $ArtifactNames = @(
 )
 $AppDir = [IO.Path]::GetFullPath($AppDir)
 $DataRoot = [IO.Path]::GetFullPath($DataRoot)
-$Global:LogFile = Join-Path $DataRoot "logs\installer-smoke.log"
+if (-not $LogDir) {
+  $LogDir = Join-Path ([IO.Path]::GetTempPath()) "bytefray-installer-smoke"
+}
+$LogDir = [IO.Path]::GetFullPath($LogDir)
+$Global:LogFile = Join-Path $LogDir "installer-smoke.log"
 
 function Write-SmokeLog([string]$Message) {
   $Line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  $Message"
@@ -135,7 +149,7 @@ function Invoke-InstalledSmoke {
 
   $Executables = @{}
   foreach ($Name in $ArtifactNames) { $Executables[$Name] = Resolve-Artifact $Name }
-  $StructureLog = Join-Path $DataRoot "logs\installed-files.txt"
+  $StructureLog = Join-Path $LogDir "installed-files.txt"
   Get-ChildItem -LiteralPath $AppDir -Recurse -Force | ForEach-Object {
     $_.FullName.Substring($AppDir.Length).TrimStart([IO.Path]::DirectorySeparatorChar)
   } | Set-Content -LiteralPath $StructureLog
@@ -152,8 +166,11 @@ function Invoke-InstalledSmoke {
 
   # No "replays" entry: the installer no longer creates it (V5 Alpha 1
   # Maintenance Phase 2 -- see tools/installer.iss's [Dirs] comment); it was
-  # always created empty and never written to by any runtime code.
-  foreach ($WritableDirectory in @("agents", "logs", "runs\_loose")) {
+  # always created empty and never written to by any runtime code. No "logs"
+  # entry either, for the same reason (V5 Alpha 1 Maintenance Phase 3): this
+  # script's own diagnostics no longer write there (see $LogDir above), and
+  # no product runtime code ever wrote there either.
+  foreach ($WritableDirectory in @("agents", "runs\_loose")) {
     $Directory = Join-Path $DataRoot $WritableDirectory
     if (-not (Test-Path -LiteralPath $Directory -PathType Container)) {
       throw "Writable data directory missing: $Directory"
@@ -237,6 +254,7 @@ function Invoke-InstalledSmoke {
 }
 
 Write-SmokeLog "=== Bytefray Windows installer smoke ==="
+Write-SmokeLog "Diagnostics directory: $LogDir"
 if (-not $Lifecycle) {
   Invoke-InstalledSmoke
   Write-SmokeLog "=== SUCCESS ==="

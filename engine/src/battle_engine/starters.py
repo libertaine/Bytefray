@@ -409,6 +409,14 @@ def _mirror_bundled(
     removing one the current release dropped is correct rather than
     destructive. Files whose bytes already match are left untouched, so a
     refresh that changes one file does not churn the rest.
+
+    Deliberately idempotent and resumable: re-running this against a
+    directory that a prior call only partially updated finishes writing
+    whatever was not yet updated (skipping files whose bytes already match)
+    and still removes the same stray extras. ``ensure_starter_agents``'s
+    refresh-marker recovery (FIND-03, V5 Alpha 1 Maintenance Phase 3) relies
+    on exactly this property to recover from an interruption without needing
+    an atomic whole-directory replace.
     """
 
     wanted = {source.relative_to(source_agent_dir): source for source in files}
@@ -423,6 +431,82 @@ def _mirror_bundled(
     for existing in starter_content_files(destination_dir):
         if existing.relative_to(base) not in wanted:
             existing.unlink()
+
+
+# ---------------------------------------------------------------------------
+# Interrupted-refresh recovery (FIND-03, V5 Alpha 1 Maintenance Phase 3)
+# ---------------------------------------------------------------------------
+#
+# The audit's own suggested fix -- stage a replacement directory and
+# atomically rename/replace it into place -- has no safe cross-platform
+# primitive for a *non-empty* destination directory on either Windows or
+# POSIX, and risks leaving an orphaned staging directory that could surface
+# as a bogus entry in the Designer's own agent discovery (V5 Alpha 1
+# Maintenance Phase 2's FIND-03 deferral explains this in full). Rather than
+# make directory replacement atomic, this makes the *interrupted state
+# recoverable*: a small marker file, written and removed with a single
+# atomic single-file rename (a primitive both platforms already guarantee),
+# records "a mirror toward this bundled digest is in progress" before
+# ``_mirror_bundled`` touches anything, and is read back on the next call so
+# an interrupted mirror resumes -- via ``_mirror_bundled``'s own idempotency
+# -- instead of falling through to the ordinary digest classification, which
+# would see the resulting hybrid digest and mislabel the starter
+# ``CUSTOMIZED`` forever. The marker lives beside ``agents/``, never inside
+# it, so ``discover_agents()`` (which only scans ``<data_root>/agents``)
+# never sees it, satisfying the "no temporary agent discovery" invariant
+# without any directory staging at all.
+
+_REFRESH_STATE_DIRNAME = ".starter_refresh_state"
+
+
+def _refresh_marker_path(data_root: Path, name: str) -> Path:
+    return data_root / _REFRESH_STATE_DIRNAME / f"{name}.json"
+
+
+def _write_refresh_marker(data_root: Path, name: str, *, target_digest: str) -> None:
+    """Durably record that a mirror toward ``target_digest`` is starting.
+
+    Written to a temp file and renamed into place with ``Path.replace``, so a
+    crash mid-write leaves either no marker at all (the mirror had not
+    started) or a fully-written one -- never a truncated/partial marker.
+    """
+
+    marker = _refresh_marker_path(data_root, name)
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    payload = json.dumps(
+        {"digest_version": STARTER_CONTENT_DIGEST_VERSION, "target_digest": target_digest}
+    )
+    tmp = marker.with_name(marker.name + ".tmp")
+    tmp.write_text(payload, encoding="utf-8")
+    tmp.replace(marker)
+
+
+def _read_refresh_marker(data_root: Path, name: str) -> str | None:
+    """Return the marker's recorded target digest, or ``None`` if absent/unreadable.
+
+    An unreadable or malformed marker (truncated by something other than
+    this module, or from a future digest-version scheme) is treated as
+    absent rather than raising: recovery is a best-effort convenience, never
+    a reason to block starter bootstrap.
+    """
+
+    marker = _refresh_marker_path(data_root, name)
+    if not marker.is_file():
+        return None
+    try:
+        payload = json.loads(marker.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    if payload.get("digest_version") != STARTER_CONTENT_DIGEST_VERSION:
+        return None
+    target = payload.get("target_digest")
+    return target if isinstance(target, str) else None
+
+
+def _clear_refresh_marker(data_root: Path, name: str) -> None:
+    _refresh_marker_path(data_root, name).unlink(missing_ok=True)
 
 
 def ensure_starter_agents(
@@ -456,6 +540,14 @@ def ensure_starter_agents(
     Idempotent by construction: the second run of any of these lands on
     "already current" or "user-modified with nothing missing", and both write
     nothing.
+
+    An interruption partway through the "untouched copy" refresh path is
+    recoverable, not fatal: a marker recorded just before the mirror starts
+    (see ``_write_refresh_marker``) is read back on the next call and, if it
+    still targets the current bundled release, the mirror simply resumes --
+    landing on the same fully-refreshed content a single uninterrupted call
+    would have produced -- instead of the resulting hybrid digest being
+    misclassified as a user edit (FIND-03, V5 Alpha 1 Maintenance Phase 3).
     """
     resources = (resource_root or get_resource_root()).expanduser().resolve()
     writable = (data_root or get_data_root()).expanduser().resolve()
@@ -482,13 +574,42 @@ def ensure_starter_agents(
         installed_digest = starter_content_digest(destination_dir)
         bundled_digest = starter_content_digest(source_agent_dir)
 
+        # FIND-03 recovery: a marker from an interrupted mirror takes
+        # priority over ordinary classification. If it still targets the
+        # current bundled release, resume the (idempotent) mirror rather
+        # than let the interrupted state's hybrid digest fall through to
+        # ordinary classification, which cannot distinguish it from a real
+        # user edit. Otherwise the marker is stale -- either the mirror had
+        # already finished and only its own cleanup was interrupted
+        # (installed_digest already equals bundled_digest), or the bundled
+        # release itself changed since the interruption (a product upgrade
+        # in between) -- so it is discarded and whatever is actually on disk
+        # is classified normally below.
+        marker_target = _read_refresh_marker(writable, name)
+        if marker_target is not None:
+            if marker_target == bundled_digest and installed_digest != bundled_digest:
+                _mirror_bundled(source_agent_dir, destination_dir, files)
+                _clear_refresh_marker(writable, name)
+                refreshed.append(
+                    StarterRefresh(
+                        name=name,
+                        path=destination_dir.resolve(),
+                        previous_digest=str(installed_digest),
+                        digest=str(bundled_digest),
+                    )
+                )
+                continue
+            _clear_refresh_marker(writable, name)
+
         if installed_digest is None:
             created.extend(_copy_missing(source_agent_dir, destination_dir, files))
             continue
         if installed_digest == bundled_digest:
             continue
         if installed_digest in SUPERSEDED_STARTER_DIGESTS.get(name, ()):
+            _write_refresh_marker(writable, name, target_digest=str(bundled_digest))
             _mirror_bundled(source_agent_dir, destination_dir, files)
+            _clear_refresh_marker(writable, name)
             refreshed.append(
                 StarterRefresh(
                     name=name,
