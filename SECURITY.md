@@ -5,12 +5,15 @@
 Bytefray follows a single active release line — there are no older
 maintained major versions receiving separate fixes; security fixes are made
 against that line's current state. See [CHANGELOG.md](CHANGELOG.md) for
-release history. As of this writing, that line is in the `4.x` prerelease
-series, currently `4.0.0-rc1` — a release candidate, not yet a final stable
-release; the most recent stable release remains `3.0.0`. See
-[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) for what the current line's
-Ruleset, Agent API, and schema contracts do and do not guarantee as stable
-while v4.0 remains a release candidate.
+release history. As of this writing, the most recent stable release is
+`4.0.0`, and the current prerelease is `5.0.0a1` ("Bytefray V5 Alpha 1"),
+published as a GitHub prerelease and collecting feedback. Bytefray V5 builds
+on unchanged, stable `bytefray-rules-4` gameplay — it introduces
+agent-authoring, parameter, and Designer/UX changes, not a new gameplay
+Ruleset. See [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) for what the
+current line's Ruleset, Agent API, and schema contracts do and do not
+guarantee as stable, and [docs/ROADMAP.md](docs/ROADMAP.md) for the current
+release boundary.
 
 ## Reporting a vulnerability
 
@@ -36,11 +39,13 @@ agent formats:
 
 - **Python agents** (Agent API v1 and Agent API v2) run in-process or in a
   worker subprocess with the same OS-level privileges and filesystem/network
-  access as the process running Bytefray. Agent API v2 (used by Ruleset
-  `bytefray-rules-4-alpha1`) changes the Python programming contract, not
-  the execution/isolation model — the same non-sandboxed guarantees below
-  apply identically to both API generations. The optional worker-subprocess
-  timeout used by `bytefray agents validate`/`test` and Agent Lab (see
+  access as the process running Bytefray. Agent API v2 (used by Rulesets
+  `bytefray-rules-4-alpha1`, `bytefray-rules-4-alpha2`, and the permanent
+  `bytefray-rules-4`) changes the Python programming contract, not the
+  execution/isolation model — the same non-sandboxed guarantees below apply
+  identically across both API generations and all Ruleset identities. The
+  optional worker-subprocess timeout used by `bytefray agents validate`/`test`
+  and Agent Lab (see
   [docs/AGENT_LAB.md](docs/AGENT_LAB.md)) exists to contain accidental
   non-returning `reset()`/`act()` calls during agent development — it is
   **development-time hang containment, not a security boundary**, and it is
