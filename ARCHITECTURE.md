@@ -71,7 +71,7 @@ of `MatchEntrant`s, a tick limit, and a replay path) and returns a typed
    dataclasses at schema version 3 for historical Ruleset-v1/v2 matches or
    schema version 4 for v4 process matches, and atomically publish the canonical
    replay (`replay.jsonl`) alongside `result.json`
-   (`battle2.result` schema v1, written by `write_json_atomic`) with a
+   (`battle2.result` schema v2, written by `write_json_atomic`) with a
    SHA-256 replay digest recorded in `result.json`'s `replay` reference.
    Both the replay header and the result envelope also carry the exact resolved
    `ruleset_id`; see
@@ -340,7 +340,7 @@ agent manifests/blobs/Python sources + built-ins
               |
               v
    canonical battle2.replay v3/v4 (replay.jsonl)
-   + battle2.result v1 (result.json)
+   + battle2.result v2 native / v1 pMARS (result.json)
    + compatibility summary.json
               |
               v

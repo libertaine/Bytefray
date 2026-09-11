@@ -43,7 +43,8 @@ is above, and the version-specific sections below define retained contracts.
 - **Agent API v1** — the Python loading/lifecycle/`Observation`/
   `AgentAction` contract and its frozen deterministic RNG derivation,
   described in [AGENT_API_V1.md](AGENT_API_V1.md).
-- **Result and replay current schemas** — `battle2.result` v1 and
+- **Result and replay current schemas** — `battle2.result` v2 for native
+  results (with v1 retained for historical artifacts and pMARS) and
   `battle2.replay` v3/v4, described in [RESULT_SCHEMA.md](RESULT_SCHEMA.md)
   and [REPLAY_SCHEMA.md](REPLAY_SCHEMA.md).
 - **Evaluation current schema/history behavior** — `bytefray.evaluation`

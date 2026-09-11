@@ -1,4 +1,4 @@
-"""Canonical ``battle2.result`` v1 models, serialization, and compatibility output."""
+"""Canonical ``battle2.result`` models, serialization, and compatibility."""
 
 from __future__ import annotations
 
@@ -6,15 +6,83 @@ import hashlib
 import json
 import os
 import tempfile
+import uuid
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 from battle_engine.rules import BYTEFRAY_RULESET_ID, RulesetProvenance
 
 SCHEMA_NAME = "battle2.result"
-SCHEMA_VERSION = 1
+# ``battle2.result`` is retained as an established compatibility identifier,
+# not introduced as a new product-facing name. Released artifacts from v0.3.0
+# through V5 Alpha 1 already use it; changing only the v2 writer to
+# ``bytefray.result`` would split one continuing result contract into two
+# schema families. New, unrelated public artifact contracts should use the
+# Bytefray product name instead.
+SCHEMA_VERSION_V1 = 1
+SCHEMA_VERSION_V2 = 2
+SCHEMA_VERSION = SCHEMA_VERSION_V2
+SUPPORTED_SCHEMA_VERSIONS = (SCHEMA_VERSION_V1, SCHEMA_VERSION_V2)
+
+
+def generate_occurrence_id() -> str:
+    """Return a new opaque identity for one completed match execution."""
+
+    return str(uuid.uuid4())
+
+
+def utc_completed_at() -> str:
+    """Return the canonical UTC completion timestamp for a new result."""
+
+    return datetime.now(timezone.utc).isoformat(timespec="microseconds").replace(
+        "+00:00", "Z"
+    )
+
+
+def _validate_occurrence_id(value: object) -> str:
+    if not isinstance(value, str):
+        raise ValueError(
+            "battle2.result v2 occurrence_id must be a canonical UUID string"
+        )
+    try:
+        parsed = uuid.UUID(value)
+    except (AttributeError, ValueError) as exc:
+        raise ValueError(
+            "battle2.result v2 occurrence_id must be a canonical UUID string"
+        ) from exc
+    if str(parsed) != value:
+        raise ValueError(
+            "battle2.result v2 occurrence_id must be a canonical UUID string"
+        )
+    return value
+
+
+def _validate_completed_at(value: object) -> str:
+    if not isinstance(value, str) or not value:
+        raise ValueError(
+            "battle2.result v2 completed_at must be a timezone-aware UTC ISO-8601 string"
+        )
+    candidate = f"{value[:-1]}+00:00" if value.endswith("Z") else value
+    try:
+        parsed = datetime.fromisoformat(candidate)
+    except ValueError as exc:
+        raise ValueError(
+            "battle2.result v2 completed_at must be a timezone-aware UTC ISO-8601 string"
+        ) from exc
+    if parsed.tzinfo is None or parsed.utcoffset() != timedelta(0):
+        raise ValueError(
+            "battle2.result v2 completed_at must be a timezone-aware UTC ISO-8601 string"
+        )
+    return value
+
+
+def _validate_product_version(value: object) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("battle2.result v2 product_version must be a non-empty string")
+    return value
 
 
 def canonical_json(value: Mapping[str, Any]) -> bytes:
@@ -56,11 +124,40 @@ class ResultEnvelope:
     # recover a confidence-qualified answer for the latter case rather than
     # treating an absent field as "unknown gameplay" by itself.
     ruleset_id: str | None = None
+    # V5 Replay History Phase 7A: occurrence metadata is deliberately
+    # excluded from deterministic match/result/replay identity. Historical
+    # v1 envelopes leave all three values as ``None``.
+    occurrence_id: str | None = None
+    completed_at: str | None = None
+    product_version: str | None = None
+    # Defaults to v1 so existing programmatic construction of a historical
+    # envelope remains source-compatible. Production match writers select
+    # the current schema explicitly and provide its required metadata.
+    schema_version: int = SCHEMA_VERSION_V1
+
+    def __post_init__(self) -> None:
+        if (
+            type(self.schema_version) is not int
+            or self.schema_version not in SUPPORTED_SCHEMA_VERSIONS
+        ):
+            raise ValueError(
+                f"unsupported {SCHEMA_NAME} schema version {self.schema_version!r}; "
+                f"supported versions are {SUPPORTED_SCHEMA_VERSIONS}"
+            )
+        if self.schema_version == SCHEMA_VERSION_V2:
+            _validate_occurrence_id(self.occurrence_id)
+            _validate_completed_at(self.completed_at)
+            _validate_product_version(self.product_version)
+        elif any(
+            value is not None
+            for value in (self.occurrence_id, self.completed_at, self.product_version)
+        ):
+            raise ValueError("battle2.result v1 cannot carry v2 occurrence metadata")
 
     def as_dict(self) -> dict[str, Any]:
-        return {
+        payload: dict[str, Any] = {
             "schema": SCHEMA_NAME,
-            "schema_version": SCHEMA_VERSION,
+            "schema_version": self.schema_version,
             "result_id": self.result_id,
             "match_id": self.match_id,
             "mode": self.mode,
@@ -83,6 +180,15 @@ class ResultEnvelope:
             "backend": None if self.backend is None else dict(self.backend),
             "ruleset_id": self.ruleset_id,
         }
+        if self.schema_version == SCHEMA_VERSION_V2:
+            payload.update(
+                {
+                    "occurrence_id": self.occurrence_id,
+                    "completed_at": self.completed_at,
+                    "product_version": self.product_version,
+                }
+            )
+        return payload
 
 
 def write_json_atomic(path: Path, value: Mapping[str, Any]) -> None:
@@ -100,8 +206,23 @@ def write_json_atomic(path: Path, value: Mapping[str, Any]) -> None:
 
 def read_result(path: str | Path) -> ResultEnvelope:
     data = json.loads(Path(path).read_text(encoding="utf-8"))
-    if data.get("schema") != SCHEMA_NAME or data.get("schema_version") != SCHEMA_VERSION:
-        raise ValueError("unsupported battle2.result schema")
+    if not isinstance(data, dict):
+        raise ValueError("battle2.result JSON root must be an object")
+    if data.get("schema") != SCHEMA_NAME:
+        raise ValueError(f"unsupported result schema identifier {data.get('schema')!r}")
+    schema_version = data.get("schema_version")
+    if type(schema_version) is not int or schema_version not in SUPPORTED_SCHEMA_VERSIONS:
+        raise ValueError(
+            f"unsupported {SCHEMA_NAME} schema version {schema_version!r}; "
+            f"supported versions are {SUPPORTED_SCHEMA_VERSIONS}"
+        )
+    occurrence_id: str | None = None
+    completed_at: str | None = None
+    product_version: str | None = None
+    if schema_version == SCHEMA_VERSION_V2:
+        occurrence_id = _validate_occurrence_id(data.get("occurrence_id"))
+        completed_at = _validate_completed_at(data.get("completed_at"))
+        product_version = _validate_product_version(data.get("product_version"))
     replay = data.get("replay")
     return ResultEnvelope(
         result_id=data["result_id"],
@@ -120,6 +241,10 @@ def read_result(path: str | Path) -> ResultEnvelope:
         ),
         backend=data.get("backend"),
         ruleset_id=data.get("ruleset_id"),
+        occurrence_id=occurrence_id,
+        completed_at=completed_at,
+        product_version=product_version,
+        schema_version=schema_version,
     )
 
 

@@ -26,6 +26,7 @@ from battle_engine.config import Config
 from battle_engine.core import Kernel
 from battle_engine.entrant_identity import EntrantIdentity
 from battle_engine.process_runtime import ProcessMatchController
+from battle_engine.project_info import get_project_info
 from battle_engine.python_runtime import (
     DEFAULT_LOCALITY_REACH,
     PythonEntrantController,
@@ -47,10 +48,13 @@ from battle_engine.replay import (
     iter_replay,
     write_replay,
 )
+from battle_engine.result_model import SCHEMA_VERSION as RESULT_SCHEMA_VERSION
 from battle_engine.result_model import (
     ReplayReference,
     ResultEnvelope,
+    generate_occurrence_id,
     stable_id,
+    utc_completed_at,
     write_json_atomic,
 )
 from battle_engine.results import WINNER_TIE_SENTINEL
@@ -1150,6 +1154,13 @@ def _finalize_native_artifacts(
     *,
     final_replay_path: Path | None = None,
 ) -> NativeMatchResult:
+    # ``result`` exists only after execution has reached a final outcome.
+    # Capture occurrence metadata once at that boundary, before replay/result
+    # serialization begins, so it describes this execution rather than either
+    # file write. Re-serializing the envelope below cannot regenerate it.
+    occurrence_id = generate_occurrence_id()
+    completed_at = utc_completed_at()
+    product_version = get_project_info().version
     source_replay_path = result.replay_path
     publish_path = final_replay_path or source_replay_path
     reproducibility = _reproducibility(request)
@@ -1279,6 +1290,10 @@ def _finalize_native_artifacts(
             reproducibility=reproducibility,
             replay=ReplayReference(match_id, replay_digest, publish_path.name),
             ruleset_id=resolved_ruleset_id,
+            occurrence_id=occurrence_id,
+            completed_at=completed_at,
+            product_version=product_version,
+            schema_version=RESULT_SCHEMA_VERSION,
         )
         write_json_atomic(result_path, envelope.as_dict())
         complete = True

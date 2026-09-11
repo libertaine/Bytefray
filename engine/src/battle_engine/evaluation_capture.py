@@ -12,7 +12,7 @@ win/loss alone would erase this). Nothing here reads or derives from win
 rate or score, and nothing here feeds back into either sibling module.
 
 One data tier, matching ``evaluation_behavior``'s own Tier 2: each scored
-cell's already-written, sibling ``result.json`` (``battle2.result`` v1,
+cell's already-written, sibling ``result.json`` (``battle2.result`` v1/v2,
 read via ``result_model.read_result``). No replay reconstruction --
 per-entrant ``termination_reason`` (Ruleset v2's ``"core_captured"``),
 ``statistics.kills``, and the match's own ``ticks`` (which, for a match

@@ -26,6 +26,7 @@ from battle_engine.paths import get_data_root
 from battle_engine.placement import resolve_direct_match_starts
 from battle_engine.pmars import PMarsError, run_pmars
 from battle_engine.python_runtime import PythonEntrantInitializationError
+from battle_engine.result_model import SCHEMA_VERSION_V1 as RESULT_SCHEMA_VERSION_V1
 from battle_engine.result_model import ResultEnvelope, stable_id, write_json_atomic
 from battle_engine.rules import BYTEFRAY_RULESET_ID
 from battle_engine.ruleset_policy import (
@@ -814,6 +815,9 @@ def main(argv: Iterable[str] | None = None) -> int:
             reproducibility=reproducibility,
             replay=None,
             backend={"name": "pMARS", "returncode": result.returncode},
+            # Phase 7A changes native result metadata only. Preserve the
+            # established pMARS/Redcode result contract and behavior.
+            schema_version=RESULT_SCHEMA_VERSION_V1,
         )
         write_json_atomic(summary_path.with_name("result.json"), envelope.as_dict())
 

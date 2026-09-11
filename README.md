@@ -110,7 +110,7 @@ bytefray replay --replay runs/demo/replay.jsonl --renderer pygame
 | **Agent API** | Agent API v2 (`reset`, `declare_processes`, `act`) |
 | **Action Vocabulary** | `READ` (absolute address), `WRITE` (absolute address), `MOVE` (relative delta `[-64, 64]`) |
 | **Elimination Condition** | Core capture: an entrant is eliminated when it owns 0 cells of its 8-cell core at tick end |
-| **Artifact Formats** | `battle2.result` (schema v1 JSON), `battle2.replay` (schema v4 JSONL) |
+| **Artifact Formats** | `battle2.result` (schema v2 native JSON; v1 historical/pMARS), `battle2.replay` (schema v4 JSONL) |
 | **Execution Model** | Local trusted Python execution; worker subprocesses with per-call timeouts for hang containment |
 | **Tooling** | Headless CLI, interactive Pygame replay visualizer, PySide6 visual Agent Designer |
 

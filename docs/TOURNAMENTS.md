@@ -3,7 +3,7 @@
 Phase 5 introduces `TournamentService`, a headless orchestration layer over
 `NativeMatchService`. It accepts a `TournamentRequest`, creates a deterministic
 round-robin schedule, runs each pair in its own artifact directory, reads the
-canonical `battle2.result` v1 artifact, and derives standings.
+canonical `battle2.result` v2 artifact, and derives standings.
 
 Each of two or more entrants plays every other entrant once per configured
 round. Request order defines stable pair order. Match seeds are derived with

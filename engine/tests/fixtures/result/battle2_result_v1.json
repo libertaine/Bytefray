@@ -1,0 +1,47 @@
+{
+  "backend": null,
+  "entrants": [
+    {
+      "agent_id": "A",
+      "metadata": {
+        "code_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "name": "alpha"
+    },
+    {
+      "agent_id": "B",
+      "metadata": {
+        "code_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "name": "beta"
+    }
+  ],
+  "match_id": "match_legacy_v1",
+  "mode": "b2",
+  "replay": {
+    "filename": "replay.jsonl",
+    "replay_id": "match_legacy_v1",
+    "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  "reproducibility": {
+    "arena_size": 64,
+    "entrant_order": [
+      "A",
+      "B"
+    ],
+    "seed": 7,
+    "tick_limit": 4
+  },
+  "result_id": "result_legacy_v1",
+  "ruleset_id": "bytefray-rules-1",
+  "schema": "battle2.result",
+  "schema_version": 1,
+  "score": {
+    "A": 5,
+    "B": 0
+  },
+  "status": "completed",
+  "termination_reason": "last_agent_standing",
+  "ticks": 4,
+  "winner": "A"
+}
