@@ -30,7 +30,7 @@ from battle_engine.starters import (
     describe_starter_refresh,
     ensure_starter_agents,
 )
-from PySide6.QtCore import QProcess, QProcessEnvironment, QTimer, QUrl, Slot
+from PySide6.QtCore import QProcess, QProcessEnvironment, Qt, QTimer, QUrl, Slot
 from PySide6.QtGui import QDesktopServices, QIcon
 from PySide6.QtWidgets import (
     QApplication,
@@ -81,6 +81,7 @@ from app.views.agent_package import (
 from app.views.development import AgentDevelopmentPanel, NewAgentDialog
 from app.views.evaluation import EvaluationDialog, EvaluationResultsDialog
 from app.views.evaluation_history import EvaluationHistoryDialog
+from app.views.replay_history import ReplayHistoryWindow
 from app.views.simple import SimplePanel
 from app.views.tournament import TournamentDialog
 from app.widgets.designer_presentation import DesignerIdentityHeader
@@ -149,6 +150,10 @@ class AgentDesigner(QMainWindow):
         self._test_stdout = ""
         self._test_stderr = ""
         self.catalog = AgentCatalog(data_root)
+        # Single modeless Replay History browser. One index, one worker
+        # thread, one window: reopening raises the existing one rather than
+        # starting a second background scan over the same run tree.
+        self._replay_history: ReplayHistoryWindow | None = None
 
         # Tabs + panels
         self.tabs = QTabWidget(self)
@@ -224,6 +229,7 @@ class AgentDesigner(QMainWindow):
         tools = self.menuBar().addMenu("Tools")
         tools.addAction("Run Tournament…", self._on_tournament)
         tools.addAction("Evaluation History…", self._on_evaluation_history)
+        tools.addAction("Replay History…", self._on_replay_history)
         tools.addSeparator()
         tools.addAction("Import Agent Package…", self._on_import_agent_package)
         tools.addAction("Inspect Agent Package…", self._on_inspect_agent_package)
@@ -849,6 +855,37 @@ class AgentDesigner(QMainWindow):
         dialog.agentCatalogChanged.connect(self._on_agent_catalog_changed)
         dialog.exec()
 
+    def _on_replay_history(self) -> None:
+        """Open (or raise) the modeless Replay History browser.
+
+        Deliberately modeless and deliberately not gated on an active match:
+        browsing finished history reads already-written artifacts through the
+        Qt-free ``battle_engine.replay_history`` service on its own worker
+        thread, executes no agent code, and spawns no process, so there is
+        nothing for a running match to conflict with.
+
+        Opening does no corpus work on the GUI thread -- the window shows
+        immediately, its worker opens the index and requests the cached first
+        page, and reconciliation follows in the background.
+        """
+
+        existing = self._replay_history
+        if existing is not None:
+            existing.show()
+            existing.raise_()
+            existing.activateWindow()
+            return
+        window = ReplayHistoryWindow(data_root=self.data_root, parent=self)
+        self._replay_history = window
+        window.windowClosed.connect(self._on_replay_history_closed)
+        window.destroyed.connect(self._on_replay_history_closed)
+        window.setAttribute(Qt.WA_DeleteOnClose, True)
+        window.show()
+
+    @Slot()
+    def _on_replay_history_closed(self) -> None:
+        self._replay_history = None
+
     @Slot(str)
     def _on_agent_catalog_changed(self, affected_agent_id: str) -> None:
         """Refresh catalog views and clear evidence invalidated by a live restore.
@@ -1461,6 +1498,14 @@ class AgentDesigner(QMainWindow):
         # from it can never run against a partially/fully destroyed window,
         # and so the child is not left running detached from the app.
         self._dispose_process()
+        # Join the Replay History worker before this window's children are
+        # destroyed. Without this the browser's QThread could outlive the
+        # objects its queued signals target -- the "QThread: Destroyed while
+        # thread is still running" class of shutdown fault.
+        history, self._replay_history = self._replay_history, None
+        if history is not None:
+            history.shutdownWorker()
+            history.close()
         super().closeEvent(event)
 
 

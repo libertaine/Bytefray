@@ -62,7 +62,10 @@ from .query import (
     HistoryRow,
     RebuildSummary,
     ReconcileSummary,
+    ReplayIntegrityCheck,
+    ReplayIntegrityStatus,
     ReplayResolution,
+    RulesetFacet,
     ScanCounts,
 )
 from .service import HistoryRefreshCancelled, ReplayHistoryService
@@ -95,9 +98,12 @@ __all__ = [
     "RebuildSummary",
     "ReconcileSummary",
     "ReplayHistoryService",
+    "ReplayIntegrityCheck",
+    "ReplayIntegrityStatus",
     "ReplayResolution",
     "ReplayState",
     "ResultHealth",
+    "RulesetFacet",
     "ScanCounts",
     "ScanScope",
     "StoredSignature",

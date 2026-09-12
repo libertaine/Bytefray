@@ -11,6 +11,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
 
 from .models import (
     EntryHealth,
@@ -113,6 +114,7 @@ class HistoryRow:
     entry_health: EntryHealth
     diagnostic_category: str | None
     diagnostic_message: str | None
+    winner_display_name: str | None = None
 
     @property
     def cursor(self) -> HistoryCursor:
@@ -179,6 +181,68 @@ class ReplayResolution:
         return self.state is ReplayState.AVAILABLE and self.path is not None
 
 
+class ReplayIntegrityStatus(str, Enum):
+    """Click-time digest-preflight outcome for one resolved replay (Phase 7D).
+
+    Distinct from :class:`ReplayState`, which is the *cached* index's view of
+    availability -- this is the *live* verdict of comparing the resolved
+    file's actual bytes against the digest recorded when it was indexed.
+
+    ``UNVERIFIED_LEGACY`` is not a warning: a historical result recorded
+    before digests existed has nothing to compare against, and a file that
+    otherwise resolves and exists is not made suspect merely by predating
+    that metadata.
+    """
+
+    VERIFIED = "verified"
+    UNVERIFIED_LEGACY = "unverified_legacy"
+    MISMATCH = "mismatch"
+    UNREADABLE = "unreadable"
+
+
+@dataclass(frozen=True)
+class ReplayIntegrityCheck:
+    """Outcome of digest-verifying one :class:`ReplayResolution` (Phase 7D).
+
+    Always computed from the resolution's already containment-checked
+    ``path`` and ``expected_sha256`` -- never a second read of
+    ``result.json`` -- immediately before a replay is handed to the Viewer.
+    """
+
+    status: ReplayIntegrityStatus
+    digest: str | None = None
+    diagnostic: str | None = None
+
+    @property
+    def blocks_launch(self) -> bool:
+        return self.status is ReplayIntegrityStatus.MISMATCH or (
+            self.status is ReplayIntegrityStatus.UNREADABLE
+        )
+
+
+@dataclass(frozen=True)
+class RulesetFacet:
+    """One distinct ruleset identity present in the index, with its count.
+
+    Added in Phase 7C as the single backend capability the browser UI proved
+    it could not supply for itself. A Ruleset filter has to offer the
+    identities history actually contains, and the Designer's own product
+    option list is not that set: the measured corpus holds
+    ``bytefray-rules-3-alpha1``, ``bytefray-rules-5-r1-alpha1`` and
+    ``bytefray-rules-5-r2-alpha1`` -- 7,033 rows -- that the product list
+    does not offer. The alternative was for the UI to page the whole corpus
+    to discover them, which is exactly the backend work Phase 7C must not do.
+
+    ``ruleset_id`` is ``None`` for rows with no ruleset identity at all;
+    ``confidence`` distinguishes ``recorded``/``recovered`` from
+    ``not_applicable``/``unknown``. Both feed :class:`HistoryQuery` unchanged.
+    """
+
+    ruleset_id: str | None
+    confidence: str
+    count: int
+
+
 @dataclass(frozen=True)
 class ScanCounts:
     """Filesystem-visit accounting shared by rebuild and reconcile reports."""
@@ -239,6 +303,9 @@ __all__ = [
     "HistoryRow",
     "RebuildSummary",
     "ReconcileSummary",
+    "ReplayIntegrityCheck",
+    "ReplayIntegrityStatus",
     "ReplayResolution",
+    "RulesetFacet",
     "ScanCounts",
 ]

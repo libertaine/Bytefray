@@ -305,19 +305,15 @@ class ReplayIntegrityError(ValueError):
         self.code = code
 
 
-def verify_replay_digest(result: ResultEnvelope, replay_path: str | Path) -> str:
-    """Verify ``replay_path`` matches the digest recorded on ``result``.
+def verify_replay_digest_value(expected_sha256: str, replay_path: str | Path) -> str:
+    """Verify ``replay_path`` matches ``expected_sha256`` directly.
 
-    Returns the recomputed digest on success. Raises ``ReplayIntegrityError``
-    (with a stable ``code``) if the result has no replay reference, the file
-    is missing or unreadable, or its digest does not match.
+    Shares :func:`verify_replay_digest`'s file-read, comparison, and
+    ``ReplayIntegrityError`` codes for a caller that already has the expected
+    digest -- for example Replay History's cached index (Phase 7D) -- and
+    does not need a full ``ResultEnvelope`` merely to read one field off it.
     """
 
-    if result.replay is None:
-        raise ReplayIntegrityError(
-            "Result has no replay reference to verify (e.g. a pMARS match).",
-            code="replay_reference_missing",
-        )
     path = Path(replay_path)
     if not path.is_file():
         raise ReplayIntegrityError(
@@ -331,13 +327,29 @@ def verify_replay_digest(result: ResultEnvelope, replay_path: str | Path) -> str
             f"Referenced replay file could not be read: {path}: {exc}",
             code="replay_file_unreadable",
         ) from exc
-    if digest != result.replay.sha256:
+    if digest != expected_sha256:
         raise ReplayIntegrityError(
             f"Replay digest mismatch for {path}: "
-            f"expected {result.replay.sha256}, got {digest}",
+            f"expected {expected_sha256}, got {digest}",
             code="replay_digest_mismatch",
         )
     return digest
+
+
+def verify_replay_digest(result: ResultEnvelope, replay_path: str | Path) -> str:
+    """Verify ``replay_path`` matches the digest recorded on ``result``.
+
+    Returns the recomputed digest on success. Raises ``ReplayIntegrityError``
+    (with a stable ``code``) if the result has no replay reference, the file
+    is missing or unreadable, or its digest does not match.
+    """
+
+    if result.replay is None:
+        raise ReplayIntegrityError(
+            "Result has no replay reference to verify (e.g. a pMARS match).",
+            code="replay_reference_missing",
+        )
+    return verify_replay_digest_value(result.replay.sha256, replay_path)
 
 
 def verify_result_replay(path: str | Path) -> str:

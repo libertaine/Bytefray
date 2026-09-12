@@ -254,6 +254,95 @@ Automated coverage lives in `tests/test_agent_evaluation_history_dialog.py`
     and confirm revision restore remains disabled for that still-open History
     session; close and reopen History after the process finishes to restore it.
 
+### Replay History browser (V5 Alpha 1, packaged application)
+
+Release checklist for **Tools → Replay History…**. Automated coverage lives
+in `tests/test_v5_replay_history_browser.py` (`gui`-marked, including Phase
+7D's Open Replay / Copy Seed cases), `engine/tests/test_v5_replay_history_presentation.py`
+(headless), and `engine/tests/test_replay_history.py`'s digest-preflight
+tests; this sequence is the interactive confirmation. Replay History only
+reads the run tree and its own rebuildable index -- Open Replay hands a
+verified path to the existing Replay Viewer and Copy Seed only touches the
+clipboard, so no step here modifies a match artifact.
+
+1. With a data root that already holds completed matches, open **Tools →
+   Replay History…**. Rows must appear within about a second, before the
+   status line stops reporting a scan: the browser shows its cached index
+   first and reconciles in the background. Confirm the Designer window behind
+   it stays responsive and that the dialog does not block it.
+2. On a data root with no history index yet, open Replay History again.
+   Confirm it opens immediately with a "Preparing Replay History" state
+   rather than a frozen window, and that rows appear when the first build
+   finishes. A first build over a very large run tree can take a while; the
+   Designer must remain usable throughout.
+3. Scroll past the first 500 rows and confirm further rows load as you reach
+   the end, without a pause that blocks scrolling.
+4. Exercise each filter -- entrant search, Ruleset, Result, Source, Replay,
+   Seed, and the From/To dates -- and confirm the row count updates and the
+   table stays responsive. Type a partial seed such as `12x` and confirm the
+   field marks itself without raising a dialog. Choose **Clear Filters** and
+   confirm every control resets and the full list returns.
+5. Confirm the Ruleset filter lists the Rulesets your history actually
+   contains, including any historical Ruleset the Designer no longer offers
+   for new matches.
+6. Select a row and confirm the detail pane fills in. Tick **Show technical
+   details** and confirm identity and artifact sections appear. For a match
+   written before the current result schema, confirm its occurrence identity
+   is labelled a synthetic legacy identifier rather than presented as a
+   recorded ID.
+7. Confirm any row whose time was inferred rather than recorded is prefixed
+   `≈`, and that its tooltip explains the time is approximate.
+8. Filter **Replay** to `Missing` and confirm those rows are still fully
+   browsable, carry a text marker (not only a color), and explain in the
+   detail pane that playback is unavailable.
+9. Filter **Source** to `CLI Latest` and confirm the selected entry warns
+   that it is overwritten by the next loose CLI run, phrased as information
+   rather than an error.
+10. Choose **Refresh**, confirm progress is reported, then choose **Cancel**.
+    The refresh must stop promptly, report that it was cancelled rather than
+    failed, leave the existing rows in place, and re-enable **Refresh**.
+11. Close Replay History and reopen it; confirm it reopens cleanly. Reopen it
+    while it is already open and confirm the existing window is raised rather
+    than a second one appearing.
+12. Close the Designer with Replay History still open, and confirm the
+    application exits without a `QThread: Destroyed while thread is still
+    running` warning on the console.
+13. Select a row whose Replay column reads `Available` and confirm **Open
+    Replay** is enabled while **Copy Seed** reflects whether that row has a
+    recorded seed. Click **Open Replay** and confirm the status area briefly
+    shows a checking state, Replay Viewer launches with that match's replay,
+    and the History window stays open and usable the whole time.
+14. With a row selected, confirm double-clicking it and pressing Enter (with
+    the table focused) both launch the same replay as the **Open Replay**
+    button, and that pressing Enter while a filter field has focus does not
+    launch anything.
+15. Select a row with a recorded seed and click **Copy Seed**. Confirm the
+    exact integer seed lands on the clipboard and a brief confirmation
+    appears. Hover the button and confirm the tooltip states that
+    reproducing the exact match needs more than the seed.
+16. Select a row whose Replay column reads `Missing`, `Not produced`,
+    `Invalid`, or `Inaccessible` and confirm **Open Replay** is disabled
+    rather than launching and failing. If a real corpus has a replay you can
+    delete or rename after it is indexed, select that row and click **Open
+    Replay** anyway; confirm it explains the replay is no longer available
+    rather than crashing or launching a missing file.
+17. While a large history refresh is active, change a filter, select a match,
+    and use **Open Replay**. These reads should finish promptly without
+    waiting for the scan. Click **Copy Seed** while Replay preflight is
+    pending; its confirmation must survive the Replay completion message.
+18. Close History before deleting or corrupting a **disposable test cache**,
+    then reopen it. Confirm the preparing/rebuilding state and returned rows;
+    never modify real match artifacts for this check. Cancel a refresh and
+    confirm the previous rows remain usable and a later Refresh succeeds.
+19. Repeat close/reopen while reads and refresh are active, including Escape
+    and closing the Designer. Confirm both workers close, no late Viewer
+    appears, and the application exits normally.
+20. Review light/dark palettes and keyboard navigation. Confirm winner names
+    retain their recorded agent IDs, approximate dates carry `≈`, degradation
+    is textual, disabled action tooltips explain availability, and Tab reaches
+    Open Replay and Copy Seed. Check empty history, no filter matches,
+    unavailable replay and backend error messages separately.
+
 ### Agent Lab (v0.5, packaged application)
 
 This is the release checklist for the Agent Lab feature set (deterministic

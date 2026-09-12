@@ -43,6 +43,7 @@ from .query import (
     HistoryPage,
     HistoryQuery,
     HistoryRow,
+    RulesetFacet,
 )
 
 # Cache schema version. Deliberately independent of ``battle2.result``'s
@@ -258,7 +259,10 @@ _SELECT_ROW_COLUMNS = (
     "effective_timestamp, effective_timestamp_ns, timestamp_known, timestamp_confidence, "
     "entrant_summary, entrant_count, winner, outcome_state, ruleset_id, ruleset_confidence, "
     "seed, workflow, durable_location, duplicate_occurrence_location, replay_state, "
-    "result_health, entry_health, diagnostic_category, diagnostic_message"
+    "result_health, entry_health, diagnostic_category, diagnostic_message, "
+    "(SELECT CASE WHEN COUNT(*) = 1 THEN MAX(display_name) END "
+    "FROM occurrence_entrant e WHERE e.location_id = occurrence.location_id "
+    "AND e.agent_id = occurrence.winner)"
 )
 
 _ORDER_BY = (
@@ -354,9 +358,12 @@ def _escape_like(value: str) -> str:
 class HistoryIndex:
     """Storage primitives for the Replay History occurrence cache."""
 
-    def __init__(self, connection: sqlite3.Connection, report: CacheOpenReport) -> None:
+    def __init__(
+        self, connection: sqlite3.Connection, report: CacheOpenReport, *, read_only: bool = False
+    ) -> None:
         self._connection = connection
         self._report = report
+        self.read_only = read_only
 
     # ------------------------------------------------------------------
     # lifecycle
@@ -371,6 +378,37 @@ class HistoryIndex:
         return self._connection
 
     @classmethod
+    def open_read_only(cls, path: Path, *, root_identity: str) -> HistoryIndex:
+        """Validate an existing cache without creating, recovering or changing it.
+
+        The maintenance owner must prepare an absent/incompatible cache first.
+        URI escaping is supplied by Path.as_uri (including spaces, # and ?).
+        No immutable flag: committed WAL generations must remain visible.
+        """
+        connection = sqlite3.connect(
+            path.resolve().as_uri() + "?mode=ro", uri=True, isolation_level=None, timeout=0.25
+        )
+        try:
+            connection.execute("PRAGMA query_only = ON")
+            version = connection.execute("PRAGMA user_version").fetchone()[0]
+            stored = dict(connection.execute("SELECT key, value FROM cache_metadata"))
+            expected = {
+                META_CACHE_SCHEMA_VERSION: str(CACHE_SCHEMA_VERSION),
+                META_EXTRACTOR_VERSION: str(EXTRACTOR_VERSION),
+                META_ROOT_IDENTITY: root_identity,
+            }
+            if version != CACHE_SCHEMA_VERSION or any(stored.get(k) != v for k, v in expected.items()):
+                raise ValueError("Replay History cache needs preparation by its maintenance owner.")
+            connection.execute("SELECT " + ", ".join(_OCCURRENCE_COLUMNS) + " FROM occurrence LIMIT 0")
+            connection.execute("SELECT " + ", ".join(_ENTRANT_COLUMNS) + " FROM occurrence_entrant LIMIT 0")
+        except BaseException:
+            connection.close()
+            raise
+        return cls(
+            connection, CacheOpenReport(str(path), False, False, None, True), read_only=True
+        )
+
+    @classmethod
     def open(cls, path: Path | str | None, *, root_identity: str) -> HistoryIndex:
         """Open (creating or rebuilding as needed) the cache at ``path``.
 
@@ -380,6 +418,7 @@ class HistoryIndex:
         recreated rather than migrated: every column is derived state.
         """
 
+        connection: sqlite3.Connection | None
         if path is None:
             connection = cls._connect(None)
             cls._create_schema(connection)
@@ -394,6 +433,7 @@ class HistoryIndex:
             return cls(connection, report)
 
         target = Path(path)
+        connection = None
         try:
             connection = cls._connect(target)
             # The stored version must be read *before* the idempotent schema
@@ -407,6 +447,8 @@ class HistoryIndex:
                 is not None
             )
         except (sqlite3.DatabaseError, OSError) as exc:
+            if connection is not None:
+                connection.close()
             # A damaged or unusable *derived* cache is discarded, never
             # repaired in place, and never allowed to hide real history.
             return cls._recover(target, root_identity, f"{type(exc).__name__}: {exc}")
@@ -489,19 +531,19 @@ class HistoryIndex:
         else:
             target.parent.mkdir(parents=True, exist_ok=True)
             connection = sqlite3.connect(str(target), isolation_level=None, timeout=5.0)
-        connection.execute("PRAGMA foreign_keys = ON")
-        connection.execute("PRAGMA busy_timeout = 5000")
-        if target is not None:
-            # WAL keeps readers on the last committed generation while one
-            # refresh writer commits a new one. A filesystem that refuses WAL
-            # (some network shares) simply stays on the default journal; this
-            # cache is disposable either way, so that is a degradation, not a
-            # failure.
-            try:
-                connection.execute("PRAGMA journal_mode = WAL")
-            except sqlite3.DatabaseError:
-                pass
-            connection.execute("PRAGMA synchronous = NORMAL")
+        try:
+            connection.execute("PRAGMA foreign_keys = ON")
+            connection.execute("PRAGMA busy_timeout = 5000")
+            if target is not None:
+                # WAL keeps reads on committed generations during refresh.
+                try:
+                    connection.execute("PRAGMA journal_mode = WAL")
+                except sqlite3.DatabaseError:
+                    pass
+                connection.execute("PRAGMA synchronous = NORMAL")
+        except BaseException:
+            connection.close()
+            raise
         return connection
 
     @staticmethod
@@ -555,6 +597,18 @@ class HistoryIndex:
     # ------------------------------------------------------------------
 
     @contextmanager
+    def read_snapshot(self) -> Iterator[None]:
+        """Keep related SELECTs on one generation, then promptly release WAL."""
+        nested = self._connection.in_transaction
+        if not nested:
+            self._connection.execute("BEGIN")
+        try:
+            yield
+        finally:
+            if not nested:
+                self._connection.execute("ROLLBACK")
+
+    @contextmanager
     def write_transaction(self) -> Iterator[sqlite3.Connection]:
         """One all-or-nothing writer transaction.
 
@@ -565,6 +619,8 @@ class HistoryIndex:
         exactly as it was.
         """
 
+        if self.read_only:
+            raise PermissionError("A read-only history index cannot perform maintenance.")
         self._connection.execute("BEGIN IMMEDIATE")
         try:
             yield self._connection
@@ -823,7 +879,33 @@ class HistoryIndex:
             statement += " WHERE " + " AND ".join(clauses)
         return int(self._connection.execute(statement, tuple(params)).fetchone()[0])
 
+    def ruleset_facets(self) -> tuple[RulesetFacet, ...]:
+        """Every distinct ruleset identity in the index, most common first.
+
+        One grouped scan of the two already-indexed ruleset columns. It exists
+        so a filter control can offer exactly the identities history holds --
+        including historical ones the current product no longer lists --
+        without the caller paging the corpus to find them.
+        """
+
+        rows = self._connection.execute(
+            "SELECT ruleset_id, ruleset_confidence, COUNT(*) FROM occurrence "
+            "GROUP BY ruleset_id, ruleset_confidence ORDER BY COUNT(*) DESC, ruleset_id ASC"
+        ).fetchall()
+        return tuple(
+            RulesetFacet(
+                ruleset_id=None if row[0] is None else str(row[0]),
+                confidence=str(row[1]),
+                count=int(row[2]),
+            )
+            for row in rows
+        )
+
     def fetch_detail(self, location_id: str) -> HistoryDetail | None:
+        with self.read_snapshot():
+            return self._fetch_detail(location_id)
+
+    def _fetch_detail(self, location_id: str) -> HistoryDetail | None:
         statement = "SELECT " + ", ".join(_OCCURRENCE_COLUMNS) + (
             " FROM occurrence WHERE location_id = ?"
         )
@@ -993,6 +1075,7 @@ def _history_row(row: Sequence[Any]) -> HistoryRow:
         entry_health=EntryHealth(row[21]),
         diagnostic_category=row[22],
         diagnostic_message=row[23],
+        winner_display_name=row[24],
     )
 
 

@@ -34,6 +34,7 @@ from battle_engine.result_model import (
     read_result,
     stable_id,
     verify_replay_digest,
+    verify_replay_digest_value,
     verify_result_replay,
 )
 from battle_engine.vm import VM
@@ -407,6 +408,39 @@ def test_verify_replay_digest_reports_missing_file(tmp_path):
 
     with pytest.raises(ReplayIntegrityError) as excinfo:
         verify_replay_digest(envelope, result.replay_path)
+    assert excinfo.value.code == "replay_file_missing"
+
+
+def test_verify_replay_digest_value_accepts_the_original_file(tmp_path):
+    """The Phase 7D helper factored out of ``verify_replay_digest`` (Replay
+    History's ``resolve_replay`` hands back only the expected digest string,
+    never a full ``ResultEnvelope``, so this is the entry point it needs)."""
+
+    result = _run_simple_match(tmp_path)
+    envelope = read_result(result.result_path)
+    digest = verify_replay_digest_value(envelope.replay.sha256, result.replay_path)
+    assert digest == envelope.replay.sha256
+    # verify_replay_digest itself now delegates to this helper; same result.
+    assert verify_replay_digest(envelope, result.replay_path) == digest
+
+
+def test_verify_replay_digest_value_detects_mismatch(tmp_path):
+    result = _run_simple_match(tmp_path)
+    envelope = read_result(result.result_path)
+    result.replay_path.write_bytes(result.replay_path.read_bytes() + b'{"tampered":true}\n')
+
+    with pytest.raises(ReplayIntegrityError) as excinfo:
+        verify_replay_digest_value(envelope.replay.sha256, result.replay_path)
+    assert excinfo.value.code == "replay_digest_mismatch"
+
+
+def test_verify_replay_digest_value_reports_missing_file(tmp_path):
+    result = _run_simple_match(tmp_path)
+    envelope = read_result(result.result_path)
+    result.replay_path.unlink()
+
+    with pytest.raises(ReplayIntegrityError) as excinfo:
+        verify_replay_digest_value(envelope.replay.sha256, result.replay_path)
     assert excinfo.value.code == "replay_file_missing"
 
 

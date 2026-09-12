@@ -29,6 +29,7 @@ from battle_engine.replay_history import (
     OccurrenceIdentitySource,
     OutcomeState,
     ReplayHistoryService,
+    ReplayIntegrityStatus,
     ReplayState,
     ResultHealth,
     ScanScope,
@@ -1521,3 +1522,98 @@ def test_an_emptied_run_root_really_does_remove_its_rows(tree: Path) -> None:
         assert summary.removed == 1
         assert summary.retained_inaccessible == 0
         assert service.row_count() == 0
+
+
+# ---------------------------------------------------------------------------
+# Gate 7 -- Phase 7D: click-time digest preflight (verify_replay_integrity)
+# ---------------------------------------------------------------------------
+
+
+def test_verify_replay_integrity_verifies_a_real_produced_replay(tree: Path) -> None:
+    """A genuine current artifact's digest really does match at click time."""
+
+    runs = tree / "runs"
+    _run_real_match(runs / "_designer" / "20260911-120000-aaaaaaaa")
+    with _service(tree) as service:
+        service.refresh()
+        row = _all_rows(service)[0]
+        resolution = service.resolve_replay(row.location_id)
+        assert resolution.available
+        assert resolution.expected_sha256 is not None
+        check = service.verify_replay_integrity(resolution)
+    assert check.status is ReplayIntegrityStatus.VERIFIED
+    assert check.digest == resolution.expected_sha256
+    assert check.diagnostic is None
+
+
+def test_verify_replay_integrity_detects_a_changed_replay(tree: Path) -> None:
+    """A replay edited after indexing must block, not silently pass, the preflight."""
+
+    runs = tree / "runs"
+    _run_real_match(runs / "_designer" / "20260911-120000-aaaaaaaa")
+    with _service(tree) as service:
+        service.refresh()
+        row = _all_rows(service)[0]
+        resolution = service.resolve_replay(row.location_id)
+        assert resolution.available
+        # Tamper with the replay bytes without touching result.json's
+        # recorded digest -- exactly the "changed replay" race Phase 7D
+        # must catch rather than trust the cached AVAILABLE state.
+        Path(resolution.path).write_bytes(
+            Path(resolution.path).read_bytes() + b"\ntampered\n"
+        )
+        check = service.verify_replay_integrity(resolution)
+    assert check.status is ReplayIntegrityStatus.MISMATCH
+    assert check.diagnostic is not None
+    assert "mismatch" in check.diagnostic.lower()
+
+
+def test_verify_replay_integrity_accepts_a_legacy_replay_with_no_recorded_digest(
+    tree: Path,
+) -> None:
+    """A replay-only entry has nothing to compare against and must not be flagged."""
+
+    runs = tree / "runs"
+    _write_run(runs, "other/replay-only")
+    (runs / "other" / "replay-only" / "result.json").unlink()
+    with _service(tree) as service:
+        service.refresh()
+        row = _all_rows(service)[0]
+        resolution = service.resolve_replay(row.location_id)
+        assert resolution.available
+        assert resolution.expected_sha256 is None
+        check = service.verify_replay_integrity(resolution)
+    assert check.status is ReplayIntegrityStatus.UNVERIFIED_LEGACY
+    assert check.diagnostic is None
+
+
+def test_verify_replay_integrity_reports_unreadable_for_a_file_that_vanished_after_resolve(
+    tree: Path,
+) -> None:
+    """The resolve-to-launch race: gone between resolution and the digest read."""
+
+    runs = tree / "runs"
+    _run_real_match(runs / "_designer" / "20260911-120000-aaaaaaaa")
+    with _service(tree) as service:
+        service.refresh()
+        row = _all_rows(service)[0]
+        resolution = service.resolve_replay(row.location_id)
+        assert resolution.available
+        Path(resolution.path).unlink()
+        check = service.verify_replay_integrity(resolution)
+    assert check.status is ReplayIntegrityStatus.UNREADABLE
+    assert check.diagnostic is not None
+
+
+def test_verify_replay_integrity_is_defensive_about_an_unavailable_resolution(
+    tree: Path,
+) -> None:
+    """Callers must be able to pass a non-available resolution without a crash."""
+
+    with _service(tree) as service:
+        service.refresh()
+        resolution = service.resolve_replay("does_not_exist")
+        assert not resolution.available
+        check = service.verify_replay_integrity(resolution)
+    assert check.status is ReplayIntegrityStatus.UNREADABLE
+    assert check.digest is None

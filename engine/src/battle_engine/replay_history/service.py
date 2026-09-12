@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from battle_engine.paths import contained_path, get_data_root
+from battle_engine.result_model import ReplayIntegrityError, verify_replay_digest_value
 
 from .discovery import (
     ArtifactCandidate,
@@ -51,7 +52,10 @@ from .query import (
     HistoryQuery,
     RebuildSummary,
     ReconcileSummary,
+    ReplayIntegrityCheck,
+    ReplayIntegrityStatus,
     ReplayResolution,
+    RulesetFacet,
 )
 
 ProgressCallback = Callable[[str, int], None]
@@ -101,6 +105,7 @@ class ReplayHistoryService:
         runs_root: Path | str | None = None,
         cache_path: Path | str | None = None,
         in_memory: bool = False,
+        read_only: bool = False,
     ) -> ReplayHistoryService:
         """Open the service against a run tree and its disposable cache.
 
@@ -126,7 +131,12 @@ class ReplayHistoryService:
             target = default_cache_path(resolved_data_root)
         else:
             target = Path(cache_path).expanduser().resolve()
-        index = HistoryIndex.open(target, root_identity=identity)
+        if read_only:
+            if target is None:
+                raise ValueError("A read-only history service needs an existing persistent cache.")
+            index = HistoryIndex.open_read_only(target, root_identity=identity)
+        else:
+            index = HistoryIndex.open(target, root_identity=identity)
         return cls(index, resolved_runs, identity)
 
     def close(self) -> None:
@@ -177,9 +187,14 @@ class ReplayHistoryService:
         reconciled incrementally.
         """
 
-        if force_rebuild or self._index.open_report.rebuild_required or self._index.is_empty():
+        self._require_writer()
+        if force_rebuild or self.generation == 0:
             return self.rebuild(progress=progress, cancel_check=cancel_check)
         return self.reconcile(progress=progress, cancel_check=cancel_check)
+
+    def _require_writer(self) -> None:
+        if self._index.read_only:
+            raise PermissionError("A read-only history service cannot refresh or rebuild its cache.")
 
     def rebuild(
         self,
@@ -197,6 +212,7 @@ class ReplayHistoryService:
         back and the previously committed index remains usable.
         """
 
+        self._require_writer()
         started = time.perf_counter()
         scanner = ArtifactScanner(self._runs_root, identity=self._identity)
         tally: Counter[str] = Counter()
@@ -204,6 +220,8 @@ class ReplayHistoryService:
         inserted = 0
         try:
             with self._index.write_transaction():
+                if cancel_check is not None and cancel_check():
+                    raise HistoryRefreshCancelled("rebuild")
                 self._index.clear()
                 self._index.drop_secondary_indexes()
                 inserted = self._index.write_occurrences(
@@ -213,6 +231,8 @@ class ReplayHistoryService:
                 )
                 self._index.create_indexes()
                 self._index.refresh_duplicate_flags()
+                if cancel_check is not None and cancel_check():
+                    raise HistoryRefreshCancelled("rebuild")
                 self._finish_generation(generation)
         except HistoryRefreshCancelled:
             return RebuildSummary(
@@ -239,6 +259,7 @@ class ReplayHistoryService:
         cancel_check: CancelCheck | None = None,
     ) -> ReconcileSummary:
         """Apply only what changed since the last committed generation."""
+        self._require_writer()
 
         started = time.perf_counter()
         scanner = ArtifactScanner(self._runs_root, identity=self._identity)
@@ -249,6 +270,8 @@ class ReplayHistoryService:
         state = _ReconcileState()
         try:
             with self._index.write_transaction():
+                if cancel_check is not None and cancel_check():
+                    raise HistoryRefreshCancelled("reconcile")
                 self._index.write_occurrences(
                     self._reconciled(
                         scanner, stored, first_seen, state, tally, progress, cancel_check
@@ -260,6 +283,8 @@ class ReplayHistoryService:
                     self._index.mark_seen(state.unchanged_ids, generation)
                 removed, retained = self._sweep_deleted(scanner, stored, state)
                 self._index.refresh_duplicate_flags()
+                if cancel_check is not None and cancel_check():
+                    raise HistoryRefreshCancelled("reconcile")
                 self._finish_generation(generation)
         except HistoryRefreshCancelled:
             return ReconcileSummary(
@@ -434,6 +459,23 @@ class ReplayHistoryService:
 
         return self._index.count(query)
 
+    def fetch_page_with_count(
+        self, query: HistoryQuery | None = None, *, limit: int = DEFAULT_PAGE_SIZE
+    ) -> tuple[HistoryPage, int]:
+        """First page and matching total from one committed generation."""
+        with self._index.read_snapshot():
+            return self.fetch_page(query, limit=limit), self.count(query)
+
+    def ruleset_facets(self) -> tuple[RulesetFacet, ...]:
+        """Distinct indexed ruleset identities, most common first.
+
+        The one query a filter control needs to offer the Rulesets history
+        actually contains rather than the Rulesets the current product
+        happens to offer for new matches.
+        """
+
+        return self._index.ruleset_facets()
+
     def fetch_detail(self, location_id: str) -> HistoryDetail | None:
         """Full normalized detail for one row, with current absolute paths."""
 
@@ -520,6 +562,46 @@ class ReplayHistoryService:
             expected_sha256=occurrence.replay_sha256,
             replay_id=occurrence.replay_id,
         )
+
+    def verify_replay_integrity(self, resolution: ReplayResolution) -> ReplayIntegrityCheck:
+        """Digest-preflight a resolved replay immediately before Viewer handoff.
+
+        Takes the :class:`ReplayResolution` returned by :meth:`resolve_replay`
+        -- never a second read of ``result.json`` -- and reads the resolved
+        file's actual bytes to compare against the digest recorded when it
+        was indexed:
+
+        * no recorded digest (a historical result predating that field):
+          ``UNVERIFIED_LEGACY``, not an error -- ``resolve_replay`` has
+          already proven the file exists and is contained;
+        * bytes match: ``VERIFIED``;
+        * bytes differ: ``MISMATCH`` -- the file changed since it was
+          indexed, and Phase 7D's launch policy blocks it;
+        * the file vanished or became unreadable between ``resolve_replay``
+          and this call: ``UNREADABLE``, not a crash.
+
+        Callers must only invoke this for a resolution that already reports
+        :attr:`ReplayResolution.available`; anything else has no path to
+        read and returns ``UNREADABLE`` defensively rather than raising.
+        """
+
+        if not resolution.available or resolution.path is None:
+            return ReplayIntegrityCheck(
+                status=ReplayIntegrityStatus.UNREADABLE,
+                diagnostic="No resolved replay path to verify.",
+            )
+        if resolution.expected_sha256 is None:
+            return ReplayIntegrityCheck(status=ReplayIntegrityStatus.UNVERIFIED_LEGACY)
+        try:
+            digest = verify_replay_digest_value(resolution.expected_sha256, resolution.path)
+        except ReplayIntegrityError as exc:
+            status = (
+                ReplayIntegrityStatus.MISMATCH
+                if exc.code == "replay_digest_mismatch"
+                else ReplayIntegrityStatus.UNREADABLE
+            )
+            return ReplayIntegrityCheck(status=status, diagnostic=str(exc))
+        return ReplayIntegrityCheck(status=ReplayIntegrityStatus.VERIFIED, digest=digest)
 
     def _absolute_artifact(self, relative: str | None) -> str | None:
         if not relative:
