@@ -26,6 +26,12 @@ agent_revisions/
 *.blob
 *.jsonl
 
+# Derived, disposable application cache. In a source checkout the data root is
+# the repository itself, so the rebuildable Replay History SQLite index lands
+# in <repo>/cache/replay_history/. It is regenerated from runs/ on demand and
+# must never be committed.
+/cache/
+
 # Source checkouts use root agents/ as the writable runtime catalogue.
 # Canonical starter agents live under battle_engine/data/starter_agents/.
 # Existing tracked historical/reproducibility fixtures remain tracked.

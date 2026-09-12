@@ -206,6 +206,19 @@ def write_json_atomic(path: Path, value: Mapping[str, Any]) -> None:
 
 def read_result(path: str | Path) -> ResultEnvelope:
     data = json.loads(Path(path).read_text(encoding="utf-8"))
+    return result_from_mapping(data)
+
+
+def result_from_mapping(data: object) -> ResultEnvelope:
+    """Adapt an already-parsed ``battle2.result`` payload to a typed envelope.
+
+    Extracted from :func:`read_result` (whose behavior is unchanged) so a
+    caller that must inspect or classify the raw JSON first -- Replay History
+    discovery distinguishes malformed JSON from an unsupported schema version
+    before adapting -- can reuse the one production parser instead of
+    re-reading the file or maintaining a second, drifting implementation.
+    """
+
     if not isinstance(data, dict):
         raise ValueError("battle2.result JSON root must be an object")
     if data.get("schema") != SCHEMA_NAME:
