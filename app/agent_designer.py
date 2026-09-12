@@ -31,7 +31,7 @@ from battle_engine.starters import (
     ensure_starter_agents,
 )
 from PySide6.QtCore import QProcess, QProcessEnvironment, Qt, QTimer, QUrl, Slot
-from PySide6.QtGui import QDesktopServices, QIcon
+from PySide6.QtGui import QAction, QDesktopServices, QIcon, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -226,20 +226,14 @@ class AgentDesigner(QMainWindow):
                     advanced.appendLog(f"[Starters] {line}")
 
     def _build_menus(self) -> None:
-        tools = self.menuBar().addMenu("Tools")
-        # V5 Alpha 1 Phase 1: a new user could not tell what "Open Last
-        # Output Folder" (below) actually opens. Menu items show no tooltip
-        # by default in Qt -- this opts the whole menu in so that action's
-        # explanation is actually discoverable on hover, least-invasively.
-        tools.setToolTipsVisible(True)
-        tools.addAction("Run Tournament…", self._on_tournament)
-        tools.addAction("Evaluation History…", self._on_evaluation_history)
-        tools.addAction("Replay History…", self._on_replay_history)
-        tools.addSeparator()
-        tools.addAction("Import Agent Package…", self._on_import_agent_package)
-        tools.addAction("Inspect Agent Package…", self._on_inspect_agent_package)
-        tools.addSeparator()
-        self.openOutputFolderAction = tools.addAction(
+        file_menu = self.menuBar().addMenu("File")
+        # V5 Alpha 1 Phase 1/2: tooltips must be enabled on the menu so that
+        # "Open Last Output Folder"'s explanatory hover tip is discoverable.
+        file_menu.setToolTipsVisible(True)
+        file_menu.addAction("Import Agent Package…", self._on_import_agent_package)
+        file_menu.addAction("Inspect Agent Package…", self._on_inspect_agent_package)
+        file_menu.addSeparator()
+        self.openOutputFolderAction = file_menu.addAction(
             "Open Last Output Folder", self._on_open_output_folder
         )
         # Wording matches _on_open_output_folder's actual fallback chain
@@ -256,8 +250,20 @@ class AgentDesigner(QMainWindow):
             "from your last single match (Simple/Advanced > Run Match). "
             "Before either has run, opens this installation's runs folder."
         )
+        file_menu.addSeparator()
+        self.exitAction = file_menu.addAction("Exit", self.close)
+        self.exitAction.setShortcut(QKeySequence.StandardKey.Quit)
+        self.exitAction.setMenuRole(QAction.MenuRole.QuitRole)
+
+        tools = self.menuBar().addMenu("Tools")
+        tools.setToolTipsVisible(True)
+        tools.addAction("Run Tournament…", self._on_tournament)
+        tools.addAction("Evaluation History…", self._on_evaluation_history)
+        tools.addAction("Replay History…", self._on_replay_history)
+
         help_menu = self.menuBar().addMenu("Help")
-        help_menu.addAction("About Bytefray", self._on_about)
+        about_action = help_menu.addAction("About Bytefray", self._on_about)
+        about_action.setMenuRole(QAction.MenuRole.AboutRole)
 
     @Slot()
     def refresh_agents(self, *, select: str | None = None) -> None:
