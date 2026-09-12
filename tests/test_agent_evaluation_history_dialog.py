@@ -97,7 +97,30 @@ def test_history_dialog_shows_friendly_message_when_no_evaluations(tmp_path):
     dialog = EvaluationHistoryDialog(tmp_path)
     try:
         assert dialog.list.count() == 0
-        assert "No evaluations found" in dialog.detailText.toPlainText()
+        assert "No evaluations recorded yet" in dialog.detailText.toPlainText()
+    finally:
+        dialog.deleteLater()
+
+
+@pytest.mark.gui
+def test_history_dialog_empty_state_explains_what_an_evaluation_is_and_how_to_start(tmp_path):
+    """V5 Alpha 1 Phase 1: a new-install user sees an empty history with no
+    context. The empty state must say what an evaluation is, that results
+    accumulate here for review/comparison, that none have run yet, and the
+    existing canonical action ("Evaluate…" in Agent Development) that
+    creates the first one -- without inventing a new evaluation workflow."""
+
+    _make_app()
+    from app.views.evaluation_history import EvaluationHistoryDialog
+
+    dialog = EvaluationHistoryDialog(tmp_path)
+    try:
+        text = dialog.detailText.toPlainText().lower()
+        assert "no evaluations recorded yet" in text  # none run/recorded yet
+        assert "evaluation runs" in text  # what an evaluation is
+        assert "compare agent performance" in text or "review and compare" in text
+        assert "evaluate…" in text  # how to begin (matches the button's own label)
+        assert "agent development" in text  # where that action lives
     finally:
         dialog.deleteLater()
 

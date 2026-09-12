@@ -101,6 +101,27 @@ from app.widgets.evaluation_visuals import (
     win_rate_bar_data,
 )
 
+# V5 Alpha 1 Phase 1: the new-install empty state (Sec 4 of the phase task).
+# Evaluation History has no separate persistence of its own -- it discovers
+# whatever "agents evaluate"/Agent Development's "Evaluate…" has already
+# written under this data root's runs/evaluations directory (see refresh()'s
+# own discover_evaluation_listing call), so an empty list here means no
+# evaluation has ever completed in this installation, not that the feature
+# is broken. This explains what an evaluation is, why entries appear here
+# automatically, and the one canonical action that creates the first one --
+# deliberately not a new workflow of its own.
+_EMPTY_HISTORY_EXPLANATION = (
+    "No evaluations recorded yet.\n\n"
+    "An evaluation runs one agent -- optionally against a baseline -- through "
+    "many matches against a roster of opponents and seeds, then records the "
+    "outcomes so you can review and compare agent performance over time: win "
+    "rate, survival, core captures, and behavior versus a baseline or an "
+    "earlier version of the same agent.\n\n"
+    "Entries appear here automatically; there is nothing to import or set up. "
+    "To create your first one, select an agent in the Agent Development tab "
+    "and click \"Evaluate…\"."
+)
+
 _HISTORICAL_AGENT_LAB_TOOLTIP = (
     "Reruns the selected seed, ticks, and orientation against the currently "
     "installed agents. Historical agent source is not restored."
@@ -1158,9 +1179,7 @@ class EvaluationHistoryDialog(QDialog):
             item.setData(Qt.UserRole, entry)
             self.list.addItem(item)
         if not self._entries:
-            self.detailText.setPlainText(
-                "No evaluations found. Run \"Evaluate…\" from the Agent Development tab first."
-            )
+            self.detailText.setPlainText(_EMPTY_HISTORY_EXPLANATION)
 
     def _selected_entry(self) -> DiscoveredEvaluation | None:
         item = self.list.currentItem()

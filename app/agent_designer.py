@@ -227,6 +227,11 @@ class AgentDesigner(QMainWindow):
 
     def _build_menus(self) -> None:
         tools = self.menuBar().addMenu("Tools")
+        # V5 Alpha 1 Phase 1: a new user could not tell what "Open Last
+        # Output Folder" (below) actually opens. Menu items show no tooltip
+        # by default in Qt -- this opts the whole menu in so that action's
+        # explanation is actually discoverable on hover, least-invasively.
+        tools.setToolTipsVisible(True)
         tools.addAction("Run Tournament…", self._on_tournament)
         tools.addAction("Evaluation History…", self._on_evaluation_history)
         tools.addAction("Replay History…", self._on_replay_history)
@@ -234,7 +239,23 @@ class AgentDesigner(QMainWindow):
         tools.addAction("Import Agent Package…", self._on_import_agent_package)
         tools.addAction("Inspect Agent Package…", self._on_inspect_agent_package)
         tools.addSeparator()
-        tools.addAction("Open Last Output Folder", self._on_open_output_folder)
+        self.openOutputFolderAction = tools.addAction(
+            "Open Last Output Folder", self._on_open_output_folder
+        )
+        # Wording matches _on_open_output_folder's actual fallback chain
+        # exactly (never "tournament/evaluation/replay output" in general,
+        # which the implementation does not guarantee): a tournament's
+        # output folder takes priority for the rest of this session once
+        # any tournament has run, even over a later single match -- it is
+        # not simply "whichever happened most recently" -- and only falls
+        # back to this installation's runs folder before either has run.
+        self.openOutputFolderAction.setToolTip(
+            "Opens this session's tournament output folder, if you have run a "
+            "tournament (Tools > Run Tournament…) -- this takes priority even "
+            "over a single match run afterward. Otherwise opens the folder "
+            "from your last single match (Simple/Advanced > Run Match). "
+            "Before either has run, opens this installation's runs folder."
+        )
         help_menu = self.menuBar().addMenu("Help")
         help_menu.addAction("About Bytefray", self._on_about)
 

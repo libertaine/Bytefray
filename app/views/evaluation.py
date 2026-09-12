@@ -219,6 +219,13 @@ class EvaluationDialog(QDialog):
         self.ticksSpin = QSpinBox()
         self.ticksSpin.setRange(1, 2_147_483_647)
         self.ticksSpin.setValue(200)
+        self.ticksSpin.setToolTip(
+            "Maximum number of simulation ticks before each evaluation cell's "
+            "match ends, subject to the selected Ruleset's win condition. "
+            "The engine itself only requires a positive tick limit (at least "
+            "1) and has no maximum; the field's own upper bound is a "
+            "practical GUI limit, not a gameplay rule."
+        )
         options_row.addRow("Ticks", self.ticksSpin)
         # v3.0 Phase 4: GUI parity for the CLI's `agents evaluate --workers`
         # (docs/V1_6_PHASE2_PARALLEL_EVALUATION.md) -- bounded subprocess

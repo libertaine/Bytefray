@@ -898,6 +898,83 @@ def _many_entrant_session(tmp_path, entrant_count=6):
     return _load(tmp_path, "many_entrants.jsonl", [header, tick0])
 
 
+def _v2_two_entrant_result_session(tmp_path):
+    """A minimal completed 2-entrant replay carrying a ``MatchResult``, for
+    the terminal-banner tests below (``_v2_two_entrant_session`` above has
+    no result record at all)."""
+    header = _v2_header(("A", "B"), arena_size=32)
+    tick0 = TickSnapshot(
+        0,
+        agents=(_agent("A"), _agent("B")),
+        score={"A": 10, "B": 5},
+        memory_diffs=_core_seed_diff("A", 0, 32) + _core_seed_diff("B", 16, 32),
+    )
+    tick1 = TickSnapshot(
+        1,
+        agents=(
+            AgentState(agent_id="A", pc=0, alive=False, termination_reason="core_captured"),
+            _agent("B"),
+        ),
+        score={"A": 10, "B": 8},
+    )
+    result = MatchResult(
+        winner="B", win_mode="score_fallback", ticks=1, termination_reason="core_captured"
+    )
+    return _load(tmp_path, "v2_result.jsonl", [header, tick0, tick1, result])
+
+
+def test_terminal_banner_only_shows_at_the_final_tick_and_restores_on_return(tmp_path):
+    """V5 Alpha 1 Phase 1: the terminal banner must appear exactly when
+    playback is positioned at the replay's final recorded tick, using the
+    canonical ``ReplaySession.winner`` -- never a nonterminal tick, and never
+    a recomputed outcome -- and must reappear correctly after the viewer
+    scrubs away and back."""
+
+    session = _v2_two_entrant_result_session(tmp_path)
+    controller = PlaybackController(session, playing=False)
+    renderer = _band_renderer((960, 700), entrant_count=2, arena_size=32)
+    renderer._match_events = []
+    renderer._ruleset_label = "bytefray-rules-2"
+
+    def _banner_text():
+        renderer.banner_font = _FakeFont()
+        statuses = renderer._draw_top_band(controller)
+        renderer._draw_terminal_banner(controller, statuses)
+        return renderer.banner_font.rendered
+
+    assert _banner_text() == []  # tick 0: not terminal yet
+
+    session.step_forward()
+    assert _banner_text() == ["B WINS"]  # tick 1: final recorded tick
+
+    session.seek(0)
+    assert _banner_text() == []  # scrubbed away: hidden again
+
+    session.seek(1)
+    assert _banner_text() == ["B WINS"]  # back to the end: restored
+
+
+def test_terminal_banner_reports_a_draw_from_canonical_result_data(tmp_path):
+    header = _v2_header(("A", "B"), arena_size=32)
+    tick0 = TickSnapshot(
+        0,
+        agents=(_agent("A"), _agent("B")),
+        memory_diffs=_core_seed_diff("A", 0, 32) + _core_seed_diff("B", 16, 32),
+    )
+    result = MatchResult(winner=None, win_mode="tick_limit", ticks=0, termination_reason="tick_limit")
+    session = _load(tmp_path, "v2_draw.jsonl", [header, tick0, result])
+    controller = PlaybackController(session, playing=False)
+    renderer = _band_renderer((960, 700), entrant_count=2, arena_size=32)
+    renderer._match_events = []
+    renderer._ruleset_label = "bytefray-rules-2"
+    renderer.banner_font = _FakeFont()
+
+    statuses = renderer._draw_top_band(controller)
+    renderer._draw_terminal_banner(controller, statuses)
+
+    assert renderer.banner_font.rendered == ["DRAW"]
+
+
 def test_top_band_renders_v1_entrants_with_no_core_field(tmp_path):
     session = _no_events_session(tmp_path)
     controller = PlaybackController(session, playing=False)

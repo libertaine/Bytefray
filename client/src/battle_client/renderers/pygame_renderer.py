@@ -93,7 +93,9 @@ from battle_client.hud_layout import (
     format_help_lines,
     format_match_header_lines,
     format_playback_line,
+    format_replay_terminal_banner,
     integer_scale_to_fit,
+    terminal_banner_rect,
     timeline_contains,
     timeline_tick_for_x,
     timeline_x_for_tick,
@@ -852,6 +854,7 @@ class PygameRenderer:
         self.grid_surf: Any = None
         self.font: Any = None
         self.hud_font: Any = None
+        self.banner_font: Any = None
         # Header identity icon surface, set by _configure_window(). None
         # before the first configure (e.g. a unit test that never called
         # run()) and None permanently if the shared branding asset is
@@ -1214,6 +1217,7 @@ class PygameRenderer:
         self.grid_surf = pg.Surface((self.grid_cols, self.grid_rows))
         self.font = pg.font.SysFont("consolas", 14)
         self.hud_font = pg.font.SysFont("consolas", 13)
+        self.banner_font = pg.font.SysFont("consolas", 24)
         self._header_icon = self._load_header_icon(icon_path)
 
     def _load_header_icon(self, icon_path: Path | None) -> Any:
@@ -1811,6 +1815,7 @@ class PygameRenderer:
 
         self._draw_selection_highlight()
         statuses = self._draw_top_band(controller)
+        self._draw_terminal_banner(controller, statuses)
         self._draw_fight_night(controller, statuses)
         self._draw_capture_callout(controller, statuses)
         self._draw_footer(controller)
@@ -2419,6 +2424,50 @@ class PygameRenderer:
             self._draw_entrant_card(status, rect, ordinal=ordinal, mode=layout.card_mode, known=known)
 
         return statuses
+
+    # ---------- Terminal-outcome banner (V5 Alpha 1 Phase 1) ----------
+
+    def _draw_terminal_banner(
+        self, controller: PlaybackController, statuses: Sequence[EntrantReplayStatus]
+    ) -> None:
+        """Draw the prominent match-outcome banner at the replay's final tick.
+
+        Always on -- unlike Fight Night below, which is opt-in, timed, and
+        driven by a ``SpectatorDerivation`` that isn't always available (e.g.
+        group matches). This reads nothing but ``ReplaySession``'s own
+        already-authoritative ``winner``/``result`` fields (never recomputes
+        an outcome) and is gated purely on the *current* scrub position via
+        ``session.at_end``, so it is present exactly when the viewer is
+        actually looking at the terminal state -- scrubbing away hides it and
+        returning to the end restores it, with no cached "was terminal" flag
+        to go stale.
+        """
+
+        layout = self._layout
+        if layout is None:
+            return
+        session = controller.session
+        if session.result is None or not session.at_end:
+            return
+
+        names = {status.agent_id: status.name for status in statuses}
+        text = format_replay_terminal_banner(winner=session.winner, names=names)
+        x, y, width, height = terminal_banner_rect(layout.arena_viewport_rect)
+        if width <= 0 or height <= 0:
+            return
+
+        panel = self.pg.Surface((width, height), flags=self.pg.SRCALPHA)
+        panel.fill((*FIGHT_NIGHT_BG, FIGHT_NIGHT_PANEL_ALPHA))
+        self.pg.draw.rect(panel, TERMINAL_TEXT_COLOR, panel.get_rect(), 2)
+        # Falls back to hud_font for a renderer test double that sets that
+        # (as several pre-existing suites' own renderer fixtures do) but was
+        # never routed through _configure_window(), where banner_font is
+        # normally created -- never raises for want of the larger font.
+        font = self.banner_font if self.banner_font is not None else self.hud_font
+        rendered = font.render(text, True, TERMINAL_TEXT_COLOR)
+        text_rect = rendered.get_rect(center=(width // 2, height // 2))
+        panel.blit(rendered, text_rect)
+        self.screen.blit(panel, (x, y))
 
     def _perspective_card_knowledge_basis(self, tick: int) -> tuple[str | None, bool]:
         """``(selected_entrant_id, is_terminal)`` for ``entrant_card_known``.

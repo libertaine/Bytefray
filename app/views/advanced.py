@@ -201,7 +201,10 @@ class AdvancedPanel(QWidget):
         self.ticks.setValue(600)
         self.ticks.setToolTip(
             "Maximum number of simulation ticks before the match ends, "
-            "subject to the selected Ruleset's win condition."
+            "subject to the selected Ruleset's win condition. "
+            f"GUI limit: {self.ticks.minimum()}-{self.ticks.maximum()}; the "
+            "engine itself only requires a positive tick limit (at least 1) "
+            "and has no maximum."
         )
         form.addRow("Ticks", self.ticks)
 
@@ -213,7 +216,10 @@ class AdvancedPanel(QWidget):
             "Points added to a surviving agent's score every tick. Higher "
             "values reward staying alive longer. Bytefray's default is "
             f"{ENGINE_DEFAULT_WEIGHTS.alive:g}; left at that value, the match "
-            "runs with the engine's own default."
+            "runs with the engine's own default. "
+            f"GUI limit: {self.alive_w.minimum():g}-{self.alive_w.maximum():g}; "
+            "Bytefray does not define a maximum scoring weight, so this "
+            "range is a practical UI bound, not a gameplay rule."
         )
         self.kill_w = QDoubleSpinBox()
         self.kill_w.setRange(0.0, 1000.0)
@@ -223,7 +229,10 @@ class AdvancedPanel(QWidget):
             "Points awarded to an agent immediately when it eliminates an "
             "opponent. Bytefray's default is "
             f"{ENGINE_DEFAULT_WEIGHTS.kill:g}; left at that value, the match "
-            "runs with the engine's own default."
+            "runs with the engine's own default. "
+            f"GUI limit: {self.kill_w.minimum():g}-{self.kill_w.maximum():g}; "
+            "Bytefray does not define a maximum scoring weight, so this "
+            "range is a practical UI bound, not a gameplay rule."
         )
         self.territory_w = QDoubleSpinBox()
         self.territory_w.setRange(0.0, 1000.0)
@@ -234,7 +243,11 @@ class AdvancedPanel(QWidget):
             "arena cells an agent owns, whether or not that agent is still "
             "alive. Set to 0 to turn off territory scoring entirely. "
             f"Bytefray's default is {ENGINE_DEFAULT_WEIGHTS.territory:g}; left "
-            "at that value, the match runs with the engine's own default."
+            "at that value, the match runs with the engine's own default. "
+            f"GUI limit: {self.territory_w.minimum():g}-"
+            f"{self.territory_w.maximum():g}; Bytefray does not define a "
+            "maximum scoring weight, so this range is a practical UI bound, "
+            "not a gameplay rule."
         )
         form.addRow("Survival Weight", self.alive_w)
         form.addRow("Kill Weight", self.kill_w)
@@ -249,7 +262,11 @@ class AdvancedPanel(QWidget):
             "readily; larger values require controlling more cells before "
             "Territory Weight points accrue. Bytefray's default is "
             f"{ENGINE_DEFAULT_WEIGHTS.territory_bucket}; left at that value, "
-            "the match runs with the engine's own default."
+            "the match runs with the engine's own default. "
+            f"GUI limit: {self.territory_bucket.minimum()}-"
+            f"{self.territory_bucket.maximum()}; Bytefray does not define a "
+            "maximum bucket size, so this range is a practical UI bound, not "
+            "a gameplay rule."
         )
         form.addRow("Territory Bucket Size", self.territory_bucket)
 

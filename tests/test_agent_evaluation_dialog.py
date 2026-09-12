@@ -197,6 +197,31 @@ def test_evaluation_dialog_collects_fields(tmp_path):
 
 
 @pytest.mark.gui
+def test_evaluation_dialog_ticks_tooltip_states_its_range_honestly(tmp_path):
+    """V5 Alpha 1 Phase 1: Ticks previously had no tooltip at all here. The
+    engine's only real constraint is a positive tick limit (``max_ticks <=
+    0`` is rejected -- see ``process_runtime.py``); the field's huge upper
+    bound is a practical GUI limit and must not be presented as an engine
+    rule."""
+
+    _make_app()
+    from app.views.evaluation import EvaluationDialog
+
+    dialog = EvaluationDialog(
+        [("Candidate", "candidate"), ("Opponent A", "opponent_a")],
+        default_candidate="candidate",
+        default_output=tmp_path / "out",
+    )
+    try:
+        tip = dialog.ticksSpin.toolTip().lower()
+        assert tip.strip() != ""
+        assert "positive" in tip
+        assert "no maximum" in tip
+    finally:
+        dialog.deleteLater()
+
+
+@pytest.mark.gui
 def test_evaluation_dialog_both_orientations_checkbox_defaults_checked(tmp_path):
     """v0.9 Phase 6 (Phase 5 spec Sec P): checked by default ("recommended")."""
 

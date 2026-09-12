@@ -81,6 +81,11 @@ def test_simple_panel_run_still_produces_same_run_config_shape():
     panel = SimplePanel(catalog=None)
     try:
         panel.setAgents([_row("alpha"), _row("beta")])
+        # V5 Alpha 1 Phase 1: Simple's fresh default is now the stable v4
+        # Ruleset, which these Agent API v1 rows are not compatible with --
+        # select v2 explicitly, since this test is about RunConfig shape,
+        # not the fresh Ruleset default.
+        panel.ruleset.setCurrentIndex(panel.ruleset.findData("bytefray-rules-2"))
         captured = []
         panel.runRequested.connect(captured.append)
         panel.gridSize.setCurrentText("Large (1024)")
@@ -129,6 +134,37 @@ def test_advanced_panel_scoring_labels_and_tooltips(tmp_path):
         assert "bucket" in panel.territory_w.toolTip().lower()
 
         assert panel.btnOpen.text() == "View Last Match"
+    finally:
+        panel.deleteLater()
+
+
+@pytest.mark.gui
+def test_advanced_panel_numeric_tooltips_disclose_gui_limits_honestly(tmp_path):
+    """V5 Alpha 1 Phase 1: a numeric control's tooltip must state its own
+    displayed range and, since none of Ticks/the scoring weights/Territory
+    Bucket Size have an authoritative engine maximum (only Arena's ``> 1``
+    and Ticks' ``>= 1`` are real engine-enforced minimums -- see
+    ``process_runtime.py``'s ``arena_size <= 1 or max_ticks <= 0`` guard),
+    must not claim the shown upper bound is an engine rule rather than a
+    practical GUI limit."""
+
+    _make_app()
+    from app.views.advanced import AdvancedPanel
+
+    panel = AdvancedPanel(catalog=None, data_root=tmp_path)
+    try:
+        ticks_tip = panel.ticks.toolTip().lower()
+        assert "1-100000" in ticks_tip.replace(" ", "")
+        assert "engine" in ticks_tip and "maximum" in ticks_tip
+
+        for spin in (panel.alive_w, panel.kill_w, panel.territory_w):
+            tip = spin.toolTip().lower()
+            assert "gui limit" in tip
+            assert "not a gameplay rule" in tip
+
+        bucket_tip = panel.territory_bucket.toolTip().lower()
+        assert "gui limit" in bucket_tip
+        assert "not a gameplay rule" in bucket_tip
     finally:
         panel.deleteLater()
 

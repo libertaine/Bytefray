@@ -7,6 +7,7 @@ from collections.abc import Iterable
 from PySide6.QtWidgets import QComboBox, QLabel
 
 from app.services.ruleset_options import (
+    DEFAULT_DESIGNER_RULESET_ID,
     DESIGNER_RULESET_OPTIONS,
     RULESET_DESCRIPTION,
     VM_RULESET_EXPLANATION,
@@ -29,12 +30,27 @@ NO_COMPATIBLE_RULESET_EXPLANATION = (
 def populate_ruleset_combo(
     combo: QComboBox,
     options: tuple[DesignerRulesetOption, ...] = DESIGNER_RULESET_OPTIONS,
+    *,
+    default_ruleset_id: str = DEFAULT_DESIGNER_RULESET_ID,
 ) -> None:
+    """Populate ``combo`` and select the Designer's canonical default.
+
+    Item *order* stays whatever ``options`` declares (the product-preference
+    order ``sync_ruleset_choices_for_metadata``'s selection repair walks --
+    see ``DESIGNER_RULESET_OPTIONS``'s docstring -- which must not change
+    here). The *initial selection* is a separate concern: rather than
+    leaving Qt's incidental "item 0" default, this explicitly selects
+    ``default_ruleset_id`` (falling back to item 0 if a caller's narrower
+    ``options`` tuple happens not to include it) so every Designer surface
+    starts on the same canonical Ruleset before any agent is known.
+    """
     combo.clear()
     for option in options:
         combo.addItem(option.label, option.ruleset_id)
     combo.setToolTip(RULESET_DESCRIPTION)
     combo.setAccessibleDescription(RULESET_DESCRIPTION)
+    default_index = combo.findData(default_ruleset_id)
+    combo.setCurrentIndex(max(default_index, 0))
 
 
 def selected_ruleset_id(combo: QComboBox) -> str:

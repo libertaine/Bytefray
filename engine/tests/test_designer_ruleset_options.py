@@ -12,7 +12,9 @@ from battle_engine.ruleset_policy import (
 
 from app.services.agent_catalog import AgentRow
 from app.services.ruleset_options import (
+    DEFAULT_DESIGNER_RULESET_ID,
     DESIGNER_RULESET_OPTIONS,
+    EVALUATION_RULESET_OPTIONS,
     SIMPLE_RULESET_OPTIONS,
     agent_row_metadata,
     agent_row_supported_by_ruleset,
@@ -226,4 +228,25 @@ def test_row_metadata_projection_fails_closed_but_is_distinct_from_no_selection(
     # An unreadable row projects to an empty mapping (fails closed), never to
     # None, which would read as "nothing selected" and impose no constraint.
     assert agent_row_metadata(object()) == {}
+
+
+def test_designer_default_ruleset_is_stable_v4_not_v2() -> None:
+    """V5 Alpha 1 Phase 1 regression: a fresh Designer session (Simple,
+    Advanced, Development, Evaluation -- every surface ``populate_ruleset_
+    combo`` populates) must start on the permanent stable V4 identity, not
+    the historical Agent API v1 Ruleset v2 that previously looked like the
+    recommended V5 experience purely because it happened to sort first in
+    every option tuple below. If this regresses back to ``bytefray-rules-2``,
+    a future change silently restored the exact bug this phase corrected --
+    see ``app.widgets.ruleset_combo.populate_ruleset_combo`` and
+    ``DEFAULT_DESIGNER_RULESET_ID``'s own docstring.
+    """
+
+    assert DEFAULT_DESIGNER_RULESET_ID == BYTEFRAY_RULESET_V4_ID
+    # The default must actually be one of the choices offered by every combo
+    # population site, or `populate_ruleset_combo`'s fallback-to-item-0 would
+    # silently reintroduce v2 as the effective default on any surface whose
+    # option tuple omits it.
+    for options in (SIMPLE_RULESET_OPTIONS, DESIGNER_RULESET_OPTIONS, EVALUATION_RULESET_OPTIONS):
+        assert DEFAULT_DESIGNER_RULESET_ID in {option.ruleset_id for option in options}
     assert agent_row_metadata(object()) is not None
