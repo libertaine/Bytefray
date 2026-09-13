@@ -5,7 +5,8 @@ Validates:
 - File menu contains Import Agent Package…, Inspect Agent Package…,
   separator, Open Last Output Folder, separator, Exit.
 - Tools menu contains only operational commands: Run Tournament…,
-  Evaluation History…, Replay History… (no duplicated package/file commands).
+  Tournament History… (added by Phase 4), Evaluation History…, Replay History…
+  (no duplicated package/file commands).
 - Help menu contains About Bytefray.
 - Canonical wiring: triggering actions executes the established handler.
 - File -> Exit triggers canonical window close/shutdown path (closeEvent).
@@ -156,6 +157,7 @@ def test_tools_menu_contains_only_operational_actions(monkeypatch, tmp_path: Pat
         labels = [a.text() for a in actions if not a.isSeparator()]
         assert labels == [
             "Run Tournament…",
+            "Tournament History…",
             "Evaluation History…",
             "Replay History…",
         ]
@@ -213,6 +215,9 @@ def test_action_trigger_wiring_executes_canonical_handlers(monkeypatch, tmp_path
         monkeypatch.setattr(designer, "_on_inspect_agent_package", lambda: calls.append("inspect"))
         monkeypatch.setattr(designer, "_on_open_output_folder", lambda: calls.append("output_folder"))
         monkeypatch.setattr(designer, "_on_tournament", lambda: calls.append("tournament"))
+        monkeypatch.setattr(
+            designer, "_on_tournament_history", lambda: calls.append("tournament_history")
+        )
         monkeypatch.setattr(designer, "_on_evaluation_history", lambda: calls.append("eval_history"))
         monkeypatch.setattr(designer, "_on_replay_history", lambda: calls.append("replay_history"))
         monkeypatch.setattr(designer, "_on_about", lambda: calls.append("about"))
@@ -226,6 +231,7 @@ def test_action_trigger_wiring_executes_canonical_handlers(monkeypatch, tmp_path
         # Trigger Tools actions
         action_map_tools = {a.text(): a for a in tools_menu.actions() if not a.isSeparator()}
         action_map_tools["Run Tournament…"].trigger()
+        action_map_tools["Tournament History…"].trigger()
         action_map_tools["Evaluation History…"].trigger()
         action_map_tools["Replay History…"].trigger()
 
@@ -238,6 +244,7 @@ def test_action_trigger_wiring_executes_canonical_handlers(monkeypatch, tmp_path
             "inspect",
             "output_folder",
             "tournament",
+            "tournament_history",
             "eval_history",
             "replay_history",
             "about",

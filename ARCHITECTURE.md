@@ -245,7 +245,10 @@ engine, not part of `battle_engine.core`.
   entry point.** It is a PySide6 `QMainWindow` application with three tabs
   (Simple, Advanced, and Agent Development) built from `app.services.*` and
   `app.views.*`. Simple/Advanced launch a homogeneous VM-vs-VM or
-  Python-vs-Python match; a Tools-menu dialog launches a tournament. The
+  Python-vs-Python match; a Tools-menu dialog launches a tournament, and
+  `app/views/tournament.py` presents its results and saved history from the
+  canonical `tournament.json` and per-match artifacts through the Qt-free
+  `app/services/tournament_results.py`, which writes nothing. The
   **Agent Development** tab (`app/views/development.py`, v0.4 Phase 4a-4c)
   brings the `create → validate → test → replay` authoring loop
   (`docs/specs/agent_designer_workflow.md`) into the GUI: `New Agent` calls

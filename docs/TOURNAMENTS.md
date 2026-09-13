@@ -61,9 +61,35 @@ also names its canonical result and replay alongside `summary.json`.
 The optional PySide6 Designer exposes a deliberately small launcher at
 **Tools → Run Tournament…**. It selects two or more homogeneous entrants,
 rounds, seed, and an output directory, then runs this same supported CLI in a
-background process. Completion counts and standings are shown in the existing
-log, and **Tools → Open Last Output Folder** opens the selected artifact root.
-An existing compatible output directory resumes automatically.
+background process. Each launch proposes a new folder beneath
+`<data-root>/runs/tournaments/` (`designer-<UTC timestamp>-<suffix>`), so a new
+roster never collides with an earlier tournament's state; choosing an existing
+compatible output directory still resumes it.
+
+When the process ends, the Designer opens **Tournament Results**, read only
+from `tournament.json` and each completed match's `result.json`. It shows the
+winner, the output folder, the Ruleset recorded by the matches, entrant and
+match counts, the standings exactly as `tournament.json` records them, and
+every recorded match in schedule order with its result, seed, and replay
+availability. Entrants level on both wins and score share a rank and are shown
+as tied for first rather than separated by the agent-ID ordering tiebreak.
+Failed, rejected, and corrupted matches are listed with their recorded error;
+because standings exclude them, the top entrant is then called the leader. A
+`tournament.json` with no standings belongs to a tournament that stopped before
+its schedule finished, and is shown as not finished, with no winner. **View
+Replay** checks the replay against the digest in the match's `result.json` and
+hands it to the normal Replay Viewer; a missing or changed replay is reported
+instead of opened. If a run records nothing (the process exits without
+replacing `tournament.json`, for example because the chosen folder holds a
+different tournament), the Designer says the tournament did not run rather than
+presenting the folder's earlier results.
+
+**Tools → Tournament History…** lists the tournament folders directly beneath
+`runs/tournaments/`, newest first, and reopens any of them in Tournament
+Results; **Open Tournament Folder…** reads a tournament saved elsewhere. No
+index or additional artifact is written. Completion counts and standings are
+also written to the Advanced log, and **File → Open Last Output Folder** opens
+the last tournament's output directory.
 
 There is no bracket visualization, parallel scheduler, elimination bracket,
 rating system, custom tournament scoring UI, mixed-runtime division, or pMARS

@@ -72,6 +72,12 @@ from app.services.ruleset_options import (
     validate_designer_agent_rows,
     validate_designer_ruleset,
 )
+from app.services.tournament_results import (
+    describe_tournament_not_run,
+    new_tournament_output_directory,
+    read_tournament_results,
+    tournament_state_signature,
+)
 from app.views.advanced import AdvancedPanel
 from app.views.agent_package import (
     PackageDetailsDialog,
@@ -84,7 +90,11 @@ from app.views.evaluation import EvaluationDialog, EvaluationResultsDialog
 from app.views.evaluation_history import EvaluationHistoryDialog
 from app.views.replay_history import ReplayHistoryWindow
 from app.views.simple import SimplePanel
-from app.views.tournament import TournamentDialog
+from app.views.tournament import (
+    TournamentDialog,
+    TournamentHistoryDialog,
+    TournamentResultsDialog,
+)
 from app.widgets.designer_presentation import DesignerIdentityHeader
 
 
@@ -141,6 +151,8 @@ class AgentDesigner(QMainWindow):
         self._last_replay = None                  # <-- init replay capture
         self._result_path = None
         self._tournament_output = None
+        self._tournament_state_before = None
+        self._tournament_stderr = ""
         self._evaluation_output = None
         self._evaluation_ticks = None
         self._active_workflow = "match"
@@ -262,6 +274,8 @@ class AgentDesigner(QMainWindow):
         tools = self.menuBar().addMenu("Tools")
         tools.setToolTipsVisible(True)
         tools.addAction("Run Tournament…", self._on_tournament)
+        tools.addAction("Tournament History…", self._on_tournament_history)
+        tools.addSeparator()
         tools.addAction("Evaluation History…", self._on_evaluation_history)
         tools.addAction("Replay History…", self._on_replay_history)
 
@@ -554,6 +568,8 @@ class AgentDesigner(QMainWindow):
             self._test_stdout += out
             self._test_stderr += err
             return
+        if self._active_workflow == "tournament":
+            self._tournament_stderr += err
         text = (out or "") + (err or "")
         if text:
             # send to active tab’s log
@@ -656,7 +672,13 @@ class AgentDesigner(QMainWindow):
         if self._active_workflow == "evaluation_agent_lab_test":
             return  # Same reasoning: this is a bare agents-test rerun, not a logged workflow.
         if self._log_target:
-            label = "Evaluate" if self._active_workflow == "evaluate" else "RunMatch"
+            label = (
+                "Evaluate"
+                if self._active_workflow == "evaluate"
+                else "Tournament"
+                if self._active_workflow == "tournament"
+                else "RunMatch"
+            )
             self._log_target.appendLog(f"[{label}] stopped.\n")
 
     def _on_proc_finished(self, proc, code, status):
@@ -760,7 +782,9 @@ class AgentDesigner(QMainWindow):
 
     def _on_tournament(self) -> None:
         rows = self.catalog.list_agents()
-        default = self.data_root / "runs" / "tournaments" / "designer-tournament"
+        # A fixed default folder made every later tournament with a different roster fail as
+        # incompatible state; each launch now proposes its own folder, like match runs.
+        default = new_tournament_output_directory(self.data_root)
         dialog = TournamentDialog(rows, default, self)
         if not dialog.exec():
             return
@@ -775,6 +799,8 @@ class AgentDesigner(QMainWindow):
             QMessageBox.warning(self, "Invalid Tournament", str(exc))
             return
         self._tournament_output = dialog.output_path().expanduser().resolve()
+        self._tournament_state_before = tournament_state_signature(self._tournament_output)
+        self._tournament_stderr = ""
         self._active_workflow = "tournament"
         self._log_target = self.advanced if hasattr(self, "advanced") else self.simple
         self.simple.setBusy(True)
@@ -800,13 +826,29 @@ class AgentDesigner(QMainWindow):
         proc.start()
 
     def _present_tournament_result(self, code: int) -> None:
-        if not self._tournament_output:
+        output = self._tournament_output
+        if not output:
             return
-        state_path = self._tournament_output / "tournament.json"
+        if tournament_state_signature(output) == self._tournament_state_before:
+            # This run wrote nothing, so any tournament.json here belongs to an earlier run.
+            self._log_target.appendLog("[Tournament] no results were recorded by this run.\n")
+            QMessageBox.warning(
+                self,
+                "Tournament Did Not Run",
+                describe_tournament_not_run(
+                    code,
+                    self._tournament_stderr,
+                    had_earlier_results=self._tournament_state_before is not None,
+                ),
+            )
+            return
+        state_path = output / "tournament.json"
         try:
             result = read_tournament_presentation(state_path)
+            results = read_tournament_results(output)
         except (OSError, ValueError, KeyError) as exc:
             self._log_target.appendLog(f"[Tournament] Could not read state: {exc}\n")
+            QMessageBox.warning(self, "Tournament Results Unavailable", str(exc))
             return
         self._log_target.appendLog(
             f"[Tournament] {result.tournament_id} ({result.division})\n"
@@ -819,6 +861,14 @@ class AgentDesigner(QMainWindow):
                 f"  {row.get('agent_id')}: W={row.get('wins')} L={row.get('losses')} "
                 f"T={row.get('ties')} score={row.get('score_total')}\n"
             )
+        dialog = TournamentResultsDialog(results, parent=self)
+        dialog.openReplayRequested.connect(self._on_evaluation_open_replay)
+        dialog.exec()
+
+    def _on_tournament_history(self) -> None:
+        dialog = TournamentHistoryDialog(self.data_root, parent=self)
+        dialog.openReplayRequested.connect(self._on_evaluation_open_replay)
+        dialog.exec()
 
     def _plan_default_evaluation_output(self, dialog: EvaluationDialog) -> Path:
         """This plan's own content-addressed default output directory.

@@ -343,6 +343,48 @@ clipboard, so no step here modifies a match artifact.
     Open Replay and Copy Seed. Check empty history, no filter matches,
     unavailable replay and backend error messages separately.
 
+### Tournament Results and History (V5 Alpha 1, packaged application)
+
+Release checklist for the tournament workflow after **Tools → Run
+Tournament…**. Automated coverage lives in
+`tests/test_v5_alpha1_phase4_tournament_results.py` (`gui`-marked, including a
+real Designer-launched tournament) and `engine/tests/test_tournament_results.py`
+(headless); this sequence is the interactive confirmation. Results and History
+only read tournament artifacts, and View Replay hands a digest-checked replay to
+the existing Replay Viewer.
+
+1. Choose **Tools → Run Tournament…**, select three agents of one runtime, and
+   confirm Output proposes a new `runs/tournaments/designer-…` folder. Run it;
+   when it finishes, **Tournament Results** must open without further action.
+2. Confirm the headline names the winner (or "Tied for first"), and that the
+   status, Ruleset, entrant count, match count, and output folder are shown.
+3. On **Standings**, confirm the order and Played/Wins/Losses/Ties/Score match
+   the Advanced log's standings. Entrants level on wins and score share a rank.
+4. On **Matches**, confirm every match appears in schedule order with its
+   result, seed, and `Available` replay. Select one and choose **View Replay**,
+   then double-click another; Replay Viewer must open each selected match, and
+   Tournament Results must stay open.
+5. Choose **Open Output Folder** and confirm the tournament folder opens. Close
+   Results, then choose **File → Open Last Output Folder** and confirm it opens
+   the same folder.
+6. Run a second tournament with a different roster, changing Output to the
+   first tournament's folder. Confirm **Tournament Did Not Run** explains that
+   the folder already holds an earlier tournament, and that no results window
+   presents the earlier tournament as this run.
+7. Start a tournament with many rounds and press **Stop**. Confirm the log reads
+   `[Tournament] stopped.` and no results window opens.
+8. Open **Tools → Tournament History…**. Confirm tournaments are listed newest
+   first and the stopped one reads `Did not finish`. View a finished one's
+   results; view the stopped one and confirm it claims no winner and explains
+   that standings were not recorded.
+9. Rename one replay inside a tournament's `matches/` folder, reopen that
+   tournament's results, and confirm the match reads `Replay unavailable` with
+   its reason instead of failing. Restore the file afterward.
+10. On a fresh data root, open Tournament History and confirm it explains that
+    no tournament results have been recorded yet and how to create them. Use
+    **Open Tournament Folder…** on a tournament saved outside `runs/tournaments`
+    and confirm its results open.
+
 ### Agent Lab (v0.5, packaged application)
 
 This is the release checklist for the Agent Lab feature set (deterministic
