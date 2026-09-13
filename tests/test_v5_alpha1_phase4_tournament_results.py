@@ -531,7 +531,7 @@ def test_tournament_history_opens_a_tournament_saved_elsewhere(monkeypatch, tmp_
 
 
 @pytest.mark.gui
-def test_tools_menu_places_tournament_history_beside_run_tournament(monkeypatch, tmp_path):
+def test_history_menu_contains_tournament_history_with_preserved_wiring(monkeypatch, tmp_path):
     designer = _designer(monkeypatch, tmp_path)
     try:
         tools = next(
@@ -539,13 +539,17 @@ def test_tools_menu_places_tournament_history_beside_run_tournament(monkeypatch,
             for action in designer.menuBar().actions()
             if action.menu() is not None and action.menu().title() == "Tools"
         )
-        actions = tools.actions()
-        assert ["---" if action.isSeparator() else action.text() for action in actions] == [
-            "Run Tournament…",
-            "Tournament History…",
-            "---",
-            "Evaluation History…",
+        history = next(
+            action.menu()
+            for action in designer.menuBar().actions()
+            if action.menu() is not None and action.menu().title() == "History"
+        )
+        assert [action.text() for action in tools.actions()] == ["Run Tournament…"]
+        actions = history.actions()
+        assert [action.text() for action in actions] == [
             "Replay History…",
+            "Tournament History…",
+            "Evaluation History…",
         ]
 
         created = []

@@ -356,7 +356,7 @@ Launched via `bytefray design` or `bytefray-agent-designer`. Features:
 * Match setup with agent selection, seed controls, and ruleset pickers.
 * Dynamic parameter controls generated from agent YAML schemas.
 * Built-in code inspection, validation, test launcher, and replay browser.
-* **Replay History** (**Tools → Replay History…**): a searchable, filterable
+* **Replay History** (**History → Replay History…**): a searchable, filterable
   browser over every completed match Bytefray has written, including matches
   produced before the current result schema. Selecting a match with an
   available replay lets you **Open Replay** (launches the same Replay Viewer

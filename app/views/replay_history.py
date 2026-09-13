@@ -1,7 +1,7 @@
 """Replay History browser (V5 Phase 7C, extended in Phase 7D).
 
 Brings the Qt-free ``battle_engine.replay_history`` service (Phase 7B) into the
-Agent Designer as **Tools → Replay History…**: a modeless, virtualized browser
+Agent Designer as **History → Replay History…**: a modeless, virtualized browser
 over every completed match Bytefray has written, filtered and paged entirely by
 the backend.
 

@@ -274,10 +274,11 @@ class AgentDesigner(QMainWindow):
         tools = self.menuBar().addMenu("Tools")
         tools.setToolTipsVisible(True)
         tools.addAction("Run Tournament…", self._on_tournament)
-        tools.addAction("Tournament History…", self._on_tournament_history)
-        tools.addSeparator()
-        tools.addAction("Evaluation History…", self._on_evaluation_history)
-        tools.addAction("Replay History…", self._on_replay_history)
+
+        history_menu = self.menuBar().addMenu("History")
+        history_menu.addAction("Replay History…", self._on_replay_history)
+        history_menu.addAction("Tournament History…", self._on_tournament_history)
+        history_menu.addAction("Evaluation History…", self._on_evaluation_history)
 
         help_menu = self.menuBar().addMenu("Help")
         about_action = help_menu.addAction("About Bytefray", self._on_about)

@@ -4,7 +4,7 @@ Covers ``ReplayHistoryWorker`` (thread ownership, lifecycle, cancellation,
 error capture), ``ReplayHistoryTableModel`` (headers, cell formatting, lazy
 keyset paging, reset semantics), ``ReplayHistoryWindow`` (filters, debounce,
 stale-response suppression, detail selection, empty/error states, shutdown),
-and ``AgentDesigner`` wiring (the Tools action opens the browser, reuses it,
+and ``AgentDesigner`` wiring (the History action opens the browser, reuses it,
 and joins its worker on Designer shutdown).
 
 The invariant most of these tests exist to defend:
@@ -1596,17 +1596,16 @@ def _designer(monkeypatch, tmp_path):
 
 
 @pytest.mark.gui
-def test_tools_menu_contains_replay_history(monkeypatch, tmp_path) -> None:
+def test_history_menu_contains_replay_history(monkeypatch, tmp_path) -> None:
     designer = _designer(monkeypatch, tmp_path)
     try:
-        tools = next(
+        history = next(
             menu
             for menu in designer.menuBar().findChildren(type(designer.menuBar().addMenu("x")))
-            if menu.title() == "Tools"
+            if menu.title() == "History"
         )
-        labels = [action.text() for action in tools.actions()]
-        assert "Replay History…" in labels
-        assert "Evaluation History…" in labels, "the existing Tools entries must not move"
+        labels = [action.text() for action in history.actions()]
+        assert labels == ["Replay History…", "Tournament History…", "Evaluation History…"]
     finally:
         designer.close()
 
@@ -1834,12 +1833,12 @@ def test_keyboard_navigation_action_tab_order_and_filter_focus(history_env, monk
 def test_history_action_is_available_without_an_active_agent(monkeypatch, tmp_path) -> None:
     designer = _designer(monkeypatch, tmp_path)
     try:
-        tools = next(
+        history = next(
             menu
             for menu in designer.menuBar().findChildren(type(designer.menuBar().addMenu("x")))
-            if menu.title() == "Tools"
+            if menu.title() == "History"
         )
-        action = next(a for a in tools.actions() if a.text() == "Replay History…")
+        action = next(a for a in history.actions() if a.text() == "Replay History…")
         assert action.isEnabled()
     finally:
         designer.close()

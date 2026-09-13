@@ -256,7 +256,7 @@ Automated coverage lives in `tests/test_agent_evaluation_history_dialog.py`
 
 ### Replay History browser (V5 Alpha 1, packaged application)
 
-Release checklist for **Tools → Replay History…**. Automated coverage lives
+Release checklist for **History → Replay History…**. Automated coverage lives
 in `tests/test_v5_replay_history_browser.py` (`gui`-marked, including Phase
 7D's Open Replay / Copy Seed cases), `engine/tests/test_v5_replay_history_presentation.py`
 (headless), and `engine/tests/test_replay_history.py`'s digest-preflight
@@ -265,7 +265,7 @@ reads the run tree and its own rebuildable index -- Open Replay hands a
 verified path to the existing Replay Viewer and Copy Seed only touches the
 clipboard, so no step here modifies a match artifact.
 
-1. With a data root that already holds completed matches, open **Tools →
+1. With a data root that already holds completed matches, open **History →
    Replay History…**. Rows must appear within about a second, before the
    status line stops reporting a scan: the browser shows its cached index
    first and reconciles in the background. Confirm the Designer window behind
@@ -373,7 +373,7 @@ the existing Replay Viewer.
    presents the earlier tournament as this run.
 7. Start a tournament with many rounds and press **Stop**. Confirm the log reads
    `[Tournament] stopped.` and no results window opens.
-8. Open **Tools → Tournament History…**. Confirm tournaments are listed newest
+8. Open **History → Tournament History…**. Confirm tournaments are listed newest
    first and the stopped one reads `Did not finish`. View a finished one's
    results; view the stopped one and confirm it claims no winner and explains
    that standings were not recorded.

@@ -84,7 +84,7 @@ replacing `tournament.json`, for example because the chosen folder holds a
 different tournament), the Designer says the tournament did not run rather than
 presenting the folder's earlier results.
 
-**Tools → Tournament History…** lists the tournament folders directly beneath
+**History → Tournament History…** lists the tournament folders directly beneath
 `runs/tournaments/`, newest first, and reopens any of them in Tournament
 Results; **Open Tournament Folder…** reads a tournament saved elsewhere. No
 index or additional artifact is written. Completion counts and standings are

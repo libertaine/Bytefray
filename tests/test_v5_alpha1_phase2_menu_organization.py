@@ -1,12 +1,12 @@
 """Tests for V5 Alpha 1 Phase 2: Menu and Command Organization.
 
 Validates:
-- Conventional top-level menu layout: File, Tools, Help (View deferred).
+- Conventional top-level menu layout: File, Tools, History, Help (View deferred).
 - File menu contains Import Agent Package…, Inspect Agent Package…,
   separator, Open Last Output Folder, separator, Exit.
-- Tools menu contains only operational commands: Run Tournament…,
-  Tournament History… (added by Phase 4), Evaluation History…, Replay History…
-  (no duplicated package/file commands).
+- Tools contains only the operational Run Tournament… command.
+- History contains Replay History…, Tournament History…, and Evaluation
+  History… (no duplicated package/file or operational commands).
 - Help menu contains About Bytefray.
 - Canonical wiring: triggering actions executes the established handler.
 - File -> Exit triggers canonical window close/shutdown path (closeEvent).
@@ -41,7 +41,7 @@ def _get_top_level_menus(designer):
 
 @pytest.mark.gui
 def test_menu_bar_top_level_menus_and_order(monkeypatch, tmp_path: Path) -> None:
-    """The menu bar must expose File, Tools, and Help in desktop-standard order.
+    """Expose File, Tools, History, and Help in desktop-standard order.
 
     View is intentionally deferred because no genuine view commands exist.
     """
@@ -53,7 +53,7 @@ def test_menu_bar_top_level_menus_and_order(monkeypatch, tmp_path: Path) -> None
     try:
         menus = _get_top_level_menus(designer)
         titles = [m.title() for m in menus]
-        assert titles == ["File", "Tools", "Help"]
+        assert titles == ["File", "Tools", "History", "Help"]
         assert "View" not in titles
     finally:
         designer.deleteLater()
@@ -141,9 +141,10 @@ def test_file_menu_tooltips_visible_and_output_folder_tip(monkeypatch, tmp_path:
 
 
 @pytest.mark.gui
-def test_tools_menu_contains_only_operational_actions(monkeypatch, tmp_path: Path) -> None:
-    """Tools menu must retain operational/analysis commands and no longer carry
-    file/package commands or redundant separators."""
+def test_tools_and_history_menus_separate_operations_from_history(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """Tools starts work; History revisits durable results."""
     _make_app()
     from app.agent_designer import AgentDesigner
 
@@ -152,27 +153,31 @@ def test_tools_menu_contains_only_operational_actions(monkeypatch, tmp_path: Pat
     try:
         menus = _get_top_level_menus(designer)
         tools_menu = next(m for m in menus if m.title() == "Tools")
-        actions = tools_menu.actions()
+        history_menu = next(m for m in menus if m.title() == "History")
+        tool_actions = tools_menu.actions()
+        history_actions = history_menu.actions()
 
-        labels = [a.text() for a in actions if not a.isSeparator()]
-        assert labels == [
-            "Run Tournament…",
+        tool_labels = [a.text() for a in tool_actions if not a.isSeparator()]
+        history_labels = [a.text() for a in history_actions if not a.isSeparator()]
+        assert tool_labels == ["Run Tournament…"]
+        assert history_labels == [
+            "Replay History…",
             "Tournament History…",
             "Evaluation History…",
-            "Replay History…",
         ]
 
-        # Ensure no package or folder commands remain under Tools
+        # No package/file/history command may leak into Tools.
         for forbidden in (
             "Import Agent Package…",
             "Inspect Agent Package…",
             "Open Last Output Folder",
             "Exit",
+            *history_labels,
         ):
-            assert forbidden not in labels
+            assert forbidden not in tool_labels
 
-        # All Tools actions must be enabled
-        for action in actions:
+        # All global history actions remain available without a selected agent.
+        for action in (*tool_actions, *history_actions):
             assert action.isEnabled()
     finally:
         designer.deleteLater()
@@ -207,6 +212,7 @@ def test_action_trigger_wiring_executes_canonical_handlers(monkeypatch, tmp_path
         menus = _get_top_level_menus(designer)
         file_menu = next(m for m in menus if m.title() == "File")
         tools_menu = next(m for m in menus if m.title() == "Tools")
+        history_menu = next(m for m in menus if m.title() == "History")
         help_menu = next(m for m in menus if m.title() == "Help")
 
         calls = []
@@ -228,12 +234,17 @@ def test_action_trigger_wiring_executes_canonical_handlers(monkeypatch, tmp_path
         action_map_file["Inspect Agent Package…"].trigger()
         action_map_file["Open Last Output Folder"].trigger()
 
-        # Trigger Tools actions
+        # Trigger the operational Tools action.
         action_map_tools = {a.text(): a for a in tools_menu.actions() if not a.isSeparator()}
         action_map_tools["Run Tournament…"].trigger()
-        action_map_tools["Tournament History…"].trigger()
-        action_map_tools["Evaluation History…"].trigger()
-        action_map_tools["Replay History…"].trigger()
+
+        # Trigger the application-level History actions.
+        action_map_history = {
+            a.text(): a for a in history_menu.actions() if not a.isSeparator()
+        }
+        action_map_history["Replay History…"].trigger()
+        action_map_history["Tournament History…"].trigger()
+        action_map_history["Evaluation History…"].trigger()
 
         # Trigger Help action
         action_map_help = {a.text(): a for a in help_menu.actions() if not a.isSeparator()}
@@ -244,9 +255,9 @@ def test_action_trigger_wiring_executes_canonical_handlers(monkeypatch, tmp_path
             "inspect",
             "output_folder",
             "tournament",
+            "replay_history",
             "tournament_history",
             "eval_history",
-            "replay_history",
             "about",
         ]
     finally:
@@ -314,11 +325,11 @@ def test_menu_accessibility_and_no_shortcut_collisions(monkeypatch, tmp_path: Pa
         shortcut_strings = [s[0] for s in shortcuts]
         assert len(shortcut_strings) == len(set(shortcut_strings))
 
-        # Menu bar itself is active and has the 3 expected top-level menu actions
+        # Menu bar itself is active and has the 4 expected top-level menu actions.
         menu_bar = designer.menuBar()
-        assert len(menu_bar.actions()) == 3
+        assert len(menu_bar.actions()) == 4
         bar_texts = [a.text() for a in menu_bar.actions()]
-        assert bar_texts == ["File", "Tools", "Help"]
+        assert bar_texts == ["File", "Tools", "History", "Help"]
     finally:
         designer.deleteLater()
 
@@ -444,4 +455,3 @@ def test_designer_gui_menu_smoke_offscreen(monkeypatch, tmp_path: Path) -> None:
         designer.close()
         app.processEvents()
         designer.deleteLater()
-

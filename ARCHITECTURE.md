@@ -212,7 +212,7 @@ holds PySide6/Pygame-oriented tools that are adjacent consumers of the
 engine, not part of `battle_engine.core`.
 
 - **Replay History** (`app/views/replay_history.py`, V5 Alpha 1) is the
-  Designer's browser over completed matches, reached via **Tools → Replay
+  Designer's browser over completed matches, reached via **History → Replay
   History…**. Two `QThread` workers own separate Qt-free
   `battle_engine.replay_history` services. The maintenance worker initializes
   or recovers the rebuildable cache and performs transactional refreshes. The
