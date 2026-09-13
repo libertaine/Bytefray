@@ -60,8 +60,14 @@ def test_menu_bar_top_level_menus_and_order(monkeypatch, tmp_path: Path) -> None
 
 @pytest.mark.gui
 def test_file_menu_actions_and_ordering(monkeypatch, tmp_path: Path) -> None:
-    """File menu must contain Import, Inspect, Open Output Folder, and Exit with
-    separators creating logical desktop-standard groups."""
+    """File menu must contain Import, Inspect, Export, Open Output Folder, and
+    Exit with separators creating logical desktop-standard groups.
+
+    This asserts the current (post-Phase-3) File menu contract. Phase 2's own
+    6-action layout is not accepted as an alternative runtime state here --
+    that historical shape remains on record in the Phase 2 report, not as a
+    live possibility the running application may still exhibit.
+    """
     _make_app()
     from app.agent_designer import AgentDesigner
 
@@ -72,7 +78,7 @@ def test_file_menu_actions_and_ordering(monkeypatch, tmp_path: Path) -> None:
         file_menu = next(m for m in menus if m.title() == "File")
         actions = file_menu.actions()
 
-        assert len(actions) in (6, 7)
+        assert len(actions) == 7
 
         # Item 0: Import Agent Package… (dialog command -> ellipsis)
         assert actions[0].text() == "Import Agent Package…"
@@ -84,31 +90,28 @@ def test_file_menu_actions_and_ordering(monkeypatch, tmp_path: Path) -> None:
         assert not actions[1].isSeparator()
         assert actions[1].isEnabled()
 
-        offset = 0
-        if len(actions) == 7:
-            # Phase 3 companion operation: Export Agent Package… (dialog command -> ellipsis)
-            assert actions[2].text() == "Export Agent Package…"
-            assert not actions[2].isSeparator()
-            assert actions[2].isEnabled()
-            offset = 1
+        # Item 2: Export Agent Package… (dialog command -> ellipsis)
+        assert actions[2].text() == "Export Agent Package…"
+        assert not actions[2].isSeparator()
+        assert actions[2].isEnabled()
 
-        # Separator between package ops and folder ops
-        assert actions[2 + offset].isSeparator()
+        # Item 3: Separator between package ops and folder ops
+        assert actions[3].isSeparator()
 
-        # Open Last Output Folder (immediate command -> no ellipsis)
-        assert actions[3 + offset].text() == "Open Last Output Folder"
-        assert not actions[3 + offset].isSeparator()
-        assert actions[3 + offset].isEnabled()
-        assert actions[3 + offset] is designer.openOutputFolderAction
+        # Item 4: Open Last Output Folder (immediate command -> no ellipsis)
+        assert actions[4].text() == "Open Last Output Folder"
+        assert not actions[4].isSeparator()
+        assert actions[4].isEnabled()
+        assert actions[4] is designer.openOutputFolderAction
 
-        # Separator before application lifecycle
-        assert actions[4 + offset].isSeparator()
+        # Item 5: Separator before application lifecycle
+        assert actions[5].isSeparator()
 
-        # Exit (immediate command -> no ellipsis)
-        assert actions[5 + offset].text() == "Exit"
-        assert not actions[5 + offset].isSeparator()
-        assert actions[5 + offset].isEnabled()
-        assert actions[5 + offset] is designer.exitAction
+        # Item 6: Exit (immediate command -> no ellipsis)
+        assert actions[6].text() == "Exit"
+        assert not actions[6].isSeparator()
+        assert actions[6].isEnabled()
+        assert actions[6] is designer.exitAction
     finally:
         designer.deleteLater()
 
@@ -429,7 +432,7 @@ def test_designer_gui_menu_smoke_offscreen(monkeypatch, tmp_path: Path) -> None:
 
         menus = _get_top_level_menus(designer)
         file_menu = next(m for m in menus if m.title() == "File")
-        assert len(file_menu.actions()) in (6, 7)
+        assert len(file_menu.actions()) == 7
     finally:
         designer.close()
         app.processEvents()

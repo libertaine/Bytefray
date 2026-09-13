@@ -249,14 +249,18 @@ def test_export_unsupported_kind_agent_reports_error_cleanly(monkeypatch, tmp_pa
 
     data_root = tmp_path / "designer-data"
     monkeypatch.setenv("BYTEFRAY_ROOT", str(data_root))
-    _write_python_agent(data_root, "builtin_agent")
+    agent_dir = data_root / "agents" / "builtin_agent"
+    agent_dir.mkdir(parents=True, exist_ok=True)
+    agent_dir.joinpath("agent.yaml").write_text(
+        json.dumps({"name": "Builtin Starter", "kind": "builtin"}),
+        encoding="utf-8",
+    )
 
     designer = AgentDesigner()
     try:
-        # Simulate an agent row whose kind is unsupported (e.g. "builtin")
         unsupported_row = AgentRow(
             name="Builtin Starter",
-            path=str(data_root / "agents" / "builtin_agent"),
+            path=str(agent_dir),
             blob_path=None,
             meta={"kind": "builtin"},
             agent_id="builtin_agent",
@@ -275,6 +279,11 @@ def test_export_unsupported_kind_agent_reports_error_cleanly(monkeypatch, tmp_pa
             agent_designer_module.QMessageBox,
             "critical",
             staticmethod(lambda *a, **k: critical.append(a) or None),
+        )
+        monkeypatch.setattr(
+            agent_designer_module.QMessageBox,
+            "information",
+            staticmethod(lambda *a, **k: pytest.fail(f"unexpected information dialog: {a}")),
         )
 
         designer.exportAgentPackageAction.trigger()
@@ -384,6 +393,65 @@ def test_export_agent_package_creates_canonical_archive(monkeypatch, tmp_path: P
 
 
 @pytest.mark.gui
+def test_export_explicit_extension_overwrite_relies_on_native_dialog_only(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """When the save dialog already returns a destination ending in
+    .bytefray-agent, the OS/Qt save dialog itself already owns any overwrite
+    confirmation for that literal path -- it saw the exact destination
+    before returning it here. The handler must not layer a second, redundant
+    QMessageBox.question on top of that: exactly one overwrite confirmation
+    should occur, not two. Only the extension-normalization path (destination
+    typed without the extension, covered separately below) bypasses the
+    dialog's own overwrite check and therefore needs its own explicit
+    confirmation."""
+    _make_app()
+    import app.agent_designer as agent_designer_module
+    from app.agent_designer import AgentDesigner
+
+    data_root = tmp_path / "designer-data"
+    monkeypatch.setenv("BYTEFRAY_ROOT", str(data_root))
+    _write_python_agent(data_root, "hunter")
+
+    designer = AgentDesigner()
+    try:
+        designer.refresh_agents(select="hunter")
+
+        existing_file = tmp_path / "hunter.bytefray-agent"
+        existing_file.write_text("pre-existing content", encoding="utf-8")
+
+        monkeypatch.setattr(
+            agent_designer_module.QFileDialog,
+            "getSaveFileName",
+            staticmethod(lambda *a, **k: (str(existing_file), "")),
+        )
+        monkeypatch.setattr(
+            agent_designer_module.QMessageBox,
+            "question",
+            staticmethod(
+                lambda *a, **k: pytest.fail(
+                    "unexpected second overwrite prompt: the native save "
+                    "dialog already confirmed this exact destination"
+                )
+            ),
+        )
+        informed = []
+        monkeypatch.setattr(
+            agent_designer_module.QMessageBox,
+            "information",
+            staticmethod(lambda *a, **k: informed.append(a) or None),
+        )
+
+        designer.exportAgentPackageAction.trigger()
+
+        assert len(informed) == 1
+        assert "Exported agent: hunter" in informed[0][2]
+        assert existing_file.read_bytes()[:2] == b"PK"
+    finally:
+        designer.deleteLater()
+
+
+@pytest.mark.gui
 def test_export_agent_package_normalizes_omitted_extension(monkeypatch, tmp_path: Path) -> None:
     """If user saves without typing .bytefray-agent, the extension is appended."""
     _make_app()
@@ -409,6 +477,11 @@ def test_export_agent_package_normalizes_omitted_extension(monkeypatch, tmp_path
             agent_designer_module.QMessageBox,
             "information",
             staticmethod(lambda *a, **k: None),
+        )
+        monkeypatch.setattr(
+            agent_designer_module.QMessageBox,
+            "critical",
+            staticmethod(lambda *a, **k: pytest.fail(f"unexpected failure dialog: {a}")),
         )
 
         designer.exportAgentPackageAction.trigger()
@@ -515,6 +588,11 @@ def test_export_extension_normalization_allows_overwrite_if_confirmed(
             agent_designer_module.QMessageBox,
             "information",
             staticmethod(lambda *a, **k: informed.append(a) or None),
+        )
+        monkeypatch.setattr(
+            agent_designer_module.QMessageBox,
+            "critical",
+            staticmethod(lambda *a, **k: pytest.fail(f"unexpected failure dialog: {a}")),
         )
 
         designer.exportAgentPackageAction.trigger()
@@ -714,6 +792,11 @@ def test_designer_export_round_trip_inspect_and_import(monkeypatch, tmp_path: Pa
             "information",
             staticmethod(lambda *a, **k: None),
         )
+        monkeypatch.setattr(
+            agent_designer_module.QMessageBox,
+            "critical",
+            staticmethod(lambda *a, **k: pytest.fail(f"unexpected failure dialog: {a}")),
+        )
 
         # 1. Export
         designer.exportAgentPackageAction.trigger()
@@ -780,6 +863,11 @@ def test_export_is_strictly_readonly_with_respect_to_source_agent(
             agent_designer_module.QMessageBox,
             "information",
             staticmethod(lambda *a, **k: None),
+        )
+        monkeypatch.setattr(
+            agent_designer_module.QMessageBox,
+            "critical",
+            staticmethod(lambda *a, **k: pytest.fail(f"unexpected failure dialog: {a}")),
         )
 
         designer.exportAgentPackageAction.trigger()
