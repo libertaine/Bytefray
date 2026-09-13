@@ -12,6 +12,7 @@ from battle_engine.agent_evaluation import (
     ORIENTATION_OPPONENT_FIRST,
 )
 from battle_engine.agent_package import (
+    PACKAGE_EXTENSION,
     AgentPackageError,
     PackageImportConflictError,
     export_agent,
@@ -232,6 +233,9 @@ class AgentDesigner(QMainWindow):
         file_menu.setToolTipsVisible(True)
         file_menu.addAction("Import Agent Package…", self._on_import_agent_package)
         file_menu.addAction("Inspect Agent Package…", self._on_inspect_agent_package)
+        self.exportAgentPackageAction = file_menu.addAction(
+            "Export Agent Package…", self._on_export_agent_package
+        )
         file_menu.addSeparator()
         self.openOutputFolderAction = file_menu.addAction(
             "Open Last Output Folder", self._on_open_output_folder
@@ -1413,6 +1417,49 @@ class AgentDesigner(QMainWindow):
             QMessageBox.critical(self, "Export Failed", f"[{exc.code}] {exc}")
             return
         QMessageBox.information(self, "Export Agent", format_export_result_text(result))
+
+    def _on_export_agent_package(self) -> None:
+        if not hasattr(self, "development"):
+            return
+        row = self.development.selectedAgentRow()
+        if row is None:
+            QMessageBox.information(self, "Export Agent Package", "Select a Python agent first.")
+            return
+        agent_id = row.agent_id or row.name
+        if not agent_id:
+            QMessageBox.information(self, "Export Agent Package", "Select a Python agent first.")
+            return
+        default_path = str(self.data_root / f"{agent_id}{PACKAGE_EXTENSION}")
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Agent Package",
+            default_path,
+            "Bytefray Agent Packages (*.bytefray-agent);;All Files (*.*)",
+        )
+        if not path:
+            return
+        dest = Path(path)
+        if not dest.name.endswith(PACKAGE_EXTENSION):
+            dest = dest.with_name(dest.name + PACKAGE_EXTENSION)
+            if dest.exists():
+                reply = QMessageBox.question(
+                    self,
+                    "Confirm Overwrite",
+                    f"'{dest.name}' already exists.\nDo you want to replace it?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No,
+                )
+                if reply != QMessageBox.StandardButton.Yes:
+                    return
+        try:
+            result = export_agent(agent_id, data_root=self.data_root, output=dest)
+        except AgentPackageError as exc:
+            QMessageBox.critical(self, "Export Failed", f"[{exc.code}] {exc}")
+            return
+        except Exception as exc:
+            QMessageBox.critical(self, "Export Failed", str(exc))
+            return
+        QMessageBox.information(self, "Export Agent Package", format_export_result_text(result))
 
     def _on_inspect_agent_package(self) -> None:
         path, _ = QFileDialog.getOpenFileName(

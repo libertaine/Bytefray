@@ -72,7 +72,7 @@ def test_file_menu_actions_and_ordering(monkeypatch, tmp_path: Path) -> None:
         file_menu = next(m for m in menus if m.title() == "File")
         actions = file_menu.actions()
 
-        assert len(actions) == 6
+        assert len(actions) in (6, 7)
 
         # Item 0: Import Agent Package… (dialog command -> ellipsis)
         assert actions[0].text() == "Import Agent Package…"
@@ -84,23 +84,31 @@ def test_file_menu_actions_and_ordering(monkeypatch, tmp_path: Path) -> None:
         assert not actions[1].isSeparator()
         assert actions[1].isEnabled()
 
-        # Item 2: Separator between package ops and folder ops
-        assert actions[2].isSeparator()
+        offset = 0
+        if len(actions) == 7:
+            # Phase 3 companion operation: Export Agent Package… (dialog command -> ellipsis)
+            assert actions[2].text() == "Export Agent Package…"
+            assert not actions[2].isSeparator()
+            assert actions[2].isEnabled()
+            offset = 1
 
-        # Item 3: Open Last Output Folder (immediate command -> no ellipsis)
-        assert actions[3].text() == "Open Last Output Folder"
-        assert not actions[3].isSeparator()
-        assert actions[3].isEnabled()
-        assert actions[3] is designer.openOutputFolderAction
+        # Separator between package ops and folder ops
+        assert actions[2 + offset].isSeparator()
 
-        # Item 4: Separator before application lifecycle
-        assert actions[4].isSeparator()
+        # Open Last Output Folder (immediate command -> no ellipsis)
+        assert actions[3 + offset].text() == "Open Last Output Folder"
+        assert not actions[3 + offset].isSeparator()
+        assert actions[3 + offset].isEnabled()
+        assert actions[3 + offset] is designer.openOutputFolderAction
 
-        # Item 5: Exit (immediate command -> no ellipsis)
-        assert actions[5].text() == "Exit"
-        assert not actions[5].isSeparator()
-        assert actions[5].isEnabled()
-        assert actions[5] is designer.exitAction
+        # Separator before application lifecycle
+        assert actions[4 + offset].isSeparator()
+
+        # Exit (immediate command -> no ellipsis)
+        assert actions[5 + offset].text() == "Exit"
+        assert not actions[5 + offset].isSeparator()
+        assert actions[5 + offset].isEnabled()
+        assert actions[5 + offset] is designer.exitAction
     finally:
         designer.deleteLater()
 
@@ -421,7 +429,7 @@ def test_designer_gui_menu_smoke_offscreen(monkeypatch, tmp_path: Path) -> None:
 
         menus = _get_top_level_menus(designer)
         file_menu = next(m for m in menus if m.title() == "File")
-        assert len(file_menu.actions()) == 6
+        assert len(file_menu.actions()) in (6, 7)
     finally:
         designer.close()
         app.processEvents()
