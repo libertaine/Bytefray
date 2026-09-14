@@ -226,3 +226,14 @@ def test_version_transition_5_0_0rc1() -> None:
     assert app_match.group(1) == "5.0.0rc1"
     assert tag_match.group(1) == "5.0.0-rc1"
     assert distribution_version("bytefray") == "5.0.0rc1"
+
+
+def test_windows_smoke_uses_an_isolated_data_root_and_installs_starters() -> None:
+    """The source smoke must not depend on an operator's populated data root."""
+
+    smoke = (ROOT / "tools" / "smoke_test.ps1").read_text(encoding="utf-8")
+
+    assert "BYTEFRAY_AGENTS_DIR" not in smoke
+    assert "BYTEFRAY_ROOT" in smoke
+    assert "[guid]::NewGuid()" in smoke
+    assert "ensure_starter_agents(data_root=root)" in smoke

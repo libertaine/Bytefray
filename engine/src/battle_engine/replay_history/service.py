@@ -20,6 +20,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from battle_engine.paths import contained_path, get_data_root
+from battle_engine.replay_integrity import (
+    ReplayPreflightFailure,
+    ResultReplayRequest,
+    preflight_result_replay,
+)
 from battle_engine.result_model import ReplayIntegrityError, verify_replay_digest_value
 
 from .discovery import (
@@ -499,9 +504,10 @@ class ReplayHistoryService:
         The cached path is never trusted on its own: it is re-resolved under
         the indexed run root with the canonical containment discipline (which
         rejects traversal, drive-qualified, and symlink escapes) and then
-        re-checked on disk. Digest verification and the Viewer handoff belong
-        to Phase 7D; the recorded expectation is returned here so that step
-        needs no second read of ``result.json``.
+        re-checked on disk. Result-backed entries also retain their expected
+        result identity so :meth:`verify_replay_integrity` can reread the
+        authoritative result at click time. Replay-only historical entries
+        intentionally have no result context.
         """
 
         detail = self._index.fetch_detail(location_id)
@@ -515,6 +521,11 @@ class ReplayHistoryService:
                 diagnostic="No indexed occurrence with that location id.",
             )
         occurrence = detail.occurrence
+        result_path = (
+            self._absolute_artifact(occurrence.result_fingerprint.relative_path)
+            if occurrence.result_fingerprint.exists
+            else None
+        )
         relative = occurrence.replay_fingerprint.relative_path
         if occurrence.replay_state is ReplayState.NOT_PRODUCED or relative is None:
             return ReplayResolution(
@@ -561,15 +572,20 @@ class ReplayHistoryService:
             path=str(resolved),
             expected_sha256=occurrence.replay_sha256,
             replay_id=occurrence.replay_id,
+            result_path=result_path,
+            expected_result_id=occurrence.result_id,
+            expected_match_id=occurrence.match_id,
         )
 
     def verify_replay_integrity(self, resolution: ReplayResolution) -> ReplayIntegrityCheck:
         """Digest-preflight a resolved replay immediately before Viewer handoff.
 
-        Takes the :class:`ReplayResolution` returned by :meth:`resolve_replay`
-        -- never a second read of ``result.json`` -- and reads the resolved
-        file's actual bytes to compare against the digest recorded when it
-        was indexed:
+        For result-backed entries, rereads the authoritative ``result.json``
+        through the shared canonical preflight and compares its identity with
+        the indexed occurrence before checking the indexed replay expectation.
+        Replay-only historical entries retain the prior containment/existence
+        and digest behavior because they have no parent result to authorize
+        them:
 
         * no recorded digest (a historical result predating that field):
           ``UNVERIFIED_LEGACY``, not an error -- ``resolve_replay`` has
@@ -590,6 +606,42 @@ class ReplayHistoryService:
                 status=ReplayIntegrityStatus.UNREADABLE,
                 diagnostic="No resolved replay path to verify.",
             )
+        if resolution.result_path is not None:
+            preflight = preflight_result_replay(
+                ResultReplayRequest(
+                    result_path=Path(resolution.result_path),
+                    artifact_root=self._runs_root,
+                    expected_result_id=resolution.expected_result_id,
+                    expected_match_id=resolution.expected_match_id,
+                )
+            )
+            if not preflight.verified:
+                unavailable = {
+                    ReplayPreflightFailure.RESULT_UNAVAILABLE,
+                    ReplayPreflightFailure.REPLAY_REFERENCE_MISSING,
+                    ReplayPreflightFailure.REPLAY_MISSING,
+                    ReplayPreflightFailure.REPLAY_UNREADABLE,
+                }
+                return ReplayIntegrityCheck(
+                    status=(
+                        ReplayIntegrityStatus.UNREADABLE
+                        if preflight.failure in unavailable
+                        else ReplayIntegrityStatus.MISMATCH
+                    ),
+                    diagnostic=preflight.diagnostic,
+                    preflight_failure=preflight.failure,
+                )
+            assert preflight.replay_path is not None
+            try:
+                same_path = preflight.replay_path.resolve() == Path(resolution.path).resolve()
+            except (OSError, RuntimeError):
+                same_path = False
+            if not same_path:
+                return ReplayIntegrityCheck(
+                    status=ReplayIntegrityStatus.MISMATCH,
+                    diagnostic="The result's replay path changed after Replay History indexed it.",
+                    preflight_failure=ReplayPreflightFailure.RESULT_ASSOCIATION_MISMATCH,
+                )
         if resolution.expected_sha256 is None:
             return ReplayIntegrityCheck(status=ReplayIntegrityStatus.UNVERIFIED_LEGACY)
         try:

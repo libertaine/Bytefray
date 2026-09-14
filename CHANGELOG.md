@@ -21,10 +21,14 @@ desktop and headless product.
   See Results → Browse Matches → View Replay loop in Agent Designer. Includes atomic
   `tournament.json` checkpoints, full standings display, and per-match result and
   replay inspection.
-* **Unified Replay Integrity Preflight:** All user-facing replay launch paths
-  (Simple, Advanced, Development, Tournament Results, Tournament History, Replay
-  History, Evaluation Results, Evaluation History) verify recorded artifact association
-  and SHA-256 digests at click time, guarding against missing or mutated replay files.
+* **Unified Result-Backed Replay Integrity Preflight:** Simple/Advanced last-match,
+  Development, Tournament Results/History, Replay History, and Evaluation
+  Results/History reread their authoritative result association and verify SHA-256
+  digests at click time. Standalone replay-file pickers remain available for
+  replay-only and historical files that have no parent result.
+* **RC1 Tournament Resume Integrity:** A completed checkpoint whose canonical
+  result is missing or invalid is now recorded as corrupted and remains terminal;
+  only explicit `--retry-failed` authorization can execute it again.
 * **Standard Desktop Accessibility Baseline:** Full keyboard navigation across all
   Designer workspaces (Simple, Advanced, Development) and modal dialogs; programmatic
   label-buddy associations (`QLabel.setBuddy`); informative accessible names and
@@ -42,6 +46,10 @@ desktop and headless product.
   banner in the Pygame replay visualizer upon match completion.
 * **Hardened Parameter Consistency:** Unified parameter resolution, CLI overrides,
   and preset inheritance across direct CLI runs, tournament matches, and GUI panels.
+* **Release Qualification Hardening:** Fresh-root PowerShell smoke tests install and
+  discover the bundled starter catalog in an isolated data root. Wheel validation
+  now requires every supported scaffold family, runtime branding, exact console
+  entry-point targets, and consistent distribution version metadata.
 
 ## [5.0.0a1] - 2026-09-10
 

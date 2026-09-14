@@ -231,8 +231,11 @@ engine, not part of `battle_engine.core`.
   `app/services/replay_history_presentation.py`, which formats
   already-normalized backend values and decides no history semantics of its
   own. Selecting a row with an available replay exposes **Open Replay** and
-  **Copy Seed** (Phase 7D): resolving the replay path and digest-verifying it
-  both still run on the worker thread, and the launch itself reuses the
+  **Copy Seed** (Phase 7D): resolving the replay path and verifying its current
+  parent-result association plus digest both still run on the worker thread
+  through the shared canonical preflight. Replay-only historical entries retain
+  their contained standalone-file path because no parent result exists. The
+  launch reuses the
   existing `app.services.engine_commands.open_pygame_client_direct` handoff
   unchanged — History constructs no second Viewer command and never launches
   based on a stale selection. `Re-run Match` remains unimplemented: recorded

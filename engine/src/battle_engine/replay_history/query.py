@@ -13,6 +13,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 
+from battle_engine.replay_integrity import ReplayPreflightFailure
+
 from .models import (
     EntryHealth,
     HistoryEntrant,
@@ -162,11 +164,12 @@ class HistoryDetail:
 class ReplayResolution:
     """Click-time replay availability answer for one occurrence.
 
-    Re-resolves the referenced replay under its own result directory with the
+    Re-resolves the referenced replay under the indexed run tree with the
     canonical containment discipline and re-checks the filesystem, because a
-    cached row is never authority for opening a file. Digest verification is
-    an explicit, separate Phase 7D step; the recorded expectation is exposed
-    here so that step needs no second read of ``result.json``.
+    cached row is never authority for opening a file. For a result-backed row,
+    the indexed result identity is retained so click-time verification can
+    reread the authoritative result before authorizing a launch. Replay-only
+    historical entries have no result context and keep their legacy path.
     """
 
     location_id: str
@@ -175,6 +178,9 @@ class ReplayResolution:
     expected_sha256: str | None
     replay_id: str | None
     diagnostic: str | None = None
+    result_path: str | None = None
+    expected_result_id: str | None = None
+    expected_match_id: str | None = None
 
     @property
     def available(self) -> bool:
@@ -182,15 +188,15 @@ class ReplayResolution:
 
 
 class ReplayIntegrityStatus(str, Enum):
-    """Click-time digest-preflight outcome for one resolved replay (Phase 7D).
+    """Click-time integrity outcome for one resolved replay (Phase 7D).
 
     Distinct from :class:`ReplayState`, which is the *cached* index's view of
-    availability -- this is the *live* verdict of comparing the resolved
-    file's actual bytes against the digest recorded when it was indexed.
+    availability -- this is the *live* verdict after authoritative result
+    association and replay-byte verification where a parent result exists.
 
     ``UNVERIFIED_LEGACY`` is not a warning: a historical result recorded
-    before digests existed has nothing to compare against, and a file that
-    otherwise resolves and exists is not made suspect merely by predating
+    without a parent result/digest has nothing to compare against, and a file
+    that otherwise resolves and exists is not made suspect merely by predating
     that metadata.
     """
 
@@ -202,16 +208,12 @@ class ReplayIntegrityStatus(str, Enum):
 
 @dataclass(frozen=True)
 class ReplayIntegrityCheck:
-    """Outcome of digest-verifying one :class:`ReplayResolution` (Phase 7D).
-
-    Always computed from the resolution's already containment-checked
-    ``path`` and ``expected_sha256`` -- never a second read of
-    ``result.json`` -- immediately before a replay is handed to the Viewer.
-    """
+    """Outcome of click-time integrity verification before Viewer handoff."""
 
     status: ReplayIntegrityStatus
     digest: str | None = None
     diagnostic: str | None = None
+    preflight_failure: ReplayPreflightFailure | None = None
 
     @property
     def blocks_launch(self) -> bool:

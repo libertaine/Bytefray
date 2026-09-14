@@ -50,13 +50,14 @@ function Ensure-Env {
   $engine = (Resolve-Path (Join-Path $RepoRoot 'engine\src')).Path
   $client = (Resolve-Path (Join-Path $RepoRoot 'client\src')).Path
   $env:PYTHONPATH = "$engine;$client"
-  if (-not $env:BYTEFRAY_AGENTS_DIR) {
-    $agents = Join-Path $RepoRoot 'agents'
-    if (Test-Path $agents) { $env:BYTEFRAY_AGENTS_DIR = (Resolve-Path $agents).Path }
+  if (-not $env:BYTEFRAY_ROOT) {
+    $smokeRoot = Join-Path $RepoRoot ('.pytest-tmp\smoke-test-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $smokeRoot -Force | Out-Null
+    $env:BYTEFRAY_ROOT = (Resolve-Path $smokeRoot).Path
   }
   Write-Info "Repo root: $RepoRoot"
   Write-Info "PYTHONPATH = $($env:PYTHONPATH)"
-  if ($env:BYTEFRAY_AGENTS_DIR) { Write-Info "BYTEFRAY_AGENTS_DIR = $($env:BYTEFRAY_AGENTS_DIR)" }
+  Write-Info "BYTEFRAY_ROOT = $($env:BYTEFRAY_ROOT)"
 }
 
 function Invoke-PyCode {
@@ -101,7 +102,9 @@ import sys, pathlib
 sys.path[:0] = [r"engine/src", r"client/src"]
 from battle_engine.paths import get_data_root
 from battle_engine.agents import discover_agents
+from battle_engine.starters import ensure_starter_agents
 root = pathlib.Path(get_data_root())
+ensure_starter_agents(data_root=root)
 items = discover_agents(root)
 names = [getattr(x, "display", None) or getattr(x, "name", None) or getattr(x, "id", None) for x in items.values()]
 print("agents count:", len(items))

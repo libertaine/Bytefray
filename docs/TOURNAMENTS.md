@@ -15,13 +15,13 @@ The tournament root contains `tournament.json` using schema
 With resume enabled, a match recorded `completed` is only accepted from its
 canonical `result.json` (instead of rerun) after verifying that result's own
 entrant IDs, entrant order, and seed match the scheduled match, and that its
-referenced replay exists and matches its recorded digest. A `result.json`
-that fails any of these checks -- copied from a different tournament, stale
-from a differently-ordered or differently-seeded request, unparseable, or
-paired with a missing/modified replay -- is recorded as `corrupted` instead
-of `completed`. Failed, rejected, and corrupted matches are all recorded and
-excluded from standings; they remain terminal unless `retry_failures` is set,
-which retries all three the same way.
+referenced replay exists and matches its recorded digest. A missing
+`result.json`, or one that fails any of these checks -- copied from a
+different tournament, stale from a differently-ordered or differently-seeded
+request, unparseable, or paired with a missing/modified replay -- is recorded
+as `corrupted` instead of `completed`. Failed, rejected, and corrupted matches
+are all recorded and excluded from standings; they remain terminal unless
+`retry_failures` is set, which retries all three the same way.
 
 Every match has a stable scheduled ID and a directory beneath `matches/` that
 contains its replay, canonical result, and compatibility summary where produced.
@@ -42,7 +42,8 @@ uses the normal writable data root, starter initialization, and agent discovery;
 it does not use `tournament/scripts/btctl.py`.
 
 Rerunning the same request and output directory resumes completed canonical
-results. `--retry-failed` reruns state entries recorded as failed or rejected.
+results. `--retry-failed` reruns state entries recorded as failed, rejected, or
+corrupted.
 An incompatible request using an existing state directory exits with a controlled
 error. Without `--output`, artifacts default beneath
 `<data-root>/runs/tournaments/<entrants>-seed-<seed>/`.

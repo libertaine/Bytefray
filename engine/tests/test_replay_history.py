@@ -43,6 +43,7 @@ from battle_engine.replay_history import (
     synthetic_occurrence_key,
 )
 from battle_engine.replay_history.index import HistoryIndex
+from battle_engine.replay_integrity import ReplayPreflightFailure
 
 # ---------------------------------------------------------------------------
 # fixtures / helpers
@@ -1566,6 +1567,32 @@ def test_verify_replay_integrity_detects_a_changed_replay(tree: Path) -> None:
     assert check.status is ReplayIntegrityStatus.MISMATCH
     assert check.diagnostic is not None
     assert "mismatch" in check.diagnostic.lower()
+
+
+def test_verify_replay_integrity_rejects_a_result_changed_after_indexing(
+    tree: Path,
+) -> None:
+    """The current result, not cached index metadata, authorizes a launch."""
+
+    runs = tree / "runs"
+    _run_real_match(runs / "_designer" / "20260911-120000-aaaaaaaa")
+    with _service(tree) as service:
+        service.refresh()
+        row = _all_rows(service)[0]
+        resolution = service.resolve_replay(row.location_id)
+        assert resolution.available
+        detail = service.fetch_detail(row.location_id)
+        assert detail is not None and detail.result_path is not None
+        result_path = Path(detail.result_path)
+        payload = json.loads(result_path.read_text(encoding="utf-8"))
+        payload["result_id"] = "result_foreign_after_index"
+        result_path.write_text(json.dumps(payload), encoding="utf-8")
+
+        check = service.verify_replay_integrity(resolution)
+
+    assert check.status is ReplayIntegrityStatus.MISMATCH
+    assert check.preflight_failure is ReplayPreflightFailure.RESULT_ASSOCIATION_MISMATCH
+    assert check.blocks_launch
 
 
 def test_verify_replay_integrity_accepts_a_legacy_replay_with_no_recorded_digest(

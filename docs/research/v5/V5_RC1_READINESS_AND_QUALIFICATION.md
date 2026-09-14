@@ -1,5 +1,18 @@
 # Bytefray V5 — Release Candidate 1 Readiness & Qualification Report
 
+> **Historical rejected-candidate record.** The verdict in this report was
+> invalidated by an independent adversarial review of candidate
+> `84032674facc9c8720533f65afce00a3369cf7d6`. That review reproduced two
+> release-blocking integrity defects: a completed Tournament match with a
+> missing `result.json` silently reran without retry authorization, and Replay
+> History trusted an index-time result/replay association at click time. It
+> also showed that the reported wheel/sdist did not contain this candidate's
+> `battle_engine.command` module guard. The original report is retained below
+> for traceability, but its `RC1 READINESS PASSED` conclusion and package
+> evidence must not be used. See
+> `V5_RC1_BLOCKER_REMEDIATION_AND_SOURCE_REQUALIFICATION.md` for the replacement
+> source-candidate record.
+
 **Date:** 2026-09-14  
 **Audited Target:** Bytefray 5.0.0-rc1 (`5.0.0rc1`)  
 **Branch:** `v5-research`  

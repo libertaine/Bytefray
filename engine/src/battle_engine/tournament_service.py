@@ -241,7 +241,7 @@ class TournamentService:
             previous = prior_matches.get(item.schedule_id)
             result_path = item.artifact_dir / "result.json"
             replay_path = item.artifact_dir / "replay.jsonl"
-            if previous and previous.get("status") == "completed" and result_path.is_file():
+            if previous and previous.get("status") == "completed":
                 scheduled_request = MatchRequest(
                     config=replace(request.config, seed=item.seed),
                     entrants=entrants,
@@ -252,13 +252,17 @@ class TournamentService:
                 )
                 mismatch: str | None
                 try:
-                    envelope = read_result(result_path)
-                    mismatch = _resumed_result_mismatch(
-                        envelope,
-                        item,
-                        replay_path,
-                        canonical_match_id(scheduled_request),
-                    )
+                    if not result_path.is_file():
+                        envelope = None
+                        mismatch = "result.json is not present"
+                    else:
+                        envelope = read_result(result_path)
+                        mismatch = _resumed_result_mismatch(
+                            envelope,
+                            item,
+                            replay_path,
+                            canonical_match_id(scheduled_request),
+                        )
                 except (OSError, ValueError, KeyError) as exc:
                     envelope = None
                     mismatch = f"result.json could not be read: {exc}"
