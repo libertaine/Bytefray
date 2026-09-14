@@ -99,6 +99,22 @@ During the RC1 readiness audit, three minor defects/stale references were identi
 3. **Release Candidate Version Transition:**
    - *Files:* `pyproject.toml`, `tools/installer.iss`, `engine/tests/test_v5_alpha1_phase_b_engine_hygiene.py`, `README.md`, `SECURITY.md`, `docs/ROADMAP.md`, `docs/COMPATIBILITY.md`, `docs/V5_STARTER_AGENTS.md`, `CHANGELOG.md`.
    - *Adjustment:* Transitioned version identifiers from `5.0.0a1` to release candidate `5.0.0-rc1` (PEP 440 normalized `5.0.0rc1` in Python packaging and installer metadata). Updated version consistency tests to lock the RC1 version across all release surfaces.
+4. **Agent Discovery Key Iteration in PowerShell Smoke Script:**
+   - *Location:* `tools/smoke_test.ps1:106`
+   - *Issue:* Iterated over dictionary keys `items` instead of `items.values()`, causing `names` to evaluate to 21 `None` elements.
+   - *Fix:* Changed iteration to `items.values()`, correctly printing all 21 discovered agent display names.
+5. **Missing Module Entry Point Guard in Command Dispatcher:**
+   - *Location:* `engine/src/battle_engine/command.py`
+   - *Issue:* Lacked `if __name__ == "__main__":` guard, causing `python -m battle_engine.command` to exit silently with code 0 without executing dispatcher.
+   - *Fix:* Added `if __name__ == "__main__": raise SystemExit(main())`.
+6. **Starter Agent Completeness in Wheel Checker:**
+   - *Location:* `tools/check_wheel.py`
+   - *Issue:* `EXPECTED_FILES` verified 18 of 21 starters, omitting `raider`, `sentinel`, and `v4_quorum`.
+   - *Fix:* Added `raider`, `sentinel`, and `v4_quorum` manifests and sources to `EXPECTED_FILES` so all 21 starter agents are validated.
+7. **Stale Docstring in Engine Hygiene Test:**
+   - *Location:* `engine/tests/test_v5_alpha1_phase_b_engine_hygiene.py:8`
+   - *Issue:* Docstring still mentioned `5.0.0a1 version transition`.
+   - *Fix:* Updated docstring to `5.0.0-rc1 version transition`.
 
 ---
 
@@ -152,8 +168,8 @@ A clean distribution build was executed using the standard build frontend:
 
 | Artifact File | Size | SHA-256 Digest |
 |---|---|---|
-| `dist/bytefray-5.0.0rc1-py3-none-any.whl` | ~166 KB | `D9AB5CB7FB37D8D37B9BED834BA81111DC64339636CDC1CEF7EEE8A01735AA17` |
-| `dist/bytefray-5.0.0rc1.tar.gz` | ~218 KB | `D42B5A7B4D535110E530894269C8B07DD019C15D4ECCDB9EFD678A6C6CAD7930` |
+| `dist/bytefray-5.0.0rc1-py3-none-any.whl` | 1,069,239 bytes (~1.04 MB) | `D9AB5CB7FB37D8D37B9BED834BA81111DC64339636CDC1CEF7EEE8A01735AA17` |
+| `dist/bytefray-5.0.0rc1.tar.gz` | 979,684 bytes (~957 KB) | `D42B5A7B4D535110E530894269C8B07DD019C15D4ECCDB9EFD678A6C6CAD7930` |
 
 ---
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 Validates the complete removal and isolation of rejected R1/R2 experimental
 mechanics (finite process mortality, objective-target oracle, and experimental
 rulesets) from the production engine while verifying stable V4 behavior, passive
-replay compatibility, and 5.0.0a1 version transition.
+replay compatibility, and 5.0.0-rc1 version transition.
 """
 
 import re

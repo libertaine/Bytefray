@@ -29,6 +29,10 @@ EXPECTED_FILES = {
     "battle_engine/data/starter_agents/wanderer/agent.py",
     "battle_engine/data/starter_agents/adaptive/agent.yaml",
     "battle_engine/data/starter_agents/adaptive/agent.py",
+    "battle_engine/data/starter_agents/raider/agent.yaml",
+    "battle_engine/data/starter_agents/raider/agent.py",
+    "battle_engine/data/starter_agents/sentinel/agent.yaml",
+    "battle_engine/data/starter_agents/sentinel/agent.py",
     # Agent API v2 / Ruleset v4 alpha1 starter population.
     "battle_engine/data/starter_agents/v4_claimer/agent.yaml",
     "battle_engine/data/starter_agents/v4_claimer/agent.py",
@@ -38,6 +42,8 @@ EXPECTED_FILES = {
     "battle_engine/data/starter_agents/v4_defender_scout/agent.py",
     "battle_engine/data/starter_agents/v4_local_defender/agent.yaml",
     "battle_engine/data/starter_agents/v4_local_defender/agent.py",
+    "battle_engine/data/starter_agents/v4_quorum/agent.yaml",
+    "battle_engine/data/starter_agents/v4_quorum/agent.py",
     "battle_engine/data/starter_agents/v4_scout/agent.yaml",
     "battle_engine/data/starter_agents/v4_scout/agent.py",
     # Agent API v2 educational ladder added in v5.0.0a1 (V5 Alpha 1 Phase C).

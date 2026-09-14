@@ -103,7 +103,7 @@ from battle_engine.paths import get_data_root
 from battle_engine.agents import discover_agents
 root = pathlib.Path(get_data_root())
 items = discover_agents(root)
-names = [getattr(x, "display", None) or getattr(x, "name", None) or getattr(x, "id", None) for x in items]
+names = [getattr(x, "display", None) or getattr(x, "name", None) or getattr(x, "id", None) for x in items.values()]
 print("agents count:", len(items))
 print("agents:", names)
 if len(items) == 0:
