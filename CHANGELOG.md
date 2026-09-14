@@ -2,6 +2,47 @@
 
 This changelog records notable user- and developer-visible changes to Bytefray.
 
+## [5.0.0-rc1] - 2026-09-14
+
+### Bytefray v5.0 — release candidate 1
+
+The first **release candidate** for Bytefray v5.0. Bytefray 5 stabilizes the
+agent-authoring, parameterization, and desktop experience atop the immutable
+`bytefray-rules-4` gameplay core and Agent API v2. RC1 consolidates the post-Alpha 1
+remediation phases (tournament UX completion, unified replay integrity, replay
+history discovery and viewer integration, standard accessibility baseline, application
+menu reorganization, and starter agent refresh hygiene) into a unified, release-ready
+desktop and headless product.
+
+* **Replay History Subsystem:** Global Replay History dialog (`History → Replay History…`)
+  with automatic discovery of recorded match and evaluation replays, result occurrence
+  indexing, real-time filtering/search, and seamless Replay Viewer launch.
+* **Complete Tournament UX Workflow:** End-to-end Configure → Run Tournament →
+  See Results → Browse Matches → View Replay loop in Agent Designer. Includes atomic
+  `tournament.json` checkpoints, full standings display, and per-match result and
+  replay inspection.
+* **Unified Replay Integrity Preflight:** All user-facing replay launch paths
+  (Simple, Advanced, Development, Tournament Results, Tournament History, Replay
+  History, Evaluation Results, Evaluation History) verify recorded artifact association
+  and SHA-256 digests at click time, guarding against missing or mutated replay files.
+* **Standard Desktop Accessibility Baseline:** Full keyboard navigation across all
+  Designer workspaces (Simple, Advanced, Development) and modal dialogs; programmatic
+  label-buddy associations (`QLabel.setBuddy`); informative accessible names and
+  descriptions; visible keyboard focus styling; and dual keyboard (`Return`/`Enter`)
+  and mouse activation for all result and history tables.
+* **Application Menu Organization:** Restructured Designer menu bar adhering to
+  standard desktop conventions (`File`, `Agent`, `Match`, `Tournament`, `History`,
+  `Tools`, `Help`) with clean separation of operational actions and historical viewers.
+* **Designer Ruleset Default Cleanliness:** Fresh Designer sessions default cleanly
+  to stable `bytefray-rules-4` across Simple, Advanced, and Development panels,
+  matching CLI defaults and Agent API v2 starter requirements.
+* **Agent Package Export Workflow:** Interactive agent package export from Designer
+  with metadata validation and cross-platform zip export.
+* **Replay Terminal Outcome Presentation:** Always-on terminal winner/draw HUD
+  banner in the Pygame replay visualizer upon match completion.
+* **Hardened Parameter Consistency:** Unified parameter resolution, CLI overrides,
+  and preset inheritance across direct CLI runs, tournament matches, and GUI panels.
+
 ## [5.0.0a1] - 2026-09-10
 
 ### V5 Alpha 1 — agent authoring and Designer workflows

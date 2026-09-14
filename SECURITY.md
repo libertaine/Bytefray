@@ -6,8 +6,8 @@ Bytefray follows a single active release line — there are no older
 maintained major versions receiving separate fixes; security fixes are made
 against that line's current state. See [CHANGELOG.md](CHANGELOG.md) for
 release history. As of this writing, the most recent stable release is
-`4.0.0`, and the current prerelease is `5.0.0a1` ("Bytefray V5 Alpha 1"),
-published as a GitHub prerelease and collecting feedback. Bytefray V5 builds
+`4.0.0`, and the current prerelease is `5.0.0rc1` ("Bytefray 5.0.0-rc1"),
+candidate under active release qualification. Bytefray V5 builds
 on unchanged, stable `bytefray-rules-4` gameplay — it introduces
 agent-authoring, parameter, and Designer/UX changes, not a new gameplay
 Ruleset. See [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) for what the

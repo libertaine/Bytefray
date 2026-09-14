@@ -688,7 +688,7 @@ def main(argv: Iterable[str] | None = None) -> int:
             print(f" - {name:20} {disp:20} {agent_runtime_label(spec):8} blob={blob}")
         print(
             "\n[Python] agents run under Ruleset v1 or v2 with Agent API v1; "
-            "Ruleset v4 alpha1 uses Agent API v2."
+            "Ruleset v4 uses Agent API v2."
             "\n[VM] agents run under Ruleset v1 only."
         )
         return 0

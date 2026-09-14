@@ -40,9 +40,8 @@ function Get-Python {
   # 2) Local .venv
   $py = Join-Path $RepoRoot '.venv\Scripts\python.exe'
   if (Test-Path $py) { return (Resolve-Path $py).Path }
-  # 3) Fallback to PATH
-  $py = (Get-Command python -ErrorAction SilentlyContinue)?.Source
-  if ($py) { return $py }
+  $cmd = Get-Command python -ErrorAction SilentlyContinue
+  if ($cmd) { return $cmd.Source }
   throw "Python executable not found. Create venv:  python -m venv .venv"
 }
 
@@ -88,11 +87,11 @@ Ensure-Env -RepoRoot $repo
 # 1) Import sanity: battle_engine and client renderer
 Write-Info "Check: module imports"
 Invoke-PyCode -PythonExe $PY -What "import check" -Code @'
-import sys, pkgutil
+import sys, importlib.util
 sys.path[:0] = [r"engine/src", r"client/src"]
-print("has battle_engine:", pkgutil.find_loader("battle_engine") is not None)
+print("has battle_engine:", importlib.util.find_spec("battle_engine") is not None)
 print("has battle_client.renderers.pygame_renderer:",
-      pkgutil.find_loader("battle_client.renderers.pygame_renderer") is not None)
+      importlib.util.find_spec("battle_client.renderers.pygame_renderer") is not None)
 '@
 
 # 2) Agent discovery (uses discover_agents(Path(root)))

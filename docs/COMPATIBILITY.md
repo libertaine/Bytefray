@@ -10,7 +10,7 @@ expecting this document to repeat them.
 
 ## Current V5 product boundary
 
-Bytefray `5.0.0a1` is the V5 product release; its process-agent gameplay
+Bytefray `5.0.0-rc1` (`5.0.0rc1`) is the V5 release candidate; its process-agent gameplay
 continues to use permanent `bytefray-rules-4` and Agent API v2. There is no
 production Ruleset 5. Product versions, gameplay identities, Agent API
 versions, and replay/result schemas are independent compatibility axes.

@@ -209,8 +209,8 @@ def test_replay_deserialization_passive_compatibility() -> None:
     assert state.integrity == 1
 
 
-def test_version_transition_5_0_0a1() -> None:
-    """Project version is 5.0.0a1 across pyproject.toml, installer.iss, and package metadata."""
+def test_version_transition_5_0_0rc1() -> None:
+    """Project version is 5.0.0-rc1 across pyproject.toml, installer.iss, and package metadata."""
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     installer = (ROOT / "tools" / "installer.iss").read_text(encoding="utf-8")
 
@@ -222,7 +222,7 @@ def test_version_transition_5_0_0a1() -> None:
     assert app_match is not None
     assert tag_match is not None
 
-    assert proj_match.group(1) == "5.0.0a1"
-    assert app_match.group(1) == "5.0.0a1"
-    assert tag_match.group(1) == "5.0.0a1"
-    assert distribution_version("bytefray") == "5.0.0a1"
+    assert proj_match.group(1) == "5.0.0-rc1"
+    assert app_match.group(1) == "5.0.0rc1"
+    assert tag_match.group(1) == "5.0.0-rc1"
+    assert distribution_version("bytefray") == "5.0.0rc1"

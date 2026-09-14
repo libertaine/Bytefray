@@ -1,6 +1,6 @@
 # The V5 Starter Agents
 
-Bytefray 5.0.0a1 ships four Agent API v2 starter agents. They are a ladder,
+Bytefray 5 ships four Agent API v2 starter agents. They are a ladder,
 not a roster: each one exists to teach exactly one idea, and each is meant to
 be read straight through in a couple of minutes.
 
