@@ -79,6 +79,28 @@ def _run_real_evaluation(tmp_path: Path, *, output_name: str = "eval-out", basel
     return result.state_path
 
 
+def _integrity_designer(monkeypatch, tmp_path: Path):
+    from app.agent_designer import AgentDesigner
+
+    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
+    warnings = []
+    monkeypatch.setattr(
+        "app.agent_designer.QMessageBox.warning",
+        staticmethod(lambda *args, **_kwargs: warnings.append(args)),
+    )
+    monkeypatch.setattr(
+        "app.agent_designer.QMessageBox.critical",
+        staticmethod(lambda *args, **_kwargs: pytest.fail(f"unexpected critical dialog: {args}")),
+    )
+    designer = AgentDesigner()
+    launched = []
+    monkeypatch.setattr(
+        "app.agent_designer.open_pygame_client_direct",
+        lambda root, replay: launched.append((root, replay)),
+    )
+    return designer, launched, warnings
+
+
 class _NullSignal:
     def connect(self, *_a, **_k):
         pass
@@ -325,8 +347,8 @@ def test_history_dialog_cell_selection_enables_drilldown_and_emits_signals(
 
         assert lab_calls == [("candidate", "opponent", 1, 12, "candidate_first")]
         assert len(replay_calls) == 1
-        assert replay_calls[0].name == "replay.jsonl"
-        assert replay_calls[0].is_file()
+        assert replay_calls[0].result_path.name == "result.json"
+        assert replay_calls[0].result_path.is_file()
 
         restore_policy = []
 
@@ -349,6 +371,34 @@ def test_history_dialog_cell_selection_enables_drilldown_and_emits_signals(
         assert restore_policy == [False]
     finally:
         dialog.deleteLater()
+
+
+@pytest.mark.gui
+def test_history_cell_rechecks_missing_replay_at_click(monkeypatch, tmp_path):
+    _make_app()
+    from app.views.evaluation_history import EvaluationHistoryDialog
+
+    _run_real_evaluation(tmp_path, baseline=False)
+    dialog = EvaluationHistoryDialog(tmp_path)
+    designer, launched, warnings = _integrity_designer(monkeypatch, tmp_path)
+    try:
+        dialog.list.setCurrentRow(0)
+        dialog.cellsList.setCurrentRow(0)
+        cell = dialog._selected_cell()
+        summary = dialog._current_summary
+        assert cell is not None and summary is not None
+        replay_path = summary.location.directory / cell.artifact_dir / "replay.jsonl"
+        assert replay_path.is_file()
+        dialog.openReplayRequested.connect(designer._on_evaluation_open_replay)
+
+        replay_path.unlink()
+        dialog.openReplayButton.click()
+
+        assert launched == []
+        assert [args[1] for args in warnings] == ["Replay Unavailable"]
+    finally:
+        dialog.deleteLater()
+        designer.deleteLater()
 
 
 # ---------------------------------------------------------------------------
@@ -641,7 +691,7 @@ def test_evaluation_comparison_dialog_row_drilldown_offers_both_sides(tmp_path):
         right_replay = (
             result.right.location.directory / dialog._active_right_cell.artifact_dir / "replay.jsonl"
         )
-        assert replay_calls[0] == right_replay
+        assert replay_calls[0].result_path.parent == right_replay.parent
 
         # Switching to the left side must retarget both actions, not just
         # relabel the combo -- the emitted replay path changes to the
@@ -655,10 +705,53 @@ def test_evaluation_comparison_dialog_row_drilldown_offers_both_sides(tmp_path):
         left_replay = (
             result.left.location.directory / dialog._active_left_cell.artifact_dir / "replay.jsonl"
         )
-        assert replay_calls[0] == left_replay
+        assert replay_calls[0].result_path.parent == left_replay.parent
         assert left_replay != right_replay
     finally:
         dialog.deleteLater()
+
+
+@pytest.mark.gui
+def test_comparison_left_and_right_replays_are_rechecked_at_click(monkeypatch, tmp_path):
+    _make_app()
+    from app.services.evaluation_history_workflows import compare_evaluations
+    from app.views.evaluation_history import EvaluationComparisonDialog
+
+    left_path = _run_real_evaluation(
+        tmp_path, output_name="eval-left", baseline=False, both_orientations=False
+    )
+    right_path = _run_real_evaluation(
+        tmp_path, output_name="eval-right", baseline=False, both_orientations=False
+    )
+    result = compare_evaluations(left_path, right_path, verify=False, data_root=tmp_path)
+    dialog = EvaluationComparisonDialog(result)
+    designer, launched, warnings = _integrity_designer(monkeypatch, tmp_path)
+    try:
+        dialog.rowsList.setCurrentRow(0)
+        dialog.openReplayRequested.connect(designer._on_evaluation_open_replay)
+
+        dialog.sideCombo.setCurrentIndex(dialog.sideCombo.findData("left"))
+        left_cell = dialog._active_left_cell
+        assert left_cell is not None
+        left_replay = result.left.location.directory / left_cell.artifact_dir / "replay.jsonl"
+        left_replay.write_bytes(left_replay.read_bytes() + b"\n")
+        dialog.openReplayButton.click()
+
+        dialog.sideCombo.setCurrentIndex(dialog.sideCombo.findData("right"))
+        right_cell = dialog._active_right_cell
+        assert right_cell is not None
+        right_replay = result.right.location.directory / right_cell.artifact_dir / "replay.jsonl"
+        right_replay.unlink()
+        dialog.openReplayButton.click()
+
+        assert launched == []
+        assert [args[1] for args in warnings] == [
+            "Replay Changed",
+            "Replay Unavailable",
+        ]
+    finally:
+        dialog.deleteLater()
+        designer.deleteLater()
 
 
 @pytest.mark.gui
@@ -696,7 +789,7 @@ def test_evaluation_comparison_dialog_unmatched_gap_offers_only_the_real_side(tm
         dialog.openReplayRequested.connect(lambda path: replay_calls.append(path))
         dialog.openReplayButton.click()
         assert len(replay_calls) == 1
-        assert replay_calls[0].is_file()
+        assert replay_calls[0].result_path.is_file()
 
         right_row = next(
             row
@@ -709,10 +802,47 @@ def test_evaluation_comparison_dialog_unmatched_gap_offers_only_the_real_side(tm
         replay_calls.clear()
         dialog.openReplayButton.click()
         assert len(replay_calls) == 1
-        assert replay_calls[0].is_file()
-        assert replay_calls[0].is_relative_to(result.right.location.directory)
+        assert replay_calls[0].result_path.is_file()
+        assert replay_calls[0].result_path.is_relative_to(result.right.location.directory)
     finally:
         dialog.deleteLater()
+
+
+@pytest.mark.gui
+def test_comparison_gap_replay_is_rechecked_at_click(monkeypatch, tmp_path):
+    _make_app()
+    from app.services.evaluation_history_workflows import compare_evaluations
+    from app.views.evaluation_history import EvaluationComparisonDialog
+
+    left_path = _run_real_evaluation(
+        tmp_path, output_name="eval-left", baseline=False, seeds=(1,)
+    )
+    right_path = _run_real_evaluation(
+        tmp_path, output_name="eval-right", baseline=False, seeds=(2,)
+    )
+    result = compare_evaluations(left_path, right_path, verify=False, data_root=tmp_path)
+    dialog = EvaluationComparisonDialog(result)
+    designer, launched, warnings = _integrity_designer(monkeypatch, tmp_path)
+    try:
+        target_row = next(
+            row
+            for row in range(dialog.gapsList.count())
+            if "UNMATCHED (left only)" in dialog.gapsList.item(row).text()
+        )
+        dialog.gapsList.setCurrentRow(target_row)
+        cell = dialog._active_left_cell
+        assert cell is not None
+        replay_path = result.left.location.directory / cell.artifact_dir / "replay.jsonl"
+        dialog.openReplayRequested.connect(designer._on_evaluation_open_replay)
+
+        replay_path.write_bytes(replay_path.read_bytes() + b"\n")
+        dialog.openReplayButton.click()
+
+        assert launched == []
+        assert [args[1] for args in warnings] == ["Replay Changed"]
+    finally:
+        dialog.deleteLater()
+        designer.deleteLater()
 
 
 @pytest.mark.gui
@@ -773,14 +903,14 @@ def test_evaluation_comparison_dialog_changed_condition_requires_explicit_side(t
         dialog.testAgentLabButton.click()
         dialog.openReplayButton.click()
         assert lab_calls[-1] == ("candidate", "opponent", 1, 10, "candidate_first")
-        assert replay_calls[-1].is_relative_to(result.left.location.directory)
+        assert replay_calls[-1].result_path.is_relative_to(result.left.location.directory)
 
         dialog.sideCombo.setCurrentIndex(dialog.sideCombo.findData("right"))
         dialog.testAgentLabButton.click()
         dialog.openReplayButton.click()
         assert lab_calls[-1] == ("candidate", "opponent", 1, 25, "candidate_first")
-        assert replay_calls[-1].is_relative_to(result.right.location.directory)
-        assert replay_calls[-1] != replay_calls[-2]
+        assert replay_calls[-1].result_path.is_relative_to(result.right.location.directory)
+        assert replay_calls[-1].result_path != replay_calls[-2].result_path
     finally:
         dialog.deleteLater()
 

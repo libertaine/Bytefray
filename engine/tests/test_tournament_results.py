@@ -241,6 +241,21 @@ def test_missing_and_changed_replays_are_detected_before_opening(tmp_path):
     ]
 
 
+def test_result_identity_and_replay_reference_are_rechecked_after_results_load(tmp_path):
+    TournamentService().run(_request(tmp_path))
+    first, second, _ = read_tournament_results(tmp_path).matches
+    first_result = json.loads(first.result_path.read_text(encoding="utf-8"))
+    first_result["result_id"] = "replaced_result"
+    first.result_path.write_text(json.dumps(first_result), encoding="utf-8")
+
+    second_result = json.loads(second.result_path.read_text(encoding="utf-8"))
+    second_result["replay"]["filename"] = "../outside.jsonl"
+    second.result_path.write_text(json.dumps(second_result), encoding="utf-8")
+
+    assert check_match_replay(first) == REPLAY_CHANGED
+    assert check_match_replay(second) == REPLAY_CHANGED
+
+
 def test_result_file_that_does_not_match_the_tournament_record_is_not_trusted(tmp_path):
     service_result = TournamentService().run(_request(tmp_path))
     first_dir = service_result.matches[0].artifact_dir

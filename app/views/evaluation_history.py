@@ -89,6 +89,7 @@ from app.services.evaluation_history_workflows import (
     sorted_listing_entries,
     summary_is_group,
 )
+from app.services.replay_integrity import result_replay_request
 from app.widgets.evaluation_visuals import (
     COLOR_LOSS,
     COLOR_WIN,
@@ -100,6 +101,15 @@ from app.widgets.evaluation_visuals import (
     rate_stat_bar_data,
     win_rate_bar_data,
 )
+
+
+def _cell_replay_request(summary: EvaluationSummary, cell: AdaptedCell):
+    return result_replay_request(
+        summary.location.directory / cell.artifact_dir / "result.json",
+        artifact_root=summary.location.directory,
+        expected_result_id=cell.result_id,
+        expected_match_id=cell.match_id,
+    )
 
 # V5 Alpha 1 Phase 1: the new-install empty state (Sec 4 of the phase task).
 # Evaluation History has no separate persistence of its own -- it discovers
@@ -583,7 +593,7 @@ class EvaluationComparisonDialog(QDialog):
     """
 
     testInAgentLabRequested = Signal(str, str, int, int, str)
-    openReplayRequested = Signal(Path)
+    openReplayRequested = Signal(object)
 
     def __init__(self, result, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -932,7 +942,7 @@ class EvaluationComparisonDialog(QDialog):
         summary, cell = self._selected_side_cell()
         if cell is None:
             return
-        self.openReplayRequested.emit(summary.location.directory / cell.artifact_dir / "replay.jsonl")
+        self.openReplayRequested.emit(_cell_replay_request(summary, cell))
 
 
 def _build_history_visual_panel(summary: EvaluationSummary) -> QWidget | None:
@@ -1035,7 +1045,7 @@ class EvaluationHistoryDialog(QDialog):
     """
 
     testInAgentLabRequested = Signal(str, str, int, int, str)
-    openReplayRequested = Signal(Path)
+    openReplayRequested = Signal(object)
     agentCatalogChanged = Signal(str)
 
     def __init__(
@@ -1317,7 +1327,7 @@ class EvaluationHistoryDialog(QDialog):
         cell = self._selected_cell()
         if cell is None or self._current_summary is None:
             return
-        self.openReplayRequested.emit(self._current_summary.location.directory / cell.artifact_dir / "replay.jsonl")
+        self.openReplayRequested.emit(_cell_replay_request(self._current_summary, cell))
 
     # ---- Open Evaluation Folder ----
     def _on_open_evaluation_folder(self) -> None:

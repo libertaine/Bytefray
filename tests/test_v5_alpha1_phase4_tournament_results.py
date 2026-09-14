@@ -252,6 +252,37 @@ def test_unavailable_replay_is_explained_and_never_launched(monkeypatch, tmp_pat
 
 
 @pytest.mark.gui
+def test_result_removed_after_results_load_is_explained_and_never_launched(
+    monkeypatch, tmp_path
+):
+    _make_app()
+    modals = _Modals(monkeypatch)
+    from app.services.tournament_results import read_tournament_results
+    from app.views.tournament import TournamentResultsDialog
+
+    service_result = _run_tournament(tmp_path / "cup")
+    dialog = TournamentResultsDialog(read_tournament_results(tmp_path / "cup"))
+    emitted = []
+    dialog.openReplayRequested.connect(emitted.append)
+    try:
+        dialog.matchesTable.selectRow(0)
+        assert dialog.viewReplayButton.isEnabled()
+        (service_result.matches[0].artifact_dir / "result.json").unlink()
+
+        dialog.viewReplayButton.click()
+
+        assert emitted == []
+        assert not dialog.viewReplayButton.isEnabled()
+        assert dialog.replayStatusLabel.text() == (
+            "Replay unavailable: The match result needed to verify this replay is "
+            "missing or unreadable."
+        )
+    finally:
+        dialog.deleteLater()
+    assert modals.calls == []
+
+
+@pytest.mark.gui
 def test_changed_replay_warns_and_is_not_opened(monkeypatch, tmp_path):
     _make_app()
     modals = _Modals(monkeypatch)
@@ -566,7 +597,7 @@ def test_history_menu_contains_tournament_history_with_preserved_wiring(monkeypa
         monkeypatch.setattr("app.agent_designer.TournamentHistoryDialog", _History)
         next(action for action in actions if action.text() == "Tournament History…").trigger()
 
-        assert created == [designer.data_root, designer._on_evaluation_open_replay, "exec"]
+        assert created == [designer.data_root, designer._on_verified_replay_path, "exec"]
     finally:
         designer.deleteLater()
 

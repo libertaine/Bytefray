@@ -524,6 +524,13 @@ class AgentDevelopmentPanel(QWidget):
         """
         return self._last_test_replay
 
+    def last_test_result_path(self) -> Path | None:
+        """Canonical result backing the last completed Development Test replay."""
+
+        if self._last_test is None or self._last_test.match is None:
+            return None
+        return self._last_test.match.result_path
+
     def selectAgent(self, agent_id: str) -> None:
         idx = self.agentCombo.findData(agent_id)
         if idx < 0:

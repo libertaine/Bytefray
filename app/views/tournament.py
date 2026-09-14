@@ -42,7 +42,6 @@ from app.services.tournament_results import (
     TournamentHistoryEntry,
     TournamentResults,
     TournamentResultsError,
-    check_match_replay,
     discover_tournaments,
     entrants_text,
     format_score,
@@ -53,8 +52,11 @@ from app.services.tournament_results import (
     match_result_text,
     match_title,
     matches_text,
+    preflight_match_replay,
     read_tournament_results,
     replay_column_text,
+    replay_preflight_state,
+    replay_preflight_unavailable_reason,
     ruleset_text,
     status_text,
     tournaments_root,
@@ -316,16 +318,17 @@ class TournamentResultsDialog(QDialog):
         match = self._selected_match()
         if match is None or match.replay_path is None or self._replay_problem(match) is not None:
             return
-        state = check_match_replay(match)
-        if state == REPLAY_READY:
+        outcome = preflight_match_replay(match)
+        state = replay_preflight_state(outcome)
+        if state == REPLAY_READY and outcome.replay_path is not None:
             self.replayStatusLabel.setText(OPENING_REPLAY_TEXT)
-            self.openReplayRequested.emit(match.replay_path)
+            self.openReplayRequested.emit(outcome.replay_path)
             return
         if state == REPLAY_CHANGED:
             self._mark_replay_problem(match, REPLAY_CHANGED_TEXT)
             QMessageBox.warning(self, REPLAY_CHANGED_TITLE, REPLAY_CHANGED_BODY)
             return
-        self._mark_replay_problem(match, REPLAY_MISSING_TEXT)
+        self._mark_replay_problem(match, replay_preflight_unavailable_reason(outcome))
 
     def _mark_replay_problem(self, match: MatchRow, reason: str) -> None:
         self._replay_problems[match.number] = reason

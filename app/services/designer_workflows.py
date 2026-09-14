@@ -735,6 +735,8 @@ class EvaluationCellPresentation:
     artifact_dir: Path
     score_subject: float | None
     score_opponent: float | None
+    match_id: str | None = None
+    result_id: str | None = None
     # v0.9 Phase 6 (Phase 5 spec Sec P): which entrant orientation this cell
     # executed under -- shown per-cell since results/comparison stay
     # perspective-correct (subject/opponent) even when the physical
@@ -848,6 +850,12 @@ def read_evaluation_presentation(state_path: Path) -> EvaluationPresentation:
             artifact_dir=(base_dir / str(cell.get("artifact_dir", ""))),
             score_subject=cell.get("score_subject"),
             score_opponent=cell.get("score_opponent"),
+            match_id=(
+                str(cell["match_id"]) if cell.get("match_id") is not None else None
+            ),
+            result_id=(
+                str(cell["result_id"]) if cell.get("result_id") is not None else None
+            ),
             orientation=str(cell.get("orientation", ORIENTATION_CANDIDATE_FIRST)),
             roster_agent_ids=tuple(str(value) for value in (cell.get("roster_agent_ids") or ())),
             seat_agent_ids=tuple(str(value) for value in (cell.get("seat_agent_ids") or ())),

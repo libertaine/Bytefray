@@ -62,6 +62,7 @@ from app.services.designer_workflows import (
     EvaluationPresentation,
     build_designer_evaluation_plan,
 )
+from app.services.replay_integrity import result_replay_request
 from app.services.ruleset_options import (
     EVALUATION_RULESET_OPTIONS,
     RULESET_DESCRIPTION,
@@ -704,7 +705,7 @@ class EvaluationResultsDialog(QDialog):
 
     # subject_id, opponent_id, seed, ticks, orientation
     testInAgentLabRequested = Signal(str, str, int, int, str)
-    openReplayRequested = Signal(Path)
+    openReplayRequested = Signal(object)
 
     def __init__(self, presentation: EvaluationPresentation, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -929,7 +930,14 @@ class EvaluationResultsDialog(QDialog):
         cell = self._candidate_cell(payload)
         if cell is None:
             return
-        self.openReplayRequested.emit(cell.artifact_dir / "replay.jsonl")
+        self.openReplayRequested.emit(
+            result_replay_request(
+                cell.artifact_dir / "result.json",
+                artifact_root=self._presentation.state_path.parent,
+                expected_result_id=cell.result_id,
+                expected_match_id=cell.match_id,
+            )
+        )
 
 
 __all__ = ["EvaluationDialog", "EvaluationResultsDialog"]

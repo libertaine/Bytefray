@@ -10,14 +10,15 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
-from battle_engine.result_model import (
-    ReplayIntegrityError,
-    ResultEnvelope,
-    read_result,
-    verify_replay_digest_value,
+from battle_engine.replay_integrity import (
+    ReplayPreflightFailure,
+    ReplayPreflightResult,
+    preflight_result_replay,
 )
+from battle_engine.result_model import ResultEnvelope, read_result
 from battle_engine.tournament_service import SCHEMA_NAME, SCHEMA_VERSION
 
+from app.services import replay_integrity as replay_integrity_service
 from app.services.designer_workflows import RUNTIME_LABELS
 from app.services.replay_history_presentation import ruleset_label
 
@@ -29,11 +30,8 @@ NO_TOURNAMENT_HISTORY_TEXT = (
 )
 REPLAY_AVAILABLE_TEXT = "Available"
 REPLAY_UNAVAILABLE_TEXT = "Replay unavailable"
-REPLAY_CHANGED_TITLE = "Replay Changed"
-REPLAY_CHANGED_BODY = (
-    "This replay no longer matches the match result it belongs to. It may have been "
-    "modified or replaced, so Bytefray has not opened it."
-)
+REPLAY_CHANGED_TITLE = replay_integrity_service.REPLAY_CHANGED_TITLE
+REPLAY_CHANGED_BODY = replay_integrity_service.REPLAY_CHANGED_BODY
 NOT_COMPLETED_REPLAY_TEXT = "This match did not complete, so it has no replay."
 REPLAY_MISSING_TEXT = "The replay file is missing."
 REPLAY_CHANGED_TEXT = "The replay file has changed since the match was recorded."
@@ -84,6 +82,7 @@ class MatchRow:
     replay_path: Path | None = None
     replay_sha256: str | None = None
     replay_unavailable_reason: str | None = None
+    recorded_result_id: str | None = None
 
     def name_of(self, agent_id: str) -> str:
         for entrant_id, name in zip(self.entrant_ids, self.entrant_names, strict=True):
@@ -365,6 +364,7 @@ def read_tournament_results(output_dir: Path) -> TournamentResults:
                 replay_path=replay_path,
                 replay_sha256=replay_sha256,
                 replay_unavailable_reason=replay_problem,
+                recorded_result_id=record.result_id,
             )
         matches.append(row)
 
@@ -393,16 +393,61 @@ def read_tournament_results(output_dir: Path) -> TournamentResults:
     )
 
 
-def check_match_replay(match: MatchRow) -> str:
-    """Click-time check against the digest recorded in the match's ``result.json``."""
+def preflight_match_replay(match: MatchRow) -> ReplayPreflightResult:
+    """Reread and verify a tournament match's canonical result and replay."""
 
-    if match.replay_path is None or match.replay_sha256 is None:
-        return REPLAY_MISSING
-    try:
-        verify_replay_digest_value(match.replay_sha256, match.replay_path)
-    except ReplayIntegrityError as exc:
-        return REPLAY_CHANGED if exc.code == "replay_digest_mismatch" else REPLAY_MISSING
-    return REPLAY_READY
+    if match.result_path is None or match.artifact_dir is None:
+        return ReplayPreflightResult(
+            failure=ReplayPreflightFailure.RESULT_UNAVAILABLE,
+            diagnostic="The tournament match has no readable canonical result.",
+        )
+    return preflight_result_replay(
+        replay_integrity_service.result_replay_request(
+            match.result_path,
+            artifact_root=match.artifact_dir,
+            expected_result_id=match.recorded_result_id,
+        )
+    )
+
+
+def replay_preflight_state(outcome: ReplayPreflightResult) -> str:
+    if outcome.verified:
+        return REPLAY_READY
+    if outcome.failure in {
+        ReplayPreflightFailure.RESULT_ASSOCIATION_MISMATCH,
+        ReplayPreflightFailure.REPLAY_REFERENCE_MALFORMED,
+        ReplayPreflightFailure.REPLAY_PATH_UNSAFE,
+        ReplayPreflightFailure.REPLAY_CHANGED,
+        ReplayPreflightFailure.REPLAY_INVALID,
+        ReplayPreflightFailure.REPLAY_IDENTITY_MISMATCH,
+    }:
+        return REPLAY_CHANGED
+    return REPLAY_MISSING
+
+
+def replay_preflight_unavailable_reason(outcome: ReplayPreflightResult) -> str:
+    """Concise inline reason for a non-mismatch Tournament preflight failure."""
+
+    if outcome.failure is ReplayPreflightFailure.REPLAY_MISSING:
+        return REPLAY_MISSING_TEXT
+    if outcome.failure in {
+        ReplayPreflightFailure.RESULT_UNAVAILABLE,
+        ReplayPreflightFailure.RESULT_PATH_UNSAFE,
+    }:
+        return "The match result needed to verify this replay is missing or unreadable."
+    if outcome.failure in {
+        ReplayPreflightFailure.REPLAY_REFERENCE_MISSING,
+        ReplayPreflightFailure.REPLAY_REFERENCE_MALFORMED,
+        ReplayPreflightFailure.REPLAY_PATH_UNSAFE,
+    }:
+        return "The match result no longer contains a safe, valid replay reference."
+    return "The replay could not be read and verified."
+
+
+def check_match_replay(match: MatchRow) -> str:
+    """Compatibility status wrapper around the canonical click-time preflight."""
+
+    return replay_preflight_state(preflight_match_replay(match))
 
 
 def _match_count_text(count: int) -> str:

@@ -26,6 +26,7 @@ from battle_engine.launchers import (
 )
 from battle_engine.paths import canonical_replay_directory, get_branding_icon_path, get_data_root
 from battle_engine.project_info import get_project_info
+from battle_engine.replay_integrity import ResultReplayRequest, preflight_result_replay
 from battle_engine.starters import (
     describe_bootstrap_errors,
     describe_starter_refresh,
@@ -68,6 +69,7 @@ from app.services.designer_workflows import (
     validate_homogeneous,
 )
 from app.services.engine import open_pygame_client_direct
+from app.services.replay_integrity import replay_failure_message, result_replay_request
 from app.services.ruleset_options import (
     validate_designer_agent_rows,
     validate_designer_ruleset,
@@ -149,6 +151,7 @@ class AgentDesigner(QMainWindow):
         self.data_root = data_root            # <-- keep for later
         self._proc = None                         # <-- init process handle
         self._last_replay = None                  # <-- init replay capture
+        self._last_result_path = None
         self._result_path = None
         self._tournament_output = None
         self._tournament_state_before = None
@@ -717,6 +720,7 @@ class AgentDesigner(QMainWindow):
             try:
                 result = read_match_presentation(self._result_path)
                 self._last_replay = result.replay_path
+                self._last_result_path = result.result_path
                 if hasattr(self, "advanced"):
                     self.advanced.note_completed_replay(self._last_replay)
                 self._log_target.appendLog(
@@ -757,24 +761,21 @@ class AgentDesigner(QMainWindow):
         # run's replay -- never the file a currently-running match is still
         # writing. If either guarantee is ever relaxed, this button should
         # move back into setBusy()'s disabled set.
+        last_result_path = getattr(self, "_last_result_path", None)
+        if last_result_path is not None:
+            self._open_result_replay(result_replay_request(last_result_path))
+            return
         path = None
-        if self._last_replay:
-            if Path(self._last_replay).exists():
-                path = self._last_replay
-            else:
-                QMessageBox.warning(
-                    self,
-                    "Replay Not Found",
-                    "The replay from your last match is no longer available.\n\n"
-                    "Choose a saved replay instead.",
-                )
-        if not path:
+        if getattr(self, "_last_replay", None) is None:
             path, _ = QFileDialog.getOpenFileName(
                 self,
                 "Open Replay",
                 str(canonical_replay_directory(self.data_root)),
                 "Bytefray Replays (*.jsonl)",
             )
+        else:
+            message = replay_failure_message(None)
+            QMessageBox.warning(self, message.title, message.body)
         if path:
             try:
                 open_pygame_client_direct(self.data_root, Path(path))
@@ -863,12 +864,12 @@ class AgentDesigner(QMainWindow):
                 f"T={row.get('ties')} score={row.get('score_total')}\n"
             )
         dialog = TournamentResultsDialog(results, parent=self)
-        dialog.openReplayRequested.connect(self._on_evaluation_open_replay)
+        dialog.openReplayRequested.connect(self._on_verified_replay_path)
         dialog.exec()
 
     def _on_tournament_history(self) -> None:
         dialog = TournamentHistoryDialog(self.data_root, parent=self)
-        dialog.openReplayRequested.connect(self._on_evaluation_open_replay)
+        dialog.openReplayRequested.connect(self._on_verified_replay_path)
         dialog.exec()
 
     def _plan_default_evaluation_output(self, dialog: EvaluationDialog) -> Path:
@@ -1235,9 +1236,30 @@ class AgentDesigner(QMainWindow):
                 self, "Agent Lab Test", "The rerun did not produce a trace to inspect."
             )
 
-    def _on_evaluation_open_replay(self, replay_path: Path) -> None:
+    def _open_result_replay(self, request: ResultReplayRequest) -> None:
+        outcome = preflight_result_replay(request)
+        if not outcome.verified or outcome.replay_path is None:
+            message = replay_failure_message(outcome.failure)
+            QMessageBox.warning(self, message.title, message.body)
+            return
         try:
-            open_pygame_client_direct(self.data_root, Path(replay_path))
+            open_pygame_client_direct(self.data_root, outcome.replay_path)
+        except (FileNotFoundError, OSError) as exc:
+            QMessageBox.critical(self, "Replay Launch Failed", str(exc))
+
+    def _on_evaluation_open_replay(self, request: ResultReplayRequest) -> None:
+        self._open_result_replay(request)
+
+    def _on_verified_replay_path(self, replay: Path) -> None:
+        """Launch a path a specialized UI preflighted in the same click.
+
+        Tournament and Replay History need their own contextual UI/state
+        handling. Only Tournament emits through this Designer slot; Replay
+        History owns its launcher directly.
+        """
+
+        try:
+            open_pygame_client_direct(self.data_root, Path(replay))
         except (FileNotFoundError, OSError) as exc:
             QMessageBox.critical(self, "Replay Launch Failed", str(exc))
 
@@ -1399,13 +1421,10 @@ class AgentDesigner(QMainWindow):
         """
         if not hasattr(self, "development"):
             return
-        path = self.development.last_test_replay_path()
-        if not path:
+        result_path = self.development.last_test_result_path()
+        if result_path is None:
             return
-        try:
-            open_pygame_client_direct(self.data_root, Path(path))
-        except (FileNotFoundError, OSError) as exc:
-            QMessageBox.critical(self, "Replay Launch Failed", str(exc))
+        self._open_result_replay(result_replay_request(result_path))
 
     def _on_inspect_trace(self) -> None:
         """Open the Trace Inspector over the last development test's trace.
