@@ -273,6 +273,7 @@ class AdvancedPanel(QWidget):
         form.addRow("Territory Bucket Size", self.territory_bucket)
 
         self.seed = QSpinBox()
+        self.seed.setAccessibleName("Random seed")
         self.seed.setRange(0, 1_000_000)
         self.seed.setValue(0)
         self.seed.setToolTip(

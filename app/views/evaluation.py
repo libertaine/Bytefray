@@ -777,6 +777,7 @@ class EvaluationResultsDialog(QDialog):
         visual_panel = _build_visual_evidence_panel(presentation)
         if visual_panel is not None:
             scroll = QScrollArea()
+            scroll.setAccessibleName("Evaluation metric visuals")
             scroll.setWidget(visual_panel)
             scroll.setWidgetResizable(True)
             scroll.setMaximumHeight(280)
