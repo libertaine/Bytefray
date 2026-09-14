@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QUrl, Signal
+from PySide6.QtCore import QEvent, QObject, Qt, QUrl, Signal
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -77,14 +78,33 @@ OPENING_REPLAY_TEXT = "Opening replay in Replay Viewer…"
 _MATCH_REPLAY_COLUMN = MATCH_COLUMNS.index("Replay")
 
 
+class _ReturnActivationFilter(QObject):
+    """Make Return/Enter an explicit, single activation for a table row."""
+
+    def __init__(self, handler: Callable[[], None], parent: QWidget) -> None:
+        super().__init__(parent)
+        self._handler = handler
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        if event.type() == QEvent.Type.KeyPress and event.key() in (
+            Qt.Key.Key_Return,
+            Qt.Key.Key_Enter,
+        ):
+            self._handler()
+            return True
+        return super().eventFilter(watched, event)
+
+
 class TournamentDialog(QDialog):
     def __init__(self, rows, default_output: Path, parent=None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Run Tournament")
         self._rows = tuple(rows)
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel("Select at least two agents from one runtime kind."))
+        self.agentsLabel = QLabel("Select at least two agents from one runtime kind.")
         self.agents = QListWidget()
+        self.agentsLabel.setBuddy(self.agents)
+        layout.addWidget(self.agentsLabel)
         self.agents.setSelectionMode(QAbstractItemView.ExtendedSelection)
         for index, row in enumerate(self._rows):
             item = QListWidgetItem(f"{row.name} ({row.meta.get('kind', 'vm')})")
@@ -101,13 +121,16 @@ class TournamentDialog(QDialog):
         self.seed.setValue(1337)
         output_row = QHBoxLayout()
         self.output = QLineEdit(str(default_output))
-        choose = QPushButton("Choose…")
-        choose.clicked.connect(self._choose_output)
+        self.chooseOutputButton = QPushButton("Choose…")
+        self.chooseOutputButton.setAccessibleName("Choose tournament output folder")
+        self.chooseOutputButton.clicked.connect(self._choose_output)
         output_row.addWidget(self.output, 1)
-        output_row.addWidget(choose)
+        output_row.addWidget(self.chooseOutputButton)
         form.addRow("Rounds", self.rounds)
         form.addRow("Seed", self.seed)
-        form.addRow("Output", output_row)
+        self.outputLabel = QLabel("Output")
+        self.outputLabel.setBuddy(self.output)
+        form.addRow(self.outputLabel, output_row)
         layout.addLayout(form)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -179,6 +202,7 @@ class TournamentResultsDialog(QDialog):
 
         self.statusLabel = QLabel(status_text(results))
         self.statusLabel.setWordWrap(True)
+        self.statusLabel.setAccessibleName("Tournament status")
         layout.addWidget(self.statusLabel)
 
         facts = QFormLayout()
@@ -208,6 +232,7 @@ class TournamentResultsDialog(QDialog):
         self.standingsNotice.setWordWrap(True)
         self.standingsNotice.setVisible(not results.finished)
         self.standingsTable = _read_only_table(STANDING_COLUMNS)
+        self.standingsTable.setAccessibleName("Tournament standings")
         standings_layout.addWidget(self.standingsNotice)
         standings_layout.addWidget(self.standingsTable, 1)
         self.tabs.addTab(standings_page, "Standings")
@@ -215,13 +240,16 @@ class TournamentResultsDialog(QDialog):
         matches_page = QWidget()
         matches_layout = QVBoxLayout(matches_page)
         self.matchesTable = _read_only_table(MATCH_COLUMNS)
+        self.matchesTable.setAccessibleName("Tournament matches")
         self.matchDetail = QPlainTextEdit()
         self.matchDetail.setReadOnly(True)
+        self.matchDetail.setAccessibleName("Selected tournament match details")
         replay_row = QHBoxLayout()
         self.viewReplayButton = QPushButton("View Replay")
         self.viewReplayButton.setEnabled(False)
         self.replayStatusLabel = QLabel(SELECT_MATCH_TEXT)
         self.replayStatusLabel.setWordWrap(True)
+        self.replayStatusLabel.setAccessibleName("Tournament replay status")
         replay_row.addWidget(self.viewReplayButton)
         replay_row.addWidget(self.replayStatusLabel, 1)
         matches_layout.addWidget(self.matchesTable, 2)
@@ -240,6 +268,10 @@ class TournamentResultsDialog(QDialog):
         self._populate_matches()
         self.matchesTable.itemSelectionChanged.connect(self._on_match_selection_changed)
         self.matchesTable.cellDoubleClicked.connect(self._on_match_double_clicked)
+        self._matchesReturnFilter = _ReturnActivationFilter(
+            self._on_view_replay, self.matchesTable
+        )
+        self.matchesTable.installEventFilter(self._matchesReturnFilter)
         self.viewReplayButton.clicked.connect(self._on_view_replay)
         self.openFolderButton.clicked.connect(self._on_open_output_folder)
 
@@ -371,10 +403,12 @@ class TournamentHistoryDialog(QDialog):
         layout.addWidget(self.emptyLabel)
 
         self.table = _read_only_table(HISTORY_COLUMNS)
+        self.table.setAccessibleName("Tournament history")
         layout.addWidget(self.table, 1)
 
         self.statusLabel = QLabel("")
         self.statusLabel.setWordWrap(True)
+        self.statusLabel.setAccessibleName("Tournament history status")
         layout.addWidget(self.statusLabel)
 
         actions = QHBoxLayout()
@@ -395,6 +429,10 @@ class TournamentHistoryDialog(QDialog):
 
         self.table.itemSelectionChanged.connect(self._on_selection_changed)
         self.table.cellDoubleClicked.connect(self._on_row_double_clicked)
+        self._historyReturnFilter = _ReturnActivationFilter(
+            self._on_view_results, self.table
+        )
+        self.table.installEventFilter(self._historyReturnFilter)
         self.viewResultsButton.clicked.connect(self._on_view_results)
         self.browseButton.clicked.connect(self._on_browse)
         self.refreshButton.clicked.connect(self.refresh)

@@ -121,8 +121,10 @@ class NewAgentDialog(QDialog):
         self.result: ScaffoldResult | None = None
 
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel("Agent ID"))
+        self.agentIdLabel = QLabel("Agent ID")
         self.agentId = QLineEdit()
+        self.agentIdLabel.setBuddy(self.agentId)
+        layout.addWidget(self.agentIdLabel)
         layout.addWidget(self.agentId)
 
         hint = QLabel(
@@ -132,11 +134,13 @@ class NewAgentDialog(QDialog):
         hint.setWordWrap(True)
         layout.addWidget(hint)
 
-        layout.addWidget(QLabel("Starting point"))
+        self.templateLabel = QLabel("Starting point")
         self.templateCombo = QComboBox()
+        self.templateLabel.setBuddy(self.templateCombo)
         for key in TEMPLATE_DIRECTORIES:
             self.templateCombo.addItem(_TEMPLATE_LABELS.get(key, key), key)
         self.templateCombo.setCurrentIndex(self.templateCombo.findData(DEFAULT_TEMPLATE))
+        layout.addWidget(self.templateLabel)
         layout.addWidget(self.templateCombo)
 
         self.errorLabel = QLabel("")
@@ -232,8 +236,10 @@ class AgentDevelopmentPanel(QWidget):
 
         header = QGroupBox("Agent")
         header_row = QHBoxLayout(header)
-        header_row.addWidget(QLabel("Agent"))
+        self.agentLabel = QLabel("Agent")
         self.agentCombo = QComboBox()
+        self.agentLabel.setBuddy(self.agentCombo)
+        header_row.addWidget(self.agentLabel)
         header_row.addWidget(self.agentCombo, 1)
         self.btnRefresh = QPushButton("Refresh")
         self.btnNewAgent = QPushButton("New Agent…")
@@ -272,6 +278,8 @@ class AgentDevelopmentPanel(QWidget):
         fixed_font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
         self.pythonSource = QPlainTextEdit()
         self.manifestSource = QPlainTextEdit()
+        self.pythonSource.setAccessibleName("agent.py source (read-only)")
+        self.manifestSource.setAccessibleName("agent.yaml manifest (read-only)")
         for viewer in (self.pythonSource, self.manifestSource):
             viewer.setReadOnly(True)
             viewer.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
@@ -295,17 +303,21 @@ class AgentDevelopmentPanel(QWidget):
         test = QGroupBox("Development Test")
         test_layout = QVBoxLayout(test)
         options_row = QHBoxLayout()
-        options_row.addWidget(QLabel("Opponent"))
+        self.opponentLabel = QLabel("Opponent")
         self.opponentCombo = QComboBox()
+        self.opponentLabel.setBuddy(self.opponentCombo)
+        options_row.addWidget(self.opponentLabel)
         options_row.addWidget(self.opponentCombo, 1)
-        options_row.addWidget(QLabel("Seed"))
+        self.seedLabel = QLabel("Seed")
         self.seedSpin = QSpinBox()
+        self.seedLabel.setBuddy(self.seedSpin)
         self.seedSpin.setRange(0, _MAX_SPINBOX_INT)
         self.seedSpin.setValue(_DEFAULT_TEST_SEED)
         self.seedSpin.setToolTip(
             "The deterministic seed for this test match. The same agent, "
             "opponent, tick count and seed always produce the same match."
         )
+        options_row.addWidget(self.seedLabel)
         options_row.addWidget(self.seedSpin)
         # V5 Alpha 1 Phase E2: the same explicit randomization Advanced's
         # match seed offers, on the surface an author actually iterates in.
@@ -318,15 +330,20 @@ class AgentDevelopmentPanel(QWidget):
             "visible and editable: testing again with the same number "
             "reproduces the same match."
         )
+        self.btnRandomizeSeed.setAccessibleName("Randomize development test seed")
+        self.btnRandomizeSeed.setAccessibleDescription(self.btnRandomizeSeed.toolTip())
         self.btnRandomizeSeed.clicked.connect(self.randomize_seed)
         options_row.addWidget(self.btnRandomizeSeed)
-        options_row.addWidget(QLabel("Ticks"))
+        self.ticksLabel = QLabel("Ticks")
         self.ticksSpin = QSpinBox()
+        self.ticksLabel.setBuddy(self.ticksSpin)
         self.ticksSpin.setRange(1, _MAX_SPINBOX_INT)
         self.ticksSpin.setValue(_DEFAULT_TEST_TICKS)
+        options_row.addWidget(self.ticksLabel)
         options_row.addWidget(self.ticksSpin)
-        options_row.addWidget(QLabel("Timeout (s)"))
+        self.timeoutLabel = QLabel("Timeout (s)")
         self.timeoutSpin = QDoubleSpinBox()
+        self.timeoutLabel.setBuddy(self.timeoutSpin)
         self.timeoutSpin.setDecimals(1)
         self.timeoutSpin.setRange(0.1, 300.0)
         self.timeoutSpin.setValue(DEFAULT_AGENT_TIMEOUT)
@@ -334,6 +351,7 @@ class AgentDevelopmentPanel(QWidget):
             "Per-call load/reset/act timeout for supervised worker execution.\n"
             "Development-time hang containment only -- not a security sandbox."
         )
+        options_row.addWidget(self.timeoutLabel)
         options_row.addWidget(self.timeoutSpin)
         test_layout.addLayout(options_row)
 
@@ -349,11 +367,13 @@ class AgentDevelopmentPanel(QWidget):
         # identities, so no entrant-kind gating is needed on this selector --
         # unlike Simple/Advanced, whose combos also carry VM agents.
         ruleset_row = QHBoxLayout()
-        ruleset_row.addWidget(QLabel("Ruleset"))
+        self.rulesetLabel = QLabel("Ruleset")
         self.rulesetCombo = QComboBox()
+        self.rulesetLabel.setBuddy(self.rulesetCombo)
         populate_ruleset_combo(self.rulesetCombo)
         self.rulesetCombo.setToolTip(RULESET_DESCRIPTION)
         self.rulesetCombo.setAccessibleName("Development test ruleset")
+        ruleset_row.addWidget(self.rulesetLabel)
         ruleset_row.addWidget(self.rulesetCombo, 1)
         test_layout.addLayout(ruleset_row)
 
@@ -362,6 +382,7 @@ class AgentDevelopmentPanel(QWidget):
         test_layout.addWidget(self.btnTest)
 
         self.testStatusLabel = QLabel("No agent selected.")
+        self.testStatusLabel.setAccessibleName("Development test status")
         self.testStatusLabel.setWordWrap(True)
         self.testStatusLabel.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextSelectableByMouse
@@ -393,6 +414,7 @@ class AgentDevelopmentPanel(QWidget):
         status = QGroupBox("Status")
         status_layout = QVBoxLayout(status)
         self.statusLabel = QLabel("No agent selected.")
+        self.statusLabel.setAccessibleName("Agent validation status")
         self.statusLabel.setWordWrap(True)
         self.statusLabel.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextSelectableByMouse

@@ -229,6 +229,7 @@ class EvaluationPickerDialog(QDialog):
         layout.addWidget(QLabel("The selected evaluation will be the right-hand comparison side."))
 
         self.list = QListWidget()
+        self.list.setAccessibleName("Evaluations available for comparison")
         for entry in entries:
             if exclude is not None and entry.location.evaluation_json_path == exclude:
                 continue
@@ -305,8 +306,10 @@ class RevisionBrowserDialog(QDialog):
 
         layout = QVBoxLayout(self)
         row = QHBoxLayout()
-        row.addWidget(QLabel("Role"))
+        self.roleLabel = QLabel("Role")
         self.roleCombo = QComboBox()
+        self.roleLabel.setBuddy(self.roleCombo)
+        row.addWidget(self.roleLabel)
         for label, agent_id, revision_id in roles:
             self.roleCombo.addItem(label, (agent_id, revision_id))
         row.addWidget(self.roleCombo, 1)
@@ -316,6 +319,7 @@ class RevisionBrowserDialog(QDialog):
 
         self.detailText = QPlainTextEdit()
         self.detailText.setReadOnly(True)
+        self.detailText.setAccessibleName("Agent revision details")
         layout.addWidget(self.detailText, 1)
 
         self.restoreButton = QPushButton("Restore Files…")
@@ -471,12 +475,15 @@ class RestoreRevisionDialog(QDialog):
         layout.addWidget(infoLabel)
 
         targetRow = QHBoxLayout()
-        targetRow.addWidget(QLabel("Target directory"))
+        self.targetLabel = QLabel("Target directory")
         self.targetEdit = QLineEdit(
             str(data_root / "agent_revisions_restored" / presentation.revision_id)
         )
+        self.targetLabel.setBuddy(self.targetEdit)
+        targetRow.addWidget(self.targetLabel)
         targetRow.addWidget(self.targetEdit, 1)
         browseButton = QPushButton("Browse…")
+        browseButton.setAccessibleName("Choose revision restore target directory")
         targetRow.addWidget(browseButton)
         layout.addLayout(targetRow)
 
@@ -610,6 +617,7 @@ class EvaluationComparisonDialog(QDialog):
 
         summaryText = QPlainTextEdit()
         summaryText.setReadOnly(True)
+        summaryText.setAccessibleName("Evaluation comparison summary")
         summaryText.setPlainText(format_comparison_text(result))
         summaryText.setMaximumHeight(220)
         layout.addWidget(summaryText)
@@ -622,6 +630,7 @@ class EvaluationComparisonDialog(QDialog):
             )
         )
         self.rowsList = QListWidget()
+        self.rowsList.setAccessibleName("Comparable evaluation rows")
         for row in result.comparison.rows:
             left_cell = find_candidate_cell(result.left, row, side="left")
             right_cell = find_candidate_cell(result.right, row, side="right")
@@ -669,6 +678,7 @@ class EvaluationComparisonDialog(QDialog):
 
         self._gap_entries = self._build_gap_entries()
         self.gapsList = QListWidget()
+        self.gapsList.setAccessibleName("Unmatched and changed evaluation rows")
         self.gapsList.setVisible(False)
         for entry in self._gap_entries:
             item = QListWidgetItem(entry.label)
@@ -680,12 +690,15 @@ class EvaluationComparisonDialog(QDialog):
 
         self.detailText = QPlainTextEdit()
         self.detailText.setReadOnly(True)
+        self.detailText.setAccessibleName("Selected comparison row details")
         self.detailText.setMaximumHeight(120)
         layout.addWidget(self.detailText)
 
         actionsRow = QHBoxLayout()
-        actionsRow.addWidget(QLabel("Side"))
+        self.sideLabel = QLabel("Side")
         self.sideCombo = QComboBox()
+        self.sideLabel.setBuddy(self.sideCombo)
+        actionsRow.addWidget(self.sideLabel)
         actionsRow.addWidget(self.sideCombo)
         self.testAgentLabButton = QPushButton("Test in Agent Lab")
         self.testAgentLabButton.setToolTip(_HISTORICAL_AGENT_LAB_TOOLTIP)
@@ -1081,10 +1094,12 @@ class EvaluationHistoryDialog(QDialog):
         # scrolling down. This label is redundant with that line by design
         # (never the *only* place the fact appears), not a replacement for it.
         self.verifyStatusLabel = QLabel("")
+        self.verifyStatusLabel.setAccessibleName("Evaluation verification status")
         layout.addWidget(self.verifyStatusLabel)
 
         splitter = QSplitter()
         self.list = QListWidget()
+        self.list.setAccessibleName("Evaluation history")
         splitter.addWidget(self.list)
 
         detailPane = QWidget()
@@ -1092,15 +1107,18 @@ class EvaluationHistoryDialog(QDialog):
         detailLayout.setContentsMargins(0, 0, 0, 0)
         self.detailText = QPlainTextEdit()
         self.detailText.setReadOnly(True)
+        self.detailText.setAccessibleName("Evaluation details")
         detailLayout.addWidget(self.detailText, 2)
 
         self.visualPanelScroll = QScrollArea()
+        self.visualPanelScroll.setAccessibleName("Evaluation metric visuals")
         self.visualPanelScroll.setWidgetResizable(True)
         self.visualPanelScroll.setMaximumHeight(260)
         detailLayout.addWidget(self.visualPanelScroll)
 
         detailLayout.addWidget(QLabel("Cells"))
         self.cellsList = QListWidget()
+        self.cellsList.setAccessibleName("Evaluation cells")
         detailLayout.addWidget(self.cellsList, 1)
 
         cellActions = QHBoxLayout()

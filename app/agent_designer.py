@@ -173,6 +173,7 @@ class AgentDesigner(QMainWindow):
 
         # Tabs + panels
         self.tabs = QTabWidget(self)
+        self.tabs.setAccessibleName("Designer workspace")
 
         try:
             self.simple = SimplePanel(catalog=self.catalog)

@@ -121,12 +121,15 @@ class AgentParameterForm(QGroupBox):
             "of them. Resolution is always defaults, then preset, then your "
             "own edits."
         )
+        self.presets.setAccessibleDescription(self.presets.toolTip())
+        self._presetLabel.setBuddy(self.presets)
         preset_layout.addWidget(self.presets, 1)
         self.btnReset = QPushButton("Reset to Defaults")
         self.btnReset.setToolTip(
             "Restore every control to the value this agent's manifest declares "
             "as its default."
         )
+        self.btnReset.setAccessibleDescription(self.btnReset.toolTip())
         preset_layout.addWidget(self.btnReset)
         root.addWidget(self._presetRow)
 
@@ -200,8 +203,11 @@ class AgentParameterForm(QGroupBox):
             control = self._build_control(declaration)
             self._controls[key] = control
             label = QLabel(key)
-            label.setToolTip(self._describe(declaration))
-            control.setToolTip(self._describe(declaration))
+            description = self._describe(declaration)
+            label.setToolTip(description)
+            label.setBuddy(control)
+            control.setToolTip(description)
+            control.setAccessibleDescription(description)
             self._form.addRow(label, control)
         self._updating = False
 

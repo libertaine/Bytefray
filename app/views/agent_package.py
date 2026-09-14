@@ -156,10 +156,11 @@ class PackageDetailsDialog(QDialog):
         self.import_button: QWidget | None = None
 
         layout = QVBoxLayout(self)
-        text = QPlainTextEdit()
-        text.setReadOnly(True)
-        text.setPlainText(format_package_inspection_text(inspection))
-        layout.addWidget(text)
+        self.detailsText = QPlainTextEdit()
+        self.detailsText.setReadOnly(True)
+        self.detailsText.setAccessibleName("Agent package details")
+        self.detailsText.setPlainText(format_package_inspection_text(inspection))
+        layout.addWidget(self.detailsText)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Close)
         if allow_import and inspection.valid and inspection.compatible:

@@ -173,6 +173,8 @@ class AdvancedPanel(QWidget):
         agent_c_row.addWidget(self.btnRemoveAgentC)
         form.addRow("Agent C", self._agentCContainer)
         self._agentCLabel = form.labelForField(self._agentCContainer)
+        if self._agentCLabel is not None:
+            self._agentCLabel.setBuddy(self.agentC)
 
         self.btnAddAgent = QPushButton("+ Add Agent")
         form.addRow("", self.btnAddAgent)
@@ -295,6 +297,8 @@ class AdvancedPanel(QWidget):
             "editable: running again with the same number reproduces the same "
             "match."
         )
+        self.btnRandomizeSeed.setAccessibleName("Randomize match seed")
+        self.btnRandomizeSeed.setAccessibleDescription(self.btnRandomizeSeed.toolTip())
         seed_layout.addWidget(self.seed, 1)
         seed_layout.addWidget(self.btnRandomizeSeed)
         form.addRow("Random Seed (0 = default)", self._seedRow)
@@ -389,10 +393,12 @@ class AdvancedPanel(QWidget):
         self.table = QTableWidget(0, 2)
         self.table.setHorizontalHeaderLabels(["Field", "Value"])
         self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.setAccessibleName("Match results")
 
         self.log = QPlainTextEdit()
         self.log.setReadOnly(True)
         self.log.setMaximumBlockCount(10000)
+        self.log.setAccessibleName("Engine log")
         group = QGroupBox("Engine Log")
         gl = QVBoxLayout(group)
         gl.addWidget(self.log)

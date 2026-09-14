@@ -153,6 +153,7 @@ class EvaluationDialog(QDialog):
             for name in sorted(self._presets):
                 self.presetCombo.addItem(name, name)
             self.presetCombo.currentIndexChanged.connect(self._on_preset_selected)
+            self.presetLabel.setBuddy(self.presetCombo)
             form.addRow(self.presetLabel, self.presetCombo)
         else:
             self.presetLabel = None
@@ -166,6 +167,7 @@ class EvaluationDialog(QDialog):
             if index >= 0:
                 self.candidateCombo.setCurrentIndex(index)
         self.candidateLabel = QLabel("Candidate")
+        self.candidateLabel.setBuddy(self.candidateCombo)
         form.addRow(self.candidateLabel, self.candidateCombo)
 
         self.baselineCombo = QComboBox()
@@ -173,6 +175,7 @@ class EvaluationDialog(QDialog):
         for display, agent_id in self._agents:
             self.baselineCombo.addItem(display, agent_id)
         self.baselineLabel = QLabel("Baseline")
+        self.baselineLabel.setBuddy(self.baselineCombo)
         form.addRow(self.baselineLabel, self.baselineCombo)
 
         # Group evaluation is Ruleset-v2-only by construction, so it shows a
@@ -193,13 +196,15 @@ class EvaluationDialog(QDialog):
         )
         self.pairwiseRulesetCombo.setToolTip(RULESET_DESCRIPTION)
         self.pairwiseRulesetCombo.setAccessibleName("Pairwise evaluation ruleset")
+        self.pairwiseRulesetLabel.setBuddy(self.pairwiseRulesetCombo)
         form.addRow(self.pairwiseRulesetLabel, self.pairwiseRulesetCombo)
 
         layout.addLayout(form)
 
         self.opponentsLabel = QLabel("Opponents (select one or more)")
-        layout.addWidget(self.opponentsLabel)
         self.opponentsList = QListWidget()
+        self.opponentsLabel.setBuddy(self.opponentsList)
+        layout.addWidget(self.opponentsLabel)
         self.opponentsList.setSelectionMode(QAbstractItemView.ExtendedSelection)
         for display, agent_id in self._agents:
             item = QListWidgetItem(display)
@@ -264,18 +269,22 @@ class EvaluationDialog(QDialog):
         self.previewText = QPlainTextEdit()
         self.previewText.setReadOnly(True)
         self.previewText.setAccessibleName("Authoritative group evaluation matrix preview")
+        self.previewLabel.setBuddy(self.previewText)
         self.previewText.setMaximumHeight(170)
         layout.addWidget(self.previewLabel)
         layout.addWidget(self.previewText)
 
         output_row = QHBoxLayout()
         self.outputEdit = QLineEdit(str(default_output))
-        choose = QPushButton("Choose…")
-        choose.clicked.connect(self._choose_output)
+        self.chooseOutputButton = QPushButton("Choose…")
+        self.chooseOutputButton.setAccessibleName("Choose evaluation output folder")
+        self.chooseOutputButton.clicked.connect(self._choose_output)
         output_row.addWidget(self.outputEdit, 1)
-        output_row.addWidget(choose)
+        output_row.addWidget(self.chooseOutputButton)
         form2 = QFormLayout()
-        form2.addRow("Output", output_row)
+        self.outputLabel = QLabel("Output")
+        self.outputLabel.setBuddy(self.outputEdit)
+        form2.addRow(self.outputLabel, output_row)
         layout.addLayout(form2)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -775,6 +784,7 @@ class EvaluationResultsDialog(QDialog):
 
         layout.addWidget(QLabel("Cells" if not presentation.comparison else "Comparison"))
         self.resultsList = QListWidget()
+        self.resultsList.setAccessibleName("Evaluation results")
         show_orientation = presentation.orientation_mode == ORIENTATION_MODE_BOTH
         if presentation.comparison:
             for entry in presentation.comparison:
@@ -810,6 +820,7 @@ class EvaluationResultsDialog(QDialog):
 
         self.detailText = QPlainTextEdit()
         self.detailText.setReadOnly(True)
+        self.detailText.setAccessibleName("Selected evaluation result details")
         layout.addWidget(self.detailText, 1)
 
         actions = QHBoxLayout()
