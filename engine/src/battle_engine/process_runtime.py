@@ -309,6 +309,23 @@ class ProcessMatchController:
             )
         return typed
 
+    @staticmethod
+    def _runtime_quota_shares(
+        declarations: list[ProcessDeclaration],
+    ) -> tuple[Fraction, ...]:
+        """Convert accepted public shares to an exact internal partition.
+
+        ``_validate_declarations`` is the one validity decision.  Converting
+        each accepted float independently can produce exact fractions whose
+        sum differs slightly from one, so normalize the converted weights
+        before the runtime's exact-arithmetic quota allocation.  A declaration
+        whose converted fractions already total one is unchanged.
+        """
+
+        converted = tuple(Fraction(str(item.share)) for item in declarations)
+        converted_total = sum(converted, start=Fraction())
+        return tuple(share / converted_total for share in converted)
+
     @classmethod
     def from_python_entrants(
         cls,
@@ -543,6 +560,7 @@ class ProcessMatchController:
                     slot=slot,
                     arena_size=config.arena_size,
                 )
+                quota_shares = cls._runtime_quota_shares(validated)
                 if trace_writer is not None:
                     from battle_engine.agent_trace import DeclarationRecord
                     for item in validated:
@@ -553,13 +571,15 @@ class ProcessMatchController:
                         ProcessRole.GENERALIST,
                         None,
                         declaration.reach,
-                        Fraction(str(declaration.share)),
+                        quota_share,
                         lambda _observation, _state: AgentAction(
                             ActionKindV2.MOVE, 0
                         ),
                         executor=executor,
                     )
-                    for declaration in validated
+                    for declaration, quota_share in zip(
+                        validated, quota_shares, strict=True
+                    )
                 ]
                 try:
                     source_digest = hashlib.sha256(source_path.read_bytes()).hexdigest()

@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import json
+from fractions import Fraction
 from pathlib import Path
 
 import pytest
+from battle_engine.agent_api import ProcessDeclaration
 from battle_engine.agent_evaluation import EvaluationRequest, EvaluationService
+from battle_engine.agent_parameters import resolve_parameters
 from battle_engine.agent_test import DevelopmentTestOutcome
 from battle_engine.agent_test import test_agent as run_agent_test
+from battle_engine.agent_validation import AgentValidationFailedError, validate_agent
 from battle_engine.agents import resolve_agent
 from battle_engine.cli import main as run_cli
 from battle_engine.config import Config
@@ -16,6 +20,7 @@ from battle_engine.match_service import (
     NativeMatchResult,
     NativeMatchService,
 )
+from battle_engine.process_runtime import ProcessMatchController
 from battle_engine.python_runtime import PythonEntrantInitializationError
 from battle_engine.replay import (
     MatchResult,
@@ -24,7 +29,11 @@ from battle_engine.replay import (
     iter_replay,
     write_replay,
 )
-from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ALPHA1_ID
+from battle_engine.ruleset_policy import (
+    BYTEFRAY_RULESET_V4_ALPHA1_ID,
+    BYTEFRAY_RULESET_V4_ID,
+)
+from battle_engine.starters import ensure_starter_agents
 
 
 def _write_agent(root: Path, name: str, source: str) -> None:
@@ -55,6 +64,7 @@ def _request(
     starts: tuple[int, int] = (0, 32),
     timeout: float | None = None,
     seed: int = 17,
+    ruleset_id: str = BYTEFRAY_RULESET_V4_ALPHA1_ID,
 ) -> MatchRequest:
     specs = tuple(resolve_agent(root, name) for name in names)
     entrants = tuple(
@@ -68,7 +78,7 @@ def _request(
         replay_path=replay_path,
         verbose=False,
         agent_call_timeout=timeout,
-        ruleset_id=BYTEFRAY_RULESET_V4_ALPHA1_ID,
+        ruleset_id=ruleset_id,
     )
 
 
@@ -93,6 +103,178 @@ class Agent:
 def create_agent():
     return Agent()
 """
+
+
+def _equal_share_declarations(count: int) -> list[ProcessDeclaration]:
+    if count == 1:
+        shares = [1.0]
+    else:
+        share = 1.0 / count
+        shares = [share] * (count - 1)
+        shares.append(1.0 - sum(shares))
+    return [
+        ProcessDeclaration(f"p{index}", 31, share)
+        for index, share in enumerate(shares)
+    ]
+
+
+def _equal_share_source(count: int) -> str:
+    return f"""
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
+
+COUNT = {count}
+
+class Agent:
+    def reset(self, context): pass
+    def declare_processes(self):
+        if COUNT == 1:
+            shares = [1.0]
+        else:
+            share = 1.0 / COUNT
+            shares = [share] * (COUNT - 1)
+            shares.append(1.0 - sum(shares))
+        return [
+            ProcessDeclaration(f"p{{index}}", 31, share)
+            for index, share in enumerate(shares)
+        ]
+    def act(self, observation): return AgentAction(ActionKindV2.MOVE, 0)
+def create_agent(): return Agent()
+"""
+
+
+@pytest.mark.parametrize("count", range(1, 9))
+def test_accepted_process_shares_form_one_exact_runtime_partition(count: int) -> None:
+    """Publicly valid shares cannot fail a stricter runtime total check."""
+
+    declarations = _equal_share_declarations(count)
+    validated = ProcessMatchController._validate_declarations(
+        declarations,
+        agent_id="A",
+        slot=0,
+        arena_size=64,
+    )
+    runtime_shares = ProcessMatchController._runtime_quota_shares(validated)
+
+    assert sum(runtime_shares, start=Fraction()) == Fraction(1)
+    if count in {1, 2, 4, 8}:
+        assert runtime_shares == tuple(
+            Fraction(str(declaration.share)) for declaration in declarations
+        )
+
+
+@pytest.mark.parametrize("count", (3, 5, 6, 7))
+def test_non_dyadic_process_counts_validate_construct_and_run(
+    tmp_path: Path, count: int
+) -> None:
+    """The documented derive-the-remainder pattern reaches a real match."""
+
+    agent_id = f"equal_{count}"
+    _write_agent(tmp_path, agent_id, _equal_share_source(count))
+    _write_agent(tmp_path, "passive", PASSIVE_SOURCE)
+
+    result = NativeMatchService().run(
+        _request(
+            tmp_path,
+            (agent_id, "passive"),
+            tmp_path / f"equal-{count}.jsonl",
+            ticks=1,
+            ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        )
+    )
+
+    assert result.ticks_run == 1
+    assert all(agent.diagnostic is None for agent in result.agents)
+
+
+@pytest.mark.parametrize("raider_share", (0.7, 0.33))
+def test_shipped_dual_team_schema_validation_and_match_agree(
+    tmp_path: Path, raider_share: float
+) -> None:
+    """The shipped starter's accepted parameter must run under stable v4."""
+
+    root = Path(__file__).resolve().parents[2]
+    data_root = tmp_path / "data"
+    bootstrap = ensure_starter_agents(resource_root=root, data_root=data_root)
+    assert not bootstrap.errors
+
+    dual_team = resolve_agent(data_root, "v5_dual_team")
+    quorum = resolve_agent(data_root, "v4_quorum")
+    parameters = resolve_parameters(
+        dual_team.parameter_schema,
+        overrides={"raider_share": str(raider_share)},
+    )
+    validation = validate_agent("v5_dual_team", data_root=data_root)
+
+    assert parameters == {"raider_share": raider_share}
+    assert validation.api_version == 2
+
+    result = NativeMatchService().run(
+        MatchRequest(
+            config=Config(arena_size=512, instr_per_tick=8, seed=1),
+            entrants=(
+                MatchEntrant.python("A", dual_team.name, 0, dual_team, parameters),
+                MatchEntrant.python("B", quorum.name, 256, quorum),
+            ),
+            max_ticks=2,
+            replay_path=tmp_path / f"dual-{raider_share}" / "replay.jsonl",
+            verbose=False,
+            ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        )
+    )
+
+    assert result.ticks_run > 0
+    assert all(agent.diagnostic is None for agent in result.agents)
+
+
+def test_invalid_share_total_is_presentable_in_validation_and_cli_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    invalid_source = """
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
+class Agent:
+    def reset(self, context): pass
+    def declare_processes(self):
+        return [ProcessDeclaration("a", 4, 0.6), ProcessDeclaration("b", 8, 0.3)]
+    def act(self, observation): return AgentAction(ActionKindV2.MOVE, 0)
+def create_agent(): return Agent()
+"""
+    _write_agent(tmp_path, "invalid_total", invalid_source)
+    _write_agent(tmp_path, "passive", PASSIVE_SOURCE)
+
+    with pytest.raises(AgentValidationFailedError) as caught:
+        validate_agent("invalid_total", data_root=tmp_path)
+
+    diagnostic = caught.value.diagnostic
+    assert diagnostic.code == "agent_process_declaration_invalid"
+    assert diagnostic.stage == "declaration"
+    assert diagnostic.message == "Python agent A process shares total 0.9; expected 1."
+
+    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
+    exit_code = run_cli(
+        [
+            "--a-type",
+            "invalid_total",
+            "--b-type",
+            "passive",
+            "--arena",
+            "512",
+            "--quota",
+            "8",
+            "--ticks",
+            "1",
+            "--ruleset",
+            BYTEFRAY_RULESET_V4_ID,
+            "--replay",
+            str(tmp_path / "invalid-run" / "replay.jsonl"),
+            "--quiet",
+        ]
+    )
+    captured = capsys.readouterr()
+
+    assert exit_code == 2
+    assert diagnostic.message in captured.err
+    assert "Traceback" not in captured.err
+    assert "ValueError" not in captured.err
 
 
 @pytest.mark.parametrize(

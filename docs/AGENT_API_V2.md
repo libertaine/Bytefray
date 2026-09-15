@@ -150,11 +150,12 @@ Rules worth knowing:
   the eligible positive-share processes, so your entrant total is preserved
   whenever any process is eligible at all.
 
-A float trap worth avoiding: derive the last share rather than writing two
-literals that you believe add up. `v5_dual_team` declares
+Because shares are ordinary Python numbers, deriving the last share is the
+clearest way to express a complete partition. `v5_dual_team` declares
 `share=self.raider_share` and `share=1.0 - self.raider_share` for exactly
-this reason — the pair cannot drift out of total, whatever the first is set
-to.
+this reason. Bytefray validates the supplied total with the tolerance above,
+then normalizes an accepted declaration for exact deterministic quota
+allocation; shares do not need to be exactly representable in binary.
 
 ---
 
@@ -709,8 +710,8 @@ guide replaced.
    it is reading a coincidence.
 7. **Using module-global randomness or wall-clock time.** Your agent stops
    being reproducible, and therefore stops being debuggable.
-8. **Declaring shares that do not total 1.0.** Derive the last one instead of
-   writing literals you believe add up.
+8. **Declaring shares that do not total 1.0.** Derive the last one where
+   practical; the total still has to satisfy the documented tolerance.
 9. **Declaring more processes for more throughput.** The `Q = 8` budget is
    per entrant. More processes means each gets fewer actions.
 10. **Trying to teach or use multi-process behaviour with one process.**
