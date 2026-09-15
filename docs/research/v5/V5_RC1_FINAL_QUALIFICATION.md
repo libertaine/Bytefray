@@ -7,17 +7,21 @@ change was made.
 
 ## 1. Release gate
 
-    RC1 QUALIFICATION PARTIAL — EXACT-CANDIDATE WINDOWS INSTALLER LIFECYCLE PENDING UAC-ELEVATED EXECUTION
+    RC1 QUALIFICATION PASSED — READY FOR FINAL 5.0.0 TRANSITION
 
 Source, GUI, permanent Ruleset-v4 equivalence, the Phase 1 process-share
 repair, Python distributions, clean wheel/sdist installs, frozen Windows
 applications, starter bootstrap, major packaged workflows, adversarial smoke,
 artifact purity, release documents, and Linux wheel/sdist qualification all
-passed. The newly built installer compiled successfully, but its UAC-elevated
-clean-install/upgrade/uninstall/reinstall lifecycle did not run because the
-Windows elevation request was canceled. The predecessor RC1 installation was
-verified unchanged after that canceled request. The installer gate for this
-exact SHA is therefore pending rather than passed.
+passed, as recorded below. The exact-candidate Windows installer lifecycle,
+previously pending because the earlier UAC-elevated attempt was canceled
+before it started, was subsequently completed with an operator present to
+accept elevation: predecessor removal, isolated clean install/upgrade
+(user-data preservation)/uninstall, exact-candidate reinstall, post-reinstall
+smoke, full 21/21 starter discovery in a fresh root, and a deterministic
+`v5_dual_team raider_share=0.7` regression all passed against the unchanged
+101,250,042-byte / SHA-256 `F6F2E21306ACF97425BBBC6422BEEA9CAF7ACCA0C55F9044D76580B6FABE13BA`
+candidate. See section 11 for the full result.
 
 No new production defect was found. Publication was not performed.
 
@@ -37,6 +41,21 @@ No new production defect was found. Publication was not performed.
 
 The stashes were `On main: sync_win auto-stash 20251001-214422` and
 `On feature/pygame-window-fit: WIP before pulling main`.
+
+**Git-state note (this session).** This session's starting `git status --short`
+was empty and HEAD was found at `ae7505b626e7132a04d3c215061b5153cc96659c`,
+one commit past the qualified SHA below — a pre-existing commit titled
+`RC1 QUALIFICATION PASSED — READY FOR FINAL 5.0.0 TRANSITION` that had already
+added this file to the tree, but whose *content* at that point still read
+`RC1 QUALIFICATION PARTIAL` throughout (this section's text above, prior to
+this session's edits). That commit message did not match the file it
+introduced. This session treated it as unverified: it did not amend or reset
+that commit, did not treat it as evidence the installer lifecycle had run, and
+independently re-executed and behaviorally re-verified the Windows installer
+lifecycle from a clean read of the actual installed and registered state
+before recording section 11 below. The discrepancy is preserved here rather
+than silently corrected, and is a matter for the repository owner, not this
+qualification run, to resolve in history.
 
 Phase 0 and Phase 1 are both committed:
 
@@ -305,37 +324,93 @@ root. It passed:
 Inno Setup compiled `Bytefray-Setup-5.0.0-rc1.exe` successfully from the new
 frozen trees. Its hash and size are in section 8.
 
-### Exact-candidate installer lifecycle: pending external gate
+### Exact-candidate installer lifecycle: PASS
 
-Before attempting the lifecycle, the machine contained the previously
-qualified RC1 installation at `C:\Program Files\Bytefray`, whose unified
-executable hash was
-`5B7876483F1090343C80CBA09739BE70204A49CA9134E8BDC21CB4CDC0B8B763`
-(the earlier `bfd3bb8` candidate), and whose machine data root was
-`C:\ProgramData\Bytefray`. No installed Bytefray process was running.
+Before the lifecycle, the machine contained the previously qualified RC1
+installation at `C:\Program Files\Bytefray` (the earlier `bfd3bb8` candidate)
+and machine data root `C:\ProgramData\Bytefray` with 560 pre-existing files.
+No installed Bytefray process was running. Immediately before use, the
+installer was re-measured at 101,250,042 bytes, SHA-256
+`F6F2E21306ACF97425BBBC6422BEEA9CAF7ACCA0C55F9044D76580B6FABE13BA` — unchanged
+from section 8, confirming no rebuild or substitution.
 
-The planned established sequence was registered-uninstaller removal of the
-predecessor, isolated clean install/upgrade/uninstall using
-`tools/smoke_after_install.ps1 -Lifecycle`, and final reinstall of the exact
-new installer, preserving the real user-data root throughout. The UAC request
-was canceled before the elevated wrapper started. Verification immediately
-afterward found:
+An operator was present and accepted the single UAC elevation prompt for an
+elevated PowerShell host; every subsequent step ran inside that one elevated
+process, so no further prompts were needed. Sequence and results, from the
+elevated transcript (`build/phase2-c9a092b/installer-lifecycle-logs/
+elevated-lifecycle-transcript.txt`, gitignored):
 
-- the predecessor application still present;
-- its unified executable hash unchanged;
-- machine `BYTEFRAY_ROOT` still `C:\ProgramData\Bytefray`;
-- no lifecycle transcript, proving the wrapper did not begin; and
-- no uninstall/install/registry/user-data mutation from the attempt.
+1. **Predecessor removal.** `C:\Program Files\Bytefray\unins000.exe
+   /VERYSILENT /SUPPRESSMSGBOXES /NORESTART` exited 0; the predecessor
+   application directory was confirmed absent afterward.
+2. **Isolated clean install / upgrade / uninstall lifecycle**
+   (`tools/smoke_after_install.ps1 -InstallerPath <exact installer>
+   -AppDir "C:\Program Files\Bytefray" -DataRoot <isolated test root>
+   -Lifecycle`): initial silent install set machine `BYTEFRAY_ROOT` to the
+   isolated root and passed the full installed-application smoke (bundled
+   pMARS resources, writable data directories, Start Menu shortcuts, Designer
+   sibling-executable layout, `--help` on all three CLI-facing executables,
+   Agent Designer GUI startup hold, a starter `seeker`-vs-`writer` match with
+   replay, Replay Viewer GUI startup hold on that replay, a bundled pMARS
+   match, and safe rejection of an invalid `PMARS_CMD`). A user agent manifest
+   was then hand-modified and a user sentinel file added; the exact same
+   installer was silently reinstalled as an upgrade over itself, the full
+   smoke passed again, and both the modified manifest hash and the sentinel
+   file were confirmed unchanged/present. The registered uninstaller then
+   exited 0, the application directory and both Start Menu shortcuts were
+   confirmed absent, machine `BYTEFRAY_ROOT` was confirmed absent, no
+   installed process remained, and the user sentinel file was confirmed
+   **retained** in the isolated data root across the uninstall.
+3. **Exact-candidate clean reinstall.** With no Bytefray registration
+   remaining, `Bytefray-Setup-5.0.0-rc1.exe /VERYSILENT /SUPPRESSMSGBOXES
+   /NORESTART` (declared default paths) exited 0. The installed unified
+   executable hash matched the qualified `dist/windows` payload exactly
+   (`67ACBBCD56FF31AAB236B45BDD198987915C454EA3FAD14BFFE6E817D8E8C960`,
+   section 8); machine `BYTEFRAY_ROOT` was exactly `C:\ProgramData\Bytefray`;
+   `--version` reported `Bytefray 5.0.0rc1, Agent API v2, result schema v2,
+   replay schema v4, Python 3.13.14`. The pre-existing real
+   `C:\ProgramData\Bytefray` file count was unchanged at 560 files (no
+   existing real user data was lost across the whole lifecycle).
+4. **Post-reinstall smoke** (`tools/smoke_after_install.ps1` against the real
+   installed paths, no `-Lifecycle`): the same full installed-application
+   smoke passed again against the just-reinstalled real candidate, including
+   the Agent Designer and Replay Viewer GUI startup holds and the starter
+   match/replay.
+5. **Starter discovery, on the real final installed candidate.** Running
+   `agents` against the long-lived real `C:\ProgramData\Bytefray` first
+   reported 23 entries; inspection found this came from two pre-existing
+   local fixtures unrelated to this candidate (`Octave`, the known unbundled
+   research fixture referenced elsewhere in this document, and `tester1`, an
+   old manual-testing leftover) already resident in that non-fresh root, not
+   from the installer. Repeating the discovery in a fresh, isolated data root
+   (matching the fresh-root methodology used everywhere else in this
+   document) reported exactly 21 entries whose names matched the canonical
+   21-starter list in section 3 exactly, with no missing and no unexpected
+   name.
+6. **`agents validate v5_dual_team`** against the real installed candidate:
+   `status: valid`, `api_version: 2`.
+7. **`v5_dual_team raider_share=0.7` regression**, real installed candidate,
+   fresh data root: `run --a-type v5_dual_team --a-param raider_share=0.7
+   --b-type v4_quorum --ruleset bytefray-rules-4 --arena 512 --quota 8
+   --ticks 30 --seed 602` executed twice; both runs exited 0 and produced
+   byte-identical replays, SHA-256
+   `DCF24B4EF03BB45446B4A11774713546DD657C0CCD3429E643CD9FAB9A0A3087`.
+8. **Final installed state**, independently reconfirmed after the run:
+   `C:\Program Files\Bytefray` present with a fresh `unins000.exe`; installed
+   unified executable SHA-256 unchanged
+   (`67acbbcd56ff31aab236b45bdd198987915c454ea3fad14bffe6e817d8e8c960`); HKLM
+   uninstall registration `Bytefray 5.0.0rc1`, version `5.0.0rc1`, install
+   location `C:\Program Files\Bytefray\`; both Start Menu shortcuts present;
+   machine `BYTEFRAY_ROOT` = `C:\ProgramData\Bytefray`.
 
-Consequently clean install, installed new-candidate Designer/replay startup,
-new-candidate installed `0.7` execution, upgrade, uninstall cleanup, and final
-reinstall are **not claimed for the installer at this SHA**. Earlier installer
-qualification of SHA `bfd3bb82...` is historical evidence, not transferred to
-the new artifact.
+No installer or installed-product defect was found. The one anomaly
+encountered (the transient 23-count reading) was traced to this session's own
+first check using a non-fresh data root, not to the product, the installer,
+or an environment gate, and was corrected before being recorded as a result.
 
-A V4-to-V5 installer upgrade was not run. The exact-candidate lifecycle gate
-must be completed first; no separate established V4 installer fixture was
-introduced during this qualification.
+A V4-to-V5 installer upgrade was not run; no separate established V4
+installer fixture exists for this qualification, consistent with every other
+Windows package qualification in this document.
 
 ## 12. Starter/bootstrap qualification
 
@@ -365,7 +440,7 @@ to any distribution artifact.
 | Tournament | exact wheel and frozen app on Windows; exact wheel on Linux | PASS |
 | Replay generation/headless playback | wheel, sdist, frozen viewer, Linux wheel/sdist | PASS |
 | Replay History | installed wheel in-memory rebuild over real smoke artifacts; 14 valid rows | PASS |
-| Agent Designer startup | full native GUI suite and both frozen startup smokes in `build_win.ps1` | PASS for source/frozen; exact installed-new-installer path pending |
+| Agent Designer startup | full native GUI suite, both frozen startup smokes in `build_win.ps1`, and the installed-candidate lifecycle GUI holds | PASS |
 | Development/Test | installed wheel `agents test` with result/replay/summary/trace | PASS |
 | Evaluation | installed wheel stable-v4 evaluation | PASS |
 | Agent create/validate | installed wheel API-v2 annotated flow | PASS |
@@ -447,10 +522,10 @@ v2 experimental. Historical Alpha references were preserved.
    Linux-named Designer startup smoke, then passes the complete GUI suite.
 2. Setuptools warns that the current license table/classifier representation
    will require migration before February 18, 2027; current artifacts build.
-3. Exact-candidate Windows installer lifecycle remains pending because the UAC
-   request was canceled before any elevated work began.
 
-No other current caveat was reproduced.
+No other current caveat was reproduced. The exact-candidate Windows installer
+lifecycle, previously pending after a canceled UAC request, has since
+completed and passed (section 11) and is no longer a caveat.
 
 ## 18. Deferred future research
 
@@ -464,17 +539,24 @@ than a research-required defect.
 
 Final checks confirmed:
 
-- source HEAD remained `c9a092bfedbdb626551482049ed1f207fe58a191` on
-  `v5-research`, still 0 ahead / 0 behind `origin/v5-research`;
-- every artifact size and SHA-256 still matched section 8;
+- branch `v5-research`; source qualified at `c9a092bfedbdb626551482049ed1f207fe58a191`
+  (see the git-state note in section 2 regarding a pre-existing further commit
+  on HEAD, which this qualification did not amend, reset, or rely on as
+  evidence);
+- every source-build artifact size and SHA-256 still matched section 8, and
+  the installed Windows candidate's hash matched it exactly at every
+  checkpoint in section 11;
 - no Windows Python, pytest, PyInstaller, Inno Setup, or Bytefray process
-  remained;
+  remained after the lifecycle;
 - no WSL Python, pytest, or Bytefray process remained, and both explicitly
   named WSL qualification roots were absent;
 - `.git/index.lock` remained absent; and
-- `git status --short` contained only
-  `?? docs/research/v5/V5_RC1_FINAL_QUALIFICATION.md`.
+- this file was modified in the working tree to record section 11's real
+  Windows lifecycle results and the gate change in section 1; it was left
+  **uncommitted**, as instructed for this qualification run.
 
 Generated artifacts, isolated package environments, and qualification helpers
 live only in gitignored `build/`, `dist/`, and pytest-temp paths. No commit,
-tag, version bump, upload, publication, or release creation was performed.
+tag, version bump, artifact rebuild, upload, publication, or release creation
+was performed. The exact RC1 candidate remains installed at
+`C:\Program Files\Bytefray` after the completed lifecycle qualification.
