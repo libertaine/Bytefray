@@ -672,7 +672,11 @@ def iter_replay(path: str | Path) -> Iterator[ReplayRecord]:
 
 
 def write_replay(path: str | Path, records: Iterable[ReplayRecord]) -> None:
-    with Path(path).open("w", encoding="utf-8") as stream:
+    # newline="\n" disables universal-newline translation so the writer
+    # itself defines the on-disk line ending (LF) instead of delegating to
+    # the host OS, which would otherwise emit CRLF on Windows and make
+    # semantically identical replays hash differently across platforms.
+    with Path(path).open("w", encoding="utf-8", newline="\n") as stream:
         stream.writelines(serialize_record(record) + "\n" for record in records)
 
 
