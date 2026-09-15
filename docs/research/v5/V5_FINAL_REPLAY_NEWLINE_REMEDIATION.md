@@ -198,6 +198,105 @@ Section E/H of the task brief, if that exact hash is not produced, the fix
 needs further investigation before artifact rebuild — this should happen
 before, not instead of, that Windows confirmation.
 
+### 8.1 Windows verification (actual evidence, independent session)
+
+The recommendation above was carried out. Windows remediation commit under
+test: `314ccdaa1386b5cf662015c8596e553c0b5701e4` (`fix(v5): canonicalize
+replay newlines across platforms`, direct child of `61d5abb` "docs(v5):
+record final Windows qualification", itself descending from `4be3384`
+"release: prepare Bytefray 5.0.0" — ancestry confirmed with
+`git merge-base --is-ancestor`, not inferred from branch naming).
+
+Exact fixed-seed invocation (recovered from §1 above, matching Phase 3/RC1):
+
+```
+bytefray run --a-type v5_dual_team --a-param raider_share=0.7 --b-type v4_quorum \
+  --ruleset bytefray-rules-4 --arena 512 --quota 8 --ticks 30 --seed 602 \
+  --replay <path>
+```
+
+**First attempt (contaminated environment) — preserved as evidence, not
+discarded:** running this command against the remediation commit, using
+this machine's normal writable agent catalog (`%ProgramData%\Bytefray`),
+produced a replay that matched the expected byte size (23,171) and CRLF
+count (0) but **did not** match the required SHA-256 — it produced
+`c49eee6ab89740be42668e564180295facc5a063ee9352d4794403360f8e236a`
+instead. Per the task brief's Section F this is a STOP condition, so
+qualification paused for root-cause diagnosis before any further gate was
+run.
+
+Diagnosis: the mismatch was isolated to the `source_sha256` /
+`local_source_fingerprint` provenance fields embedded in the replay
+header, which hash the *raw bytes* of the `v5_dual_team` starter agent's
+`agent.py` actually loaded at match time. This machine's persistent
+writable agent catalog held a stale copy of that file from an earlier
+session — `agent.py`, 9,516 bytes, 221 CRLF, SHA-256 `5bc0a8c4...` —
+textually identical to the canonical bundled starter (9,295 bytes, 0 CRLF,
+SHA-256 `833871d1...`) except for CRLF line endings. `starters.py`'s own
+drift detection (`starter_content_digest`) normalizes newlines before
+comparing, correctly judges the two content-equivalent, and by design
+leaves an "equivalent" installed copy alone rather than overwriting it —
+so this stale copy was never a bug, and the engine's raw-byte provenance
+hashing correctly reported it as literally different bytes from the
+canonical starter. This is local machine/environment state predating this
+session, not a defect introduced or exposed by the newline remediation
+itself, and it does not touch any tracked file in the repository.
+
+Rather than mutate the shared, persistent `%ProgramData%\Bytefray` catalog
+to work around this, the clean re-run instead used the engine's own
+documented `BYTEFRAY_ROOT` environment-variable override to point at a
+freshly created, empty data root, letting `ensure_starter_agents()` install
+the canonical bundled starter (LF, 9,295 bytes, SHA-256 `833871d1...`) with
+no contamination and no changes to the machine's real environment:
+
+- Post-fix Windows replay (clean root): **23,171 bytes**
+- CRLF count: **0**
+- SHA-256: **`6deed2d65ca8be145110037550c17592ad2aa8bd1d13b6fbd8a3d8cb554ae78a`**
+  — **exact match** to the required canonical hash and to the Linux value
+  above.
+
+**Semantic comparison:** rather than relying on the pre-fix Windows replay
+recorded only in this document (the original file lives on the Linux
+machine referenced in §2 and was not available in this session), the
+comparison was re-derived independently: reversing the fix's transform
+(replacing every bare `\n` in the clean post-fix replay with `\r\n`)
+reproduced a byte sequence of exactly 23,184 bytes with SHA-256
+`dcf24b4ef03bb45446b4a11774713546dd657c0ccd3429e643cd9fab9a0a3087` — an
+exact match to the pre-fix hash recorded in §2 — and normalizing that
+reconstruction back to LF reproduced the clean post-fix bytes exactly
+(13/13 records, zero semantic differences). This independently confirms
+the only difference between the pre-fix and post-fix Windows artifacts is
+newline encoding.
+
+Remaining Windows gates, all against the clean-root, uncontaminated
+environment:
+
+| Gate | Command | Result |
+|---|---|---|
+| Newline regression | `pytest engine/tests/test_replay_newline_canonicalization.py` | **PASS** — 5 passed |
+| Focused replay/integrity/history/result/runtime suite | `pytest engine/tests -k "replay or integrity or history or result or runtime"` | **PASS** — 811 passed, 3 skipped |
+| Ruleset-v4 equivalence | `pytest engine/tests/test_v4_stable_ruleset_equivalence.py engine/tests/test_v4_trace_equivalence.py` | **PASS** — 25 passed; `git status --short` clean afterward, no vector/golden files touched |
+| Full source suite | `python -m pytest` | **PASS** — 3,687 passed, 22 skipped, 3 deselected, 0 failed in 380.18s (baseline 3,682 + the 5 new regression tests; no new failures) |
+| Native Windows GUI suite | `$env:QT_QPA_PLATFORM='windows'; pytest tests/ -m gui` | **PASS** — 507 passed, 6 deselected in 182.50s; reproduced the known non-failing `0x8001010d` diagnostic from `test_linux_designer_smoke.py`, unchanged from the existing qualification caveat |
+| `ruff check .` | — | **PASS** — all checks passed |
+| `mypy engine/src/battle_engine` | — | **PASS** — no issues, 114 source files (matches Phase 3) |
+| `mypy client/src/battle_client` | — | **PASS** — no issues, 16 source files (matches Phase 3) |
+| `git diff --check` | — | **PASS** — clean |
+| `git status --short` (final) | — | clean |
+
+The remediation commit was independently confirmed to touch only
+`engine/src/battle_engine/replay.py` (a 5-line, newline-only change),
+`engine/tests/test_replay_newline_canonicalization.py`, and the two
+documentation files listed in §1 — no scheduler, process-share, action-
+ordering, Ruleset-v4 semantics, Agent API, starter-agent behavior,
+capture-timing, process-reach, disruption-logic, or replay-schema changes.
+
+**Gate:** REPLAY NEWLINE REMEDIATION QUALIFIED ON WINDOWS — READY FOR FINAL
+ARTIFACT REBUILD AND CROSS-PLATFORM REQUALIFICATION. This is not
+publication approval; artifacts have not been rebuilt, the branch has not
+been merged, and nothing has been tagged or published as part of this
+verification.
+
 ## 9. Audit of other replay-writing call sites
 
 | Site | Classification | Action |
