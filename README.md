@@ -4,7 +4,14 @@
   <img src="assets/branding/bytefray-logo-horizontal.png" alt="Bytefray logo" width="420">
 </p>
 
-> **Bytefray v4.0.0 is the current stable release.** Promoted from the qualified candidate and post-UX polish: RC1 established stable `bytefray-rules-4` gameplay and the spectator presentation suite (Perspective Cam, Spectator Director, Fight Night); RC2 added the self-contained Linux binary distribution baseline, pygame-ce, Python 3.14, and the `V4 Quorum` example agent; and post-UX polish finalized Ruleset-first Advanced configuration, multi-agent setup, and scoring defaults.
+> **Bytefray v5.0.0-rc1 is now available for testing.** V5 is the next major
+> Bytefray release and focuses on the complete desktop/authoring experience
+> around the stable `bytefray-rules-4` gameplay core: Replay History, a
+> complete Tournament workflow, stronger replay/result integrity, improved
+> agent authoring and packaging, and extensive UX/accessibility polish.
+>
+> **v4.0.0 remains the current stable release.** v5.0.0-rc1 is a prerelease
+> candidate for users who want to test the upcoming V5 release.
 
 **Bytefray** is a deterministic programmable-agent combat simulator in which
 agents compete over a shared circular memory arena. Bytefray v4 adds a
@@ -20,9 +27,46 @@ evaluation and tournament tools, and a complete command-line workflow.
 [![Python 3.10–3.14](https://img.shields.io/badge/Python-3.10%E2%80%933.14-blue)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Current release:** [Bytefray v4.0.0](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0)
-— see [Downloads](#downloads) below. Earlier [v3.0.0](https://github.com/libertaine/Bytefray/releases/tag/v3.0.0)
+- **Latest prerelease:** [Bytefray v5.0.0-rc1](https://github.com/libertaine/Bytefray/releases/tag/v5.0.0-rc1)
+- **Windows:** [Download Bytefray-Setup-5.0.0-rc1.exe](https://github.com/libertaine/Bytefray/releases/download/v5.0.0-rc1/Bytefray-Setup-5.0.0-rc1.exe)
+- **Current stable:** [Bytefray v4.0.0](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0)
+
+See [Downloads](#downloads) below. Earlier [v3.0.0](https://github.com/libertaine/Bytefray/releases/tag/v3.0.0)
 remains available for historical Ruleset-v2 workflows.
+
+## What's new in V5 RC1
+
+V5 builds on the permanent `bytefray-rules-4` gameplay model and Agent API v2
+established in v4. The focus of V5 is the surrounding product
+experience—authoring, tournaments, replay discovery/integrity, evaluation,
+packaging, and desktop UX—rather than replacing the stable v4 gameplay
+contract.
+
+**Replay History** — a global Replay History browser with automatic
+discovery/indexing of completed runs, search/filtering and outcome metadata,
+direct handoff to the Replay Viewer, and stronger result/replay integrity
+validation before launch.
+
+**Tournament workflow** — a more complete desktop Tournament experience
+covering the full Configure → Run Tournament → Results → Matches → Replay
+workflow, with persistent/atomic tournament checkpointing and better
+result/replay association.
+
+**Agent authoring and packaging** — continued improvements to Agent
+Designer, agent parameter/preset workflows where currently supported, agent
+package export/import tooling, better starter/scaffold packaging and
+validation, and improved development/evaluation workflows.
+
+**Desktop UX** — cleaner menu/command organization, improved winner/result
+presentation, accessibility baseline improvements including keyboard/focus/
+label behavior, and better consistency between GUI and CLI workflows.
+
+**Reliability** — V5 RC1 underwent substantial post-Alpha remediation and
+package qualification, including integrity fixes around Tournament resume and
+Replay History.
+
+v5.0.0-rc1 is a prerelease candidate; **v4.0.0 remains the current stable
+release**. See [Downloads](#downloads) below to install RC1 or v4.0.0.
 
 ## What is Bytefray?
 
@@ -229,6 +273,26 @@ For headless Linux and wheel-specific guidance, see
 environment variables, see [Installation](INSTALL.md).
 
 ## Downloads
+
+### Bytefray v5.0.0-rc1 — latest prerelease
+
+Bytefray v5.0.0-rc1 is the current release candidate for the upcoming V5
+release. Windows users can install and test the fully packaged desktop/CLI
+distribution below.
+
+| Package | Download | Notes |
+|---|---|---|
+| Windows installer | [Bytefray-Setup-5.0.0-rc1.exe](https://github.com/libertaine/Bytefray/releases/download/v5.0.0-rc1/Bytefray-Setup-5.0.0-rc1.exe) | Qualified Windows AMD64/x64 installer; requires administrative installation; prerelease. No Windows ARM64 support. See [Installation](INSTALL.md). |
+| Checksums | [SHA256SUMS.txt](https://github.com/libertaine/Bytefray/releases/download/v5.0.0-rc1/SHA256SUMS.txt) | SHA-256 verification for the published RC1 installer |
+
+[View Bytefray v5.0.0-rc1 release notes](https://github.com/libertaine/Bytefray/releases/tag/v5.0.0-rc1)
+
+v5.0.0-rc1 is a prerelease candidate, not a final release; **v4.0.0 remains
+the current stable release** (below). A Linux distribution for V5 is not yet
+published; Linux users should continue to use v4.0.0 (or the source
+checkout) until a V5 Linux package is available.
+
+### Bytefray v4.0.0 — current stable
 
 **Current stable release:** [Bytefray v4.0.0](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0)
 — establishes the permanent `bytefray-rules-4` gameplay ruleset, Agent API v2,
@@ -503,6 +567,13 @@ pygame-ce and Python 3.14 support; post-UX polish finalized Ruleset-first
 Advanced configuration, multi-agent match setup, and scoring defaults.
 Historical alpha1/alpha2 identities and wire formats remain distinct,
 selectable, and readable.
+
+v4.0.0 established the stable `bytefray-rules-4` gameplay foundation, and
+**v5.0.0-rc1 is now the active release candidate**. V5 focuses on
+authoring/product/replay/Tournament/UX maturity around that same gameplay
+foundation—Replay History, a complete Tournament workflow, agent authoring
+and packaging, and desktop UX/accessibility polish—rather than changing
+gameplay. v5.0.0 final follows RC testing.
 
 The earlier BATTLE2 name and migration history are preserved in
 [Project History](docs/PROJECT_HISTORY.md); all current product commands,
