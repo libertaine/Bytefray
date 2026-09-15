@@ -5,7 +5,7 @@ from __future__ import annotations
 Validates the complete removal and isolation of rejected R1/R2 experimental
 mechanics (finite process mortality, objective-target oracle, and experimental
 rulesets) from the production engine while verifying stable V4 behavior, passive
-replay compatibility, and 5.0.0-rc1 version transition.
+replay compatibility, and final 5.0.0 version identity.
 """
 
 import re
@@ -209,8 +209,8 @@ def test_replay_deserialization_passive_compatibility() -> None:
     assert state.integrity == 1
 
 
-def test_version_transition_5_0_0rc1() -> None:
-    """Project version is 5.0.0-rc1 across pyproject.toml, installer.iss, and package metadata."""
+def test_version_transition_5_0_0() -> None:
+    """Project version is final 5.0.0 across pyproject.toml, installer.iss, and package metadata."""
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     installer = (ROOT / "tools" / "installer.iss").read_text(encoding="utf-8")
 
@@ -222,10 +222,10 @@ def test_version_transition_5_0_0rc1() -> None:
     assert app_match is not None
     assert tag_match is not None
 
-    assert proj_match.group(1) == "5.0.0-rc1"
-    assert app_match.group(1) == "5.0.0rc1"
-    assert tag_match.group(1) == "5.0.0-rc1"
-    assert distribution_version("bytefray") == "5.0.0rc1"
+    assert proj_match.group(1) == "5.0.0"
+    assert app_match.group(1) == "5.0.0"
+    assert tag_match.group(1) == "5.0.0"
+    assert distribution_version("bytefray") == "5.0.0"
 
 
 def test_windows_smoke_uses_an_isolated_data_root_and_installs_starters() -> None:

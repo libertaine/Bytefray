@@ -2,6 +2,47 @@
 
 This changelog records notable user- and developer-visible changes to Bytefray.
 
+## [5.0.0] - 2026-09-15
+
+### Bytefray v5.0 — final release
+
+Bytefray 5.0 promotes the qualified `5.0.0-rc1` candidate to the stable 5.0
+line. No gameplay, Agent API, or wire-schema change has been made since RC1
+— this release finalizes the agent-authoring, parameterization, and desktop
+experience atop the immutable `bytefray-rules-4` gameplay core and Agent API
+v2.
+
+* **Process-share validation repair.** Agent API v2 process-share declaration
+  validation previously accepted some floating-point share totals that
+  Ruleset-v4 construction then rejected under a stricter exact-rational
+  check, which could surface as a false `agent_process_declaration_invalid`
+  rejection for otherwise-valid multi-process declarations (including
+  bundled `v5_dual_team` parameterizations). Accepted shares are now
+  converted into an exact normalized rational partition before scheduling,
+  so validation and construction agree. Found during adversarial RC1
+  review; see
+  [`docs/research/v5/V5_RC1_PROCESS_SHARE_REMEDIATION.md`](docs/research/v5/V5_RC1_PROCESS_SHARE_REMEDIATION.md).
+* **Replay History Subsystem:** Global Replay History dialog (`History → Replay History…`)
+  with automatic discovery of recorded match and evaluation replays, result occurrence
+  indexing, real-time filtering/search, and seamless Replay Viewer launch.
+* **Complete Tournament UX Workflow:** End-to-end Configure → Run Tournament →
+  See Results → Browse Matches → View Replay loop in Agent Designer, with atomic
+  `tournament.json` checkpoints, full standings display, and per-match result and
+  replay inspection.
+* **Unified Result-Backed Replay Integrity Preflight:** Simple/Advanced last-match,
+  Development, Tournament Results/History, Replay History, and Evaluation
+  Results/History reread their authoritative result association and verify SHA-256
+  digests at click time.
+* **Standard Desktop Accessibility Baseline:** Full keyboard navigation across all
+  Designer workspaces and modal dialogs, programmatic label-buddy associations,
+  informative accessible names and descriptions, visible keyboard focus styling,
+  and dual keyboard/mouse activation for all result and history tables.
+* **Application Menu Organization:** Restructured Designer menu bar adhering to
+  standard desktop conventions (`File`, `Agent`, `Match`, `Tournament`, `History`,
+  `Tools`, `Help`) with clean separation of operational actions and historical viewers.
+* **Hardened Parameter Consistency:** Unified parameter resolution, CLI overrides,
+  and preset inheritance across direct CLI runs, tournament matches, and GUI panels.
+
 ## [5.0.0-rc1] - 2026-09-14
 
 ### Bytefray v5.0 — release candidate 1

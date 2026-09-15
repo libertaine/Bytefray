@@ -451,9 +451,9 @@ Mechanics such as fixed process rosters and circular core sizes are ruleset-spec
 
 ## Project Status and Research
 
-### Current Baseline vs. Development Line
+### Current Baseline and Release
 * **Stable Gameplay Baseline**: Bytefray 4.0 (`bytefray-rules-4`) remains the stable, qualified gameplay standard.
-* **Development Line**: The active release candidate is **Bytefray 5.0.0-rc1** (`5.0.0rc1`). Bytefray 5 builds directly on the stable `bytefray-rules-4` gameplay foundation while introducing:
+* **Current Release**: The current stable release is **Bytefray 5.0.0** (`5.0.0`). Bytefray 5 builds directly on the stable `bytefray-rules-4` gameplay foundation while introducing:
   * Four educational starter agents teaching core defense, area denial, and multi-process coordination (`v5_region_attacker`, `v5_scout_striker`, `v5_core_defender`, `v5_dual_team`).
   * Typed parameter schemas and presets in `agent.yaml` with dynamic GUI controls.
   * Enhanced authoring and validation tooling in `bytefray agents`.

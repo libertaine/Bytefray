@@ -27,8 +27,8 @@ V5 promises and do not imply when — or whether — an idea ships.
 
 ## Current V5 boundary
 
-**Bytefray 5 is the current development generation, and `5.0.0-rc1` (`5.0.0rc1`)
-is the release candidate.** V5 builds on the stable `bytefray-rules-4` gameplay foundation;
+**Bytefray 5 is the current stable generation, and `5.0.0` is the current
+release.** V5 builds on the stable `bytefray-rules-4` gameplay foundation;
 the supported V4 Ruleset and Alpha1/Alpha2 design contracts remain current
 supporting documentation.
 
