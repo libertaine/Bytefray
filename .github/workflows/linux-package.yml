@@ -8,20 +8,6 @@ name: Linux Package (Ubuntu 24.04 release baseline)
 # uses -- it does not reimplement a second, CI-only build path.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - v4-rc2-development
-    paths:
-      - ".github/workflows/linux-package.yml"
-      - "tools/build_linux.sh"
-      - "tools/bytefray.spec"
-      - "tools/bytefray_cli.spec"
-      - "tools/agent_designer.spec"
-      - "tools/replay_viewer.spec"
-      - "pyproject.toml"
-      - "engine/src/**"
-      - "client/src/**"
-      - "app/**"
 
 jobs:
   linux-package:
