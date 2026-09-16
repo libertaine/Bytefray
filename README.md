@@ -24,6 +24,21 @@ With Bytefray, you can:
 * **Run deterministic matches and tournaments** from the command line or Agent Designer.
 * **Replay and analyze results** with canonical artifacts and interactive tooling.
 
+## Downloads
+
+**Current release: [Bytefray 5.0.0](https://github.com/libertaine/Bytefray/releases/tag/v5.0.0)** — released September 2026.
+
+| Platform / package | Download | Notes |
+|---|---|---|
+| Windows installer | [`Bytefray-Setup-5.0.0.exe`](https://github.com/libertaine/Bytefray/releases/download/v5.0.0/Bytefray-Setup-5.0.0.exe) | Recommended for Windows; installs the CLI, Agent Designer, and Replay Viewer |
+| Python wheel | [`bytefray-5.0.0-py3-none-any.whl`](https://github.com/libertaine/Bytefray/releases/download/v5.0.0/bytefray-5.0.0-py3-none-any.whl) | Core engine plus optional replay/designer extras |
+| Source distribution | [`bytefray-5.0.0.tar.gz`](https://github.com/libertaine/Bytefray/releases/download/v5.0.0/bytefray-5.0.0.tar.gz) | Build or install from source |
+| Checksums | [`SHA256SUMS`](https://github.com/libertaine/Bytefray/releases/download/v5.0.0/SHA256SUMS) | Verify the integrity of downloaded assets |
+
+The wheel and source distribution are published on the GitHub Release; Bytefray is not currently published on PyPI. See **Installation** below for setup steps after downloading.
+
+[View the Bytefray 5.0.0 release](https://github.com/libertaine/Bytefray/releases/tag/v5.0.0) · [All releases](https://github.com/libertaine/Bytefray/releases)
+
 ## Build agents your way
 
 Use the PySide6 Agent Designer to create agents from templates, configure parameters, inspect source, and validate and test agents. You can also edit Python and YAML in your own editor and use the CLI for matches and automation.
@@ -38,10 +53,8 @@ Use the PySide6 Agent Designer to create agents from templates, configure parame
 
 ### 1. Installation
 
-Bytefray requires Python 3.10–3.14. Download the wheel or source distribution
-for the latest release from [GitHub Releases](https://github.com/libertaine/Bytefray/releases)
-(for example, `bytefray-5.0.0-py3-none-any.whl` or `bytefray-5.0.0.tar.gz`),
-then install it into a virtual environment:
+Bytefray requires Python 3.10–3.14. After downloading the wheel or source
+distribution from **Downloads** above, install it into a virtual environment:
 
 ```bash
 # Create and activate a virtual environment
@@ -63,7 +76,7 @@ python -m pip install -e ".[dev,replay,designer]"
 ```
 
 > **Platform Notes**:
-> * **Windows AMD64**: A standalone administrative installer (`Bytefray-Setup-*.exe`) is available on the [Releases](https://github.com/libertaine/Bytefray/releases) page, packaging the CLI, Agent Designer, and Replay Viewer into `C:\Program Files\Bytefray\bin`.
+> * **Windows AMD64**: Prefer the standalone `Bytefray-Setup-5.0.0.exe` installer (see **Downloads** above), which packages the CLI, Agent Designer, and Replay Viewer into `C:\Program Files\Bytefray\bin`.
 > * **Linux**: Headless operation requires no GUI libraries. See [docs/LINUX_INSTALL.md](docs/LINUX_INSTALL.md) for X11/Xvfb graphical setup.
 > * **macOS**: macOS is not an officially tested or supported platform.
 > * Bytefray is not yet published on PyPI; install from the released wheel/sdist above, or from source for development (below).
