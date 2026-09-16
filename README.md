@@ -38,7 +38,10 @@ Use the PySide6 Agent Designer to create agents from templates, configure parame
 
 ### 1. Installation
 
-Bytefray requires Python 3.10–3.14. Install the package in a virtual environment:
+Bytefray requires Python 3.10–3.14. Download the wheel or source distribution
+for the latest release from [GitHub Releases](https://github.com/libertaine/Bytefray/releases)
+(for example, `bytefray-5.0.0-py3-none-any.whl` or `bytefray-5.0.0.tar.gz`),
+then install it into a virtual environment:
 
 ```bash
 # Create and activate a virtual environment
@@ -46,11 +49,11 @@ python -m venv .venv
 # Windows PowerShell: .\.venv\Scripts\Activate.ps1
 # Linux (bash/sh):    source .venv/bin/activate
 
-# Install the core engine CLI (requires only PyYAML)
-python -m pip install bytefray
+# Install the core engine CLI from the downloaded wheel (requires only PyYAML)
+python -m pip install bytefray-5.0.0-py3-none-any.whl
 
 # Or install with graphical replay and designer tools
-python -m pip install "bytefray[replay,designer]"
+python -m pip install "bytefray-5.0.0-py3-none-any.whl[replay,designer]"
 ```
 
 For local repository development, install editable with development extras:
@@ -63,6 +66,7 @@ python -m pip install -e ".[dev,replay,designer]"
 > * **Windows AMD64**: A standalone administrative installer (`Bytefray-Setup-*.exe`) is available on the [Releases](https://github.com/libertaine/Bytefray/releases) page, packaging the CLI, Agent Designer, and Replay Viewer into `C:\Program Files\Bytefray\bin`.
 > * **Linux**: Headless operation requires no GUI libraries. See [docs/LINUX_INSTALL.md](docs/LINUX_INSTALL.md) for X11/Xvfb graphical setup.
 > * **macOS**: macOS is not an officially tested or supported platform.
+> * Bytefray is not yet published on PyPI; install from the released wheel/sdist above, or from source for development (below).
 
 With the graphical extras installed, open the Agent Designer to create and configure agents:
 
@@ -427,7 +431,7 @@ Bytefray's codebase emphasizes strict reproducibility, version isolation, and ar
 
 Bytefray maintains independent, versioned compatibility axes across releases, rulesets, and schemas (see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)).
 
-Bytefray 5.x is the current product and research line. Its Agent API v2 gameplay continues to use permanent Ruleset 4; V5 Alpha 1 introduces no Ruleset 5.
+Bytefray 5.x is the current product and research line. Its Agent API v2 gameplay continues to use permanent Ruleset 4; Bytefray 5.0.0 introduces no new Ruleset 5.
 
 ### Active Gameplay Ruleset: `bytefray-rules-4`
 The current permanent stable ruleset is `bytefray-rules-4`. An omitted `--ruleset` flag for Agent API v2 entrants resolves to this ruleset automatically. It defines:
