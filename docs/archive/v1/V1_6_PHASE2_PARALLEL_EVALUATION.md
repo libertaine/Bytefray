@@ -48,7 +48,7 @@ identified: `EvaluationService.run`'s per-cell orchestration in
 - **`engine/tests/test_evaluation_worker.py`** (new, 13 tests) — worker
   protocol unit/white-box tests, mirroring `test_agent_worker.py`'s
   structure.
-- **`docs/V1_6_PHASE2_PARALLEL_EVALUATION.md`** (this document).
+- **`docs/archive/v1/V1_6_PHASE2_PARALLEL_EVALUATION.md`** (this document).
 
 No change to `evaluation_history/*`, any Ruleset-v1/execution-boundary
 module, any persisted schema (`SCHEMA_VERSION`/`IDENTITY_VERSION` both

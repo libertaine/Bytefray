@@ -323,7 +323,7 @@ non-skipped-inclusive count matching 1264 passed + 6 skipped.)
   tests.
 - `engine/tests/test_native_match_service.py` -- one added fail-closed
   service-level test.
-- `docs/V1_5_PHASE3_RULESET_POLICY_DISPATCH.md` (new, this document).
+- `docs/archive/v1/V1_5_PHASE3_RULESET_POLICY_DISPATCH.md` (new, this document).
 - `docs/ROADMAP.md` -- v1.5 section updated with Phase 3 status.
 
 ## Architectural debt intentionally left

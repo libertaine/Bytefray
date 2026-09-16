@@ -210,3 +210,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _agents(remainder)
     parser.error(f"unknown command: {namespace.command}")
     return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

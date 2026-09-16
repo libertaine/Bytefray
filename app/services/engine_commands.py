@@ -58,8 +58,16 @@ def build_engine_command(
         "--replay", str(paths.replay_path),
         "--a-type", cfg.a_type,
         "--b-type", cfg.b_type,
-        "--ruleset", cfg.ruleset_id,
     ]
+    # The optional third entrant, emitted between --b-type and --ruleset to
+    # match build_designer_match_arguments' existing flag order. Guarded on
+    # truthiness rather than "is not None" so an empty selection is treated
+    # as "no Agent C", exactly as that helper and the CLI's own ``--c-type``
+    # default ("") already do. When cfg.c_type is absent nothing is
+    # inserted, so a two-entrant command is byte-identical to before.
+    if cfg.c_type:
+        arguments.extend(("--c-type", cfg.c_type))
+    arguments.extend(("--ruleset", cfg.ruleset_id))
     for flag, value in (
         ("--alive-w", cfg.alive_w),
         ("--kill-w", cfg.kill_w),
@@ -76,6 +84,12 @@ def build_engine_command(
         env["BYTEFRAY_AGENT_A_PARAMS_JSON"] = json.dumps(cfg.a_params)
     if cfg.b_params is not None:
         env["BYTEFRAY_AGENT_B_PARAMS_JSON"] = json.dumps(cfg.b_params)
+    # Agent C's params only travel with an actual Agent C: exporting them for
+    # a two-entrant run would hand the child a C override for a slot the
+    # match does not contain. Mirrors agent_designer.py's own
+    # ``if rowC and c_params is not None`` guard on the same env var.
+    if cfg.c_type and cfg.c_params is not None:
+        env["BYTEFRAY_AGENT_C_PARAMS_JSON"] = json.dumps(cfg.c_params)
     return build_match_command(arguments), env
 
 

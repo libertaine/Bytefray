@@ -5,8 +5,8 @@ hand-editable evaluation configurations (`bytefray agents evaluate --preset
 <name>`) and their inspection surface (`bytefray agents evaluation-presets
 list|show|validate`).
 
-Written in the same spirit as `docs/V1_6_PHASE1_EVALUATION_SCALE_BASELINE.md`
-and `docs/V1_6_PHASE2_PARALLEL_EVALUATION.md`: this document cites both as
+Written in the same spirit as `docs/archive/v1/V1_6_PHASE1_EVALUATION_SCALE_BASELINE.md`
+and `docs/archive/v1/V1_6_PHASE2_PARALLEL_EVALUATION.md`: this document cites both as
 the authoritative pre-implementation baseline rather than re-deriving them.
 Phase 1's own §11 ("Preset / suite architecture recommendation") is the
 direct ancestor of the design below; where this document departs from that
@@ -441,7 +441,7 @@ gets awkward: "prefer documented examples over built-in mutable files."
 
 Three documented example tiers were added to
 `docs/AGENT_LAB.md`/this document, grounded in Phase 0-1's own measured
-scale targets (`docs/V1_6_PHASE1_EVALUATION_SCALE_BASELINE.md` §10), not
+scale targets (`docs/archive/v1/V1_6_PHASE1_EVALUATION_SCALE_BASELINE.md` §10), not
 arbitrary numbers:
 
 ```yaml

@@ -5,7 +5,7 @@ this reference agent is genuinely *reactive* (detects and responds to
 evidence of core damage through ordinary observations) rather than merely
 a differently-shaped periodic agent like the original ``core_defender``
 (see ``test_v2_alpha1_reference_agents.py`` and
-``docs/V2_0_ALPHA2_REACTIVE_DEFENSE.md``). Every scripted opponent below is
+``docs/archive/v2/V2_0_ALPHA2_REACTIVE_DEFENSE.md``). Every scripted opponent below is
 a small, fully deterministic Python source string, mirroring
 ``test_ruleset_v2_alpha1.py``'s own pattern, so each scenario's exact
 tick-by-tick ownership sequence is knowable in advance.

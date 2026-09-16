@@ -1,5 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 import os
+import sys
 from PyInstaller.utils.hooks import collect_submodules
 from PyInstaller.building.build_main import Analysis, PYZ
 from PyInstaller.building.api import EXE, COLLECT
@@ -7,15 +8,28 @@ from PyInstaller.building.api import EXE, COLLECT
 project_root = os.path.abspath(".")
 engine_src   = os.path.join(project_root, "engine", "src")
 client_src   = os.path.join(project_root, "client", "src")
-assets_dir   = os.path.join(project_root, "assets")
+branding_dir = os.path.join(project_root, "app", "assets", "branding")
 script_path  = os.path.join(project_root, "app", "replay_viewer.py")  # ABSOLUTE
 icon_path    = os.path.join(project_root, "assets", "branding", "bytefray-icon.ico")
 
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+from tools.packaging_data import collect_data_tree
+
 block_cipher = None
 hiddenimports = collect_submodules("battle_engine") + collect_submodules("battle_client")
+# Expanded per-file through the shared bytecode-filtering collector -- see
+# tools/bytefray.spec's equivalent block for the shipped defect this prevents.
+#
+# Only the runtime branding icon is bundled here, matching tools/bytefray.spec
+# -- not the full repository-root assets/ directory, which also holds
+# documentation/marketing images no runtime code ever loads. The destination
+# "assets/branding" is unchanged: it is the same path
+# battle_engine.paths.get_branding_icon_path() already checks first, so the
+# frozen executable resolves its window icon identically to before (FIND-06,
+# V5 Alpha 1 Post-Release Hardening Audit).
 datas = []
-if os.path.isdir(assets_dir):
-    datas.append((assets_dir, "assets"))
+datas += collect_data_tree(branding_dir, "assets/branding")
 
 a = Analysis(
     [script_path],

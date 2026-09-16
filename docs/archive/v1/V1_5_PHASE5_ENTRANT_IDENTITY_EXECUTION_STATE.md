@@ -501,7 +501,7 @@ changed.
   redeclared as a read-only property (type-only change, see "Static
   validation").
 - `engine/tests/test_entrant_identity.py` (new) -- see "Tests added".
-- `docs/V1_5_PHASE5_ENTRANT_IDENTITY_EXECUTION_STATE.md` (new, this
+- `docs/archive/v1/V1_5_PHASE5_ENTRANT_IDENTITY_EXECUTION_STATE.md` (new, this
   document).
 - `docs/ROADMAP.md` -- v1.5 section updated with Phase 5 status.
 

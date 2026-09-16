@@ -33,10 +33,10 @@ Branched from the verified alpha.8 baseline, commit `a17fb8f` on
   lineage). Per the governing task's explicit instruction, this alpha did
   not merge, rebase, cherry-pick, reset onto, or otherwise reconcile with
   it anywhere.
-- `docs/V2_0_ALPHA2_REACTIVE_DEFENSE.md`,
-  `docs/V2_0_ALPHA6_CORE_SEEKER_TIMING.md`,
-  `docs/V2_0_ALPHA7_SPATIAL_CHARACTERIZATION.md`, and
-  `docs/V2_0_ALPHA8_PLACEMENT_AGNOSTIC_OFFENSE.md` were read in full before
+- `docs/archive/v2/V2_0_ALPHA2_REACTIVE_DEFENSE.md`,
+  `docs/archive/v2/V2_0_ALPHA6_CORE_SEEKER_TIMING.md`,
+  `docs/archive/v2/V2_0_ALPHA7_SPATIAL_CHARACTERIZATION.md`, and
+  `docs/archive/v2/V2_0_ALPHA8_PLACEMENT_AGNOSTIC_OFFENSE.md` were read in full before
   any new work began.
 - Read directly, not inferred: `core_seeker/agent.py`, `core_tracker/
   agent.py`, `core_defender/agent.py`, `reactive_core_defender/agent.py`
@@ -693,6 +693,6 @@ further, per the governing task's own explicit instruction.
 Committed locally on `v2.0-development` only. No merge, rebase,
 cherry-pick, tag, or push performed. `origin/v2.0-development`'s unrelated
 commit `151866c` was left untouched throughout. The only tracked change is
-this document (`docs/V2_0_ALPHA9_DEFENSE_ROBUSTNESS.md`) — no source,
+this document (`docs/archive/v2/V2_0_ALPHA9_DEFENSE_ROBUSTNESS.md`) — no source,
 test, or config file was modified; `runs/v2_0_alpha9_defense_robustness/`
 remains gitignored, matching every prior alpha's own precedent.

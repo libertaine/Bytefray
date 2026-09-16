@@ -3,7 +3,7 @@
 The Phase 5 design proposal declared, but never ran, an "E8 turtle
 control" gate: "A deliberately passive/immobile probe agent (analogous to
 Phase 2's ``local_camper``) must not become competitive at any tested
-``w_defense``" (``docs/V3_PHASE5_DEFENSIVE_EVENT_DESIGN_PROPOSAL.md``
+``w_defense``" (``docs/archive/v3/V3_PHASE5_DEFENSIVE_EVENT_DESIGN_PROPOSAL.md``
 Sec 5B.3). Phase 5B -- the scoring experiment E8 was declared for -- never
 ran, because Phase 5A itself failed qualification first. There is no
 ``w_defense`` scoring Ruleset to test "competitiveness" against.

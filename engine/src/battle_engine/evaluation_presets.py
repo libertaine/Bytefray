@@ -3,7 +3,7 @@
 A preset is a small, versioned, hand-editable YAML artifact
 (``bytefray.evaluation_preset`` v1) that supplies default values for a
 ``bytefray agents evaluate`` invocation. The governing architectural
-principle (see ``docs/V1_6_PHASE3_EVALUATION_PRESETS.md``):
+principle (see ``docs/archive/v1/V1_6_PHASE3_EVALUATION_PRESETS.md``):
 
     named reusable definition -> fully resolved explicit EvaluationRequest
     -> ordinary EvaluationRequest -> canonical evaluation execution

@@ -13,7 +13,7 @@ This file characterizes and locks in the alpha.4.1 fix: a dead entrant is
 never eligible to win while any entrant survives, regardless of accumulated
 score. Scores, statistics, and everything else remain byte-for-byte
 unaffected -- only winner *eligibility* changed (see
-``docs/V2_0_ALPHA4_1_WINNER_SEMANTICS.md``).
+``docs/archive/v2/V2_0_ALPHA4_1_WINNER_SEMANTICS.md``).
 
 Two layers are covered:
 

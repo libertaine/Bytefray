@@ -1,5 +1,5 @@
 """Phase 4 aggregate/statistical analysis over already-authoritative
-evaluation data (``docs/V1_6_PHASE4_EVALUATION_ANALYSIS.md``).
+evaluation data (``docs/archive/v1/V1_6_PHASE4_EVALUATION_ANALYSIS.md``).
 
 Pure, derived interpretation layer over ``agent_evaluation.SubjectAggregate``/
 ``ComparisonEntry`` — computes nothing that changes match execution,

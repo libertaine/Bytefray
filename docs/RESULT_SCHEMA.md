@@ -1,12 +1,70 @@
 # Canonical Result Contract
 
-Bytefray v0.3 writes `result.json` using schema `battle2.result`, version 1. The
-same high-level envelope represents VM, Python, and pMARS matches.
+Bytefray writes `result.json` with the established schema identifier
+`battle2.result`. Native VM and Python results use version 2 beginning with V5
+Replay History Phase 7A. Historical results and pMARS/Redcode output remain
+version 1. The same high-level envelope represents every mode.
 
-Required envelope fields are `result_id`, `match_id`, `mode`, `status`, `winner`,
-`termination_reason`, `ticks`, `score`, `entrants`, `reproducibility`, `replay`,
-and `backend`. Native results reference a replay by `replay_id`, SHA-256 digest,
+`battle2.result` is retained solely as a compatibility identifier. A local tag
+audit found it in every inspected released writer from v0.3.0 through V5 Alpha
+1, including the v0.3.0 result fixture and expected output. Changing the native
+v2 writer to `bytefray.result` would split one continuing `result.json` contract
+into two active schema families. This decision does not rename the separate,
+historical `battle2.replay` contract and does not establish `battle2` as a name
+for any new artifact family.
+
+The envelope identifies its version with the existing integer
+`schema_version` field. Versions 1 and 2 are supported; any other version and
+any other schema identifier are rejected. The common writer shape contains
+`result_id`, `match_id`, `mode`, `status`, `winner`, `termination_reason`,
+`ticks`, `score`, `entrants`, `reproducibility`, `replay`, `backend`, and
+`ruleset_id`. Native results reference a replay by `replay_id`, SHA-256 digest,
 and portable filename. pMARS results set `replay` to `null`.
+
+## Version 2 occurrence metadata
+
+Every newly completed native match adds these required fields:
+
+| Field | Wire contract | Meaning |
+|---|---|---|
+| `occurrence_id` | Canonical lowercase, hyphenated UUID string; the writer uses `uuid.uuid4()` | Opaque identity of one actual execution. It is random and independent of seed, path, and `match_id`. |
+| `completed_at` | Timezone-aware UTC ISO-8601 string; the writer emits six fractional-second digits and `Z`, for example `2026-09-11T19:42:31.123456Z` | The time the completed execution enters native artifact finalization. It is match completion metadata, not filesystem or replay-write time. |
+| `product_version` | Non-empty string from `project_info.get_project_info().version` | Bytefray package/product version that created the result. It is descriptive metadata, not gameplay identity. |
+
+Native occurrence metadata is captured exactly once at entry to
+`match_service._finalize_native_artifacts`, after the executor has returned a
+final match outcome and before replay or result serialization. Calling
+`ResultEnvelope.as_dict()` repeatedly therefore preserves the same UUID and
+timestamp. If later replay publication fails, the timestamp still describes
+the completed execution; existing all-or-nothing artifact cleanup removes the
+incomplete replay/result set.
+
+`occurrence_id`, `completed_at`, and `product_version` are excluded from the
+hash inputs for `match_id`, `result_id`, and `replay_id`. Two executions of the
+same semantic match retain the same deterministic identities and gameplay
+result while receiving distinct occurrence metadata.
+
+## Version compatibility and validation
+
+`read_result` accepts versions 1 and 2. A v1 artifact is parsed without
+inference: `occurrence_id`, `completed_at`, and `product_version` are all
+`None`, regardless of filesystem timestamps, directory names, the current
+process version, or `match_id`. No migration or rewrite is required.
+
+For v2, `occurrence_id` must parse as and exactly equal a canonical UUID
+string; `completed_at` must parse as timezone-aware ISO-8601 with a zero UTC
+offset; and `product_version` must be a non-empty string. Missing or malformed
+required metadata raises `ValueError` with the field name. The reader ignores
+unknown keys for both supported versions, preserving the established
+forward-compatible field policy, while malformed or unsupported
+`schema_version` values fail closed. Values accepted from a file are preserved
+as written rather than normalized during parsing.
+
+`ResultEnvelope` defaults to schema version 1 for source compatibility with
+existing code that constructs historical envelopes directly. Native
+production finalization explicitly selects current version 2 and supplies all
+required metadata. The pMARS/Redcode writer explicitly selects version 1, so
+its artifact behavior remains unchanged.
 
 ## Ruleset identity
 

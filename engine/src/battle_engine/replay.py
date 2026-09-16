@@ -38,6 +38,11 @@ class ProcessState:
     anchor: int
     disrupted: bool
     reach: int
+    # Passive-compatibility fields: retained for reading historical research
+    # replays (V5 Phase R1/R2) without errors. Production writers never emit
+    # these fields.
+    alive: bool = True
+    integrity: int | None = None
 
 
 @dataclass(frozen=True)
@@ -224,12 +229,15 @@ def _process_from_dict(value: Any) -> ProcessState:
     entrant_id = data.get("entrant_id")
     if not isinstance(entrant_id, str) or not entrant_id:
         raise ReplayFormatError("process.entrant_id is required")
+    integrity = data.get("integrity")
     return ProcessState(
         process_id=process_id,
         entrant_id=entrant_id,
         anchor=_as_int(data.get("anchor", 0), "process.anchor"),
         disrupted=bool(data.get("disrupted", False)),
         reach=_as_int(data.get("reach", 0), "process.reach"),
+        alive=bool(data.get("alive", True)),
+        integrity=(None if integrity is None else _as_int(integrity, "process.integrity")),
     )
 
 
@@ -664,7 +672,11 @@ def iter_replay(path: str | Path) -> Iterator[ReplayRecord]:
 
 
 def write_replay(path: str | Path, records: Iterable[ReplayRecord]) -> None:
-    with Path(path).open("w", encoding="utf-8") as stream:
+    # newline="\n" disables universal-newline translation so the writer
+    # itself defines the on-disk line ending (LF) instead of delegating to
+    # the host OS, which would otherwise emit CRLF on Windows and make
+    # semantically identical replays hash differently across platforms.
+    with Path(path).open("w", encoding="utf-8", newline="\n") as stream:
         stream.writelines(serialize_record(record) + "\n" for record in records)
 
 

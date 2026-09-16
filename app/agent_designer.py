@@ -12,6 +12,7 @@ from battle_engine.agent_evaluation import (
     ORIENTATION_OPPONENT_FIRST,
 )
 from battle_engine.agent_package import (
+    PACKAGE_EXTENSION,
     AgentPackageError,
     PackageImportConflictError,
     export_agent,
@@ -25,9 +26,14 @@ from battle_engine.launchers import (
 )
 from battle_engine.paths import canonical_replay_directory, get_branding_icon_path, get_data_root
 from battle_engine.project_info import get_project_info
-from battle_engine.starters import describe_bootstrap_errors, ensure_starter_agents
-from PySide6.QtCore import QProcess, QProcessEnvironment, QTimer, QUrl, Slot
-from PySide6.QtGui import QDesktopServices, QIcon
+from battle_engine.replay_integrity import ResultReplayRequest, preflight_result_replay
+from battle_engine.starters import (
+    describe_bootstrap_errors,
+    describe_starter_refresh,
+    ensure_starter_agents,
+)
+from PySide6.QtCore import QProcess, QProcessEnvironment, Qt, QTimer, QUrl, Slot
+from PySide6.QtGui import QAction, QDesktopServices, QIcon, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -59,12 +65,20 @@ from app.services.designer_workflows import (
     read_evaluation_presentation,
     read_match_presentation,
     read_tournament_presentation,
+    validate_entrant_parameters,
     validate_homogeneous,
 )
 from app.services.engine import open_pygame_client_direct
+from app.services.replay_integrity import replay_failure_message, result_replay_request
 from app.services.ruleset_options import (
     validate_designer_agent_rows,
     validate_designer_ruleset,
+)
+from app.services.tournament_results import (
+    describe_tournament_not_run,
+    new_tournament_output_directory,
+    read_tournament_results,
+    tournament_state_signature,
 )
 from app.views.advanced import AdvancedPanel
 from app.views.agent_package import (
@@ -76,8 +90,13 @@ from app.views.agent_package import (
 from app.views.development import AgentDevelopmentPanel, NewAgentDialog
 from app.views.evaluation import EvaluationDialog, EvaluationResultsDialog
 from app.views.evaluation_history import EvaluationHistoryDialog
+from app.views.replay_history import ReplayHistoryWindow
 from app.views.simple import SimplePanel
-from app.views.tournament import TournamentDialog
+from app.views.tournament import (
+    TournamentDialog,
+    TournamentHistoryDialog,
+    TournamentResultsDialog,
+)
 from app.widgets.designer_presentation import DesignerIdentityHeader
 
 
@@ -110,6 +129,12 @@ class AgentDesigner(QMainWindow):
 
         # Build data_root and shared catalog
         data_root = _resolve_data_root()
+        # What the starter refresh did, or deliberately declined to do (V5
+        # Alpha 1 Phase E0). Held until the panels exist and then written to
+        # the Advanced engine log rather than raised as a dialog: an upgraded
+        # catalog is normal, and a customized starter is a standing condition
+        # that would otherwise interrupt every single launch.
+        self._starter_refresh_notice: str | None = None
         try:
             bootstrap = ensure_starter_agents(data_root=data_root)
         except (FileNotFoundError, OSError) as exc:
@@ -122,11 +147,15 @@ class AgentDesigner(QMainWindow):
             warning = describe_bootstrap_errors(bootstrap)
             if warning:
                 QMessageBox.warning(self, "Some Starter Agents Unavailable", warning)
+            self._starter_refresh_notice = describe_starter_refresh(bootstrap)
         self.data_root = data_root            # <-- keep for later
         self._proc = None                         # <-- init process handle
         self._last_replay = None                  # <-- init replay capture
+        self._last_result_path = None
         self._result_path = None
         self._tournament_output = None
+        self._tournament_state_before = None
+        self._tournament_stderr = ""
         self._evaluation_output = None
         self._evaluation_ticks = None
         self._active_workflow = "match"
@@ -137,9 +166,14 @@ class AgentDesigner(QMainWindow):
         self._test_stdout = ""
         self._test_stderr = ""
         self.catalog = AgentCatalog(data_root)
+        # Single modeless Replay History browser. One index, one worker
+        # thread, one window: reopening raises the existing one rather than
+        # starting a second background scan over the same run tree.
+        self._replay_history: ReplayHistoryWindow | None = None
 
         # Tabs + panels
         self.tabs = QTabWidget(self)
+        self.tabs.setAccessibleName("Designer workspace")
 
         try:
             self.simple = SimplePanel(catalog=self.catalog)
@@ -202,17 +236,57 @@ class AgentDesigner(QMainWindow):
         # Initial population of agent lists
         self.refresh_agents()
 
+        if self._starter_refresh_notice is not None:
+            advanced = getattr(self, "advanced", None)
+            if advanced is not None:
+                for line in self._starter_refresh_notice.splitlines():
+                    advanced.appendLog(f"[Starters] {line}")
+
     def _build_menus(self) -> None:
+        file_menu = self.menuBar().addMenu("File")
+        # V5 Alpha 1 Phase 1/2: tooltips must be enabled on the menu so that
+        # "Open Last Output Folder"'s explanatory hover tip is discoverable.
+        file_menu.setToolTipsVisible(True)
+        file_menu.addAction("Import Agent Package…", self._on_import_agent_package)
+        file_menu.addAction("Inspect Agent Package…", self._on_inspect_agent_package)
+        self.exportAgentPackageAction = file_menu.addAction(
+            "Export Agent Package…", self._on_export_agent_package
+        )
+        file_menu.addSeparator()
+        self.openOutputFolderAction = file_menu.addAction(
+            "Open Last Output Folder", self._on_open_output_folder
+        )
+        # Wording matches _on_open_output_folder's actual fallback chain
+        # exactly (never "tournament/evaluation/replay output" in general,
+        # which the implementation does not guarantee): a tournament's
+        # output folder takes priority for the rest of this session once
+        # any tournament has run, even over a later single match -- it is
+        # not simply "whichever happened most recently" -- and only falls
+        # back to this installation's runs folder before either has run.
+        self.openOutputFolderAction.setToolTip(
+            "Opens this session's tournament output folder, if you have run a "
+            "tournament (Tools > Run Tournament…) -- this takes priority even "
+            "over a single match run afterward. Otherwise opens the folder "
+            "from your last single match (Simple/Advanced > Run Match). "
+            "Before either has run, opens this installation's runs folder."
+        )
+        file_menu.addSeparator()
+        self.exitAction = file_menu.addAction("Exit", self.close)
+        self.exitAction.setShortcut(QKeySequence.StandardKey.Quit)
+        self.exitAction.setMenuRole(QAction.MenuRole.QuitRole)
+
         tools = self.menuBar().addMenu("Tools")
+        tools.setToolTipsVisible(True)
         tools.addAction("Run Tournament…", self._on_tournament)
-        tools.addAction("Evaluation History…", self._on_evaluation_history)
-        tools.addSeparator()
-        tools.addAction("Import Agent Package…", self._on_import_agent_package)
-        tools.addAction("Inspect Agent Package…", self._on_inspect_agent_package)
-        tools.addSeparator()
-        tools.addAction("Open Last Output Folder", self._on_open_output_folder)
+
+        history_menu = self.menuBar().addMenu("History")
+        history_menu.addAction("Replay History…", self._on_replay_history)
+        history_menu.addAction("Tournament History…", self._on_tournament_history)
+        history_menu.addAction("Evaluation History…", self._on_evaluation_history)
+
         help_menu = self.menuBar().addMenu("Help")
-        help_menu.addAction("About Bytefray", self._on_about)
+        about_action = help_menu.addAction("About Bytefray", self._on_about)
+        about_action.setMenuRole(QAction.MenuRole.AboutRole)
 
     @Slot()
     def refresh_agents(self, *, select: str | None = None) -> None:
@@ -362,6 +436,22 @@ class AgentDesigner(QMainWindow):
             validate_homogeneous(roster_rows)
             validate_designer_ruleset(cfg.ruleset_id, {agent_kind(row) for row in roster_rows})
             validate_designer_agent_rows(cfg.ruleset_id, roster_rows)
+            # V5 Alpha 1 Phase E1: the authoritative pre-launch parameter
+            # gate, at the one place every Advanced match is actually
+            # started. The panel already blocks Run on the same canonical
+            # resolver, but a RunConfig can also arrive programmatically, and
+            # no route into a match may start a subprocess that is only going
+            # to fail once the agent is imported. Non-v2 agents are
+            # deliberately not checked here -- they never receive resolved
+            # parameters, and cli.py warns about and ignores whatever is
+            # supplied, which is the behaviour the Designer has always had.
+            for slot, row, params in (
+                ("A", rowA, self._cfgget(cfg, "a_params", "aParams")),
+                ("B", rowB, self._cfgget(cfg, "b_params", "bParams")),
+                ("C", rowC, self._cfgget(cfg, "c_params", "cParams")),
+            ):
+                if row is not None:
+                    validate_entrant_parameters(row, params, slot=slot)
         except (DesignerValidationError, ValueError) as exc:
             self.advanced.appendLog(f"[RunMatch] {exc}\n")
             QMessageBox.warning(self, "Unsupported Match", str(exc))
@@ -483,6 +573,8 @@ class AgentDesigner(QMainWindow):
             self._test_stdout += out
             self._test_stderr += err
             return
+        if self._active_workflow == "tournament":
+            self._tournament_stderr += err
         text = (out or "") + (err or "")
         if text:
             # send to active tab’s log
@@ -585,7 +677,13 @@ class AgentDesigner(QMainWindow):
         if self._active_workflow == "evaluation_agent_lab_test":
             return  # Same reasoning: this is a bare agents-test rerun, not a logged workflow.
         if self._log_target:
-            label = "Evaluate" if self._active_workflow == "evaluate" else "RunMatch"
+            label = (
+                "Evaluate"
+                if self._active_workflow == "evaluate"
+                else "Tournament"
+                if self._active_workflow == "tournament"
+                else "RunMatch"
+            )
             self._log_target.appendLog(f"[{label}] stopped.\n")
 
     def _on_proc_finished(self, proc, code, status):
@@ -623,6 +721,7 @@ class AgentDesigner(QMainWindow):
             try:
                 result = read_match_presentation(self._result_path)
                 self._last_replay = result.replay_path
+                self._last_result_path = result.result_path
                 if hasattr(self, "advanced"):
                     self.advanced.note_completed_replay(self._last_replay)
                 self._log_target.appendLog(
@@ -663,24 +762,21 @@ class AgentDesigner(QMainWindow):
         # run's replay -- never the file a currently-running match is still
         # writing. If either guarantee is ever relaxed, this button should
         # move back into setBusy()'s disabled set.
+        last_result_path = getattr(self, "_last_result_path", None)
+        if last_result_path is not None:
+            self._open_result_replay(result_replay_request(last_result_path))
+            return
         path = None
-        if self._last_replay:
-            if Path(self._last_replay).exists():
-                path = self._last_replay
-            else:
-                QMessageBox.warning(
-                    self,
-                    "Replay Not Found",
-                    "The replay from your last match is no longer available.\n\n"
-                    "Choose a saved replay instead.",
-                )
-        if not path:
+        if getattr(self, "_last_replay", None) is None:
             path, _ = QFileDialog.getOpenFileName(
                 self,
                 "Open Replay",
                 str(canonical_replay_directory(self.data_root)),
                 "Bytefray Replays (*.jsonl)",
             )
+        else:
+            message = replay_failure_message(None)
+            QMessageBox.warning(self, message.title, message.body)
         if path:
             try:
                 open_pygame_client_direct(self.data_root, Path(path))
@@ -689,7 +785,9 @@ class AgentDesigner(QMainWindow):
 
     def _on_tournament(self) -> None:
         rows = self.catalog.list_agents()
-        default = self.data_root / "runs" / "tournaments" / "designer-tournament"
+        # A fixed default folder made every later tournament with a different roster fail as
+        # incompatible state; each launch now proposes its own folder, like match runs.
+        default = new_tournament_output_directory(self.data_root)
         dialog = TournamentDialog(rows, default, self)
         if not dialog.exec():
             return
@@ -704,6 +802,8 @@ class AgentDesigner(QMainWindow):
             QMessageBox.warning(self, "Invalid Tournament", str(exc))
             return
         self._tournament_output = dialog.output_path().expanduser().resolve()
+        self._tournament_state_before = tournament_state_signature(self._tournament_output)
+        self._tournament_stderr = ""
         self._active_workflow = "tournament"
         self._log_target = self.advanced if hasattr(self, "advanced") else self.simple
         self.simple.setBusy(True)
@@ -729,13 +829,29 @@ class AgentDesigner(QMainWindow):
         proc.start()
 
     def _present_tournament_result(self, code: int) -> None:
-        if not self._tournament_output:
+        output = self._tournament_output
+        if not output:
             return
-        state_path = self._tournament_output / "tournament.json"
+        if tournament_state_signature(output) == self._tournament_state_before:
+            # This run wrote nothing, so any tournament.json here belongs to an earlier run.
+            self._log_target.appendLog("[Tournament] no results were recorded by this run.\n")
+            QMessageBox.warning(
+                self,
+                "Tournament Did Not Run",
+                describe_tournament_not_run(
+                    code,
+                    self._tournament_stderr,
+                    had_earlier_results=self._tournament_state_before is not None,
+                ),
+            )
+            return
+        state_path = output / "tournament.json"
         try:
             result = read_tournament_presentation(state_path)
+            results = read_tournament_results(output)
         except (OSError, ValueError, KeyError) as exc:
             self._log_target.appendLog(f"[Tournament] Could not read state: {exc}\n")
+            QMessageBox.warning(self, "Tournament Results Unavailable", str(exc))
             return
         self._log_target.appendLog(
             f"[Tournament] {result.tournament_id} ({result.division})\n"
@@ -748,6 +864,14 @@ class AgentDesigner(QMainWindow):
                 f"  {row.get('agent_id')}: W={row.get('wins')} L={row.get('losses')} "
                 f"T={row.get('ties')} score={row.get('score_total')}\n"
             )
+        dialog = TournamentResultsDialog(results, parent=self)
+        dialog.openReplayRequested.connect(self._on_verified_replay_path)
+        dialog.exec()
+
+    def _on_tournament_history(self) -> None:
+        dialog = TournamentHistoryDialog(self.data_root, parent=self)
+        dialog.openReplayRequested.connect(self._on_verified_replay_path)
+        dialog.exec()
 
     def _plan_default_evaluation_output(self, dialog: EvaluationDialog) -> Path:
         """This plan's own content-addressed default output directory.
@@ -814,6 +938,37 @@ class AgentDesigner(QMainWindow):
         dialog.openReplayRequested.connect(self._on_evaluation_open_replay)
         dialog.agentCatalogChanged.connect(self._on_agent_catalog_changed)
         dialog.exec()
+
+    def _on_replay_history(self) -> None:
+        """Open (or raise) the modeless Replay History browser.
+
+        Deliberately modeless and deliberately not gated on an active match:
+        browsing finished history reads already-written artifacts through the
+        Qt-free ``battle_engine.replay_history`` service on its own worker
+        thread, executes no agent code, and spawns no process, so there is
+        nothing for a running match to conflict with.
+
+        Opening does no corpus work on the GUI thread -- the window shows
+        immediately, its worker opens the index and requests the cached first
+        page, and reconciliation follows in the background.
+        """
+
+        existing = self._replay_history
+        if existing is not None:
+            existing.show()
+            existing.raise_()
+            existing.activateWindow()
+            return
+        window = ReplayHistoryWindow(data_root=self.data_root, parent=self)
+        self._replay_history = window
+        window.windowClosed.connect(self._on_replay_history_closed)
+        window.destroyed.connect(self._on_replay_history_closed)
+        window.setAttribute(Qt.WA_DeleteOnClose, True)
+        window.show()
+
+    @Slot()
+    def _on_replay_history_closed(self) -> None:
+        self._replay_history = None
 
     @Slot(str)
     def _on_agent_catalog_changed(self, affected_agent_id: str) -> None:
@@ -1082,9 +1237,30 @@ class AgentDesigner(QMainWindow):
                 self, "Agent Lab Test", "The rerun did not produce a trace to inspect."
             )
 
-    def _on_evaluation_open_replay(self, replay_path: Path) -> None:
+    def _open_result_replay(self, request: ResultReplayRequest) -> None:
+        outcome = preflight_result_replay(request)
+        if not outcome.verified or outcome.replay_path is None:
+            message = replay_failure_message(outcome.failure)
+            QMessageBox.warning(self, message.title, message.body)
+            return
         try:
-            open_pygame_client_direct(self.data_root, Path(replay_path))
+            open_pygame_client_direct(self.data_root, outcome.replay_path)
+        except (FileNotFoundError, OSError) as exc:
+            QMessageBox.critical(self, "Replay Launch Failed", str(exc))
+
+    def _on_evaluation_open_replay(self, request: ResultReplayRequest) -> None:
+        self._open_result_replay(request)
+
+    def _on_verified_replay_path(self, replay: Path) -> None:
+        """Launch a path a specialized UI preflighted in the same click.
+
+        Tournament and Replay History need their own contextual UI/state
+        handling. Only Tournament emits through this Designer slot; Replay
+        History owns its launcher directly.
+        """
+
+        try:
+            open_pygame_client_direct(self.data_root, Path(replay))
         except (FileNotFoundError, OSError) as exc:
             QMessageBox.critical(self, "Replay Launch Failed", str(exc))
 
@@ -1246,13 +1422,10 @@ class AgentDesigner(QMainWindow):
         """
         if not hasattr(self, "development"):
             return
-        path = self.development.last_test_replay_path()
-        if not path:
+        result_path = self.development.last_test_result_path()
+        if result_path is None:
             return
-        try:
-            open_pygame_client_direct(self.data_root, Path(path))
-        except (FileNotFoundError, OSError) as exc:
-            QMessageBox.critical(self, "Replay Launch Failed", str(exc))
+        self._open_result_replay(result_replay_request(result_path))
 
     def _on_inspect_trace(self) -> None:
         """Open the Trace Inspector over the last development test's trace.
@@ -1315,6 +1488,49 @@ class AgentDesigner(QMainWindow):
             QMessageBox.critical(self, "Export Failed", f"[{exc.code}] {exc}")
             return
         QMessageBox.information(self, "Export Agent", format_export_result_text(result))
+
+    def _on_export_agent_package(self) -> None:
+        if not hasattr(self, "development"):
+            return
+        row = self.development.selectedAgentRow()
+        if row is None:
+            QMessageBox.information(self, "Export Agent Package", "Select a Python agent first.")
+            return
+        agent_id = row.agent_id or row.name
+        if not agent_id:
+            QMessageBox.information(self, "Export Agent Package", "Select a Python agent first.")
+            return
+        default_path = str(self.data_root / f"{agent_id}{PACKAGE_EXTENSION}")
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Agent Package",
+            default_path,
+            "Bytefray Agent Packages (*.bytefray-agent);;All Files (*.*)",
+        )
+        if not path:
+            return
+        dest = Path(path)
+        if not dest.name.endswith(PACKAGE_EXTENSION):
+            dest = dest.with_name(dest.name + PACKAGE_EXTENSION)
+            if dest.exists():
+                reply = QMessageBox.question(
+                    self,
+                    "Confirm Overwrite",
+                    f"'{dest.name}' already exists.\nDo you want to replace it?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No,
+                )
+                if reply != QMessageBox.StandardButton.Yes:
+                    return
+        try:
+            result = export_agent(agent_id, data_root=self.data_root, output=dest)
+        except AgentPackageError as exc:
+            QMessageBox.critical(self, "Export Failed", f"[{exc.code}] {exc}")
+            return
+        except Exception as exc:
+            QMessageBox.critical(self, "Export Failed", str(exc))
+            return
+        QMessageBox.information(self, "Export Agent Package", format_export_result_text(result))
 
     def _on_inspect_agent_package(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
@@ -1427,6 +1643,14 @@ class AgentDesigner(QMainWindow):
         # from it can never run against a partially/fully destroyed window,
         # and so the child is not left running detached from the app.
         self._dispose_process()
+        # Join the Replay History worker before this window's children are
+        # destroyed. Without this the browser's QThread could outlive the
+        # objects its queued signals target -- the "QThread: Destroyed while
+        # thread is still running" class of shutdown fault.
+        history, self._replay_history = self._replay_history, None
+        if history is not None:
+            history.shutdownWorker()
+            history.close()
         super().closeEvent(event)
 
 

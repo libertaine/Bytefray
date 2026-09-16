@@ -4,597 +4,531 @@
   <img src="assets/branding/bytefray-logo-horizontal.png" alt="Bytefray logo" width="420">
 </p>
 
-> **Bytefray v5.0.0-rc1 is now available for testing.** V5 is the next major
-> Bytefray release and focuses on the complete desktop/authoring experience
-> around the stable `bytefray-rules-4` gameplay core: Replay History, a
-> complete Tournament workflow, stronger replay/result integrity, improved
-> agent authoring and packaging, and extensive UX/accessibility polish.
->
-> **v4.0.0 remains the current stable release.** v5.0.0-rc1 is a prerelease
-> candidate for users who want to test the upcoming V5 release.
+Bytefray is a deterministic shared-memory programming game where Python agents compete for control of a circular arena.
 
-**Bytefray** is a deterministic programmable-agent combat simulator in which
-agents compete over a shared circular memory arena. Bytefray v4 adds a
-Python-first spatial process game: entrants manage bounded local reach,
-maneuver multiple processes to spot enemies, and weigh defensive posture
-against aggressive coverage. Historical Ruleset-v1/v2 and VM workflows remain
-available for compatibility.
+You write the agents: they maneuver, inspect, and rewrite memory while defending their own core. Matches between Python agents can be replayed and analyzed, and deterministic execution makes the same configuration reproducible.
 
-Bytefray includes an Agent Designer, an interactive Replay Viewer, reproducible
-evaluation and tournament tools, and a complete command-line workflow.
-
-[![GitHub release](https://img.shields.io/github/v/release/libertaine/Bytefray?label=release)](https://github.com/libertaine/Bytefray/releases)
 [![Python 3.10–3.14](https://img.shields.io/badge/Python-3.10%E2%80%933.14-blue)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-- **Latest prerelease:** [Bytefray v5.0.0-rc1](https://github.com/libertaine/Bytefray/releases/tag/v5.0.0-rc1)
-- **Windows:** [Download Bytefray-Setup-5.0.0-rc1.exe](https://github.com/libertaine/Bytefray/releases/download/v5.0.0-rc1/Bytefray-Setup-5.0.0-rc1.exe)
-- **Current stable:** [Bytefray v4.0.0](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0)
+<p align="center">
+  <img src="docs/screenshots/v5-replay-showcase.gif" alt="Animated Bytefray replay showing two Python agents competing in the arena and a core capture" width="900">
+</p>
+<p align="center"><em>A deterministic Bytefray match replayed in the Pygame viewer.</em></p>
 
-See [Downloads](#downloads) below. Earlier [v3.0.0](https://github.com/libertaine/Bytefray/releases/tag/v3.0.0)
-remains available for historical Ruleset-v2 workflows.
+**Design → Battle → Replay → Analyze**
 
-## What's new in V5 RC1
+With Bytefray, you can:
 
-V5 builds on the permanent `bytefray-rules-4` gameplay model and Agent API v2
-established in v4. The focus of V5 is the surrounding product
-experience—authoring, tournaments, replay discovery/integrity, evaluation,
-packaging, and desktop UX—rather than replacing the stable v4 gameplay
-contract.
+* **Write Python agents** with structured APIs and configurable parameters.
+* **Run deterministic matches and tournaments** from the command line or Agent Designer.
+* **Replay and analyze results** with canonical artifacts and interactive tooling.
 
-**Replay History** — a global Replay History browser with automatic
-discovery/indexing of completed runs, search/filtering and outcome metadata,
-direct handoff to the Replay Viewer, and stronger result/replay integrity
-validation before launch.
+## Build agents your way
 
-**Tournament workflow** — a more complete desktop Tournament experience
-covering the full Configure → Run Tournament → Results → Matches → Replay
-workflow, with persistent/atomic tournament checkpointing and better
-result/replay association.
-
-**Agent authoring and packaging** — continued improvements to Agent
-Designer, agent parameter/preset workflows where currently supported, agent
-package export/import tooling, better starter/scaffold packaging and
-validation, and improved development/evaluation workflows.
-
-**Desktop UX** — cleaner menu/command organization, improved winner/result
-presentation, accessibility baseline improvements including keyboard/focus/
-label behavior, and better consistency between GUI and CLI workflows.
-
-**Reliability** — V5 RC1 underwent substantial post-Alpha remediation and
-package qualification, including integrity fixes around Tournament resume and
-Replay History.
-
-v5.0.0-rc1 is a prerelease candidate; **v4.0.0 remains the current stable
-release**. See [Downloads](#downloads) below to install RC1 or v4.0.0.
-
-## What is Bytefray?
-
-Bytefray is both a game and a deterministic experimentation platform:
-
-- Under the v4 Rulesets, Python entrants define a fixed roster of spatial
-  processes and use Agent API v2 to command them.
-- Processes maneuver the arena with `MOVE` and affect memory via `READ` and `WRITE` bounded by their local reach.
-- Matches are reproducible from their agents, configuration, placements, seed, and Ruleset identity.
-- Canonical result and replay artifacts make a completed match inspectable without rerunning agent code.
-
-## Getting Started
-
-1. **Install**: See [INSTALL.md](INSTALL.md) for detailed instructions.
-2. **Starter Agents**: Explore the bundled v4 agents in `agents/v4_claimer`, `agents/v4_scout`, etc., to see examples of spatial mechanics.
-3. **Run a Match**: Start the Agent Designer with `bytefray design`, or run a
-   headless match with `bytefray run` and inspect it with `bytefray replay`.
-4. **Feedback**: Please open an issue on GitHub to share feedback on the
-   spatial gameplay, UX, installation, or replay experience.
-
-## Bytefray v4
-
-`bytefray-rules-4` is the **permanent, stable v4 gameplay Ruleset**,
-promoted on the RC path from `bytefray-rules-4-alpha2` unchanged: same
-Agent API v2, same replay schema 4, same fixed entrant quota `Q=8`,
-deterministic `K=2` rotating scheduling, seed-derived core placement under
-a minimum separation, round-robin intra-entrant process selection, `D=1`
-temporary anchor disruption with fair redistribution, current-only local
-detection, and the minimal Agent API v2 observation contract. See
-[the stable Ruleset v4 reference](docs/RULES_V4.md) for the full contract.
-
-Two prerelease identities precede it and remain fully supported,
-explicitly selectable, and behaviorally frozen for reproducing historical
-matches:
-
-- **`bytefray-rules-4-alpha1`**, the production alpha endpoint of the
-  completed R0-R6 research program — documented in the
-  [v4 alpha1 design](docs/V4_ALPHA1_DESIGN.md).
-- **`bytefray-rules-4-alpha2`**, which changed exactly two things from
-  alpha1 (seed-derived core placement instead of a fixed evenly-spread
-  seat layout, and round-robin instead of declared-list-priority process
-  selection) — documented in the
-  [v4 alpha2 gameplay contract](docs/V4_ALPHA2_DESIGN.md), with the
-  evidence behind both changes in
-  [the Phase 4 study](docs/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md), and the
-  evidence that no further gameplay alpha was needed in
-  [the pre-RC research report](docs/research/v4/V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md).
-
-`bytefray-rules-4`'s equivalence to alpha2 is proven by a release-blocking
-test corpus (`engine/tests/test_v4_stable_ruleset_equivalence.py`), not
-merely declared — identical inputs under both identities produce
-identical replay content, differing only in the Ruleset-identity-bearing
-fields every persisted artifact already carries.
-
-An omitted `--ruleset` for an Agent API v2 roster now resolves to
-`bytefray-rules-4` across every product surface (CLI `run`/`agents test`/
-`agents evaluate`/`tournament`, and Agent Designer); both alphas remain
-one explicit `--ruleset` away. The reports under
-[`docs/research/v4/`](docs/research/v4/) remain the evidence and decision
-history behind all three identities. They are not alternate runtime
-semantics: user-invocable CLI, Designer test/evaluation, tournament,
-installed wheel, and frozen-executable matches all dispatch through the
-same canonical v4 process runtime. Ruleset v1/v2, Agent API v1, VM/blob
-execution, and historical artifacts are retained rather than reinterpreted
-as v4.
-
-## How the game works
-
-Agents operate in one circular shared-memory arena. Writing a cell claims its
-territory; reading lets an agent observe and react to the arena through the
-capabilities of its runtime. Scores reflect survival, kills, and territory.
-With identical inputs, a match proceeds identically and produces the same
-canonical identity.
-
-For historical Agent API v1 Python-agent play, **Ruleset v2** adds a small vulnerable core for each
-entrant. An entrant is eliminated when it loses ownership of every cell in
-its core, allowing decisive captures instead of relying only on territory
-scores at the tick limit. Ruleset v2 supports Python entrants only.
-
-**Ruleset v4** (stable `bytefray-rules-4`, and its two prerelease alphas) uses
-Agent API v2 and adds fixed spatial processes whose anchors move
-independently. `READ` and `WRITE` use absolute arena addresses; `MOVE` uses a
-signed delta from the acting process anchor. All three v4 identities consume
-the same per-entrant `Q=8` action budget. The stable identity and alpha2
-place cores from the match seed and select processes in rotation; alpha1
-instead uses a fixed evenly-spread seat layout and declared-list-priority
-selection.
-
-The engine and evaluation model support multiple entrants. In the Designer,
-Simple supports two-agent quick matches; Advanced supports two- or three-agent
-matches. **Group Evaluation** remains the Ruleset-v2 workflow for evaluating a
-focus agent with a roster across layouts, seat assignments, and seeds.
-
-See the [v4 alpha2 gameplay contract](docs/V4_ALPHA2_DESIGN.md),
-[v4 alpha1 design](docs/V4_ALPHA1_DESIGN.md),
-[Agent API v2 contract](docs/AGENT_API_V2.md),
-[Ruleset v2 reference](docs/RULES_V2.md), and
-[Ruleset v1 reference](docs/RULES.md) for exact semantics.
-
-## Agent Designer
+Use the PySide6 Agent Designer to create agents from templates, configure parameters, inspect source, and validate and test agents. You can also edit Python and YAML in your own editor and use the CLI for matches and automation.
 
 <p align="center">
-  <img src="docs/screenshots/v4-agent-designer.png" alt="Bytefray Agent Designer Advanced tab with V4 Quorum (Advanced Example) and V4 Defender Scout selected under Ruleset v4 (Agent API v2)" width="800">
+  <img src="docs/screenshots/v5-agent-designer.png" alt="Bytefray Agent Designer showing a V5 Python agent, validation status, and development test configuration" width="720">
 </p>
 
-**Agent Designer** — create, test, and evaluate Python agents with explicit
-Ruleset selection.
+---
 
-Agent Designer provides a native PySide6 workflow for configuring matches and
-developing Python agents:
+## Quick Start
 
-- Simple two-agent and Advanced two- or three-agent match setup with explicit
-  Ruleset selection
-- Python-agent discovery and canonical-ID-safe selection
-- New Agent scaffolding and package import/export
-- read-only inspection of the selected agent's `agent.py` and `agent.yaml`
-- validation, supervised development tests, replay opening, and Agent Lab
-  trace inspection
-- Pairwise and Ruleset-v2 Group Evaluation with matrix preview
-- evaluation history, comparison, provenance, and revision restoration
+### 1. Installation
 
-v4 matches launched from the Agent Designer (Simple or Advanced) automatically
-record the spectator trace used by Perspective Cam, Spectator Director, and
-Fight Night, so **Open Replay** has them available without any extra setup.
+Bytefray requires Python 3.10–3.14. Install the package in a virtual environment:
 
-Source viewing in Agent Designer is deliberately read-only. Use
-**Open Folder** to edit an agent with your preferred editor. See the
-[Agent Authoring Guide](docs/AGENT_AUTHORING.md) and
-[Agent Designer workflow reference](docs/specs/agent_designer_workflow.md).
+```bash
+# Create and activate a virtual environment
+python -m venv .venv
+# Windows PowerShell: .\.venv\Scripts\Activate.ps1
+# Linux (bash/sh):    source .venv/bin/activate
 
-Launch it with:
+# Install the core engine CLI (requires only PyYAML)
+python -m pip install bytefray
+
+# Or install with graphical replay and designer tools
+python -m pip install "bytefray[replay,designer]"
+```
+
+For local repository development, install editable with development extras:
+
+```bash
+python -m pip install -e ".[dev,replay,designer]"
+```
+
+> **Platform Notes**:
+> * **Windows AMD64**: A standalone administrative installer (`Bytefray-Setup-*.exe`) is available on the [Releases](https://github.com/libertaine/Bytefray/releases) page, packaging the CLI, Agent Designer, and Replay Viewer into `C:\Program Files\Bytefray\bin`.
+> * **Linux**: Headless operation requires no GUI libraries. See [docs/LINUX_INSTALL.md](docs/LINUX_INSTALL.md) for X11/Xvfb graphical setup.
+> * **macOS**: macOS is not an officially tested or supported platform.
+
+With the graphical extras installed, open the Agent Designer to create and configure agents:
 
 ```bash
 bytefray design
 ```
 
-## Replay Viewer
+For a command-line match and replay, continue below.
 
-<p align="center">
-  <img src="docs/screenshots/v4-replay-broadcast.png" alt="Bytefray Replay Viewer showing a v4_quorum vs v4_defender_scout Ruleset v4 match in Broadcast view, with Quorum's six processes spread across the arena and both sides' territory HUD" width="48%">
-  <img src="docs/screenshots/v4-replay-perspective.png" alt="Bytefray Replay Viewer showing the same match through Entrant A's Perspective Cam, with the opponent's stats hidden as UNKNOWN and CURRENT/STALE contact markers aged by tick" width="48%">
-</p>
+### 2. Run an Existing Match
 
-**Replay Viewer** — canonical Broadcast playback plus the full spectator
-suite.
-
-The Pygame Replay Viewer reconstructs the arena directly from a canonical
-replay; it never reruns the match. Broadcast mode remains fixed-rate and needs
-no trace. When a matching API-v2 trace is supplied—or a companion
-`trace.jsonl` is beside the replay—the spectator suite also enables:
-
-- a responsive arena view with ownership, recent activity, trails, selection,
-  and write markers
-- per-entrant alive/captured status, score, territory, kills, and runtime facts
-- layouts that remain readable for multi-entrant replays
-- play/pause, stepping, seeking, speed, zoom/fit, event navigation, and trails
-- territory history and a clear winner/termination presentation
-- **Perspective Cam**, showing only a selected entrant's delivered knowledge:
-  own-process reach, anonymous `CURRENT` contacts, aged `STALE` contacts, and
-  historical READ samples—without inventing enemy identity or continuity
-- a perspective-safe HUD that redacts unknown opponent facts during live play
-- the deterministic **Spectator Director** for dynamic playback pacing
-- the **Fight Night** factual event ribbon for 2-, 3-, and 4-entrant matches
+Discovered starter agents are available immediately:
 
 ```bash
-bytefray replay --replay path/to/replay.jsonl --renderer pygame
-bytefray replay --replay path/to/replay.jsonl --trace path/to/trace.jsonl \
-  --renderer pygame --perspective A --director --fight-night
-```
-
-Press `Space` to pause, the arrow keys to step or seek, `Home`/`End` to jump,
-`+`/`-` to change speed, `[`/`]` to zoom, `0` to fit, and `T` to toggle trails.
-Use `V`/`P` to cycle Broadcast and entrant perspectives, `1`–`9` to select an
-entrant directly, `G` to toggle Director pacing, `N` to toggle Fight Night,
-and `?` for the in-viewer help panel. If the trace is missing, invalid, or
-mismatched, replay viewing remains available in Broadcast mode.
-
-## Quick Start
-
-Bytefray supports Python 3.10 through 3.14. From a source checkout:
-
-```bash
-git clone https://github.com/libertaine/Bytefray.git
-cd Bytefray
-python -m venv .venv
-source .venv/bin/activate                 # Windows: .venv\Scripts\activate
-pip install -e .                         # core/headless
-pip install -e ".[replay]"              # add pygame-ce Replay Viewer
-pip install -e ".[designer]"            # add PySide6 Agent Designer
-# or: pip install -e ".[gui]"            # both GUI applications
-```
-
-Try the bundled Python agents under Ruleset v2:
-
-```bash
+# List available starter agents
 bytefray agents
-bytefray run --a-type claimer --b-type hunter \
-  --ruleset bytefray-rules-2 --ticks 600 --replay replay.jsonl
-bytefray replay --replay replay.jsonl --renderer pygame
+
+# Run a match between two starter agents and record a replay
+bytefray run --a-type v5_region_attacker --b-type v5_core_defender --seed 42 --ticks 200 --replay runs/demo/replay.jsonl
 ```
 
-For headless Linux and wheel-specific guidance, see
-[Linux installation](docs/LINUX_INSTALL.md). For platform data roots and
-environment variables, see [Installation](INSTALL.md).
+### 3. Inspect the Replay
 
-## Downloads
-
-### Bytefray v5.0.0-rc1 — latest prerelease
-
-Bytefray v5.0.0-rc1 is the current release candidate for the upcoming V5
-release. Windows users can install and test the fully packaged desktop/CLI
-distribution below.
-
-| Package | Download | Notes |
-|---|---|---|
-| Windows installer | [Bytefray-Setup-5.0.0-rc1.exe](https://github.com/libertaine/Bytefray/releases/download/v5.0.0-rc1/Bytefray-Setup-5.0.0-rc1.exe) | Qualified Windows AMD64/x64 installer; requires administrative installation; prerelease. No Windows ARM64 support. See [Installation](INSTALL.md). |
-| Checksums | [SHA256SUMS.txt](https://github.com/libertaine/Bytefray/releases/download/v5.0.0-rc1/SHA256SUMS.txt) | SHA-256 verification for the published RC1 installer |
-
-[View Bytefray v5.0.0-rc1 release notes](https://github.com/libertaine/Bytefray/releases/tag/v5.0.0-rc1)
-
-v5.0.0-rc1 is a prerelease candidate, not a final release; **v4.0.0 remains
-the current stable release** (below). A Linux distribution for V5 is not yet
-published; Linux users should continue to use v4.0.0 (or the source
-checkout) until a V5 Linux package is available.
-
-### Bytefray v4.0.0 — current stable
-
-**Current stable release:** [Bytefray v4.0.0](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0)
-— establishes the permanent `bytefray-rules-4` gameplay ruleset, Agent API v2,
-the full spectator presentation suite (Perspective Cam, Spectator Director,
-Fight Night), and refreshed Ruleset-first Agent Designer workflows. See
-[CHANGELOG.md](CHANGELOG.md#400---2026-09-08) for the full release notes.
-
-| Package | Download | Notes |
-|---|---|---|
-| Windows installer | [Bytefray-Setup-4.0.0.exe](https://github.com/libertaine/Bytefray/releases/download/v4.0.0/Bytefray-Setup-4.0.0.exe) | Administrative AMD64/x64 installation; unsigned, see [Installation](INSTALL.md) |
-| Portable Windows applications | [bytefray-4.0.0-windows.zip](https://github.com/libertaine/Bytefray/releases/download/v4.0.0/bytefray-4.0.0-windows.zip) | AMD64 onedir applications for the Bytefray CLI, Agent Designer, and Replay Viewer workflows |
-| Python wheel | [bytefray-4.0.0-py3-none-any.whl](https://github.com/libertaine/Bytefray/releases/download/v4.0.0/bytefray-4.0.0-py3-none-any.whl) | Pure Python 3.10–3.14 package; no pMARS binary |
-| Source archive | [bytefray-4.0.0.tar.gz](https://github.com/libertaine/Bytefray/releases/download/v4.0.0/bytefray-4.0.0.tar.gz) | Python/source workflows |
-| Checksums | [SHA256SUMS.txt](https://github.com/libertaine/Bytefray/releases/download/v4.0.0/SHA256SUMS.txt) | SHA-256 values for all published v4.0.0 assets |
-
-Linux users can install via the Python wheel or source distribution; see
-[Linux installation](docs/LINUX_INSTALL.md) for headless and GUI setup. (A
-standalone self-contained Linux archive was qualified and published with the
-[v4.0.0-rc2](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0-rc2)
-prerelease.)
-
-The prior release candidates [v4.0.0-rc2](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0-rc2)
-and [v4.0.0-rc1](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0-rc1)
-remain published for reference — see
-[CHANGELOG.md](CHANGELOG.md#400-rc2---2026-09-07) and
-[CHANGELOG.md](CHANGELOG.md#400-rc1---2026-09-03) for what they shipped.
-
-The earlier [v4.0.0-alpha4](https://github.com/libertaine/Bytefray/releases/tag/v4.0.0-alpha4)
-release remains published for reference; it shipped the same gameplay under
-the `bytefray-rules-4-alpha2` identity plus the Designer trace-recording
-follow-up RC1 also carries forward unchanged.
-
-**Earlier major release:** [Bytefray v3.0.0](https://github.com/libertaine/Bytefray/releases/tag/v3.0.0)
-remains available for users who do not want v4 gameplay or Agent API v2
-changes.
-
-Use the [GitHub Releases page](https://github.com/libertaine/Bytefray/releases)
-for historical releases and prereleases.
-
-**Previous major release:** [Bytefray v2.0.0](https://github.com/libertaine/Bytefray/releases/tag/v2.0.0)
-— Vulnerable Core. Promotes the qualified `v2.0.0-rc2` candidate with no
-software change; adds the permanent Ruleset v2 (`bytefray-rules-2`)
-alongside frozen Ruleset v1.
-
-| Package | Download | Notes |
-|---|---|---|
-| Windows installer | [Bytefray-Setup-2.0.0.exe](https://github.com/libertaine/Bytefray/releases/download/v2.0.0/Bytefray-Setup-2.0.0.exe) | Administrative AMD64/x64 installation |
-| Portable Windows applications | [bytefray-2.0.0-windows.zip](https://github.com/libertaine/Bytefray/releases/download/v2.0.0/bytefray-2.0.0-windows.zip) | Complete onedir layouts for all four executables |
-| Python wheel | [bytefray-2.0.0-py3-none-any.whl](https://github.com/libertaine/Bytefray/releases/download/v2.0.0/bytefray-2.0.0-py3-none-any.whl) | Pure Python 3.10–3.13 package; no pMARS binary |
-| Source archive | [bytefray-2.0.0.tar.gz](https://github.com/libertaine/Bytefray/releases/download/v2.0.0/bytefray-2.0.0.tar.gz) | Python/source workflows |
-| Checksums | [SHA256SUMS.txt](https://github.com/libertaine/Bytefray/releases/download/v2.0.0/SHA256SUMS.txt) | SHA-256 values for 2.0.0 assets |
-
-See [Bytefray v1.6.0](https://github.com/libertaine/Bytefray/releases/tag/v1.6.0)
-for the earlier stable 1.x line and the
-[GitHub Releases page](https://github.com/libertaine/Bytefray/releases) for
-historical alpha, beta, and release-candidate builds.
-
-Windows installer data defaults to `%ProgramData%\Bytefray`; regular Windows
-wheel installs default to `%LOCALAPPDATA%\Bytefray`. `BYTEFRAY_ROOT` explicitly
-overrides the data root. The installer requires administrative installation
-and targets AMD64/x64; no Windows ARM64 support is claimed.
-
-## Creating an Agent
-
-The shortest GUI path is:
-
-```text
-Agent Designer → New Agent → inspect agent.py / agent.yaml
-               → edit externally → Validate → Test → Replay / Evaluate
-```
-
-The equivalent CLI loop is:
+Replays decouple simulation from visualization. Play back recorded execution in the terminal or with the interactive Pygame visualizer:
 
 ```bash
-bytefray agents create my_agent
-bytefray agents validate my_agent
-bytefray agents test my_agent --opponent claimer
-bytefray agents inspect <printed-run-directory>
-bytefray agents evaluate my_agent --opponents claimer,hunter --seeds 1,2,3
+# Headless terminal playback
+bytefray replay --replay runs/demo/replay.jsonl --renderer headless
+
+# Interactive Pygame visualizer (requires 'replay' extra)
+bytefray replay --replay runs/demo/replay.jsonl --renderer pygame
 ```
-
-Validation and development tests use timeout-bounded worker processes by
-default so a non-returning agent call can be contained. This is development
-hang containment, not a security sandbox: Python agents are ordinary executable
-code and should be treated accordingly.
-
-Fresh installations include bundled Agent API v1 and Agent API v2 Python
-examples, plus four VM starters (`runner`, `writer`, `seeker`, and `spiral`).
-Each Python starter documents its strategy and is intended to be read,
-copied, modified, tested, and evaluated.
-
-Five teach the fundamentals of claiming territory — `claimer` (a blind
-fixed-stride sweep), `strider` (the same sweep plus periodic re-defense of
-ground already held), `hunter` (scatter widely first, then fill in),
-`wanderer` (a per-seed randomized sweep order), and `adaptive` (phase
-switching driven by the engine's own `pc`/`JUMP`).
-
-Two demonstrate Ruleset v2's defining Vulnerable Core mechanic, which the
-territorial five never touch:
-
-- `raider` — searches with `READ` for evidence of an enemy core, confirms
-  the location before committing, then attacks it. Winning outright by
-  taking a core is a different strategy from out-claiming an opponent, and
-  the search costs real budget.
-- `sentinel` — spends one action in every four re-securing its own core
-  instead of expanding, making the cost of defending measurable.
-
-None of them is an optimal strategy, and the two above generally hold less
-territory than the pure expanders — that trade-off is the lesson. Try
-`bytefray agents test raider --opponent claimer --ruleset bytefray-rules-2`
-and watch the replay.
-
-The `v4_*` starters demonstrate the v4 process model. `v4_defender_scout`
-declares two co-located processes with equal shares, while most of the
-others provide single-process controls; their `READ`/`WRITE` operands are
-absolute arena addresses and their `MOVE` operands are signed relative
-deltas. `v4_quorum` is the advanced example: it coordinates six declared
-processes with different reach/share roles to demonstrate a substantially
-richer Agent API v2 strategy.
-
-See [Writing Agents](docs/AGENT_AUTHORING.md), the
-[Agent API v2 contract](docs/AGENT_API_V2.md), the
-[Agent API v1 contract](docs/AGENT_API_V1.md), and
-[Agent Lab](docs/AGENT_LAB.md).
-
-## Rulesets
-
-| Ruleset | Designer role | Runtime compatibility |
-|---|---|---|
-| `bytefray-rules-4` | Current, permanent v4 gameplay Ruleset for spatial process matches | Agent API v2 Python entrants only |
-| `bytefray-rules-4-alpha2` | Historical prerelease, for reproducing earlier alpha2 matches | Agent API v2 Python entrants only |
-| `bytefray-rules-4-alpha1` | Historical prerelease, for reproducing earlier alpha1 matches | Agent API v2 Python entrants only |
-| `bytefray-rules-2` | Current/recommended for compatible Python direct matches | Python entrants only |
-| `bytefray-rules-1` | Compatibility: historical reproduction, and the only ruleset that runs VM/blob entrants | VM/blob and Python native matches |
-
-Agent API v1 Python agents run under Ruleset v1 or v2. Agent API v2 Python
-agents run under any of the three v4 identities; omitting `--ruleset` selects
-`bytefray-rules-4`, the current, permanent v4 gameplay Ruleset. VM/blob agents
-run under Ruleset v1 only. Redcode/pMARS is separate from all five — see
-below.
-
-Agent Designer passes its selection explicitly everywhere, including the
-Agent Development tab's development tests and pairwise evaluation, both of
-which default to Ruleset v2 (for an Agent API v1 roster) or `bytefray-rules-4`
-(for an Agent API v2 roster) as of `v4.0.0-rc1` Phase 2. The CLI (`bytefray
-run`, `agents test`, `agents evaluate`, `tournament`) resolves an omitted
-`--ruleset` the same way: Agent API v1 Python-only matches default to Ruleset
-v2, Agent API v2 Python-only matches default to `bytefray-rules-4`, and
-VM/blob-only matches default to Ruleset v1, so an ordinary match gets the
-same current gameplay through either front end. A mixed Python/VM request
-without an explicit `--ruleset` keeps the historical Ruleset v1 default.
-Ruleset v2 is a permanent, stable gameplay identity as of `v2.0.0`;
-`bytefray-rules-4` is a permanent, stable gameplay identity as of
-`v4.0.0-rc1` Phase 2. Historical alpha identities remain readable/executable
-for artifact compatibility but are not normal product choices.
-
-Detailed references:
-
-- [Ruleset v4 (stable)](docs/RULES_V4.md)
-- [Ruleset v4 alpha2 gameplay contract](docs/V4_ALPHA2_DESIGN.md)
-- [Ruleset v4 alpha1 design](docs/V4_ALPHA1_DESIGN.md)
-- [Ruleset v2](docs/RULES_V2.md)
-- [Ruleset v1](docs/RULES.md)
-- [Compatibility model](docs/COMPATIBILITY.md)
-
-## CLI and Common Workflows
-
-```bash
-bytefray --help
-bytefray run --help
-bytefray tournament runner writer seeker --rounds 2
-bytefray agents evaluations list
-bytefray agents evaluations show <evaluation-id-or-path>
-bytefray agents evaluations compare <left> <right>
-bytefray agents export my_agent
-bytefray agents package show <package.bytefray-agent>
-bytefray agents import <package.bytefray-agent>
-```
-
-Pairwise evaluation measures one candidate against explicit opponents and
-seeds. Group Evaluation fields a focus agent and roster together under Ruleset
-v2, covering standard layouts and distinct seat assignments:
-
-```bash
-bytefray agents evaluate focus_agent --ruleset bytefray-rules-2 --group \
-  --opponents agent_b,agent_c --seeds 1,2,3
-```
-
-Use `tournament` for round-robin standings among peers; use `agents evaluate`
-for controlled candidate analysis. See [Agent Lab](docs/AGENT_LAB.md) and
-[Tournaments](docs/TOURNAMENTS.md).
-
-### Redcode / pMARS interoperability
-
-```bash
-bytefray run --mode redcode94 --red-a path/to/A.red --red-b path/to/B.red
-```
-
-Redcode/pMARS matches run in an external pMARS process and do not use a
-Bytefray ruleset — not Ruleset v1, v2, or any v4 identity. They produce a normalized
-summary rather than a native Bytefray replay. See
-[RULES.md](docs/RULES.md)'s "Redcode/pMARS — not Ruleset v1".
-
-Windows CLI application packages include pMARS and its GPLv2 licensing
-materials. The pure Python and Linux wheels do not include a pMARS executable.
-See [pMARS build/runtime guidance](README.md) and
-`third_party_licenses/`.
-
-## Documentation
-
-- [Agent Authoring Guide](docs/AGENT_AUTHORING.md)
-- [Agent API v2 Technical Contract](docs/AGENT_API_V2.md)
-- [Agent API v1 Technical Contract](docs/AGENT_API_V1.md)
-- [v4 Spectator Perspective Contract](docs/specs/v4_spectator_perspective.md)
-- [Ruleset v4 Alpha2 Gameplay Contract](docs/V4_ALPHA2_DESIGN.md)
-- [Ruleset v4 Alpha1 Design](docs/V4_ALPHA1_DESIGN.md)
-- [Agent Lab: trace, inspect, diverge, timeouts, and evaluation](docs/AGENT_LAB.md)
-- [Ruleset v2 Reference](docs/RULES_V2.md)
-- [Ruleset v1 Reference](docs/RULES.md)
-- [Result Schema](docs/RESULT_SCHEMA.md) and [Replay Schema](docs/REPLAY_SCHEMA.md)
-- [Tournament Service](docs/TOURNAMENTS.md)
-- [Compatibility Reference](docs/COMPATIBILITY.md)
-- [Installation](INSTALL.md) and [Linux wheel installation](docs/LINUX_INSTALL.md)
-- [Architecture](ARCHITECTURE.md)
-- [Roadmap and milestone history](docs/ROADMAP.md)
-- [Future Plans](docs/FUTURE_PLANS.md)
-- [Changelog](CHANGELOG.md)
-
-## Platforms and Packaging
-
-- Runtime support: Python 3.10–3.14
-- Core dependency: PyYAML
-- Optional GUI dependencies: pygame-ce (`replay`, via the standard `pygame`
-  Python namespace) and PySide6 (`designer`)
-- Headless-first pure wheel for Linux and automation
-- Windows AMD64 installer and portable package with four onedir applications:
-  `bytefray`, `bytefray-cli`, `bytefray-agent-designer`, and
-  `bytefray-replay-viewer`
-- **macOS is not a currently supported or tested distribution target.**
-  No macOS build, packaging, or CI job exists; the pure Python wheel may
-  work there in principle (Pygame and PySide6 both publish macOS wheels
-  upstream) but this is untested and unsupported. Report macOS results as
-  a GitHub issue if you try it.
-
-The primary dispatcher is `bytefray`; obsolete predecessor command and
-executable names are not supported. Internal `battle_engine`/`battle_client`
-package names and `battle2.result`/`battle2.replay` schema identifiers remain
-stable compatibility surfaces.
-
-For development setup, testing, and contribution workflow, see
-[CONTRIBUTING.md](CONTRIBUTING.md), [Architecture](ARCHITECTURE.md), and
-[Windows development notes](docs/WINDOWS_DEV_NOTES.md).
-
-## Project Status and Roadmap
-
-Bytefray's stable 1.x line established Agent API v1, Ruleset v1, canonical
-result/replay schemas, reproducible evaluation, provenance, package sharing,
-and architecture boundaries. Bytefray 2.0 adds the permanent, Python-only
-Ruleset-v2 vulnerable-core game and scales evaluation and presentation to
-multi-entrant work, together with explicit Designer Ruleset selection,
-read-only agent-source inspection, refreshed onboarding, and current product
-screenshots.
-
-Bytefray v3.0.0 remains available for historical Ruleset-v2 workflows. Bytefray
-v4.0.0 is the current stable release: building on RC1's promotion of
-`bytefray-rules-4` to a permanent, stable gameplay Ruleset alongside the
-qualified spectator intelligence suite (Perspective Cam, Spectator Director,
-Fight Night) and the seeded-placement evaluation methodology, independently
-qualified on both Windows and native-Wayland Linux. RC2 added a self-contained
-Linux binary distribution and an official Ubuntu 24.04 build baseline with
-pygame-ce and Python 3.14 support; post-UX polish finalized Ruleset-first
-Advanced configuration, multi-agent match setup, and scoring defaults.
-Historical alpha1/alpha2 identities and wire formats remain distinct,
-selectable, and readable.
-
-v4.0.0 established the stable `bytefray-rules-4` gameplay foundation, and
-**v5.0.0-rc1 is now the active release candidate**. V5 focuses on
-authoring/product/replay/Tournament/UX maturity around that same gameplay
-foundation—Replay History, a complete Tournament workflow, agent authoring
-and packaging, and desktop UX/accessibility polish—rather than changing
-gameplay. v5.0.0 final follows RC testing.
-
-The earlier BATTLE2 name and migration history are preserved in
-[Project History](docs/PROJECT_HISTORY.md); all current product commands,
-executables, paths, and environment variables use Bytefray naming.
-
-## AI-Assisted Development
-
-Bytefray development may use AI-assisted coding, review, and bounded local
-model tooling under human direction. This is development methodology, not a
-runtime feature. No LLM is required to build or run Bytefray, author agents,
-execute matches or tests, use either GUI, or produce a release.
-
-See [Development Method](docs/DEVELOPMENT_METHOD.md) for the complete policy.
-
-## License
-
-Bytefray is released under the [MIT License](LICENSE).
-
-pMARS is separate GPL-licensed interoperability software; distributions that
-bundle it preserve the applicable materials under `third_party_licenses/`.
 
 ---
 
-☕🍕 If Bytefray has been useful or entertaining, you can [buy me a coffee or pizza via PayPal](https://www.paypal.com/donate/?hosted_button_id=DRJD388WT8DAL). Contributions are entirely optional.
+## Technical Snapshot
+
+| Dimension | Specification |
+|---|---|
+| **Runtime** | Python 3.10–3.14 (CPython; qualified on Windows AMD64 and Linux x86_64) |
+| **Dependencies** | PyYAML for core engine; optional `pygame-ce` (replays) and `PySide6` (designer) |
+| **Arena Model** | Circular array of discrete memory cells (default 4096); 1-byte value (`0..255`) + last-writer ownership |
+| **Simulation** | Discrete-tick deterministic engine; chunked quota scheduling (`K = 2`, `Q = 8`) |
+| **Stable Ruleset** | `bytefray-rules-4` (spatial multi-process, seed-derived core placement, round-robin process selection) |
+| **Agent API** | Agent API v2 (`reset`, `declare_processes`, `act`) |
+| **Action Vocabulary** | `READ` (absolute address), `WRITE` (absolute address), `MOVE` (relative delta `[-64, 64]`) |
+| **Elimination Condition** | Core capture: an entrant is eliminated when it owns 0 cells of its 8-cell core at tick end |
+| **Artifact Formats** | `battle2.result` (schema v2 native JSON; v1 historical/pMARS), `battle2.replay` (schema v4 JSONL) |
+| **Execution Model** | Local trusted Python execution; worker subprocesses with per-call timeouts for hang containment |
+| **Tooling** | Headless CLI, interactive Pygame replay visualizer, PySide6 visual Agent Designer |
+
+---
+
+## How Bytefray Works
+
+### Arena and Memory Ownership
+The arena is a circular array of discrete memory cells (default 4096 cells, wrapping at `arena_size`). Each cell stores an 8-bit integer value (`0..255`) and the identity of the entrant that wrote to it most recently. Unwritten cells have no owner.
+
+### Cores and Elimination
+Every entrant is assigned a contiguous 8-cell core (`CORE_SIZE = 8`). In the stable ruleset, core locations are derived deterministically from the match seed with a guaranteed minimum circular separation (64 cells) between entrants.
+
+* **Victory Condition**: An entrant is eliminated when it owns **zero of the eight cells** of its assigned core.
+* Elimination checks occur once per tick, after all actions for that tick have executed. Holding even a single core cell keeps the entrant alive.
+* If multiple entrants remain alive when the tick limit is reached, winner resolution evaluates accumulated scores based on survival time, core kills, and territorial ownership.
+
+### Spatial Multi-Process Execution
+In Ruleset v4, entrants act through one or more *processes*. Each process has:
+* An **anchor**: Its current address in the circular arena. All processes begin co-located at their entrant's core base.
+* A **reach**: A circular radius around the anchor within which the process can read and write.
+* A **quota share**: The proportion of the entrant's per-tick action budget allocated to this process.
+
+Declaring additional processes provides spatial positioning and specialized roles, not additional actions: every entrant shares a fixed budget of `Q = 8` actions per tick regardless of process count.
+
+### Fundamental Game Loop
+
+Each simulation tick resolves through five deterministic phases:
+
+```
+[Interleaved Quota Scheduling]
+           │
+           ▼
+[Round-Robin Process Selection]
+           │
+           ▼
+ [Observation Generation] ──► [Agent Decision: act()]
+           │
+           ▼
+[Deterministic Action Resolution & Disruption]
+           │
+           ▼
+[Core Capture Check, Scoring, & Replay Snapshot]
+```
+
+1. **Entrant Scheduling**: Entrants take turns in chunked action slots (`K = 2` actions per slice) rotating starting seat order across ticks to eliminate first-player bias.
+2. **Process Selection**: Within an entrant's turn, action slots rotate across its eligible processes via round-robin selection. If a process was disrupted earlier in the tick, its remaining share redistributes evenly among remaining eligible processes.
+3. **Observation**: The engine supplies the active process with an immutable `ObservationV2`. Visibility is spatial: an agent sees enemy process anchors that fall within the reach of *any* eligible friendly process. Opponent core locations, process configurations, and strategy states are never revealed.
+4. **Action Execution**: The process returns one of three actions:
+   * **`WRITE(address, value)`**: Writes `value & 0xFF` to an absolute address within the process's reach and claims ownership. If the address matches an enemy process's anchor, all enemy processes on that cell are disrupted for the remainder of the tick (`D = 1`).
+   * **`READ(address)`**: Reads the byte value and last-writer entrant ID at an absolute address within reach, reported in the process's subsequent observation.
+   * **`MOVE(delta)`**: Adjusts the process's anchor by a signed relative displacement, clamped to `[-64, 64]` and wrapped circularly.
+   * *Rejection*: Actions targeting addresses beyond a process's declared reach are discarded; the action slot is consumed without effect.
+5. **Tick Resolution & Telemetry**: Core ownership is audited for eliminations. Territory and survival scores accrue, and state diffs are appended to the canonical `replay.jsonl` stream.
+
+---
+
+## Writing an Agent
+
+### Create Your First Agent
+
+An Agent API v2 agent implements a factory returning an object with three methods: `reset`, `declare_processes`, and `act`.
+
+Scaffold a new agent using the CLI:
+
+```bash
+bytefray agents create my_agent --api-version 2 --template blank
+```
+
+This writes an `agent.yaml` manifest and an `agent.py` starter into your writable agents catalog. Edit those files to define the agent; the generated Python entry point begins:
+
+```python
+"""Starting point for a Bytefray Agent API v2 process agent."""
+
+from battle_engine.agent_api import (
+    ActionKindV2,
+    AgentAction,
+    MatchContextV2,
+    ObservationV2,
+    ProcessDeclaration,
+)
+
+
+class Agent:
+    def reset(self, context: MatchContextV2) -> None:
+        """Called once before tick 0. Store match context and seeded RNG."""
+        self.rng = context.rng
+        self.signature = 0xA5
+
+    def declare_processes(self) -> list[ProcessDeclaration]:
+        """Declare processes and divide your per-tick action quota (shares must sum to 1.0)."""
+        return [ProcessDeclaration(id="main", reach=1, share=1.0)]
+
+    def act(self, observation: ObservationV2) -> AgentAction:
+        """Called for each allocated action slot. Returns READ, WRITE, or MOVE."""
+        return AgentAction(
+            kind=ActionKindV2.WRITE,
+            operand=observation.self_anchor,
+            value=self.signature,
+        )
+
+
+def create_agent() -> Agent:
+    return Agent()
+```
+
+### Run Your Custom Agent
+
+Execute a match with your new agent against any reference opponent:
+
+```bash
+bytefray run --a-type my_agent --b-type v5_region_attacker --seed 42 --ticks 200
+```
+
+### Validate and Test
+
+Use Agent Lab commands to verify lifecycle compliance and test against opponents with hang containment:
+
+```bash
+# Dry-run validation (verifies factory, reset, process declaration, and one act call)
+bytefray agents validate my_agent
+
+# Run a supervised development match with timeout protection
+bytefray agents test my_agent --opponent v5_region_attacker
+```
+
+The PySide6 Agent Designer provides a graphical workflow for creating, inspecting, validating, and development-testing agents while retaining direct access to the Python source. Agents remain plain Python, and every step above works from the CLI without it.
+
+### Agent API v2 Interface
+
+Agents target the `AgentV2` protocol defined in `battle_engine.agent_api`:
+
+```python
+class AgentV2(Protocol):
+    def reset(self, context: MatchContextV2) -> None: ...
+    def declare_processes(self) -> list[ProcessDeclaration]: ...
+    def act(self, observation: ObservationV2) -> AgentAction: ...
+```
+
+* **`reset(context: MatchContextV2)`**: Runs once before tick 0. Provides `context.arena_size`, `context.tick_limit`, `context.agent_id` (slot `"A"`, `"B"`, etc.), `context.parameters`, and `context.rng`.
+* **`declare_processes() -> list[ProcessDeclaration]`**: Runs once after `reset`. Returns a list of `ProcessDeclaration(id="...", reach=..., share=...)`. Shares must be non-negative and sum to `1.0`.
+* **`act(observation: ObservationV2) -> AgentAction`**: Invoked for each action allocated to the acting process. Returns an `AgentAction(kind=ActionKindV2.*, operand=..., value=...)`.
+
+### Observation Model
+
+Every call to `act` receives an immutable `ObservationV2`:
+
+| Category | Attributes | Description |
+|---|---|---|
+| **Identity & Position** | `self_process_id`, `self_anchor`, `self_reach` | ID, current arena address, and reach radius of the acting process |
+| **Friendly Core** | `own_core_base`, `own_core_size` | Starting address and cell length (`8`) of your own core |
+| **Perception** | `visible_enemy_anchor_addresses` | Sorted tuple of enemy process anchors currently within reach of any friendly process |
+| **Feedback** | `previous_action_applied`, `previous_read_value`, `previous_read_owner` | Outcome and read payload from this process's preceding action |
+| **Timing** | `current_tick`, `last_callback_tick`, `previous_action_tick` | Tick indices for temporal tracking and disruption inference |
+
+### Parameters and Presets
+
+Agents can declare typed parameter schemas in `agent.yaml`. Values are validated at match configuration time and passed to `reset` via `context.parameters`:
+
+```yaml
+kind: python
+api_version: 2
+entrypoint: agent.py:create_agent
+version: "1.0.0"
+
+parameters:
+  attacker_reach:
+    type: int
+    default: 16
+    min: 4
+    max: 64
+
+presets:
+  far_sighted:
+    attacker_reach: 32
+```
+
+Parameters follow precedence: `schema defaults < preset < CLI/GUI overrides`. Overrides are passed at the command line via `--a-preset` and `--a-param`:
+
+```bash
+bytefray run --a-type v5_region_attacker --b-type v5_core_defender --a-preset far_sighted --a-param attacker_reach=24
+```
+
+See [docs/AGENT_API_V2.md](docs/AGENT_API_V2.md) for the complete authoring specification and [docs/V5_STARTER_AGENTS.md](docs/V5_STARTER_AGENTS.md) for strategy patterns.
+
+---
+
+## Determinism and Reproducibility
+
+A match is driven by an explicit seed and deterministic engine rules. Agents that use Bytefray's provided RNG and obey the deterministic-agent contract can reproduce simulations for testing, replay, tournament evaluation, and automated experimentation.
+
+### Concrete Guarantees and Limits
+
+* **Same-Environment Byte-Identical Artifacts**: Given the same match seed, ruleset identity, entrant configurations, parameters, and arena dimensions, repeated executions on the same environment produce identical match outcomes, identical event timelines, and byte-identical `replay.jsonl` and `result.json` records.
+* **Cross-Platform Semantic Equivalence**: Simulation state transitions, scheduling, seeded core placement (`seeded_seat_starts`), and winner resolution rely on discrete integer arithmetic. Continuous integration validates deterministic regression vectors across Windows AMD64 and Linux x86_64, and across Python 3.10 through 3.14.
+* **Deterministic Trace Identity**: Diagnostic traces (`trace.jsonl`) generated during supervised test runs capture identical decision sequences across runs with matching seeds.
+
+### The Deterministic Agent Contract
+
+Bytefray's engine guarantees determinism **if and only if** agent implementations adhere to the following constraints:
+
+1. **Use `context.rng`**: Use only the seeded `random.Random` instance provided in `MatchContextV2`. Never import or call unseeded global generators (`random.random()`, `numpy.random`).
+2. **No Wall-Clock Time**: Do not branch on `time.time()`, `time.perf_counter()`, or datetime values.
+3. **No External I/O**: Do not perform filesystem access, network requests, subprocess execution, or IPC during `reset`, `declare_processes`, or `act`.
+4. **No Address/Memory Hashing**: Avoid iterating over sets or dictionaries keyed by object memory addresses (`id()`) or types whose hash randomized across Python processes (`PYTHONHASHSEED`).
+5. **No Shared Mutable State**: Do not store state in class variables or module-level globals that persist across multiple match invocations.
+
+Bytefray does not enforce sandboxing or runtime restrictions to prevent nondeterministic code; agents that violate these boundaries will produce diverging simulations that cannot be reproduced.
+
+---
+
+## Replays and Tooling
+
+Bytefray includes a modular tool suite separating headless simulation from presentation:
+
+### 1. Command-Line Interface (`bytefray`)
+* `bytefray run`: Execute native matches or pMARS ICWS'94 benchmarks.
+* `bytefray replay`: Play back recorded `.jsonl` replays via headless terminal or Pygame.
+* `bytefray tournament`: Run or resume headless round-robin tournaments across rosters.
+* `bytefray design`: Launch the PySide6 visual Agent Designer.
+* `bytefray agents`: Comprehensive agent lifecycle tools:
+  * `create`: Scaffold blank or annotated starter templates (`--api-version 2`).
+  * `validate`: Dry-run agent lifecycle with timeout protection.
+  * `test`: Execute short development matches against reference opponents.
+  * `inspect`: Inspect observation and action decisions from `trace.jsonl`.
+  * `diverge`: Compare two traces to identify the exact tick where decisions differed.
+  * `evaluate`: Run pairwise or group evaluation matrices across seeds.
+
+### 2. Pygame Replay Viewer
+Launched via `bytefray replay --replay <path> --renderer pygame` or `bytefray-replay-viewer`. Features:
+* Broadcast and perspective viewing modes.
+* Visual process anchors, reach perimeters, and disruption indicators.
+* Memory ownership overlays with territory tracking bars.
+* Interactive playback controls: scrub timeline, step tick-by-tick, adjust speed.
+
+<p align="center">
+  <img src="docs/screenshots/v4-replay-broadcast.png" alt="Bytefray Pygame Replay Viewer showing a live match in broadcast mode" width="720">
+</p>
+<p align="center"><em>Broadcast-mode view of the replay viewer, showing process anchors, reach zones, memory ownership, and the playback timeline.</em></p>
+
+### 3. PySide6 Agent Designer
+Launched via `bytefray design` or `bytefray-agent-designer`. Features:
+* Match setup with agent selection, seed controls, and ruleset pickers.
+* Dynamic parameter controls generated from agent YAML schemas.
+* Built-in code inspection, validation, test launcher, and replay browser.
+* **Replay History** (**History → Replay History…**): a searchable, filterable
+  browser over every completed match Bytefray has written, including matches
+  produced before the current result schema. Selecting a match with an
+  available replay lets you **Open Replay** (launches the same Replay Viewer
+  used everywhere else in Bytefray) or **Copy Seed** (copies the match's
+  integer seed to the clipboard -- reproducing the exact match also requires
+  the same agents, ruleset, parameters, and configuration, which History does
+  not attempt to restore). Re-running a match from History is not implemented.
+  Filter by entrant, ruleset, outcome, date, seed, source, or replay availability.
+  Dates marked **≈** are approximate legacy dates; missing or invalid replays
+  leave their result history browsable. **Refresh** checks for new matches in
+  the background while browsing and replay checks remain available. History's
+  cache is rebuildable from saved artifacts; deleting it does not delete matches.
+
+---
+
+## Bytefray vs. Core War
+
+Bytefray takes inspiration from Core War's shared-memory competitive programming model but is not a Redcode implementation or compatibility layer.
+
+| Dimension | Core War (ICWS'94 / Redcode) | Bytefray (Ruleset v4 / Agent API v2) |
+|---|---|---|
+| **Warrior Code** | Redcode assembly text executed instruction-by-instruction | Standard Python classes implementing structured lifecycle methods (`reset`, `declare_processes`, `act`) |
+| **Arena Memory** | Circular array of Redcode instructions (`opcode`, addressing modes, A/B fields) | Circular array of discrete memory cells storing byte values (`0..255`) and last-writer ownership |
+| **Execution Model** | Instruction pointer step; warriors mutate memory into executable code or bombs | Discrete ticks; per-entrant action quotas (`Q = 8`) distributed to processes via round-robin scheduling |
+| **Multi-Process Model** | Dynamic process splitting via the `SPL` instruction | Process declarations (`ProcessDeclaration`); fixed per-entrant quota shared across all processes |
+| **Combat & Victory** | Elimination occurs when a process thread executes an illegal instruction (e.g. `DAT`) | Core defense: an entrant is eliminated when it owns zero cells of its 8-cell arena core |
+| **Interference Mechanic** | Corrupting opponent instruction code in memory | Disruptive writes: a `WRITE` hitting an enemy process anchor disrupts that process for the tick (`D = 1`) |
+| **Sensing & Perception** | Warriors cannot inspect memory without reading cells via `CMP` / `SLT` | Structured spatial observation (`ObservationV2`) providing anchor, reach, core base, and visible enemy anchors |
+| **Randomness & Placement** | Starting placement randomized in core; no runtime RNG | Seed-derived core placement (`seeded_seat_starts`); per-entrant seeded RNG (`context.rng`) |
+| **Tooling & Ecosystem** | Vintage terminal simulators and pMARS binaries | Headless CLI, canonical JSON/JSONL replays, interactive Pygame visualizer, and PySide6 graphical designer |
+
+---
+
+## Execution and Trust Model
+
+Bytefray's execution architecture distinguishes between **development reliability containment** and **security sandboxing**.
+
+### Local Trusted Code Model
+Agents are trusted local Python code executed through Bytefray's gameplay interface. Bytefray is designed for local experimentation and evaluation, not as a hardened sandbox for untrusted hostile code. Agent modules are imported dynamically and execute with the full OS permissions of the running user.
+
+> **Security Boundary**: Bytefray does **not** provide a hardened security sandbox against hostile or untrusted code. Never execute unreviewed third-party agents from untrusted sources.
+
+### Hang and Timeout Containment
+To protect development workflows, test harnesses, and automated tournaments from broken agent code, Bytefray provides isolated process supervision:
+
+* **Supervised Worker Subprocesses**: `bytefray agents test`, `bytefray agents validate`, and parallel evaluation cells execute Python entrants inside dedicated worker subprocesses (`AgentWorkerHandle`).
+* **IPC Isolation**: Workers communicate via newline-delimited JSON over standard input and output pipes. Standard output is redirected to standard error before agent execution to prevent `print()` statements from corrupting protocol streams. Standard input is closed to prevent interactive `input()` calls from blocking.
+* **Uniform Per-Call Timeouts**: Supervised calls enforce an explicit deadline (default `5.0s`, configurable via `--timeout`). If an agent blocks during load, `reset()`, or an individual `act()` call, the worker process is terminated unconditionally.
+* **Actionable Diagnostics**: Timeouts and uncaught exceptions produce structured diagnostic events (`agent_action_timeout`, `agent_worker_exited`, etc.) and forfeit the match without hanging the caller.
+* **Direct Execution Performance**: Standard `bytefray run` matches execute in-process by default to eliminate IPC overhead (~120 ms for a 200-tick match).
+
+---
+
+## Engineering Standards
+
+Bytefray's codebase emphasizes strict reproducibility, version isolation, and architectural boundaries:
+
+* **Explicit Seeds & Discrete Arithmetic**: All simulation logic (scheduling, movement, placement, action resolution) uses discrete integer math and explicit seeds; floating-point simulation drift is eliminated.
+* **Separation of Simulation & Visualization**: The engine (`battle_engine`) executes entirely headless without GUI dependencies. Presentation tools (`battle_client`, Pygame viewer, PySide6 Designer) consume decoupled event and replay streams.
+* **Typed Protocols & Immutable Data**: Agent interactions use strict dataclasses and typed protocols (`AgentV2`, `MatchContextV2`, `ObservationV2`, `AgentAction`). Observations and match contexts are immutable or read-only proxies.
+* **Independent Compatibility Axes**: Release versions, Agent API versions, Ruleset identities, and artifact wire schemas are decoupled and versioned independently (see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)). A ruleset change does not force an API or schema bump.
+* **Deterministic Artifact Hashing**: Match identities (`match_id`, `result_id`, `replay_id`) derive deterministically from canonical SHA-256 hashes of agent source, configuration, and ruleset identity—independent of absolute checkout paths or filesystem timestamps.
+* **Multi-Platform CI Qualification**: Continuous integration qualifies headless execution and determinism regression suites across Python 3.10, 3.11, 3.12, 3.13, and 3.14 on both Linux and Windows.
+
+---
+
+## Rulesets and Compatibility
+
+Bytefray maintains independent, versioned compatibility axes across releases, rulesets, and schemas (see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)).
+
+Bytefray 5.x is the current product and research line. Its Agent API v2 gameplay continues to use permanent Ruleset 4; V5 Alpha 1 introduces no Ruleset 5.
+
+### Active Gameplay Ruleset: `bytefray-rules-4`
+The current permanent stable ruleset is `bytefray-rules-4`. An omitted `--ruleset` flag for Agent API v2 entrants resolves to this ruleset automatically. It defines:
+* Spatial multi-process execution with round-robin process selection.
+* Seed-derived core placement with minimum 64-cell circular separation.
+* Fixed ruleset constants: `CORE_SIZE = 8`, `Q = 8` actions/tick, `D = 1` disruption duration, move clamp `[-64, 64]`.
+
+### Historical Rulesets
+Earlier gameplay contracts remain executable and explicitly selectable for compatible agents, including historical reproduction:
+* `bytefray-rules-4-alpha2`: Semantic predecessor of Ruleset v4, preserved as a research milestone.
+* `bytefray-rules-4-alpha1`: Initial v4 alpha with evenly spaced core placement and priority process selection.
+* `bytefray-rules-2`: Permanent single-actor Python gameplay; still the omitted-ruleset default for Agent API v1 agents.
+* `bytefray-rules-1`: Historical Python Agent API v1 and native VM/blob gameplay. Mixed Python/VM matches remain unsupported.
+
+pMARS Redcode uses a separate backend and does not execute under a Bytefray ruleset. Designer Simple offers permanent v2 and v4; Advanced, Development, and pairwise Evaluation also expose historical choices. Group evaluation requires Ruleset v2.
+
+### Scope Discipline
+Mechanics such as fixed process rosters and circular core sizes are ruleset-specific gameplay specifications (`RulesetPolicy`), not immutable project-wide engine constraints.
+
+---
+
+## Project Status and Research
+
+### Current Baseline and Release
+* **Stable Gameplay Baseline**: Bytefray 4.0 (`bytefray-rules-4`) remains the stable, qualified gameplay standard.
+* **Current Release**: The current stable release is **Bytefray 5.0.0** (`5.0.0`). Bytefray 5 builds directly on the stable `bytefray-rules-4` gameplay foundation while introducing:
+  * Four educational starter agents teaching core defense, area denial, and multi-process coordination (`v5_region_attacker`, `v5_scout_striker`, `v5_core_defender`, `v5_dual_team`).
+  * Typed parameter schemas and presets in `agent.yaml` with dynamic GUI controls.
+  * Enhanced authoring and validation tooling in `bytefray agents`.
+  * Comprehensive Replay History discovery and viewer integration.
+  * Complete Tournament UX with match replay inspection and tournament history.
+  * Standard OS-level accessibility support across Designer workflows.
+
+### Future Gameplay Research
+Active research explores alternative gameplay mechanics under isolated research branches without destabilizing released rulesets, including:
+* Process mortality and dynamic process lifespans
+* Alternative spatial/process combat and disruption models
+* Dynamic replication and deployment economics
+* Territory scoring incentives and arena capacity models
+
+---
+
+## Documentation
+
+* **Agent Authoring**:
+  * [Agent API v2 Reference](docs/AGENT_API_V2.md) — Authoritative Agent API v2 specification.
+  * [V5 Starter Agents Guide](docs/V5_STARTER_AGENTS.md) — Educational strategies and trade-offs.
+  * [Authoring Workflow](docs/AGENT_AUTHORING.md) — Step-by-step agent creation and validation.
+  * [Agent Lab Guide](docs/AGENT_LAB.md) — Tracing, debugging, divergence analysis, and timeouts.
+* **Rules and Mechanics**:
+  * [Ruleset v4 Specification](docs/RULES_V4.md) — Normative gameplay rules for `bytefray-rules-4`.
+  * [Historical Ruleset v1](docs/RULES.md) & [Ruleset v2](docs/RULES_V2.md) — Historical gameplay references.
+  * [Compatibility Policy](docs/COMPATIBILITY.md) — Ruleset, schema, and API versioning contracts.
+* **Systems and Schemas**:
+  * [Result Schema](docs/RESULT_SCHEMA.md) — Canonical `battle2.result` JSON model.
+  * [Replay Schema](docs/REPLAY_SCHEMA.md) — Canonical `battle2.replay` JSONL model.
+  * [Tournament Service](docs/TOURNAMENTS.md) — Headless round-robin tournament execution.
+  * [Architecture Overview](ARCHITECTURE.md) — Package boundaries and dependency direction.
+* **Installation and Environment**:
+  * [Installation Guide](INSTALL.md) — General installation instructions.
+  * [Linux Installation](docs/LINUX_INSTALL.md) — Headless Linux and WSL2 setup.
+  * [Windows Development Notes](docs/WINDOWS_DEV_NOTES.md) — Windows environment notes and PyInstaller builds.
+
+---
+
+## Development and Testing
+
+Bytefray requires Python 3.10–3.14. Clone the repository and install development dependencies in a virtual environment:
+
+```bash
+python -m venv .venv
+# Activate virtual environment
+python -m pip install -e ".[dev,replay,designer]"
+
+# Run the test suite (excludes GUI display-backed tests)
+python -m pytest
+
+# Run linter
+ruff check .
+
+# Run static type checkers
+mypy engine/src/battle_engine
+mypy client/src/battle_client
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md) for contribution guidelines and architectural discipline.
+
+---
+
+## Contributing
+
+Contributions and issues are welcome on [GitHub](https://github.com/libertaine/Bytefray).
+
+* Follow the development guidelines in [AGENTS.md](AGENTS.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
+* Report security vulnerabilities privately according to [SECURITY.md](SECURITY.md).
+
+---
+
+## License and Support
+
+Bytefray is open-source software licensed under the [MIT License](LICENSE).
+
+* **pMARS Interoperability**: pMARS is separate GPL-licensed software. Distributions bundling pMARS preserve licensing materials in [third_party_licenses/](third_party_licenses/). The pure Python wheel does not bundle pMARS executables.
+* **Support**: If Bytefray is useful for your work or research, you can support ongoing development via [PayPal](https://www.paypal.com/donate/?hosted_button_id=DRJD388WT8DAL). Contributions are entirely optional.

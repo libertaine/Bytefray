@@ -12,6 +12,7 @@ run, exercised by the dedicated display-backed workflow.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 
@@ -27,7 +28,21 @@ def _write_match_artifacts(run_dir, *, winner="A", replay_name="replay.jsonl"):
     Sec 2.2)."""
     run_dir.mkdir(parents=True)
     replay_path = run_dir / replay_name
-    replay_path.write_text('{"tick": 0, "ver": 6, "config": {"arena_size": 32}}\n')
+    replay_path.write_text(
+        json.dumps(
+            {
+                "schema": "battle2.replay",
+                "schema_version": 4,
+                "record_type": "header",
+                "config": {"arena_size": 32},
+                "replay_id": f"rep-{run_dir.name}",
+                "match_id": f"m-{run_dir.name}",
+                "result_id": f"r-{run_dir.name}",
+                "ruleset_id": None,
+            }
+        )
+        + "\n"
+    )
     result_path = run_dir / "result.json"
     result_path.write_text(
         json.dumps(
@@ -41,7 +56,7 @@ def _write_match_artifacts(run_dir, *, winner="A", replay_name="replay.jsonl"):
                 "ticks": 10,
                 "replay": {
                     "replay_id": f"rep-{run_dir.name}",
-                    "sha256": "0" * 64,
+                    "sha256": hashlib.sha256(replay_path.read_bytes()).hexdigest(),
                     "filename": replay_name,
                 },
             }
@@ -188,6 +203,33 @@ def test_deleted_last_replay_shows_a_warning_instead_of_silently_substituting(mo
 
         assert warnings, "expected a warning that the last replay is gone"
         assert launched == []  # never silently substitutes a different replay
+    finally:
+        designer.deleteLater()
+
+
+@pytest.mark.gui
+def test_changed_last_replay_is_rechecked_at_click_and_never_launched(monkeypatch, tmp_path):
+    designer, QProcess = _build_designer(monkeypatch, tmp_path)
+    try:
+        result_path, replay_path = _write_match_artifacts(tmp_path / "run-a")
+        _finish_match(designer, QProcess, result_path=result_path)
+
+        replay_path.write_bytes(replay_path.read_bytes() + b"\n")
+        warnings = []
+        monkeypatch.setattr(
+            "app.agent_designer.QMessageBox.warning",
+            staticmethod(lambda *args, **_kwargs: warnings.append(args)),
+        )
+        launched = []
+        monkeypatch.setattr(
+            "app.agent_designer.open_pygame_client_direct",
+            lambda root, path: launched.append((root, path)),
+        )
+
+        designer._on_open_replay()
+
+        assert launched == []
+        assert [args[1] for args in warnings] == ["Replay Changed"]
     finally:
         designer.deleteLater()
 

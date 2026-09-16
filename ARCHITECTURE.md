@@ -71,7 +71,7 @@ of `MatchEntrant`s, a tick limit, and a replay path) and returns a typed
    dataclasses at schema version 3 for historical Ruleset-v1/v2 matches or
    schema version 4 for v4 process matches, and atomically publish the canonical
    replay (`replay.jsonl`) alongside `result.json`
-   (`battle2.result` schema v1, written by `write_json_atomic`) with a
+   (`battle2.result` schema v2, written by `write_json_atomic`) with a
    SHA-256 replay digest recorded in `result.json`'s `replay` reference.
    Both the replay header and the result envelope also carry the exact resolved
    `ruleset_id`; see
@@ -211,11 +211,47 @@ presence that the Designer embeds a live replay view.
 holds PySide6/Pygame-oriented tools that are adjacent consumers of the
 engine, not part of `battle_engine.core`.
 
+- **Replay History** (`app/views/replay_history.py`, V5 Alpha 1) is the
+  Designer's browser over completed matches, reached via **History → Replay
+  History…**. Two `QThread` workers own separate Qt-free
+  `battle_engine.replay_history` services. The maintenance worker initializes
+  or recovers the rebuildable cache and performs transactional refreshes. The
+  query worker opens the prepared cache with SQLite `mode=ro`, serves pages,
+  counts, details and facets, and performs Replay preflight. Each connection is
+  constructed, used, and closed on its owning thread; only immutable DTOs cross
+  back. WAL readers retain committed snapshots during maintenance; related
+  page/count and detail/entrant reads share a short snapshot. A pending-start
+  guard prevents duplicate reader opens. Shutdown invalidates pending responses,
+  cancels maintenance, closes the reader, then closes the writer for final WAL
+  checkpointing, while a local Qt event loop keeps the window responsive.
+  The existing private in-memory fallback uses serialized queries on its
+  maintenance owner because it has no shareable persistent cache. The GUI never holds a database
+  connection, issues SQL, or parses a `result.json`/replay; all row and
+  detail formatting lives in the Qt-free
+  `app/services/replay_history_presentation.py`, which formats
+  already-normalized backend values and decides no history semantics of its
+  own. Selecting a row with an available replay exposes **Open Replay** and
+  **Copy Seed** (Phase 7D): resolving the replay path and verifying its current
+  parent-result association plus digest both still run on the worker thread
+  through the shared canonical preflight. Replay-only historical entries retain
+  their contained standalone-file path because no parent result exists. The
+  launch reuses the
+  existing `app.services.engine_commands.open_pygame_client_direct` handoff
+  unchanged — History constructs no second Viewer command and never launches
+  based on a stale selection. `Re-run Match` remains unimplemented: recorded
+  artifacts do not guarantee the original agent source is still available, so
+  Copy Seed states plainly that it does not by itself reproduce a match. See
+  `docs/research/v5/V5_REPLAY_HISTORY_PHASE6_ARCHITECTURE.md` for the design
+  and the Phase 7B/7C/7D reports for the implementation record.
+
 - **`app/agent_designer.py` is the actual, sole supported Agent Designer
   entry point.** It is a PySide6 `QMainWindow` application with three tabs
   (Simple, Advanced, and Agent Development) built from `app.services.*` and
   `app.views.*`. Simple/Advanced launch a homogeneous VM-vs-VM or
-  Python-vs-Python match; a Tools-menu dialog launches a tournament. The
+  Python-vs-Python match; a Tools-menu dialog launches a tournament, and
+  `app/views/tournament.py` presents its results and saved history from the
+  canonical `tournament.json` and per-match artifacts through the Qt-free
+  `app/services/tournament_results.py`, which writes nothing. The
   **Agent Development** tab (`app/views/development.py`, v0.4 Phase 4a-4c)
   brings the `create → validate → test → replay` authoring loop
   (`docs/specs/agent_designer_workflow.md`) into the GUI: `New Agent` calls
@@ -340,7 +376,7 @@ agent manifests/blobs/Python sources + built-ins
               |
               v
    canonical battle2.replay v3/v4 (replay.jsonl)
-   + battle2.result v1 (result.json)
+   + battle2.result v2 native / v1 pMARS (result.json)
    + compatibility summary.json
               |
               v
@@ -583,8 +619,10 @@ run, read, or copy.
 `claimer`, `strider`, `hunter`, `wanderer`, `adaptive` — each a full
 Agent API v1 agent (`agent.yaml` + `agent.py`) bundled under
 `battle_engine/data/starter_agents/<name>/`, discovered and copied into
-the writable catalog by the same `ensure_starter_agents()` non-destructive
-mechanism the native VM starters already use; no new discovery, catalog,
+the writable catalog by the same `ensure_starter_agents()` mechanism the
+native VM starters already use (which, since V5 Alpha 1 Phase E, installs a
+missing starter, refreshes one whose content is provably an untouched copy of
+a superseded bundled release, and otherwise preserves what is there); no new discovery, catalog,
 or packaging concept was introduced; `[tool.setuptools.package-data]`'s
 existing `battle_engine = ["data/**/*"]` glob already covers the new
 subdirectories. Each agent's module docstring is a self-contained

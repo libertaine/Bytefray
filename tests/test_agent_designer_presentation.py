@@ -6,6 +6,8 @@ import os
 
 import pytest
 
+BYTEFRAY_RULESET_V2_ID = "bytefray-rules-2"
+
 
 def _make_app():
     pytest.importorskip("PySide6")
@@ -39,6 +41,11 @@ def test_simple_panel_starts_with_real_empty_state_and_current_matchup():
 
     panel = SimplePanel(catalog=None)
     panel.setAgents([_row("alpha", "Alpha"), _row("beta", "Beta")])
+    # V5 Alpha 1 Phase 1: Simple's fresh-session default is now the stable
+    # v4 Ruleset, which these Agent API v1 rows are not compatible with --
+    # select v2 explicitly, since this test is about matchup/empty-state
+    # presentation, not the fresh Ruleset default.
+    panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
 
     assert panel.output.is_showing_empty_state() is True
     assert panel.output.readyLabel.text() == "Ready to run a match"
@@ -58,6 +65,7 @@ def test_empty_matchup_updates_by_disambiguated_labels_and_supports_self_match()
 
     panel = SimplePanel(catalog=None)
     panel.setAgents([_row("alpha_id", "Friendly"), _row("beta_id", "Friendly")])
+    panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
 
     panel.agentA.setCurrentIndex(panel.agentA.findData("beta_id"))
     panel.agentB.setCurrentIndex(panel.agentB.findData("beta_id"))
@@ -96,6 +104,7 @@ def test_clear_log_restores_current_empty_state_and_second_output_replaces_it():
 
     panel = SimplePanel(catalog=None)
     panel.setAgents([_row("alpha", "Alpha"), _row("beta", "Beta")])
+    panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
     panel.appendLog("first run")
     panel.agentA.setCurrentIndex(panel.agentA.findData("beta"))
     panel.agentB.setCurrentIndex(panel.agentB.findData("beta"))

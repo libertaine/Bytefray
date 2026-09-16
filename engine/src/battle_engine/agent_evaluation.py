@@ -53,6 +53,7 @@ from battle_engine.agent_test import (
     GroupEntrantSpec,
     GroupInitializationFailureOutcome,
     InitializationFailureOutcome,
+    _resolve_default_parameters,
     test_agent,
     test_agents,
 )
@@ -415,7 +416,7 @@ class EvaluationPlacement:
     baseline cell's "subject" is the baseline, not the candidate, and
     placement must describe *where the subject starts* regardless of role.
     Deliberately 1v1-scoped (two named fields, not a generic seat map) --
-    see ``docs/V2_0_BETA2_PHASE1_EVALUATION_METHODOLOGY.md``'s multi-entrant
+    see ``docs/archive/v2/V2_0_BETA2_PHASE1_EVALUATION_METHODOLOGY.md``'s multi-entrant
     extension seam for how this generalizes to N seats in Beta2 Phase 2.
     """
 
@@ -1070,8 +1071,20 @@ def _expected_cell_match_id(
             ),
         ),
         entrants=(
-            MatchEntrant.python(TESTED_AGENT_SLOT, slot_a_agent_id, slot_a_start, slot_a_spec),
-            MatchEntrant.python(OPPONENT_SLOT, slot_b_agent_id, slot_b_start, slot_b_spec),
+            MatchEntrant.python(
+                TESTED_AGENT_SLOT,
+                slot_a_agent_id,
+                slot_a_start,
+                slot_a_spec,
+                _resolve_default_parameters(slot_a_spec, role="entrant A"),
+            ),
+            MatchEntrant.python(
+                OPPONENT_SLOT,
+                slot_b_agent_id,
+                slot_b_start,
+                slot_b_spec,
+                _resolve_default_parameters(slot_b_spec, role="entrant B"),
+            ),
         ),
         max_ticks=ticks,
         replay_path=Path("."),
@@ -1121,7 +1134,15 @@ def _expected_group_cell_match_id(
             ),
         ),
         entrants=tuple(
-            MatchEntrant.python(seat_label(index), agent_id, start, specs[agent_id])
+            MatchEntrant.python(
+                seat_label(index),
+                agent_id,
+                start,
+                specs[agent_id],
+                _resolve_default_parameters(
+                    specs[agent_id], role=f"entrant {seat_label(index)}"
+                ),
+            )
             for index, (agent_id, start) in enumerate(zip(seat_agent_ids, seat_starts, strict=True))
         ),
         max_ticks=ticks,

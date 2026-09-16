@@ -315,6 +315,16 @@ reproducible (see "Inspecting a regression" below).
 
 ### Reusable evaluation presets
 
+Evaluation presets are separate from an agent's parameter presets. Their
+optional `ruleset` field currently accepts only `bytefray-rules-1` and
+`bytefray-rules-2`. For an API v2 pairwise evaluation, omit that field and
+let the roster resolve to permanent `bytefray-rules-4`, or pass the supported
+V4 identity explicitly with `--ruleset`. Its other settings must still satisfy
+the selected methodology, including arena size 512 for permanent v4/alpha2.
+A preset containing a V4 ruleset is rejected during preset loading even if
+the command supplies an override.
+Group evaluation remains restricted to Ruleset v2/API v1.
+
 Since v1.6, a small YAML file can save an opponent/seed/ticks/orientation
 combination you run repeatedly, instead of retyping the same flags every
 time:

@@ -75,6 +75,26 @@ for i in "${!ARTIFACT_NAMES[@]}"; do
   [[ -x "${exe_path}" ]] || die "Produced artifact is not executable: ${exe_path}"
 done
 
+# Verify no Python bytecode/cache reached any distributable tree, mirroring
+# tools/build_win.ps1's equivalent backstop (FIND-05, V5 Alpha 1 Post-Release
+# Hardening Audit). This build runs from the live repository checkout, and
+# the engine imports agent modules out of battle_engine/data at runtime, so
+# CPython writes __pycache__ directories next to shipped product data as a
+# normal consequence of running the product. tools/packaging_data.py already
+# excludes bytecode by construction, so this is a non-destructive backstop
+# rather than the fix: it deliberately does NOT delete anything from the
+# checkout, and instead fails the build if a future collection path is ever
+# added that bypasses the shared collector.
+for name in "${ARTIFACT_NAMES[@]}"; do
+  artifact_dir="${DIST_DIR}/${name}"
+  debris="$(find "${artifact_dir}" \( -type d -name "__pycache__" -o -type f \( -name "*.pyc" -o -name "*.pyo" \) \) 2>/dev/null || true)"
+  if [[ -n "${debris}" ]]; then
+    die "Python bytecode/cache reached the frozen payload for ${name}:
+${debris}"
+  fi
+done
+log "Frozen payloads contain no Python bytecode/cache."
+
 # The unified dispatcher imports the Designer dynamically; prove its frozen
 # tree contains the same runtime branding resource as the standalone GUI
 # build (mirrors tools/build_win.ps1's identical check).

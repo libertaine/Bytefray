@@ -46,7 +46,10 @@ def _argument_value(command: list[str], flag: str) -> str:
 @pytest.mark.parametrize(
     ("panel_name", "agent_a", "agent_b", "ruleset_id"),
     [
-        ("simple", "adaptive", "hunter", None),
+        # V5 Alpha 1 Phase 1: Simple's fresh default is now the stable v4
+        # Ruleset; "adaptive"/"hunter" are Agent API v1, so v2 must be
+        # selected explicitly for them to appear in Agent A/B at all.
+        ("simple", "adaptive", "hunter", "bytefray-rules-2"),
         ("advanced", "runner", "writer", "bytefray-rules-1"),
     ],
 )
@@ -122,6 +125,13 @@ def test_designer_resolves_duplicate_displays_by_id_and_allows_self_match(monkey
     assert designer._resolve_agent_row(rows, "Friendly") is None
     assert designer._resolve_agent_row(rows[:1], "Friendly") is rows[0]
 
+    # V5 Alpha 1 Phase 1: Simple's fresh default is now the stable v4
+    # Ruleset, which these Agent API v1 rows are not compatible with --
+    # select v2 explicitly, since this test is about duplicate-display-name
+    # resolution, not the fresh Ruleset default.
+    designer.simple.ruleset.setCurrentIndex(
+        designer.simple.ruleset.findData("bytefray-rules-2")
+    )
     designer.simple.agentA.setCurrentIndex(designer.simple.agentA.findData("beta_id"))
     designer.simple.agentB.setCurrentIndex(designer.simple.agentB.findData("beta_id"))
     designer.simple._emit_run()

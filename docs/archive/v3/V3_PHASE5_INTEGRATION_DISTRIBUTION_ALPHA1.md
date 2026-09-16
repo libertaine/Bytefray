@@ -28,7 +28,7 @@ Verified directly before any change:
   `v3.0-development` (expected — `main` has not merged v3 work).
 - Full v3.0-development lineage confirmed present: Phase 0 product scope,
   Phase 1 presentation baseline, Phase 2 agent creation, Phase 3 strategy
-  analysis (`docs/V3_PHASE3_STRATEGY_ANALYSIS.md`), core-capture callouts,
+  analysis (`docs/archive/v3/V3_PHASE3_STRATEGY_ANALYSIS.md`), core-capture callouts,
   match timeline, and Phase 4 evaluation infrastructure.
 - Existing tags: `v0.1.0` through `v2.0.0-rc2`. **No `v3.0.0-alpha1` tag or
   GitHub Release existed.**
@@ -99,7 +99,7 @@ no change.
 
 Audited `README.md`, `CHANGELOG.md`, `INSTALL.md`, `docs/LINUX_INSTALL.md`,
 `SECURITY.md`, `docs/COMPATIBILITY.md`, `docs/ROADMAP.md`,
-`docs/V3_PRODUCT_SCOPE.md`, and the Phase 0-4 v3 reports. (The task
+`docs/archive/v3/V3_PRODUCT_SCOPE.md`, and the Phase 0-4 v3 reports. (The task
 prompt's `docs/INSTALL.md`/`docs/SECURITY.md` paths do not match this
 repository's actual layout — both live at the repository root; used real
 filenames throughout, per the prompt's own "use actual filenames if
@@ -112,7 +112,7 @@ Findings and corrections:
   `README.md` and `docs/COMPATIBILITY.md` were already current for the
   2.0.0 stable line — a real, pre-existing drift bug independent of v3,
   already flagged by this project's own Phase 0 audit
-  (`docs/V3_PHASE0_PRODUCT_SCOPE.md`'s Phase 5 objective, found verbatim
+  (`docs/archive/v3/V3_PHASE0_PRODUCT_SCOPE.md`'s Phase 5 objective, found verbatim
   in-repo). Corrected both to the current `2.0.0` examples.
 - **`SECURITY.md`** said fixes are made "against the latest `1.x`
   release" — also stale now that `2.0.0` is stable. Reworded to name the
@@ -371,7 +371,7 @@ window. This is a screenshot-timing limitation of this session, not a
 functional gap: the underlying capture event, attribution, and replay
 data were independently confirmed correct at the CLI/artifact level, and
 the callout's own behavior was already screenshot-verified against a
-source checkout in `docs/V3_CORE_CAPTURE_CALLOUT.md`, with the full
+source checkout in `docs/archive/v3/V3_CORE_CAPTURE_CALLOUT.md`, with the full
 GUI-marked test suite (unchanged, still passing) covering its logic.
 
 Designer-side manual GUI click-through (New Agent dialog, Evaluate dialog,
@@ -427,7 +427,7 @@ No visible regression was found in what was checked.
   infrastructure exists in this repository or its build tooling
   (confirmed: no `signtool`/`codesign`/Authenticode reference anywhere in
   `tools/`, `docs/`, or `.github/`).
-- `docs/V3_PRODUCT_SCOPE.md` already correctly identified this as an
+- `docs/archive/v3/V3_PRODUCT_SCOPE.md` already correctly identified this as an
   undisclosed gap (Phase 5's own pre-registered objective). It is now
   disclosed in `INSTALL.md` (§3): Windows SmartScreen will very likely
   warn on first run; this reflects the lack of a paid signing certificate

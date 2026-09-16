@@ -169,7 +169,7 @@ clicks and a real `QProcess` validate run, under
 | `engine/tests/test_agent_scaffold.py` | **+8 tests** — template default/selection/validation, CLI flag, unknown-template rejection |
 | `tests/test_agent_development_panel.py` | **+8 tests** — template picker defaults/selection, selectable labels, reload via button/Validate/Test/`invalidateAgentState` |
 | `docs/screenshots/v3-phase2-baseline/*.png` | **new** — the six images in §6 |
-| `docs/V3_PHASE2_AGENT_CREATION_WORKFLOW.md` | **new** — this report |
+| `docs/archive/v3/V3_PHASE2_AGENT_CREATION_WORKFLOW.md` | **new** — this report |
 
 ## Validation
 

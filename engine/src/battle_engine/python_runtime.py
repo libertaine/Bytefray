@@ -708,7 +708,7 @@ class PythonEntrantState:
     References the entrant's :class:`~battle_engine.entrant_identity.
     EntrantIdentity` rather than storing ``agent_id``/``name`` as
     independent fields -- see
-    ``docs/V1_5_PHASE5_ENTRANT_IDENTITY_EXECUTION_STATE.md``. Both remain
+    ``docs/archive/v1/V1_5_PHASE5_ENTRANT_IDENTITY_EXECUTION_STATE.md``. Both remain
     available as read-only compatibility properties: the identity itself
     never mutates once construction finishes, matching every other field
     below that genuinely does (``pc``, ``alive``, RNG-consumed state,

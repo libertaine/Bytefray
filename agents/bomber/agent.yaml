@@ -1,5 +1,0 @@
-name: bomber
-display: Bomber
-blob_path: agents/bomber/model.blob
-defaults:
-  aggression: 0.6

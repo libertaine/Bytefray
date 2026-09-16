@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from typing import ClassVar
 
 from battle_engine.agent_api import (
     ActionKindV2,
@@ -60,7 +61,7 @@ class QuorumAgent:
 
     _CORE_ORDER = (0, 7, 3, 4, 1, 6, 2, 5)
     _SIEGE_ORDER = (0, 7, 3, 4, 1, 6, 2, 5, -1, 8, -2, 9, -3, 10, -4, 11)
-    _SIGNATURES = {
+    _SIGNATURES: ClassVar[dict[str, int]] = {
         "oracle": 0x91,
         "breaker": 0xB4,
         "guardian": 0xD3,

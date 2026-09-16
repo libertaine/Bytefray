@@ -279,8 +279,8 @@ cover both defaults end-to-end (§17).
 - **`CHANGELOG.md`** — added an `## [Unreleased]` entry (no existing
   `[Unreleased]` section existed above the tagged `[3.0.0-rc1]` entry, which
   was left untouched) describing the fix in the suggested wording.
-- **`docs/V3_ALPHA2_STRATEGY_EXAMPLES_RULESET_CLARITY.md`** and
-  **`docs/V3_RC1_QUALIFICATION.md`** — both are historical qualification
+- **`docs/archive/v3/V3_ALPHA2_STRATEGY_EXAMPLES_RULESET_CLARITY.md`** and
+  **`docs/archive/v3/V3_RC1_QUALIFICATION.md`** — both are historical qualification
   records (the latter tied to the immutable `v3.0.0-rc1` tag) that
   explicitly discussed and deferred this exact CLI default as a known,
   non-blocking gap. Per this repository's standing research-integrity

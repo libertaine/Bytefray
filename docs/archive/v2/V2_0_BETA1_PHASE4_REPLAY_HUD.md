@@ -9,7 +9,7 @@ Ruleset semantics in the renderer. Phase 1 froze gameplay semantics; Phase 2
 made the permanent v2 identity selectable through product CLI surfaces;
 Phase 3 made status derivable from replay data. None of those are touched
 here — this phase changes only `battle_client`'s presentation layer, plus
-tests and documentation. See `docs/V2_0_BETA1_PLAN.md` for the overall phase
+tests and documentation. See `docs/archive/v2/V2_0_BETA1_PLAN.md` for the overall phase
 sequence.
 
 ## 1. Starting repository state
@@ -204,7 +204,7 @@ This audit directly motivated the Phase 4B design: a fixed-height top HUD
 band (match header + entrant status cards), an unobstructed arena band, and
 a fixed-height footer band (playback/tick, one compact status/event
 message, controls, and the relocated territory-history graph) — see
-`docs/V2_0_BETA1_PLAN.md` §7.
+`docs/archive/v2/V2_0_BETA1_PLAN.md` §7.
 
 ## 6. HUD layout design
 
@@ -430,7 +430,7 @@ the VM-runtime cases in `test_pygame_renderer.py`) pass unmodified.
   never implying "highest score = winning" independent of life state
   (Phase 4N; `format_entrant_stats_line` never reads `alive`/`core` at
   all, so the two are structurally decoupled, matching Phase 3's own
-  design intent recorded in `docs/V2_0_BETA1_PHASE3_REPLAY_SEMANTICS.md`
+  design intent recorded in `docs/archive/v2/V2_0_BETA1_PHASE3_REPLAY_SEMANTICS.md`
   §15).
 - **Ruleset identification**: the header's first line always names the
   resolved Ruleset identity (`resolve_match_ruleset_label`) — a v1 replay
@@ -716,5 +716,5 @@ for the first visible v2 milestone, the Designer's Ruleset-v2 workflow
 integration has not happened yet, and combining both interfaces in one
 phase would dilute qualification focus. This idea is not lost: it remains
 recorded as a candidate for a later Beta1 phase or for `v2.0.0-beta3`
-("Workflow & Compatibility Stabilization" — see `docs/V2_0_BETA1_PLAN.md`
+("Workflow & Compatibility Stabilization" — see `docs/archive/v2/V2_0_BETA1_PLAN.md`
 §8), whichever the roadmap reaches first.

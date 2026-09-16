@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from battle_engine.agent_api import AgentValidationError
+from battle_engine.agent_parameters import resolve_entrant_parameters
 from battle_engine.agents import resolve_agent
 from battle_engine.builtins import SUPPORTED, build_agent
 from battle_engine.config import Config, Weights
@@ -69,8 +70,8 @@ def _parser() -> argparse.ArgumentParser:
             "gameplay Ruleset identity. If omitted, Agent API v1 Python-only "
             f"rosters use {BYTEFRAY_RULESET_V2_ID}, Agent API v2 Python-only "
             f"rosters use {BYTEFRAY_RULESET_V4_ID}, and VM/blob-only "
-            f"rosters use {BYTEFRAY_RULESET_ID}; a mixed Python/VM roster "
-            f"without an explicit choice uses {BYTEFRAY_RULESET_ID}. "
+            f"rosters use {BYTEFRAY_RULESET_ID}. Tournament rosters must be "
+            "homogeneous; mixed Python/VM rosters are rejected. "
             f"{BYTEFRAY_RULESET_V2_ID}, {BYTEFRAY_RULESET_V4_ID}, and both v4 "
             "alphas support Python entrants only; every v4 identity requires "
             f"Agent API v2. {BYTEFRAY_RULESET_V4_ID} is the current, "
@@ -105,7 +106,27 @@ def _resolve_entrant(root: Path, name: str, start: int) -> MatchEntrant:
     except SystemExit:
         spec = None
     if spec is not None and spec.kind == "python":
-        return MatchEntrant.python(name, spec.display or name, start, spec)
+        # V5 Alpha 1 Post-Release Hardening H1 (FIND-01): a tournament
+        # entrant has no per-agent override/preset surface, so this is
+        # always "no explicit overrides" -- but that must still resolve to
+        # the agent's declared schema defaults, exactly like an equivalent
+        # `bytefray run` invocation with no `--*-param`/`--*-preset` flags,
+        # rather than to an empty mapping. Using the same canonical
+        # boundary as every other frontend is what keeps a tournament
+        # match's `canonical_match_id` and `context.parameters` identical
+        # to a `bytefray run` match of the same roster.
+        try:
+            parameters = resolve_entrant_parameters(
+                api_version=spec.api_version,
+                schema=spec.parameter_schema,
+                legacy_defaults=spec.defaults,
+                path=spec.dir,
+            )
+        except AgentValidationError as exc:
+            raise TournamentConfigurationError(
+                f"Agent {name!r} declares invalid parameters: {exc}"
+            ) from exc
+        return MatchEntrant.python(name, spec.display or name, start, spec, parameters)
     if spec is not None and spec.blob is not None and spec.blob.is_file():
         return MatchEntrant(name, spec.display or name, start, spec.blob.read_bytes())
     if name in SUPPORTED:

@@ -6,8 +6,8 @@ derived statistical-interpretation layer over already-authoritative
 paired candidate-vs-baseline evidence, surfaced through the existing CLI,
 evaluation-history, and Designer read paths.
 
-Written in the same spirit as `docs/V1_6_PHASE1_EVALUATION_SCALE_BASELINE.md`
-through `docs/V1_6_PHASE3_EVALUATION_PRESETS.md`: this document cites all
+Written in the same spirit as `docs/archive/v1/V1_6_PHASE1_EVALUATION_SCALE_BASELINE.md`
+through `docs/archive/v1/V1_6_PHASE3_EVALUATION_PRESETS.md`: this document cites all
 three as the authoritative pre-implementation baseline rather than
 re-deriving them, and in particular treats Phase 0-1 §12 ("Statistical
 analysis data inventory") as the direct ancestor of the design below.

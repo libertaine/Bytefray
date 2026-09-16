@@ -303,8 +303,6 @@ def test_gui_service_subprocess_receives_same_traceback_free_failure(tmp_path):
         check=False,
         env=env,
     )
-    # EngineRunner uses this same stderr-to-stdout subprocess model and emits
-    # each resulting line through its GUI output signal.
     assert completed.returncode == 2
     assert "pMARS error: Configured PMARS_CMD executable was not found" in completed.stdout
     assert "Traceback" not in completed.stdout

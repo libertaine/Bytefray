@@ -2,7 +2,7 @@
 
 Not another exploratory alpha. Alpha.1–alpha.10 completed the planned
 research sequence and handed forward exactly one unresolved gameplay
-problem (`docs/V2_0_ALPHA10_STRATEGIC_ECOLOGY.md` §29/§38/§39):
+problem (`docs/archive/v2/V2_0_ALPHA10_STRATEGIC_ECOLOGY.md` §29/§38/§39):
 
 > Blind territorial expansion remains close to a universal solution even
 > though offense, defense, vulnerable-core mortality, multi-entrant play,
@@ -47,8 +47,8 @@ Branched from the verified alpha.10 baseline, commit `37f9bc6` on
   failure `docs/WINDOWS_DEV_NOTES.md` already characterises; clearing it
   resolved it, and `pytest.ini`'s repo-local cache/temp paths were not
   touched.
-- Read in full before any design work: `docs/V2_0_ALPHA_ARCHITECTURE.md`,
-  `docs/V2_0_ALPHA10_STRATEGIC_ECOLOGY.md`, `docs/RULES.md`,
+- Read in full before any design work: `docs/archive/v2/V2_0_ALPHA_ARCHITECTURE.md`,
+  `docs/archive/v2/V2_0_ALPHA10_STRATEGIC_ECOLOGY.md`, `docs/RULES.md`,
   `docs/COMPATIBILITY.md`, `docs/AGENT_API_V1.md`, plus the alpha.1–alpha.9
   findings as summarised by the governing task. Read directly from source,
   not inferred: `python_runtime.py`'s `seed_core_ownership`/
@@ -253,7 +253,7 @@ New identity **`bytefray-rules-2-alpha11`**, following the existing
 | Does it wrap at arena boundaries? | Yes — `core_addresses` is unchanged and uses the ordinary `pos % arena_size` wrap (pinned: core at `arena-3` covers `125,126,127,0,1,2,3,4`). |
 | Overlapping cores? | Unchanged from alpha.1. Later-constructed entrants seed over earlier ones; an entrant left owning zero core cells is captured with no attributable killer, exactly as `_attribute_core_capture` already documents. Maintenance cannot alter this: it never changes ownership. |
 | After entrant death? | Maintenance skips non-living entrants. A dead entrant's core keeps whatever content and ownership it ended with, permanently (pinned by test). |
-| Is the byte public Ruleset knowledge? | Yes, documented here and in `docs/V2_0_RULESET_V2_CANDIDATE.md`. Not keyed to any agent. |
+| Is the byte public Ruleset knowledge? | Yes, documented here and in `docs/archive/v2/V2_0_RULESET_V2_CANDIDATE.md`. Not keyed to any agent. |
 
 Ruleset-v1 preservation (Phase A5): a v1 Python match performs **no** core
 seeding, **no** beacon, **no** maintenance, **no** capture, and still
@@ -718,7 +718,7 @@ came in.
 ## 24. Documentation
 
 This document, plus the pre-beta candidate specification
-`docs/V2_0_RULESET_V2_CANDIDATE.md` (Resolution C). `docs/ROADMAP.md`,
+`docs/archive/v2/V2_0_RULESET_V2_CANDIDATE.md` (Resolution C). `docs/ROADMAP.md`,
 `docs/FUTURE_PLANS.md`, `README.md`, `CHANGELOG.md`, and the project version
 were **not** modified, per Phase C8 — the next user-directed phase handles
 beta planning; alpha.11 supplies evidence only.

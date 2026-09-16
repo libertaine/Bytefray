@@ -12,11 +12,12 @@ from battle_engine.ruleset_policy import (
 
 from app.services.agent_catalog import AgentRow
 from app.services.ruleset_options import (
+    DEFAULT_DESIGNER_RULESET_ID,
     DESIGNER_RULESET_OPTIONS,
+    EVALUATION_RULESET_OPTIONS,
     SIMPLE_RULESET_OPTIONS,
     agent_row_metadata,
     agent_row_supported_by_ruleset,
-    best_designer_ruleset,
     best_designer_ruleset_for_agents,
     ruleset_supports_agent_metadata,
     ruleset_supports_runtime_kinds,
@@ -50,7 +51,16 @@ def test_product_options_include_all_v4_identities_without_changing_default_pref
         BYTEFRAY_RULESET_V2_ID,
         BYTEFRAY_RULESET_V4_ID,
     ]
-    assert best_designer_ruleset({"python"}) == BYTEFRAY_RULESET_V2_ID
+    # Preference order is what an unset selection resolves through, asked of
+    # the metadata-aware chooser: a Python agent alone says nothing about
+    # which Ruleset it can run under, and every option below is Python-only
+    # except v1.
+    assert best_designer_ruleset_for_agents(({"kind": "python", "api_version": 1},)) == (
+        BYTEFRAY_RULESET_V2_ID
+    )
+    assert best_designer_ruleset_for_agents(({"kind": "python", "api_version": 2},)) == (
+        BYTEFRAY_RULESET_V4_ID
+    )
 
 
 def test_the_three_v4_options_are_distinguishable_to_a_reader() -> None:
@@ -68,8 +78,20 @@ def test_the_three_v4_options_are_distinguishable_to_a_reader() -> None:
 
 
 def test_python_composition_prefers_v2_and_vm_composition_prefers_v1() -> None:
-    assert best_designer_ruleset({"python"}) == BYTEFRAY_RULESET_V2_ID
-    assert best_designer_ruleset({"vm"}) == BYTEFRAY_RULESET_ID
+    """V5 Alpha 1 Phase E3.
+
+    This used to assert ``best_designer_ruleset({"python"})``, a chooser that
+    saw only the runtime kind. Every Python-only Ruleset looks alike on that
+    axis, so it answered ``bytefray-rules-2`` for an Agent API v2 agent --
+    a Ruleset that agent cannot run under. No production code ever called it
+    and it has been removed; the question it was asked is answered here by
+    the metadata-aware chooser every Designer surface actually uses.
+    """
+
+    assert best_designer_ruleset_for_agents(({"kind": "python", "api_version": 1},)) == (
+        BYTEFRAY_RULESET_V2_ID
+    )
+    assert best_designer_ruleset_for_agents(({"kind": "vm"},)) == BYTEFRAY_RULESET_ID
     assert ruleset_supports_runtime_kinds(BYTEFRAY_RULESET_V2_ID, {"python"})
     assert not ruleset_supports_runtime_kinds(BYTEFRAY_RULESET_V2_ID, {"vm"})
 
@@ -206,4 +228,25 @@ def test_row_metadata_projection_fails_closed_but_is_distinct_from_no_selection(
     # An unreadable row projects to an empty mapping (fails closed), never to
     # None, which would read as "nothing selected" and impose no constraint.
     assert agent_row_metadata(object()) == {}
+
+
+def test_designer_default_ruleset_is_stable_v4_not_v2() -> None:
+    """V5 Alpha 1 Phase 1 regression: a fresh Designer session (Simple,
+    Advanced, Development, Evaluation -- every surface ``populate_ruleset_
+    combo`` populates) must start on the permanent stable V4 identity, not
+    the historical Agent API v1 Ruleset v2 that previously looked like the
+    recommended V5 experience purely because it happened to sort first in
+    every option tuple below. If this regresses back to ``bytefray-rules-2``,
+    a future change silently restored the exact bug this phase corrected --
+    see ``app.widgets.ruleset_combo.populate_ruleset_combo`` and
+    ``DEFAULT_DESIGNER_RULESET_ID``'s own docstring.
+    """
+
+    assert DEFAULT_DESIGNER_RULESET_ID == BYTEFRAY_RULESET_V4_ID
+    # The default must actually be one of the choices offered by every combo
+    # population site, or `populate_ruleset_combo`'s fallback-to-item-0 would
+    # silently reintroduce v2 as the effective default on any surface whose
+    # option tuple omits it.
+    for options in (SIMPLE_RULESET_OPTIONS, DESIGNER_RULESET_OPTIONS, EVALUATION_RULESET_OPTIONS):
+        assert DEFAULT_DESIGNER_RULESET_ID in {option.ruleset_id for option in options}
     assert agent_row_metadata(object()) is not None

@@ -49,7 +49,17 @@ def _panel(tmp_path, rows):
     from app.views.advanced import AdvancedPanel
 
     panel = AdvancedPanel(catalog=None, data_root=tmp_path)
+    # V5 Alpha 1 Phase 1: Advanced's fresh-session Ruleset default changed
+    # from v2 to the stable v4 identity, which this module's Agent API v1
+    # ("legacy"/"x_id"/...) rows are not compatible with. This suite is
+    # about roster add/remove/order mechanics under a Python Agent API v1
+    # roster, not about which Ruleset a fresh panel starts on (that is
+    # covered by engine/tests/test_designer_ruleset_options.py and
+    # tests/test_v5_alpha1_phase1_corrective_cleanup.py) -- so every caller
+    # explicitly pins v2 here, exactly as the callers that already did this
+    # individually before this helper existed.
     panel.setAgents(rows)
+    panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
     return panel
 
 
@@ -419,6 +429,11 @@ def test_simple_stays_two_agent_and_gains_only_the_advanced_hint(tmp_path):
     panel = SimplePanel(catalog=None)
     try:
         panel.setAgents([_row("legacy", "python", 1), _row("legacy2", "python", 1)])
+        # V5 Alpha 1 Phase 1: Simple's fresh-session default is now the
+        # stable v4 Ruleset, which these Agent API v1 rows are not
+        # compatible with -- select v2 explicitly, since this test is about
+        # the 2-agent-only structural behavior, not the fresh default.
+        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
         assert not hasattr(panel, "agentC")
         assert not hasattr(panel, "btnAddAgent")
         assert "Advanced" in panel.multiAgentHint.text()

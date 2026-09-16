@@ -6,7 +6,7 @@ not real match executions -- the broader empirical validation against the
 committed Phase 1 corpus (selectivity, budget robustness, replay
 auditability) lives in the module's own ``qualify``/``determinism`` CLI
 commands and is reported in
-``docs/V3_PHASE6_ACTIVE_DEFENSIVE_INTERVENTION_QUALIFICATION.md``, which this
+``docs/archive/v3/V3_PHASE6_ACTIVE_DEFENSIVE_INTERVENTION_QUALIFICATION.md``, which this
 module does not duplicate. Each test builds the smallest tick sequence that
 isolates one mechanic from the governing Phase 6O checklist.
 """

@@ -46,6 +46,26 @@ RULESET_V1_OPTION = DesignerRulesetOption(
     BYTEFRAY_RULESET_ID, "Ruleset v1 — Compatibility (Python and VM/blob)"
 )
 
+# V5 Alpha 1 Phase 1: the Designer's canonical new-session/fresh-state
+# Ruleset selection. Before any agent is known (a freshly constructed
+# Simple/Advanced/Development combo, before ``setAgents``/a real selection
+# ever runs), ``populate_ruleset_combo`` selects this identity rather than
+# leaving Qt's incidental "item 0" default -- which, since ``RULESET_V2_
+# OPTION`` is listed first in every option tuple below for unrelated
+# compatibility-ordering reasons (see ``DESIGNER_RULESET_OPTIONS``'s own
+# docstring), silently made an Agent API v1 ruleset look like the
+# recommended V5 experience. ``bytefray-rules-4`` is the permanent stable
+# process-agent identity and, per docs/research/v5/
+# V5_ALPHA1_CONSOLIDATION_AND_PLAN.md's "default cleanly to stable V4" and
+# docs/research/v5/V5_ALPHA1_MAINTENANCE_PHASE4_RELEASE_SURFACE_AUDIT.md's
+# "V5 ordinary API-v2 default", is the already-documented canonical V5
+# default -- this only wires the Designer up to actually start there. This
+# only changes the *pre-agent-selection* default: once a real agent or
+# roster is known, ``sync_ruleset_choices_for_metadata`` (Development,
+# Evaluation) or Simple/Advanced's own Ruleset-first filtering takes over
+# exactly as before, using the same unchanged product-preference order.
+DEFAULT_DESIGNER_RULESET_ID = BYTEFRAY_RULESET_V4_ID
+
 # Simple offers current gameplay only, the policy it has followed since
 # v3.0.0-alpha2: one current Agent API v1 Ruleset and one current Agent API
 # v2 Ruleset. v4.0.0-rc1 Phase 2: the stable identity now occupies the
@@ -136,14 +156,6 @@ def ruleset_supports_runtime_kinds(ruleset_id: str, kinds: set[str]) -> bool:
     except UnknownRulesetError:
         return False
     return not policy.unsupported_runtime_kinds(kinds)
-
-
-def best_designer_ruleset(kinds: set[str]) -> str:
-    """Return the first product-preferred Ruleset compatible with ``kinds``."""
-    for option in DESIGNER_RULESET_OPTIONS:
-        if ruleset_supports_runtime_kinds(option.ruleset_id, kinds):
-            return option.ruleset_id
-    return BYTEFRAY_RULESET_ID
 
 
 def ruleset_supports_agent_metadata(

@@ -20,9 +20,9 @@ unchanged at `5593d287f95a24996bb3b105befbc625a00795db` throughout).
 - Branch: `v2.0-development`. HEAD at start: `35a2476`. Working tree:
   clean. `main`: `5593d287...`, unchanged. Local branch 5 commits ahead of
   `origin/v2.0-development`; nothing pushed.
-- `docs/V2_0_ALPHA1_EVALUATION.md`, `docs/V2_0_ALPHA2_REACTIVE_DEFENSE.md`,
-  `docs/V2_0_ALPHA4_MULTI_ENTRANT_FEASIBILITY.md`,
-  `docs/V2_0_ALPHA5_MULTI_ENTRANT_SCORING_ACTIVATION.md` were read in full.
+- `docs/archive/v2/V2_0_ALPHA1_EVALUATION.md`, `docs/archive/v2/V2_0_ALPHA2_REACTIVE_DEFENSE.md`,
+  `docs/archive/v2/V2_0_ALPHA4_MULTI_ENTRANT_FEASIBILITY.md`,
+  `docs/archive/v2/V2_0_ALPHA5_MULTI_ENTRANT_SCORING_ACTIVATION.md` were read in full.
 - Read directly, not inferred: `core_seeker/agent.py`, `core_defender/
   agent.py`, `reactive_core_defender/agent.py`, `claimer/agent.py`,
   `hunter/agent.py`, `agent_api.py` (`Observation`/`MatchContext`/

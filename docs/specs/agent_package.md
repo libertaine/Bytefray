@@ -725,3 +725,11 @@ another display name. No restart is required.
 All of these changes retain `bytefray.agent_package` schema version 1. The
 additional checks reject packages that were already inconsistent with their
 own verified payload; no JSON member or CLI JSON response gains a field.
+
+In V5 Alpha 1 Phase 3, **Export Agent Package…** is exposed directly on the
+Designer's `File` menu (`File → Export Agent Package…`), completing the
+canonical `Design/Edit → Export → Inspect → Import` lifecycle. It routes
+directly to `export_agent` with standard Qt file save dialog behavior
+(`.bytefray-agent` extension filter, overwrite confirmation, and clean
+cancellation), packaging the currently selected Python agent without
+modifying source files or inventing new packaging contracts.

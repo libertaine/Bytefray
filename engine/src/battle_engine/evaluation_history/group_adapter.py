@@ -1,5 +1,5 @@
 """Bridges evaluation-history's ``AdaptedCell`` to Phase 3 group-analysis
-refs (``docs/V2_0_BETA2_PHASE3_MULTI_ENTRANT_ANALYSIS.md``).
+refs (``docs/archive/v2/V2_0_BETA2_PHASE3_MULTI_ENTRANT_ANALYSIS.md``).
 
 Deliberately a separate module from ``models.py``/``cli.py``, mirroring
 ``behavior_adapter.py``'s identical precedent exactly: it is the one place

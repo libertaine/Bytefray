@@ -2,23 +2,49 @@
 
 This is a concise policy/reference document, not a duplicate of every
 schema specification: it names the independent compatibility axes Bytefray
-maintains, says what is a stable-candidate contract for the 1.x series
-versus explicitly unsupported/experimental, and gives a worked table for
+maintains, distinguishes supported contracts from historical experiments,
+and gives a worked table for
 deciding which axis a given change actually requires bumping. For the full
 wire-level detail behind each axis, follow the links below rather than
 expecting this document to repeat them.
 
+## Current V5 product boundary
+
+Bytefray `5.0.0` is the current V5 release; its process-agent gameplay
+continues to use permanent `bytefray-rules-4` and Agent API v2. There is no
+production Ruleset 5. Product versions, gameplay identities, Agent API
+versions, and replay/result schemas are independent compatibility axes.
+
+For ordinary CLI matches, an omitted ruleset selects v4 for an API v2
+Python roster, v2 for an API v1 Python roster, and v1 for VM/blob entrants.
+Mixed Python/VM matches and mixed API generations remain unsupported.
+Both V4 alpha identities remain explicitly selectable for historical
+reproduction. Designer Simple offers v2/v4; Advanced, Development, and
+pairwise Evaluation also offer v4 alpha2, v4 alpha1, and v1. Group evaluation
+requires v2. Development and Evaluation name workflows, not different
+gameplay rulesets; V4 evaluation uses the same permanent gameplay with its
+documented seeded-placement methodology.
+
+Recorded replay playback reconstructs stored state without re-executing
+agents. Keeping an identity readable and preserving its interpretation is
+distinct from offering it for new matches; historical execution is also
+retained for agent compatibility, tests, and reproducibility. The complete
+inventory and proposed future presentation are in the
+[Phase 4 audit](research/v5/V5_ALPHA1_MAINTENANCE_PHASE4_RELEASE_SURFACE_AUDIT.md).
+
 ## Stable-candidate contracts for 1.x
 
-The following are candidates for a stable-contract declaration at 1.0 —
-see `docs/ROADMAP.md` for the release criterion this feeds into:
+This section preserves the earlier 1.x contract inventory and its subsequent
+additions. Its milestone terminology is historical; the current V5 boundary
+is above, and the version-specific sections below define retained contracts.
 
 - **Ruleset v1** (`bytefray-rules-1`) — the gameplay semantics described in
   [RULES.md](RULES.md).
 - **Agent API v1** — the Python loading/lifecycle/`Observation`/
   `AgentAction` contract and its frozen deterministic RNG derivation,
   described in [AGENT_API_V1.md](AGENT_API_V1.md).
-- **Result and replay current schemas** — `battle2.result` v1 and
+- **Result and replay current schemas** — `battle2.result` v2 for native
+  results (with v1 retained for historical artifacts and pMARS) and
   `battle2.replay` v3/v4, described in [RESULT_SCHEMA.md](RESULT_SCHEMA.md)
   and [REPLAY_SCHEMA.md](REPLAY_SCHEMA.md).
 - **Evaluation current schema/history behavior** — `bytefray.evaluation`
@@ -173,7 +199,7 @@ BYTEFRAY_RULESET_V2_ID = "bytefray-rules-2"
 defined in `battle_engine.ruleset_policy`, resolved through the same
 fail-closed `resolve_ruleset_policy` seam as every other identity. See
 [RULES_V2.md](RULES_V2.md) for the full Ruleset v2 gameplay contract and
-`docs/V2_0_BETA1_PLAN.md`/`docs/V2_0_RULESET_V2_CANDIDATE.md` for the
+`docs/archive/v2/V2_0_BETA1_PLAN.md`/`docs/archive/v2/V2_0_RULESET_V2_CANDIDATE.md` for the
 evidence behind it.
 
 - **Status: permanent, stable semantic identity** as of `v2.0.0`, promoted

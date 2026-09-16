@@ -31,7 +31,7 @@ explicitly rather than repeating it.
   (`bytefray 1.6.0` from `D:\Projects\BATTLE2`), Python 3.11.9:
   **1474 tests: 1468 passed, 6 skipped, 0 failed, 0 errors** — matching
   the exact `1474 passed, 6 skipped` figure
-  `docs/V1_6_PHASE6_INTEGRATED_QUALIFICATION.md` records as v1.6.0's own
+  `docs/archive/v1/V1_6_PHASE6_INTEGRATED_QUALIFICATION.md` records as v1.6.0's own
   qualification baseline (line 29). `ruff check .`: all checks passed.
   `mypy engine/src/battle_engine`: no issues (65 source files). `mypy
   client/src/battle_client`: no issues (10 source files). This is strong

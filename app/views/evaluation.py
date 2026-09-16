@@ -62,6 +62,7 @@ from app.services.designer_workflows import (
     EvaluationPresentation,
     build_designer_evaluation_plan,
 )
+from app.services.replay_integrity import result_replay_request
 from app.services.ruleset_options import (
     EVALUATION_RULESET_OPTIONS,
     RULESET_DESCRIPTION,
@@ -152,6 +153,7 @@ class EvaluationDialog(QDialog):
             for name in sorted(self._presets):
                 self.presetCombo.addItem(name, name)
             self.presetCombo.currentIndexChanged.connect(self._on_preset_selected)
+            self.presetLabel.setBuddy(self.presetCombo)
             form.addRow(self.presetLabel, self.presetCombo)
         else:
             self.presetLabel = None
@@ -165,6 +167,7 @@ class EvaluationDialog(QDialog):
             if index >= 0:
                 self.candidateCombo.setCurrentIndex(index)
         self.candidateLabel = QLabel("Candidate")
+        self.candidateLabel.setBuddy(self.candidateCombo)
         form.addRow(self.candidateLabel, self.candidateCombo)
 
         self.baselineCombo = QComboBox()
@@ -172,6 +175,7 @@ class EvaluationDialog(QDialog):
         for display, agent_id in self._agents:
             self.baselineCombo.addItem(display, agent_id)
         self.baselineLabel = QLabel("Baseline")
+        self.baselineLabel.setBuddy(self.baselineCombo)
         form.addRow(self.baselineLabel, self.baselineCombo)
 
         # Group evaluation is Ruleset-v2-only by construction, so it shows a
@@ -192,13 +196,15 @@ class EvaluationDialog(QDialog):
         )
         self.pairwiseRulesetCombo.setToolTip(RULESET_DESCRIPTION)
         self.pairwiseRulesetCombo.setAccessibleName("Pairwise evaluation ruleset")
+        self.pairwiseRulesetLabel.setBuddy(self.pairwiseRulesetCombo)
         form.addRow(self.pairwiseRulesetLabel, self.pairwiseRulesetCombo)
 
         layout.addLayout(form)
 
         self.opponentsLabel = QLabel("Opponents (select one or more)")
-        layout.addWidget(self.opponentsLabel)
         self.opponentsList = QListWidget()
+        self.opponentsLabel.setBuddy(self.opponentsList)
+        layout.addWidget(self.opponentsLabel)
         self.opponentsList.setSelectionMode(QAbstractItemView.ExtendedSelection)
         for display, agent_id in self._agents:
             item = QListWidgetItem(display)
@@ -219,6 +225,13 @@ class EvaluationDialog(QDialog):
         self.ticksSpin = QSpinBox()
         self.ticksSpin.setRange(1, 2_147_483_647)
         self.ticksSpin.setValue(200)
+        self.ticksSpin.setToolTip(
+            "Maximum number of simulation ticks before each evaluation cell's "
+            "match ends, subject to the selected Ruleset's win condition. "
+            "The engine itself only requires a positive tick limit (at least "
+            "1) and has no maximum; the field's own upper bound is a "
+            "practical GUI limit, not a gameplay rule."
+        )
         options_row.addRow("Ticks", self.ticksSpin)
         # v3.0 Phase 4: GUI parity for the CLI's `agents evaluate --workers`
         # (docs/V1_6_PHASE2_PARALLEL_EVALUATION.md) -- bounded subprocess
@@ -256,18 +269,22 @@ class EvaluationDialog(QDialog):
         self.previewText = QPlainTextEdit()
         self.previewText.setReadOnly(True)
         self.previewText.setAccessibleName("Authoritative group evaluation matrix preview")
+        self.previewLabel.setBuddy(self.previewText)
         self.previewText.setMaximumHeight(170)
         layout.addWidget(self.previewLabel)
         layout.addWidget(self.previewText)
 
         output_row = QHBoxLayout()
         self.outputEdit = QLineEdit(str(default_output))
-        choose = QPushButton("Choose…")
-        choose.clicked.connect(self._choose_output)
+        self.chooseOutputButton = QPushButton("Choose…")
+        self.chooseOutputButton.setAccessibleName("Choose evaluation output folder")
+        self.chooseOutputButton.clicked.connect(self._choose_output)
         output_row.addWidget(self.outputEdit, 1)
-        output_row.addWidget(choose)
+        output_row.addWidget(self.chooseOutputButton)
         form2 = QFormLayout()
-        form2.addRow("Output", output_row)
+        self.outputLabel = QLabel("Output")
+        self.outputLabel.setBuddy(self.outputEdit)
+        form2.addRow(self.outputLabel, output_row)
         layout.addLayout(form2)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -697,7 +714,7 @@ class EvaluationResultsDialog(QDialog):
 
     # subject_id, opponent_id, seed, ticks, orientation
     testInAgentLabRequested = Signal(str, str, int, int, str)
-    openReplayRequested = Signal(Path)
+    openReplayRequested = Signal(object)
 
     def __init__(self, presentation: EvaluationPresentation, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -760,6 +777,7 @@ class EvaluationResultsDialog(QDialog):
         visual_panel = _build_visual_evidence_panel(presentation)
         if visual_panel is not None:
             scroll = QScrollArea()
+            scroll.setAccessibleName("Evaluation metric visuals")
             scroll.setWidget(visual_panel)
             scroll.setWidgetResizable(True)
             scroll.setMaximumHeight(280)
@@ -767,6 +785,7 @@ class EvaluationResultsDialog(QDialog):
 
         layout.addWidget(QLabel("Cells" if not presentation.comparison else "Comparison"))
         self.resultsList = QListWidget()
+        self.resultsList.setAccessibleName("Evaluation results")
         show_orientation = presentation.orientation_mode == ORIENTATION_MODE_BOTH
         if presentation.comparison:
             for entry in presentation.comparison:
@@ -802,6 +821,7 @@ class EvaluationResultsDialog(QDialog):
 
         self.detailText = QPlainTextEdit()
         self.detailText.setReadOnly(True)
+        self.detailText.setAccessibleName("Selected evaluation result details")
         layout.addWidget(self.detailText, 1)
 
         actions = QHBoxLayout()
@@ -922,7 +942,14 @@ class EvaluationResultsDialog(QDialog):
         cell = self._candidate_cell(payload)
         if cell is None:
             return
-        self.openReplayRequested.emit(cell.artifact_dir / "replay.jsonl")
+        self.openReplayRequested.emit(
+            result_replay_request(
+                cell.artifact_dir / "result.json",
+                artifact_root=self._presentation.state_path.parent,
+                expected_result_id=cell.result_id,
+                expected_match_id=cell.match_id,
+            )
+        )
 
 
 __all__ = ["EvaluationDialog", "EvaluationResultsDialog"]

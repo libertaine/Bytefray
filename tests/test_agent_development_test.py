@@ -18,6 +18,7 @@ the real, slower ``bytefray agents test`` subprocess for every case.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sys
@@ -56,7 +57,22 @@ def _write_result_and_replay(run_dir: Path, *, winner: str, termination_reason: 
     run_dir.mkdir(parents=True, exist_ok=True)
     result_path = run_dir / "result.json"
     replay_path = run_dir / "replay.jsonl"
-    replay_path.write_text("{}\n", encoding="utf-8")
+    replay_path.write_text(
+        json.dumps(
+            {
+                "schema": "battle2.replay",
+                "schema_version": 4,
+                "record_type": "header",
+                "config": {"arena_size": 64},
+                "replay_id": "replay_1",
+                "match_id": "match_1",
+                "result_id": "result_1",
+                "ruleset_id": None,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     result_path.write_text(
         json.dumps(
             {
@@ -68,7 +84,11 @@ def _write_result_and_replay(run_dir: Path, *, winner: str, termination_reason: 
                 "winner": winner,
                 "termination_reason": termination_reason,
                 "ticks": 117,
-                "replay": {"replay_id": "replay_1", "sha256": "abc", "filename": "replay.jsonl"},
+                "replay": {
+                    "replay_id": "replay_1",
+                    "sha256": hashlib.sha256(replay_path.read_bytes()).hexdigest(),
+                    "filename": "replay.jsonl",
+                },
             }
         ),
         encoding="utf-8",
@@ -1225,6 +1245,57 @@ def test_open_test_replay_noop_when_no_replay_available(monkeypatch, tmp_path):
         )
         designer._on_open_test_replay()
         assert captured == []
+    finally:
+        designer.deleteLater()
+
+
+@pytest.mark.gui
+@pytest.mark.parametrize("change", ["delete", "modify"])
+def test_open_test_replay_rechecks_artifacts_at_click(monkeypatch, tmp_path, change):
+    _make_app()
+    data_root = tmp_path / "data"
+    monkeypatch.setenv("BYTEFRAY_ROOT", str(data_root))
+    from app.agent_designer import AgentDesigner
+    from app.services.agent_workflows import DevelopmentTestPresentation
+    from app.services.designer_workflows import read_match_presentation
+
+    designer = AgentDesigner()
+    try:
+        result_path, replay_path = _write_result_and_replay(
+            tmp_path / "run",
+            winner="replay_agent",
+            termination_reason="last_agent_standing",
+        )
+        designer.development.show_test_result(
+            DevelopmentTestPresentation(
+                agent_id="replay_agent",
+                outcome="completed",
+                match=read_match_presentation(result_path),
+            )
+        )
+        assert designer.development.btnOpenTestReplay.isEnabled()
+        if change == "delete":
+            replay_path.unlink()
+        else:
+            replay_path.write_bytes(replay_path.read_bytes() + b"\n")
+
+        warnings = []
+        monkeypatch.setattr(
+            "app.agent_designer.QMessageBox.warning",
+            staticmethod(lambda *args, **_kwargs: warnings.append(args)),
+        )
+        launched = []
+        monkeypatch.setattr(
+            "app.agent_designer.open_pygame_client_direct",
+            lambda root, path: launched.append((root, path)),
+        )
+
+        designer._on_open_test_replay()
+
+        assert launched == []
+        assert len(warnings) == 1
+        expected_title = "Replay Unavailable" if change == "delete" else "Replay Changed"
+        assert warnings[0][1] == expected_title
     finally:
         designer.deleteLater()
 

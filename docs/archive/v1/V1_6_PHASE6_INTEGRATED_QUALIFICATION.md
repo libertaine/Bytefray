@@ -7,7 +7,7 @@ statistical analysis, behavior-profile analytics) working together across
 source, packaged, Windows, Linux, CLI, Designer, resume/history, and
 meaningful large-scale workloads. This phase adds no new features; it
 qualifies Phases 0-5, documented in `docs/V1_6_PHASE1_EVALUATION_SCALE_
-BASELINE.md` through `docs/V1_6_PHASE5_BEHAVIOR_ANALYSIS.md`, which are the
+BASELINE.md` through `docs/archive/v1/V1_6_PHASE5_BEHAVIOR_ANALYSIS.md`, which are the
 authoritative record of intended v1.6 behavior and are cited, not
 re-derived, throughout this document.
 
@@ -725,7 +725,7 @@ explicitly instructs recording (not expanding scope to fix) such items.
 
 **None in the production source tree.** This qualification pass found no
 defect requiring a code fix (§22-§23); the only new file is this
-document itself, `docs/V1_6_PHASE6_INTEGRATED_QUALIFICATION.md`.
+document itself, `docs/archive/v1/V1_6_PHASE6_INTEGRATED_QUALIFICATION.md`.
 
 ## 26. Phase 6 commit(s)
 

@@ -1,5 +1,5 @@
 """Phase 5 behavior-profile analysis over already-authoritative evaluation
-data (``docs/V1_6_PHASE5_BEHAVIOR_ANALYSIS.md``).
+data (``docs/archive/v1/V1_6_PHASE5_BEHAVIOR_ANALYSIS.md``).
 
 Sibling of ``evaluation_analysis.py`` (Phase 4), not a replacement or an
 extension of it: Phase 4 answers "did the candidate do better," measured

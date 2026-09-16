@@ -34,6 +34,7 @@ from battle_engine.result_model import (
     read_result,
     stable_id,
     verify_replay_digest,
+    verify_replay_digest_value,
     verify_result_replay,
 )
 from battle_engine.vm import VM
@@ -308,6 +309,67 @@ def _run_simple_match(tmp_path):
     return result
 
 
+def test_identical_native_runs_get_distinct_occurrences_without_identity_changes(
+    tmp_path, monkeypatch
+):
+    occurrence_ids = iter(
+        (
+            "12345678-1234-4abc-8def-1234567890ab",
+            "87654321-4321-4cba-9fed-ba0987654321",
+        )
+    )
+    completion_times = iter(
+        (
+            "2026-09-11T19:42:31.123456Z",
+            "2026-09-11T19:42:32.123456Z",
+        )
+    )
+
+    class ProductInfo:
+        version = "5.0.0-test"
+
+    monkeypatch.setattr(
+        "battle_engine.match_service.generate_occurrence_id",
+        lambda: next(occurrence_ids),
+    )
+    monkeypatch.setattr(
+        "battle_engine.match_service.utc_completed_at",
+        lambda: next(completion_times),
+    )
+    monkeypatch.setattr(
+        "battle_engine.match_service.get_project_info", lambda: ProductInfo()
+    )
+
+    first = _run_simple_match(tmp_path / "first")
+    second = _run_simple_match(tmp_path / "second")
+    first_envelope = read_result(first.result_path)
+    second_envelope = read_result(second.result_path)
+
+    assert first_envelope.schema_version == second_envelope.schema_version == 2
+    assert first.match_id == second.match_id
+    assert first.result_id == second.result_id
+    assert first.replay_sha256 == second.replay_sha256
+    assert first.winner == second.winner
+    assert first.score == second.score
+    assert first.ticks_run == second.ticks_run
+    assert first_envelope.occurrence_id == "12345678-1234-4abc-8def-1234567890ab"
+    assert second_envelope.occurrence_id == "87654321-4321-4cba-9fed-ba0987654321"
+    assert first_envelope.completed_at == "2026-09-11T19:42:31.123456Z"
+    assert second_envelope.completed_at == "2026-09-11T19:42:32.123456Z"
+    assert first_envelope.product_version == second_envelope.product_version == (
+        "5.0.0-test"
+    )
+
+    # Occurrence metadata belongs exclusively to result.json. Identical
+    # executions retain byte-identical replay serialization and replay IDs.
+    assert first.replay_path.read_bytes() == second.replay_path.read_bytes()
+    for line in first.replay_path.read_text(encoding="utf-8").splitlines():
+        record = json.loads(line)
+        assert "occurrence_id" not in record
+        assert "completed_at" not in record
+        assert "product_version" not in record
+
+
 def test_verify_replay_digest_accepts_the_original_file(tmp_path):
     result = _run_simple_match(tmp_path)
     envelope = read_result(result.result_path)
@@ -346,6 +408,39 @@ def test_verify_replay_digest_reports_missing_file(tmp_path):
 
     with pytest.raises(ReplayIntegrityError) as excinfo:
         verify_replay_digest(envelope, result.replay_path)
+    assert excinfo.value.code == "replay_file_missing"
+
+
+def test_verify_replay_digest_value_accepts_the_original_file(tmp_path):
+    """The Phase 7D helper factored out of ``verify_replay_digest`` (Replay
+    History's ``resolve_replay`` hands back only the expected digest string,
+    never a full ``ResultEnvelope``, so this is the entry point it needs)."""
+
+    result = _run_simple_match(tmp_path)
+    envelope = read_result(result.result_path)
+    digest = verify_replay_digest_value(envelope.replay.sha256, result.replay_path)
+    assert digest == envelope.replay.sha256
+    # verify_replay_digest itself now delegates to this helper; same result.
+    assert verify_replay_digest(envelope, result.replay_path) == digest
+
+
+def test_verify_replay_digest_value_detects_mismatch(tmp_path):
+    result = _run_simple_match(tmp_path)
+    envelope = read_result(result.result_path)
+    result.replay_path.write_bytes(result.replay_path.read_bytes() + b'{"tampered":true}\n')
+
+    with pytest.raises(ReplayIntegrityError) as excinfo:
+        verify_replay_digest_value(envelope.replay.sha256, result.replay_path)
+    assert excinfo.value.code == "replay_digest_mismatch"
+
+
+def test_verify_replay_digest_value_reports_missing_file(tmp_path):
+    result = _run_simple_match(tmp_path)
+    envelope = read_result(result.result_path)
+    result.replay_path.unlink()
+
+    with pytest.raises(ReplayIntegrityError) as excinfo:
+        verify_replay_digest_value(envelope.replay.sha256, result.replay_path)
     assert excinfo.value.code == "replay_file_missing"
 
 

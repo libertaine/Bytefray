@@ -29,7 +29,7 @@ from battle_engine.evaluation_behavior import (
     largest_bounded_differences,
     load_cell_behavior_sample,
 )
-from battle_engine.result_model import SCHEMA_NAME, SCHEMA_VERSION, write_json_atomic
+from battle_engine.result_model import SCHEMA_NAME, SCHEMA_VERSION_V1, write_json_atomic
 
 CANDIDATE = "candidate"
 BASELINE = "baseline"
@@ -107,7 +107,7 @@ def _write_result_json(
         )
     payload = {
         "schema": SCHEMA_NAME,
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": SCHEMA_VERSION_V1,
         "result_id": "result_x",
         "match_id": "match_x",
         "mode": "b2",

@@ -2,6 +2,132 @@
 
 This changelog records notable user- and developer-visible changes to Bytefray.
 
+## [5.0.0] - 2026-09-15
+
+### Bytefray v5.0 — final release
+
+Bytefray 5.0 promotes the qualified `5.0.0-rc1` candidate to the stable 5.0
+line. No gameplay, Agent API, or wire-schema change has been made since RC1
+— this release finalizes the agent-authoring, parameterization, and desktop
+experience atop the immutable `bytefray-rules-4` gameplay core and Agent API
+v2.
+
+* **Process-share validation repair.** Agent API v2 process-share declaration
+  validation previously accepted some floating-point share totals that
+  Ruleset-v4 construction then rejected under a stricter exact-rational
+  check, which could surface as a false `agent_process_declaration_invalid`
+  rejection for otherwise-valid multi-process declarations (including
+  bundled `v5_dual_team` parameterizations). Accepted shares are now
+  converted into an exact normalized rational partition before scheduling,
+  so validation and construction agree. Found during adversarial RC1
+  review; see
+  [`docs/research/v5/V5_RC1_PROCESS_SHARE_REMEDIATION.md`](docs/research/v5/V5_RC1_PROCESS_SHARE_REMEDIATION.md).
+* **Replay History Subsystem:** Global Replay History dialog (`History → Replay History…`)
+  with automatic discovery of recorded match and evaluation replays, result occurrence
+  indexing, real-time filtering/search, and seamless Replay Viewer launch.
+* **Complete Tournament UX Workflow:** End-to-end Configure → Run Tournament →
+  See Results → Browse Matches → View Replay loop in Agent Designer, with atomic
+  `tournament.json` checkpoints, full standings display, and per-match result and
+  replay inspection.
+* **Unified Result-Backed Replay Integrity Preflight:** Simple/Advanced last-match,
+  Development, Tournament Results/History, Replay History, and Evaluation
+  Results/History reread their authoritative result association and verify SHA-256
+  digests at click time.
+* **Standard Desktop Accessibility Baseline:** Full keyboard navigation across all
+  Designer workspaces and modal dialogs, programmatic label-buddy associations,
+  informative accessible names and descriptions, visible keyboard focus styling,
+  and dual keyboard/mouse activation for all result and history tables.
+* **Application Menu Organization:** Restructured Designer menu bar adhering to
+  standard desktop conventions (`File`, `Agent`, `Match`, `Tournament`, `History`,
+  `Tools`, `Help`) with clean separation of operational actions and historical viewers.
+* **Hardened Parameter Consistency:** Unified parameter resolution, CLI overrides,
+  and preset inheritance across direct CLI runs, tournament matches, and GUI panels.
+
+## [5.0.0-rc1] - 2026-09-14
+
+### Bytefray v5.0 — release candidate 1
+
+The first **release candidate** for Bytefray v5.0. Bytefray 5 stabilizes the
+agent-authoring, parameterization, and desktop experience atop the immutable
+`bytefray-rules-4` gameplay core and Agent API v2. RC1 consolidates the post-Alpha 1
+remediation phases (tournament UX completion, unified replay integrity, replay
+history discovery and viewer integration, standard accessibility baseline, application
+menu reorganization, and starter agent refresh hygiene) into a unified, release-ready
+desktop and headless product.
+
+* **Replay History Subsystem:** Global Replay History dialog (`History → Replay History…`)
+  with automatic discovery of recorded match and evaluation replays, result occurrence
+  indexing, real-time filtering/search, and seamless Replay Viewer launch.
+* **Complete Tournament UX Workflow:** End-to-end Configure → Run Tournament →
+  See Results → Browse Matches → View Replay loop in Agent Designer. Includes atomic
+  `tournament.json` checkpoints, full standings display, and per-match result and
+  replay inspection.
+* **Unified Result-Backed Replay Integrity Preflight:** Simple/Advanced last-match,
+  Development, Tournament Results/History, Replay History, and Evaluation
+  Results/History reread their authoritative result association and verify SHA-256
+  digests at click time. Standalone replay-file pickers remain available for
+  replay-only and historical files that have no parent result.
+* **RC1 Tournament Resume Integrity:** A completed checkpoint whose canonical
+  result is missing or invalid is now recorded as corrupted and remains terminal;
+  only explicit `--retry-failed` authorization can execute it again.
+* **Standard Desktop Accessibility Baseline:** Full keyboard navigation across all
+  Designer workspaces (Simple, Advanced, Development) and modal dialogs; programmatic
+  label-buddy associations (`QLabel.setBuddy`); informative accessible names and
+  descriptions; visible keyboard focus styling; and dual keyboard (`Return`/`Enter`)
+  and mouse activation for all result and history tables.
+* **Application Menu Organization:** Restructured Designer menu bar adhering to
+  standard desktop conventions (`File`, `Agent`, `Match`, `Tournament`, `History`,
+  `Tools`, `Help`) with clean separation of operational actions and historical viewers.
+* **Designer Ruleset Default Cleanliness:** Fresh Designer sessions default cleanly
+  to stable `bytefray-rules-4` across Simple, Advanced, and Development panels,
+  matching CLI defaults and Agent API v2 starter requirements.
+* **Agent Package Export Workflow:** Interactive agent package export from Designer
+  with metadata validation and cross-platform zip export.
+* **Replay Terminal Outcome Presentation:** Always-on terminal winner/draw HUD
+  banner in the Pygame replay visualizer upon match completion.
+* **Hardened Parameter Consistency:** Unified parameter resolution, CLI overrides,
+  and preset inheritance across direct CLI runs, tournament matches, and GUI panels.
+* **Release Qualification Hardening:** Fresh-root PowerShell smoke tests install and
+  discover the bundled starter catalog in an isolated data root. Wheel validation
+  now requires every supported scaffold family, runtime branding, exact console
+  entry-point targets, and consistent distribution version metadata.
+
+## [5.0.0a1] - 2026-09-10
+
+### V5 Alpha 1 — agent authoring and Designer workflows
+
+Published as `b5.0.0-alpha1` from
+`28a10b8f8fd47bf32ec9281dcc21b0645276962c`. V5 continues to use permanent
+`bytefray-rules-4` gameplay and Agent API v2; no Ruleset 5 was introduced.
+
+* **Four educational API v2 starters:** `v5_region_attacker`,
+  `v5_scout_striker`, `v5_core_defender`, and `v5_dual_team`, demonstrating
+  region attacks, remembered contacts, observed defense, and process teams.
+  Existing V4 and historical starters remain available.
+* **Agent parameter schemas and presets.** API v2 manifests can declare
+  typed parameters, bounds, defaults, and named presets. Direct matches
+  resolve defaults, then a selected preset, then explicit overrides, and
+  record the effective parameters in match artifacts.
+* **Designer parameter controls.** Advanced's Agent Params generates controls
+  from the selected agent's schema, with preset selection, effective-value
+  feedback, validation, and Reset to Defaults. Results display effective
+  parameters; agents without schemas retain the existing free-form field.
+* **Randomize Seed** in Advanced and the Development test panel writes a
+  visible, reusable seed without changing match seed semantics.
+* **Starter refresh on upgrade** updates recognized, unedited older bundled
+  starters while preserving customized copies and reporting them to users.
+* **Frozen packaging fixes** include both API generations' blank/annotated
+  scaffold resources and exclude Python bytecode/cache debris. The release
+  includes a wheel, sdist, four Windows executable assets, and the Windows
+  installer; no frozen Linux archive was published for this Alpha 1.
+
+Release and qualification evidence:
+[publication record](docs/research/v5/V5_ALPHA1_PHASE_F_FINAL_QUALIFICATION.md#publication-addendum--2026-09-10-utc).
+Replay History was deferred. Spectator features inherited from V4 are not
+new Alpha 1 features. Subsequent parameter-consistency fixes, core-capture
+presentation changes, and maintenance Phases 0–4 on `v5-research` are
+post-release work and are not included in this published tag's feature list.
+
 ## [4.0.0] - 2026-09-08
 
 ### Spatial Multi-Process Platform & Spectator Intelligence
@@ -272,9 +398,9 @@ Agent API v2 observation contract (visible anchors, plus `READ` search using
 historical `hydra` and `Nemesis` are unchanged.
 
 See [docs/V4_ALPHA2_DESIGN.md](docs/V4_ALPHA2_DESIGN.md) for the full contract,
-[docs/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md](docs/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md)
+[docs/archive/v4/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md](docs/archive/v4/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md)
 for the evidence, and
-[docs/V4_ALPHA2_PHASE5_QUALIFICATION.md](docs/V4_ALPHA2_PHASE5_QUALIFICATION.md)
+[docs/archive/v4/V4_ALPHA2_PHASE5_QUALIFICATION.md](docs/archive/v4/V4_ALPHA2_PHASE5_QUALIFICATION.md)
 for the release qualification record.
 
 ## [4.0.0-alpha1] - 2026-08-31
@@ -1098,7 +1224,7 @@ package schema, evaluation methodology, or gameplay behavior.
   statistics, ownership/memory fingerprints, and normalized canonical replay
   content remain unchanged.
 - Added a reproducible non-CI scaling benchmark and recorded before/after and
-  replay measurements in `docs/performance/V1_4_SCALING.md`. Current backward
+  replay measurements in `docs/archive/v1/V1_4_SCALING.md`. Current backward
   seek performance did not justify checkpoint/index complexity.
 - Qualified existing homogeneous three-entrant VM/Python execution without
   changing pairwise tournament/evaluation methodology or gameplay semantics.

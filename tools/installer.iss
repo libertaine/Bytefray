@@ -2,7 +2,7 @@
 ;   ISCC.exe tools\installer.iss
 
 #define AppName "Bytefray"
-#define AppVersion "4.0.0"
+#define AppVersion "5.0.0"
 ; Release-artifact filenames use the hyphenated tag spelling (matching the
 ; "v4.0.0" Git tag/GitHub release name) while AppVersion keeps the PEP 440
 ; spelling used by the Python package/CLI. Both spellings are identical for
@@ -10,7 +10,7 @@
 ; than folded back into AppVersion) so the same pattern continues to work
 ; unchanged for a future pre-release identity. See docs/ROADMAP.md and
 ; CHANGELOG.md for context.
-#define ReleaseTag "4.0.0"
+#define ReleaseTag "5.0.0"
 #define AppPublisher "Bytefray Project"
 #define DistRoot "..\dist\windows"
 #define OutputRoot "..\dist\installer"
@@ -47,10 +47,19 @@ Name: "desktopicons"; Description: "Create desktop shortcuts"; GroupDescription:
 [Dirs]
 ; This is writable shared application data, not a bundled-resource directory.
 ; /BYTEFRAYDATAROOT=... is supported for isolated validation installations.
+; No "\replays" entry: no runtime code has ever written there (replays live
+; under "runs\_loose"/"runs\_designer" -- see canonical_replay_directory in
+; engine/src/battle_engine/paths.py); it was always created empty and never
+; used (V5 Alpha 1 Maintenance Phase 2, dead installer handling cleanup).
+; No "\logs" entry either, for the same reason (V5 Alpha 1 Maintenance
+; Phase 3): the installed product writes no persistent log file anywhere --
+; this directory's only consumer was tools/smoke_after_install.ps1's own
+; release-validation diagnostics, which now default to the process
+; temporary directory instead of the installed data root (see that script's
+; -LogDir parameter). It was always created empty and never written to by
+; any runtime code.
 Name: "{code:GetDataRoot}"; Permissions: users-modify
 Name: "{code:GetDataRoot}\agents"
-Name: "{code:GetDataRoot}\replays"
-Name: "{code:GetDataRoot}\logs"
 Name: "{code:GetDataRoot}\runs\_loose"
 
 [Files]

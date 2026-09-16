@@ -241,7 +241,7 @@ class TournamentService:
             previous = prior_matches.get(item.schedule_id)
             result_path = item.artifact_dir / "result.json"
             replay_path = item.artifact_dir / "replay.jsonl"
-            if previous and previous.get("status") == "completed" and result_path.is_file():
+            if previous and previous.get("status") == "completed":
                 scheduled_request = MatchRequest(
                     config=replace(request.config, seed=item.seed),
                     entrants=entrants,
@@ -252,13 +252,17 @@ class TournamentService:
                 )
                 mismatch: str | None
                 try:
-                    envelope = read_result(result_path)
-                    mismatch = _resumed_result_mismatch(
-                        envelope,
-                        item,
-                        replay_path,
-                        canonical_match_id(scheduled_request),
-                    )
+                    if not result_path.is_file():
+                        envelope = None
+                        mismatch = "result.json is not present"
+                    else:
+                        envelope = read_result(result_path)
+                        mismatch = _resumed_result_mismatch(
+                            envelope,
+                            item,
+                            replay_path,
+                            canonical_match_id(scheduled_request),
+                        )
                 except (OSError, ValueError, KeyError) as exc:
                     envelope = None
                     mismatch = f"result.json could not be read: {exc}"
@@ -454,6 +458,14 @@ class TournamentService:
                 first.code,
                 first.kind,
                 first.python_spec,
+                # V5 Alpha 1 Post-Release Hardening H1 (FIND-01 sibling):
+                # re-placement must carry the entrant's already-resolved
+                # parameters forward, or every seeded-placement Ruleset
+                # (which includes the permanent, default bytefray-rules-4)
+                # would silently re-derive it back to {} here, undoing
+                # tournament_cli's own resolution before the match ever
+                # runs.
+                first.parameters,
             ),
             MatchEntrant(
                 second.agent_id,
@@ -462,6 +474,7 @@ class TournamentService:
                 second.code,
                 second.kind,
                 second.python_spec,
+                second.parameters,
             ),
         )
 

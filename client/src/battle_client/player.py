@@ -27,6 +27,8 @@ from __future__ import annotations
 
 import bisect
 from collections.abc import Iterable
+from dataclasses import dataclass
+from enum import Enum
 from typing import Any
 
 from battle_engine.replay import ReplayRecord
@@ -80,6 +82,43 @@ DEFAULT_SPEED_INDEX = SPEEDS.index(1.0)
 DEFAULT_TICK_INTERVAL = 0.05  # seconds per tick at 1x, if the caller supplies none
 
 
+class PlaybackMovementKind(str, Enum):
+    """Why the replay cursor moved between rendered frames."""
+
+    AUTOMATIC = "automatic"
+    STEP_FORWARD = "step_forward"
+    STEP_BACKWARD = "step_backward"
+    SEEK_FORWARD = "seek_forward"
+    SEEK_BACKWARD = "seek_backward"
+    RESTART = "restart"
+    JUMP_TO_END = "jump_to_end"
+
+
+@dataclass(frozen=True)
+class PlaybackMovement:
+    """One explicit cursor movement reported to presentation consumers.
+
+    ``crossed_ticks`` contains every recorded tick actually traversed by
+    continuous forward playback. It is intentionally empty for seeks and
+    other discontinuous navigation: their destination is still available as
+    ``to_tick``, but they did not *play through* the intervening ticks.
+    """
+
+    kind: PlaybackMovementKind
+    from_tick: int
+    to_tick: int
+    crossed_ticks: tuple[int, ...] = ()
+
+    @property
+    def presents_forward_events(self) -> bool:
+        """Whether transient event presentation may use ``crossed_ticks``."""
+
+        return self.kind in {
+            PlaybackMovementKind.AUTOMATIC,
+            PlaybackMovementKind.STEP_FORWARD,
+        }
+
+
 class PlaybackController:
     """Play/pause/speed/navigation over a loaded ``ReplaySession``.
 
@@ -111,6 +150,7 @@ class PlaybackController:
         self.playing = playing and not session.at_end
         self._speed_index = DEFAULT_SPEED_INDEX
         self._accumulated = 0.0
+        self._pending_movements: list[PlaybackMovement] = []
 
     @property
     def speed(self) -> float:
@@ -127,7 +167,9 @@ class PlaybackController:
         own without a ``play()`` call.
         """
         if self.session.at_end:
+            source_tick = self.session.current_tick
             self.session.restart()
+            self._record_movement(PlaybackMovementKind.RESTART, source_tick)
         self.playing = True
         self._accumulated = 0.0
 
@@ -164,18 +206,45 @@ class PlaybackController:
         """Advance exactly one recorded tick. A safe no-op at the final tick."""
         self.pause()
         self._accumulated = 0.0
+        source_tick = self.session.current_tick
         if self.session.at_end:
             return self.session.current_state
-        return self.session.step_forward()
+        state = self.session.step_forward()
+        self._record_movement(
+            PlaybackMovementKind.STEP_FORWARD,
+            source_tick,
+            crossed_ticks=(state.tick,),
+        )
+        return state
 
     def step_backward(self) -> ReplayState:
         """Move to the previous recorded tick. A safe no-op at the first tick."""
         self.pause()
         self._accumulated = 0.0
+        source_tick = self.session.current_tick
         target = self._adjacent_recorded_tick(-1)
         if target is None:
             return self.session.current_state
-        return self.session.seek(target)
+        state = self.session.seek(target)
+        self._record_movement(PlaybackMovementKind.STEP_BACKWARD, source_tick)
+        return state
+
+    def seek_to(self, tick: int) -> ReplayState:
+        """Seek to one exact recorded tick and report discontinuous movement."""
+
+        self.pause()
+        self._accumulated = 0.0
+        source_tick = self.session.current_tick
+        if tick == source_tick:
+            return self.session.current_state
+        state = self.session.seek(tick)
+        kind = (
+            PlaybackMovementKind.SEEK_BACKWARD
+            if tick < source_tick
+            else PlaybackMovementKind.SEEK_FORWARD
+        )
+        self._record_movement(kind, source_tick)
+        return state
 
     def seek_relative(self, delta: int) -> ReplayState:
         """Seek by roughly ``delta`` ticks (negative for backward).
@@ -188,22 +257,26 @@ class PlaybackController:
         self.pause()
         self._accumulated = 0.0
         target = self._nearest_recorded_tick(self.session.current_tick + delta, delta)
-        if target == self.session.current_tick:
-            return self.session.current_state
-        return self.session.seek(target)
+        return self.seek_to(target)
 
     def restart(self) -> ReplayState:
         self.pause()
         self._accumulated = 0.0
-        return self.session.restart()
+        source_tick = self.session.current_tick
+        state = self.session.restart()
+        self._record_movement(PlaybackMovementKind.RESTART, source_tick)
+        return state
 
     def jump_to_end(self) -> ReplayState:
         self.pause()
         self._accumulated = 0.0
+        source_tick = self.session.current_tick
         final = self.session.final_tick
         if final is None:
             return self.session.current_state
-        return self.session.seek(final)
+        state = self.session.seek(final)
+        self._record_movement(PlaybackMovementKind.JUMP_TO_END, source_tick)
+        return state
 
     # ---------- frame-driven auto-advance ----------
 
@@ -217,14 +290,29 @@ class PlaybackController:
         """
         if not self.playing or self.session.at_end:
             return
+        source_tick = self.session.current_tick
+        crossed_ticks: list[int] = []
         self._accumulated += max(0.0, elapsed_seconds) * self.speed
         interval = self.tick_interval
         while self._accumulated >= interval and not self.session.at_end:
             self._accumulated -= interval
-            self.session.step_forward()
+            crossed_ticks.append(self.session.step_forward().tick)
+        if crossed_ticks:
+            self._record_movement(
+                PlaybackMovementKind.AUTOMATIC,
+                source_tick,
+                crossed_ticks=tuple(crossed_ticks),
+            )
         if self.session.at_end:
             self.playing = False
             self._accumulated = 0.0
+
+    def consume_movements(self) -> tuple[PlaybackMovement, ...]:
+        """Return and clear cursor movements recorded since the last call."""
+
+        movements = tuple(self._pending_movements)
+        self._pending_movements.clear()
+        return movements
 
     def reset_accumulator(self) -> None:
         """Discard any partially-accumulated tick-advance time.
@@ -241,6 +329,22 @@ class PlaybackController:
         self._accumulated = 0.0
 
     # ---------- internals: recorded-tick-aware navigation ----------
+
+    def _record_movement(
+        self,
+        kind: PlaybackMovementKind,
+        source_tick: int,
+        *,
+        crossed_ticks: tuple[int, ...] = (),
+    ) -> None:
+        self._pending_movements.append(
+            PlaybackMovement(
+                kind=kind,
+                from_tick=source_tick,
+                to_tick=self.session.current_tick,
+                crossed_ticks=crossed_ticks,
+            )
+        )
 
     def _adjacent_recorded_tick(self, direction: int) -> int | None:
         """The previous (``direction < 0``) or next (``direction > 0``)

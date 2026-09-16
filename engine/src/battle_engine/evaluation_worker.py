@@ -1,7 +1,7 @@
 """Whole-process-lifetime worker subprocess for parallel evaluation-cell execution.
 
-v1.6 Phase 2 (see ``docs/V1_6_PHASE2_PARALLEL_EVALUATION.md`` and the Phase
-0-1 baseline it builds on, ``docs/V1_6_PHASE1_EVALUATION_SCALE_BASELINE.md``
+v1.6 Phase 2 (see ``docs/archive/v1/V1_6_PHASE2_PARALLEL_EVALUATION.md`` and the Phase
+0-1 baseline it builds on, ``docs/archive/v1/V1_6_PHASE1_EVALUATION_SCALE_BASELINE.md``
 Sec 4/Sec 7). Reuses the exact subprocess-worker pattern already proven by
 :mod:`battle_engine.agent_worker` -- spawn-safe, argument-list-only, frozen-
 or-source command resolution via :func:`battle_engine.launchers.

@@ -430,7 +430,7 @@ No pre-existing test's outcome changed.
   termination-check lifecycle-order test.
 - `engine/tests/test_native_match_service.py` -- new direct VM
   `termination_reason` coverage.
-- `docs/V1_5_PHASE4_TERMINATION_POLICY.md` (new, this document).
+- `docs/archive/v1/V1_5_PHASE4_TERMINATION_POLICY.md` (new, this document).
 - `docs/ROADMAP.md` -- v1.5 section updated with Phase 4 status.
 
 ## Architectural debt intentionally left

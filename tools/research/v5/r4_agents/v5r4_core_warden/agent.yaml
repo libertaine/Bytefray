@@ -1,0 +1,9 @@
+{
+  "name": "v5r4_core_warden",
+  "display": "V5 R4 Core Warden (research only)",
+  "description": "RESEARCH ONLY -- V5 Phase R4 competence-controlled research population, archetype C (objective-capable defender). Not a starter, not a shipped example, not a bundled agent.",
+  "kind": "python",
+  "api_version": 2,
+  "entrypoint": "agent.py:create_agent",
+  "version": "1.0.0"
+}

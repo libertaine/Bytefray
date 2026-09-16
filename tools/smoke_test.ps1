@@ -40,9 +40,8 @@ function Get-Python {
   # 2) Local .venv
   $py = Join-Path $RepoRoot '.venv\Scripts\python.exe'
   if (Test-Path $py) { return (Resolve-Path $py).Path }
-  # 3) Fallback to PATH
-  $py = (Get-Command python -ErrorAction SilentlyContinue)?.Source
-  if ($py) { return $py }
+  $cmd = Get-Command python -ErrorAction SilentlyContinue
+  if ($cmd) { return $cmd.Source }
   throw "Python executable not found. Create venv:  python -m venv .venv"
 }
 
@@ -51,13 +50,14 @@ function Ensure-Env {
   $engine = (Resolve-Path (Join-Path $RepoRoot 'engine\src')).Path
   $client = (Resolve-Path (Join-Path $RepoRoot 'client\src')).Path
   $env:PYTHONPATH = "$engine;$client"
-  if (-not $env:BYTEFRAY_AGENTS_DIR) {
-    $agents = Join-Path $RepoRoot 'agents'
-    if (Test-Path $agents) { $env:BYTEFRAY_AGENTS_DIR = (Resolve-Path $agents).Path }
+  if (-not $env:BYTEFRAY_ROOT) {
+    $smokeRoot = Join-Path $RepoRoot ('.pytest-tmp\smoke-test-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $smokeRoot -Force | Out-Null
+    $env:BYTEFRAY_ROOT = (Resolve-Path $smokeRoot).Path
   }
   Write-Info "Repo root: $RepoRoot"
   Write-Info "PYTHONPATH = $($env:PYTHONPATH)"
-  if ($env:BYTEFRAY_AGENTS_DIR) { Write-Info "BYTEFRAY_AGENTS_DIR = $($env:BYTEFRAY_AGENTS_DIR)" }
+  Write-Info "BYTEFRAY_ROOT = $($env:BYTEFRAY_ROOT)"
 }
 
 function Invoke-PyCode {
@@ -88,11 +88,11 @@ Ensure-Env -RepoRoot $repo
 # 1) Import sanity: battle_engine and client renderer
 Write-Info "Check: module imports"
 Invoke-PyCode -PythonExe $PY -What "import check" -Code @'
-import sys, pkgutil
+import sys, importlib.util
 sys.path[:0] = [r"engine/src", r"client/src"]
-print("has battle_engine:", pkgutil.find_loader("battle_engine") is not None)
+print("has battle_engine:", importlib.util.find_spec("battle_engine") is not None)
 print("has battle_client.renderers.pygame_renderer:",
-      pkgutil.find_loader("battle_client.renderers.pygame_renderer") is not None)
+      importlib.util.find_spec("battle_client.renderers.pygame_renderer") is not None)
 '@
 
 # 2) Agent discovery (uses discover_agents(Path(root)))
@@ -102,9 +102,11 @@ import sys, pathlib
 sys.path[:0] = [r"engine/src", r"client/src"]
 from battle_engine.paths import get_data_root
 from battle_engine.agents import discover_agents
+from battle_engine.starters import ensure_starter_agents
 root = pathlib.Path(get_data_root())
+ensure_starter_agents(data_root=root)
 items = discover_agents(root)
-names = [getattr(x, "display", None) or getattr(x, "name", None) or getattr(x, "id", None) for x in items]
+names = [getattr(x, "display", None) or getattr(x, "name", None) or getattr(x, "id", None) for x in items.values()]
 print("agents count:", len(items))
 print("agents:", names)
 if len(items) == 0:

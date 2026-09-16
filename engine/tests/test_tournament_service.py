@@ -247,6 +247,10 @@ def test_cli_help_lists_product_rulesets_including_v4_alpha1(capsys):
     assert "bytefray-rules-4-alpha1" in out
     assert "bytefray-rules-2-alpha1" not in out
     assert "bytefray-rules-3-alpha1" not in out
+    assert "homogeneous" in out
+    normalized = " ".join(out.split())
+    assert "mixed Python/VM rosters are rejected" in normalized
+    assert "without an explicit choice uses" not in normalized
 
 
 def test_cli_ruleset_flag_unknown_value_fails_closed(capsys):
@@ -606,6 +610,48 @@ def test_resume_rejects_malformed_result_json(tmp_path):
     assert resumed_match.status == "corrupted"
     assert resumed_match.error_code == "resumed_result_mismatch"
     assert all(row.played == 0 for row in resumed.standings)
+
+
+def test_resume_missing_completed_result_is_terminal_without_retry(tmp_path):
+    request = _request(tmp_path, entrants=_entrants(2), rounds=1)
+    first = TournamentService().run(request)
+    match = first.matches[0]
+    result_path = match.artifact_dir / "result.json"
+    result_path.unlink()
+
+    class NoRunService:
+        def run(self, request):
+            raise AssertionError("a completed match with a missing result must not rerun")
+
+    resumed = TournamentService(NoRunService()).run(request)
+
+    resumed_match = resumed.matches[0]
+    assert resumed_match.status == "corrupted"
+    assert resumed_match.error_code == "resumed_result_mismatch"
+    assert "result.json" in resumed_match.error_message
+    assert "not present" in resumed_match.error_message
+    assert all(row.played == 0 for row in resumed.standings)
+    assert not result_path.exists()
+    state = json.loads(resumed.state_path.read_text(encoding="utf-8"))
+    assert state["matches"][0]["status"] == "corrupted"
+    assert state["matches"][0]["result_id"] is None
+    assert not list(tmp_path.rglob("result.json")), "resume created a new result occurrence"
+
+
+def test_missing_completed_result_is_retried_when_authorized(tmp_path):
+    request = _request(tmp_path, entrants=_entrants(2), rounds=1)
+    first = TournamentService().run(request)
+    result_path = first.matches[0].artifact_dir / "result.json"
+    original_occurrence_id = json.loads(result_path.read_text(encoding="utf-8"))[
+        "occurrence_id"
+    ]
+    result_path.unlink()
+
+    retried = TournamentService().run(replace(request, retry_failures=True))
+
+    assert retried.matches[0].status == "completed"
+    replacement = json.loads(result_path.read_text(encoding="utf-8"))
+    assert replacement["occurrence_id"] != original_occurrence_id
 
 
 def test_resume_rejects_result_whose_replay_was_truncated(tmp_path):

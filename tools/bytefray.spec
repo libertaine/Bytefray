@@ -11,9 +11,35 @@ pmars_dir = os.path.join(project_root, "pmars", "windows")
 icon_path = os.path.join(project_root, "assets", "branding", "bytefray-icon.ico")
 branding_dir = os.path.join(project_root, "app", "assets", "branding")
 starter_agents_dir = os.path.join(engine_src, "battle_engine", "data", "starter_agents")
-agent_template_dir = os.path.join(engine_src, "battle_engine", "data", "agent_template")
-agent_template_annotated_dir = os.path.join(
-    engine_src, "battle_engine", "data", "agent_template_annotated"
+
+# The scaffold template directories are READ FROM THE PRODUCT's own canonical
+# inventory rather than re-listed here by name. This spec used to enumerate
+# them literally, which made the frozen build's resource list a second,
+# hand-maintained copy of a set the product already defines -- and it fell
+# behind that set twice: once when the "annotated" template was added, and
+# again when the Agent API v2 template pair was, each time shipping an
+# executable whose `bytefray agents create` failed for the new template with
+# "Agent template resource directory not found" while source checkouts and
+# installed wheels both worked. The wheel never had this failure mode because
+# pyproject.toml's package-data is the glob `data/**/*`, which needs no
+# per-directory maintenance. Deriving the list restores that property here:
+# adding a template or an Agent API generation to
+# `agent_scaffold.TEMPLATE_DIRECTORIES_BY_API_VERSION` now packages it
+# automatically, and a missing directory fails the build loudly instead of
+# silently producing an executable that cannot scaffold.
+if engine_src not in sys.path:
+    sys.path.insert(0, engine_src)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+from battle_engine.agent_scaffold import TEMPLATE_DIRECTORIES_BY_API_VERSION
+from tools.packaging_data import collect_data_tree
+
+agent_template_dirs = sorted(
+    {
+        directory
+        for templates in TEMPLATE_DIRECTORIES_BY_API_VERSION.values()
+        for directory in templates.values()
+    }
 )
 # pmars/windows only ships a Windows pmars.exe; battle_engine.pmars only ever
 # looks under a "pmars/windows" resource subdirectory when os.name == "nt"
@@ -34,14 +60,29 @@ if sys.platform == "win32" and os.path.isdir(pmars_dir):
             (os.path.join(pmars_dir, "COPYING"), "pmars/windows"),
         ]
     )
-if os.path.isdir(branding_dir):
-    datas.append((branding_dir, "assets/branding"))
-if os.path.isdir(starter_agents_dir):
-    datas.append((starter_agents_dir, "battle_engine/data/starter_agents"))
-if os.path.isdir(agent_template_dir):
-    datas.append((agent_template_dir, "battle_engine/data/agent_template"))
-if os.path.isdir(agent_template_annotated_dir):
-    datas.append((agent_template_annotated_dir, "battle_engine/data/agent_template_annotated"))
+# Every repository directory below is expanded per-file by collect_data_tree
+# rather than handed to PyInstaller as a `(directory, destination)` tuple.
+# PyInstaller expands such a tuple by collecting the directory's entire
+# contents with no exclusion hook, and this build runs from the live
+# repository root (tools/build_win.ps1), so ignored bytecode caches that the
+# product itself creates -- the engine imports starter_agents/<name>/agent.py
+# at runtime, leaving __pycache__ beside shipped data -- were collected into
+# the frozen payload verbatim. Phase F1's first build shipped five such stale
+# .pyc files and was only made clean by sweeping the checkout by hand. See
+# tools/packaging_data.py; the wheel and sdist have always filtered bytecode
+# at their own packaging boundary.
+datas += collect_data_tree(branding_dir, "assets/branding")
+datas += collect_data_tree(starter_agents_dir, "battle_engine/data/starter_agents")
+for template_dir_name in agent_template_dirs:
+    template_dir = os.path.join(engine_src, "battle_engine", "data", template_dir_name)
+    if not os.path.isdir(template_dir):
+        raise SystemExit(
+            f"Scaffold template resource directory {template_dir!r} is missing; "
+            "`bytefray agents create` would fail in the frozen build."
+        )
+    datas += collect_data_tree(
+        template_dir, f"battle_engine/data/{template_dir_name}", required=True
+    )
 
 hiddenimports = (
     collect_submodules("battle_engine")

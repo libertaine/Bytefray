@@ -1,0 +1,9 @@
+{
+  "name": "v5_scout_striker",
+  "display": "V5 Scout Striker (Starter)",
+  "description": "V5 starter: crosses the arena in deliberate strides, remembers a legitimately detected contact, then strikes a bounded window around it.",
+  "kind": "python",
+  "api_version": 2,
+  "entrypoint": "agent.py:create_agent",
+  "version": "1.0.0"
+}

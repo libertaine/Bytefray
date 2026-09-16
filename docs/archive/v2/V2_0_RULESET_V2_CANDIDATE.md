@@ -7,7 +7,7 @@ unchanged), and it does *not* claim the permanent `bytefray-rules-2`
 identity. The semantics below currently execute under the experimental
 identity **`bytefray-rules-2-alpha11`**.
 
-Evidence: `docs/V2_0_ALPHA11_RULESET_V2_CANDIDATE_RESOLUTION.md` and the
+Evidence: `docs/archive/v2/V2_0_ALPHA11_RULESET_V2_CANDIDATE_RESOLUTION.md` and the
 alpha.1–alpha.10 documents it cites. Where this document says "unchanged",
 it means byte-identical to Ruleset v1 as documented in `docs/RULES.md`.
 
@@ -333,7 +333,7 @@ Ruleset identity:**
 ## 14. Beta readiness
 
 **GO** for beginning the separate v2 beta-planning phase, on the evidence
-recorded in `docs/V2_0_ALPHA11_RULESET_V2_CANDIDATE_RESOLUTION.md`: expansion
+recorded in `docs/archive/v2/V2_0_ALPHA11_RULESET_V2_CANDIDATE_RESOLUTION.md`: expansion
 dominance is materially resolved without a new universal strategy replacing
 it; core observability is coherent and minimal; offense, defense and
 expansion all retain real and distinct action costs; scheduler sensitivity is

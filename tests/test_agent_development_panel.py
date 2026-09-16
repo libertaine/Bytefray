@@ -591,7 +591,8 @@ def test_match_selectors_and_development_receive_their_intended_catalogs(
 ):
     """Simple filters by Ruleset; Development keeps its established
     all-Python scope; Advanced (Phase 2) now filters by Ruleset too, using
-    the same default Ruleset (v2) Simple starts on."""
+    the same default Ruleset (the stable v4 identity, as of V5 Alpha 1
+    Phase 1's ruleset-default correction) Simple starts on."""
     _make_app()
     data_root = tmp_path / "data"
     monkeypatch.setenv("BYTEFRAY_ROOT", str(data_root))
@@ -615,23 +616,25 @@ def test_match_selectors_and_development_receive_their_intended_catalogs(
             designer.simple.agentA.itemData(index)
             for index in range(designer.simple.agentA.count())
         }
-        v2_ids = {
+        v4_ids = {
             row.agent_id
             for row in catalog_rows
-            if row.meta.get("kind") == "python" and row.meta.get("api_version") == 1
+            if row.meta.get("kind") == "python" and row.meta.get("api_version") == 2
         }
+        assert v4_ids, "expected at least one Agent API v2 starter agent"
         assert dev_ids == python_ids
         assert dev_ids.isdisjoint(non_python_ids)
-        assert simple_ids == v2_ids
+        assert simple_ids == v4_ids
 
-        # Advanced defaults to the same Ruleset v2 Simple starts on (index 0
-        # of the shared Designer Ruleset options), so its initial roster is
-        # the same v2-compatible set -- not the whole discovered catalog.
+        # Advanced defaults to the same stable-v4 Ruleset Simple starts on
+        # (DEFAULT_DESIGNER_RULESET_ID, the same canonical choice every
+        # ``populate_ruleset_combo`` call starts on), so its initial roster
+        # is the same v4-compatible set -- not the whole discovered catalog.
         advanced_ids = {
             designer.advanced.agentA.itemData(index)
             for index in range(designer.advanced.agentA.count())
         }
-        assert advanced_ids == v2_ids
+        assert advanced_ids == v4_ids
 
         # The full historical catalog, including VM starters, remains
         # reachable in Advanced by selecting Ruleset v1.

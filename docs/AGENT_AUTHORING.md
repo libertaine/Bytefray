@@ -18,6 +18,19 @@ User agents live under the configured writable data root in
 
 ## Recommended: scaffold a starting agent
 
+For current V5 process-agent authoring, select Agent API v2 explicitly:
+
+```bash
+bytefray agents create my_process_agent --api-version 2 --template annotated
+```
+
+This agent uses permanent `bytefray-rules-4` when the ruleset is omitted.
+V5 introduces no separate Ruleset 5. The examples below that omit
+`--api-version` retain the CLI's default of **Agent API v1**, which uses
+`bytefray-rules-2` for an omitted ruleset. Choose opponents with the same
+API generation; API v1 and v2 agents cannot share a match. See
+[V5_STARTER_AGENTS.md](V5_STARTER_AGENTS.md) for current API v2 examples.
+
 The fastest way to get a valid, immediately-discoverable Python agent is
 `bytefray agents create`:
 
@@ -123,10 +136,11 @@ bytefray replay --replay <reported-replay-path>
 See [AGENT_API_V1.md](AGENT_API_V1.md) for the full loading, lifecycle, and
 action contract the generated files satisfy.
 
-The scaffold command currently creates Agent API v1 examples. To author a v4
-agent, start from one of the packaged `v4_*` agents, set `api_version: 2`, and
-implement `reset(context)`, `declare_processes()`, and `act(observation)` as
-specified in [AGENT_API_V2.md](AGENT_API_V2.md). Omitting `--ruleset` resolves
+The scaffold command supports both API generations; the commands above use
+its API v1 default. For an API v2 process agent, use `--api-version 2` or
+study the packaged `v5_*` and `v4_*` agents, which implement `reset(context)`,
+`declare_processes()`, and `act(observation)` as specified in
+[AGENT_API_V2.md](AGENT_API_V2.md). Omitting `--ruleset` resolves
 automatically to `bytefray-rules-4`, the stable v4 gameplay contract, from
 your agent's own declared `api_version: 2`; pass an explicit
 `--ruleset bytefray-rules-4-alpha1` or `bytefray-rules-4-alpha2` only to
@@ -187,9 +201,9 @@ already-claimed cells (`Observation` carries no ownership map), capturing
 `pc`/`JUMP` as an explicit phase state machine. There is no
 separate "start from example" scaffold option -- copy one of these
 directories into a new agent id under `agents/` and edit `agent.py`
-directly; the file is the whole starting point. See the main
-[README](../README.md#-try-the-bundled-agents) for compelling matchups to
-try first and an `agents evaluate` example.
+directly; the file is the whole starting point. See
+[Agent Lab](AGENT_LAB.md#evaluating-a-candidate) for an `agents evaluate`
+example using compatible Python opponents.
 
 ## Development-test your agent
 
@@ -424,6 +438,87 @@ version: "0.1.0"
 identity is always the directory basename, never a manifest field, so
 adding a `name` that merely duplicates the directory risks silently
 drifting from it if the directory is later renamed.
+
+### Optional manifest sections
+
+| Key | Applies to | Meaning |
+| --- | --- | --- |
+| `description` | any | Free text shown in listings. |
+| `defaults` | VM/blob agents | The historical free-form parameter block. Untyped, unvalidated, unknown keys allowed. Preserved unchanged; see below. |
+| `parameters` | `api_version: 2` only | A declared parameter schema (5.0.0a1). |
+| `presets` | `api_version: 2` only | Named, schema-validated parameter sets (5.0.0a1). Requires `parameters`. |
+
+Both `parameters` and `presets` are **optional and additive**. A manifest
+that declares neither behaves exactly as it did before they existed, and no
+historical agent was retrofitted with them.
+
+```yaml
+kind: python
+api_version: 2
+entrypoint: agent.py:create_agent
+version: "1.1.0"
+
+parameters:
+  # key: lowercase letter, then lowercase letters, digits or underscores
+  search_stride_divisor:
+    type: integer          # integer | number | boolean | string | choice
+    default: 1             # required, and validated against the constraints below
+    minimum: 1             # integer/number only
+    maximum: 8             # integer/number only
+    description: >-        # optional; this is what a user reads when choosing
+      Divides the search stride. 1 moves a full reach per action.
+  stance:
+    type: choice
+    default: balanced
+    choices: [cautious, balanced, aggressive]   # required for choice; unique strings
+
+presets:
+  standard:
+    description: The declared defaults.
+    values:
+      search_stride_divisor: 1
+  careful:
+    values:
+      search_stride_divisor: 4
+      stance: cautious
+```
+
+Resolution is always `schema defaults < selected preset < explicit
+overrides`, and the resolved values reach an Agent API v2 agent as
+`context.parameters` in `reset()`. Full semantics, the exact coercion rules
+(including the explicit boolean vocabulary), and the CLI flags are in
+[AGENT_API_V2.md](AGENT_API_V2.md#m-parameters-and-presets).
+
+**Invalid declarations are rejected when the agent is resolved**, before any
+of its code is imported, as an ordinary manifest error naming the file:
+
+```yaml
+parameters:
+  bad_type:      { type: date,    default: 1 }              # unsupported type
+  no_default:    { type: integer, minimum: 1 }              # 'default' is required
+  impossible:    { type: integer, default: 0, minimum: 1 }  # default breaks its own bound
+  wrong_bounds:  { type: string,  default: "a", minimum: 1 }# bounds need integer/number
+  empty_menu:    { type: choice,  default: "a", choices: [] }
+  Bad-Key:       { type: integer, default: 1 }              # key syntax
+presets:
+  typo: { values: { no_such_parameter: 1 } }                # must be a declared key
+```
+
+Two further rules exist so a manifest can never mean two things at once:
+
+- A `parameters` section requires `api_version: 2`. Resolved values are
+  delivered on `MatchContextV2`, so an agent that could never receive them
+  may not declare them.
+- A manifest may declare **either** `parameters` **or** a non-empty legacy
+  `defaults:` block, never both.
+
+**Compatibility for manifests without a schema.** Nothing changes. Values
+supplied to such an agent (through `$BYTEFRAY_AGENT_A_PARAMS_JSON`, which
+the Agent Designer's *Agent Params* tab exports, or `--a-param`) pass
+through free-form and unvalidated exactly as before, and unknown keys are
+still accepted. Strictness — unknown keys rejected, values type-checked and
+range-checked — applies only to an agent that opted in by declaring a
+schema.
 
 `agents/example/agent.py`:
 

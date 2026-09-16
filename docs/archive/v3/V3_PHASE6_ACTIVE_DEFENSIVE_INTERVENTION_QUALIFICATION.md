@@ -5,7 +5,7 @@ Status: research complete, not merged, not tagged, not published.
 
 Phase 6 qualifies a new hypothesis, not the one Phase 5A rejected: instead of
 measuring whether a defender was *assaulted and survived* (falsified at
-full-corpus scale, `docs/V3_PHASE5A_DEFENSIVE_EVENT_QUALIFICATION.md`), it
+full-corpus scale, `docs/archive/v3/V3_PHASE5A_DEFENSIVE_EVENT_QUALIFICATION.md`), it
 asks whether Bytefray's existing mechanics contain a reproducible,
 attacker-agnostic, cross-tick event meaning **an opponent mounted a real
 core assault, and the victim actively countered it**. It changes no
@@ -540,7 +540,7 @@ Stated, not implemented:
 | `tools/v3_phase6_defense_episode.py` | **new** — episode reconstruction, qualification, pilot, and determinism tooling (measurement only) |
 | `engine/tests/test_v3_phase6_defense_episode.py` | **new** — 15 focused tests |
 | `engine/src/battle_engine/data/benchmarks/v3_phase6_active_defense_gates.json` | **new** — gates, declared at `aea199e` before the exhaustive run |
-| `docs/V3_PHASE6_ACTIVE_DEFENSIVE_INTERVENTION_QUALIFICATION.md` | **new** — this report |
+| `docs/archive/v3/V3_PHASE6_ACTIVE_DEFENSIVE_INTERVENTION_QUALIFICATION.md` | **new** — this report |
 
 ## Validation
 

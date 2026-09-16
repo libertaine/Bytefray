@@ -68,18 +68,22 @@ class TraceInspectorDialog(QDialog):
         layout.addWidget(header_label)
 
         controls = QHBoxLayout()
-        controls.addWidget(QLabel("Tick"))
+        self.tickLabel = QLabel("Tick")
         self.tickSpin = QSpinBox()
+        self.tickLabel.setBuddy(self.tickSpin)
         tick_range = self._document.tick_range()
         low, high = tick_range if tick_range is not None else (0, 0)
         self.tickSpin.setRange(low, high)
         self.tickSpin.setValue(low)
+        controls.addWidget(self.tickLabel)
         controls.addWidget(self.tickSpin)
 
-        controls.addWidget(QLabel("Agent"))
+        self.agentLabel = QLabel("Agent")
         self.agentCombo = QComboBox()
+        self.agentLabel.setBuddy(self.agentCombo)
         for slot, name in sorted(self._document.header.agents.items()):
             self.agentCombo.addItem(f"{slot} ({name})", slot)
+        controls.addWidget(self.agentLabel)
         controls.addWidget(self.agentCombo, 1)
 
         self.failuresOnlyCheck = QCheckBox("Failures only")
@@ -96,6 +100,7 @@ class TraceInspectorDialog(QDialog):
 
         self.detailText = QPlainTextEdit()
         self.detailText.setReadOnly(True)
+        self.detailText.setAccessibleName("Trace decision details")
         self.detailText.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
         layout.addWidget(self.detailText, 1)
 

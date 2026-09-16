@@ -31,8 +31,10 @@ from battle_client.hud_layout import (
     format_help_lines,
     format_match_header_lines,
     format_playback_line,
+    format_replay_terminal_banner,
     format_terminal_state_line,
     integer_scale_to_fit,
+    terminal_banner_rect,
     timeline_contains,
     timeline_tick_for_x,
     timeline_x_for_tick,
@@ -726,6 +728,38 @@ def test_terminal_state_helper_is_blank_without_authoritative_result():
         )
         == ""
     )
+
+
+# ---------------------------------------------------------------------------
+# Terminal-state banner (V5 Alpha 1 Phase 1)
+# ---------------------------------------------------------------------------
+
+
+def test_terminal_banner_names_the_winner():
+    text = format_replay_terminal_banner(winner="quorum", names={"quorum": "Quorum"})
+    assert text == "QUORUM WINS"
+
+
+def test_terminal_banner_falls_back_to_raw_id_when_unnamed():
+    text = format_replay_terminal_banner(winner="agent_7", names={})
+    assert text == "AGENT_7 WINS"
+
+
+def test_terminal_banner_reports_a_draw_without_inventing_a_winner():
+    assert format_replay_terminal_banner(winner=None, names={"a": "A"}) == "DRAW"
+
+
+def test_terminal_banner_rect_is_a_shallow_band_at_the_viewport_top():
+    viewport = (10, 20, 400, 300)
+    x, y, width, height = terminal_banner_rect(viewport)
+    assert (x, y) == (10, 20)
+    assert width == 400
+    assert 0 < height < 300  # shallow: the arena stays visible beneath it
+
+
+def test_terminal_banner_rect_is_degenerate_when_the_viewport_is_too_short():
+    _x, _y, width, height = terminal_banner_rect((0, 0, 400, 10))
+    assert (width, height) == (0, 0)
 
 
 def test_match_header_distinguishes_v1_from_v2_label():

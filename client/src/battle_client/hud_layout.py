@@ -604,6 +604,60 @@ def format_terminal_state_line(
     return f"MATCH COMPLETE — {outcome} — {reason}"
 
 
+# ---------------------------------------------------------------------------
+# Terminal-state banner (V5 Alpha 1 Phase 1) -- pure geometry and text, no
+# drawing. Deliberately independent of Fight Night below: Fight Night is
+# opt-in, timed/narrative, and driven by a ``SpectatorDerivation`` that is
+# not always available (e.g. group matches). This banner is always on,
+# derived from nothing but ``ReplaySession``'s own already-authoritative
+# result fields, and visible for exactly as long as playback is positioned
+# at the replay's final recorded tick -- the "ordinary replay status text"
+# (``format_terminal_state_line`` above) already states the same facts in
+# the header at every scrub position; this is the substantially more
+# prominent, terminal-position-only presentation V5 Alpha 1 testing asked
+# for.
+# ---------------------------------------------------------------------------
+TERMINAL_BANNER_HEIGHT = 40
+TERMINAL_BANNER_PADDING = 8
+#: Below this arena-viewport height the banner is skipped entirely rather
+#: than squeezed -- half the viewport is the same "arena stays visually
+#: primary" ceiling Fight Night's ribbon uses.
+TERMINAL_BANNER_MIN_VIEWPORT_HEIGHT = TERMINAL_BANNER_HEIGHT * 2
+
+
+def format_replay_terminal_banner(*, winner: str | None, names: Mapping[str, str]) -> str:
+    """The prominent terminal-outcome banner's single line of text.
+
+    Same "``winner is None`` means a draw" convention as
+    :func:`format_terminal_state_line`/:func:`format_fight_night_result_lines`,
+    over the identical already-authoritative ``ReplaySession.winner`` value
+    -- nothing here infers or recomputes a winner. ``names`` resolves the
+    winning agent's id to its display name exactly like Fight Night's result
+    card does; an id absent from ``names`` falls back to the raw id rather
+    than failing.
+    """
+
+    if winner is None:
+        return "DRAW"
+    return f"{names.get(winner, winner).upper()} WINS"
+
+
+def terminal_banner_rect(viewport_rect: Rect) -> Rect:
+    """A shallow band across the top of the arena viewport for the banner.
+
+    Deliberately thin rather than a full overlay, so the banner coexists
+    with the still-visible final arena state instead of hiding it. Returns a
+    degenerate (zero-size) rect -- the same "caller treats zero-size as
+    skip" convention every other overlay geometry helper here uses -- when
+    the viewport is too small to spare the height.
+    """
+
+    vx, vy, vw, vh = viewport_rect
+    if vw <= 0 or vh <= 0 or vh < TERMINAL_BANNER_MIN_VIEWPORT_HEIGHT:
+        return (vx, vy, 0, 0)
+    return (vx, vy, vw, TERMINAL_BANNER_HEIGHT)
+
+
 def format_match_header_lines(
     *,
     ruleset_label: str,
@@ -966,6 +1020,9 @@ __all__ = [
     "MAX_TOP_BAND_FRACTION",
     "MIN_USEFUL_ARENA_HEIGHT",
     "MIN_VIEWER_SIZE",
+    "TERMINAL_BANNER_HEIGHT",
+    "TERMINAL_BANNER_MIN_VIEWPORT_HEIGHT",
+    "TERMINAL_BANNER_PADDING",
     "TOP_BAND_HEIGHT",
     "TOP_BAND_PADDING",
     "CardMode",
@@ -986,8 +1043,10 @@ __all__ = [
     "format_help_lines",
     "format_match_header_lines",
     "format_playback_line",
+    "format_replay_terminal_banner",
     "format_terminal_state_line",
     "integer_scale_to_fit",
+    "terminal_banner_rect",
     "timeline_contains",
     "timeline_tick_for_x",
     "timeline_x_for_tick",

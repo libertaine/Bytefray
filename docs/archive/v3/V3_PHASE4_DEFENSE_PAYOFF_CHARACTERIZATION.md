@@ -92,7 +92,7 @@ attacker this benefit) and 44 (8.1%) are captured.
 
 ### 3.3 Structural sanity check: `weights.alive` is dead, reconfirmed directly
 
-Alpha.5 §15 (`docs/V2_0_ALPHA5_MULTI_ENTRANT_SCORING_ACTIVATION.md`) proved
+Alpha.5 §15 (`docs/archive/v2/V2_0_ALPHA5_MULTI_ENTRANT_SCORING_ACTIVATION.md`) proved
 in closed form that whenever 2+ entrants are alive at match resolution,
 their `alive_ticks` must be identical, because `resolve_termination` only
 forces early termination at 0 or 1 entrants alive. That proof is
@@ -424,7 +424,7 @@ question this phase justifies asking — explicitly not answered here.
 | `tools/v3_phase4_economics.py` | **new** — cost/benefit/alive-tie/territory-share measurement |
 | `tools/v3_phase4_execution_invariance.py` | **new** — territory-axis trajectory-invariance check |
 | `tools/v3_phase4_corpus.py` | **new** — territory-weight corpus builder + Phase 1 tooling reuse |
-| `docs/V3_PHASE4_DEFENSE_PAYOFF_CHARACTERIZATION.md` | **new** — this report |
+| `docs/archive/v3/V3_PHASE4_DEFENSE_PAYOFF_CHARACTERIZATION.md` | **new** — this report |
 
 ## Commits
 

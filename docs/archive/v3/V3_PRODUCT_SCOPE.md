@@ -238,8 +238,8 @@ told the user to leave the GUI and run `evaluations show <id> --json`.
   sequenced after it, but does not require it.
 * **Exclusions**: no evaluation identity or schema change; the
   research-motivated flags' identity-bearing behavior
-  (`docs/V3_PHASE0_RESEARCH_BASELINE.md` §5,
-  `docs/V3_PHASE3_OFFENSE_PAYOFF_CHARACTERIZATION.md` §5) is unchanged;
+  (`docs/archive/v3/V3_PHASE0_RESEARCH_BASELINE.md` §5,
+  `docs/archive/v3/V3_PHASE3_OFFENSE_PAYOFF_CHARACTERIZATION.md` §5) is unchanged;
   discovery/listing stays one-level and cheap (no directory-size column, no
   recursive stat walk, no pagination); no evaluation delete/prune/archive.
 * **Validation**: existing evaluation artifacts remain loadable and

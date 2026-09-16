@@ -88,6 +88,11 @@ def test_combo_and_match_launch_use_discovery_ids_for_duplicate_display_names():
     ]
     panel = SimplePanel(catalog=None)
     panel.setAgents(rows)
+    # V5 Alpha 1 Phase 1: Simple's fresh default is now the stable v4
+    # Ruleset, which these Agent API v1 rows are not compatible with --
+    # select v2 explicitly, since this test is about duplicate-display-name
+    # identifier resolution, not the fresh Ruleset default.
+    panel.ruleset.setCurrentIndex(panel.ruleset.findData("bytefray-rules-2"))
 
     assert [panel.agentA.itemText(i) for i in range(2)] == [
         "Friendly [Python] (alpha_id)",
@@ -237,6 +242,11 @@ def test_simple_panel_filters_from_ruleset_and_emits_real_identifiers():
 
     panel = SimplePanel(catalog=None)
     panel.setAgents(_rows())
+    # V5 Alpha 1 Phase 1: Simple's fresh default is now the stable v4
+    # Ruleset, which these Agent API v1 rows are not compatible with --
+    # select v2 explicitly, since this test is about agent filtering and
+    # real-identifier emission, not the fresh Ruleset default.
+    panel.ruleset.setCurrentIndex(panel.ruleset.findData("bytefray-rules-2"))
     panel.agentA.setCurrentIndex(0)  # claimer [Python]
 
     assert panel.ruleset.findData("bytefray-rules-1") == -1
@@ -283,8 +293,12 @@ def test_simple_ruleset_change_filters_api_generation_and_repairs_deterministica
     ]
     panel = SimplePanel(catalog=None)
     panel.setAgents(rows)
-
-    assert panel.ruleset.currentData() == "bytefray-rules-2"
+    # V5 Alpha 1 Phase 1: Simple's fresh default is now the stable v4
+    # Ruleset; this test is about switching between Rulesets and repairing
+    # the selection deterministically, not about which Ruleset is the fresh
+    # default (covered separately), so it starts from an explicit v2
+    # selection like the rest of the switch sequence below.
+    panel.ruleset.setCurrentIndex(panel.ruleset.findData("bytefray-rules-2"))
     assert [panel.agentA.itemData(i) for i in range(panel.agentA.count())] == [
         "legacy_a",
         "legacy_b",
@@ -315,6 +329,11 @@ def test_simple_one_agent_allows_self_match_and_empty_state_prevents_launch():
 
     panel = SimplePanel(catalog=None)
     panel.setAgents([_row("only_v1", "python")])
+    # V5 Alpha 1 Phase 1: Simple's fresh default is now the stable v4
+    # Ruleset, which this Agent API v1 row is not compatible with -- select
+    # v2 explicitly, since this test is about self-match/empty-state
+    # behavior, not the fresh Ruleset default.
+    panel.ruleset.setCurrentIndex(panel.ruleset.findData("bytefray-rules-2"))
     assert panel.agentA.currentData() == panel.agentB.currentData() == "only_v1"
     assert panel.btnRun.isEnabled()
 
@@ -398,6 +417,12 @@ def test_simple_and_advanced_now_expose_the_same_ruleset_filtered_roster(tmp_pat
     advanced = AdvancedPanel(catalog=None, data_root=tmp_path)
 
     simple.setAgents(rows)
+    # V5 Alpha 1 Phase 1: both panels' fresh default is now the stable v4
+    # Ruleset, which these Agent API v1/VM rows are not compatible with --
+    # select v2 explicitly on Simple too (Advanced already does, below),
+    # since this test is about the two tabs' rosters agreeing under a given
+    # Ruleset, not the fresh Ruleset default.
+    simple.ruleset.setCurrentIndex(simple.ruleset.findData("bytefray-rules-2"))
     assert [simple.agentA.itemData(i) for i in range(simple.agentA.count())] == [
         "claimer",
         "hunter",

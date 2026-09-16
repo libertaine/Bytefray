@@ -3,11 +3,10 @@
 This project was previously named **BATTLE2**. It started as a minimal
 headless Core War-inspired engine plus a Pygame match runner and Qt agent
 designer, then grew a dedicated agent-authoring and evaluation toolchain one
-milestone at a time before being rebranded Bytefray at v0.3.0. For the full
-milestone-by-milestone history, see the version table in
-[README.md](../README.md#roadmap), the forward-looking
-[Roadmap](ROADMAP.md), and [CHANGELOG.md](../CHANGELOG.md) for what actually
-shipped release by release.
+milestone at a time before being rebranded Bytefray at v0.3.0. See
+[README.md](../README.md) for the current release overview, the historical
+release [Roadmap](ROADMAP.md) for milestone context, and
+[CHANGELOG.md](../CHANGELOG.md) for what actually shipped release by release.
 
 ## What changed at the rename
 

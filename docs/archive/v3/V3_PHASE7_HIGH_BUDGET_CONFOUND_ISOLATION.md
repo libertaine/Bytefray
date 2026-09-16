@@ -7,7 +7,7 @@ Phase 6 qualified a cross-tick "attack episode" active-defense event and
 found it fails two blocking gates -- Q6 (budget-robustness margin) and Q7
 (seat robustness) -- at `instr_per_tick=32` only, through two mechanisms it
 diagnosed but explicitly declined to disentangle further
-(`docs/V3_PHASE6_ACTIVE_DEFENSIVE_INTERVENTION_QUALIFICATION.md` Sec 15,
+(`docs/archive/v3/V3_PHASE6_ACTIVE_DEFENSIVE_INTERVENTION_QUALIFICATION.md` Sec 15,
 16, 20): `core_tracker`'s own un-offset `expand_cursor` inflating its
 opportunity-conditioned rate to 50.0%, and a genuine collapse of the
 cross-tick reclaim advantage when an assault completes inside one action
@@ -394,7 +394,7 @@ something to soften.
 | `engine/src/battle_engine/data/v3_phase7_agents/core_tracker_offset/agent.yaml` | **new** -- manifest, never registered in any `BenchmarkPopulation` |
 | `tools/v3_phase7_confound_isolation.py` | **new** -- Part A/B driver and analysis, imports the frozen Phase 6 detector unmodified |
 | `engine/tests/test_v3_phase7_confound_isolation.py` | **new** -- 7 focused tests (agent mechanics + reaction-opportunity predicate) |
-| `docs/V3_PHASE7_HIGH_BUDGET_CONFOUND_ISOLATION.md` | **new** -- this report |
+| `docs/archive/v3/V3_PHASE7_HIGH_BUDGET_CONFOUND_ISOLATION.md` | **new** -- this report |
 | `runs/research_v3_phase7/` | **local, git-ignored, not committed** -- 162 new match cells (`results/`) plus the two JSON analysis reports, exactly like every other `runs/research_v3_phaseN/` corpus in this program; reproducible by rerunning `tools/v3_phase7_confound_isolation.py run` |
 
 No file under `runs/research_v3_phase1` through `runs/research_v3_phase6`,

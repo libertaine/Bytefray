@@ -453,9 +453,9 @@ requirement.
 
 | file | change |
 |---|---|
-| `docs/V3_RULESET_RESEARCH_SUMMARY.md` | **new** — navigable phase index; discoverability was weak (nothing in README/ROADMAP/COMPATIBILITY pointed at the closeout before this phase), so a dedicated index was created rather than relying on `V3_RESEARCH_CLOSEOUT.md` alone, per the governing task's own "if discoverability is weak, create a concise permanent index" instruction |
-| `docs/V3_PRODUCT_SCOPE.md` | **new** — v3.0 thesis, workstreams, non-goals, phase plan, compatibility contract, Ruleset-reopen gate, success criteria |
-| `docs/V3_PHASE0_PRODUCT_SCOPE.md` | **new** — this report |
+| `docs/archive/v3/V3_RULESET_RESEARCH_SUMMARY.md` | **new** — navigable phase index; discoverability was weak (nothing in README/ROADMAP/COMPATIBILITY pointed at the closeout before this phase), so a dedicated index was created rather than relying on `V3_RESEARCH_CLOSEOUT.md` alone, per the governing task's own "if discoverability is weak, create a concise permanent index" instruction |
+| `docs/archive/v3/V3_PRODUCT_SCOPE.md` | **new** — v3.0 thesis, workstreams, non-goals, phase plan, compatibility contract, Ruleset-reopen gate, success criteria |
+| `docs/archive/v3/V3_PHASE0_PRODUCT_SCOPE.md` | **new** — this report |
 | `docs/ROADMAP.md` | added "v3 Ruleset Research — Closed" and "v3.0 — Product Development" sections, between the shipped `v2.0.0` entry and the pre-existing "After v1.0" section |
 | `docs/FUTURE_PLANS.md` | added v3-closure notes to every relevant existing subsection (territory maintenance, advanced offense, arena/field-size, multiple execution processes, replication, specialized sub-agents, Agent API v2, future rulesets); added two new subsections, "Agent lifecycle: mutation, evolution, and replication economics" and "Execution-trace / intent semantics," covering the governing task's requested deferred-research items that had no prior home |
 | `docs/COMPATIBILITY.md` | added one short forward-pointer section ("Bytefray v3.0 software version") rather than duplicating the existing, already-thorough independent-axes policy |

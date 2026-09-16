@@ -89,6 +89,7 @@ from app.services.evaluation_history_workflows import (
     sorted_listing_entries,
     summary_is_group,
 )
+from app.services.replay_integrity import result_replay_request
 from app.widgets.evaluation_visuals import (
     COLOR_LOSS,
     COLOR_WIN,
@@ -99,6 +100,36 @@ from app.widgets.evaluation_visuals import (
     plain_rate_bar_data,
     rate_stat_bar_data,
     win_rate_bar_data,
+)
+
+
+def _cell_replay_request(summary: EvaluationSummary, cell: AdaptedCell):
+    return result_replay_request(
+        summary.location.directory / cell.artifact_dir / "result.json",
+        artifact_root=summary.location.directory,
+        expected_result_id=cell.result_id,
+        expected_match_id=cell.match_id,
+    )
+
+# V5 Alpha 1 Phase 1: the new-install empty state (Sec 4 of the phase task).
+# Evaluation History has no separate persistence of its own -- it discovers
+# whatever "agents evaluate"/Agent Development's "Evaluate…" has already
+# written under this data root's runs/evaluations directory (see refresh()'s
+# own discover_evaluation_listing call), so an empty list here means no
+# evaluation has ever completed in this installation, not that the feature
+# is broken. This explains what an evaluation is, why entries appear here
+# automatically, and the one canonical action that creates the first one --
+# deliberately not a new workflow of its own.
+_EMPTY_HISTORY_EXPLANATION = (
+    "No evaluations recorded yet.\n\n"
+    "An evaluation runs one agent -- optionally against a baseline -- through "
+    "many matches against a roster of opponents and seeds, then records the "
+    "outcomes so you can review and compare agent performance over time: win "
+    "rate, survival, core captures, and behavior versus a baseline or an "
+    "earlier version of the same agent.\n\n"
+    "Entries appear here automatically; there is nothing to import or set up. "
+    "To create your first one, select an agent in the Agent Development tab "
+    "and click \"Evaluate…\"."
 )
 
 _HISTORICAL_AGENT_LAB_TOOLTIP = (
@@ -198,6 +229,7 @@ class EvaluationPickerDialog(QDialog):
         layout.addWidget(QLabel("The selected evaluation will be the right-hand comparison side."))
 
         self.list = QListWidget()
+        self.list.setAccessibleName("Evaluations available for comparison")
         for entry in entries:
             if exclude is not None and entry.location.evaluation_json_path == exclude:
                 continue
@@ -274,8 +306,10 @@ class RevisionBrowserDialog(QDialog):
 
         layout = QVBoxLayout(self)
         row = QHBoxLayout()
-        row.addWidget(QLabel("Role"))
+        self.roleLabel = QLabel("Role")
         self.roleCombo = QComboBox()
+        self.roleLabel.setBuddy(self.roleCombo)
+        row.addWidget(self.roleLabel)
         for label, agent_id, revision_id in roles:
             self.roleCombo.addItem(label, (agent_id, revision_id))
         row.addWidget(self.roleCombo, 1)
@@ -285,6 +319,7 @@ class RevisionBrowserDialog(QDialog):
 
         self.detailText = QPlainTextEdit()
         self.detailText.setReadOnly(True)
+        self.detailText.setAccessibleName("Agent revision details")
         layout.addWidget(self.detailText, 1)
 
         self.restoreButton = QPushButton("Restore Files…")
@@ -440,12 +475,15 @@ class RestoreRevisionDialog(QDialog):
         layout.addWidget(infoLabel)
 
         targetRow = QHBoxLayout()
-        targetRow.addWidget(QLabel("Target directory"))
+        self.targetLabel = QLabel("Target directory")
         self.targetEdit = QLineEdit(
             str(data_root / "agent_revisions_restored" / presentation.revision_id)
         )
+        self.targetLabel.setBuddy(self.targetEdit)
+        targetRow.addWidget(self.targetLabel)
         targetRow.addWidget(self.targetEdit, 1)
         browseButton = QPushButton("Browse…")
+        browseButton.setAccessibleName("Choose revision restore target directory")
         targetRow.addWidget(browseButton)
         layout.addLayout(targetRow)
 
@@ -562,7 +600,7 @@ class EvaluationComparisonDialog(QDialog):
     """
 
     testInAgentLabRequested = Signal(str, str, int, int, str)
-    openReplayRequested = Signal(Path)
+    openReplayRequested = Signal(object)
 
     def __init__(self, result, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -579,6 +617,7 @@ class EvaluationComparisonDialog(QDialog):
 
         summaryText = QPlainTextEdit()
         summaryText.setReadOnly(True)
+        summaryText.setAccessibleName("Evaluation comparison summary")
         summaryText.setPlainText(format_comparison_text(result))
         summaryText.setMaximumHeight(220)
         layout.addWidget(summaryText)
@@ -591,6 +630,7 @@ class EvaluationComparisonDialog(QDialog):
             )
         )
         self.rowsList = QListWidget()
+        self.rowsList.setAccessibleName("Comparable evaluation rows")
         for row in result.comparison.rows:
             left_cell = find_candidate_cell(result.left, row, side="left")
             right_cell = find_candidate_cell(result.right, row, side="right")
@@ -638,6 +678,7 @@ class EvaluationComparisonDialog(QDialog):
 
         self._gap_entries = self._build_gap_entries()
         self.gapsList = QListWidget()
+        self.gapsList.setAccessibleName("Unmatched and changed evaluation rows")
         self.gapsList.setVisible(False)
         for entry in self._gap_entries:
             item = QListWidgetItem(entry.label)
@@ -649,12 +690,15 @@ class EvaluationComparisonDialog(QDialog):
 
         self.detailText = QPlainTextEdit()
         self.detailText.setReadOnly(True)
+        self.detailText.setAccessibleName("Selected comparison row details")
         self.detailText.setMaximumHeight(120)
         layout.addWidget(self.detailText)
 
         actionsRow = QHBoxLayout()
-        actionsRow.addWidget(QLabel("Side"))
+        self.sideLabel = QLabel("Side")
         self.sideCombo = QComboBox()
+        self.sideLabel.setBuddy(self.sideCombo)
+        actionsRow.addWidget(self.sideLabel)
         actionsRow.addWidget(self.sideCombo)
         self.testAgentLabButton = QPushButton("Test in Agent Lab")
         self.testAgentLabButton.setToolTip(_HISTORICAL_AGENT_LAB_TOOLTIP)
@@ -911,7 +955,7 @@ class EvaluationComparisonDialog(QDialog):
         summary, cell = self._selected_side_cell()
         if cell is None:
             return
-        self.openReplayRequested.emit(summary.location.directory / cell.artifact_dir / "replay.jsonl")
+        self.openReplayRequested.emit(_cell_replay_request(summary, cell))
 
 
 def _build_history_visual_panel(summary: EvaluationSummary) -> QWidget | None:
@@ -1014,7 +1058,7 @@ class EvaluationHistoryDialog(QDialog):
     """
 
     testInAgentLabRequested = Signal(str, str, int, int, str)
-    openReplayRequested = Signal(Path)
+    openReplayRequested = Signal(object)
     agentCatalogChanged = Signal(str)
 
     def __init__(
@@ -1050,10 +1094,12 @@ class EvaluationHistoryDialog(QDialog):
         # scrolling down. This label is redundant with that line by design
         # (never the *only* place the fact appears), not a replacement for it.
         self.verifyStatusLabel = QLabel("")
+        self.verifyStatusLabel.setAccessibleName("Evaluation verification status")
         layout.addWidget(self.verifyStatusLabel)
 
         splitter = QSplitter()
         self.list = QListWidget()
+        self.list.setAccessibleName("Evaluation history")
         splitter.addWidget(self.list)
 
         detailPane = QWidget()
@@ -1061,15 +1107,18 @@ class EvaluationHistoryDialog(QDialog):
         detailLayout.setContentsMargins(0, 0, 0, 0)
         self.detailText = QPlainTextEdit()
         self.detailText.setReadOnly(True)
+        self.detailText.setAccessibleName("Evaluation details")
         detailLayout.addWidget(self.detailText, 2)
 
         self.visualPanelScroll = QScrollArea()
+        self.visualPanelScroll.setAccessibleName("Evaluation metric visuals")
         self.visualPanelScroll.setWidgetResizable(True)
         self.visualPanelScroll.setMaximumHeight(260)
         detailLayout.addWidget(self.visualPanelScroll)
 
         detailLayout.addWidget(QLabel("Cells"))
         self.cellsList = QListWidget()
+        self.cellsList.setAccessibleName("Evaluation cells")
         detailLayout.addWidget(self.cellsList, 1)
 
         cellActions = QHBoxLayout()
@@ -1158,9 +1207,7 @@ class EvaluationHistoryDialog(QDialog):
             item.setData(Qt.UserRole, entry)
             self.list.addItem(item)
         if not self._entries:
-            self.detailText.setPlainText(
-                "No evaluations found. Run \"Evaluate…\" from the Agent Development tab first."
-            )
+            self.detailText.setPlainText(_EMPTY_HISTORY_EXPLANATION)
 
     def _selected_entry(self) -> DiscoveredEvaluation | None:
         item = self.list.currentItem()
@@ -1298,7 +1345,7 @@ class EvaluationHistoryDialog(QDialog):
         cell = self._selected_cell()
         if cell is None or self._current_summary is None:
             return
-        self.openReplayRequested.emit(self._current_summary.location.directory / cell.artifact_dir / "replay.jsonl")
+        self.openReplayRequested.emit(_cell_replay_request(self._current_summary, cell))
 
     # ---- Open Evaluation Folder ----
     def _on_open_evaluation_folder(self) -> None:

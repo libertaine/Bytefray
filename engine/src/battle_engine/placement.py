@@ -35,7 +35,7 @@ from battle_engine.ruleset_policy import UnknownRulesetError, resolve_ruleset_po
 # v4 alpha2's minimum circular separation between any two entrant core
 # base addresses, in cells. 64 is exactly the value the Phase 4 controlled
 # gameplay study's seeded-placement condition used
-# (docs/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md Section F2, whose measured
+# (docs/archive/v4/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md Section F2, whose measured
 # ecology is the whole evidence base for adopting seeded placement), so the
 # production rule and the studied rule agree; changing it would put the
 # study's numbers out of scope for the shipped Ruleset.
@@ -197,7 +197,7 @@ def seeded_seat_starts(
     """v4 alpha2's seed-derived, minimum-separated seat start addresses.
 
     The production form of the Phase 4 study's ``seeded_starts`` condition
-    (docs/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md Section F2): the same placement
+    (docs/archive/v4/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md Section F2): the same placement
     *model* -- uniform candidate addresses drawn from the match seed,
     rejection-sampled until every pair of cores is at least
     :func:`alpha2_min_separation` cells apart -- generalized from that
@@ -288,7 +288,7 @@ def resolve_direct_match_starts(
     Ruleset identity other than the permanent Ruleset v2 one (including the
     historical ``bytefray-rules-2-alpha1``/``-alpha11`` identities, whose
     execution semantics this RC2 fix deliberately leaves untouched -- see
-    ``docs/V1_5_PHASE3_RULESET_POLICY_DISPATCH.md``'s identity-separation
+    ``docs/archive/v1/V1_5_PHASE3_RULESET_POLICY_DISPATCH.md``'s identity-separation
     rationale): every omitted start resolves to ``0``, exactly the historical
     default this function's introduction does not change for those
     identities.

@@ -21,8 +21,10 @@ class JsonEditor(QWidget):
     def __init__(self, title: str = "JSON") -> None:
         super().__init__()
         root = QVBoxLayout(self)
-        root.addWidget(QLabel(title))
+        self.titleLabel = QLabel(title)
         self.text = QPlainTextEdit()
+        self.titleLabel.setBuddy(self.text)
+        root.addWidget(self.titleLabel)
         self.text.setPlaceholderText(
             '{\n  "param_name": value\n}\n\n'
             "Keys are defined by the selected agent, not by Bytefray."

@@ -7,8 +7,8 @@ interaction — that lets agents with similar win rates but genuinely
 different strategies be distinguished, without inventing a composite
 "strategy score," clustering, or ranking.
 
-Written in the same spirit as `docs/V1_6_PHASE1_EVALUATION_SCALE_BASELINE.md`
-through `docs/V1_6_PHASE4_EVALUATION_ANALYSIS.md`: this document cites all
+Written in the same spirit as `docs/archive/v1/V1_6_PHASE1_EVALUATION_SCALE_BASELINE.md`
+through `docs/archive/v1/V1_6_PHASE4_EVALUATION_ANALYSIS.md`: this document cites all
 four as the authoritative pre-implementation baseline rather than
 re-deriving them, and in particular treats Phase 0-1 §13 ("Behavior-profile
 data inventory") as the direct ancestor of the design below.

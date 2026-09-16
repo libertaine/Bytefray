@@ -81,6 +81,28 @@ def _run_real_evaluation(tmp_path: Path, *, baseline: bool, ruleset_id: str | No
     return result.state_path
 
 
+def _integrity_designer(monkeypatch, tmp_path: Path):
+    from app.agent_designer import AgentDesigner
+
+    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path / "designer-data"))
+    warnings = []
+    monkeypatch.setattr(
+        "app.agent_designer.QMessageBox.warning",
+        staticmethod(lambda *args, **_kwargs: warnings.append(args)),
+    )
+    monkeypatch.setattr(
+        "app.agent_designer.QMessageBox.critical",
+        staticmethod(lambda *args, **_kwargs: pytest.fail(f"unexpected critical dialog: {args}")),
+    )
+    designer = AgentDesigner()
+    launched = []
+    monkeypatch.setattr(
+        "app.agent_designer.open_pygame_client_direct",
+        lambda root, replay: launched.append((root, replay)),
+    )
+    return designer, launched, warnings
+
+
 # ---------------------------------------------------------------------------
 # Development panel: Evaluate button
 # ---------------------------------------------------------------------------
@@ -192,6 +214,31 @@ def test_evaluation_dialog_collects_fields(tmp_path):
         dialog.ticksSpin.setValue(50)
         assert dialog.ticks() == 50
         assert dialog.output_path() == tmp_path / "out"
+    finally:
+        dialog.deleteLater()
+
+
+@pytest.mark.gui
+def test_evaluation_dialog_ticks_tooltip_states_its_range_honestly(tmp_path):
+    """V5 Alpha 1 Phase 1: Ticks previously had no tooltip at all here. The
+    engine's only real constraint is a positive tick limit (``max_ticks <=
+    0`` is rejected -- see ``process_runtime.py``); the field's huge upper
+    bound is a practical GUI limit and must not be presented as an engine
+    rule."""
+
+    _make_app()
+    from app.views.evaluation import EvaluationDialog
+
+    dialog = EvaluationDialog(
+        [("Candidate", "candidate"), ("Opponent A", "opponent_a")],
+        default_candidate="candidate",
+        default_output=tmp_path / "out",
+    )
+    try:
+        tip = dialog.ticksSpin.toolTip().lower()
+        assert tip.strip() != ""
+        assert "positive" in tip
+        assert "no maximum" in tip
     finally:
         dialog.deleteLater()
 
@@ -518,7 +565,7 @@ def test_results_dialog_comparison_mode_selection_and_signals(tmp_path):
         assert "candidate" in dialog.detailText.toPlainText()
 
         captured_lab: list[tuple[str, str, int, int, str]] = []
-        captured_replay: list[Path] = []
+        captured_replay = []
         dialog.testInAgentLabRequested.connect(
             lambda s, o, seed, ticks, orientation: captured_lab.append(
                 (s, o, seed, ticks, orientation)
@@ -531,7 +578,9 @@ def test_results_dialog_comparison_mode_selection_and_signals(tmp_path):
 
         dialog._on_open_replay()
         assert captured_replay
-        assert captured_replay[0].name == "replay.jsonl"
+        assert captured_replay[0].result_path.name == "result.json"
+        assert captured_replay[0].expected_result_id
+        assert captured_replay[0].expected_match_id
     finally:
         dialog.deleteLater()
 
@@ -583,15 +632,130 @@ def test_results_dialog_duplicate_seed_open_replay_resolves_correct_duplicate(tm
 
     dialog = EvaluationResultsDialog(presentation)
     try:
-        captured_replay: list[Path] = []
+        captured_replay = []
         dialog.openReplayRequested.connect(lambda p: captured_replay.append(p))
 
         dialog.resultsList.setCurrentRow(1)  # the second duplicate's comparison row
         dialog._on_open_replay()
         assert captured_replay
-        assert captured_replay[0].parent == candidate_cells[1].artifact_dir
+        assert captured_replay[0].result_path.parent == candidate_cells[1].artifact_dir
     finally:
         dialog.deleteLater()
+
+
+@pytest.mark.gui
+def test_fresh_results_cell_rechecks_missing_replay_at_click(monkeypatch, tmp_path):
+    _make_app()
+    from app.services.designer_workflows import read_evaluation_presentation
+    from app.views.evaluation import EvaluationResultsDialog
+
+    presentation = read_evaluation_presentation(
+        _run_real_evaluation(tmp_path, baseline=False)
+    )
+    dialog = EvaluationResultsDialog(presentation)
+    designer, launched, warnings = _integrity_designer(monkeypatch, tmp_path)
+    try:
+        dialog.resultsList.setCurrentRow(0)
+        cell = dialog._candidate_cell(dialog._selected_payload())
+        assert cell is not None
+        replay_path = cell.artifact_dir / "replay.jsonl"
+        assert replay_path.is_file()
+        dialog.openReplayRequested.connect(designer._on_evaluation_open_replay)
+
+        replay_path.unlink()
+        dialog.btnOpenReplay.click()
+
+        assert launched == []
+        assert [args[1] for args in warnings] == ["Replay Unavailable"]
+    finally:
+        dialog.deleteLater()
+        designer.deleteLater()
+
+
+@pytest.mark.gui
+def test_fresh_results_comparison_rechecks_changed_replay_at_click(monkeypatch, tmp_path):
+    _make_app()
+    from app.services.designer_workflows import read_evaluation_presentation
+    from app.views.evaluation import EvaluationResultsDialog
+
+    presentation = read_evaluation_presentation(
+        _run_real_evaluation(tmp_path, baseline=True)
+    )
+    dialog = EvaluationResultsDialog(presentation)
+    designer, launched, warnings = _integrity_designer(monkeypatch, tmp_path)
+    try:
+        dialog.resultsList.setCurrentRow(0)
+        cell = dialog._candidate_cell(dialog._selected_payload())
+        assert cell is not None
+        replay_path = cell.artifact_dir / "replay.jsonl"
+        assert replay_path.is_file()
+        dialog.openReplayRequested.connect(designer._on_evaluation_open_replay)
+
+        replay_path.write_bytes(replay_path.read_bytes() + b"\n")
+        dialog.btnOpenReplay.click()
+
+        assert launched == []
+        assert [args[1] for args in warnings] == ["Replay Changed"]
+    finally:
+        dialog.deleteLater()
+        designer.deleteLater()
+
+
+@pytest.mark.gui
+def test_fresh_results_valid_replay_launches_exactly_once(monkeypatch, tmp_path):
+    _make_app()
+    from app.services.designer_workflows import read_evaluation_presentation
+    from app.views.evaluation import EvaluationResultsDialog
+
+    presentation = read_evaluation_presentation(
+        _run_real_evaluation(tmp_path, baseline=False)
+    )
+    dialog = EvaluationResultsDialog(presentation)
+    designer, launched, warnings = _integrity_designer(monkeypatch, tmp_path)
+    try:
+        dialog.resultsList.setCurrentRow(0)
+        dialog.openReplayRequested.connect(designer._on_evaluation_open_replay)
+
+        dialog.btnOpenReplay.click()
+
+        cell = dialog._candidate_cell(dialog._selected_payload())
+        assert cell is not None
+        assert launched == [(designer.data_root, (cell.artifact_dir / "replay.jsonl").resolve())]
+        assert warnings == []
+    finally:
+        dialog.deleteLater()
+        designer.deleteLater()
+
+
+@pytest.mark.gui
+def test_fresh_results_rechecks_parent_result_identity_at_click(monkeypatch, tmp_path):
+    _make_app()
+    from app.services.designer_workflows import read_evaluation_presentation
+    from app.views.evaluation import EvaluationResultsDialog
+
+    presentation = read_evaluation_presentation(
+        _run_real_evaluation(tmp_path, baseline=False)
+    )
+    dialog = EvaluationResultsDialog(presentation)
+    designer, launched, warnings = _integrity_designer(monkeypatch, tmp_path)
+    try:
+        dialog.resultsList.setCurrentRow(0)
+        cell = dialog._candidate_cell(dialog._selected_payload())
+        assert cell is not None
+        result_path = cell.artifact_dir / "result.json"
+        result = json.loads(result_path.read_text(encoding="utf-8"))
+        result["result_id"] = "replaced_result"
+        result_path.write_text(json.dumps(result), encoding="utf-8")
+        dialog.openReplayRequested.connect(designer._on_evaluation_open_replay)
+
+        dialog.btnOpenReplay.click()
+
+        assert launched == []
+        assert [args[1] for args in warnings] == ["Replay Unavailable"]
+        assert "associated" in warnings[0][2]
+    finally:
+        dialog.deleteLater()
+        designer.deleteLater()
 
 
 @pytest.mark.gui
@@ -1058,9 +1222,11 @@ def test_designer_evaluate_uses_discovery_id_not_display_name_when_they_differ(m
 
 
 @pytest.mark.gui
-def test_designer_evaluation_open_replay_delegates_to_launcher(monkeypatch, tmp_path):
+def test_designer_evaluation_open_replay_preflights_then_delegates(monkeypatch, tmp_path):
     _make_app()
     from app.agent_designer import AgentDesigner
+    from app.services.designer_workflows import read_evaluation_presentation
+    from app.services.replay_integrity import result_replay_request
 
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path / "data"))
     designer = AgentDesigner()
@@ -1070,8 +1236,19 @@ def test_designer_evaluation_open_replay_delegates_to_launcher(monkeypatch, tmp_
             "app.agent_designer.open_pygame_client_direct",
             lambda root, replay: launched.append((root, replay)),
         )
-        replay_path = tmp_path / "replay.jsonl"
-        designer._on_evaluation_open_replay(replay_path)
+        presentation = read_evaluation_presentation(
+            _run_real_evaluation(tmp_path, baseline=False)
+        )
+        cell = presentation.cells[0]
+        replay_path = cell.artifact_dir / "replay.jsonl"
+        designer._on_evaluation_open_replay(
+            result_replay_request(
+                cell.artifact_dir / "result.json",
+                artifact_root=presentation.state_path.parent,
+                expected_result_id=cell.result_id,
+                expected_match_id=cell.match_id,
+            )
+        )
         assert launched == [(designer.data_root, replay_path)]
     finally:
         designer.deleteLater()

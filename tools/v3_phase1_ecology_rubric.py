@@ -6,7 +6,7 @@ script reads that reduction and answers the four questions Phase 1 has to
 answer from it.
 
 1. **Sec 17 rubric, verbatim.** The five criteria from
-   ``docs/V2_0_BETA2_PHASE4_STRATEGIC_CHARACTERIZATION.md`` Sec 17 are
+   ``docs/archive/v2/V2_0_BETA2_PHASE4_STRATEGIC_CHARACTERIZATION.md`` Sec 17 are
    reproduced unaltered in ``CRITERIA`` below and each parameter condition
    is scored against them. No replacement rubric is defined; the
    supplementary measurements this file adds are reported alongside the

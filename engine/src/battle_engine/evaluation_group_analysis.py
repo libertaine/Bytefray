@@ -1,5 +1,5 @@
 """v2.0.0-beta2 Phase 3 multi-entrant ("group") strategic analysis
-(``docs/V2_0_BETA2_PHASE3_MULTI_ENTRANT_ANALYSIS.md``).
+(``docs/archive/v2/V2_0_BETA2_PHASE3_MULTI_ENTRANT_ANALYSIS.md``).
 
 Sibling of ``evaluation_analysis.py`` (Phase 4, outcome/win-rate),
 ``evaluation_behavior.py`` (Phase 5, behavior profile), and

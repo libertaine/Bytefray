@@ -745,7 +745,7 @@ is no BLOCKER finding.
 | `tools/v3_phase0_baseline_corpus.py` | **new** — corpus `run`/`analyze` driver |
 | `engine/tests/test_v3_phase0_evaluation_conditions.py` | **new** — 20 tests |
 | `engine/tests/test_v3_phase0_benchmark_population.py` | **new** — 16 tests |
-| `docs/V3_PHASE0_RESEARCH_BASELINE.md` | **new** — this report |
+| `docs/archive/v3/V3_PHASE0_RESEARCH_BASELINE.md` | **new** — this report |
 
 ## 16. Commits
 

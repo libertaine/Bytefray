@@ -225,10 +225,10 @@ priorities (P1–P5 do not include it).
 **Evidence gathered.** `--arena-size`, `--instr-per-tick`, and
 `--kill-weight` are `agents evaluate` CLI flags whose `--help` text already
 cites the relevant v3 research reports
-(`docs/V3_PHASE0_RESEARCH_BASELINE.md`,
-`docs/V3_PHASE3_OFFENSE_PAYOFF_CHARACTERIZATION.md`) and already states
+(`docs/archive/v3/V3_PHASE0_RESEARCH_BASELINE.md`,
+`docs/archive/v3/V3_PHASE3_OFFENSE_PAYOFF_CHARACTERIZATION.md`) and already states
 they are "controlled experimental variable[s], not a Ruleset change."
-`docs/V3_PHASE0_RESEARCH_BASELINE.md` §5's compatibility table confirms all
+`docs/archive/v3/V3_PHASE0_RESEARCH_BASELINE.md` §5's compatibility table confirms all
 three are fully identity-bearing (hashed into `effective_conditions` /
 `evaluation_id`) but not a Ruleset, Agent API, or schema change. No doc in
 the repository (`COMPATIBILITY.md`, `ROADMAP.md`, or elsewhere) promises
@@ -251,7 +251,7 @@ workflow.** Rationale:
   *was* run with them non-default (however it was launched — GUI or CLI),
   the GUI now discloses that fact after the run, which is the concrete gap
   that mattered.
-* `docs/V3_PRODUCT_SCOPE.md` §6 Phase 4 has been updated (this session) to
+* `docs/archive/v3/V3_PRODUCT_SCOPE.md` §6 Phase 4 has been updated (this session) to
   record this disposition explicitly, superseding its original,
   audit-unsupported wording.
 

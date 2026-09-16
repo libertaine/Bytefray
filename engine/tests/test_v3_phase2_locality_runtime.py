@@ -10,7 +10,7 @@ experimental Ruleset is *additive and isolated*: it must be impossible to
 reach locality semantics from a Ruleset-v1/v2 request, impossible to reach
 absolute addressing from a locality request, and impossible for either to
 change the other's artifacts by a single byte. See
-``docs/V3_PHASE2_LOCALITY_FEASIBILITY.md``.
+``docs/archive/v3/V3_PHASE2_LOCALITY_FEASIBILITY.md``.
 """
 
 from __future__ import annotations

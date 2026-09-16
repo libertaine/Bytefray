@@ -22,7 +22,7 @@ has one obvious place to obtain Ruleset-owned scheduling/termination
 semantics instead of duplicating them per runtime, and so an unrecognized
 Ruleset ID fails before any gameplay executes rather than silently running
 as v1. Scoring, statistics, and winner resolution are not yet
-Ruleset-policy-owned -- see ``docs/V1_5_PHASE4_TERMINATION_POLICY.md`` for
+Ruleset-policy-owned -- see ``docs/archive/v1/V1_5_PHASE4_TERMINATION_POLICY.md`` for
 what remains outside this seam and why.
 """
 
@@ -49,7 +49,7 @@ class TerminationReason(str, Enum):
     A ``str`` subclass so its ``.value`` -- the persisted/serialized form
     used in ``result.json`` and the golden corpus -- is exactly its member
     name's lowercase spelling; this representation predates Phase 4 and is
-    unchanged by it (see ``docs/V1_5_PHASE4_TERMINATION_POLICY.md``'s
+    unchanged by it (see ``docs/archive/v1/V1_5_PHASE4_TERMINATION_POLICY.md``'s
     "Reason representation").
     """
 
@@ -221,7 +221,7 @@ class RulesetPolicy:
         three integers, and is called both mid-match (to decide whether a
         runtime should keep ticking, using only ``.terminated``) and once a
         match has already stopped (to obtain the final ``.reason``) -- see
-        ``docs/V1_5_PHASE4_TERMINATION_POLICY.md`` for exactly where each
+        ``docs/archive/v1/V1_5_PHASE4_TERMINATION_POLICY.md`` for exactly where each
         runtime calls this.
         """
 
@@ -314,7 +314,7 @@ RULESET_V2_ALPHA11 = RulesetPolicy(ruleset_id=BYTEFRAY_RULESET_V2_ALPHA11_ID)
 # entrant, their exact pre-existing historical behavior, deliberately
 # preserved), a VM entrant requested under this permanent identity is
 # rejected by ``NativeMatchService`` before any entrant executes -- see
-# ``docs/V2_0_BETA1_PHASE2_PRODUCT_EXECUTION.md``. This is an execution
+# ``docs/archive/v2/V2_0_BETA1_PHASE2_PRODUCT_EXECUTION.md``. This is an execution
 # compatibility boundary, not a gameplay change: the frozen semantics this
 # policy's ``run_scheduler``/``resolve_termination`` expose are untouched.
 BYTEFRAY_RULESET_V2_ID = "bytefray-rules-2"
@@ -381,7 +381,7 @@ RULESET_V4_ALPHA1 = RulesetPolicy(
 # scheduling with a rotating entrant start, the same termination rule, the
 # same 8-cell core, the same reach legality, the same replay schema 4 --
 # except the two gameplay semantics the Phase 4 controlled gameplay study
-# produced evidence for (docs/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md Sections
+# produced evidence for (docs/archive/v4/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md Sections
 # F2/G, docs/V4_ALPHA2_DESIGN.md):
 #
 #   1. ``core_placement="seeded"`` -- entrant cores are placed from the
@@ -447,7 +447,11 @@ RULESET_V4 = RulesetPolicy(
 # never means hunting down scattered ``== BYTEFRAY_RULESET_V4_ALPHA1_ID``
 # comparisons.
 PROCESS_RULESET_IDS: frozenset[str] = frozenset(
-    {BYTEFRAY_RULESET_V4_ALPHA1_ID, BYTEFRAY_RULESET_V4_ALPHA2_ID, BYTEFRAY_RULESET_V4_ID}
+    {
+        BYTEFRAY_RULESET_V4_ALPHA1_ID,
+        BYTEFRAY_RULESET_V4_ALPHA2_ID,
+        BYTEFRAY_RULESET_V4_ID,
+    }
 )
 
 
@@ -472,7 +476,7 @@ class UnknownRulesetError(LookupError):
 # from which ID a persisted artifact may be *attributed* to. A historical
 # artifact identity alias is not evidence that runtime dispatch should
 # execute the aliased ID as today's Ruleset v1 -- see
-# ``docs/V1_5_PHASE3_RULESET_POLICY_DISPATCH.md``'s "Resolver design".
+# ``docs/archive/v1/V1_5_PHASE3_RULESET_POLICY_DISPATCH.md``'s "Resolver design".
 #
 # ``bytefray-rules-2-alpha1``, ``bytefray-rules-2-alpha11``,
 # ``bytefray-rules-2``, and ``bytefray-rules-3-alpha1`` are each registered
@@ -602,6 +606,22 @@ class NoCompatibleRulesetError(ValueError):
 # ``_RULESET_POLICIES``, explicitly selectable by name from every CLI and
 # Designer surface, and are still what every persisted alpha1/alpha2
 # artifact resolves to -- see docs/COMPATIBILITY.md's v4 identity section.
+#
+# V5 research constraint (pre-Phase-0 baseline remediation). An experimental
+# V5 Ruleset must require *explicit* selection: it must not be added to this
+# tuple, and must never become what an existing Agent API v2 roster receives
+# when the Ruleset is omitted. Stable ``bytefray-rules-4`` is the immutable
+# scientific control the V5 program measures against, so silently
+# reassigning the omitted-selection slot to an experimental identity would
+# contaminate every comparison made against it -- the same class of defect
+# as the ``ProcessMatchController`` alpha1 fallback corrected alongside this
+# note (see test_v4_runtime_default_ruleset.py). The v4 promotion precedent
+# above is not a counter-example: alpha1 -> alpha2 -> stable moved this slot
+# only between identities that were already the *current shipped* v4
+# gameplay contract, never onto an experimental one.
+# ``test_automatic_resolution_never_selects_an_experimental_identity`` and
+# ``test_omitted_ruleset_resolves_from_runtime_kind_and_api_version`` in
+# engine/tests/test_ruleset_policy.py already enforce both halves of this.
 OMITTED_RULESET_CANDIDATES: tuple[str, ...] = (
     BYTEFRAY_RULESET_V2_ID,
     BYTEFRAY_RULESET_V4_ID,

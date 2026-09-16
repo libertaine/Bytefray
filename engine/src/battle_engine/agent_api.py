@@ -6,10 +6,11 @@ import hashlib
 import importlib.util
 import random
 import sys
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from types import ModuleType
+from types import MappingProxyType, ModuleType
 from typing import Any, Protocol, runtime_checkable
 
 AGENT_API_VERSION = 2
@@ -184,6 +185,21 @@ class MatchContextV2:
     arena_size: int
     tick_limit: int
     rng: random.Random
+    #: This match's fully resolved agent parameters (V5 Alpha 1 Phase D),
+    #: already validated and coerced to their declared types by
+    #: ``agent_parameters.resolve_parameters`` -- an agent reads values, it
+    #: never re-validates them. Empty for an agent that declares no
+    #: ``parameters`` section in its manifest and is given no overrides,
+    #: which is every agent written before Phase D.
+    #:
+    #: Additive and last, with a default, so this is NOT an Agent API
+    #: version change: an agent that never looks at it observes and behaves
+    #: exactly as it did before, and existing keyword construction of this
+    #: context is unaffected. Read-only by construction so one process
+    #: cannot mutate what a sibling process is handed.
+    parameters: Mapping[str, bool | int | float | str] = field(
+        default_factory=lambda: MappingProxyType({})
+    )
 
 
 @dataclass(frozen=True)

@@ -50,9 +50,11 @@ import subprocess
 import sys
 import threading
 from collections import deque
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from enum import Enum
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from battle_engine.agent_api import (
@@ -221,6 +223,7 @@ class AgentWorkerHandle:
         action_budget: int,
         timeout: float,
         locality_reach: int | None = None,
+        parameters: Mapping[str, Any] | None = None,
     ) -> WorkerCallResult:
         return self._call(
             {
@@ -235,6 +238,13 @@ class AgentWorkerHandle:
                 # key existed reads it back through `.get(...)`, so the wire
                 # stays backward-tolerant in both directions.
                 "locality_reach": locality_reach,
+                # V5 Alpha 1 Phase D: the same already-resolved parameter
+                # mapping the in-process path puts on MatchContextV2, so a
+                # supervised (Agent Lab timeout) run hands the agent exactly
+                # what an ordinary run does. Resolved values are scalars by
+                # construction, so they cross this JSON wire unchanged; read
+                # back through `.get(...)` for the same tolerance as above.
+                "parameters": dict(parameters or {}),
             },
             timeout=timeout,
         )
@@ -428,6 +438,7 @@ def _handle_reset(state: _WorkerState, request: dict[str, Any], out: Any) -> Non
             arena_size=request["arena_size"],
             tick_limit=request["tick_limit"],
             rng=random.Random(seed),
+            parameters=MappingProxyType(dict(request.get("parameters") or {})),
         )
     else:
         context = MatchContext(

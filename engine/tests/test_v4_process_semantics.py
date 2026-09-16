@@ -23,6 +23,7 @@ from battle_engine.process_runtime import (
     ProcessMatchController,
     ProcessRole,
 )
+from battle_engine.ruleset_policy import RULESET_V4_ALPHA1
 
 
 def test_process_entrant_action_quota_invariant() -> None:
@@ -70,7 +71,18 @@ def test_chunked_scheduler_fairness_with_multi_process() -> None:
     ])
 
     config = Config(arena_size=1024, instr_per_tick=8, seed=1, weights=Weights())
-    controller = ProcessMatchController(config, [spec_a, spec_b], max_ticks=1)
+    # Alpha1 is selected *explicitly* here. The trace asserted below is
+    # alpha1's ``process_selection="priority"`` ordering -- freed-up
+    # intra-entrant quota always goes to the earliest-declared eligible
+    # process -- which alpha2 deliberately replaced with round-robin
+    # rotation. This R1 characterization predates alpha2 and used to receive
+    # alpha1 accidentally, through a ``ProcessMatchController`` default that
+    # was never updated when the stable identity was promoted; naming the
+    # policy keeps this test pinned to the historical semantics it actually
+    # characterizes instead of tracking whatever the default happens to be.
+    controller = ProcessMatchController(
+        config, [spec_a, spec_b], max_ticks=1, ruleset_policy=RULESET_V4_ALPHA1
+    )
     controller.run()
 
     # Pass 0 (chunk 2): A (pA1 x 2), B (pB1 x 2)

@@ -4,7 +4,7 @@ This document records Beta1 Phase 2: making the permanent `bytefray-rules-2`
 identity safely and deliberately usable through supported direct
 product-execution workflows, with an authoritative Python-only runtime
 boundary and no silent reinterpretation of existing Ruleset-v1 commands.
-Phase 1 (`docs/V2_0_BETA1_PLAN.md`) froze the gameplay semantics; this phase
+Phase 1 (`docs/archive/v2/V2_0_BETA1_PLAN.md`) froze the gameplay semantics; this phase
 does not touch them. It is about *who is allowed to select which Ruleset,
 through which CLI surface, and what happens when a requested Ruleset cannot
 execute the entrants it was given* — execution/product integration, not
@@ -452,7 +452,7 @@ work did not alter accepted Python-match behavior.
 
 ## 24. Remaining Beta1 Phase-3 boundary
 
-Explicitly not started by this phase (per `docs/V2_0_BETA1_PLAN.md` §7):
+Explicitly not started by this phase (per `docs/archive/v2/V2_0_BETA1_PLAN.md` §7):
 Replay v2 semantics (core status/capture events surfaced in replay-derived
 data), HUD/status-model preparation. No replay schema, telemetry, or
 Replay Viewer code was touched here.

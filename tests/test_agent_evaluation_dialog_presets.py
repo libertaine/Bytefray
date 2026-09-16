@@ -375,7 +375,7 @@ def test_pairwise_ruleset_defaults_to_v2_and_group_stays_v2_only(tmp_path):
     """Both modes now state their Ruleset; only pairwise is selectable."""
 
     _make_app()
-    from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V2_ID
+    from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V2_ID, BYTEFRAY_RULESET_V4_ID
 
     from app.services.designer_workflows import EVALUATION_MODE_GROUP
     from app.views.evaluation import EvaluationDialog
@@ -386,7 +386,12 @@ def test_pairwise_ruleset_defaults_to_v2_and_group_stays_v2_only(tmp_path):
         default_output=tmp_path / "out",
     )
     try:
-        assert dialog.pairwise_ruleset_id() == BYTEFRAY_RULESET_V2_ID
+        # V5 Alpha 1 Phase 1: with no ``agent_metadata`` supplied, the
+        # compatibility-repair pass (``_sync_pairwise_ruleset``) never runs
+        # (nothing to derive a Ruleset from), so the pairwise selector shows
+        # the Designer's own canonical fresh-session default -- now the
+        # stable v4 identity, not v2 (see DEFAULT_DESIGNER_RULESET_ID).
+        assert dialog.pairwise_ruleset_id() == BYTEFRAY_RULESET_V4_ID
         assert dialog.pairwiseRulesetCombo.isVisibleTo(dialog)
         assert not dialog.rulesetValue.isVisibleTo(dialog)
 
@@ -435,11 +440,13 @@ def test_preset_ruleset_is_surfaced_into_the_selector(tmp_path):
 
 @pytest.mark.gui
 def test_preset_without_a_ruleset_leaves_the_selection_alone(tmp_path):
-    """Nothing to preserve, so the user's own choice governs."""
+    """Nothing to preserve, so the user's own choice -- here, the Designer's
+    own canonical fresh-session default, since no ``agent_metadata`` was
+    supplied to derive anything else -- governs."""
 
     _make_app()
     from battle_engine.evaluation_presets import load_preset
-    from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V2_ID
+    from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
 
     _write_preset(tmp_path, "plain", {"opponents": ["opponent"], "seeds": [1]})
     from app.views.evaluation import EvaluationDialog
@@ -452,7 +459,7 @@ def test_preset_without_a_ruleset_leaves_the_selection_alone(tmp_path):
     )
     try:
         dialog.presetCombo.setCurrentIndex(dialog.presetCombo.findData("plain"))
-        assert dialog.pairwise_ruleset_id() == BYTEFRAY_RULESET_V2_ID
+        assert dialog.pairwise_ruleset_id() == BYTEFRAY_RULESET_V4_ID
     finally:
         dialog.deleteLater()
 

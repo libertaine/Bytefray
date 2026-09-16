@@ -12,7 +12,7 @@ intelligence?
 
 This instantiates the Phase 5 design proposal's declared-but-never-run
 E8 turtle-control probe
-(``docs/V3_PHASE5_DEFENSIVE_EVENT_DESIGN_PROPOSAL.md`` Sec 5B.3: "A
+(``docs/archive/v3/V3_PHASE5_DEFENSIVE_EVENT_DESIGN_PROPOSAL.md`` Sec 5B.3: "A
 deliberately passive/immobile probe agent (analogous to Phase 2's
 ``local_camper``) must not become competitive at any tested
 ``w_defense``") against the Phase 6 active-defense event rather than

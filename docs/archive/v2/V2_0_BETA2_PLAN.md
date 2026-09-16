@@ -2,9 +2,9 @@
 
 This is the working plan for `v2.0.0-beta2`, on `v2.0-beta2-development`
 (branched from `main` at the exact post-`v2.0.0-beta1`-release commit — see
-`docs/V2_0_BETA2_PHASE1_EVALUATION_METHODOLOGY.md` §1–2 for the verified
+`docs/archive/v2/V2_0_BETA2_PHASE1_EVALUATION_METHODOLOGY.md` §1–2 for the verified
 branch lineage). It is not a roadmap duplicate — see `docs/ROADMAP.md` for
-shipped-milestone history and `docs/V2_0_BETA1_PLAN.md` for the prior
+shipped-milestone history and `docs/archive/v2/V2_0_BETA1_PLAN.md` for the prior
 milestone this one builds on.
 
 **Release status: shipped.** Package version `2.0.0b2` is tagged and
@@ -25,7 +25,7 @@ this milestone.
 ## Phase 1 — Ruleset-v2 1v1 Evaluation Methodology
 
 **Status: complete and released in Beta2.** See
-`docs/V2_0_BETA2_PHASE1_EVALUATION_METHODOLOGY.md` for the full design
+`docs/archive/v2/V2_0_BETA2_PHASE1_EVALUATION_METHODOLOGY.md` for the full design
 record and qualification report. Summary:
 
 - explicit `agents evaluate --ruleset {bytefray-rules-1,bytefray-rules-2}`,
@@ -62,7 +62,7 @@ extension seam and explicit non-goals.
 ## Phase 2 — Multi-Entrant Evaluation Model
 
 **Status: complete and released in Beta2.** See
-`docs/V2_0_BETA2_PHASE2_MULTI_ENTRANT_EVALUATION.md` for the full design
+`docs/archive/v2/V2_0_BETA2_PHASE2_MULTI_ENTRANT_EVALUATION.md` for the full design
 record and qualification report. Summary:
 
 - a generic entrant/seat/permutation/layout model (`EvaluationSeatAssignment`,
@@ -103,7 +103,7 @@ Multi-entrant behavior/capture aggregate analysis is deliberately deferred
 ## Phase 3 — Multi-Entrant Analysis & Strategic Metrics
 
 **Status: complete and released in Beta2.** See
-`docs/V2_0_BETA2_PHASE3_MULTI_ENTRANT_ANALYSIS.md` for the full design
+`docs/archive/v2/V2_0_BETA2_PHASE3_MULTI_ENTRANT_ANALYSIS.md` for the full design
 record and qualification report. Summary:
 
 - a new, entrant-symmetric sibling analysis module
@@ -142,7 +142,7 @@ record and qualification report. Summary:
 ## Phase 4 — Strategic Characterization
 
 **Status: complete and released in Beta2.** See
-`docs/V2_0_BETA2_PHASE4_STRATEGIC_CHARACTERIZATION.md` for the full
+`docs/archive/v2/V2_0_BETA2_PHASE4_STRATEGIC_CHARACTERIZATION.md` for the full
 research record. Summary:
 
 - an 11-roster, 990-cell pre-registered primary corpus (plus 3 pairwise
@@ -180,7 +180,7 @@ Ruleset revision is recommended before Beta2 qualification.
 ## Phase 4.1 — Pre-Qualification Review Remediation
 
 **Status: complete.** See
-`docs/V2_0_BETA2_PHASE4_1_PRE_QUALIFICATION_REMEDIATION.md` for the
+`docs/archive/v2/V2_0_BETA2_PHASE4_1_PRE_QUALIFICATION_REMEDIATION.md` for the
 recovery record and qualification evidence. An independent review found
 five high-severity compatibility/correctness gaps after Phase 4. Phase 4.1
 repaired group deep verification, self-play artifact health, conservative
@@ -196,7 +196,7 @@ outcome or statistic used by that assessment changed.
 ## Phase 5 — Integrated Beta2 Qualification
 
 **Status: complete; qualified and published.** See
-`docs/V2_0_BETA2_PHASE5_INTEGRATED_QUALIFICATION.md` for the evidence and
+`docs/archive/v2/V2_0_BETA2_PHASE5_INTEGRATED_QUALIFICATION.md` for the evidence and
 release decision. The integrated pass re-established v4/v5/v6 identity,
 resume, verification, comparison, self-play, generic-N, pairwise, history,
 and CLI behavior; built and installed an isolated wheel; and completed the

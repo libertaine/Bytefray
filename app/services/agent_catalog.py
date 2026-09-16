@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from battle_engine.agent_parameters import EMPTY_PARAMETER_SCHEMA, AgentParameterSchema
 from battle_engine.agents import discover_agents_in
 
 
@@ -21,6 +22,15 @@ class AgentRow:
     # construction that predates this field; ``AgentCatalog.list_agents``
     # always sets it from ``spec.name``.
     agent_id: str = ""
+    # The agent's declared parameter schema, carried through from the
+    # engine's own ``AgentSpec.parameter_schema`` (V5 Alpha 1 Phase D) so the
+    # Designer generates controls from the parsed model rather than
+    # re-reading and re-interpreting the raw manifest in ``meta``. Always a
+    # schema, never ``None`` -- an agent that declares none resolves to
+    # ``EMPTY_PARAMETER_SCHEMA``, so a caller can ask any row what it exposes
+    # without first asking whether it exposes anything. Defaulted last so
+    # every pre-existing positional construction of this row is unaffected.
+    parameter_schema: AgentParameterSchema = EMPTY_PARAMETER_SCHEMA
 
 
 class AgentCatalog:
@@ -64,6 +74,7 @@ class AgentCatalog:
                     blob_path=blob_path,
                     meta=meta,
                     agent_id=spec.name,
+                    parameter_schema=spec.parameter_schema,
                 )
             )
         return rows

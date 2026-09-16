@@ -11,7 +11,7 @@ fully supported, executable, explicitly selectable Ruleset; alpha2 does not
 replace it, deprecate it, or reinterpret any artifact recorded under it.
 
 The evidence behind both changes is
-[V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md](V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md)
+[V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md](archive/v4/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md)
 (the Phase 4 controlled gameplay study, ~36,000 matches) and the Phase 5
 alpha1/alpha2 ecology qualification that followed it.
 

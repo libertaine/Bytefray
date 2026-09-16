@@ -1,7 +1,7 @@
 """Entrant identity: who a competitor is, independent of match or runtime.
 
 This is the v1.5 Phase 5 identity seam
-(``docs/V1_5_PHASE5_ENTRANT_IDENTITY_EXECUTION_STATE.md``): a small,
+(``docs/archive/v1/V1_5_PHASE5_ENTRANT_IDENTITY_EXECUTION_STATE.md``): a small,
 dependency-free module -- like ``rules.py`` and ``scheduler.py`` before it --
 sitting at the bottom of the runtime import graph so both the VM path
 (``agent_state.Agent``) and the Python path (``python_runtime.

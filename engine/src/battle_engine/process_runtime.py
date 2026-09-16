@@ -17,6 +17,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from fractions import Fraction
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, cast
 
 from battle_engine.agent_api import (
@@ -51,7 +52,7 @@ from battle_engine.python_runtime import (
     diagnose_load_failure,
     diagnose_reset_failure,
 )
-from battle_engine.ruleset_policy import RULESET_V4_ALPHA1, RulesetPolicy
+from battle_engine.ruleset_policy import RULESET_V4, RulesetPolicy
 from battle_engine.scoring import ScoreMap, ScoringPolicy
 from battle_engine.statistics import StatisticsCollector, StatisticsMap
 from battle_engine.telemetry import ReplayPublisher, ReplaySink
@@ -308,6 +309,23 @@ class ProcessMatchController:
             )
         return typed
 
+    @staticmethod
+    def _runtime_quota_shares(
+        declarations: list[ProcessDeclaration],
+    ) -> tuple[Fraction, ...]:
+        """Convert accepted public shares to an exact internal partition.
+
+        ``_validate_declarations`` is the one validity decision.  Converting
+        each accepted float independently can produce exact fractions whose
+        sum differs slightly from one, so normalize the converted weights
+        before the runtime's exact-arithmetic quota allocation.  A declaration
+        whose converted fractions already total one is unchanged.
+        """
+
+        converted = tuple(Fraction(str(item.share)) for item in declarations)
+        converted_total = sum(converted, start=Fraction())
+        return tuple(share / converted_total for share in converted)
+
     @classmethod
     def from_python_entrants(
         cls,
@@ -315,7 +333,7 @@ class ProcessMatchController:
         entrants: tuple[Any, ...],
         max_ticks: int,
         *,
-        ruleset_policy: RulesetPolicy = RULESET_V4_ALPHA1,
+        ruleset_policy: RulesetPolicy = RULESET_V4,
         agent_call_timeout: float | None = None,
         trace_writer: TraceWriter | None = None,
     ) -> ProcessMatchController:
@@ -326,7 +344,7 @@ class ProcessMatchController:
                 code="match_configuration_invalid",
                 stage="configuration",
                 message=(
-                    "Bytefray Ruleset v4 alpha1 fixes the entrant action quota at Q=8; "
+                    "Bytefray Ruleset v4 fixes the entrant action quota at Q=8; "
                     f"received {config.instr_per_tick}."
                 ),
             )
@@ -373,6 +391,13 @@ class ProcessMatchController:
                         arena_size=config.arena_size,
                         tick_limit=max_ticks,
                         rng=random.Random(seed),
+                        # V5 Alpha 1 Phase D: already resolved and validated
+                        # against the agent's declared schema before the
+                        # request reached the runtime, so there is nothing
+                        # left to check here -- an invalid parameter has
+                        # already failed the match without importing agent
+                        # code. Empty for every agent without a schema.
+                        parameters=MappingProxyType(dict(entrant.parameters)),
                     )
                     instance = cast(AgentV2, loaded.instance)
                     reset_start = time.perf_counter()
@@ -451,6 +476,7 @@ class ProcessMatchController:
                         tick_limit=max_ticks,
                         action_budget=config.instr_per_tick,
                         timeout=agent_call_timeout,
+                        parameters=entrant.parameters,
                     )
                     if trace_writer is not None:
                         trace_writer.write_reset(ResetRecord(
@@ -534,6 +560,7 @@ class ProcessMatchController:
                     slot=slot,
                     arena_size=config.arena_size,
                 )
+                quota_shares = cls._runtime_quota_shares(validated)
                 if trace_writer is not None:
                     from battle_engine.agent_trace import DeclarationRecord
                     for item in validated:
@@ -544,13 +571,15 @@ class ProcessMatchController:
                         ProcessRole.GENERALIST,
                         None,
                         declaration.reach,
-                        Fraction(str(declaration.share)),
+                        quota_share,
                         lambda _observation, _state: AgentAction(
                             ActionKindV2.MOVE, 0
                         ),
                         executor=executor,
                     )
-                    for declaration in validated
+                    for declaration, quota_share in zip(
+                        validated, quota_shares, strict=True
+                    )
                 ]
                 try:
                     source_digest = hashlib.sha256(source_path.read_bytes()).hexdigest()
@@ -607,7 +636,7 @@ class ProcessMatchController:
         self.config = config
         self.entrant_specs = entrant_specs
         self.max_ticks = max_ticks
-        self.ruleset_policy = ruleset_policy or RULESET_V4_ALPHA1
+        self.ruleset_policy = ruleset_policy or RULESET_V4
         self.disruption_duration = 1
         self.max_move_delta = max_move_delta
         self.trace_writer = trace_writer
@@ -810,7 +839,7 @@ class ProcessMatchController:
         declaration order an undocumented priority ranking distinct from the
         ``share`` each process actually declares. Phase 4 measured that
         accidental lever at up to ~14 percentage points of win rate
-        (docs/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md Section G1).
+        (docs/archive/v4/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md Section G1).
 
         ``"round_robin"`` (v4 alpha2): scan from ``self._process_cursor``
         instead, and advance the cursor to just past whichever process was
