@@ -72,8 +72,18 @@ coverage can lag a new CPython release, which forces pip to fall back to a
 source build that fails without `sdl2-config` and the SDL2 dev packages
 installed. CI validates pygame-ce and Designer startup under X11/Xvfb across
 the package's minimum and current-generation Python versions. That is not
-full visible/input GUI validation, and native Wayland remains unvalidated,
-so the Linux wheel should still be treated as headless-first.
+full visible/input GUI validation. Bytefray 5.0.0 was additionally
+smoke-tested on a native GNOME/Wayland desktop — Ubuntu 26.04.1 LTS, Python
+3.14.4 — where both `bytefray-agent-designer` and
+`bytefray replay --renderer pygame` launched, ran stably, and exited cleanly;
+see
+[`docs/research/v5/V5_FINAL_ARTIFACT_REBUILD_AND_CROSS_PLATFORM_REQUALIFICATION.md`](research/v5/V5_FINAL_ARTIFACT_REBUILD_AND_CROSS_PLATFORM_REQUALIFICATION.md#23-native-linux-wayland-gui-qualification--final-closeout-2026-09-15)
+for the full evidence. That establishes native GNOME/Wayland as validated for
+the tested Ubuntu configuration, not as a guarantee across every Wayland
+compositor, distribution, or GPU stack, and it did not include the deeper
+click-through UX checks in `docs/MANUAL_SMOKE_TESTS.md`. The Linux wheel
+should still be treated as headless-first by default outside that one tested
+configuration.
 
 ## Writable data and starter agents
 
