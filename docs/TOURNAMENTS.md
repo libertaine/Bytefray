@@ -38,8 +38,7 @@ bytefray tournament runner writer seeker \
 
 Discovered Python agents use the same syntax, but every entrant in one division
 must resolve to Python. Built-ins and blob manifests form VM divisions. The CLI
-uses the normal writable data root, starter initialization, and agent discovery;
-it does not use `tournament/scripts/btctl.py`.
+uses the normal writable data root, starter initialization, and agent discovery.
 
 Rerunning the same request and output directory resumes completed canonical
 results. `--retry-failed` reruns state entries recorded as failed, rejected, or
@@ -94,5 +93,4 @@ the last tournament's output directory.
 
 There is no bracket visualization, parallel scheduler, elimination bracket,
 rating system, custom tournament scoring UI, mixed-runtime division, or pMARS
-tournament division. The older `tournament/scripts/btctl.py` remains a legacy
-standalone workflow and is not the supported execution path.
+tournament division.

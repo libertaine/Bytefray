@@ -21,7 +21,6 @@ venv/
 
 # Project artifacts
 runs/
-agents_build/
 agent_revisions/
 *.blob
 *.jsonl
