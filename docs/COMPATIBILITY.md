@@ -30,7 +30,7 @@ agents. Keeping an identity readable and preserving its interpretation is
 distinct from offering it for new matches; historical execution is also
 retained for agent compatibility, tests, and reproducibility. The complete
 inventory and proposed future presentation are in the
-[Phase 4 audit](research/v5/V5_ALPHA1_MAINTENANCE_PHASE4_RELEASE_SURFACE_AUDIT.md).
+[Phase 4 audit](archive/v5/V5_ALPHA1_MAINTENANCE_PHASE4_RELEASE_SURFACE_AUDIT.md).
 
 ## Stable-candidate contracts for 1.x
 
@@ -300,13 +300,13 @@ defined in `battle_engine.rules` alongside its two alpha siblings and
 resolved through the same fail-closed `resolve_ruleset_policy` seam as every
 other identity. See [RULES_V4.md](RULES_V4.md) for the full Ruleset v4
 gameplay contract and
-[docs/research/v4/V4_RC1_PHASE2_STABLE_CONTRACT_PROMOTION.md](research/v4/V4_RC1_PHASE2_STABLE_CONTRACT_PROMOTION.md)
+[docs/archive/v4/V4_RC1_PHASE2_STABLE_CONTRACT_PROMOTION.md](archive/v4/V4_RC1_PHASE2_STABLE_CONTRACT_PROMOTION.md)
 for the promotion evidence.
 
 - **Status: permanent, stable semantic identity** as of `v4.0.0-rc1` Phase 2,
   promoted unchanged from the pre-RC research program's evidence-backed
   result (no further gameplay alpha found necessary; see
-  [V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md](research/v4/V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md)).
+  [V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md](archive/v4/V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md)).
   Like Ruleset v1/v2's contracts, it is not expected to change without new
   evidence and a deliberate, separately-versioned decision to revise it.
 - **Gameplay-identical to `bytefray-rules-4-alpha2`, field for field.** Its
@@ -502,12 +502,12 @@ identity-bearing.
 
 `agents evaluate --ruleset bytefray-rules-4-alpha2` now runs a fourth,
 additive evaluation methodology rather than being rejected outright.
-Implements docs/research/v4/V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md's
+Implements docs/archive/v4/V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md's
 accepted Sec H specification, on the maintainer-accepted evidence that
 alpha2's whole gameplay change *is* seed-derived placement, so evaluating
 it under the historical fixed-placement methodology would produce an
 artifact labelled alpha2 that actually ran alpha1's fixed opposed
-placement — see docs/research/v4/V4_RC1_PHASE1_EVALUATION_METHODOLOGY.md
+placement — see docs/archive/v4/V4_RC1_PHASE1_EVALUATION_METHODOLOGY.md
 for the full implementation report.
 
 - **Placement.** No new placement algorithm. Evaluation stops imposing

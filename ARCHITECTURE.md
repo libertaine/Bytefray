@@ -241,7 +241,7 @@ engine, not part of `battle_engine.core`.
   based on a stale selection. `Re-run Match` remains unimplemented: recorded
   artifacts do not guarantee the original agent source is still available, so
   Copy Seed states plainly that it does not by itself reproduce a match. See
-  `docs/research/v5/V5_REPLAY_HISTORY_PHASE6_ARCHITECTURE.md` for the design
+  `docs/archive/v5/V5_REPLAY_HISTORY_PHASE6_ARCHITECTURE.md` for the design
   and the Phase 7B/7C/7D reports for the implementation record.
 
 - **`app/agent_designer.py` is the actual, sole supported Agent Designer

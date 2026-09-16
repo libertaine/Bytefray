@@ -21,7 +21,7 @@ v2.
   converted into an exact normalized rational partition before scheduling,
   so validation and construction agree. Found during adversarial RC1
   review; see
-  [`docs/research/v5/V5_RC1_PROCESS_SHARE_REMEDIATION.md`](docs/research/v5/V5_RC1_PROCESS_SHARE_REMEDIATION.md).
+  [`docs/archive/v5/V5_RC1_PROCESS_SHARE_REMEDIATION.md`](docs/archive/v5/V5_RC1_PROCESS_SHARE_REMEDIATION.md).
 * **Replay History Subsystem:** Global Replay History dialog (`History → Replay History…`)
   with automatic discovery of recorded match and evaluation replays, result occurrence
   indexing, real-time filtering/search, and seamless Replay Viewer launch.
@@ -122,7 +122,7 @@ Published as `b5.0.0-alpha1` from
   installer; no frozen Linux archive was published for this Alpha 1.
 
 Release and qualification evidence:
-[publication record](docs/research/v5/V5_ALPHA1_PHASE_F_FINAL_QUALIFICATION.md#publication-addendum--2026-09-10-utc).
+[publication record](docs/archive/v5/V5_ALPHA1_PHASE_F_FINAL_QUALIFICATION.md#publication-addendum--2026-09-10-utc).
 Replay History was deferred. Spectator features inherited from V4 are not
 new Alpha 1 features. Subsequent parameter-consistency fixes, core-capture
 presentation changes, and maintenance Phases 0–4 on `v5-research` are
@@ -185,7 +185,7 @@ stable v4 contract (`bytefray-rules-4`) is unchanged.
   measured maximum requirement is `GLIBC_2.38`; the archive is not
   qualified against Ubuntu 22.04 or Debian 12 and does not claim universal
   Linux compatibility. See
-  `docs/research/v4/V4_RC2_LINUX_RELEASE_BASELINE_QUALIFICATION.md`.
+  `docs/archive/v4/V4_RC2_LINUX_RELEASE_BASELINE_QUALIFICATION.md`.
 * **Frozen Linux subprocess-launch portability fix.** Every code path that
   relaunches the frozen executable as a subprocess (`agents validate`/
   `test`, tournament resume, Designer development-test/replay launch)
@@ -206,7 +206,7 @@ stable v4 contract (`bytefray-rules-4`) is unchanged.
   installed. pygame-ce publishes CPython 3.14 (and 3.15) Linux wheels, so
   a supported Python now installs `replay`/`gui` from a binary wheel
   without requiring any local SDL toolchain. See
-  `docs/research/v4/V4_RC2_PYGAME_CE_PYTHON314_QUALIFICATION.md` for the
+  `docs/archive/v4/V4_RC2_PYGAME_CE_PYTHON314_QUALIFICATION.md` for the
   full compatibility qualification record.
 * **Python 3.14 qualified and added to supported/tested metadata.** Core,
   Agent API v2 (including the Quorum advanced example), Designer, and the
@@ -229,7 +229,7 @@ stable v4 contract (`bytefray-rules-4`) is unchanged.
 
 The first **release candidate** for Bytefray v4.0, prepared on
 `v4-rc1-development`. RC1 combines the RC-path's three implementation/audit
-phases (see `docs/research/v4/V4_RC1_PHASE1_EVALUATION_METHODOLOGY.md`,
+phases (see `docs/archive/v4/V4_RC1_PHASE1_EVALUATION_METHODOLOGY.md`,
 `V4_RC1_PHASE2_STABLE_CONTRACT_PROMOTION.md`, and
 `V4_RC1_PHASE3_PRODUCT_COHERENCE_AUDIT.md`) into one stable contract, not a
 chronological alpha dump. Bytefray v4.0 is now treated as feature-complete

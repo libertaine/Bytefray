@@ -294,7 +294,7 @@ which is where a worker is standing, not where the core is.
 This is not hypothetical. It is what five of the six original `v4_*`
 starters did, and it is why matches used to time out at 60% with a 1.77%
 conversion rate. The V5 research program (Phases R1–R4, under
-`docs/research/v5/`) tried changing the *engine* twice before establishing
+`docs/archive/v5/`) tried changing the *engine* twice before establishing
 that the mechanics were never the problem: a plain region sweep captures
 cores in tens of ticks under completely unmodified `bytefray-rules-4`.
 

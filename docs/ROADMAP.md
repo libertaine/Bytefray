@@ -4,7 +4,7 @@ This document preserves Bytefray's shipped milestone roadmap from v0.10
 through v4 and records the boundary into the V5 era. It is historical context,
 not a schedule of V5 commitments. See [README.md](../README.md) for the current
 product generation, [CHANGELOG.md](../CHANGELOG.md) for what shipped release by
-release, and [`docs/research/v5/`](research/v5/) for current V5 research and
+release, and [`docs/archive/v5/`](archive/v5/) for current V5 research and
 development records. Long-range ideas remain catalogued separately in
 [FUTURE_PLANS.md](FUTURE_PLANS.md).
 
@@ -34,7 +34,7 @@ supporting documentation.
 
 V5 development is deliberately evidence-led and research-driven rather than
 committed to a feature-by-feature release schedule. The V5 research record is
-under [`docs/research/v5/`](research/v5/). The v0.10 through v4 sections below
+under [`docs/archive/v5/`](archive/v5/). The v0.10 through v4 sections below
 are retained as milestone history, and the broader archive boundary is
 documented in [`docs/archive/README.md`](archive/README.md).
 
@@ -1172,7 +1172,7 @@ replay-only.
 **Status: published prerelease; superseded by v4.0.0-rc2 below.** The first
 v4.0 release candidate, published September 4, 2026 — see
 [CHANGELOG.md](../CHANGELOG.md#400-rc1---2026-09-03) and the RC-path
-qualification reports under [docs/research/v4/](research/v4/). Promotes
+qualification reports under [docs/archive/v4/](archive/v4/). Promotes
 `bytefray-rules-4` to the permanent, stable v4 gameplay Ruleset (proven
 equivalent to `bytefray-rules-4-alpha2` by a release-blocking
 replay-equivalence corpus, not merely declared); an omitted `--ruleset` for
@@ -1190,7 +1190,7 @@ selectable.
 **Status: published prerelease; superseded by v4.0.0 final below.** The second
 v4.0 release candidate — see
 [CHANGELOG.md](../CHANGELOG.md#400-rc2---2026-09-07) and the RC-path
-qualification reports under [docs/research/v4/](research/v4/). Adds a
+qualification reports under [docs/archive/v4/](archive/v4/). Adds a
 self-contained Linux binary distribution built and qualified on an official
 Ubuntu 24.04 baseline (byte-for-byte verified, unrebuilt, on Ubuntu 26.04;
 measured maximum requirement `GLIBC_2.38`), migrates the replay/GUI
@@ -1216,8 +1216,8 @@ Windows AMD64 installer, portable ZIP, self-contained Linux archive (Ubuntu
 Agent API v1, Ruleset v1/v2 compatibility, and pMARS external interoperability
 are all preserved.
 
-See [V4_RC2_POST_UX_WINDOWS_QUALIFICATION.md](research/v4/V4_RC2_POST_UX_WINDOWS_QUALIFICATION.md)
-and [V4_RC2_POST_UX_LINUX_PACKAGED_QUALIFICATION.md](research/v4/V4_RC2_POST_UX_LINUX_PACKAGED_QUALIFICATION.md)
+See [V4_RC2_POST_UX_WINDOWS_QUALIFICATION.md](archive/v4/V4_RC2_POST_UX_WINDOWS_QUALIFICATION.md)
+and [V4_RC2_POST_UX_LINUX_PACKAGED_QUALIFICATION.md](archive/v4/V4_RC2_POST_UX_LINUX_PACKAGED_QUALIFICATION.md)
 for the candidate qualification records. `v4.0.0-alpha1` through `-alpha4`,
 `v4.0.0-rc1`, and `v4.0.0-rc2` remain published, immutable prereleases; none
 was moved, retagged, or rewritten by this promotion.

@@ -9,7 +9,7 @@ see [V4_ALPHA1_DESIGN.md](V4_ALPHA1_DESIGN.md) (the frozen scheduler/
 process/disruption/observation freeze this Ruleset inherits unchanged),
 [V4_ALPHA2_DESIGN.md](V4_ALPHA2_DESIGN.md) (the two gameplay changes this
 Ruleset was promoted from, unmodified), and
-[docs/research/v4/V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md](research/v4/V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md)
+[docs/archive/v4/V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md](archive/v4/V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md)
 (the pre-RC study that concluded no further gameplay alpha was needed).
 
 `docs/RULES.md`/`docs/RULES_V2.md` remain the frozen, unmodified Ruleset
@@ -188,6 +188,6 @@ behavior this implies.
 historical, unedited evidence records of the research that produced this
 Ruleset — see [V4_ALPHA1_DESIGN.md](V4_ALPHA1_DESIGN.md),
 [V4_ALPHA2_DESIGN.md](V4_ALPHA2_DESIGN.md), and
-[docs/research/v4/](research/v4/) for how they got here. This document
+[docs/archive/v4/](archive/v4/) for how they got here. This document
 describes the stable game; the alpha designs and research reports describe
 how it was found.

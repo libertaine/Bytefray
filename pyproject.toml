@@ -37,7 +37,7 @@ replay = [
   # wheels for newer CPython on Linux (see docs/LINUX_INSTALL.md), which
   # forces a source build against SDL2 development headers most installs
   # don't have. 2.5.8 is the first pygame-ce version qualified against this
-  # renderer (RC2 pygame-ce/Python 3.14 migration); see docs/research/v4
+  # renderer (RC2 pygame-ce/Python 3.14 migration); see docs/archive/v4
   # for the qualification record.
   "pygame-ce>=2.5.8",
 ]

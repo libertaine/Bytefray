@@ -37,7 +37,7 @@ glibc symbol version is `GLIBC_2.38`. Ubuntu 22.04 LTS (glibc 2.35) and
 Debian 12 "Bookworm" (glibc 2.36) are **not** claimed as compatible, and no
 universal Linux compatibility is claimed; only the two Ubuntu releases
 actually tested are called out above. See
-[`docs/research/v4/V4_RC2_LINUX_RELEASE_BASELINE_QUALIFICATION.md`](research/v4/V4_RC2_LINUX_RELEASE_BASELINE_QUALIFICATION.md)
+[`docs/archive/v4/V4_RC2_LINUX_RELEASE_BASELINE_QUALIFICATION.md`](archive/v4/V4_RC2_LINUX_RELEASE_BASELINE_QUALIFICATION.md)
 for the full qualification record.
 
 ## Python wheel installation
@@ -77,7 +77,7 @@ smoke-tested on a native GNOME/Wayland desktop — Ubuntu 26.04.1 LTS, Python
 3.14.4 — where both `bytefray-agent-designer` and
 `bytefray replay --renderer pygame` launched, ran stably, and exited cleanly;
 see
-[`docs/research/v5/V5_FINAL_ARTIFACT_REBUILD_AND_CROSS_PLATFORM_REQUALIFICATION.md`](research/v5/V5_FINAL_ARTIFACT_REBUILD_AND_CROSS_PLATFORM_REQUALIFICATION.md#23-native-linux-wayland-gui-qualification--final-closeout-2026-09-15)
+[`docs/archive/v5/V5_FINAL_ARTIFACT_REBUILD_AND_CROSS_PLATFORM_REQUALIFICATION.md`](archive/v5/V5_FINAL_ARTIFACT_REBUILD_AND_CROSS_PLATFORM_REQUALIFICATION.md#23-native-linux-wayland-gui-qualification--final-closeout-2026-09-15)
 for the full evidence. That establishes native GNOME/Wayland as validated for
 the tested Ubuntu configuration, not as a guarantee across every Wayland
 compositor, distribution, or GPU stack, and it did not include the deeper
