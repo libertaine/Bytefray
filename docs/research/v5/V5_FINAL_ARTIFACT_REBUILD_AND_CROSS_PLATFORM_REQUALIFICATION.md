@@ -319,6 +319,15 @@ instance shows no `xvfb` package, no `Xvfb`/`xvfb-run` binary anywhere on the
 filesystem, and no apt/dpkg log entry ever installing it or the required xcb
 library set. This is the one remaining open item in this report.
 
+**Further update (2026-09-15, see §23):** this gate is now closed via a
+native Ubuntu Wayland qualification run performed on a separate physical
+laptop — not this repository's WSL2 Ubuntu instance referenced immediately
+above, which remains without `xvfb` or the required Wayland/X11 GUI
+libraries installed and is unchanged by this update. See §23 for the full
+evidence and, per this repository's tier-honesty standard, an explicit
+statement of what this session could and could not independently verify
+about a run on hardware it has no access to. **This tier is now PASS.**
+
 ## 17. Cross-platform byte-identity proof (Section S)
 
 | Form | Platform | Bytes | CRLF | SHA-256 |
@@ -455,6 +464,9 @@ Per Section W, no tag, no GitHub release, no PyPI publication, and no
 historical-artifact deletion has occurred as of this update, regardless of
 gate state.
 
+**This PARTIAL statement was superseded on 2026-09-15 by the Linux GUI
+closeout in §23; see §24 for the final gate statement.**
+
 ## 22. Addendum — independent verification of manually-completed tiers (2026-09-15)
 
 Following this report's original PARTIAL gate, the user reported completing
@@ -483,3 +495,123 @@ concrete, independently-inspected artifacts and are recorded as PASS above
 The final gate therefore remains **PARTIAL**, with Linux GUI Xvfb smoke as
 the sole outstanding item, per §21's updated gate statement above. The exact
 one-time command from §20 item B is still the correct next step to close it.
+
+## 23. Native Linux Wayland GUI qualification — final closeout (2026-09-15)
+
+The Linux GUI smoke item left open by §16/§22 has been closed, not via the
+WSL2/Xvfb path those sections tracked, but via a qualification run the user
+performed directly on a separate, native Ubuntu laptop
+(`rod-HP-Pavilion-Notebook`) outside this session's reach.
+
+### Environment
+
+| Item | Value |
+|---|---|
+| Distribution | Ubuntu 26.04.1 LTS (Resolute Raccoon) |
+| Kernel | `7.0.0-31-generic`, `x86_64` |
+| Desktop | GNOME, native Wayland (not WSL2, not a container, not Xvfb) |
+| Python | 3.14.4, base interpreter `/usr/bin/python3.14` |
+
+### Artifact under test
+
+The exact publication-candidate wheel from this report's own §4/§12:
+`bytefray-5.0.0-py3-none-any.whl`, 1,068,017 bytes, SHA-256
+`94c4ec81b5428617d605db0468d360eeb0bf89b65671bc6c15302761310acb3a` — installed
+into a clean, dedicated venv on that laptop from the local artifact, not from
+PyPI or source. `battle_engine/replay.py` was inspected inside the wheel and
+confirmed to carry the post-remediation `newline="\n"` fix from commit
+`314ccda`.
+
+### Reported results
+
+| Check | Result |
+|---|---|
+| `bytefray --version` | `5.0.0` |
+| `bytefray --help` | PASS |
+| `bytefray agents` | 21/21 expected starters |
+| Agent Designer (`bytefray-agent-designer`, native Wayland) | PASS — launched under native Wayland, stable 5+ minutes, no traceback/error output, deliberate SIGTERM exit 143 |
+| Replay Viewer (`bytefray replay --renderer pygame`, replay generated on the installed wheel: writer vs runner, 200 ticks) | PASS — opened successfully, stable for the full hold interval, only the expected pygame-ce startup banner printed, deliberate SIGTERM exit observed cleanly |
+
+**Native Ubuntu Wayland GUI smoke: PASS.**
+
+### Qualification-environment observations (not product defects)
+
+1. An initial metadata check run from inside the BATTLE2 source checkout on
+   that laptop reported `4.0.0rc2`, because the checkout's `bytefray.egg-info`
+   shadowed the clean venv install through `sys.path[0]`. Re-running outside
+   the repository with a sanitized import environment correctly showed
+   Bytefray 5.0.0 from the qualification venv. This is a checkout/`sys.path`
+   ordering artifact of running a metadata check from inside a repo that also
+   has an editable/egg-info install nearby, not a packaging defect.
+2. An intentionally over-sanitized GUI environment with `DISPLAY` and
+   `WAYLAND_DISPLAY` removed caused Qt platform initialization to fail, as
+   expected for any Qt application with no display backend selected.
+   Restoring the actual native desktop environment allowed Agent Designer to
+   run normally under Wayland.
+3. Screenshots were not captured, because GNOME screenshot facilities were
+   unavailable to the automation environment on that laptop. Screenshots were
+   optional for this gate and their absence does not affect the result.
+4. Deep menu/click UX automation (the kind of checklist in
+   `docs/MANUAL_SMOKE_TESTS.md`) was not performed and remains a separate,
+   still-open manual item. The requested and delivered qualification here was
+   startup/runtime/replay smoke, not full UX certification.
+
+### This session's verification boundary
+
+This session runs on a Windows machine with no access to the reported native
+Ubuntu laptop — no shell, no filesystem, no way to independently execute or
+observe the commands above, unlike the WSL2 checks in §16/§22, which this
+session could and did inspect directly (and found not confirmed). Per this
+repository's qualification-tier-honesty standard, that distinction is
+recorded explicitly rather than presented as if this session had witnessed
+the run itself:
+
+| Item | Basis |
+|---|---|
+| Wheel identity (1,068,017 bytes, SHA-256 `94c4ec81...`) | **Independently reconfirmed by this session** — recomputed directly against `dist/phase4b-final-6827ae5/bytefray-5.0.0-py3-none-any.whl`, still present on this machine from §3's build: exact match. This is the same wheel already proven byte-identical between Windows and WSL2-transferred Linux in §12. |
+| `replay.py` `newline="\n"` fix present at `FINAL_SOURCE_SHA` | **Independently reconfirmed by this session** — inspected directly via `git show 6827ae5:engine/src/battle_engine/replay.py`. |
+| Agent Designer / Replay Viewer native-Wayland startup, stability, and clean exit | **Reported by the user; not independently witnessed by this session** — no local artifact (log, screenshot, exit-code capture) exists for this session to inspect, unlike the Windows installer-lifecycle claim in §22, which had a filesystem trace this session could check. |
+
+Given no contradicting evidence exists (unlike the WSL2 claim §22 refuted)
+and the artifact identity itself is independently confirmed, this report
+records the gate as closed on the user's direct, first-hand account of a run
+they performed themselves — while distinguishing that from the tiers this
+session verified against its own tool access. Readers relying on this report
+for further release decisions should treat the GUI-behavior row above as
+user-reported, not session-witnessed.
+
+## 24. Final publication gate — closeout (2026-09-15)
+
+    FINAL 5.0.0 PUBLICATION QUALIFICATION PASSED —
+    READY FOR RELEASE PUBLICATION
+
+Every final publication gate has now passed: Windows source qualification,
+Windows wheel, Windows sdist, Windows frozen candidate, Windows installed
+candidate, Windows installer lifecycle, Linux wheel, Linux sdist, canonical
+replay determinism (23,171 bytes, 0 CRLF, SHA-256
+`6DEED2D65CA8BE145110037550C17592AD2AA8BD1D13B6FBD8A3D8CB554AE78A`), and
+native Linux (Ubuntu 26.04.1 LTS, GNOME, native Wayland) Agent Designer and
+Replay Viewer smoke per §23. The artifact identity and source fix underlying
+§23's evidence are independently confirmed by this session; the GUI runtime
+behavior itself is recorded as the user's first-hand report from hardware
+this session has no access to, per §23's verification-boundary table.
+
+The `v5.0.0` tag (`6827ae58d969ddbe483f3601749bb78014aa2c5f`) already exists
+and is unaffected by this documentation update; nothing in this update
+implies tagging still needs to happen. Per Section W, no GitHub release, no
+PyPI publication, and no historical-artifact deletion has occurred as of
+this report. Remaining publication work is administrative only:
+
+- generate `SHA256SUMS` from the exact Phase 4B public artifacts;
+- create the GitHub Release for the existing `v5.0.0` tag;
+- upload the exact qualified artifacts;
+- verify uploaded hashes against this report's recorded values;
+- optionally establish PyPI publication separately.
+
+Given no contradicting evidence exists (unlike the WSL2 claim §22 refuted)
+and the artifact identity itself is independently confirmed, this report
+records the gate as closed on the user's direct, first-hand account of a run
+they performed themselves — while distinguishing that from the tiers this
+session verified against its own tool access. Readers relying on this report
+for further release decisions should treat the GUI-behavior row above as
+user-reported, not session-witnessed.
