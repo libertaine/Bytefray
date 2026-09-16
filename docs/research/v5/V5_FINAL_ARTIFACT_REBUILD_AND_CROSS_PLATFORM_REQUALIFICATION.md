@@ -193,6 +193,18 @@ to run this tier themselves in an elevated shell. See §14 for the exact
 handoff commands prepared for that run. **This is the one Windows gate item
 still open; §13's Windows gate is stated as partial pending it.**
 
+**Update (2026-09-15, see §22 Addendum):** the user subsequently ran this
+tier themselves in an elevated shell using the exact prepared handoff
+command, `tools/smoke_after_install.ps1 -Lifecycle` against the isolated
+`D:\Bytefray Phase4B Test\Application` / `D:\Bytefray Phase4B Test\Data`
+paths from §14. Reported outcome: `Installed application smoke passed.` /
+`Upgrade preserved modified agents; uninstall removed programs and retained
+data.` / `=== SUCCESS: full installer lifecycle passed ===`. This is
+independently corroborated by the retained `Data` tree: `Application` no
+longer exists (uninstalled) while `Data\agents\user-upgrade-sentinel.txt`
+(planted to prove upgrade preserves user modifications) survived. **This
+tier is now PASS.**
+
 ## 10. Windows cross-form consistency (Section L)
 
 | Form | Bytes | CRLF | SHA-256 |
@@ -201,11 +213,16 @@ still open; §13's Windows gate is stated as partial pending it.**
 | Wheel (isolated venv) | 23,171 | 0 | `6deed2d65ca8be145110037550c17592ad2aa8bd1d13b6fbd8a3d8cb554ae78a` |
 | Sdist (isolated venv) | 23,171 | 0 | `6deed2d65ca8be145110037550c17592ad2aa8bd1d13b6fbd8a3d8cb554ae78a` |
 | Frozen `bytefray.exe` | 23,171 | 0 | `6deed2d65ca8be145110037550c17592ad2aa8bd1d13b6fbd8a3d8cb554ae78a` |
-| Installed candidate | *(pending §9/§14)* | — | — |
+| Installed candidate | 23,171 | 0 | `6deed2d65ca8be145110037550c17592ad2aa8bd1d13b6fbd8a3d8cb554ae78a` |
 
-All four reached forms are byte-identical. This is the exact fixed-seed
-command from the task brief (`v5_dual_team raider_share=0.7` vs `v4_quorum`,
-`bytefray-rules-4`, arena 512, quota 8, ticks 30, seed 602) in every case.
+**Update (2026-09-15, see §22 Addendum):** the installed-candidate row was
+completed via the elevated lifecycle run referenced in §9. All five reached
+Windows forms are now byte-identical. This is the exact fixed-seed command
+from the task brief (`v5_dual_team raider_share=0.7` vs `v4_quorum`,
+`bytefray-rules-4`, arena 512, quota 8, ticks 30, seed 602) in every case,
+independently re-verified against `D:\Bytefray Phase4B Test\Data\runs\
+phase4b-installed-fixedseed.jsonl` (23,171 bytes, 0 CRLF, SHA-256 matches
+exactly).
 
 ## 11. Windows gate (Section M)
 
@@ -219,6 +236,11 @@ elevation this session does not have; it is deferred to the user per their
 explicit choice, not silently skipped or approximated. The exact wheel/sdist
 were preserved unmodified for Linux transfer regardless of this open item,
 per the task's Section M instruction.
+
+**Update (2026-09-15, see §22 Addendum):** the installer lifecycle tier is
+now complete (§9) and independently corroborated. **WINDOWS PHASE 4B FINAL
+ARTIFACT QUALIFICATION: PASS — every Windows tier, including the installer
+lifecycle, now passed with the exact required hash.**
 
 ## 12. Linux artifact transfer verification (Section O)
 
@@ -291,6 +313,12 @@ substituted with an unvalidated native-Wayland/offscreen run. Native Wayland
 remains the documented "unvalidated" support position, unchanged by this
 phase.
 
+**Update (2026-09-15, see §22 Addendum):** re-checked independently before
+closing this report. This tier is **still not run** — the WSL2 Ubuntu
+instance shows no `xvfb` package, no `Xvfb`/`xvfb-run` binary anywhere on the
+filesystem, and no apt/dpkg log entry ever installing it or the required xcb
+library set. This is the one remaining open item in this report.
+
 ## 17. Cross-platform byte-identity proof (Section S)
 
 | Form | Platform | Bytes | CRLF | SHA-256 |
@@ -299,17 +327,17 @@ phase.
 | Wheel | Windows | 23,171 | 0 | `6deed2d6...4ae78a` |
 | Sdist | Windows | 23,171 | 0 | `6deed2d6...4ae78a` |
 | Frozen exe | Windows | 23,171 | 0 | `6deed2d6...4ae78a` |
-| Installed | Windows | *pending* | — | — |
+| Installed | Windows | 23,171 | 0 | `6deed2d6...4ae78a` |
 | Wheel | Linux (WSL2 Ubuntu 24.04.3) | 23,171 | 0 | `6deed2d6...4ae78a` |
 | Sdist | Linux (WSL2 Ubuntu 24.04.3) | 23,171 | 0 | `6deed2d6...4ae78a` |
 
-**Six of seven forms are byte-identical**, all matching the required
-`6deed2d65ca8be145110037550c17592ad2aa8bd1d13b6fbd8a3d8cb554ae78a`. The one
-outstanding form (Windows installed candidate) is blocked only on the
-elevation gap in §9/§14, not on any observed or suspected discrepancy — every
-other Windows and Linux form already agrees exactly. Full byte-identity
-proof (Section S) is not yet complete; it is deferred to the elevated
-lifecycle run, not failed.
+**Update (2026-09-15, see §22 Addendum):** the Windows installed-candidate
+row is now complete via the elevated lifecycle run. **All seven qualified
+replay forms are byte-identical**, all matching the required
+`6deed2d65ca8be145110037550c17592ad2aa8bd1d13b6fbd8a3d8cb554ae78a`. This is
+the artifact/replay-hash byte-identity proof specifically; it is independent
+of the separate, still-open Linux GUI Xvfb smoke item tracked in §16 and
+§22, which concerns desktop GUI startup, not replay/artifact hashes.
 
 ## 18. Closing the original Phase 4 failure (Section T)
 
@@ -335,7 +363,14 @@ session (no elevation, no `sudo` password for package installation), not
 observed or suspected product defects — every check actually run, on every
 reached tier and platform, passed with the exact required values.
 
+**Update (2026-09-15, see §22 Addendum):** the installer-lifecycle gap has
+since been closed by the user; Linux GUI smoke remains the one open
+access/environment gap.
+
 ## 20. Handoff — remaining steps to reach the final publication gate
+
+**Update (2026-09-15):** item A below is complete — see §9 and §22. Item B
+remains open.
 
 Two items remain before Section V's final gate can be declared:
 
@@ -404,3 +439,47 @@ the wheel venv already qualified in §14 (`~/bytefray-phase4b/wheel-env`, with
 Per Section W, no tag, no GitHub release, no PyPI publication, and no
 historical-artifact deletion occurred in this phase regardless of gate
 state.
+
+**Update (2026-09-15, see §22 Addendum) — superseding gate statement:**
+
+    FINAL 5.0.0 PUBLICATION QUALIFICATION: PARTIAL —
+    THE WINDOWS INSTALLER LIFECYCLE AND WINDOWS INSTALLED-CANDIDATE
+    FIXED-SEED REPLAY ARE NOW COMPLETE AND INDEPENDENTLY VERIFIED, MAKING
+    ALL SEVEN ARTIFACT FORMS BYTE-IDENTICAL AT THE REQUIRED HASH
+    (6DEED2D6...4AE78A). LINUX GUI XVFB SMOKE REMAINS OPEN — INDEPENDENTLY
+    RE-CHECKED AND STILL NOT PERFORMED ON THIS MACHINE'S ONLY AVAILABLE
+    LINUX ENVIRONMENT. NOT YET READY FOR TAGGING/RELEASE PUBLICATION
+    PENDING THAT ONE REMAINING ITEM.
+
+Per Section W, no tag, no GitHub release, no PyPI publication, and no
+historical-artifact deletion has occurred as of this update, regardless of
+gate state.
+
+## 22. Addendum — independent verification of manually-completed tiers (2026-09-15)
+
+Following this report's original PARTIAL gate, the user reported completing
+the two access-gated items themselves outside this session (an elevated
+PowerShell for the installer lifecycle; the WSL2/Xvfb path for Linux GUI
+smoke) and asked for the gate to be closed. Per this repository's standing
+rule that qualification claims are verified against real evidence rather
+than accepted on report alone, each of the three items was independently
+checked against artifacts actually present on this machine before this
+report was updated:
+
+| Item | Claimed | Independently verified | Result |
+|---|---|---|---|
+| Windows installer elevated lifecycle | PASS — install/upgrade/uninstall via `tools/smoke_after_install.ps1 -Lifecycle` | `D:\Bytefray Phase4B Test\Application` no longer exists (uninstalled); `...\Data` tree survives with `agents\user-upgrade-sentinel.txt` (content: "preserve across upgrade and uninstall") intact — consistent with "upgrade preserved modified agents; uninstall removed programs and retained data" | **CONFIRMED** |
+| Windows installed-candidate fixed-seed replay | PASS — 23,171 bytes, 0 CRLF, SHA-256 `6deed2d6...4ae78a` | `D:\Bytefray Phase4B Test\Data\runs\phase4b-installed-fixedseed.jsonl`: 23,171 bytes exactly, 0 CRLF, SHA-256 `6deed2d65ca8be145110037550c17592ad2aa8bd1d13b6fbd8a3d8cb554ae78a` — exact match; adjacent `result.json` independently shows `product_version: "5.0.0"`, `ruleset_id: "bytefray-rules-4"`, seed 602, arena 512, entrants `v5_dual_team`/`v4_quorum` matching the required command exactly | **CONFIRMED** |
+| Linux GUI Xvfb smoke | PASS — via the documented WSL2/Xvfb path | On the WSL2 Ubuntu instance (the same one used for §12–§15's wheel/sdist requalification): `dpkg -s xvfb` → "not installed"; no `Xvfb` or `xvfb-run` binary found anywhere on the filesystem (only unrelated `bash-completion` stub files matched); `/var/log/apt/history.log` for the current month is empty; `/var/log/dpkg.log` and its rotated predecessor contain no install entry for `xvfb` or the required `libxcb-cursor0`/`libxkbcommon-x11-0` set; no other WSL distro is registered on this machine | **NOT CONFIRMED — no evidence this tier was ever run** |
+
+Per this repository's qualification-tier-honesty standard, a claimed result
+without supporting evidence — and directly contradicted by the only
+available Linux environment — is not recorded as PASS. The user, informed
+of this discrepancy, chose to keep Linux GUI smoke open in this report
+rather than mark it complete. The two Windows-side items are corroborated by
+concrete, independently-inspected artifacts and are recorded as PASS above
+(§9, §10, §11, §17, §20).
+
+The final gate therefore remains **PARTIAL**, with Linux GUI Xvfb smoke as
+the sole outstanding item, per §21's updated gate statement above. The exact
+one-time command from §20 item B is still the correct next step to close it.
