@@ -44,11 +44,13 @@ first search for a difference.
 from __future__ import annotations
 
 import shutil
+import sys
 from dataclasses import replace
 from pathlib import Path
 
 import pytest
-from battle_engine.agents import resolve_agent
+from battle_engine.agent_api import AgentManifestError
+from battle_engine.agents import agent_spec_from_dir, resolve_agent
 from battle_engine.config import Config
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
 from battle_engine.placement import resolve_direct_match_starts
@@ -60,6 +62,24 @@ STARTER_SOURCE_DIRS = (
     REPO_ROOT / "agents",
     REPO_ROOT / "engine" / "src" / "battle_engine" / "data" / "starter_agents",
 )
+
+
+def _is_usable_agent_source(path: Path) -> bool:
+    """Whether ``path`` is a directory ``resolve_agent`` could actually load.
+
+    Mirrors the real discovery/resolution check (``agent_spec_from_dir``,
+    the same one ``discover_agents_in``/``resolve_agent`` use) instead of a
+    bare ``is_dir()`` -- a stale, emptied local ``agents/<name>`` (e.g. only
+    a leftover ``__pycache__``) satisfies ``is_dir()`` but must not shadow
+    the correct bundled fallback. A directory whose manifest fails to parse
+    is likewise treated as unusable rather than propagating the error here:
+    this is only a source *candidate* selection, not the final load.
+    """
+
+    try:
+        return agent_spec_from_dir(path) is not None
+    except AgentManifestError:
+        return False
 
 
 def _bootstrap_agent(tmp_path: Path, name: str) -> None:
@@ -77,7 +97,7 @@ def _bootstrap_agent(tmp_path: Path, name: str) -> None:
         return
     for source_root in STARTER_SOURCE_DIRS:
         source = source_root / name
-        if source.is_dir():
+        if _is_usable_agent_source(source):
             shutil.copytree(source, dest)
             return
     raise FileNotFoundError(f"no source found for agent {name!r} under {STARTER_SOURCE_DIRS}")
@@ -375,3 +395,117 @@ def test_equivalence_at_tick_limit_termination(tmp_path: Path):
     _assert_gameplay_equivalent_and_identity_differs(alpha2_replay, stable_replay, ticks_expected=15)
     alpha2_result = _raw_result(alpha2_replay)
     assert alpha2_result.termination_reason == "tick_limit"
+
+
+# ---------------------------------------------------------------------------
+# Bytefray V6 Phase 2B.1 -- regression coverage for _bootstrap_agent()'s
+# starter-source validity check (docs/research/v6/V6_PHASE1_REPOSITORY_DIET
+# _AUDIT.md Sec 8.2). Every case below would have passed silently on a
+# stale/emptied higher-priority source directory before this fix, exactly
+# reproducing the V6 Phase 0 failure at the site Phase 1 traced it to --
+# entirely against isolated tmp_path fixtures, never the developer's real
+# gitignored agents/ catalog.
+# ---------------------------------------------------------------------------
+
+
+def test_bootstrap_agent_skips_stale_cache_only_source_and_falls_through(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """A higher-priority source candidate that satisfies ``is_dir()`` but
+    holds only a stale ``__pycache__`` (the exact Phase 0 shape) must not
+    shadow a genuinely valid lower-priority fallback."""
+
+    primary_root = tmp_path / "sources" / "primary"
+    (primary_root / "v4_fake" / "__pycache__").mkdir(parents=True)
+    (primary_root / "v4_fake" / "__pycache__" / "agent.cpython-313.pyc").write_bytes(b"\x00")
+
+    secondary_root = tmp_path / "sources" / "secondary"
+    (secondary_root / "v4_fake").mkdir(parents=True)
+    (secondary_root / "v4_fake" / "agent.yaml").write_text('{"name": "v4_fake"}', encoding="utf-8")
+    (secondary_root / "v4_fake" / "agent.py").write_text(
+        "def create_agent(**_kwargs):\n    raise NotImplementedError\n", encoding="utf-8"
+    )
+
+    monkeypatch.setattr(
+        sys.modules[__name__], "STARTER_SOURCE_DIRS", (primary_root, secondary_root)
+    )
+
+    data_root = tmp_path / "data_root"
+    _bootstrap_agent(data_root, "v4_fake")
+
+    installed = data_root / "agents" / "v4_fake"
+    assert (installed / "agent.yaml").is_file()
+    assert (installed / "agent.py").is_file()
+
+
+def test_bootstrap_agent_prefers_a_valid_first_candidate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """The ordinary case is unaffected by the fix: a genuinely valid
+    higher-priority source is still preferred over a valid fallback."""
+
+    primary_root = tmp_path / "sources" / "primary"
+    (primary_root / "v4_fake").mkdir(parents=True)
+    (primary_root / "v4_fake" / "agent.yaml").write_text(
+        '{"name": "v4_fake", "note": "primary"}', encoding="utf-8"
+    )
+
+    secondary_root = tmp_path / "sources" / "secondary"
+    (secondary_root / "v4_fake").mkdir(parents=True)
+    (secondary_root / "v4_fake" / "agent.yaml").write_text(
+        '{"name": "v4_fake", "note": "secondary"}', encoding="utf-8"
+    )
+
+    monkeypatch.setattr(
+        sys.modules[__name__], "STARTER_SOURCE_DIRS", (primary_root, secondary_root)
+    )
+
+    data_root = tmp_path / "data_root"
+    _bootstrap_agent(data_root, "v4_fake")
+
+    installed_manifest = (data_root / "agents" / "v4_fake" / "agent.yaml").read_text(
+        encoding="utf-8"
+    )
+    assert "primary" in installed_manifest
+
+
+def test_bootstrap_agent_raises_when_no_candidate_is_usable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """Every candidate invalid (one empty, one entirely absent) must still
+    fail loudly rather than silently copying unusable content."""
+
+    primary_root = tmp_path / "sources" / "primary"
+    (primary_root / "v4_fake").mkdir(parents=True)
+    secondary_root = tmp_path / "sources" / "secondary"  # never created
+
+    monkeypatch.setattr(
+        sys.modules[__name__], "STARTER_SOURCE_DIRS", (primary_root, secondary_root)
+    )
+
+    with pytest.raises(FileNotFoundError):
+        _bootstrap_agent(tmp_path / "data_root", "v4_fake")
+
+
+def test_bootstrap_agent_never_touches_an_existing_destination(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """A destination that already has content -- whatever its origin -- is
+    never inspected or overwritten; only a wholly missing destination
+    triggers a source copy. This is the pre-existing safety property the
+    fix must not weaken."""
+
+    primary_root = tmp_path / "sources" / "primary"
+    (primary_root / "v4_fake").mkdir(parents=True)
+    (primary_root / "v4_fake" / "agent.yaml").write_text('{"name": "v4_fake"}', encoding="utf-8")
+
+    monkeypatch.setattr(sys.modules[__name__], "STARTER_SOURCE_DIRS", (primary_root,))
+
+    data_root = tmp_path / "data_root"
+    dest = data_root / "agents" / "v4_fake"
+    dest.mkdir(parents=True)
+    (dest / "agent.yaml").write_text('{"name": "v4_fake", "user_edited": true}', encoding="utf-8")
+
+    _bootstrap_agent(data_root, "v4_fake")
+
+    assert "user_edited" in (dest / "agent.yaml").read_text(encoding="utf-8")
