@@ -37,6 +37,7 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ALPHA11_ID,
     BYTEFRAY_RULESET_V2_ID,
     TerminationReason,
+    UnknownRulesetError,
 )
 
 from app.services import engine_commands
@@ -154,7 +155,21 @@ def test_v2_explicit_overlapping_starts_pass_through_unrepaired() -> None:
 
 
 @pytest.mark.parametrize("alpha_id", [ALPHA1, ALPHA11])
-def test_historical_alpha_identities_keep_v1_style_zero_defaults(alpha_id: str) -> None:
+def test_retired_alpha_identities_still_get_the_masked_zero_default(alpha_id: str) -> None:
+    """``placement.core_placement_mode`` deliberately fails *safe* to
+    ``"zero"`` for any unregistered Ruleset ID rather than raising --
+    ``resolve_ruleset_policy``'s own fail-closed error is meant to fire
+    first, from real match dispatch, before placement is ever consulted
+    (audit finding T-4, docs/research/v6/
+    V6_PHASE2B8_LEGACY_RULESET_RETIREMENT_AUDIT.md). V6 Phase 2B.9 retiring
+    ``bytefray-rules-2-alpha1``/``-alpha11`` makes them the first
+    historical identities to exercise this fallback for real: this pins
+    that they keep the exact same masked ``(0, 0)`` behavior they always
+    had (unaffected by retirement), and
+    ``test_retired_alpha_identities_fail_closed_before_any_overlap_guard_question``
+    below proves the earlier, real-dispatch rejection is what actually
+    keeps this masked path from mattering."""
+
     assert resolve_direct_match_starts(
         ruleset_id=alpha_id, arena_size=512, entrant_count=2, supplied_starts=[None, None]
     ) == (0, 0)
@@ -240,20 +255,25 @@ def test_v2_non_overlapping_starts_run_a_real_multi_tick_match(tmp_path: Path) -
 
 
 @pytest.mark.parametrize("alpha_id", [ALPHA1, ALPHA11])
-def test_historical_alpha_identities_are_not_gated_by_the_v2_overlap_guard(
+def test_retired_alpha_identities_fail_closed_before_any_overlap_guard_question(
     tmp_path: Path, alpha_id: str
 ) -> None:
-    # The RC2 guard is scoped to the permanent bytefray-rules-2 identity
-    # only -- historical alpha identities keep their pre-existing, unguarded
-    # degenerate-overlap execution semantics exactly as before this fix.
+    """The RC2 overlap guard was always scoped to the permanent
+    ``bytefray-rules-2`` identity only, and historical alpha identities kept
+    their pre-existing, unguarded degenerate-overlap execution semantics --
+    but V6 Phase 2B.9 retired both alphas from execution entirely, so the
+    question is now moot: dispatch itself must reject the identity, never
+    reaching the overlap guard (or writing any artifact) at all (W.5)."""
+
     root = tmp_path / "data"
     entrants = (
         _python_entrant(root, "nop_a", slot="A", start=0),
         _python_entrant(root, "nop_b", slot="B", start=0),
     )
     request = _request(tmp_path, entrants, ruleset_id=alpha_id, arena_size=512, max_ticks=5)
-    result = NativeMatchService().run(request)  # must not raise
-    assert result.ticks_run == 1
+    with pytest.raises(UnknownRulesetError):
+        NativeMatchService().run(request)
+    assert not request.replay_path.exists()
 
 
 def test_canonical_identity_distinguishes_broken_from_corrected_v2_defaults(

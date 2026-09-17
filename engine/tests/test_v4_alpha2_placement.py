@@ -279,7 +279,15 @@ def test_alpha2_does_not_expose_closed_form_opposite_placement(
         (BYTEFRAY_RULESET_V2_ALPHA1_ID, "zero"),
         ("bytefray-rules-not-a-real-identity", "zero"),
         (BYTEFRAY_RULESET_V2_ID, "seat_spread"),
-        (BYTEFRAY_RULESET_V3_ALPHA1_ID, "seat_spread"),
+        # V6 Phase 2B.9 retired bytefray-rules-3-alpha1 from executable
+        # registration; it now takes the same masked fail-safe "zero"
+        # default as any other unregistered ID (audit finding T-4) rather
+        # than its former "seat_spread" -- core_placement_mode deliberately
+        # fails *safe*, not closed, here (see its own docstring); real
+        # dispatch rejects the identity before placement is ever consulted
+        # (see test_ruleset_v2_runtime_compatibility.py's/
+        # test_v2_default_placement.py's dispatch-level proofs).
+        (BYTEFRAY_RULESET_V3_ALPHA1_ID, "zero"),
         (BYTEFRAY_RULESET_V4_ALPHA1_ID, "seat_spread"),
         (BYTEFRAY_RULESET_V4_ALPHA2_ID, "seeded"),
     ],

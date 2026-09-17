@@ -25,7 +25,6 @@ from battle_engine.replay import TickSnapshot, iter_replay
 from battle_engine.rules import BYTEFRAY_RULESET_ID
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ID,
-    BYTEFRAY_RULESET_V3_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     resolve_ruleset_policy,
 )
@@ -300,12 +299,10 @@ def test_ruleset_policy_dispatch_modes() -> None:
     """Confirm that existing rulesets use sequential and v4 uses K=2 rotating."""
     policy_v1 = resolve_ruleset_policy(BYTEFRAY_RULESET_ID)
     policy_v2 = resolve_ruleset_policy(BYTEFRAY_RULESET_V2_ID)
-    policy_v3 = resolve_ruleset_policy(BYTEFRAY_RULESET_V3_ALPHA1_ID)
     policy_v4 = resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ALPHA1_ID)
 
     assert policy_v1.scheduler_mode == "sequential"
     assert policy_v2.scheduler_mode == "sequential"
-    assert policy_v3.scheduler_mode == "sequential"
     assert policy_v4.scheduler_mode == "chunked"
     assert policy_v4.scheduler_chunk_size == 2
     assert policy_v4.scheduler_rotate_start is True

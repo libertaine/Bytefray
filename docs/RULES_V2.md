@@ -182,14 +182,16 @@ closed instead. VM parity is not claimed and is not part of this beta.
 
 This restriction applies only to the permanent `bytefray-rules-2` identity.
 The historical experimental identities `bytefray-rules-2-alpha1` and
-`bytefray-rules-2-alpha11` keep their original behavior unchanged for
-historical-artifact compatibility: they still dispatch successfully on a VM
-entrant, with the core mechanic simply inert (scheduling/termination
-identical to Ruleset v1, no Vulnerable Core semantics). This alpha-only
-carve-out exists so that no already-executed historical alpha match's
-behavior is retroactively altered by a beta-era product decision — it is
-not evidence that VM play is, or was ever, a supported way to exercise
-Ruleset v2's actual gameplay.
+`bytefray-rules-2-alpha11` kept their original VM dispatch behavior
+unchanged through beta1 — they dispatched successfully on a VM entrant,
+with the core mechanic simply inert (scheduling/termination identical to
+Ruleset v1, no Vulnerable Core semantics) — for historical-artifact
+compatibility; it was never evidence that VM play was a supported way to
+exercise Ruleset v2's actual gameplay. V6 Phase 2B.9 retired both
+identities from executable registration entirely
+(`docs/research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md`): neither
+dispatches at all any more, on a VM entrant or otherwise, though results
+and replays already recorded under them remain fully readable.
 
 ## Does the Agent API change?
 
@@ -220,16 +222,22 @@ constant requires its own, distinct Ruleset identity — see
 
 `bytefray-rules-2` is registered in
 `battle_engine.ruleset_policy._RULESET_POLICIES` under its own explicit
-key, alongside — never aliased to or from — `bytefray-rules-1`,
-`bytefray-rules-2-alpha1`, and `bytefray-rules-2-alpha11`. It shares its
-exact behavioral implementation with `bytefray-rules-2-alpha11` (the
-evidence being promoted is intentionally identical to what alpha.11
-validated), but dispatches, hashes into `canonical_match_id`, and persists
-as a fully distinct identity — see `docs/COMPATIBILITY.md` for the full
+key, never aliased to or from `bytefray-rules-1`. It shares its exact
+behavioral implementation with `bytefray-rules-2-alpha11` (the evidence
+being promoted is intentionally identical to what alpha.11 validated), but
+dispatches, hashes into `canonical_match_id`, and persists as a fully
+distinct identity — see `docs/COMPATIBILITY.md` for the full
 persistence/comparison/resume behavior this implies.
 
-`bytefray-rules-2-alpha1` and `bytefray-rules-2-alpha11` remain executable,
-historical, uncorrected evidence records of the research that produced this
-Ruleset — see `docs/archive/v2/V2_0_ALPHA_RESEARCH_SUMMARY.md` for how they got here.
-This document describes the stable game; the alpha reports describe how it
-was found.
+`bytefray-rules-2-alpha1` and `bytefray-rules-2-alpha11` were, through
+V6 Phase 2B.8, executable historical, uncorrected evidence records of the
+research that produced this Ruleset — see
+`docs/archive/v2/V2_0_ALPHA_RESEARCH_SUMMARY.md` for how they got here. V6
+Phase 2B.9 retired both from executable registration
+(`docs/research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md`): their
+result/replay artifacts remain fully readable and correctly attributed, and
+the promotion-equivalence proof between alpha11 and this Ruleset survives
+as a frozen-golden characterization
+(`engine/tests/test_ruleset_v2_promotion_equivalence.py`), but neither ID
+can execute a new match. This document describes the stable game; the
+alpha reports describe how it was found.

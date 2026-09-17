@@ -23,6 +23,13 @@ and does not promise, and for the release-blocking equivalence corpus
 Ruleset is gameplay-identical to `bytefray-rules-4-alpha2`, not merely
 declared to be.
 
+Following V6 Phase 2B.9's retirement of the closed-research rulesets listed
+in `docs/COMPATIBILITY.md`'s "Retired from execution / still recognised"
+table, `bytefray-rules-4` is V6's single executable gameplay control —
+behaviorally frozen for the duration of V6 research. Any new V6 gameplay
+semantics belong to a future `bytefray-rules-6` identity, not to in-place
+mutation of this one.
+
 ## What makes v4 different from v1/v2, in one paragraph
 
 Ruleset v4 replaces v1/v2's single-actor-per-entrant model with a

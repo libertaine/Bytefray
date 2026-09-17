@@ -57,8 +57,6 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ID,
     RULESET_V1,
     RULESET_V2,
-    RULESET_V2_ALPHA1,
-    RULESET_V2_ALPHA11,
     UnknownRulesetError,
     resolve_ruleset_policy,
 )
@@ -168,18 +166,27 @@ def test_permanent_v2_resolves_explicitly() -> None:
     assert policy.ruleset_id == "bytefray-rules-2"
 
 
-def test_all_four_identities_resolve_to_four_distinct_policy_objects() -> None:
+def test_v1_and_v2_resolve_to_distinct_policy_objects() -> None:
     resolved = {
         V1: resolve_ruleset_policy(V1),
-        ALPHA1: resolve_ruleset_policy(ALPHA1),
-        ALPHA11: resolve_ruleset_policy(ALPHA11),
         V2: resolve_ruleset_policy(V2),
     }
     assert resolved[V1] is RULESET_V1
-    assert resolved[ALPHA1] is RULESET_V2_ALPHA1
-    assert resolved[ALPHA11] is RULESET_V2_ALPHA11
     assert resolved[V2] is RULESET_V2
-    assert len({id(policy) for policy in resolved.values()}) == 4
+    assert len({id(policy) for policy in resolved.values()}) == 2
+
+
+def test_retired_alpha_identities_no_longer_resolve() -> None:
+    """V6 Phase 2B.9 retired ``bytefray-rules-2-alpha1``/``-alpha11`` from
+    executable registration; neither may resolve to a policy object -- and
+    in particular, neither may silently resolve to the permanent
+    ``bytefray-rules-2`` identity they were promoted into."""
+
+    import pytest
+
+    for retired in (ALPHA1, ALPHA11):
+        with pytest.raises(UnknownRulesetError):
+            resolve_ruleset_policy(retired)
 
 
 def test_unknown_ruleset_ids_still_fail_closed_alongside_the_new_identity() -> None:
@@ -194,13 +201,20 @@ def test_permanent_v2_is_not_an_alias_of_alpha11_or_anything_else() -> None:
     """The alias table (``rules._RULESET_ALIASES``) governs historical
     artifact-identity normalization, not runtime dispatch, and must gain no
     entry for either direction of alpha11 <-> v2 (docs/V2_0_BETA1_PLAN.md's
-    "No aliasing" section)."""
+    "No aliasing" section) -- true before Phase 2B.9 retired alpha11 from
+    execution, and unchanged by it: historical recognition
+    (``normalize_ruleset_id``) still preserves the literal identity, while
+    execution (``resolve_ruleset_policy``) now rejects it outright rather
+    than resolving it to anything, aliased or not."""
+
+    import pytest
 
     assert normalize_ruleset_id(V2) == V2
     assert normalize_ruleset_id(ALPHA11) == ALPHA11
     assert normalize_ruleset_id(ALPHA11) != V2
     assert normalize_ruleset_id(V2) != ALPHA11
-    assert resolve_ruleset_policy(V2) is not resolve_ruleset_policy(ALPHA11)
+    with pytest.raises(UnknownRulesetError):
+        resolve_ruleset_policy(ALPHA11)
 
 
 # ---------------------------------------------------------------------------

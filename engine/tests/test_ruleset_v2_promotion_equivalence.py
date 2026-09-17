@@ -1,34 +1,52 @@
-"""Beta1 promotion-equivalence corpus: ``bytefray-rules-2-alpha11`` vs
-``bytefray-rules-2``.
+"""Frozen-golden characterization of ``bytefray-rules-2``, pinning the
+promotion semantics qualified against ``bytefray-rules-2-alpha11`` at
+v2.0.0-beta1.
 
-Phase 1C of docs/V2_0_BETA1_PLAN.md: v2.0.0-beta1 promotes alpha.11's
+**History.** Phase 1C of docs/V2_0_BETA1_PLAN.md promoted alpha.11's
 evidence-backed candidate semantics into the permanent ``bytefray-rules-2``
-identity rather than inventing new gameplay. This file is the direct proof:
-for each representative scenario below, running byte-identical inputs under
-the two Ruleset identities must produce identical semantic output --
+identity rather than inventing new gameplay. From v2.0.0-beta1 through V6
+Phase 2B.8, this file proved that directly: it ran every scenario below
+under both Ruleset identities and diffed the full semantic output --
 winner, every per-agent statistic, final arena content, final ownership,
-and every replay event -- differing *only* in the identity fields that are
-expected to differ (the Ruleset identity itself, and the canonical
-match/result/replay ids derived from it).
+and every replay event.
 
-Scenarios, matching the governing task's minimum list:
+**Phase 2B.9 conversion.** ``bytefray-rules-2-alpha11`` (and
+``bytefray-rules-2-alpha1``, used by the differentiation test below) were
+retired from executable registration by V6 Phase 2B.9
+(docs/research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md), per the
+disposition in docs/research/v6/V6_PHASE2B8_LEGACY_RULESET_RETIREMENT_AUDIT.md
+Sec E.2/P.5/T-15. Rather than deleting the proof that promotion preserved
+alpha.11's semantics, this file was converted -- following the same
+frozen-golden pattern already established by ``test_ruleset_v1_equivalence.py``
+for the v1.4 ownership-accounting optimization -- into a permanent
+characterization: the ``EXPECTED`` table below pins the exact semantic
+snapshot (as a SHA-256 digest plus the human-readable summary fields used
+to diagnose a mismatch) that ``bytefray-rules-2-alpha11`` produced for each
+scenario in its last passing run before retirement, and every scenario is
+now run only under stable ``bytefray-rules-2`` and compared against that
+frozen snapshot.
 
-* Claimer vs Core Tracker (starter vs reference offense benchmark)
-* Hunter vs Core Tracker
-* Core Tracker vs Core Defender
-* Core Tracker vs Reactive Core Defender
-* one 3-entrant match
-* a wraparound core
-* a deterministic capture case
-* a deterministic non-capture case
-* more than one seed for Core Tracker (seeds vary the search outcome, per
-  docs/V2_0_ALPHA11_RULESET_V2_CANDIDATE_RESOLUTION.md Sec 17)
+**Provenance.** The frozen values were captured at commit
+``b55b8ea49019bd3ca5f1710b79fd4dfe5b6be24c`` (the ``v6-research`` HEAD
+immediately before Phase 2B.9's registry edit landed), using this file's
+own pre-conversion scenario corpus and helper functions -- reproducible by
+checking out that commit's version of this file (which still exercises
+``bytefray-rules-2-alpha11`` directly) and rerunning it. That run first
+re-confirmed the live alpha11-vs-v2 equivalence still held, then derived
+these digests from the confirmed-passing alpha11 side.
+
+**Policy, restated from the v1 file this pattern is copied from:** a
+legitimate Ruleset 2 gameplay, Agent API, RNG, or schema change must
+version this file's expectations deliberately; it must never refresh
+``EXPECTED`` in place to make a regression pass.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
-from dataclasses import asdict
+from collections.abc import Callable
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
@@ -36,16 +54,14 @@ import pytest
 from battle_engine.agents import resolve_agent
 from battle_engine.config import Config
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
+from battle_engine.python_runtime import CORE_BEACON_BYTE, CORE_SEED_BYTE_ALPHA1, core_addresses
 from battle_engine.reference_agents import reference_agent_spec
-from battle_engine.replay import ReplayHeader, TickSnapshot, iter_replay
-from battle_engine.result_model import read_result
-from battle_engine.ruleset_policy import (
-    BYTEFRAY_RULESET_V2_ALPHA11_ID,
-    BYTEFRAY_RULESET_V2_ID,
-)
+from battle_engine.replay import TickSnapshot, iter_replay
+from battle_engine.rules import BYTEFRAY_RULESET_ID
+from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V2_ID
 from battle_engine.starters import ensure_starter_agents
 
-ALPHA11 = BYTEFRAY_RULESET_V2_ALPHA11_ID
+V1 = BYTEFRAY_RULESET_ID
 V2 = BYTEFRAY_RULESET_V2_ID
 
 
@@ -65,7 +81,7 @@ def _write_agent(agent_dir: Path, agent_id: str, source: bytes) -> None:
     agent_dir.joinpath("agent.py").write_bytes(source)
 
 
-def _scripted_entrant(root: Path, agent_id: str, source: bytes, *, slot: str, start: int):
+def _scripted_entrant(root: Path, agent_id: str, source: bytes, *, slot: str, start: int) -> MatchEntrant:
     agent_dir = root / "agents" / agent_id
     _write_agent(agent_dir, agent_id, source)
     return MatchEntrant.python(slot, agent_id, start, resolve_agent(root, agent_id))
@@ -103,22 +119,142 @@ def _scripted_writer_source(addresses: list[int], value: int = 0xAA) -> bytes:
     ).encode()
 
 
-def _run(
-    tmp_path: Path,
-    entrants,
-    *,
-    ruleset_id: str,
-    run_name: str,
-    arena_size: int = 4096,
-    instr_per_tick: int = 8,
-    max_ticks: int = 200,
-    seed: int = 1,
-):
+# ---------------------------------------------------------------------------
+# Scenario corpus -- identical in substance to the pre-conversion
+# alpha11-vs-v2 corpus; each builder is now module-level so it can be
+# shared between the (removed) golden-generation step and this permanent
+# test.
+# ---------------------------------------------------------------------------
+
+
+def _build_claimer_vs_core_tracker(root: Path) -> tuple[MatchEntrant, ...]:
+    ensure_starter_agents(data_root=root)
+    claimer = resolve_agent(root, "claimer")
+    tracker = reference_agent_spec("core_tracker")
+    return (
+        MatchEntrant.python("A", "claimer", 0, claimer),
+        MatchEntrant.python("B", "core_tracker", 2048, tracker),
+    )
+
+
+def _build_hunter_vs_core_tracker(root: Path) -> tuple[MatchEntrant, ...]:
+    ensure_starter_agents(data_root=root)
+    hunter = resolve_agent(root, "hunter")
+    tracker = reference_agent_spec("core_tracker")
+    return (
+        MatchEntrant.python("A", "hunter", 0, hunter),
+        MatchEntrant.python("B", "core_tracker", 2048, tracker),
+    )
+
+
+def _build_core_tracker_vs_core_defender(root: Path) -> tuple[MatchEntrant, ...]:
+    tracker = reference_agent_spec("core_tracker")
+    defender = reference_agent_spec("core_defender")
+    return (
+        MatchEntrant.python("A", "core_tracker", 0, tracker),
+        MatchEntrant.python("B", "core_defender", 2048, defender),
+    )
+
+
+def _build_core_tracker_vs_reactive_core_defender(root: Path) -> tuple[MatchEntrant, ...]:
+    tracker = reference_agent_spec("core_tracker")
+    reactive = reference_agent_spec("reactive_core_defender")
+    return (
+        MatchEntrant.python("A", "core_tracker", 0, tracker),
+        MatchEntrant.python("B", "reactive_core_defender", 2048, reactive),
+    )
+
+
+def _build_three_entrant(root: Path) -> tuple[MatchEntrant, ...]:
+    ensure_starter_agents(data_root=root)
+    claimer = resolve_agent(root, "claimer")
+    tracker = reference_agent_spec("core_tracker")
+    defender = reference_agent_spec("core_defender")
+    return (
+        MatchEntrant.python("A", "claimer", 0, claimer),
+        MatchEntrant.python("B", "core_tracker", 1365, tracker),
+        MatchEntrant.python("C", "core_defender", 2730, defender),
+    )
+
+
+def _build_wraparound_core(root: Path) -> tuple[MatchEntrant, ...]:
+    arena_size = 128
+    start = arena_size - 3  # core spans 125,126,127,0,1,2,3,4
+    return (
+        _scripted_entrant(root, "wrapper", NOP_SOURCE, slot="A", start=start),
+        _scripted_entrant(root, "other", NOP_SOURCE, slot="B", start=60),
+    )
+
+
+def _build_deterministic_capture_case(root: Path) -> tuple[MatchEntrant, ...]:
+    core = [start_addr for start_addr in range(20, 28)]
+    return (
+        _scripted_entrant(root, "victim", NOP_SOURCE, slot="A", start=20),
+        _scripted_entrant(root, "attacker", _scripted_writer_source(core), slot="B", start=60),
+    )
+
+
+def _build_deterministic_non_capture_case(root: Path) -> tuple[MatchEntrant, ...]:
+    return (
+        _scripted_entrant(root, "idle_a", NOP_SOURCE, slot="A", start=20),
+        _scripted_entrant(root, "idle_b", NOP_SOURCE, slot="B", start=60),
+    )
+
+
+def _build_diff_idle_pair(root: Path) -> tuple[MatchEntrant, ...]:
+    return (
+        _scripted_entrant(root, "idle_a", NOP_SOURCE, slot="A", start=20),
+        _scripted_entrant(root, "idle_b", NOP_SOURCE, slot="B", start=60),
+    )
+
+
+@dataclass(frozen=True)
+class Scenario:
+    key: str
+    build: Callable[[Path], tuple[MatchEntrant, ...]]
+    seed: int
+    arena_size: int = 4096
+    max_ticks: int = 200
+    instr_per_tick: int = 8
+
+
+SCENARIOS: tuple[Scenario, ...] = (
+    Scenario("claimer_vs_core_tracker_seed1", _build_claimer_vs_core_tracker, seed=1),
+    Scenario("claimer_vs_core_tracker_seed2", _build_claimer_vs_core_tracker, seed=2),
+    Scenario("claimer_vs_core_tracker_seed3", _build_claimer_vs_core_tracker, seed=3),
+    Scenario("hunter_vs_core_tracker_seed1", _build_hunter_vs_core_tracker, seed=1),
+    Scenario("hunter_vs_core_tracker_seed2", _build_hunter_vs_core_tracker, seed=2),
+    Scenario("core_tracker_vs_core_defender", _build_core_tracker_vs_core_defender, seed=4),
+    Scenario(
+        "core_tracker_vs_reactive_core_defender",
+        _build_core_tracker_vs_reactive_core_defender,
+        seed=5,
+    ),
+    Scenario("three_entrant_match", _build_three_entrant, seed=2),
+    Scenario("wraparound_core", _build_wraparound_core, seed=1, arena_size=128, max_ticks=5),
+    Scenario(
+        "deterministic_capture_case",
+        _build_deterministic_capture_case,
+        seed=1,
+        arena_size=128,
+        max_ticks=20,
+    ),
+    Scenario(
+        "deterministic_non_capture_case",
+        _build_deterministic_non_capture_case,
+        seed=1,
+        arena_size=128,
+        max_ticks=10,
+    ),
+)
+
+
+def _run(root: Path, entrants: tuple[MatchEntrant, ...], *, ruleset_id: str, scenario: Scenario):
     request = MatchRequest(
-        Config(arena_size=arena_size, instr_per_tick=instr_per_tick, seed=seed),
+        Config(arena_size=scenario.arena_size, instr_per_tick=scenario.instr_per_tick, seed=scenario.seed),
         entrants,
-        max_ticks=max_ticks,
-        replay_path=tmp_path / run_name / "replay.jsonl",
+        max_ticks=scenario.max_ticks,
+        replay_path=root / "replay.jsonl",
         verbose=False,
         ruleset_id=ruleset_id,
     )
@@ -164,7 +300,7 @@ def _final_arena_and_owners(result, arena_size: int) -> tuple[dict[int, int], di
 def _events(result) -> list[tuple[int, str, dict[str, Any]]]:
     """Every replay event, normalized to a plain, order-preserving tuple
     list -- includes the tick it occurred on so timing equivalence (not
-    just event content) is part of the equivalence check."""
+    just event content) is part of the characterization."""
 
     out: list[tuple[int, str, dict[str, Any]]] = []
     for record in iter_replay(result.replay_path):
@@ -175,220 +311,182 @@ def _events(result) -> list[tuple[int, str, dict[str, Any]]]:
     return out
 
 
-def _assert_semantically_equivalent(alpha11_result, v2_result, *, arena_size: int) -> None:
-    # Identity fields are *expected* to differ.
-    alpha11_header = next(
-        r for r in iter_replay(alpha11_result.replay_path) if isinstance(r, ReplayHeader)
-    )
-    v2_header = next(r for r in iter_replay(v2_result.replay_path) if isinstance(r, ReplayHeader))
-    assert alpha11_header.ruleset_id == ALPHA11
-    assert v2_header.ruleset_id == V2
-    assert alpha11_header.match_id != v2_header.match_id
-    assert alpha11_result.result_id != v2_result.result_id
-    alpha11_envelope = read_result(alpha11_result.result_path)
-    v2_envelope = read_result(v2_result.result_path)
-    assert alpha11_envelope.ruleset_id == ALPHA11
-    assert v2_envelope.ruleset_id == V2
-
-    # Everything else must be identical.
-    assert alpha11_result.winner == v2_result.winner
-    assert alpha11_result.ticks_run == v2_result.ticks_run
-    assert alpha11_result.termination_reason == v2_result.termination_reason
-    assert dict(alpha11_result.score) == dict(v2_result.score)
-    assert _agent_snapshot(alpha11_result) == _agent_snapshot(v2_result)
-
-    alpha11_arena, alpha11_owners = _final_arena_and_owners(alpha11_result, arena_size)
-    v2_arena, v2_owners = _final_arena_and_owners(v2_result, arena_size)
-    assert alpha11_arena == v2_arena
-    assert alpha11_owners == v2_owners
-
-    assert _events(alpha11_result) == _events(v2_result)
+def _snapshot(result, arena_size: int) -> dict[str, Any]:
+    arena, owners = _final_arena_and_owners(result, arena_size)
+    return {
+        "winner": result.winner,
+        "ticks_run": result.ticks_run,
+        "termination_reason": result.termination_reason.value,
+        "score": dict(result.score),
+        "agents": _agent_snapshot(result),
+        "arena": {str(address): value for address, value in sorted(arena.items())},
+        "owners": {str(address): owner for address, owner in sorted(owners.items())},
+        "events": _events(result),
+    }
 
 
-def _matched_pair(tmp_path: Path, build_entrants, **run_kwargs):
-    """Run ``build_entrants()`` (a zero-arg factory, since ``MatchEntrant``
-    resolution is not always reusable across two separate roots) once under
-    each Ruleset and assert full semantic equivalence."""
-
-    arena_size = run_kwargs.get("arena_size", 4096)
-    alpha11_result = _run(
-        tmp_path, build_entrants(tmp_path / "alpha11"), ruleset_id=ALPHA11, run_name="alpha11", **run_kwargs
-    )
-    v2_result = _run(tmp_path, build_entrants(tmp_path / "v2"), ruleset_id=V2, run_name="v2", **run_kwargs)
-    _assert_semantically_equivalent(alpha11_result, v2_result, arena_size=arena_size)
+def _snapshot_digest(snapshot: dict[str, Any]) -> str:
+    encoded = json.dumps(snapshot, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 # ---------------------------------------------------------------------------
-# Reference-agent matchups, multiple seeds
+# EXPECTED -- frozen from bytefray-rules-2-alpha11's last passing run
+# against this exact scenario corpus, at commit
+# b55b8ea49019bd3ca5f1710b79fd4dfe5b6be24c, immediately before Phase 2B.9
+# removed bytefray-rules-2-alpha11's executable registration. Each digest
+# covers the complete semantic snapshot (winner, ticks, termination,
+# per-agent score/stat tuple, final arena bytes, final ownership, and the
+# full ordered event stream); the summary fields exist only to make a
+# mismatch diagnosable without recomputing the digest by hand.
+# ---------------------------------------------------------------------------
+
+EXPECTED: dict[str, dict[str, Any]] = {
+    "claimer_vs_core_tracker_seed1": {
+        "digest": "9b3428a293350117fd641e3078f90cecb19ab899ff3c41a4d9b272fc5dc9bde5",
+        "winner": "A",
+        "ticks_run": 200,
+        "termination_reason": "tick_limit",
+        "score": {"A": 2448.0, "B": 1370.0},
+        "agent_ids": ["A", "B"],
+    },
+    "claimer_vs_core_tracker_seed2": {
+        "digest": "c361181c887791a0253d8c46a35eb96a968c0dbffad6b898247a06287d6fdea3",
+        "winner": "B",
+        "ticks_run": 144,
+        "termination_reason": "last_agent_standing",
+        "score": {"A": 1320.0, "B": 789.0},
+        "agent_ids": ["A", "B"],
+    },
+    "claimer_vs_core_tracker_seed3": {
+        "digest": "50641a19f31848dec13775193fae06a6dbe5afc110a250b8498d45e62587011b",
+        "winner": "B",
+        "ticks_run": 110,
+        "termination_reason": "last_agent_standing",
+        "score": {"A": 792.0, "B": 502.0},
+        "agent_ids": ["A", "B"],
+    },
+    "hunter_vs_core_tracker_seed1": {
+        "digest": "7f6b95d9695d9ad2318d5f081c1186e291d07e346428c109a8899dc4bff6b3eb",
+        "winner": "A",
+        "ticks_run": 200,
+        "termination_reason": "tick_limit",
+        "score": {"A": 2419.0, "B": 1423.0},
+        "agent_ids": ["A", "B"],
+    },
+    "hunter_vs_core_tracker_seed2": {
+        "digest": "b7b4ca74454eb5d876a75d4b16ea67e4254a4cd08455f5dcd6e046a829f4da1c",
+        "winner": "B",
+        "ticks_run": 158,
+        "termination_reason": "last_agent_standing",
+        "score": {"A": 1560.0, "B": 947.0},
+        "agent_ids": ["A", "B"],
+    },
+    "core_tracker_vs_core_defender": {
+        "digest": "55a8c88b467ddaff6c210d613909cb4dc04bd258e96518461d4a72a34fedb078",
+        "winner": "B",
+        "ticks_run": 200,
+        "termination_reason": "tick_limit",
+        "score": {"A": 1554.0, "B": 1830.0},
+        "agent_ids": ["A", "B"],
+    },
+    "core_tracker_vs_reactive_core_defender": {
+        "digest": "00a0fe226da2bd6a8361b06bc177afc472c0f13f662ade94d9dddce83951f723",
+        "winner": "B",
+        "ticks_run": 200,
+        "termination_reason": "tick_limit",
+        "score": {"A": 1558.0, "B": 1797.0},
+        "agent_ids": ["A", "B"],
+    },
+    "three_entrant_match": {
+        "digest": "40e635fb30cd623c6616f74a940e35fbeb51267133e169e6fae27aca148c3bc2",
+        "winner": "A",
+        "ticks_run": 200,
+        "termination_reason": "tick_limit",
+        "score": {"A": 2186.0, "B": 1382.0, "C": 1617.0},
+        "agent_ids": ["A", "B", "C"],
+    },
+    "wraparound_core": {
+        "digest": "a12280524c7102116a7929696dd7c930f774409a44b9bdf001dd477cbd34801e",
+        "winner": "tie",
+        "ticks_run": 5,
+        "termination_reason": "tick_limit",
+        "score": {"A": 5.0, "B": 5.0},
+        "agent_ids": ["A", "B"],
+    },
+    "deterministic_capture_case": {
+        "digest": "26fc1cc7173c5f1ea3f5f5ae6bbb756e6310844778fdd31bda50fec7d0708de2",
+        "winner": "B",
+        "ticks_run": 1,
+        "termination_reason": "last_agent_standing",
+        "score": {"A": 0, "B": 6.0},
+        "agent_ids": ["A", "B"],
+    },
+    "deterministic_non_capture_case": {
+        "digest": "46c20c353158c71a079a35c3f352a8289b6f536c2f238d38a52baeef8a4cb24a",
+        "winner": "tie",
+        "ticks_run": 10,
+        "termination_reason": "tick_limit",
+        "score": {"A": 10.0, "B": 10.0},
+        "agent_ids": ["A", "B"],
+    },
+}
+
+
+@pytest.mark.parametrize("scenario", SCENARIOS, ids=[s.key for s in SCENARIOS])
+def test_ruleset_v2_matches_frozen_alpha11_promotion_golden(tmp_path: Path, scenario: Scenario) -> None:
+    """Stable ``bytefray-rules-2`` must still produce exactly the semantic
+    output that was proven equivalent to ``bytefray-rules-2-alpha11`` at
+    promotion time -- now checked against the frozen golden rather than a
+    live second execution, since alpha11 is no longer executable."""
+
+    entrants = scenario.build(tmp_path / "agents")
+    result = _run(tmp_path, entrants, ruleset_id=V2, scenario=scenario)
+    snapshot = _snapshot(result, scenario.arena_size)
+    expected = EXPECTED[scenario.key]
+
+    assert _snapshot_digest(snapshot) == expected["digest"]
+    assert snapshot["winner"] == expected["winner"]
+    assert snapshot["ticks_run"] == expected["ticks_run"]
+    assert snapshot["termination_reason"] == expected["termination_reason"]
+    assert snapshot["score"] == expected["score"]
+    assert sorted(snapshot["agents"]) == expected["agent_ids"]
+
+
+# ---------------------------------------------------------------------------
+# Explicit non-equivalence check: the golden corpus above proves alpha11's
+# promoted semantics persist in v2; this proves that proof is not vacuous --
+# v1 and alpha1 remain genuinely, behaviorally distinct from v2, not merely
+# differently labeled. v1 remains executable and is run live; alpha1 was
+# retired from execution by Phase 2B.9, so its side is the frozen constant
+# ``CORE_SEED_BYTE_ALPHA1`` that already governs its (still-present, shared)
+# core-seeding logic in ``python_runtime.py`` -- not a value invented for
+# this test.
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("seed", [1, 2, 3])
-def test_claimer_vs_core_tracker_equivalent_across_seeds(tmp_path: Path, seed: int) -> None:
-    def build(root: Path):
-        ensure_starter_agents(data_root=root)
-        claimer = resolve_agent(root, "claimer")
-        tracker = reference_agent_spec("core_tracker")
-        return (
-            MatchEntrant.python("A", "claimer", 0, claimer),
-            MatchEntrant.python("B", "core_tracker", 2048, tracker),
-        )
-
-    _matched_pair(tmp_path, build, seed=seed)
-
-
-@pytest.mark.parametrize("seed", [1, 2])
-def test_hunter_vs_core_tracker_equivalent_across_seeds(tmp_path: Path, seed: int) -> None:
-    def build(root: Path):
-        ensure_starter_agents(data_root=root)
-        hunter = resolve_agent(root, "hunter")
-        tracker = reference_agent_spec("core_tracker")
-        return (
-            MatchEntrant.python("A", "hunter", 0, hunter),
-            MatchEntrant.python("B", "core_tracker", 2048, tracker),
-        )
-
-    _matched_pair(tmp_path, build, seed=seed)
-
-
-def test_core_tracker_vs_core_defender_equivalent(tmp_path: Path) -> None:
-    def build(root: Path):
-        tracker = reference_agent_spec("core_tracker")
-        defender = reference_agent_spec("core_defender")
-        return (
-            MatchEntrant.python("A", "core_tracker", 0, tracker),
-            MatchEntrant.python("B", "core_defender", 2048, defender),
-        )
-
-    _matched_pair(tmp_path, build, seed=4)
-
-
-def test_core_tracker_vs_reactive_core_defender_equivalent(tmp_path: Path) -> None:
-    def build(root: Path):
-        tracker = reference_agent_spec("core_tracker")
-        reactive = reference_agent_spec("reactive_core_defender")
-        return (
-            MatchEntrant.python("A", "core_tracker", 0, tracker),
-            MatchEntrant.python("B", "reactive_core_defender", 2048, reactive),
-        )
-
-    _matched_pair(tmp_path, build, seed=5)
-
-
-# ---------------------------------------------------------------------------
-# 3-entrant match
-# ---------------------------------------------------------------------------
-
-
-def test_three_entrant_match_equivalent(tmp_path: Path) -> None:
-    def build(root: Path):
-        ensure_starter_agents(data_root=root)
-        claimer = resolve_agent(root, "claimer")
-        tracker = reference_agent_spec("core_tracker")
-        defender = reference_agent_spec("core_defender")
-        return (
-            MatchEntrant.python("A", "claimer", 0, claimer),
-            MatchEntrant.python("B", "core_tracker", 1365, tracker),
-            MatchEntrant.python("C", "core_defender", 2730, defender),
-        )
-
-    _matched_pair(tmp_path, build, seed=2)
-
-
-# ---------------------------------------------------------------------------
-# Deterministic, scripted scenarios: wraparound core, capture, non-capture
-# ---------------------------------------------------------------------------
-
-
-def test_wraparound_core_equivalent(tmp_path: Path) -> None:
-    arena_size = 128
-    start = arena_size - 3  # core spans 125,126,127,0,1,2,3,4
-
-    def build(root: Path):
-        return (
-            _scripted_entrant(root, "wrapper", NOP_SOURCE, slot="A", start=start),
-            _scripted_entrant(root, "other", NOP_SOURCE, slot="B", start=60),
-        )
-
-    _matched_pair(tmp_path, build, arena_size=arena_size, max_ticks=5, seed=1)
-
-
-def test_deterministic_capture_case_equivalent(tmp_path: Path) -> None:
-    arena_size = 128
-    core = [start_addr for start_addr in range(20, 28)]
-
-    def build(root: Path):
-        return (
-            _scripted_entrant(root, "victim", NOP_SOURCE, slot="A", start=20),
-            _scripted_entrant(
-                root, "attacker", _scripted_writer_source(core), slot="B", start=60
-            ),
-        )
-
-    _matched_pair(tmp_path, build, arena_size=arena_size, max_ticks=20, seed=1)
-
-
-def test_deterministic_non_capture_case_equivalent(tmp_path: Path) -> None:
-    arena_size = 128
-
-    def build(root: Path):
-        return (
-            _scripted_entrant(root, "idle_a", NOP_SOURCE, slot="A", start=20),
-            _scripted_entrant(root, "idle_b", NOP_SOURCE, slot="B", start=60),
-        )
-
-    _matched_pair(tmp_path, build, arena_size=arena_size, max_ticks=10, seed=1)
-
-
-# ---------------------------------------------------------------------------
-# Explicit non-equivalence check: the equivalence corpus does not silently
-# also make v1/alpha1 look the same -- only alpha11 vs v2 are expected to
-# match, never anything else.
-# ---------------------------------------------------------------------------
-
-
-def test_permanent_v2_still_differs_from_ruleset_v1_and_alpha1(tmp_path: Path) -> None:
-    """The equivalence corpus above proves alpha11-vs-v2 sameness; this
-    proves it is not vacuous -- v1 and alpha1 remain genuinely,
-    behaviorally distinct from v2, not merely differently labeled."""
-
-    from battle_engine.python_runtime import CORE_BEACON_BYTE, core_addresses
-    from battle_engine.rules import BYTEFRAY_RULESET_ID
-    from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V2_ALPHA1_ID
-
-    def build(root: Path):
-        return (
-            _scripted_entrant(root, "idle_a", NOP_SOURCE, slot="A", start=20),
-            _scripted_entrant(root, "idle_b", NOP_SOURCE, slot="B", start=60),
-        )
-
-    v1_result = _run(
+def test_permanent_v2_still_differs_from_ruleset_v1_and_frozen_alpha1(tmp_path: Path) -> None:
+    result = _run(
         tmp_path,
-        build(tmp_path / "v1"),
-        ruleset_id=BYTEFRAY_RULESET_ID,
-        run_name="v1",
-        arena_size=128,
-        max_ticks=3,
-    )
-    alpha1_result = _run(
-        tmp_path,
-        build(tmp_path / "alpha1"),
-        ruleset_id=BYTEFRAY_RULESET_V2_ALPHA1_ID,
-        run_name="alpha1",
-        arena_size=128,
-        max_ticks=3,
+        _build_diff_idle_pair(tmp_path / "agents"),
+        ruleset_id=V1,
+        scenario=Scenario("diff_v1", _build_diff_idle_pair, seed=1, arena_size=128, max_ticks=3),
     )
     v2_result = _run(
-        tmp_path, build(tmp_path / "v2"), ruleset_id=V2, run_name="v2", arena_size=128, max_ticks=3
+        tmp_path / "v2",
+        _build_diff_idle_pair(tmp_path / "v2" / "agents"),
+        ruleset_id=V2,
+        scenario=Scenario("diff_v2", _build_diff_idle_pair, seed=1, arena_size=128, max_ticks=3),
     )
-    v1_arena, _ = _final_arena_and_owners(v1_result, 128)
-    alpha1_arena, _ = _final_arena_and_owners(alpha1_result, 128)
+    v1_arena, _ = _final_arena_and_owners(result, 128)
     v2_arena, _ = _final_arena_and_owners(v2_result, 128)
     core = core_addresses(20, 128)
 
     # v1: no core mechanic at all -- no diffs published, nothing seeded.
     assert not any(address in v1_arena for address in core)
-    # alpha1: core is seeded, but with a blank byte -- invisible to search.
-    assert all(alpha1_arena[address] == 0 for address in core)
+    # frozen alpha1: core was seeded, but with a blank byte -- invisible to
+    # search. Confirmed live before retirement (Phase 2B.9 golden capture);
+    # the constant itself is still current, shared source, not a guess.
+    assert CORE_SEED_BYTE_ALPHA1 == 0x00
     # permanent v2: promotes alpha.11's observable seed -- the beacon.
     assert all(v2_arena[address] == CORE_BEACON_BYTE for address in core)

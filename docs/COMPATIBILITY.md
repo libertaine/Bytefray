@@ -766,6 +766,26 @@ regardless of how mature adjacent functionality is:
   API, or the canonical replay schema, and historical `redcode94` results
   remain readable; see [RULES.md](RULES.md)'s "Redcode/pMARS — not Ruleset
   v1 (historical)".
+- **`bytefray-rules-2-alpha1` / `-alpha11` / `bytefray-rules-3-alpha1`
+  execution** — retired from executable registration by V6 Phase 2B.9
+  (releases up to and including v5.0.0 supported all three); none was ever
+  selectable from any CLI, Agent Designer, or evaluation-preset surface.
+  Historical results/replays/evaluations recorded under these identities
+  remain readable, indexable, and correctly labeled — only creating *new*
+  matches under them is removed. See the table below and
+  [`docs/research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md`](research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md).
+
+### Retired from execution / still recognised (V6 Phase 2B.9)
+
+| Identity | New execution | Historical recognition |
+| --- | --- | --- |
+| `bytefray-rules-2-alpha1` | Rejected (`UnknownRulesetError`) | Full — result/replay attribution, Replay History indexing/labeling, core-status display |
+| `bytefray-rules-2-alpha11` | Rejected (`UnknownRulesetError`) | Full — same, plus the promotion-equivalence proof into `bytefray-rules-2` is preserved as a frozen-golden characterization |
+| `bytefray-rules-3-alpha1` | Rejected (`UnknownRulesetError`) | Full — same |
+
+Exact re-execution of any of the three remains available through the
+`v5.0.0` release (tag, wheel, Windows installer), whose ruleset registry is
+behaviorally identical to the one this table describes.
 - **Arena translation/placement robustness in evaluation** — decided in
   v0.10 Phase 3: the standard 1.0 `agents evaluate` methodology uses a
   single, fixed arena alignment for every cell (`arena_alignment_mode:

@@ -11,8 +11,16 @@ Two fixture styles, mirroring the project's existing convention (see
 * **Real matches** via ``NativeMatchService`` (``_python_entrant`` et al.,
   duplicated from ``engine/tests/test_ruleset_v2.py`` rather than shared
   across the two separate test roots) prove the hand-built fixtures'
-  assumed tick-0 diff shape actually matches what the engine produces, for
-  every historical/permanent core-having Ruleset identity.
+  assumed tick-0 diff shape actually matches what the engine produces.
+  Still run live for every currently-executable core-having Ruleset
+  identity; for ``bytefray-rules-2-alpha1``/``-alpha11``, retired from
+  executable registration by V6 Phase 2B.9
+  (docs/research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md), the
+  identical real-match replay is instead loaded frozen from
+  ``fixtures/replay_status/`` -- this file is itself the historical-
+  readability regression barrier the retirement's own safety case depends
+  on, so it re-points rather than deletes (see the two ``test_frozen_*``
+  functions below for provenance).
 """
 
 from __future__ import annotations
@@ -623,8 +631,32 @@ def test_real_permanent_v2_capture_matches_engine_ground_truth(tmp_path):
     assert attacker.core.intact_cells == 8
 
 
-def test_real_alpha1_core_derived_without_beacon_assumption(tmp_path):
-    session, _core = _run_real_match(tmp_path, ruleset_id=ALPHA1, attack=True)
+FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures" / "replay_status"
+
+
+def _load_fixture(name: str) -> ReplaySession:
+    session = ReplaySession()
+    session.load(FIXTURES_DIR / name)
+    session.seek(session.final_tick)
+    return session
+
+
+def test_frozen_alpha1_core_derived_without_beacon_assumption():
+    """``bytefray-rules-2-alpha1`` was retired from executable registration
+    by V6 Phase 2B.9 (docs/research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md),
+    so this real attack match can no longer be re-executed live -- it is
+    frozen, exactly as recorded, in ``fixtures/replay_status/
+    alpha1_attack_replay.jsonl``. Captured by temporarily re-registering
+    alpha1's policy object in memory only (no engine source change) and
+    running the same ``_run_real_match(ruleset_id=ALPHA1, attack=True)``
+    scenario this test used before retirement; reproducible the same way
+    from a pre-Phase-2B.9 checkout. This still proves
+    ``get_entrant_statuses`` derives core capture from *ownership*, not
+    from assuming the observable-core beacon byte -- alpha1's core has no
+    beacon at all."""
+
+    session = _load_fixture("alpha1_attack_replay.jsonl")
+    assert session.header.ruleset_id == ALPHA1
 
     statuses = {status.agent_id: status for status in get_entrant_statuses(session)}
     victim = statuses["A"]
@@ -633,8 +665,13 @@ def test_real_alpha1_core_derived_without_beacon_assumption(tmp_path):
     assert victim.core.core_addresses == core_addresses(20, 128)
 
 
-def test_real_alpha11_and_v2_both_work_and_stay_distinct(tmp_path):
-    session_11, _ = _run_real_match(tmp_path / "a11", ruleset_id=ALPHA11)
+def test_frozen_alpha11_and_real_v2_both_work_and_stay_distinct(tmp_path):
+    """alpha11's side is frozen for the same reason as the test above
+    (``fixtures/replay_status/alpha11_no_attack_replay.jsonl``); v2 remains
+    executable, so it is still run live here -- proving the real, current
+    code path continues to work, not just the frozen historical one."""
+
+    session_11 = _load_fixture("alpha11_no_attack_replay.jsonl")
     session_v2, _ = _run_real_match(tmp_path / "v2", ruleset_id=V2)
 
     for session in (session_11, session_v2):

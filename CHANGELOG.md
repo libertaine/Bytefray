@@ -4,6 +4,32 @@ This changelog records notable user- and developer-visible changes to Bytefray.
 
 ## [Unreleased]
 
+### Removed — closed-research rulesets retired from execution
+
+`bytefray-rules-2-alpha1`, `bytefray-rules-2-alpha11`, and
+`bytefray-rules-3-alpha1` are no longer registered as executable rulesets.
+None was ever selectable from any CLI, Agent Designer, or evaluation-preset
+surface — all three were closed research, reachable only through the
+low-level Python API.
+
+`bytefray-rules-4` remains the supported V6 gameplay baseline, unchanged.
+`bytefray-rules-1`, `bytefray-rules-2`, `bytefray-rules-4-alpha1`, and
+`bytefray-rules-4-alpha2` remain executable.
+
+Historical results, replays, evaluations, and Replay History entries
+recorded under the three retired identities remain fully readable,
+indexable, filterable, and replayable — their identifiers are still
+recognized and labeled correctly. Only creating *new* matches under them is
+removed. `bytefray-rules-2`'s promotion-equivalence proof against
+`bytefray-rules-2-alpha11` (docs/V2_0_BETA1_PLAN.md) survives as a
+frozen-golden characterization (`engine/tests/test_ruleset_v2_promotion_equivalence.py`)
+rather than a live comparison.
+
+Exact re-execution of the retired identities remains available through the
+`v5.0.0` release (tag, wheel, and Windows installer), whose ruleset registry
+is behaviorally identical to the one being trimmed here. See
+[`docs/research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md`](docs/research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md).
+
 ### Removed — Redcode/pMARS support
 
 Bytefray V6 is a Bytefray-agent platform and no longer executes Redcode

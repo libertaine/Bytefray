@@ -140,19 +140,18 @@ class ActionKind(str, Enum):
 
     # -- experimental, v3 research Phase 2 only ---------------------------
     #
-    # Three additive members that are *not* part of the Agent API v1
-    # contract documented in docs/AGENT_API_V1.md and are not usable under
-    # any Ruleset with a stable identity. ``python_runtime.validate_action``
-    # accepts them only under ``bytefray-rules-3-alpha1`` and rejects them
-    # as invalid actions everywhere else, exactly as it already rejects any
-    # unrecognized action; symmetrically, that Ruleset rejects the absolute
-    # ``READ``/``WRITE`` above, so the v1 spelling of an absolute-address
-    # operation never silently acquires relative meaning.
+    # Three additive members that were never part of the Agent API v1
+    # contract documented in docs/AGENT_API_V1.md. Their only executable
+    # identity, ``bytefray-rules-3-alpha1``, was retired by V6 Phase 2B.9
+    # (docs/research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md);
+    # ``python_runtime.validate_action`` now rejects all three
+    # unconditionally, as invalid actions, under every Ruleset -- the same
+    # rejection any unrecognized action has always received. Retained here
+    # (not deleted) because historical trace/replay records from before the
+    # retirement can still contain them and must still deserialize.
     #
-    # ``AGENT_API_VERSION`` is deliberately NOT bumped for these: an agent
-    # that never emits them observes and behaves exactly as before, and
-    # Phase 2's job is to *measure* what incompatibility locality actually
-    # requires, not to pre-declare an Agent API v2 from a guess.
+    # ``AGENT_API_VERSION`` was deliberately NOT bumped for these: an agent
+    # that never emitted them observed and behaved exactly as before.
     MOVE = "move"
     LOCAL_READ = "local_read"
     LOCAL_WRITE = "local_write"
