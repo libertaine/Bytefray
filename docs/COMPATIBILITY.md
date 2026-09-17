@@ -44,9 +44,10 @@ is above, and the version-specific sections below define retained contracts.
   `AgentAction` contract and its frozen deterministic RNG derivation,
   described in [AGENT_API_V1.md](AGENT_API_V1.md).
 - **Result and replay current schemas** — `battle2.result` v2 for native
-  results (with v1 retained for historical artifacts and pMARS) and
-  `battle2.replay` v3/v4, described in [RESULT_SCHEMA.md](RESULT_SCHEMA.md)
-  and [REPLAY_SCHEMA.md](REPLAY_SCHEMA.md).
+  results (with v1 retained for historical artifacts, including retired
+  Redcode/pMARS records) and `battle2.replay` v3/v4, described in
+  [RESULT_SCHEMA.md](RESULT_SCHEMA.md) and
+  [REPLAY_SCHEMA.md](REPLAY_SCHEMA.md).
 - **Evaluation current schema/history behavior** — `bytefray.evaluation`
   v4/identity v4 and the `evaluations list/show/compare` history behavior
   described in `docs/specs/evaluation_history.md`.
@@ -647,20 +648,20 @@ gameplay Ruleset produced one native match:
   independently for v4 process state (see
   [RESULT_SCHEMA.md](RESULT_SCHEMA.md)/[REPLAY_SCHEMA.md](REPLAY_SCHEMA.md)
   for the reader-tolerance evidence).
-- A `redcode94`/pMARS result never *claims* Bytefray Ruleset v1 — but
+- A `redcode94`/pMARS result never *claimed* Bytefray Ruleset v1 — but
   "absent" and "explicit `null`" are two different, precisely distinguished
   facts here, not interchangeable phrasing (see
   [RESULT_SCHEMA.md](RESULT_SCHEMA.md)'s "Ruleset identity" for the full
-  detail): the current writer (`ResultEnvelope.as_dict()`, used by both the
-  native and pMARS paths) always emits the `ruleset_id` key, so a current
-  `redcode94` result has `"ruleset_id": null` — key **present**, value
-  `null` — never `"bytefray-rules-1"`. Only a `result.json` written
+  detail): the writer (`ResultEnvelope.as_dict()`, used historically by both
+  the native and pMARS paths) always emits the `ruleset_id` key, so a
+  historical `redcode94` result has `"ruleset_id": null` — key **present**,
+  value `null` — never `"bytefray-rules-1"`. Only a `result.json` written
   *before this field existed at all* (any pre-Phase-4 artifact, native or
   pMARS) has the key genuinely, structurally **absent**. Both decode to
   `ResultEnvelope.ruleset_id is None` at the Python level, and
   `resolve_result_ruleset` treats them identically via `mode`, which is
   what actually carries the "not applicable" fact — not whether the JSON
-  key itself was present. pMARS produces no canonical replay at all, so
+  key itself was present. pMARS produced no canonical replay at all, so
   this absent-vs-null question does not arise for `battle2.replay`.
 - `battle_engine.result_model.resolve_result_ruleset`/`battle_engine.
   replay.resolve_replay_ruleset` attribute a confidence-qualified answer
@@ -760,10 +761,11 @@ regardless of how mature adjacent functionality is:
   hard timeout.
 - **Replication / corruptible Python-core designs** — research-stage
   ideas tracked in [FUTURE_PLANS.md](FUTURE_PLANS.md), not implemented.
-- **Redcode/pMARS authoring, evaluation, and gameplay parity with the
-  native engine** — pMARS interoperability continues, but does not use
-  a Bytefray Ruleset, Agent API, or the canonical replay schema; see
-  [RULES.md](RULES.md)'s "Redcode/pMARS — not Ruleset v1".
+- **Redcode/pMARS execution** — retired entirely in V6 (releases up to and
+  including v5.0.0 supported it); it never used a Bytefray Ruleset, Agent
+  API, or the canonical replay schema, and historical `redcode94` results
+  remain readable; see [RULES.md](RULES.md)'s "Redcode/pMARS — not Ruleset
+  v1 (historical)".
 - **Arena translation/placement robustness in evaluation** — decided in
   v0.10 Phase 3: the standard 1.0 `agents evaluate` methodology uses a
   single, fixed arena alignment for every cell (`arena_alignment_mode:

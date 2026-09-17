@@ -2,6 +2,20 @@
 
 This changelog records notable user- and developer-visible changes to Bytefray.
 
+## [Unreleased]
+
+### Removed — Redcode/pMARS support
+
+Bytefray V6 is a Bytefray-agent platform and no longer executes Redcode
+warriors or invokes pMARS. `bytefray run`'s `--mode`, `--red-a`, `--red-b`,
+`--core-size`, `--max-cycles`, `--max-processes`, `--max-len`, `--min-dist`,
+and `--rounds` options are gone, Windows artifacts no longer bundle
+`pmars.exe`, and the `PMARS_CMD` environment variable is no longer read.
+Historical `redcode94` results remain **readable** — Replay History still
+lists them, reporting no replay and no applicable Ruleset — but are no
+longer reproducible. Releases up to and including v5.0.0 retain full
+Redcode support and remain available.
+
 ## [5.0.0] - 2026-09-15
 
 ### Bytefray v5.0 — final release

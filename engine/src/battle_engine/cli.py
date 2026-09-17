@@ -1,5 +1,4 @@
 import argparse
-import hashlib
 import json
 import os
 import sys
@@ -24,10 +23,7 @@ from battle_engine.match_service import (
 )
 from battle_engine.paths import get_data_root
 from battle_engine.placement import resolve_direct_match_starts
-from battle_engine.pmars import PMarsError, run_pmars
 from battle_engine.python_runtime import PythonEntrantInitializationError
-from battle_engine.result_model import SCHEMA_VERSION_V1 as RESULT_SCHEMA_VERSION_V1
-from battle_engine.result_model import ResultEnvelope, stable_id, write_json_atomic
 from battle_engine.rules import BYTEFRAY_RULESET_ID
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ID,
@@ -48,38 +44,6 @@ DEFAULT_REPLAY_RELATIVE_PATH = Path("runs") / "_loose" / "replay.jsonl"
 # ----------------------------
 # Helpers
 # ----------------------------
-
-
-def _pmars_arguments(
-    red_a: Path,
-    red_b: Path,
-    *,
-    core_size: int,
-    max_cycles: int,
-    max_processes: int,
-    max_len: int,
-    min_dist: int,
-    rounds: int,
-) -> list[str]:
-    """Build pMARS arguments without resolving or invoking the executable."""
-    return [
-        "-b",
-        "-r",
-        str(rounds),
-        "-s",
-        str(core_size),
-        "-c",
-        str(max_cycles),
-        "-p",
-        str(max_processes),
-        "-l",
-        str(max_len),
-        "-d",
-        str(min_dist),
-        str(red_a),
-        str(red_b),
-    ]
-
 
 
 def _data_root() -> Path:
@@ -442,33 +406,6 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
         help="optional alias for --byte (overrides it if provided)",
     )
 
-    # ICWS'94 / pMARS backend flags
-    p.add_argument(
-        "--mode",
-        choices=["native", "redcode94"],
-        default="native",
-        help="Engine mode: 'native' for Bytefray (default) or 'redcode94' to run pMARS.",
-    )
-    p.add_argument(
-        "--red-a", type=str, help="Warrior A file (.red or .load) for redcode94 mode"
-    )
-    p.add_argument(
-        "--red-b", type=str, help="Warrior B file (.red or .load) for redcode94 mode"
-    )
-    p.add_argument("--core-size", type=int, default=8000, help="ICWS'94 core size")
-    p.add_argument("--max-cycles", type=int, default=80000, help="Max cycles per round")
-    p.add_argument(
-        "--max-processes", type=int, default=8000, help="Max processes per warrior"
-    )
-    p.add_argument("--max-len", type=int, default=100, help="Max warrior length")
-    p.add_argument(
-        "--min-dist",
-        type=int,
-        default=100,
-        help="Minimum initial distance between warriors",
-    )
-    p.add_argument("--rounds", type=int, default=1, help="Number of rounds to run")
-
     p.add_argument("--quiet", action="store_true")
     return p.parse_args(argv)
 
@@ -723,111 +660,6 @@ def main(argv: Iterable[str] | None = None) -> int:
     replay_path = _resolve_replay_path(args.replay)
     summary_path = replay_path.with_name("summary.json")
     trace_path = _resolve_trace_path(args.trace)
-
-    if args.mode == "redcode94":
-        replay_path.parent.mkdir(parents=True, exist_ok=True)
-        if not args.red_a or not args.red_b:
-            print("redcode94 mode requires --red-a and --red-b", file=sys.stderr)
-            return 2
-
-        a_path = Path(args.red_a)
-        b_path = Path(args.red_b)
-
-        if not a_path.exists() or not b_path.exists():
-            missing = a_path if not a_path.exists() else b_path
-            print(f"Warrior file missing: {missing}", file=sys.stderr)
-            return 2
-
-        # Redcode mode currently produces a summary but no canonical replay.
-        # Remove an artifact from an earlier invocation before starting pMARS.
-        replay_path.unlink(missing_ok=True)
-        summary_path.with_name("result.json").unlink(missing_ok=True)
-        try:
-            result = run_pmars(
-                _pmars_arguments(
-                    a_path,
-                    b_path,
-                    core_size=args.core_size,
-                    max_cycles=args.max_cycles,
-                    max_processes=args.max_processes,
-                    max_len=args.max_len,
-                    min_dist=args.min_dist,
-                    rounds=args.rounds,
-                )
-            )
-        except PMarsError as exc:
-            replay_path.unlink(missing_ok=True)
-            summary_path.unlink(missing_ok=True)
-            summary_path.with_name("result.json").unlink(missing_ok=True)
-            print(f"pMARS error: {exc}", file=sys.stderr)
-            return exc.exit_code
-
-        summary = {
-            "version": 2,
-            "mode": "redcode94",
-            "ticks": args.max_cycles,
-            "winner": result.winner,
-            "A_score": None,
-            "B_score": None,
-            "A_alive_ticks": None,
-            "B_alive_ticks": None,
-            "A_territory": None,
-            "B_territory": None,
-            "params": {
-                "core_size": args.core_size,
-                "max_cycles": args.max_cycles,
-                "max_processes": args.max_processes,
-                "max_len": args.max_len,
-                "min_dist": args.min_dist,
-                "rounds": args.rounds,
-            },
-            "agents": {"A": str(a_path), "B": str(b_path)},
-            "backend": {
-                "cmd": list(result.command),
-                "returncode": result.returncode,
-            },
-        }
-
-        summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
-        reproducibility = {
-            **summary["params"],
-            "entrants": [
-                {
-                    "agent_id": "A",
-                    "source_sha256": hashlib.sha256(a_path.read_bytes()).hexdigest(),
-                },
-                {
-                    "agent_id": "B",
-                    "source_sha256": hashlib.sha256(b_path.read_bytes()).hexdigest(),
-                },
-            ],
-        }
-        match_id = stable_id("match", {"mode": "redcode94", **reproducibility})
-        result_id = stable_id("result", {"match_id": match_id, "winner": result.winner})
-        envelope = ResultEnvelope(
-            result_id=result_id,
-            match_id=match_id,
-            mode="redcode94",
-            winner=result.winner,
-            termination_reason="backend_completed",
-            ticks=args.max_cycles,
-            entrants=tuple(reproducibility["entrants"]),
-            reproducibility=reproducibility,
-            replay=None,
-            backend={"name": "pMARS", "returncode": result.returncode},
-            # Phase 7A changes native result metadata only. Preserve the
-            # established pMARS/Redcode result contract and behavior.
-            schema_version=RESULT_SCHEMA_VERSION_V1,
-        )
-        write_json_atomic(summary_path.with_name("result.json"), envelope.as_dict())
-
-        if not args.quiet:
-            print(
-                f"Winner: {summary['winner']}; "
-                f"result: {summary_path.with_name('result.json')}; "
-                f"summary: {summary_path}; replay: none"
-            )
-        return 0
 
     byte = args.byte
     if args.attack_byte is not None:

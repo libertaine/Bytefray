@@ -92,5 +92,4 @@ also written to the Advanced log, and **File → Open Last Output Folder** opens
 the last tournament's output directory.
 
 There is no bracket visualization, parallel scheduler, elimination bracket,
-rating system, custom tournament scoring UI, mixed-runtime division, or pMARS
-tournament division.
+rating system, custom tournament scoring UI, or mixed-runtime division.

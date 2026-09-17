@@ -34,7 +34,20 @@ def test_engine_cli_starts_and_displays_help():
     assert result.returncode == 0
     assert "usage: bytefray run" in result.stdout
     assert "--list-agents" in result.stdout
-    assert "--mode {native,redcode94}" in result.stdout
+    assert "--quota" in result.stdout
+    # V6 retired Redcode/pMARS execution: no mode selector or Redcode-only
+    # flags remain on `bytefray run` (see docs/research/v6's Phase 2B.6
+    # retirement report).
+    assert "--mode" not in result.stdout
+    assert "redcode94" not in result.stdout
+    assert "--red-a" not in result.stdout
+    assert "--red-b" not in result.stdout
+    assert "--core-size" not in result.stdout
+    assert "--max-cycles" not in result.stdout
+    assert "--max-processes" not in result.stdout
+    assert "--max-len" not in result.stdout
+    assert "--min-dist" not in result.stdout
+    assert "--rounds" not in result.stdout
 
 
 def test_cli_creates_replay_and_summary_json(tmp_path):

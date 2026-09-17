@@ -58,8 +58,8 @@ Established by direct source reading (`engine/src/battle_engine`, `app/`,
 `docs/`) before any design decision below was made.
 
 1. **`NativeMatchService`** (`match_service.py`) is the one execution
-   boundary for every native (non-pMARS) match — VM or Python, single
-   match, tournament, or development test. It takes a `MatchRequest`
+   boundary for every native match — VM or Python, single match,
+   tournament, or development test. It takes a `MatchRequest`
    (`Config`, entrant tuple, tick limit, replay path, optional
    `trace_path`/`agent_call_timeout`) and returns a `NativeMatchResult`,
    publishing canonical `replay.jsonl` (`battle2.replay` v3) and

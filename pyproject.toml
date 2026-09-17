@@ -13,7 +13,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [{ name = "Rod Satterfield" }]
-keywords = ["corewar", "pmars", "ai-agents", "pygame", "simulation"]
+keywords = ["corewar", "ai-agents", "pygame", "simulation"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
@@ -95,9 +95,9 @@ battle_engine = "engine/src/battle_engine"
 battle_client = "client/src/battle_client"
 app = "app"
 
-# Only package-local runtime data belongs here. Repository-level agents are user
-# data discovered at runtime; pMARS binaries and third-party licenses are release
-# inputs and are deliberately not folded into the Python wheel.
+# Only package-local runtime data belongs here. Repository-level agents are
+# user data discovered at runtime and are deliberately not folded into the
+# Python wheel.
 [tool.setuptools.package-data]
 app = [
   "assets/**/*",
@@ -118,13 +118,6 @@ battle_engine = [
   "__pycache__/*",
   "**/__pycache__/*",
 ]
-
-# If you prefer installing external, non-package files to a known location, you can
-# instead use data-files (commented out here; enable if you want to place files
-# outside the package, e.g., share/bytefray). Many projects stick to package-data.
-# [tool.setuptools.data-files]
-# "share/bytefray/warriors" = ["warriors/*"]
-# "share/bytefray/licenses" = ["third_party_licenses/*"]
 
 # -------------------- Ruff --------------------
 [tool.ruff]

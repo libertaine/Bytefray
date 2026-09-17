@@ -443,11 +443,11 @@ generalized to gameplay itself.
 
 **Status: mixed — see each item.**
 
-- **Redcode/pMARS authoring and evaluation improvements** (maintenance-only
-  in 1.x unless concrete demand justifies more).
-  Redcode/pMARS interoperability is not cancelled; Python-side authoring,
-  evaluation, provenance, and the ruleset itself are expected to mature
-  first (see [ROADMAP.md](ROADMAP.md)'s v0.10 product-boundary item).
+- **Redcode/pMARS execution** — **status: retired.** V6 removed Redcode/pMARS
+  execution entirely; Bytefray now supports the programmable-agent runtime
+  only (see `docs/research/v6/V6_PHASE2B6_REDCODE_PMARS_RETIREMENT.md`).
+  Releases up to and including v5.0.0 remain available for historical
+  Redcode functionality. This item is no longer a future plan.
 - **Improved Designer functionality** (Candidate).
 - **Richer GUI access to evaluation/history/provenance** — **status:
   substantially addressed.** `docs/ROADMAP.md`'s shipped v1.1.0

@@ -344,8 +344,8 @@ RULESET_V2 = RulesetPolicy(
 # knowledge of it, exactly as it carries none of the vulnerable-core rule.
 #
 # Python-only (``supported_runtime_kinds={"python"}``), mirroring
-# ``bytefray-rules-2``: locality has no VM/Redcode implementation and is
-# not being given one -- see the Phase 2 report's Python-only scope
+# ``bytefray-rules-2``: locality has no VM implementation and is not
+# being given one -- see the Phase 2 report's Python-only scope
 # statement. A VM entrant requested under this identity is rejected by
 # ``NativeMatchService`` before any entrant executes.
 BYTEFRAY_RULESET_V3_ALPHA1_ID = "bytefray-rules-3-alpha1"

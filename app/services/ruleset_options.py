@@ -116,9 +116,10 @@ DESIGNER_RULESET_OPTIONS = (
 # "The same Agent API v1 Python agent source may execute under more than
 # one compatible Ruleset"), it is merely not the current gameplay. What is
 # genuinely exclusive is the other direction: only v1 executes VM/blob
-# entrants. Deliberately says nothing about Redcode/pMARS, which uses no
-# Bytefray Ruleset at all (docs/RULES.md's "Redcode/pMARS -- not Ruleset
-# v1") and must never be implied to be a Ruleset-v1 format.
+# entrants. Deliberately says nothing about the retired, historical
+# Redcode/pMARS execution path, which used no Bytefray Ruleset at all
+# (docs/RULES.md's "Redcode/pMARS -- not Ruleset v1 (historical)") and
+# must never be implied to have been a Ruleset-v1 format.
 RULESET_DESCRIPTION = (
     "Ruleset v2 is Bytefray's current gameplay ruleset and runs Python agents only. "
     "Ruleset v4 is the current, permanent process-agent gameplay contract and "

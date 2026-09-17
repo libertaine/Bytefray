@@ -181,11 +181,10 @@ def _resumed_result_mismatch(
             f"match's expected ID {expected_match_id!r}"
         )
     if envelope.replay is None:
-        # Every tournament division is native VM-only or Python-only (pMARS
-        # divisions are unsupported), and every native result carries a
-        # replay reference -- a "completed" native result with none is
-        # itself evidence of a corrupt or foreign artifact, not a match
-        # outcome missing a replay by design.
+        # Every tournament division is native VM-only or Python-only, and
+        # every native result carries a replay reference -- a "completed"
+        # native result with none is itself evidence of a corrupt or foreign
+        # artifact, not a match outcome missing a replay by design.
         return "result has no replay reference, but a native match result always has one"
     try:
         verify_replay_digest(envelope, replay_path)

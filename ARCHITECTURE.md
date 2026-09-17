@@ -50,9 +50,8 @@ Low-level layers remain acyclic and mostly standard-library-only, as before:
   execution paths.
 
 **`NativeMatchService`** (`battle_engine.match_service`) is the canonical
-execution/orchestration boundary for every native (non-pMARS) match,
-whether invoked from the single-match CLI, the Designer, or the
-tournament service. It accepts a typed `MatchRequest` (a `Config`, a tuple
+execution/orchestration boundary for every native match, whether invoked
+from the single-match CLI, the Designer, or the tournament service. It accepts a typed `MatchRequest` (a `Config`, a tuple
 of `MatchEntrant`s, a tick limit, and a replay path) and returns a typed
 `NativeMatchResult`. It:
 
@@ -124,19 +123,14 @@ The `bytefray` command (`battle_engine.command:main`) and
 entry points call the same underlying command implementations.
 
 - **`run`** reuses `battle_engine.cli.main(argv)` directly. It resolves
-  configuration and agent slots from flags/environment, then branches on
-  `--mode`:
-  - `b2` (default, native engine): resolves VM bytecode or a Python
-    `AgentSpec` per slot, builds `MatchEntrant`/`MatchRequest`, and calls
-    `NativeMatchService().run(...)`. This is how ordinary single-match CLI
-    execution reaches the canonical boundary.
-  - `redcode94`: invokes `battle_engine.pmars.run_pmars` directly — this
-    path does **not** go through `NativeMatchService` and produces no
-    canonical replay (`result.json`'s `replay` field is `null`). It writes
-    a `summary.json` (schema version 2) and a `battle2.result` v1 envelope
-    with `mode="redcode94"` built by hand in `cli.py`, using the same
-    `stable_id`/`ResultEnvelope` machinery `NativeMatchService` uses for
-    identity, but with no replay to digest.
+  configuration and agent slots from flags/environment (`mode="b2"` is the
+  only, implicit execution model — V6 retired the former `--mode` selector
+  and its `redcode94`/pMARS backend entirely; see
+  `docs/research/v6/V6_PHASE2B6_REDCODE_PMARS_RETIREMENT.md`), resolves VM
+  bytecode or a Python `AgentSpec` per slot, builds
+  `MatchEntrant`/`MatchRequest`, and calls `NativeMatchService().run(...)`.
+  This is how ordinary single-match CLI execution reaches the canonical
+  boundary.
 - **`tournament`** reuses `battle_engine.tournament_cli.main(argv)`,
   which drives `TournamentService` (`battle_engine.tournament_service`).
   `TournamentService` constructs a deterministic round-robin schedule and
@@ -295,11 +289,12 @@ engine, not part of `battle_engine.core`.
   canonical `replay.jsonl` (schema v3 for Ruleset v1/v2; schema v4 for v4),
   `result.json` (`battle2.result`
   v1, with a SHA-256 digest of the replay), and a compatibility
-  `summary.json`. A `redcode94` match writes `summary.json` and
-  `result.json` with `replay: null` — no canonical replay stream.
-- Historical run output, prebuilt executables, pMARS binaries, and
-  `_legacy/` coexist with the active source tree but are not part of the
-  current architecture. (A `sdk/` directory of unreferenced early-migration
+  `summary.json`. A historical `redcode94` result (retired in V6; no longer
+  produced) wrote `summary.json` and `result.json` with `replay: null` — no
+  canonical replay stream — and remains readable today.
+- Historical run output, prebuilt executables, and `_legacy/` coexist with
+  the active source tree but are not part of the current architecture. (A
+  `sdk/` directory of unreferenced early-migration
   examples and an accidental duplicate result bundle previously sat
   alongside these; it was removed in a post-1.0 maintenance pass — see
   `docs/PROJECT_HISTORY.md`.)
@@ -334,9 +329,8 @@ retained separately as a tested historical migration fixture.
 
 Wheels contain Python packages and package-local assets only (see
 `[tool.setuptools.package-data]`). Repository-level `agents/` directories
-are runtime/user data. pMARS executables, SDK archives, historical
-builds, and `third_party_licenses/` are deliberately excluded from the
-Python wheel.
+are runtime/user data. SDK archives and historical builds are deliberately
+excluded from the Python wheel.
 
 ## Tests and automation
 
@@ -346,11 +340,10 @@ runs. `.github/workflows/ci.yml` runs three jobs: `test-linux-core`
 (headless suite on Python 3.10–3.13, plus a check that importing
 `battle_engine.launchers`/`app.services.engine_commands` never pulls in
 `PySide6`/`pygame`), `build-linux-wheel` (build + `tools/check_wheel.py`),
-and `build-windows-exe` (`tools/build_win.ps1`). Optional workflows
-(`.github/workflows/linux-gui-smoke.yml`,
-`.github/workflows/linux-pmars-build.yml`) cover Linux X11/Xvfb GUI
-startup smoke and Ubuntu pMARS build/runtime — these are startup checks,
-not a substitute for manual interactive testing.
+and `build-windows-exe` (`tools/build_win.ps1`). An optional workflow
+(`.github/workflows/linux-gui-smoke.yml`) covers Linux X11/Xvfb GUI
+startup smoke — a startup check, not a substitute for manual interactive
+testing.
 
 ## Dependency direction as implemented
 
@@ -358,9 +351,8 @@ not a substitute for manual interactive testing.
 agent manifests/blobs/Python sources + built-ins
               |
               v
-      battle_engine.cli ------------------> pMARS (redcode94 only,
-              |                              bypasses NativeMatchService)
-              | (mode b2)
+      battle_engine.cli
+              |
               v
       battle_engine.tournament_service --\
               |                          |
@@ -376,7 +368,8 @@ agent manifests/blobs/Python sources + built-ins
               |
               v
    canonical battle2.replay v3/v4 (replay.jsonl)
-   + battle2.result v2 native / v1 pMARS (result.json)
+   + battle2.result v2 native (result.json; v1 remains a supported read
+     format for historical artifacts, including retired redcode94 records)
    + compatibility summary.json
               |
               v

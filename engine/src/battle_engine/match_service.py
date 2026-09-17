@@ -1,8 +1,8 @@
 """Application service for resolved native Bytefray matches.
 
 The service owns homogeneous VM/Python routing, execution, and partial-artifact
-cleanup. Agent discovery, CLI parsing, pMARS, and external result persistence
-remain outside this native boundary.
+cleanup. Agent discovery, CLI parsing, and external result persistence remain
+outside this native boundary.
 """
 
 from __future__ import annotations

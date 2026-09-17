@@ -55,10 +55,11 @@ def test_listing_explains_which_rulesets_each_runtime_kind_can_use(
 ) -> None:
     """The legend must state the rule in both directions, and never mention Redcode.
 
-    Redcode/pMARS runs in an external pMARS process under no Bytefray
-    Ruleset at all (docs/RULES.md's "Redcode/pMARS -- not Ruleset v1"), so
-    naming it beside a Ruleset would teach the exact falsehood this
-    disclosure exists to prevent.
+    V6 has retired Redcode/pMARS execution entirely, and even the historical
+    pMARS backend ran under no Bytefray Ruleset at all (docs/RULES.md's
+    "Redcode/pMARS -- not Ruleset v1 (historical)"), so naming it beside a
+    Ruleset would teach the exact falsehood this disclosure exists to
+    prevent.
     """
 
     assert cli_main(["agents"]) == 0
