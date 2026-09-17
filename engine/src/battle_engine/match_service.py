@@ -58,8 +58,6 @@ from battle_engine.results import WINNER_TIE_SENTINEL
 from battle_engine.rules import BYTEFRAY_RULESET_ID
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ID,
-    BYTEFRAY_RULESET_V4_ALPHA1_ID,
-    BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
     PROCESS_RULESET_IDS,
     RulesetPolicy,
@@ -401,22 +399,22 @@ class OverlappingCoreError(ValueError):
 # added because the locality mechanic inherited this identical
 # vulnerable-core mechanic, but locality's only executable identity was
 # retired from execution, so the membership was dead.
+#
+# V6 Phase 2B.10 Scope B removed ``bytefray-rules-4-alpha1``/
+# ``-alpha2`` from this set for the identical reason: this table gates a
+# pre-execution guard on entrant placement for a match *about to run* --
+# it is never consulted by any historical reader (unlike
+# ``VULNERABLE_CORE_RULESET_IDS``/``OBSERVABLE_CORE_RULESET_IDS`` in
+# ``python_runtime.py``, whose membership for both alphas is retained
+# because replay/result readers do consult them) -- so retiring both
+# alphas' executable registration made their membership here dead.
+# ``bytefray-rules-4`` keeps the guard: it shares alpha2's exact
+# seeded-placement gameplay, and a behavioral divergence here (silently
+# allowing overlapping cores under the stable identity) would be exactly
+# the kind of gameplay difference the promotion must not introduce.
 _CORE_PLACEMENT_GUARDED_RULESET_IDS: frozenset[str] = frozenset(
     {
         BYTEFRAY_RULESET_V2_ID,
-        BYTEFRAY_RULESET_V4_ALPHA1_ID,
-        # v4 alpha2 keeps this guard for exactly alpha1's reason, and needs
-        # it more: its own seeded placement is separation-checked by
-        # construction, but an *explicitly* supplied pair of starts bypasses
-        # that entirely, and this remains the one check every caller passes
-        # -- including direct ``MatchRequest`` construction.
-        BYTEFRAY_RULESET_V4_ALPHA2_ID,
-        # v4.0.0-rc1 Phase 2: the permanent stable identity inherits this
-        # guard for the identical reason alpha2 does -- it shares alpha2's
-        # exact seeded-placement gameplay, and a behavioral divergence here
-        # (silently allowing overlapping cores under the stable identity but
-        # not under alpha2) would be exactly the kind of gameplay difference
-        # the promotion must not introduce.
         BYTEFRAY_RULESET_V4_ID,
     }
 )

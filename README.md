@@ -454,12 +454,12 @@ The current permanent stable ruleset is `bytefray-rules-4`. An omitted `--rulese
 
 ### Historical Rulesets
 Earlier gameplay contracts remain executable and explicitly selectable for compatible agents, including historical reproduction:
-* `bytefray-rules-4-alpha2`: Semantic predecessor of Ruleset v4, preserved as a research milestone.
-* `bytefray-rules-4-alpha1`: Initial v4 alpha with evenly spaced core placement and priority process selection.
 * `bytefray-rules-2`: Permanent single-actor Python gameplay; still the omitted-ruleset default for Agent API v1 agents.
 * `bytefray-rules-1`: Historical Python Agent API v1 and native VM/blob gameplay. Mixed Python/VM matches remain unsupported.
 
-Historical Redcode/pMARS execution (retired in V6) never executed under a Bytefray ruleset. Designer Simple offers permanent v2 and v4; Advanced, Development, and pairwise Evaluation also expose historical choices. Group evaluation requires Ruleset v2.
+`bytefray-rules-4-alpha1` (initial v4 alpha, evenly spaced core placement and priority process selection) and `bytefray-rules-4-alpha2` (semantic predecessor of Ruleset v4) were retired from executable registration by V6 Phase 2B.10 Scope B: neither can create a new match any longer. Historical results, replays, and evaluations recorded under either remain fully readable, indexable, and replayable — see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)'s "Retired from execution / still recognised" table. Exact re-execution of either remains available through the `v5.0.0` release.
+
+Historical Redcode/pMARS execution (retired in V6) never executed under a Bytefray ruleset. Designer Simple offers only permanent v2 and v4; Advanced, Development, and pairwise Evaluation offer v1/v2/v4 — none offers either retired v4 alpha any longer. Group evaluation requires Ruleset v2.
 
 ### Scope Discipline
 Mechanics such as fixed process rosters and circular core sizes are ruleset-specific gameplay specifications (`RulesetPolicy`), not immutable project-wide engine constraints.

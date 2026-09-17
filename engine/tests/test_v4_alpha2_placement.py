@@ -25,6 +25,7 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V3_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
+    BYTEFRAY_RULESET_V4_ID,
 )
 
 ARENA_SIZES = (256, 512, 1024)
@@ -288,8 +289,16 @@ def test_alpha2_does_not_expose_closed_form_opposite_placement(
         # (see test_ruleset_v2_runtime_compatibility.py's/
         # test_v2_default_placement.py's dispatch-level proofs).
         (BYTEFRAY_RULESET_V3_ALPHA1_ID, "zero"),
-        (BYTEFRAY_RULESET_V4_ALPHA1_ID, "seat_spread"),
-        (BYTEFRAY_RULESET_V4_ALPHA2_ID, "seeded"),
+        # V6 Phase 2B.10 Scope B retired bytefray-rules-4-alpha1/-alpha2
+        # from executable registration; both now take the same masked
+        # fail-safe "zero" default as v3-alpha1 above (T-4) rather than
+        # their former "seat_spread"/"seeded" -- real dispatch rejects
+        # both identities before placement is ever consulted (see
+        # test_ruleset_agent_compatibility.py's/
+        # test_v6_phase2b10_scope_b_retirement.py's dispatch-level
+        # proofs).
+        (BYTEFRAY_RULESET_V4_ALPHA1_ID, "zero"),
+        (BYTEFRAY_RULESET_V4_ALPHA2_ID, "zero"),
     ],
 )
 def test_each_ruleset_keeps_its_own_placement_mode(
@@ -346,9 +355,16 @@ def test_every_pre_alpha2_ruleset_keeps_its_exact_historical_placement(
     )
 
 
-def test_alpha1_placement_is_the_historical_opposite_pair() -> None:
-    """Named separately from the loop above because this exact pair is what
-    the alpha1 ecology, its agents, and its persisted corpus all encode."""
+def test_retired_alpha1_placement_now_takes_the_masked_zero_default() -> None:
+    """Before V6 Phase 2B.10 Scope B retired it from executable
+    registration, this exact pair (``(0, arena_size // 2)``) was what the
+    alpha1 ecology, its agents, and its persisted corpus all encoded --
+    named separately from the loop above for that reason. Retirement moved
+    ``bytefray-rules-4-alpha1`` onto the same masked fail-safe "zero"
+    default as any other unregistered id (T-4); the historical value
+    itself lives on in ``RULESET_V4_ALPHA1``'s retired-object comment in
+    ``ruleset_policy.py`` and in the real corpus, never here, since this
+    resolver can no longer be asked to compute it live."""
 
     for arena_size in ARENA_SIZES:
         assert resolve_direct_match_starts(
@@ -356,29 +372,38 @@ def test_alpha1_placement_is_the_historical_opposite_pair() -> None:
             arena_size=arena_size,
             entrant_count=2,
             supplied_starts=[None, None],
-        ) == (0, arena_size // 2)
+        ) == (0, 0)
 
 
-def test_alpha2_requires_a_seed_rather_than_inventing_one() -> None:
+def test_stable_v4_requires_a_seed_rather_than_inventing_one() -> None:
+    """Alpha2 originally qualified this "seeded" mode requirement; the
+    identical live check now runs against stable ``bytefray-rules-4``
+    (which shares alpha2's exact seeded-placement gameplay), since alpha2
+    can no longer be dispatched at all to exercise it (retired by V6 Phase
+    2B.10 Scope B)."""
+
     with pytest.raises(ValueError, match="requires an explicit seed"):
         resolve_direct_match_starts(
-            ruleset_id=BYTEFRAY_RULESET_V4_ALPHA2_ID,
+            ruleset_id=BYTEFRAY_RULESET_V4_ID,
             arena_size=512,
             entrant_count=2,
             supplied_starts=[None, None],
         )
 
 
-def test_explicit_starts_survive_alpha2_placement_untouched() -> None:
-    """Reproducing a specific historical layout under alpha2 stays possible.
+def test_explicit_starts_survive_stable_v4_placement_untouched() -> None:
+    """Reproducing a specific historical layout under seeded placement
+    stays possible.
 
     Explicit starts have never been adjusted by this resolver, and seeded
     placement must not become the first exception -- otherwise an alpha1
-    match could not be re-run under alpha2 semantics for comparison.
-    """
+    match could not be re-run under seeded-placement semantics for
+    comparison. Runs against stable ``bytefray-rules-4`` (V6 Phase 2B.10
+    Scope B retired alpha2, which this test originally used and which
+    shares this exact seeded-placement gameplay)."""
 
     assert resolve_direct_match_starts(
-        ruleset_id=BYTEFRAY_RULESET_V4_ALPHA2_ID,
+        ruleset_id=BYTEFRAY_RULESET_V4_ID,
         arena_size=512,
         entrant_count=2,
         supplied_starts=[0, 256],
@@ -386,7 +411,7 @@ def test_explicit_starts_survive_alpha2_placement_untouched() -> None:
     ) == (0, 256)
     # A partially-supplied layout fills only the omitted seat.
     resolved = resolve_direct_match_starts(
-        ruleset_id=BYTEFRAY_RULESET_V4_ALPHA2_ID,
+        ruleset_id=BYTEFRAY_RULESET_V4_ID,
         arena_size=512,
         entrant_count=2,
         supplied_starts=[0, None],

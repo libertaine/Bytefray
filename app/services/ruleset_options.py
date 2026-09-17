@@ -8,8 +8,6 @@ from dataclasses import dataclass
 from battle_engine.rules import BYTEFRAY_RULESET_ID
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ID,
-    BYTEFRAY_RULESET_V4_ALPHA1_ID,
-    BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
     UnknownRulesetError,
     agent_supported_by_ruleset,
@@ -29,18 +27,13 @@ RULESET_V2_OPTION = DesignerRulesetOption(
 # v4.0.0-rc1 Phase 2: the permanent stable identity (see
 # docs/research/v4/V4_RC1_PHASE2_STABLE_CONTRACT_PROMOTION.md), gameplay-
 # identical to alpha2. This is now the option Simple/Advanced/Evaluation all
-# prefer for an Agent API v2 selection -- alpha2 is retained (below) only as
-# an explicit historical-reproduction choice.
+# prefer for an Agent API v2 selection. V6 Phase 2B.10 Scope B removed the
+# alpha1/alpha2 options that used to sit alongside this one below (they
+# were retained through v5.0.0 as explicit historical-reproduction
+# choices; see docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md)
+# -- this is now the only Agent API v2 option any Designer surface offers.
 RULESET_V4_OPTION = DesignerRulesetOption(
     BYTEFRAY_RULESET_V4_ID, "Ruleset v4 — Current / Recommended (Agent API v2)"
-)
-RULESET_V4_ALPHA2_OPTION = DesignerRulesetOption(
-    BYTEFRAY_RULESET_V4_ALPHA2_ID,
-    "Ruleset v4 alpha2 — Process-agent preview, historical (Agent API v2)",
-)
-RULESET_V4_ALPHA1_OPTION = DesignerRulesetOption(
-    BYTEFRAY_RULESET_V4_ALPHA1_ID,
-    "Ruleset v4 alpha1 — Process-agent preview, historical (Agent API v2)",
 )
 RULESET_V1_OPTION = DesignerRulesetOption(
     BYTEFRAY_RULESET_ID, "Ruleset v1 — Compatibility (Python and VM/blob)"
@@ -86,27 +79,26 @@ SIMPLE_RULESET_OPTIONS = (RULESET_V2_OPTION, RULESET_V4_OPTION)
 # stable identity into the same methodology, unmodified, and gives it first
 # preference (mirroring `battle_engine.ruleset_policy.
 # OMITTED_RULESET_CANDIDATES`'s own product-preference order): an Agent
-# API v2 selection with no prior Ruleset choice now lands on the stable v4
-# identity, with alpha2 and then alpha1 one deliberate click away for
-# reproducing an earlier prerelease evaluation. Kept as its own explicit
-# tuple rather than a filter over DESIGNER_RULESET_OPTIONS so the exact
-# offered set is visible at the point of definition.
+# API v2 selection with no prior Ruleset choice lands on the stable v4
+# identity. V6 Phase 2B.10 Scope B removed alpha2 and alpha1 from this
+# tuple alongside their executable registration -- reproducing an earlier
+# prerelease evaluation under either is no longer offered from any GUI
+# surface (docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md).
+# Kept as its own explicit tuple rather than a filter over
+# DESIGNER_RULESET_OPTIONS so the exact offered set is visible at the
+# point of definition.
 EVALUATION_RULESET_OPTIONS = (
     RULESET_V2_OPTION,
     RULESET_V4_OPTION,
-    RULESET_V4_ALPHA2_OPTION,
-    RULESET_V4_ALPHA1_OPTION,
     RULESET_V1_OPTION,
 )
-# Advanced/Development keep both v4 alphas so a historical alpha1/alpha2
-# match stays reproducible from the GUI, not only from the CLI. Order is
-# the product preference ``best_designer_ruleset_for_agents`` walks, so an
-# Agent API v2 selection lands on the stable identity while alpha2/alpha1
-# remain a deliberate click away.
+# V6 Phase 2B.10 Scope B removed both v4 alphas from this tuple alongside
+# their executable registration: Advanced/Development no longer offer a
+# way to launch a *new* alpha1/alpha2 match from the GUI (or the CLI --
+# see docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md). Order
+# is the product preference ``best_designer_ruleset_for_agents`` walks.
 DESIGNER_RULESET_OPTIONS = (
     *SIMPLE_RULESET_OPTIONS,
-    RULESET_V4_ALPHA2_OPTION,
-    RULESET_V4_ALPHA1_OPTION,
     RULESET_V1_OPTION,
 )
 
@@ -124,10 +116,7 @@ RULESET_DESCRIPTION = (
     "Ruleset v2 is Bytefray's current gameplay ruleset and runs Python agents only. "
     "Ruleset v4 is the current, permanent process-agent gameplay contract and "
     "requires Agent API v2; it places entrant cores from the match seed and rotates "
-    "action slots between an entrant's own processes. Ruleset v4 alpha2 and alpha1 "
-    "are the historical process-agent prerelease identities, gameplay-identical to "
-    "v4 for alpha2 and behaviorally distinct for alpha1, kept for reproducing "
-    "earlier prerelease matches. "
+    "action slots between an entrant's own processes. "
     "Ruleset v1 also runs Agent API v1 Python agents and is the only Bytefray "
     "ruleset that runs VM/blob agents."
 )
@@ -135,8 +124,8 @@ RULESET_DESCRIPTION = (
 # Shown next to a Ruleset selector whenever the current entrant selection
 # includes a VM/blob agent.
 VM_RULESET_EXPLANATION = (
-    "VM/blob agents run under Ruleset v1 only. Rulesets v2, v4, v4 alpha2, and v4 "
-    "alpha1 are Python-agent only."
+    "VM/blob agents run under Ruleset v1 only. Rulesets v2 and v4 are Python-agent "
+    "only."
 )
 
 

@@ -38,11 +38,12 @@ agent formats:
 
 - **Python agents** (Agent API v1 and Agent API v2) run in-process or in a
   worker subprocess with the same OS-level privileges and filesystem/network
-  access as the process running Bytefray. Agent API v2 (used by Rulesets
-  `bytefray-rules-4-alpha1`, `bytefray-rules-4-alpha2`, and the permanent
-  `bytefray-rules-4`) changes the Python programming contract, not the
-  execution/isolation model — the same non-sandboxed guarantees below apply
-  identically across both API generations and all Ruleset identities. The
+  access as the process running Bytefray. Agent API v2 (the contract for
+  the permanent `bytefray-rules-4` identity, and historically for the two
+  retired v4 prerelease identities that preceded it) changes the Python
+  programming contract, not the execution/isolation model — the same
+  non-sandboxed guarantees below apply identically across both API
+  generations and all Ruleset identities. The
   optional worker-subprocess timeout used by `bytefray agents validate`/`test`
   and Agent Lab (see
   [docs/AGENT_LAB.md](docs/AGENT_LAB.md)) exists to contain accidental

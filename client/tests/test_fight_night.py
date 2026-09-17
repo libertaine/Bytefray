@@ -35,7 +35,7 @@ from battle_client.renderers.pygame_renderer import HUD_CHAR_WIDTH_PX, dispatch_
 from battle_engine.agents import resolve_agent
 from battle_engine.config import Config, Weights
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
-from battle_engine.ruleset_policy import RULESET_V4_ALPHA1
+from battle_engine.ruleset_policy import RULESET_V4
 from battle_engine.spectator_derivation import analyze_pair
 
 _IMPORTS = (
@@ -127,7 +127,7 @@ def _run(
             max_ticks=max_ticks,
             replay_path=replay_path,
             trace_path=trace_path,
-            ruleset_id=RULESET_V4_ALPHA1.ruleset_id,
+            ruleset_id=RULESET_V4.ruleset_id,
         )
     )
     return replay_path, trace_path

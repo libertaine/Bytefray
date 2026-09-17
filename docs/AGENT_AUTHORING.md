@@ -143,9 +143,10 @@ study the packaged `v5_*` and `v4_*` agents, which implement `reset(context)`,
 `declare_processes()`, and `act(observation)` as specified in
 [AGENT_API_V2.md](AGENT_API_V2.md). Omitting `--ruleset` resolves
 automatically to `bytefray-rules-4`, the stable v4 gameplay contract, from
-your agent's own declared `api_version: 2`; pass an explicit
-`--ruleset bytefray-rules-4-alpha1` or `bytefray-rules-4-alpha2` only to
-reproduce an earlier prerelease match. API-v1 and API-v2 entrants cannot be
+your agent's own declared `api_version: 2` — the only Ruleset any process
+agent can be run under (`bytefray-rules-4-alpha1`/`bytefray-rules-4-alpha2`
+were retired from executable registration by V6 Phase 2B.10 Scope B; see
+[COMPATIBILITY.md](COMPATIBILITY.md)). API-v1 and API-v2 entrants cannot be
 mixed in one match.
 
 ## Learning from the bundled agents

@@ -16,8 +16,6 @@ from battle_engine.paths import get_data_root
 from battle_engine.rules import BYTEFRAY_RULESET_ID
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ID,
-    BYTEFRAY_RULESET_V4_ALPHA1_ID,
-    BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
     resolve_omitted_ruleset_for_agents,
 )
@@ -61,8 +59,6 @@ def _parser() -> argparse.ArgumentParser:
         choices=[
             BYTEFRAY_RULESET_ID,
             BYTEFRAY_RULESET_V2_ID,
-            BYTEFRAY_RULESET_V4_ALPHA1_ID,
-            BYTEFRAY_RULESET_V4_ALPHA2_ID,
             BYTEFRAY_RULESET_V4_ID,
         ],
         default=None,

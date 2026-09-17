@@ -4,6 +4,34 @@ This changelog records notable user- and developer-visible changes to Bytefray.
 
 ## [Unreleased]
 
+### Removed — V4 prerelease rulesets retired from execution
+
+`bytefray-rules-4-alpha1` and `bytefray-rules-4-alpha2` are no longer
+registered as executable rulesets. Both were reachable from every CLI,
+Agent Designer, and evaluation surface before this change — unlike the
+closed-research identities retired below, these two were shipped,
+documented prerelease process-agent identities. `bytefray-rules-4` remains
+the single supported V6 process-gameplay control, unchanged; `bytefray-rules-1`
+and `bytefray-rules-2` remain executable, unaffected.
+
+Historical results, replays, evaluations, and Replay History entries
+recorded under either retired identity remain fully readable, indexable,
+filterable, and replayable — their identifiers are still recognized and
+labeled correctly, including per-entrant core-integrity/capture display for
+`bytefray-rules-4-alpha1` (which had vulnerable-core semantics;
+`bytefray-rules-4-alpha2` never did). Only creating *new* matches under
+either is removed. The release-blocking behavioral proof that
+`bytefray-rules-4` reproduces `bytefray-rules-4-alpha2`'s exact gameplay
+(the basis for its original promotion at v4.0.0-rc1 Phase 2) survives as a
+frozen-golden characterization
+(`engine/tests/test_v4_stable_ruleset_equivalence.py`) rather than a live
+comparison.
+
+Exact re-execution of either retired identity remains available through
+the `v5.0.0` release (tag, wheel, and Windows installer), whose ruleset
+registry is behaviorally identical to the one being trimmed here. See
+[`docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md`](docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md).
+
 ### Removed — closed-research rulesets retired from execution
 
 `bytefray-rules-2-alpha1`, `bytefray-rules-2-alpha11`, and
@@ -13,8 +41,7 @@ surface — all three were closed research, reachable only through the
 low-level Python API.
 
 `bytefray-rules-4` remains the supported V6 gameplay baseline, unchanged.
-`bytefray-rules-1`, `bytefray-rules-2`, `bytefray-rules-4-alpha1`, and
-`bytefray-rules-4-alpha2` remain executable.
+`bytefray-rules-1` and `bytefray-rules-2` remain executable.
 
 Historical results, replays, evaluations, and Replay History entries
 recorded under the three retired identities remain fully readable,

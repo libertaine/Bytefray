@@ -27,8 +27,6 @@ from battle_engine.python_runtime import PythonEntrantInitializationError
 from battle_engine.rules import BYTEFRAY_RULESET_ID
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ID,
-    BYTEFRAY_RULESET_V4_ALPHA1_ID,
-    BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
     NoCompatibleRulesetError,
     resolve_omitted_ruleset_for_agents,
@@ -294,8 +292,6 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
         choices=[
             BYTEFRAY_RULESET_ID,
             BYTEFRAY_RULESET_V2_ID,
-            BYTEFRAY_RULESET_V4_ALPHA1_ID,
-            BYTEFRAY_RULESET_V4_ALPHA2_ID,
             BYTEFRAY_RULESET_V4_ID,
         ],
         default=None,

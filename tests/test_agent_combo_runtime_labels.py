@@ -311,8 +311,10 @@ def test_simple_ruleset_change_filters_api_generation_and_repairs_deterministica
     assert panel.agentA.currentData() == "legacy_b"
 
     # Simple offers current gameplay only, so its Agent API v2 choice is the
-    # permanent stable v4 identity (v4.0.0-rc1 Phase 2); alpha2/alpha1 stay
-    # selectable from Advanced/Development.
+    # permanent stable v4 identity (v4.0.0-rc1 Phase 2). V6 Phase 2B.10
+    # Scope B retired alpha1/alpha2 from Advanced/Development too, so the
+    # stable identity is now the only Agent API v2 choice anywhere in the
+    # Designer.
     panel.ruleset.setCurrentIndex(panel.ruleset.findData("bytefray-rules-4"))
     assert [panel.agentA.itemData(i) for i in range(panel.agentA.count())] == [
         "process_a",

@@ -3374,17 +3374,19 @@ class EvaluationService:
         # duplicate the runtime-kind check Beta1's runtime boundary already
         # performs (RulesetRuntimeUnsupportedError, raised through
         # AgentTestError/test_agent if that boundary is ever reached).
+        #
+        # V6 Phase 2B.10 Scope B removed bytefray-rules-4-alpha1/-alpha2
+        # from this allow-list alongside their executable registration
+        # (docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md):
+        # neither can create a new evaluation artifact any longer.
         if request.ruleset_id is not None and request.ruleset_id not in (
             BYTEFRAY_RULESET_ID,
             BYTEFRAY_RULESET_V2_ID,
-            BYTEFRAY_RULESET_V4_ALPHA1_ID,
-            BYTEFRAY_RULESET_V4_ALPHA2_ID,
             BYTEFRAY_RULESET_V4_ID,
         ):
             raise EvaluationConfigurationError(
                 f"Unsupported evaluation --ruleset {request.ruleset_id!r}; expected "
                 f"{BYTEFRAY_RULESET_ID!r}, {BYTEFRAY_RULESET_V2_ID!r}, "
-                f"{BYTEFRAY_RULESET_V4_ALPHA1_ID!r}, {BYTEFRAY_RULESET_V4_ALPHA2_ID!r}, "
                 f"or {BYTEFRAY_RULESET_V4_ID!r}."
             )
 
@@ -4368,8 +4370,6 @@ def _parser() -> argparse.ArgumentParser:
         choices=[
             BYTEFRAY_RULESET_ID,
             BYTEFRAY_RULESET_V2_ID,
-            BYTEFRAY_RULESET_V4_ALPHA1_ID,
-            BYTEFRAY_RULESET_V4_ALPHA2_ID,
             BYTEFRAY_RULESET_V4_ID,
         ],
         default=None,
@@ -4387,10 +4387,7 @@ def _parser() -> argparse.ArgumentParser:
             "seeded-placement methodology: arena pinned to "
             f"{STANDARD_V4_ARENA_SIZE}, {len(STANDARD_V4_SEEDS)} deterministic "
             "placement samples by default, both orientations paired over the same "
-            f"seat-bound geometry. {BYTEFRAY_RULESET_V4_ALPHA2_ID} runs the identical "
-            "stable-v4 evaluation methodology under its own historical-prerelease "
-            f"identity. {BYTEFRAY_RULESET_V4_ALPHA1_ID} keeps its historical v2-style "
-            "fixed-placement evaluation methodology unchanged. See "
+            "seat-bound geometry. See "
             "docs/research/v4/V4_RC1_PHASE2_STABLE_CONTRACT_PROMOTION.md, "
             "docs/research/v4/V4_RC1_PHASE1_EVALUATION_METHODOLOGY.md, and "
             "docs/V2_0_BETA2_PHASE1_EVALUATION_METHODOLOGY.md."

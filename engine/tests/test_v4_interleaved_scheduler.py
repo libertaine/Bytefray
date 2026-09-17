@@ -5,13 +5,24 @@ from __future__ import annotations
 Tests:
 1. Direct unit verification of ``run_interleaved_quota``: round-robin order,
    mid-tick death handling, quota=1 parity with sequential quota.
-2. Ruleset policy dispatch: ``BYTEFRAY_RULESET_V4_ALPHA1_ID`` selects K=2
+2. Ruleset policy dispatch: stable ``bytefray-rules-4`` selects K=2
    chunked quota with deterministic rotating start, while v1/v2/v3 retain
    sequential quota.
-3. End-to-end match execution under ``bytefray-rules-4-alpha1``:
+3. End-to-end match execution under ``bytefray-rules-4``:
    - K=2 rotating action-sequence verification
    - strict determinism (repeatable match outcome and replay digest)
    - replay readability
+
+V6 Phase 2B.10 Scope B retired ``bytefray-rules-4-alpha1`` from executable
+registration; this file originally exercised sections 2/3 against it. The
+K=2 chunked/rotating-start scheduler mechanic characterized here is
+identical across the whole v4 family (``scheduler_mode="chunked"``,
+``scheduler_chunk_size=2``, ``scheduler_rotate_start=True`` on every one of
+alpha1/alpha2/stable's policy objects), so both sections now run against
+stable ``bytefray-rules-4`` instead -- nothing here ever depended on
+alpha1's two distinguishing fields (``core_placement``/
+``process_selection``), which ``test_v4_process_semantics.py`` and
+``test_v4_alpha2_scheduler.py`` characterize separately.
 """
 
 
@@ -25,7 +36,7 @@ from battle_engine.replay import TickSnapshot, iter_replay
 from battle_engine.rules import BYTEFRAY_RULESET_ID
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ID,
-    BYTEFRAY_RULESET_V4_ALPHA1_ID,
+    BYTEFRAY_RULESET_V4_ID,
     resolve_ruleset_policy,
 )
 from battle_engine.scheduler import run_chunked_quota, run_interleaved_quota, run_sequential_quota
@@ -213,7 +224,7 @@ def test_chunked_quota_mid_chunk_death() -> None:
     ]
 
 
-V4_INTERLEAVED = BYTEFRAY_RULESET_V4_ALPHA1_ID
+V4_INTERLEAVED = BYTEFRAY_RULESET_V4_ID
 
 
 @dataclass
@@ -299,7 +310,7 @@ def test_ruleset_policy_dispatch_modes() -> None:
     """Confirm that existing rulesets use sequential and v4 uses K=2 rotating."""
     policy_v1 = resolve_ruleset_policy(BYTEFRAY_RULESET_ID)
     policy_v2 = resolve_ruleset_policy(BYTEFRAY_RULESET_V2_ID)
-    policy_v4 = resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ALPHA1_ID)
+    policy_v4 = resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ID)
 
     assert policy_v1.scheduler_mode == "sequential"
     assert policy_v2.scheduler_mode == "sequential"

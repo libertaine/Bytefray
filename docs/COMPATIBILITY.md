@@ -774,16 +774,28 @@ regardless of how mature adjacent functionality is:
   remain readable, indexable, and correctly labeled — only creating *new*
   matches under them is removed. See the table below and
   [`docs/research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md`](research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md).
+- **`bytefray-rules-4-alpha1` / `bytefray-rules-4-alpha2` execution** —
+  retired from executable registration by V6 Phase 2B.10 Scope B (releases
+  up to and including v5.0.0 supported both, and both were selectable from
+  every CLI, Agent Designer, and evaluation surface). Historical
+  results/replays/evaluations recorded under either identity remain
+  readable, indexable, and correctly labeled — including per-entrant
+  core-integrity/capture display for `bytefray-rules-4-alpha1`, which had
+  vulnerable-core semantics (`bytefray-rules-4-alpha2` never did). Only
+  creating *new* matches under either is removed. See the table below and
+  [`docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md`](research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md).
 
-### Retired from execution / still recognised (V6 Phase 2B.9)
+### Retired from execution / still recognised (V6 Phase 2B.9, 2B.10 Scope B)
 
 | Identity | New execution | Historical recognition |
 | --- | --- | --- |
 | `bytefray-rules-2-alpha1` | Rejected (`UnknownRulesetError`) | Full — result/replay attribution, Replay History indexing/labeling, core-status display |
 | `bytefray-rules-2-alpha11` | Rejected (`UnknownRulesetError`) | Full — same, plus the promotion-equivalence proof into `bytefray-rules-2` is preserved as a frozen-golden characterization |
 | `bytefray-rules-3-alpha1` | Rejected (`UnknownRulesetError`) | Full — same |
+| `bytefray-rules-4-alpha1` | Rejected (`UnknownRulesetError`) | Full — same, including per-entrant core-integrity/capture-tick display |
+| `bytefray-rules-4-alpha2` | Rejected (`UnknownRulesetError`) | Full — result/replay attribution, Replay History indexing/labeling (never had core-status display; not a vulnerable-core identity), plus the promotion-equivalence proof into `bytefray-rules-4` is preserved as a frozen-golden characterization |
 
-Exact re-execution of any of the three remains available through the
+Exact re-execution of any of the five remains available through the
 `v5.0.0` release (tag, wheel, Windows installer), whose ruleset registry is
 behaviorally identical to the one this table describes.
 - **Arena translation/placement robustness in evaluation** — decided in
@@ -798,7 +810,7 @@ behaviorally identical to the one this table describes.
   today via `MatchEntrant.start` but `agents evaluate` is Python-only and
   has no VM path to attach it to. See `docs/ROADMAP.md` and
   `docs/RULES.md`.
-- **Future rulesets beyond the registered v1/v2/v4-alpha1 identities** —
+- **Future rulesets beyond the registered v1/v2/v4 identities** —
   additional mechanics require another distinct Ruleset identity, tracked in
   [FUTURE_PLANS.md](FUTURE_PLANS.md), and is explicitly not part of
   Ruleset v1.

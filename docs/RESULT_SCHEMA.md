@@ -75,7 +75,7 @@ gameplay Ruleset identity (`battle_engine.rules.BYTEFRAY_RULESET_ID`, see
 current native writers** — every VM or Python match produced by
 `NativeMatchService`/`match_service._finalize_native_artifacts` sets it to the
 exact resolved identity (`bytefray-rules-1`, `bytefray-rules-2`, or
-`bytefray-rules-4-alpha1`) — but it is **not required for all historical
+`bytefray-rules-4`) — but it is **not required for all historical
 artifacts**.
 
 **Present-as-`null` versus genuinely absent — these are two different

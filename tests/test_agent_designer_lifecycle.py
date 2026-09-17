@@ -428,12 +428,6 @@ def test_advanced_run_exports_agent_params_json_to_child_env(monkeypatch, tmp_pa
     ("ruleset_id", "agent_a", "agent_b", "expects_trace"),
     [
         pytest.param(
-            "bytefray-rules-4-alpha1", "v4_claimer", "v4_scout", True, id="v4-alpha1"
-        ),
-        pytest.param(
-            "bytefray-rules-4-alpha2", "v4_claimer", "v4_scout", True, id="v4-alpha2"
-        ),
-        pytest.param(
             "bytefray-rules-4", "v4_claimer", "v4_scout", True, id="v4-stable"
         ),
         pytest.param("bytefray-rules-1", "runner", "writer", False, id="v1"),
@@ -445,13 +439,17 @@ def test_designer_run_requests_trace_only_for_v4_rulesets(
 ):
     """Simple and Advanced must follow the same v4-only automatic-trace policy.
 
-    Every v4 identity's Designer matches (alpha1, alpha2, and the permanent
-    stable identity as of v4.0.0-rc1 Phase 2) request
+    The permanent stable v4 identity's Designer matches request
     ``--trace <run-dir>/trace.jsonl`` alongside ``--replay`` so the Alpha3
     spectator suite (Perspective Cam, Spectator Director, Fight Night) is
     naturally available after "Open Replay". Historical Ruleset v1/v2
     matches must keep their existing artifact set (no ``--trace``)
     unchanged.
+
+    V6 Phase 2B.10 Scope B removed bytefray-rules-4-alpha1/-alpha2's cases:
+    neither remains selectable from the Designer at all any longer
+    (docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md), so
+    there is no live launch path left to exercise for either.
     """
     pytest.importorskip("PySide6")
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")

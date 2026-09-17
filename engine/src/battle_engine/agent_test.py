@@ -61,8 +61,6 @@ from battle_engine.results import WINNER_TIE_SENTINEL
 from battle_engine.rules import BYTEFRAY_RULESET_ID
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ID,
-    BYTEFRAY_RULESET_V4_ALPHA1_ID,
-    BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
     PROCESS_RULESET_IDS,
     NoCompatibleRulesetError,
@@ -1044,8 +1042,6 @@ def _parser() -> argparse.ArgumentParser:
         choices=[
             BYTEFRAY_RULESET_ID,
             BYTEFRAY_RULESET_V2_ID,
-            BYTEFRAY_RULESET_V4_ALPHA1_ID,
-            BYTEFRAY_RULESET_V4_ALPHA2_ID,
             BYTEFRAY_RULESET_V4_ID,
         ],
         default=None,

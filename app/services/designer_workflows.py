@@ -52,8 +52,6 @@ from battle_engine.launchers import build_agents_command, build_tournament_comma
 from battle_engine.result_model import read_result
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ID,
-    BYTEFRAY_RULESET_V4_ALPHA1_ID,
-    BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
 )
 
@@ -312,15 +310,21 @@ def match_artifact_paths(replay_path: Path) -> tuple[Path, Path]:
 
 
 # Ruleset identities for which a normal Designer match automatically
-# records the Alpha3 spectator trace alongside its replay -- every v4
-# identity (alpha1, alpha2, and the permanent stable identity as of
-# v4.0.0-rc1 Phase 2). v1 and v2 deliberately keep their existing artifact
-# set unchanged: a normal v4 Designer match should automatically be
-# spectator-capable, without a new opt-in control (Alpha3 follow-up
+# records the Alpha3 spectator trace alongside its replay -- originally
+# every v4 identity (alpha1, alpha2, and the permanent stable identity, as
+# of v4.0.0-rc1 Phase 2). v1 and v2 deliberately keep their existing
+# artifact set unchanged: a normal v4 Designer match should automatically
+# be spectator-capable, without a new opt-in control (Alpha3 follow-up
 # Phase 2).
-DESIGNER_AUTO_TRACE_RULESET_IDS: frozenset[str] = frozenset(
-    {BYTEFRAY_RULESET_V4_ALPHA1_ID, BYTEFRAY_RULESET_V4_ALPHA2_ID, BYTEFRAY_RULESET_V4_ID}
-)
+#
+# V6 Phase 2B.10 Scope B removed alpha1/alpha2: this table gates whether a
+# match *about to launch* also writes a trace file, so it is
+# execution-only -- no historical reader consults it (only
+# ``app/agent_designer.py`` calls :func:`designer_trace_path` below, always
+# with an about-to-run match's own configured Ruleset). Neither alpha can
+# launch a new Designer match at all any longer, so their membership here
+# was dead.
+DESIGNER_AUTO_TRACE_RULESET_IDS: frozenset[str] = frozenset({BYTEFRAY_RULESET_V4_ID})
 
 
 def designer_trace_path(replay_path: Path, ruleset_id: str) -> Path | None:
