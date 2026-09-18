@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import FrozenInstanceError, dataclass
 
 import pytest
-from battle_engine.rules import BYTEFRAY_RULESET_ID
+from battle_engine.rules import BYTEFRAY_RULESET_ID, normalize_ruleset_id
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ALPHA1_ID,
     BYTEFRAY_RULESET_V2_ID,
@@ -23,8 +23,6 @@ from battle_engine.ruleset_policy import (
     OMITTED_RULESET_CANDIDATES,
     RULESET_V1,
     RULESET_V2,
-    RULESET_V2_ALPHA1,
-    RULESET_V2_ALPHA11,
     NoCompatibleRulesetError,
     RulesetPolicy,
     TerminationDecision,
@@ -86,36 +84,17 @@ def test_policy_scheduler_matches_the_phase_2_sequential_quota_behavior() -> Non
     assert via_policy == via_direct == ["A0", "A1", "A2", "B0", "B1", "C0", "C1", "C2"]
 
 
-def test_v2_alpha1_ruleset_id_resolves_to_its_own_distinct_policy() -> None:
-    """v2.0.0-alpha.1's dispatch registration (Phase 2/Sec 7 of
-    docs/V2_0_ALPHA_ARCHITECTURE.md): registered under its own explicit
-    key, distinct from -- and never aliased to or from -- Ruleset v1.
-    """
-
-    policy = resolve_ruleset_policy(BYTEFRAY_RULESET_V2_ALPHA1_ID)
-    assert policy is RULESET_V2_ALPHA1
-    assert policy.ruleset_id == "bytefray-rules-2-alpha1"
-    assert policy is not RULESET_V1
-    assert policy.ruleset_id != RULESET_V1.ruleset_id
-
-
 def test_permanent_v2_ruleset_id_resolves_to_its_own_distinct_policy() -> None:
     """v2.0.0-beta1's permanent identity: registered under its own explicit
-    key, distinct from -- and never aliased to or from -- Ruleset v1 or
-    either historical alpha identity (docs/V2_0_BETA1_PLAN.md).
+    key, distinct from -- and never aliased to or from -- Ruleset v1
+    (docs/V2_0_BETA1_PLAN.md).
     """
 
     policy = resolve_ruleset_policy(BYTEFRAY_RULESET_V2_ID)
     assert policy is RULESET_V2
     assert policy.ruleset_id == "bytefray-rules-2"
     assert policy is not RULESET_V1
-    assert policy is not RULESET_V2_ALPHA1
-    assert policy is not RULESET_V2_ALPHA11
-    assert policy.ruleset_id not in {
-        RULESET_V1.ruleset_id,
-        RULESET_V2_ALPHA1.ruleset_id,
-        RULESET_V2_ALPHA11.ruleset_id,
-    }
+    assert policy.ruleset_id != RULESET_V1.ruleset_id
 
 
 def test_permanent_v2_scheduling_and_termination_are_identical_to_v1() -> None:
@@ -124,21 +103,6 @@ def test_permanent_v2_scheduling_and_termination_are_identical_to_v1() -> None:
     RULESET_V2.run_scheduler(states, 2, lambda s, slot: calls.append(f"{s.name}{slot}"))
     assert calls == ["A0", "A1", "B0", "B1"]
     assert RULESET_V2.resolve_termination(
-        alive_count=1, tick=1, max_ticks=10
-    ) == TerminationDecision(terminated=True, reason=TerminationReason.LAST_AGENT_STANDING)
-
-
-def test_v2_alpha1_scheduling_and_termination_are_identical_to_v1() -> None:
-    """The alpha changes core-capture mortality only -- scheduling order
-    and the termination decision formula are the exact same shared
-    implementation as Ruleset v1 (neither reads ``self.ruleset_id``).
-    """
-
-    states = [_FakeState("A"), _FakeState("B")]
-    calls: list[str] = []
-    RULESET_V2_ALPHA1.run_scheduler(states, 2, lambda s, slot: calls.append(f"{s.name}{slot}"))
-    assert calls == ["A0", "A1", "B0", "B1"]
-    assert RULESET_V2_ALPHA1.resolve_termination(
         alive_count=1, tick=1, max_ticks=10
     ) == TerminationDecision(terminated=True, reason=TerminationReason.LAST_AGENT_STANDING)
 
@@ -345,15 +309,22 @@ def test_automatic_resolution_never_selects_an_experimental_identity() -> None:
     )
 
 
-def test_v4_alphas_remain_explicitly_selectable_after_stable_v4_takes_the_default() -> None:
-    """The permanent stable identity becoming the automatic v4 choice
-    (v4.0.0-rc1 Phase 2) must not retire either alpha.
+def test_v4_alphas_are_no_longer_selectable_after_v6_phase_2b10_retirement() -> None:
+    """Supersedes the pre-Phase-2B.10 test of the same shape.
 
-    Automatic resolution moving to the stable identity is a *default*
-    change, not a compatibility removal: every historical alpha1/alpha2
-    match must stay reproducible by naming the alpha explicitly, and each
-    alpha's policy must keep executing with its own frozen semantics rather
-    than resolving to the stable identity or to each other.
+    v4.0.0-rc1 Phase 2 made the permanent stable identity the automatic v4
+    choice without retiring either alpha: naming one explicitly still
+    resolved and executed it. V6 Phase 2B.10 Scope B changed that --
+    ``resolve_omitted_ruleset_for_agents`` still returns an explicit
+    selection unchanged (it never validates a caller's own choice, by
+    design), but ``resolve_ruleset_policy`` now raises for both, so that
+    passthrough id can no longer be dispatched. The frozen field values
+    each alpha used to expose (``core_placement``/``process_selection``,
+    otherwise identical to each other and to the stable identity) are
+    preserved as documentation in ``ruleset_policy.py``'s own retirement
+    comment and as locally-reconstructed ``RulesetPolicy`` objects in
+    ``test_v4_runtime_default_ruleset.py``/``test_v4_alpha2_scheduler.py``,
+    not by resolving them here.
     """
 
     assert (
@@ -364,35 +335,18 @@ def test_v4_alphas_remain_explicitly_selectable_after_stable_v4_takes_the_defaul
         resolve_omitted_ruleset_for_agents(BYTEFRAY_RULESET_V4_ALPHA2_ID, [_python(2)])
         == BYTEFRAY_RULESET_V4_ALPHA2_ID
     )
-    alpha1 = resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ALPHA1_ID)
-    alpha2 = resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ALPHA2_ID)
+    with pytest.raises(UnknownRulesetError):
+        resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ALPHA1_ID)
+    with pytest.raises(UnknownRulesetError):
+        resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ALPHA2_ID)
+    # Neither retired id was quietly folded into the stable identity.
+    assert normalize_ruleset_id(BYTEFRAY_RULESET_V4_ALPHA1_ID) == BYTEFRAY_RULESET_V4_ALPHA1_ID
+    assert normalize_ruleset_id(BYTEFRAY_RULESET_V4_ALPHA2_ID) == BYTEFRAY_RULESET_V4_ALPHA2_ID
     stable = resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ID)
-    assert alpha1.ruleset_id != alpha2.ruleset_id != stable.ruleset_id != alpha1.ruleset_id
-    assert (alpha1.core_placement, alpha1.process_selection) == (
-        "seat_spread",
-        "priority",
-    )
-    assert (alpha2.core_placement, alpha2.process_selection) == (
-        "seeded",
-        "round_robin",
-    )
-    # Everything else about the two alpha policies is deliberately identical.
-    assert alpha1.supported_runtime_kinds == alpha2.supported_runtime_kinds
-    # The stable identity is the promotion of alpha2, field for field -- see
-    # test_v4_stable_ruleset_equivalence.py for the release-blocking
-    # equivalence assertion this only previews.
     assert (stable.core_placement, stable.process_selection) == (
         "seeded",
         "round_robin",
     )
-    assert stable.supported_runtime_kinds == alpha2.supported_runtime_kinds
-    assert stable.supported_python_api_versions == alpha2.supported_python_api_versions
-    assert (
-        alpha1.supported_python_api_versions == alpha2.supported_python_api_versions
-    )
-    assert alpha1.scheduler_mode == alpha2.scheduler_mode
-    assert alpha1.scheduler_chunk_size == alpha2.scheduler_chunk_size
-    assert alpha1.scheduler_rotate_start == alpha2.scheduler_rotate_start
 
 
 @pytest.mark.parametrize(

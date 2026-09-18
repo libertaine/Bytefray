@@ -237,14 +237,18 @@ def test_ruleset_agent_unsupported_is_reported_cleanly_per_match(tmp_path):
     assert not match.artifact_dir.exists()
 
 
-def test_cli_help_lists_product_rulesets_including_v4_alpha1(capsys):
+def test_cli_help_lists_product_rulesets_excluding_retired_v4_alphas(capsys):
+    """V6 Phase 2B.10 Scope B removed bytefray-rules-4-alpha1/-alpha2 from
+    this CLI's ``--ruleset`` choices alongside their executable
+    registration."""
     with pytest.raises(SystemExit):
         tournament_cli_main(["--help"])
     out = capsys.readouterr().out
     assert "--ruleset" in out
     assert "bytefray-rules-1" in out
     assert "bytefray-rules-2" in out
-    assert "bytefray-rules-4-alpha1" in out
+    assert "bytefray-rules-4-alpha1" not in out
+    assert "bytefray-rules-4-alpha2" not in out
     assert "bytefray-rules-2-alpha1" not in out
     assert "bytefray-rules-3-alpha1" not in out
     assert "homogeneous" in out

@@ -21,10 +21,24 @@ venv/
 
 # Project artifacts
 runs/
-agents_build/
 agent_revisions/
 *.blob
 *.jsonl
+# V6 Phase 2B.9: frozen historical-readability fixture replays for retired
+# rulesets (bytefray-rules-2-alpha1/-alpha11), committed deliberately --
+# see client/tests/test_replay_status.py's module docstring.
+!client/tests/fixtures/replay_status/*.jsonl
+# V6 Phase 2B.10 Scope B: frozen historical-immutability fixture replays for
+# retired rulesets (bytefray-rules-4-alpha1/-alpha2), committed deliberately --
+# see engine/tests/test_v4_historical_immutability.py's module docstring.
+!engine/tests/fixtures/v4_historical_immutability/*.jsonl
+# V6 Phase 2B.10 Scope B: a frozen real bytefray-rules-4-alpha1 replay+trace
+# pair, committed deliberately because stable bytefray-rules-4 structurally
+# cannot reproduce this fixture's precondition (it is not a member of
+# VULNERABLE_CORE_RULESET_IDS, so get_entrant_statuses().core is always None
+# for it) -- see client/tests/test_perspective_card_knowledge.py's module
+# docstring.
+!client/tests/fixtures/perspective_card_knowledge/*.jsonl
 
 # Derived, disposable application cache. In a source checkout the data root is
 # the repository itself, so the rebuildable Replay History SQLite index lands

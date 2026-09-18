@@ -35,7 +35,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     subcommands = parser.add_subparsers(dest="command")
     subcommands.add_parser(
-        "run", add_help=False, help="run a native Bytefray or pMARS match"
+        "run", add_help=False, help="run a native Bytefray match"
     )
     subcommands.add_parser(
         "tournament", add_help=False, help="run or resume a native round-robin tournament"

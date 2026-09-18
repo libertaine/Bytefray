@@ -154,16 +154,6 @@ function Invoke-InstalledSmoke {
     $_.FullName.Substring($AppDir.Length).TrimStart([IO.Path]::DirectorySeparatorChar)
   } | Set-Content -LiteralPath $StructureLog
 
-  foreach ($CliArtifact in @("bytefray", "bytefray-cli")) {
-    $ArtifactDir = Split-Path -Parent $Executables[$CliArtifact]
-    foreach ($Resource in @("pmars.exe", "COPYING")) {
-      $ResourcePath = Join-Path $ArtifactDir "_internal\pmars\windows\$Resource"
-      if (-not (Test-Path -LiteralPath $ResourcePath -PathType Leaf)) {
-        throw "Bundled pMARS resource missing: $ResourcePath"
-      }
-    }
-  }
-
   # No "replays" entry: the installer no longer creates it (V5 Alpha 1
   # Maintenance Phase 2 -- see tools/installer.iss's [Dirs] comment); it was
   # always created empty and never written to by any runtime code. No "logs"
@@ -219,32 +209,6 @@ function Invoke-InstalledSmoke {
       "--replay", $Replay, "--renderer", "pygame", "--tick-delay", "0.05"
     ) "Replay Viewer"
   }
-
-  $WarriorDir = Join-Path $DataRoot "smoke warriors"
-  New-Item -ItemType Directory -Force -Path $WarriorDir | Out-Null
-  $WarriorA = Join-Path $WarriorDir "imp one.red"
-  $WarriorB = Join-Path $WarriorDir "imp two.red"
-  Set-Content -LiteralPath $WarriorA -Encoding ascii -Value ";redcode`n;name Imp One`nmov 0, 1`nend"
-  Set-Content -LiteralPath $WarriorB -Encoding ascii -Value ";redcode`n;name Imp Two`nmov 0, 1`nend"
-  Remove-Item Env:PMARS_CMD -ErrorAction SilentlyContinue
-  Invoke-ProcessChecked $Executables["bytefray"] @(
-    "run", "--mode", "redcode94", "--red-a", $WarriorA, "--red-b", $WarriorB,
-    "--rounds", "1", "--replay", (Join-Path $Runs "pmars replay.jsonl"), "--quiet"
-  ) "bundled pMARS match" -CaptureOutput | Out-Null
-
-  $InvalidDir = Join-Path $Runs "invalid-pmars"
-  $env:PMARS_CMD = Join-Path $DataRoot "missing pMARS\pmars.exe"
-  $Invalid = Invoke-ProcessChecked $Executables["bytefray"] @(
-    "run", "--mode", "redcode94", "--red-a", $WarriorA, "--red-b", $WarriorB,
-    "--replay", (Join-Path $InvalidDir "replay.jsonl"), "--quiet"
-  ) "invalid PMARS_CMD" -ExpectedExitCodes @(2) -CaptureOutput
-  if ($Invalid.Output -notmatch "Configured PMARS_CMD executable was not found") {
-    throw "Invalid PMARS_CMD did not produce the normalized diagnostic."
-  }
-  if (Test-Path -LiteralPath (Join-Path $InvalidDir "summary.json")) {
-    throw "Invalid PMARS_CMD produced a false success summary."
-  }
-  Remove-Item Env:PMARS_CMD -ErrorAction SilentlyContinue
 
   $Running = @(
     Get-Process | Where-Object { $_.Path -and $_.Path.StartsWith($AppDir, [StringComparison]::OrdinalIgnoreCase) }

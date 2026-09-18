@@ -76,11 +76,7 @@ from battle_engine.match_service import (
 from battle_engine.paths import contained_path, get_data_root
 from battle_engine.placement import resolve_direct_match_starts, spread_seat_starts
 from battle_engine.project_info import get_project_info
-from battle_engine.python_runtime import (
-    CORE_SIZE,
-    DEFAULT_LOCALITY_REACH,
-    has_bounded_locality,
-)
+from battle_engine.python_runtime import CORE_SIZE
 from battle_engine.replay import ReplayHeader, iter_replay
 from battle_engine.result_model import (
     ReplayIntegrityError,
@@ -94,7 +90,6 @@ from battle_engine.results import WINNER_TIE_SENTINEL
 from battle_engine.rules import BYTEFRAY_RULESET_ID, normalize_ruleset_id
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ID,
-    BYTEFRAY_RULESET_V3_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
@@ -609,10 +604,15 @@ def resolve_evaluation_ruleset_id(ruleset_id: str | None) -> str:
 
 #: Which resolved rules-compatibility ids select the v2 evaluation
 #: methodology. Finite and explicit, never a prefix check.
+#:
+#: V6 Phase 2B.9 removed ``BYTEFRAY_RULESET_V3_ALPHA1_ID`` from this set:
+#: the v3 research Phase 2 bounded-locality identity it supported was
+#: retired from executable registration
+#: (docs/research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md), so no
+#: request can resolve to it any longer and its membership here was dead.
 _V2_METHODOLOGY_RULESET_IDS: frozenset[str] = frozenset(
-    {BYTEFRAY_RULESET_V2_ID, BYTEFRAY_RULESET_V3_ALPHA1_ID, BYTEFRAY_RULESET_V4_ALPHA1_ID}
+    {BYTEFRAY_RULESET_V2_ID, BYTEFRAY_RULESET_V4_ALPHA1_ID}
 )
-
 
 
 def is_ruleset_v2_methodology(rules_compatibility_id: str) -> bool:
@@ -624,18 +624,6 @@ def is_ruleset_v2_methodology(rules_compatibility_id: str) -> bool:
     Ruleset identity a result/replay artifact might still reference is
     deliberately excluded -- product-facing evaluation methodology never
     advertises an alpha Ruleset identity.
-
-    v3 research Phase 2 adds exactly one more:
-    ``BYTEFRAY_RULESET_V3_ALPHA1_ID``, the experimental bounded-locality
-    identity. It is included because the locality experiment's whole design
-    is to change *addressing and nothing else* -- it must run under the
-    identical standard placements, standard layouts, standard seed set and
-    capture/core evidence the Ruleset-v2 control runs under, or the
-    comparison Phase 2 exists to make would be confounded by methodology
-    rather than by locality. Note what this does *not* do: it does not make
-    the identity product-facing, it does not alias it to
-    ``bytefray-rules-2``, and it does not change any hashed value for a
-    request that does not name it.
     """
 
     return rules_compatibility_id in _V2_METHODOLOGY_RULESET_IDS
@@ -1391,11 +1379,13 @@ class EvaluationRequest:
     # `effective_conditions_fingerprint`.
     arena_size: int | None = None
     instr_per_tick: int | None = None
-    # v3 research Phase 2's experimental bounded-locality reach. Meaningful
-    # only when `ruleset_id` is the locality identity; `_validate` rejects
-    # it outright otherwise rather than silently ignoring it, because an
-    # evaluation that names a reach and does not get one would produce a
-    # corpus whose conditions its own artifacts misdescribe.
+    # v3 research Phase 2's experimental bounded-locality reach. V6
+    # Phase 2B.9 retired every Ruleset identity that supported bounded
+    # locality, so `_validate` now rejects any non-`None` value
+    # unconditionally rather than silently ignoring it (an evaluation that
+    # names a reach and does not get one would produce a corpus whose
+    # conditions its own artifacts misdescribe). Kept as a field, rather
+    # than removed, so existing callers need no change.
     locality_reach: int | None = None
     # v3 research Phase 3 (docs/V3_PHASE3_OFFENSE_PAYOFF_CHARACTERIZATION.md):
     # the one controlled scoring variable this phase tests. `None` (the
@@ -1418,21 +1408,16 @@ class EvaluationRequest:
     def resolved_locality_reach(self) -> int | None:
         """The reach this request's cells actually execute under.
 
-        `None` for every non-locality Ruleset, so every locality-gated key
+        Always `None`: V6 Phase 2B.9 retired every Ruleset identity that
+        supported bounded-locality addressing. Kept as a stable named seam
+        rather than inlined at each call site, so every locality-gated key
         downstream (identity payloads, conditions fingerprint, disclosure)
-        is absent exactly when locality is absent. A locality request that
-        omits a reach resolves to `python_runtime.DEFAULT_LOCALITY_REACH` --
-        the same fallback the runtime itself applies, computed here so the
-        planned identity and the executed match can never disagree.
+        stays absent without those call sites needing to change, and so a
+        future locality-capable Ruleset has one obvious place to restore
+        this resolution.
         """
 
-        if not has_bounded_locality(self.resolved_rules_compatibility_id):
-            return None
-        return (
-            DEFAULT_LOCALITY_REACH
-            if self.locality_reach is None
-            else self.locality_reach
-        )
+        return None
 
     @property
     def resolved_arena_size(self) -> int:
@@ -3389,19 +3374,20 @@ class EvaluationService:
         # duplicate the runtime-kind check Beta1's runtime boundary already
         # performs (RulesetRuntimeUnsupportedError, raised through
         # AgentTestError/test_agent if that boundary is ever reached).
+        #
+        # V6 Phase 2B.10 Scope B removed bytefray-rules-4-alpha1/-alpha2
+        # from this allow-list alongside their executable registration
+        # (docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md):
+        # neither can create a new evaluation artifact any longer.
         if request.ruleset_id is not None and request.ruleset_id not in (
             BYTEFRAY_RULESET_ID,
             BYTEFRAY_RULESET_V2_ID,
-            BYTEFRAY_RULESET_V3_ALPHA1_ID,
-            BYTEFRAY_RULESET_V4_ALPHA1_ID,
-            BYTEFRAY_RULESET_V4_ALPHA2_ID,
             BYTEFRAY_RULESET_V4_ID,
         ):
             raise EvaluationConfigurationError(
                 f"Unsupported evaluation --ruleset {request.ruleset_id!r}; expected "
                 f"{BYTEFRAY_RULESET_ID!r}, {BYTEFRAY_RULESET_V2_ID!r}, "
-                f"{BYTEFRAY_RULESET_V3_ALPHA1_ID!r}, {BYTEFRAY_RULESET_V4_ALPHA1_ID!r}, "
-                f"{BYTEFRAY_RULESET_V4_ALPHA2_ID!r}, or {BYTEFRAY_RULESET_V4_ID!r}."
+                f"or {BYTEFRAY_RULESET_V4_ID!r}."
             )
 
         # v4.0.0-rc1 Phase 1 (research report Sec H.1 item 3/Sec 6.2 of the
@@ -3425,19 +3411,18 @@ class EvaluationService:
                 "--arena-size, or select a different --ruleset for a non-standard arena."
             )
 
-        # v3 Phase 2: fail closed on a reach that would be silently
-        # discarded. A request that names a reach it will not get would
-        # write artifacts describing conditions it did not run under.
+        # v3 Phase 2's experimental bounded-locality Ruleset
+        # (bytefray-rules-3-alpha1) was retired from executable
+        # registration by V6 Phase 2B.9: fail closed rather than silently
+        # discarding a reach no Ruleset can honor anymore, so an evaluation
+        # that names one never writes artifacts describing conditions it
+        # did not run under.
         if request.locality_reach is not None:
-            if not has_bounded_locality(request.resolved_rules_compatibility_id):
-                raise EvaluationConfigurationError(
-                    "Evaluation --locality-reach requires --ruleset "
-                    f"{BYTEFRAY_RULESET_V3_ALPHA1_ID}."
-                )
-            if request.locality_reach < 1:
-                raise EvaluationConfigurationError(
-                    "Evaluation requires a positive --locality-reach."
-                )
+            raise EvaluationConfigurationError(
+                "Evaluation --locality-reach is no longer supported: "
+                "bounded-locality gameplay was retired from execution "
+                "(V6 Phase 2B.9)."
+            )
         # v2.0.0-beta2 Phase 2: multi-entrant ("group") methodology
         # constraints -- fail closed rather than silently degrading to
         # pairwise or silently ignoring `group`.
@@ -4385,8 +4370,6 @@ def _parser() -> argparse.ArgumentParser:
         choices=[
             BYTEFRAY_RULESET_ID,
             BYTEFRAY_RULESET_V2_ID,
-            BYTEFRAY_RULESET_V4_ALPHA1_ID,
-            BYTEFRAY_RULESET_V4_ALPHA2_ID,
             BYTEFRAY_RULESET_V4_ID,
         ],
         default=None,
@@ -4404,10 +4387,7 @@ def _parser() -> argparse.ArgumentParser:
             "seeded-placement methodology: arena pinned to "
             f"{STANDARD_V4_ARENA_SIZE}, {len(STANDARD_V4_SEEDS)} deterministic "
             "placement samples by default, both orientations paired over the same "
-            f"seat-bound geometry. {BYTEFRAY_RULESET_V4_ALPHA2_ID} runs the identical "
-            "stable-v4 evaluation methodology under its own historical-prerelease "
-            f"identity. {BYTEFRAY_RULESET_V4_ALPHA1_ID} keeps its historical v2-style "
-            "fixed-placement evaluation methodology unchanged. See "
+            "seat-bound geometry. See "
             "docs/research/v4/V4_RC1_PHASE2_STABLE_CONTRACT_PROMOTION.md, "
             "docs/research/v4/V4_RC1_PHASE1_EVALUATION_METHODOLOGY.md, and "
             "docs/V2_0_BETA2_PHASE1_EVALUATION_METHODOLOGY.md."
@@ -5312,14 +5292,10 @@ def main(argv: list[str] | None = None) -> int:
     # product-facing preset shape.
     kill_weight = args.kill_weight
 
-    # v3 Phase 2: the experimental bounded-locality Ruleset is deliberately
-    # NOT reachable from this product CLI -- `--ruleset`'s choices above
-    # expose exactly the two product-facing identities, and a preset is a
-    # reusable product-facing evaluation shape that an unstable research
-    # identity has no business appearing in. `EvaluationRequest.
-    # locality_reach` and `EvaluationService._validate` accept it for a
-    # programmatically constructed request, which is how the Phase 2
-    # research driver (`tools/v3_phase2_locality_corpus.py`) runs it.
+    # v3 Phase 2's experimental bounded-locality Ruleset was never reachable
+    # from this product CLI, and V6 Phase 2B.9 retired it from execution
+    # entirely -- `EvaluationService._validate` now rejects any non-`None`
+    # `EvaluationRequest.locality_reach` unconditionally. Always `None` here.
     locality_reach = None
 
     if args.single_orientation:

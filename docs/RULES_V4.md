@@ -9,7 +9,7 @@ see [V4_ALPHA1_DESIGN.md](V4_ALPHA1_DESIGN.md) (the frozen scheduler/
 process/disruption/observation freeze this Ruleset inherits unchanged),
 [V4_ALPHA2_DESIGN.md](V4_ALPHA2_DESIGN.md) (the two gameplay changes this
 Ruleset was promoted from, unmodified), and
-[docs/research/v4/V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md](research/v4/V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md)
+[docs/archive/v4/V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md](archive/v4/V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md)
 (the pre-RC study that concluded no further gameplay alpha was needed).
 
 `docs/RULES.md`/`docs/RULES_V2.md` remain the frozen, unmodified Ruleset
@@ -18,10 +18,22 @@ material that is genuinely unrelated in more detail than necessary.
 
 **Status: permanent, stable semantic identity** as of `v4.0.0-rc1` Phase 2.
 See `docs/COMPATIBILITY.md`'s "Ruleset v4" section for what that status does
-and does not promise, and for the release-blocking equivalence corpus
-(`engine/tests/test_v4_stable_ruleset_equivalence.py`) that proves this
-Ruleset is gameplay-identical to `bytefray-rules-4-alpha2`, not merely
-declared to be.
+and does not promise, and for the release-blocking evidence
+(`engine/tests/test_v4_stable_ruleset_equivalence.py`) that this Ruleset is
+gameplay-identical to `bytefray-rules-4-alpha2`, not merely declared to be
+— originally a live two-identity comparison, now a frozen-golden
+characterization since V6 Phase 2B.10 Scope B retired alpha2 from
+executable registration (see that test file's own module docstring for
+the conversion and its provenance).
+
+Following V6 Phase 2B.9's retirement of the three closed-research rulesets,
+and V6 Phase 2B.10 Scope B's subsequent retirement of
+`bytefray-rules-4-alpha1`/`bytefray-rules-4-alpha2` (both listed in
+`docs/COMPATIBILITY.md`'s "Retired from execution / still recognised"
+table), `bytefray-rules-4` is V6's single executable gameplay control —
+behaviorally frozen for the duration of V6 research. Any new V6 gameplay
+semantics belong to a future `bytefray-rules-6` identity, not to in-place
+mutation of this one.
 
 ## What makes v4 different from v1/v2, in one paragraph
 
@@ -174,20 +186,28 @@ Ruleset identity".
 ## Ruleset identity and history
 
 `bytefray-rules-4` is registered in `battle_engine.ruleset_policy.
-_RULESET_POLICIES` under its own explicit key, alongside — never aliased
-to or from — `bytefray-rules-4-alpha1` and `bytefray-rules-4-alpha2`. It
-shares its exact behavioral implementation with `bytefray-rules-4-alpha2`
-(the evidence being promoted is intentionally identical to what alpha2
-qualified, per the pre-RC research program's finding that no further
-gameplay alpha was warranted), but dispatches, hashes into
+_RULESET_POLICIES` under its own explicit key — never aliased to or from
+`bytefray-rules-4-alpha1` or `bytefray-rules-4-alpha2`, both retired from
+executable registration by V6 Phase 2B.10 Scope B (see below). It shares
+its exact behavioral implementation with what `bytefray-rules-4-alpha2`
+used to run (the evidence being promoted is intentionally identical to
+what alpha2 qualified, per the pre-RC research program's finding that no
+further gameplay alpha was warranted), but dispatches, hashes into
 `canonical_match_id`, and persists as a fully distinct identity — see
 `docs/COMPATIBILITY.md` for the full persistence/comparison/resume
 behavior this implies.
 
-`bytefray-rules-4-alpha1` and `bytefray-rules-4-alpha2` remain executable,
-historical, unedited evidence records of the research that produced this
-Ruleset — see [V4_ALPHA1_DESIGN.md](V4_ALPHA1_DESIGN.md),
+`bytefray-rules-4-alpha1` and `bytefray-rules-4-alpha2` were retired from
+executable registration by V6 Phase 2B.10 Scope B
+(`docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md`): neither
+can create a new match any longer, but both remain fully readable,
+attributable, indexable, filterable, and replayable historical evidence
+records of the research that produced this Ruleset — see
+[V4_ALPHA1_DESIGN.md](V4_ALPHA1_DESIGN.md),
 [V4_ALPHA2_DESIGN.md](V4_ALPHA2_DESIGN.md), and
-[docs/research/v4/](research/v4/) for how they got here. This document
-describes the stable game; the alpha designs and research reports describe
-how it was found.
+[docs/archive/v4/](archive/v4/) for how they got here, and
+`docs/COMPATIBILITY.md`'s "Retired from execution / still recognised"
+table for exactly what remains true of each. Exact re-execution of either
+remains available through the `v5.0.0` release. This document describes
+the stable game; the alpha designs and research reports describe how it
+was found.

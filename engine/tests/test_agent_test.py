@@ -182,24 +182,24 @@ def test_cli_omitted_ruleset_resolves_current_v4_for_a_scaffolded_api_v2_agent(
     assert "Traceback" not in captured.err
 
 
-def test_cli_explicit_v4_alpha1_still_runs_the_historical_ruleset(
+def test_cli_explicit_v4_alpha1_is_rejected_as_an_unknown_ruleset(
     tmp_path, monkeypatch, capsys
 ):
-    """Alpha2 taking the omitted-Ruleset default must not make alpha1
-    unreachable: naming it explicitly still runs an alpha1 match."""
+    """V6 Phase 2B.10 Scope B retired bytefray-rules-4-alpha1 from
+    executable registration and removed it from every CLI's ``--ruleset``
+    choices (docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md).
+    Naming it explicitly must now fail closed at the CLI, exactly like any
+    other unrecognized value -- never silently falling back to running
+    under stable bytefray-rules-4 (T-12)."""
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
     scaffold_create_agent(
         "process_probe", data_root=tmp_path, resource_root=ROOT, api_version=2
     )
 
-    exit_code = main(
-        ["process_probe", "--ticks", "10", "--ruleset", "bytefray-rules-4-alpha1"]
-    )
-    captured = capsys.readouterr()
-
-    assert exit_code == 0, captured.err
-    assert "ruleset: bytefray-rules-4-alpha1" in captured.out
-    assert "Traceback" not in captured.err
+    with pytest.raises(SystemExit) as caught:
+        main(["process_probe", "--ticks", "10", "--ruleset", "bytefray-rules-4-alpha1"])
+    assert caught.value.code == 2
+    assert "invalid choice" in capsys.readouterr().err
 
 
 def test_cli_omitted_ruleset_still_resolves_v2_for_a_scaffolded_api_v1_agent(
@@ -823,14 +823,18 @@ def test_cli_ruleset_flag_unknown_value_fails_closed(capsys):
     assert "invalid choice" in capsys.readouterr().err
 
 
-def test_cli_help_lists_product_rulesets_including_v4_alpha1(capsys):
+def test_cli_help_lists_product_rulesets_excluding_retired_v4_alphas(capsys):
+    """V6 Phase 2B.10 Scope B removed bytefray-rules-4-alpha1/-alpha2 from
+    this CLI's ``--ruleset`` choices alongside their executable
+    registration (Scope A already removed the three Class-1 identities)."""
     with pytest.raises(SystemExit):
         main(["--help"])
     out = capsys.readouterr().out
     assert "--ruleset" in out
     assert "bytefray-rules-1" in out
     assert "bytefray-rules-2" in out
-    assert "bytefray-rules-4-alpha1" in out
+    assert "bytefray-rules-4-alpha1" not in out
+    assert "bytefray-rules-4-alpha2" not in out
     assert "bytefray-rules-2-alpha1" not in out
     assert "bytefray-rules-3-alpha1" not in out
 

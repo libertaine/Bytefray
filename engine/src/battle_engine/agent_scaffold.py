@@ -191,9 +191,11 @@ def create_agent(
     defaults to :data:`DEFAULT_API_VERSION` (v1), so every caller that omits
     it -- including Agent Designer's New Agent dialog -- also gets
     byte-identical output to before. Pass ``2`` for a process agent that
-    runs under the stable ``bytefray-rules-4`` (v4.0.0-rc1 Phase 2) by
-    default, or explicitly under ``bytefray-rules-4-alpha1``/``-alpha2`` to
-    reproduce a historical prerelease match.
+    runs under the stable ``bytefray-rules-4`` (v4.0.0-rc1 Phase 2). V6
+    Phase 2B.10 Scope B retired ``bytefray-rules-4-alpha1``/``-alpha2``
+    from executable registration, so a scaffolded API v2 agent can no
+    longer be run under either to reproduce a historical prerelease match
+    -- only under the stable identity.
     """
     validate_agent_id(agent_id)
     validate_api_version(api_version)

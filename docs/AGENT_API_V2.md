@@ -6,9 +6,13 @@ agent that can actually win. It is written to be read in order the first
 time and used as a reference afterwards.
 
 Agent API v2 is the stable Python contract for the permanent
-`bytefray-rules-4` identity and, unchanged, for the two v4 prerelease
-identities that preceded it (`bytefray-rules-4-alpha1` and
-`bytefray-rules-4-alpha2`). It is separate from
+`bytefray-rules-4` identity — the only Ruleset any process agent can be
+run under today. The two v4 prerelease identities that used it before
+promotion, `bytefray-rules-4-alpha1` and `bytefray-rules-4-alpha2`, were
+retired from executable registration by V6 Phase 2B.10 Scope B; their
+historical artifacts remain fully readable (see
+[COMPATIBILITY.md](COMPATIBILITY.md)'s "Retired from execution / still
+recognised" table). Agent API v2 is separate from
 [Agent API v1](AGENT_API_V1.md), which remains the contract for Ruleset
 v1/v2 Python entrants. No field, action kind, or semantic below changed at
 promotion — see [COMPATIBILITY.md](COMPATIBILITY.md)'s "Ruleset v4" section
@@ -294,7 +298,7 @@ which is where a worker is standing, not where the core is.
 This is not hypothetical. It is what five of the six original `v4_*`
 starters did, and it is why matches used to time out at 60% with a 1.77%
 conversion rate. The V5 research program (Phases R1–R4, under
-`docs/research/v5/`) tried changing the *engine* twice before establishing
+`docs/archive/v5/`) tried changing the *engine* twice before establishing
 that the mechanics were never the problem: a plain region sweep captures
 cores in tens of ticks under completely unmodified `bytefray-rules-4`.
 

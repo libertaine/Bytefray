@@ -243,44 +243,32 @@ RULESET_V1 = RulesetPolicy(
 
 
 # v2.0.0-alpha.1's experimental identity (see
-# docs/V2_0_ALPHA_ARCHITECTURE.md Sec 6/7). Spelled ``-alpha1``, never a
-# bare ``bytefray-rules-2``: the mechanic's exact shape is a hypothesis
-# under test, not a matured contract, and this module must never let an
-# unproven experimental guess masquerade as a durable compatibility
-# promise (docs/RULES.md's bump policy).
-#
-# Scheduling and termination are *identical* to Ruleset v1 -- neither
-# ``run_scheduler`` nor ``resolve_termination`` reads ``self.ruleset_id``,
-# so this is a second, distinctly-identified ``RulesetPolicy`` instance
-# reusing the exact same shared implementation, not a subclass or a copy.
-# The vulnerable-core mechanic itself lives entirely in
-# ``battle_engine.python_runtime`` (Python-only, gated on this exact
-# ``ruleset_id`` value) -- this policy object carries no knowledge of it.
+# docs/V2_0_ALPHA_ARCHITECTURE.md Sec 6/7). Closed research, retired from
+# executable registration by V6 Phase 2B.9
+# (docs/research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md): it was never
+# selectable from any CLI, Designer, or evaluation-preset surface, and its
+# only reachable path was the low-level Python API. The ID constant is kept
+# -- unlike the removed ``RulesetPolicy`` object -- because historical
+# artifacts recorded under it must remain readable, attributable, and
+# replayable indefinitely (see ``rules.py``'s alias/provenance module
+# docstring and ``VULNERABLE_CORE_RULESET_IDS``/``OBSERVABLE_CORE_RULESET_IDS``
+# in ``python_runtime.py``, whose membership for this ID is retained for
+# exactly that reason). ``resolve_ruleset_policy`` now raises
+# ``UnknownRulesetError`` for it, like any other unregistered ID.
 BYTEFRAY_RULESET_V2_ALPHA1_ID = "bytefray-rules-2-alpha1"
-RULESET_V2_ALPHA1 = RulesetPolicy(ruleset_id=BYTEFRAY_RULESET_V2_ALPHA1_ID)
 
 
 # v2.0.0-alpha.11's experimental identity (see
-# docs/V2_0_ALPHA11_RULESET_V2_CANDIDATE_RESOLUTION.md). Adds *Consistent
-# Core Observability* on top of alpha.1's Vulnerable Core: a core cell owned
-# by its own living entrant is never blank, so a core has a rules-defined,
-# ordinary-``READ``-visible footprint whether or not its owner ever chooses
-# to defend it (alpha.10 Sec 37 found the opposite -- defending was what made
-# a core detectable, which is the wrong incentive).
-#
-# A *separate* identity, not a mutation of ``bytefray-rules-2-alpha1``:
-# alpha.1--alpha.10 matches using the same agents, seed, and placement can
-# behave differently under this rule, so reusing the alpha1 identity would
-# silently reinterpret ten alphas' worth of persisted artifacts. alpha1
-# stays executable with byte-identical historical semantics.
-#
-# Scheduling and termination are again *identical* to Ruleset v1 -- neither
-# ``run_scheduler`` nor ``resolve_termination`` reads ``self.ruleset_id``.
-# The observability mechanic itself lives entirely in
-# ``battle_engine.python_runtime`` (Python-only, gated on this exact
-# ``ruleset_id`` value); this policy object carries no knowledge of it.
+# docs/V2_0_ALPHA11_RULESET_V2_CANDIDATE_RESOLUTION.md). Closed research,
+# retired from executable registration by V6 Phase 2B.9 for the same reason
+# and under the same terms as ``bytefray-rules-2-alpha1`` immediately above.
+# Its evidence-backed semantics were promoted into the permanent
+# ``bytefray-rules-2`` identity below at v2.0.0-beta1; that promotion proof
+# now lives as a frozen-golden characterization of ``bytefray-rules-2``
+# rather than a live comparison against this identity -- see
+# ``engine/tests/test_ruleset_v2_promotion_equivalence.py``'s module
+# docstring for the conversion and its provenance.
 BYTEFRAY_RULESET_V2_ALPHA11_ID = "bytefray-rules-2-alpha11"
-RULESET_V2_ALPHA11 = RulesetPolicy(ruleset_id=BYTEFRAY_RULESET_V2_ALPHA11_ID)
 
 
 # v2.0.0-beta1's permanent identity (see docs/V2_0_BETA1_PLAN.md and
@@ -299,9 +287,12 @@ RULESET_V2_ALPHA11 = RulesetPolicy(ruleset_id=BYTEFRAY_RULESET_V2_ALPHA11_ID)
 # future evaluation accidentally align an experimental run against a
 # permanent one under one canonical match identity. The two share their
 # behavioral implementation in ``battle_engine.python_runtime`` (the
-# semantics are intentionally identical at promotion time -- see the beta1
-# promotion-equivalence corpus, ``engine/tests/test_ruleset_v2_promotion_equivalence.py``)
-# but are registered, dispatched, and persisted as separate identities.
+# semantics are intentionally identical at promotion time -- proven live
+# through V6 Phase 2B.8, and preserved since Phase 2B.9 retired alpha11's
+# own executable registration as a frozen-golden characterization of this
+# identity -- see ``engine/tests/test_ruleset_v2_promotion_equivalence.py``'s
+# module docstring) but are registered, dispatched, and persisted as
+# separate identities.
 #
 # Scheduling and termination are again *identical* to Ruleset v1 -- neither
 # ``run_scheduler`` nor ``resolve_termination`` reads ``self.ruleset_id``.
@@ -327,106 +318,75 @@ RULESET_V2 = RulesetPolicy(
 
 
 # v3 research Phase 2's experimental bounded-locality identity (see
-# docs/V3_PHASE2_LOCALITY_FEASIBILITY.md). Spelled ``-alpha1``, exactly
-# like ``bytefray-rules-2-alpha1``/``-alpha11`` before it and for the same
-# reason: the mechanic is a hypothesis under test, not a matured contract.
-# This is deliberately NOT ``bytefray-rules-3`` -- no stable Ruleset 3
-# exists, and this module must never let a research prototype masquerade
-# as a durable compatibility promise (docs/RULES.md's bump policy).
-#
-# Gameplay under this identity is Ruleset v2's -- vulnerable core,
-# observable core beacon, identical scheduling and termination -- plus one
-# experimental change: a Python entrant occupies a single *execution
-# locus* in the arena and may only read/write within a bounded reach of
-# it, moving that locus with an action like any other. The mechanic itself
-# lives entirely in ``battle_engine.python_runtime`` (Python-only, gated
-# on this exact ``ruleset_id`` value); this policy object carries no
-# knowledge of it, exactly as it carries none of the vulnerable-core rule.
-#
-# Python-only (``supported_runtime_kinds={"python"}``), mirroring
-# ``bytefray-rules-2``: locality has no VM/Redcode implementation and is
-# not being given one -- see the Phase 2 report's Python-only scope
-# statement. A VM entrant requested under this identity is rejected by
-# ``NativeMatchService`` before any entrant executes.
+# docs/V3_PHASE2_LOCALITY_FEASIBILITY.md and
+# docs/research/v6/V6_PHASE2B7_RULESET3_ALPHA1_DISPOSITION.md). Closed
+# research -- Phase 2B.7 found no stable Ruleset 3 was ever built on it, and
+# V6 Phase 2B.9 retired it from executable registration on the same terms as
+# the two Ruleset-2 alphas above: never selectable from any CLI, Designer,
+# or evaluation-preset surface; reachable only through the low-level Python
+# API. The ID constant is kept for historical artifact recognition (this
+# checkout's corpus alone has 6,984 recorded results under it, all of which
+# remain readable and replayable); the locality gameplay mechanic itself
+# (``battle_engine.python_runtime``'s locus/reach machinery, gated
+# exclusively on this ID) was removed as dead code by Phase 2B.9, since this
+# was its only executable identity.
 BYTEFRAY_RULESET_V3_ALPHA1_ID = "bytefray-rules-3-alpha1"
-RULESET_V3_ALPHA1 = RulesetPolicy(
-    ruleset_id=BYTEFRAY_RULESET_V3_ALPHA1_ID,
-    supported_runtime_kinds=frozenset({"python"}),
-    supported_python_api_versions=frozenset({1}),
-    core_placement="seat_spread",
-)
 
 
 # v4 research: K=2 chunked round-robin with deterministic rotating start.
 # R0/R0b/R0c selected this policy as the scheduler research closure.
 #
-# ``core_placement="seat_spread"`` and ``process_selection="priority"`` are
-# both spelled out rather than left to the field defaults: they are exactly
-# the two semantics v4 alpha2 changes, and alpha1's are frozen historical
-# behavior that must stay legible next to alpha2's below.
-RULESET_V4_ALPHA1 = RulesetPolicy(
-    ruleset_id=BYTEFRAY_RULESET_V4_ALPHA1_ID,
-    supported_runtime_kinds=frozenset({"python"}),
-    supported_python_api_versions=frozenset({2}),
-    scheduler_mode="chunked",
-    scheduler_chunk_size=2,
-    scheduler_rotate_start=True,
-    core_placement="seat_spread",
-    process_selection="priority",
-)
-
-
-# v4.0.0-alpha2. Identical to alpha1 on every axis this policy or any other
-# product surface exposes -- Agent API v2, Python-only, K=2 chunked
-# scheduling with a rotating entrant start, the same termination rule, the
-# same 8-cell core, the same reach legality, the same replay schema 4 --
-# except the two gameplay semantics the Phase 4 controlled gameplay study
-# produced evidence for (docs/archive/v4/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md Sections
-# F2/G, docs/V4_ALPHA2_DESIGN.md):
+# ``bytefray-rules-4-alpha1``'s ``RulesetPolicy`` object (``core_placement=
+# "seat_spread"``, ``process_selection="priority"``) and
+# ``bytefray-rules-4-alpha2``'s (identical except ``core_placement=
+# "seeded"``, ``process_selection="round_robin"`` -- the two gameplay
+# semantics the Phase 4 controlled gameplay study produced evidence for,
+# docs/archive/v4/V4_ALPHA2_PHASE4_GAMEPLAY_STUDY.md Sections F2/G,
+# docs/V4_ALPHA2_DESIGN.md) were both retired from executable registration
+# by V6 Phase 2B.10 Scope B
+# (docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md), following
+# the same pattern and terms Phase 2B.9 used for the three Class-1
+# identities above: both were reachable from the CLI, Designer, and
+# evaluation surfaces (unlike those three), but no unique gameplay code was
+# deleted -- ``process_runtime.py`` contains zero Ruleset-identity
+# branching, so each alpha's entire behavioral difference from the stable
+# control below was its two policy-field values, now gone with the
+# objects. Both ID constants are kept -- unlike the removed
+# ``RulesetPolicy`` objects -- because historical artifacts recorded under
+# them (respectively 24% and under 0.1% of this repository's own corpus at
+# the time of the V6 Phase 2B.8 audit) must remain readable, attributable,
+# and replayable indefinitely. Alpha1's membership in
+# ``VULNERABLE_CORE_RULESET_IDS``/``OBSERVABLE_CORE_RULESET_IDS``
+# (``python_runtime.py``) is retained for exactly that reason (T-9); alpha2
+# was never a member of either. ``resolve_ruleset_policy`` now raises
+# ``UnknownRulesetError`` for both, like any other unregistered ID.
 #
-#   1. ``core_placement="seeded"`` -- entrant cores are placed from the
-#      match seed under a minimum-separation contract instead of alpha1's
-#      fixed evenly-spread seat layout, so ``own_core_base + arena_size //
-#      2`` is no longer a generally valid way to compute an opponent's core
-#      without observing anything. Phase 4 measured this as the single
-#      largest source of strategic distortion in the alpha1 ecology.
-#   2. ``process_selection="round_robin"`` -- an entrant's own processes
-#      take their action slots in rotation rather than always offering
-#      freed-up mid-tick quota to the earliest-declared eligible process,
-#      removing an undocumented, accidental declaration-order priority
-#      lever worth up to ~14 percentage points of win rate.
-#
-# Quota allocation, quota redistribution, and disruption eligibility are
-# deliberately untouched by (2): round-robin changes *which* eligible
-# process receives the next slot, never how many slots each is owed.
-RULESET_V4_ALPHA2 = RulesetPolicy(
-    ruleset_id=BYTEFRAY_RULESET_V4_ALPHA2_ID,
-    supported_runtime_kinds=frozenset({"python"}),
-    supported_python_api_versions=frozenset({2}),
-    scheduler_mode="chunked",
-    scheduler_chunk_size=2,
-    scheduler_rotate_start=True,
-    core_placement="seeded",
-    process_selection="round_robin",
-)
-
+# Alpha2's fields were promoted verbatim into the permanent
+# ``bytefray-rules-4`` identity below at v4.0.0-rc1 Phase 2; that
+# promotion's release-blocking behavioral proof -- originally a live
+# two-identity comparison against alpha2 -- now lives as a frozen-golden
+# characterization of ``bytefray-rules-4`` (task Sec 3), since alpha2 can
+# no longer be executed to produce a live comparison value. See
+# ``engine/tests/test_v4_stable_ruleset_equivalence.py``'s module docstring
+# for the conversion and its provenance, and
+# ``engine/tests/test_v4_historical_immutability.py``'s frozen fixtures for
+# alpha1's permanent identity/isolation regression coverage.
 
 # v4.0.0-rc1 Phase 2: the permanent stable identity (see
 # docs/research/v4/V4_RC1_PHASE2_STABLE_CONTRACT_PROMOTION.md and
 # BYTEFRAY_RULESET_V4_ID's own docstring in rules.py for the promotion
-# rationale). Every field below is deliberately copied verbatim from
-# RULESET_V4_ALPHA2 immediately above -- not re-derived, not
-# reimplemented -- so the two can never independently drift: this is one
-# semantic implementation (battle_engine.scheduler.run_chunked_quota,
+# rationale). Every field below is deliberately the same as
+# ``bytefray-rules-4-alpha2``'s retired ``RulesetPolicy`` object used to be
+# (frozen-golden-verified equal, not merely documented -- see
+# ``test_v4_stable_ruleset_equivalence.py``): this is one semantic
+# implementation (battle_engine.scheduler.run_chunked_quota,
 # battle_engine.python_runtime's seeded placement/round-robin process
 # selection, all gated on `core_placement`/`process_selection`/
-# `scheduler_*`, never on `ruleset_id` itself) exposed under two
-# compatibility identities, exactly the shape
-# ``RULESET_V2_ALPHA11``/``RULESET_V2`` already established for the
-# alpha11 -> permanent-v2 promotion. A release-blocking equivalence test
-# (test_v4_stable_ruleset_equivalence.py) asserts every field of this
-# policy equals RULESET_V4_ALPHA2's, field by field, so this comment's
-# claim is verified, not merely documented.
+# `scheduler_*`, never on `ruleset_id` itself), exactly the shape the
+# alpha11 -> permanent-v2 promotion already established (now preserved as
+# a frozen-golden characterization since V6 Phase 2B.9 retired the alpha11
+# policy object -- see
+# ``engine/tests/test_ruleset_v2_promotion_equivalence.py``).
 RULESET_V4 = RulesetPolicy(
     ruleset_id=BYTEFRAY_RULESET_V4_ID,
     supported_runtime_kinds=frozenset({"python"}),
@@ -444,12 +404,16 @@ RULESET_V4 = RulesetPolicy(
 # Agent API v1 ``PythonEntrantController``. A finite, explicit set for the
 # same reason ``_RULESET_POLICIES`` is a finite table -- and the one place
 # ``match_service`` asks the question, so adding a future process Ruleset
-# never means hunting down scattered ``== BYTEFRAY_RULESET_V4_ALPHA1_ID``
+# never means hunting down scattered ``== BYTEFRAY_RULESET_V4_ID``
 # comparisons.
+#
+# V6 Phase 2B.10 Scope B removed ``bytefray-rules-4-alpha1``/``-alpha2``
+# from this set alongside their executable registration: this table gates
+# runtime *dispatch* (and, via ``match_service.py:1212``, replay schema
+# selection) for a match about to execute, so it is execution-only,
+# unlike the two core-status tables in ``python_runtime.py``.
 PROCESS_RULESET_IDS: frozenset[str] = frozenset(
     {
-        BYTEFRAY_RULESET_V4_ALPHA1_ID,
-        BYTEFRAY_RULESET_V4_ALPHA2_ID,
         BYTEFRAY_RULESET_V4_ID,
     }
 )
@@ -478,20 +442,26 @@ class UnknownRulesetError(LookupError):
 # execute the aliased ID as today's Ruleset v1 -- see
 # ``docs/archive/v1/V1_5_PHASE3_RULESET_POLICY_DISPATCH.md``'s "Resolver design".
 #
-# ``bytefray-rules-2-alpha1``, ``bytefray-rules-2-alpha11``,
-# ``bytefray-rules-2``, and ``bytefray-rules-3-alpha1`` are each registered
-# under their own explicit key, never aliased to or from
-# ``bytefray-rules-1`` or each other (``rules.py``'s
-# ``_RULESET_ALIASES`` gets no entry for any of them either -- see that
-# table's own docstring).
+# ``bytefray-rules-2`` is registered under its own explicit key, never
+# aliased to or from ``bytefray-rules-1`` (``rules.py``'s
+# ``_RULESET_ALIASES`` gets no entry for it -- see that table's own
+# docstring).
+#
+# V6 Phase 2B.9 removed three closed-research entries this table used to
+# carry -- ``bytefray-rules-2-alpha1``, ``bytefray-rules-2-alpha11``, and
+# ``bytefray-rules-3-alpha1`` (docs/research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md).
+# V6 Phase 2B.10 Scope B removed two more -- ``bytefray-rules-4-alpha1`` and
+# ``bytefray-rules-4-alpha2`` (docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md).
+# Neither was ever selectable from any product surface after this phase;
+# each ID constant is retained above for historical-artifact recognition,
+# but ``resolve_ruleset_policy`` now raises ``UnknownRulesetError`` for all
+# five like any other unregistered ID. Do not re-add them here, and never
+# map them to ``bytefray-rules-2`` or ``bytefray-rules-4`` elsewhere in this
+# module -- historical recognition and executable registration are
+# deliberately separate concerns (see ``rules.py``'s alias-table docstring).
 _RULESET_POLICIES: Mapping[str, RulesetPolicy] = {
     RULESET_V1.ruleset_id: RULESET_V1,
-    RULESET_V2_ALPHA1.ruleset_id: RULESET_V2_ALPHA1,
-    RULESET_V2_ALPHA11.ruleset_id: RULESET_V2_ALPHA11,
     RULESET_V2.ruleset_id: RULESET_V2,
-    RULESET_V3_ALPHA1.ruleset_id: RULESET_V3_ALPHA1,
-    RULESET_V4_ALPHA1.ruleset_id: RULESET_V4_ALPHA1,
-    RULESET_V4_ALPHA2.ruleset_id: RULESET_V4_ALPHA2,
     RULESET_V4.ruleset_id: RULESET_V4,
 }
 
@@ -795,12 +765,7 @@ __all__ = [
     "PROCESS_RULESET_IDS",
     "RULESET_V1",
     "RULESET_V2",
-    "RULESET_V2_ALPHA1",
-    "RULESET_V2_ALPHA11",
-    "RULESET_V3_ALPHA1",
     "RULESET_V4",
-    "RULESET_V4_ALPHA1",
-    "RULESET_V4_ALPHA2",
     "NoCompatibleRulesetError",
     "RulesetPolicy",
     "TerminationDecision",

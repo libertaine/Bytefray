@@ -1,8 +1,8 @@
 """Application service for resolved native Bytefray matches.
 
 The service owns homogeneous VM/Python routing, execution, and partial-artifact
-cleanup. Agent discovery, CLI parsing, pMARS, and external result persistence
-remain outside this native boundary.
+cleanup. Agent discovery, CLI parsing, and external result persistence remain
+outside this native boundary.
 """
 
 from __future__ import annotations
@@ -28,7 +28,6 @@ from battle_engine.entrant_identity import EntrantIdentity
 from battle_engine.process_runtime import ProcessMatchController
 from battle_engine.project_info import get_project_info
 from battle_engine.python_runtime import (
-    DEFAULT_LOCALITY_REACH,
     PythonEntrantController,
     PythonEntrantInitializationError,
     PythonRuntimeResult,
@@ -36,8 +35,6 @@ from battle_engine.python_runtime import (
     TerminationReason,
     core_addresses,
     derive_agent_seed,
-    has_bounded_locality,
-    locality_statistics,
 )
 from battle_engine.replay import (
     MatchResult as ReplayMatchResult,
@@ -61,9 +58,6 @@ from battle_engine.results import WINNER_TIE_SENTINEL
 from battle_engine.rules import BYTEFRAY_RULESET_ID
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ID,
-    BYTEFRAY_RULESET_V3_ALPHA1_ID,
-    BYTEFRAY_RULESET_V4_ALPHA1_ID,
-    BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
     PROCESS_RULESET_IDS,
     RulesetPolicy,
@@ -195,16 +189,14 @@ class MatchRequest:
     trace_path: Path | None = None
     agent_call_timeout: float | None = None
     ruleset_id: str | None = None
-    # v3 research Phase 2's experimental bounded-locality reach. ``None``
-    # -- the default, and what every pre-Phase-2 caller passes -- means
-    # "not specified"; it is *ignored entirely* unless ``ruleset_id``
-    # resolves to a locality Ruleset, so setting it on a Ruleset-v1/v2
-    # request can never switch on locality semantics. Under a locality
-    # Ruleset, ``None`` resolves to
-    # ``python_runtime.DEFAULT_LOCALITY_REACH``; the *resolved* value is
-    # what enters ``canonical_match_id``'s ``reproducibility`` block and the
-    # persisted artifacts (see ``_reproducibility``), so a locality result
-    # always discloses the reach it actually ran under.
+    # v3 research Phase 2's experimental bounded-locality reach. Always
+    # ignored: V6 Phase 2B.9 retired every Ruleset identity that supported
+    # bounded-locality addressing (docs/research/v6/
+    # V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md), so no ``ruleset_id`` this
+    # field could accompany ever resolves to one. Kept, rather than removed,
+    # so existing callers need no change and a future locality-capable
+    # Ruleset has one obvious field to reconnect (see
+    # ``_resolve_locality_reach``, which always returns ``None`` now).
     locality_reach: int | None = None
     scheduler_chunk_size: int | None = None
     scheduler_rotate_start: bool = False
@@ -400,30 +392,29 @@ class OverlappingCoreError(ValueError):
 
 # Which Ruleset identities reject overlapping entrant cores before
 # execution. ``bytefray-rules-2`` is the permanent product identity the RC2
-# guard was written for; ``bytefray-rules-3-alpha1`` is added because
-# locality inherits the identical vulnerable-core mechanic, so an
-# overlapping-core spawn would be exactly as fatal there -- and a research
-# corpus silently measuring spawn collision is precisely the failure Phase 0
-# built the placement machinery to avoid. The historical vulnerable-core
-# alpha identities are deliberately still excluded: their execution
-# semantics are frozen.
+# guard was written for. The historical vulnerable-core alpha identities are
+# deliberately still excluded: their execution semantics are frozen.
+#
+# V6 Phase 2B.9 removed ``bytefray-rules-3-alpha1`` from this set: it was
+# added because the locality mechanic inherited this identical
+# vulnerable-core mechanic, but locality's only executable identity was
+# retired from execution, so the membership was dead.
+#
+# V6 Phase 2B.10 Scope B removed ``bytefray-rules-4-alpha1``/
+# ``-alpha2`` from this set for the identical reason: this table gates a
+# pre-execution guard on entrant placement for a match *about to run* --
+# it is never consulted by any historical reader (unlike
+# ``VULNERABLE_CORE_RULESET_IDS``/``OBSERVABLE_CORE_RULESET_IDS`` in
+# ``python_runtime.py``, whose membership for both alphas is retained
+# because replay/result readers do consult them) -- so retiring both
+# alphas' executable registration made their membership here dead.
+# ``bytefray-rules-4`` keeps the guard: it shares alpha2's exact
+# seeded-placement gameplay, and a behavioral divergence here (silently
+# allowing overlapping cores under the stable identity) would be exactly
+# the kind of gameplay difference the promotion must not introduce.
 _CORE_PLACEMENT_GUARDED_RULESET_IDS: frozenset[str] = frozenset(
     {
         BYTEFRAY_RULESET_V2_ID,
-        BYTEFRAY_RULESET_V3_ALPHA1_ID,
-        BYTEFRAY_RULESET_V4_ALPHA1_ID,
-        # v4 alpha2 keeps this guard for exactly alpha1's reason, and needs
-        # it more: its own seeded placement is separation-checked by
-        # construction, but an *explicitly* supplied pair of starts bypasses
-        # that entirely, and this remains the one check every caller passes
-        # -- including direct ``MatchRequest`` construction.
-        BYTEFRAY_RULESET_V4_ALPHA2_ID,
-        # v4.0.0-rc1 Phase 2: the permanent stable identity inherits this
-        # guard for the identical reason alpha2 does -- it shares alpha2's
-        # exact seeded-placement gameplay, and a behavioral divergence here
-        # (silently allowing overlapping cores under the stable identity but
-        # not under alpha2) would be exactly the kind of gameplay difference
-        # the promotion must not introduce.
         BYTEFRAY_RULESET_V4_ID,
     }
 )
@@ -464,19 +455,14 @@ def _validate_v2_core_placement(
 def _resolve_locality_reach(request: MatchRequest) -> int | None:
     """The bounded reach ``request`` actually executes/executed under.
 
-    ``None`` for every Ruleset whose addressing is absolute, whatever
-    ``request.locality_reach`` says. The one place this resolution is
-    computed, for the same reason :func:`_resolve_ruleset_id` is: dispatch,
-    identity hashing, and persistence must never disagree about it.
+    Always ``None``: V6 Phase 2B.9 retired every Ruleset identity that
+    supported bounded-locality addressing. Kept as a stable named seam
+    (mirroring :func:`_resolve_ruleset_id`'s discipline) rather than
+    inlining ``None`` at each call site, so a future locality-capable
+    Ruleset has one obvious place to restore this resolution.
     """
 
-    if not has_bounded_locality(_resolve_ruleset_id(request)):
-        return None
-    return (
-        DEFAULT_LOCALITY_REACH
-        if request.locality_reach is None
-        else request.locality_reach
-    )
+    return None
 
 
 def _reproducibility(request: MatchRequest) -> dict[str, Any]:
@@ -614,7 +600,6 @@ def _build_python_result(
     runtime: PythonRuntimeResult,
     config: Config,
     replay_path: Path,
-    locality_reach: int | None = None,
 ) -> NativeMatchResult:
     arena_size = config.arena_size
     results: list[NativeAgentResult] = []
@@ -681,21 +666,6 @@ def _build_python_result(
                         # PythonEntrantController.run/supervised_runtime.
                         # SupervisedPythonEntrantController.run.
                         "local_source_fingerprint_final": state.local_source_fingerprint_final,
-                        # v3 research Phase 2: deterministic per-entrant
-                        # spatial telemetry, present only for a locality
-                        # match. Purely additive to this already free-form
-                        # metadata dict (the same seam `entry_point` and the
-                        # two fingerprints above use), and omitted entirely
-                        # under every other Ruleset -- so no Ruleset-v1/v2
-                        # `result.json`, and therefore no `result_id`,
-                        # changes. Research analysis reads it from
-                        # `result.json` rather than widening any evaluation
-                        # record, exactly as Phase 1 read `cpu_total`.
-                        **(
-                            {"locality": locality_statistics(state, arena_size)}
-                            if locality_reach is not None
-                            else {}
-                        ),
                     }
                 ),
             )
@@ -980,12 +950,7 @@ def _run_python_match_traced(
         sink = None  # The controller closes the replay publisher.
         recorded_path = temporary_path
         temporary_path = None
-        return _build_python_result(
-            runtime,
-            request.config,
-            recorded_path,
-            locality_reach=_resolve_locality_reach(request),
-        )
+        return _build_python_result(runtime, request.config, recorded_path)
     except OSError as exc:
         raise PythonMatchExecutionError(
             RuntimeDiagnostic(

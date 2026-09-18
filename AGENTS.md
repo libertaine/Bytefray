@@ -96,15 +96,12 @@ abbreviated.
   `bytefray.exe` explicitly collects the `app` package and Qt dependencies so
   all four dispatcher commands work from one build.
 - Wheels contain **Python packages and package-local assets only**. Repo-level
-  `agents/` directories are runtime/user data, not package data. pMARS
-  executables, SDK archives, historical builds, and `third_party_licenses/`
-  are deliberately excluded from the Python wheel. Any future binary
-  distribution that bundles pMARS must preserve its GPLv2 licensing
-  materials (see `third_party_licenses/`).
+  `agents/` directories are runtime/user data, not package data. SDK archives
+  and historical builds are deliberately excluded from the Python wheel.
 - CI runs the headless suite on Python 3.10–3.14, validates the pure wheel,
-  and builds the four Windows executables. Optional workflows cover Linux
-  X11/Xvfb GUI startup smoke and Ubuntu pMARS build/runtime — these are
-  startup checks, not a substitute for manual interactive testing.
+  and builds the four Windows executables. An optional workflow covers Linux
+  X11/Xvfb GUI startup smoke — a startup check, not a substitute for manual
+  interactive testing.
 
 ## Compatibility requirements
 
@@ -125,23 +122,31 @@ abbreviated.
   [docs/AGENT_API_V1.md](docs/AGENT_API_V1.md), and
   [docs/AGENT_API_V2.md](docs/AGENT_API_V2.md). Bump the version and update
   the schema doc rather than silently changing wire shape in place.
-- v4.0.0-alpha1's Ruleset (`bytefray-rules-4-alpha1`) and Agent API v2 are
-  alpha contracts, not replacements for the frozen historical ones above —
-  see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)'s "v4.0.0-alpha1
-  compatibility boundary" for exactly what stays frozen (API v1, Ruleset
-  v1/v2, schema-3 replays) alongside what v4 alpha adds.
-- **Three v4 Rulesets now exist.** `bytefray-rules-4-alpha2` differs from
-  alpha1 in exactly two gameplay semantics — seed-derived core placement and
-  round-robin intra-entrant process selection — on the same Agent API v2 and
-  the same replay schema 4. Both alphas' semantics are **frozen**: an alpha1
-  or alpha2 fixture, golden, or deterministic vector that starts failing is
-  an implementation defect, never something to re-bless. As of `v4.0.0-rc1`
-  Phase 2, the permanent `bytefray-rules-4` identity is gameplay-identical to
-  alpha2 (never aliased to it — a fully distinct dispatch/hash/persistence
-  identity, proven equivalent by
-  `engine/tests/test_v4_stable_ruleset_equivalence.py`) and is what an
-  omitted `--ruleset` now resolves to for an Agent API v2 roster; both alphas
-  stay explicitly selectable everywhere. See
+- Agent API v2 is a stable contract, not a replacement for the frozen
+  historical ones above — see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)
+  for exactly what stays frozen (API v1, Ruleset v1/v2, schema-3 replays)
+  alongside what it adds.
+- **`bytefray-rules-4` is the single executable v4 Ruleset.** It was
+  promoted at `v4.0.0-rc1` Phase 2 from `bytefray-rules-4-alpha2`, which
+  differed from `bytefray-rules-4-alpha1` in exactly two gameplay
+  semantics — seed-derived core placement and round-robin intra-entrant
+  process selection — on the same Agent API v2 and the same replay schema
+  4. Both alphas' semantics are **frozen** and, since V6 Phase 2B.10 Scope
+  B retired both from executable registration, can no longer produce a
+  new match at all: a historical alpha1/alpha2 fixture, golden, or
+  deterministic vector that starts failing is still an implementation
+  defect, never something to re-bless, but the evidence now lives as
+  frozen-golden characterizations
+  (`engine/tests/test_v4_stable_ruleset_equivalence.py`,
+  `engine/tests/test_v4_historical_immutability.py`) and committed fixture
+  replays rather than live dual execution. `bytefray-rules-4` is
+  gameplay-identical to what alpha2 used to run (never aliased to it — a
+  fully distinct dispatch/hash/persistence identity) and is what an
+  omitted `--ruleset` resolves to for an Agent API v2 roster; neither
+  alpha remains selectable anywhere. Historical alpha1/alpha2 artifacts
+  remain fully readable — see
+  [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)'s "Retired from execution
+  / still recognised" table. See
   [docs/V4_ALPHA2_DESIGN.md](docs/V4_ALPHA2_DESIGN.md) and
   [docs/RULES_V4.md](docs/RULES_V4.md).
 - A Ruleset's gameplay semantics belong on its

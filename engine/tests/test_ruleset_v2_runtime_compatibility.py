@@ -96,11 +96,10 @@ def test_v2_policy_declares_python_only() -> None:
     assert RULESET_V2.unsupported_runtime_kinds({"vm", "python"}) == frozenset({"vm"})
 
 
-@pytest.mark.parametrize("ruleset_id", [V1, ALPHA1, ALPHA11])
-def test_v1_and_alpha_policies_are_unrestricted(ruleset_id: str) -> None:
+def test_v1_policy_is_unrestricted() -> None:
     from battle_engine.ruleset_policy import resolve_ruleset_policy
 
-    policy = resolve_ruleset_policy(ruleset_id)
+    policy = resolve_ruleset_policy(V1)
     assert policy.supported_runtime_kinds is None
     assert policy.unsupported_runtime_kinds({"vm"}) == frozenset()
     assert policy.unsupported_runtime_kinds({"python"}) == frozenset()
@@ -243,18 +242,19 @@ def test_v1_python_matches_still_execute_normally(tmp_path) -> None:
 
 
 @pytest.mark.parametrize("ruleset_id", [ALPHA1, ALPHA11])
-def test_alpha_identities_still_dispatch_successfully_on_vm(tmp_path, ruleset_id: str) -> None:
-    """Historical alpha VM behavior (dispatch succeeds, mechanic inert) is preserved.
+def test_retired_alpha_identities_no_longer_dispatch_even_on_vm(tmp_path, ruleset_id: str) -> None:
+    """Historical alpha VM dispatch (mechanic inert, but dispatch succeeded)
+    was preserved through Beta1 Phase 2's Python-only restriction on
+    permanent ``bytefray-rules-2`` (docs/V2_0_BETA1_PLAN.md Sec 3) -- the
+    one execution path v2 never had. V6 Phase 2B.9 retired both alphas from
+    execution entirely, so even that path is gone now: dispatch must reject
+    the identity with ``UnknownRulesetError`` before any VM/kernel
+    construction or artifact write, exactly as for a Python roster (W.5)."""
 
-    Beta1 Phase 2 deliberately does not extend the new fail-closed
-    restriction to the historical alpha identities -- only permanent
-    ``bytefray-rules-2`` gets it (docs/V2_0_BETA1_PLAN.md Sec 3).
-    """
+    from battle_engine.ruleset_policy import UnknownRulesetError
 
     entrants = (_vm_entrant("A", "runner", 0), _vm_entrant("B", "runner", 32))
-    result = NativeMatchService().run(
-        _request(tmp_path, entrants, ruleset_id=ruleset_id, run_name=f"alpha-{ruleset_id}")
-    )
-    assert result.result_path is not None and result.result_path.is_file()
-    data = json.loads(result.result_path.read_text(encoding="utf-8"))
-    assert data["ruleset_id"] == ruleset_id
+    request = _request(tmp_path, entrants, ruleset_id=ruleset_id, run_name=f"alpha-{ruleset_id}")
+    with pytest.raises(UnknownRulesetError):
+        NativeMatchService().run(request)
+    assert not request.replay_path.exists()

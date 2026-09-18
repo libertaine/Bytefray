@@ -34,7 +34,20 @@ def test_engine_cli_starts_and_displays_help():
     assert result.returncode == 0
     assert "usage: bytefray run" in result.stdout
     assert "--list-agents" in result.stdout
-    assert "--mode {native,redcode94}" in result.stdout
+    assert "--quota" in result.stdout
+    # V6 retired Redcode/pMARS execution: no mode selector or Redcode-only
+    # flags remain on `bytefray run` (see docs/research/v6's Phase 2B.6
+    # retirement report).
+    assert "--mode" not in result.stdout
+    assert "redcode94" not in result.stdout
+    assert "--red-a" not in result.stdout
+    assert "--red-b" not in result.stdout
+    assert "--core-size" not in result.stdout
+    assert "--max-cycles" not in result.stdout
+    assert "--max-processes" not in result.stdout
+    assert "--max-len" not in result.stdout
+    assert "--min-dist" not in result.stdout
+    assert "--rounds" not in result.stdout
 
 
 def test_cli_creates_replay_and_summary_json(tmp_path):
@@ -164,12 +177,15 @@ def test_run_omitted_ruleset_resolves_current_v4_for_api_v2_agents(tmp_path, mon
     assert header["ruleset_id"] == "bytefray-rules-4"
 
 
-def test_run_explicit_v4_alpha1_remains_reproducible(tmp_path, monkeypatch):
-    """Naming alpha1 explicitly still runs and records an alpha1 match.
-
-    Alpha2 taking the omitted-Ruleset default is a change of *preference*,
-    not of availability: every historical alpha1 match must stay
-    reproducible from the CLI by naming its Ruleset."""
+def test_run_explicit_v4_alpha1_is_rejected_as_an_unknown_ruleset(tmp_path, monkeypatch):
+    """V6 Phase 2B.10 Scope B retired bytefray-rules-4-alpha1 from
+    executable registration and removed it from this CLI's ``--ruleset``
+    choices (docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md).
+    Naming it explicitly must now fail closed at the CLI -- superseding
+    this test's pre-retirement claim that every historical alpha1 match
+    stayed reproducible by naming its Ruleset, which was a *preference*
+    change (alpha2 taking the omitted-Ruleset default), never an
+    availability guarantee for alpha1 itself."""
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
     _scaffold(tmp_path, "v2_alpha", api_version=2)
     _scaffold(tmp_path, "v2_beta", api_version=2)
@@ -182,11 +198,9 @@ def test_run_explicit_v4_alpha1_remains_reproducible(tmp_path, monkeypatch):
         "--replay", str(replay), "--quiet",
         cwd=tmp_path,
     )
-    assert result.returncode == 0, result.stderr
-    canonical = json.loads((replay.parent / "result.json").read_text())
-    assert canonical["ruleset_id"] == "bytefray-rules-4-alpha1"
-    header = json.loads(replay.read_text().splitlines()[0])
-    assert header["ruleset_id"] == "bytefray-rules-4-alpha1"
+    assert result.returncode == 2
+    assert "invalid choice" in result.stderr
+    assert not replay.parent.exists()
 
 
 def test_run_omitted_ruleset_still_resolves_v2_for_api_v1_agents(tmp_path, monkeypatch):
@@ -410,12 +424,16 @@ def test_ruleset_flag_unknown_value_fails_closed(tmp_path):
     assert "invalid choice" in result.stderr
 
 
-def test_cli_help_lists_product_rulesets_including_v4_alpha1():
+def test_cli_help_lists_product_rulesets_excluding_retired_v4_alphas():
+    """V6 Phase 2B.10 Scope B removed bytefray-rules-4-alpha1/-alpha2 from
+    this CLI's ``--ruleset`` choices alongside their executable
+    registration."""
     result = _run("-m", "battle_engine.cli", "--help")
     assert result.returncode == 0
     assert "bytefray-rules-1" in result.stdout
     assert "bytefray-rules-2" in result.stdout
-    assert "bytefray-rules-4-alpha1" in result.stdout
+    assert "bytefray-rules-4-alpha1" not in result.stdout
+    assert "bytefray-rules-4-alpha2" not in result.stdout
     assert "bytefray-rules-2-alpha1" not in result.stdout
     assert "bytefray-rules-3-alpha1" not in result.stdout
 

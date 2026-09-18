@@ -142,8 +142,8 @@ def normalize_ruleset_id(value: str) -> str:
 #                       recover one (e.g. a pre-v0.3 artifact, or a shape
 #                       that predates the proven-stable window).
 #   not_applicable  -- the artifact was never a candidate for this identity
-#                       at all (a Redcode/pMARS result never executes under
-#                       Bytefray Ruleset v1).
+#                       at all (a historical redcode94 result never executed
+#                       under Bytefray Ruleset v1).
 RulesetConfidence = Literal["recorded", "recovered", "unknown", "not_applicable"]
 
 

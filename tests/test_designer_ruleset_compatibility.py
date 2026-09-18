@@ -27,13 +27,18 @@ BYTEFRAY_RULESET_V2_ID = "bytefray-rules-2"
 BYTEFRAY_RULESET_V4_ALPHA1_ID = "bytefray-rules-4-alpha1"
 BYTEFRAY_RULESET_V4_ALPHA2_ID = "bytefray-rules-4-alpha2"
 BYTEFRAY_RULESET_V4_ID = "bytefray-rules-4"
-#: All three v4 identities accept the identical roster -- Python-only,
-#: Agent API v2 -- so every surface that offers one on compatibility
-#: grounds must offer all three (v4.0.0-rc1 Phase 2 added the permanent
-#: stable identity alongside the two prerelease alphas). Which of them a
-#: surface *prefers* is the product decision each test below pins
-#: separately.
-ALL_V4_IDENTITIES = {BYTEFRAY_RULESET_V4_ID, BYTEFRAY_RULESET_V4_ALPHA1_ID, BYTEFRAY_RULESET_V4_ALPHA2_ID}
+#: All three v4 identities used to accept the identical roster --
+#: Python-only, Agent API v2 -- so every surface that offered one on
+#: compatibility grounds offered all three (v4.0.0-rc1 Phase 2 added the
+#: permanent stable identity alongside the two prerelease alphas). V6
+#: Phase 2B.10 Scope B retired both alphas from executable registration
+#: and removed them from every GUI surface's offered set
+#: (docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md), so the
+#: stable identity is now the only Agent API v2 Ruleset any surface below
+#: offers -- kept as its own name (rather than inlining
+#: ``{BYTEFRAY_RULESET_V4_ID}``) so a future addition to this set reads as
+#: a deliberate product decision, not a typo.
+ALL_V4_IDENTITIES = {BYTEFRAY_RULESET_V4_ID}
 
 
 def _make_app():
@@ -372,11 +377,9 @@ def _evaluation_dialog(tmp_path, default_candidate, with_metadata=True):
     ("candidate", "expected_offered"),
     [
         ("legacy", {BYTEFRAY_RULESET_V2_ID, BYTEFRAY_RULESET_ID}),
-        # v4.0.0-rc1 Phase 2: all three v4 identities now, since `agents
-        # evaluate` accepts alpha2/the stable identity under the stable v4
-        # seeded-placement methodology, and alpha1 under its own historical
-        # one -- see test_evaluation_defaults_to_stable_v4_for_api_v2_roster
-        # below for which one is selected by default.
+        # V6 Phase 2B.10 Scope B: only the stable v4 identity remains --
+        # `agents evaluate` no longer accepts either alpha at all (see
+        # test_evaluation_defaults_to_stable_v4_for_api_v2_roster below).
         ("proc", ALL_V4_IDENTITIES),
     ],
 )
@@ -396,11 +399,10 @@ def test_evaluation_offers_only_rulesets_the_candidate_can_run(
 @pytest.mark.gui
 def test_evaluation_defaults_to_stable_v4_for_api_v2_roster(tmp_path):
     """An Agent API v2 candidate defaults to the permanent stable v4
-    identity, not either prerelease alpha -- mirrors the engine's own
-    OMITTED_RULESET_CANDIDATES product-preference order (v4.0.0-rc1
-    Phase 2). alpha2/alpha1 remain selectable (see the ALL_V4_IDENTITIES
-    offered-set test above) for reproducing an earlier prerelease
-    evaluation."""
+    identity -- mirrors the engine's own OMITTED_RULESET_CANDIDATES
+    product-preference order (v4.0.0-rc1 Phase 2). Neither alpha remains
+    selectable at all any longer (V6 Phase 2B.10 Scope B; see the
+    ALL_V4_IDENTITIES offered-set test above)."""
 
     _make_app()
     dialog = _evaluation_dialog(tmp_path, "proc")

@@ -1,42 +1,190 @@
 # Bytefray Roadmap
 
-This document preserves Bytefray's shipped milestone roadmap from v0.10
-through v4 and records the boundary into the V5 era. It is historical context,
-not a schedule of V5 commitments. See [README.md](../README.md) for the current
-product generation, [CHANGELOG.md](../CHANGELOG.md) for what shipped release by
-release, and [`docs/research/v5/`](research/v5/) for current V5 research and
-development records. Long-range ideas remain catalogued separately in
-[FUTURE_PLANS.md](FUTURE_PLANS.md).
+This document records Bytefray's execution sequence, active engineering focus,
+and milestone status. It establishes what has already shipped, what is currently
+under active development in the V6 program, what is immediately upcoming, and
+what remains longer-term research.
+
+See [README.md](../README.md) for the user-facing product overview,
+[CHANGELOG.md](../CHANGELOG.md) for release-by-release change notes,
+[ARCHITECTURE.md](../ARCHITECTURE.md) for the structural component map,
+and [FUTURE_PLANS.md](FUTURE_PLANS.md) for catalogued future ideas and research questions.
+
+## Execution Status Overview
+
+| Boundary | Version / Identity | Status | Description |
+|---|---|---|---|
+| **Current Stable Release** | `5.0.0` | **Released** (2026-09-15) | Shipped stable product line atop `bytefray-rules-4` and Agent API v2. |
+| **Active Development Line** | `V6` (`v6-research`) | **In Progress** | Repository diet, architecture modernization, and runtime retirement program. |
+| **Active Ruleset Control** | `bytefray-rules-4` | **Stable Control** | Sole executable v4 ruleset; production gameplay baseline. |
+| **Current Phase** | Phase 2B.11 | **Audit Complete** | Scope C audit for Agent API v1 & VM execution retirement. |
+| **Immediate Next Phase** | Phase 2B.12 | **Planned / Immediate** | Implementation of Scope C retirement while preserving historical readers. |
 
 ## Terminology
 
-Status words below are used consistently and are not interchangeable:
+Status words below are used consistently throughout this document:
 
-- **Planned** — scoped for a specific upcoming release.
-- **Candidate** — has real merit and a plausible design, but no assigned
-  release; likely to happen if usage or evidence justifies it.
-- **Exploratory** — a design direction being thought through; not yet
-  validated against evidence, and the shape described could change
-  substantially or not happen at all.
-- **Research** — requires investigation (data, prototypes, or both) before
-  anyone could responsibly commit to a design.
-- **Unscheduled** — real, retained, not actively planned.
+- **Shipped / Completed** — implemented, qualified, and released in a tagged release or merged milestone.
+- **Active / In Progress** — currently underway on the active development line.
+- **Planned** — explicitly scoped for the immediate or next sequential phase.
+- **Candidate** — concrete, plausible design with demonstrable merit, but no assigned release; prioritised when usage or evidence justifies it.
+- **Exploratory** — a design direction being thought through; not yet validated against empirical evidence, and the shape described could change substantially.
+- **Research** — requires hypothesis-driven investigation (data, prototypes, or both) before anyone could responsibly commit to a design.
+- **Retired** — removed from active execution registration while preserving historical-artifact compatibility.
 
-These labels explain the retained milestone text below. They are not current
-V5 promises and do not imply when — or whether — an idea ships.
+---
 
-## Current V5 boundary
+## Current V6 Program — Repository Diet & Architecture Makeover
 
-**Bytefray 5 is the current stable generation, and `5.0.0` is the current
-release.** V5 builds on the stable `bytefray-rules-4` gameplay foundation;
-the supported V4 Ruleset and Alpha1/Alpha2 design contracts remain current
-supporting documentation.
+**Status: Active development.** Bytefray 5.0.0 is the current stable release.
+Active development is on the `v6-research` branch lineage, pursuing the V6
+program theme:
 
-V5 development is deliberately evidence-led and research-driven rather than
-committed to a feature-by-feature release schedule. The V5 research record is
-under [`docs/research/v5/`](research/v5/). The v0.10 through v4 sections below
-are retained as milestone history, and the broader archive boundary is
-documented in [`docs/archive/README.md`](archive/README.md).
+> **“Bytefray goes on a diet and a makeover.”**
+
+Unlike prior versions that introduced major gameplay mechanics (V2 Vulnerable
+Core, V4 Spatial Multi-Process), V6 is primarily a **repository, architecture,
+and runtime modernization program**. Its guiding operational rule is:
+
+> **Delete before refactoring; refactor before redesigning; measure before
+> changing gameplay.**
+
+### V6 Objectives and Program Principles
+
+1. **Retire obsolete execution paths:** Migrate the runtime toward a streamlined
+   architecture with **one active agent contract (Agent API v2)** and **one
+   active baseline ruleset (`bytefray-rules-4`)**, retiring historical execution
+   runtimes (VM/bytecode execution, Agent API v1 execution) that are no longer
+   needed for ongoing agent development.
+2. **Preserve complete historical readability:** Every retired identity and
+   format (Ruleset 1, Ruleset 2, retired research alphas, Redcode results, VM
+   replays) remains 100% readable, indexable, and replayable in Replay History
+   and the Replay Viewer. Only creating *new* matches under retired identities is
+   removed.
+3. **Retire obsolete tooling and external dependencies:** Remove legacy build
+   scripts and historical execution runtimes (Redcode/pMARS) that add maintenance
+   burden without serving the core Bytefray Python agent platform.
+4. **Repository diet and context efficiency:** Archive closed research, delete
+   stale tests and abandoned CI triggers, and untangle oversized modules to
+   reduce repository weight and LLM/developer context overhead.
+5. **Protect stable gameplay controls with frozen characterizations:** Before
+   retiring any prerelease or research ruleset, prove that retained controls
+   faithfully reproduce historical behavior using frozen-golden characterization
+   tests rather than live multi-ruleset comparisons.
+6. **Postpone speculative gameplay changes:** Speculative combat or simulation
+   ideas are deferred until cleanup, debt reduction, and architectural modularity
+   justify them.
+
+### Completed V6 Milestones
+
+* **Phase 0 — Baseline Charter:** Frozen baseline at `v5.0.0` on `v6-research`,
+  verifying 3,687 canonical tests passing, toolchain versions (Python 3.10–3.14),
+  and recording the initial research questions
+  ([`docs/research/v6/V6_PHASE0_BASELINE.md`](research/v6/V6_PHASE0_BASELINE.md)).
+* **Phase 1 — Repository Diet Audit:** Comprehensive, evidence-grounded audit
+  across 13 areas (ruleset identities, documentation, dead code, tests, examples,
+  assets, packaging), establishing verified LOC and file baselines
+  ([`docs/research/v6/V6_PHASE1_REPOSITORY_DIET_AUDIT.md`](research/v6/V6_PHASE1_REPOSITORY_DIET_AUDIT.md)).
+* **Phase 2A — Organization and Quick Cleanups:**
+  * **Phase 2A.1:** Relocated closed V4 (31 files) and V5 (48 files) research
+    into `docs/archive/v4/` and `docs/archive/v5/`.
+  * **Phase 2A.2 & 2A.3:** Removed dead exploratory test
+    (`test_v4_stage6_observation.py`) and purged stale CI push triggers on
+    abandoned branch names.
+* **Phase 2B — Cleanup and Retirement Program:**
+  * **Phase 2B.1 — Starter-Agent Runtime Integrity:** Hardened starter-agent
+    bootstrap logic to verify file contents rather than directory presence
+    ([`docs/research/v6/V6_PHASE2B1_STARTER_RUNTIME_INTEGRITY.md`](research/v6/V6_PHASE2B1_STARTER_RUNTIME_INTEGRITY.md)).
+  * **Phase 2B.2 & 2B.3 — Tournament Pipeline Disposition & Removal:** Retired
+    and removed the bit-rotted root-level `tournament/` build harness, which was
+    superseded by the supported CLI/GUI tournament engine
+    ([`docs/research/v6/V6_PHASE2B2_TOURNAMENT_DISPOSITION.md`](research/v6/V6_PHASE2B2_TOURNAMENT_DISPOSITION.md),
+    [`docs/research/v6/V6_PHASE2B3_TOURNAMENT_REMOVAL.md`](research/v6/V6_PHASE2B3_TOURNAMENT_REMOVAL.md)).
+  * **Phase 2B.4 — `warriors/` Disposition Research:** Audited the unreferenced
+    root `warriors/` Redcode corpus
+    ([`docs/research/v6/V6_PHASE2B4_WARRIORS_DISPOSITION.md`](research/v6/V6_PHASE2B4_WARRIORS_DISPOSITION.md)).
+  * **Phase 2B.5 & 2B.6 — Redcode and pMARS Retirement:** Retired Redcode
+    warrior execution and external pMARS invocation from CLI options, runtime
+    dispatch, and installer packaging; historical `redcode94` results remain
+    readable in Replay History
+    ([`docs/research/v6/V6_PHASE2B5_REDCODE_PMARS_RETIREMENT_AUDIT.md`](research/v6/V6_PHASE2B5_REDCODE_PMARS_RETIREMENT_AUDIT.md),
+    [`docs/research/v6/V6_PHASE2B6_REDCODE_PMARS_RETIREMENT.md`](research/v6/V6_PHASE2B6_REDCODE_PMARS_RETIREMENT.md)).
+  * **Phase 2B.7 & 2B.8 — Legacy Ruleset Retirement Audit:** Analyzed the 8
+    registered ruleset identities and partitioned their retirement into three
+    scopes: Scope A (closed research), Scope B (V4 alphas), Scope C (API v1 / VM)
+    ([`docs/research/v6/V6_PHASE2B7_RULESET3_ALPHA1_DISPOSITION.md`](research/v6/V6_PHASE2B7_RULESET3_ALPHA1_DISPOSITION.md),
+    [`docs/research/v6/V6_PHASE2B8_LEGACY_RULESET_RETIREMENT_AUDIT.md`](research/v6/V6_PHASE2B8_LEGACY_RULESET_RETIREMENT_AUDIT.md)).
+  * **Phase 2B.9 — Scope A Ruleset Retirement:** Retired closed research
+    identities `bytefray-rules-2-alpha1`, `bytefray-rules-2-alpha11`, and
+    `bytefray-rules-3-alpha1` from executable registration. Preserved Ruleset 2
+    promotion equivalence as a golden characterization; historical artifacts
+    remain fully readable
+    ([`docs/research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md`](research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md)).
+  * **Phase 2B.10 — Scope B V4 Alpha Retirement:** Retired prerelease identities
+    `bytefray-rules-4-alpha1` and `bytefray-rules-4-alpha2` from executable
+    registration. Preserved stable Ruleset 4 equivalence as a frozen golden
+    characterization (`test_v4_stable_ruleset_equivalence.py`). `bytefray-rules-4`
+    remains the sole executable V4 control
+    ([`docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md`](research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md)).
+  * **Phase 2B.11 — Agent API v1 / VM Runtime Retirement Audit:** Completed
+    comprehensive research audit for Scope C. Proved that narrowing the
+    executable registry to `bytefray-rules-4` leaves all historical artifact
+    readers, decoders, and replay viewers intact. Identified four mandatory
+    blockers (CLI default agents, scaffold API default, preset ruleset list,
+    omitted-ruleset resolution) and outlined the phased retirement strategy
+    ([`docs/research/v6/V6_PHASE2B11_API_V1_VM_RETIREMENT_AUDIT.md`](research/v6/V6_PHASE2B11_API_V1_VM_RETIREMENT_AUDIT.md)).
+
+### Current and Immediate Next Phase
+
+* **Phase 2B.11 (Audit Complete) → Phase 2B.12 (Scope C Implementation):**
+  * **Goal:** Retire `bytefray-rules-1` and `bytefray-rules-2` from executable
+    registration, along with VM/blob execution and Agent API v1 execution,
+    leaving `bytefray-rules-4` as the single executable gameplay control.
+  * **Key implementation requirements:**
+    1. Resolve Blockers B-1 through B-4: update `bytefray run` defaults to
+       Agent API v2 Python agents, update `bytefray agents create` scaffold
+       default to API v2, update `evaluation_presets` valid rulesets to
+       `bytefray-rules-4`, and ensure omitted-ruleset resolution points
+       cleanly to `bytefray-rules-4`.
+    2. Convert affected live-match tests (approx. 393 cases across 52 files)
+       to use `bytefray-rules-4` or frozen replay fixtures so that reader
+       coverage is preserved.
+    3. Maintain 100% backward compatibility for decoding and replaying
+       historical VM and API v1 matches.
+
+### Near-Term Planned Work (V6 Program Follow-Ups)
+
+* **Repository diet and modularity:**
+  * Address oversized modules identified in Phase 1 (e.g., `agent_evaluation.py`
+    at ~5,400 LOC) by separating concerns without introducing behavioral regressions.
+  * Remove partially dead runtime modules (e.g., pruning unused controllers in
+    `supervised_runtime.py` while keeping necessary diagnostic helpers).
+  * Improve context locality and subsystem encapsulation to streamline AI-agent
+    and developer workflows.
+* **Documentation synchronization:**
+  * Bring `ARCHITECTURE.md` into alignment with post-v4/v5 architecture,
+    documenting Spectator/Fight Night, Replay History, and recent retirements.
+
+### Later Research Candidates (Post-Cleanup)
+
+Speculative gameplay ideas remain catalogued in [`docs/FUTURE_PLANS.md`](FUTURE_PLANS.md)
+and are deliberately **postponed** until cleanup and architecture stabilization
+are complete:
+* Single-entrant multi-process coordination beyond fixed rosters.
+* Mid-match process replication and deployment economics.
+* Agent lifecycle mechanics (mutation, evolution, and resource costs).
+* Observable execution telemetry / intent semantics for defense.
+* Partial observability / fog-of-war.
+* Accessible domain-specific language (DSL) targeting Agent API v2.
+
+---
+
+## Shipped Milestone History (v0.10 through v5.0)
+
+The sections below preserve Bytefray's shipped milestone roadmap from v0.10
+through v5.0.0. They serve as historical provenance and architectural context,
+not as upcoming commitments.
+
 
 ## v0.10.0 — Platform Stabilization / v1.0 Readiness
 
@@ -941,8 +1089,8 @@ report.
 
 ## v3.0 — Product Development
 
-**Status: PUBLISHED.** `v3.0.0` is the current stable release, merged to
-`main`. Bytefray
+**Status: PUBLISHED.** `v3.0.0` was tagged and merged to
+`main` as a stable release. Bytefray
 v3.0 is a **product** release
 cycle, not a gameplay-semantic one: it proceeds on `bytefray-rules-2`
 unchanged and focuses on presentation, agent creation, strategy analysis,
@@ -1172,7 +1320,7 @@ replay-only.
 **Status: published prerelease; superseded by v4.0.0-rc2 below.** The first
 v4.0 release candidate, published September 4, 2026 — see
 [CHANGELOG.md](../CHANGELOG.md#400-rc1---2026-09-03) and the RC-path
-qualification reports under [docs/research/v4/](research/v4/). Promotes
+qualification reports under [docs/archive/v4/](archive/v4/). Promotes
 `bytefray-rules-4` to the permanent, stable v4 gameplay Ruleset (proven
 equivalent to `bytefray-rules-4-alpha2` by a release-blocking
 replay-equivalence corpus, not merely declared); an omitted `--ruleset` for
@@ -1190,7 +1338,7 @@ selectable.
 **Status: published prerelease; superseded by v4.0.0 final below.** The second
 v4.0 release candidate — see
 [CHANGELOG.md](../CHANGELOG.md#400-rc2---2026-09-07) and the RC-path
-qualification reports under [docs/research/v4/](research/v4/). Adds a
+qualification reports under [docs/archive/v4/](archive/v4/). Adds a
 self-contained Linux binary distribution built and qualified on an official
 Ubuntu 24.04 baseline (byte-for-byte verified, unrebuilt, on Ubuntu 26.04;
 measured maximum requirement `GLIBC_2.38`), migrates the replay/GUI
@@ -1201,8 +1349,7 @@ RC1 — `bytefray-rules-4` remains unchanged.
 
 ## v4.0.0 — Spatial Multi-Process Platform & Spectator Intelligence
 
-**Status: published September 8, 2026; superseded as the current development
-generation by V5.** `v4.0.0` promotes the
+**Status: shipped September 8, 2026.** `v4.0.0` promotes the
 qualified `v4.0.0-rc2` post-UX candidate to the stable 4.0 line with no
 engine, schema, or evaluation-methodology change since RC2 — a version/
 documentation-only release. `bytefray-rules-4` becomes v4.0's permanent
@@ -1216,21 +1363,60 @@ Windows AMD64 installer, portable ZIP, self-contained Linux archive (Ubuntu
 Agent API v1, Ruleset v1/v2 compatibility, and pMARS external interoperability
 are all preserved.
 
-See [V4_RC2_POST_UX_WINDOWS_QUALIFICATION.md](research/v4/V4_RC2_POST_UX_WINDOWS_QUALIFICATION.md)
-and [V4_RC2_POST_UX_LINUX_PACKAGED_QUALIFICATION.md](research/v4/V4_RC2_POST_UX_LINUX_PACKAGED_QUALIFICATION.md)
+See [V4_RC2_POST_UX_WINDOWS_QUALIFICATION.md](archive/v4/V4_RC2_POST_UX_WINDOWS_QUALIFICATION.md)
+and [V4_RC2_POST_UX_LINUX_PACKAGED_QUALIFICATION.md](archive/v4/V4_RC2_POST_UX_LINUX_PACKAGED_QUALIFICATION.md)
 for the candidate qualification records. `v4.0.0-alpha1` through `-alpha4`,
 `v4.0.0-rc1`, and `v4.0.0-rc2` remain published, immutable prereleases; none
 was moved, retagged, or rewritten by this promotion.
 
-## Long-range material retained from the post-v1.0 roadmap
+## v5.0.0 — Agent Authoring, Replay History & Desktop Experience
 
-The following paragraph is retained as historical planning context, not as a
-current V5 commitment. Substantial work was intentionally kept out of the
-required v1.0 scope:
-accessible agent-authoring (a small, deterministic DSL compiling to the
-Agent API), richer evaluation and statistical analysis, evaluation
-performance/scaling, and deeper simulation/combat research (arena-size
-effects, multipronged/multi-process entrants, replication, and any future
-ruleset that would require its own compatibility identity separate from
-1.0's). None of it is lost — see [FUTURE_PLANS.md](FUTURE_PLANS.md) for
-the organized, maturity-labeled catalogue.
+**Status: published September 15, 2026.** `v5.0.0` promotes the qualified
+`5.0.0-rc1` candidate to the stable 5.0 release line with no gameplay, Agent API,
+or wire-schema change since RC1. Bytefray 5.0 finalizes the agent-authoring,
+parameterization, and desktop experience atop the immutable `bytefray-rules-4`
+gameplay core and Agent API v2:
+
+* **Global Replay History Subsystem:** Global Replay History browser
+  (`History → Replay History…` in Agent Designer) powered by a lightweight
+  SQLite discovery index (`battle_engine.replay_history`), providing automatic
+  discovery of recorded match and evaluation replays, result indexing, real-time
+  search/filtering, and direct Replay Viewer launch.
+* **Complete Tournament UX Workflow:** End-to-end Configure → Run Tournament →
+  See Results → Browse Matches → View Replay loop in Agent Designer, with atomic
+  `tournament.json` checkpoints, full standings display, and per-match result
+  and replay inspection.
+* **Unified Result-Backed Replay Integrity Preflight:** Comprehensive validation
+  applied consistently across Simple/Advanced matches, Development Test, Tournament
+  History, and Evaluation drill-downs before launching the viewer.
+* **Agent Authoring & Parameterization:** Multi-process agent parameterization,
+  reusable starter agents (`v5_dual_team`), parameter validation in Designer,
+  and exact normalized rational conversion for process share declarations
+  (resolving floating-point share validation discrepancies).
+* **Cross-Platform Quality & Polish:** Canonical replay newline normalization
+  across Windows and Linux, verified native Linux Wayland display support,
+  desktop accessibility baseline, and streamlined menu/command organization.
+
+See [`docs/archive/v5/`](archive/v5/) for the complete V5 development, research,
+and qualification archive, including
+[`V5_0_0_PUBLICATION.md`](archive/v5/V5_0_0_PUBLICATION.md) and
+[`V5_FINAL_ARTIFACT_REBUILD_AND_CROSS_PLATFORM_REQUALIFICATION.md`](archive/v5/V5_FINAL_ARTIFACT_REBUILD_AND_CROSS_PLATFORM_REQUALIFICATION.md).
+
+## Historical planning note retained from earlier roadmaps
+
+The paragraph below is retained as historical context from the early 1.0 era,
+not as a current V6 commitment:
+
+> Substantial work was intentionally kept out of the required v1.0 scope:
+> accessible agent-authoring (a small, deterministic DSL compiling to the
+> Agent API), richer evaluation and statistical analysis, evaluation
+> performance/scaling, and deeper simulation/combat research (arena-size
+> effects, multipronged/multi-process entrants, replication, and any future
+> ruleset that would require its own compatibility identity separate from
+> 1.0's).
+
+Much of this early roadmap has since been realized across v1.x through v5.0
+(e.g., parallel evaluation, evaluation presets, behavioral profiling, Ruleset 2
+vulnerable core, Ruleset 4 multi-process platform, spectator replay pipeline,
+and Replay History). For currently open candidates and long-range research
+questions, see [FUTURE_PLANS.md](FUTURE_PLANS.md).

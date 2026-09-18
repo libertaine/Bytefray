@@ -760,11 +760,12 @@ def test_the_designer_never_offers_a_rejected_research_ruleset(tmp_path):
     panel = _panel(tmp_path, _schema_rows())
     try:
         offered = {panel.ruleset.itemData(i) for i in range(panel.ruleset.count())}
+        # V6 Phase 2B.10 Scope B removed bytefray-rules-4-alpha1/-alpha2
+        # from DESIGNER_RULESET_OPTIONS alongside their executable
+        # registration (docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md).
         assert offered == {
             BYTEFRAY_RULESET_V2_ID,
             BYTEFRAY_RULESET_V4_ID,
-            "bytefray-rules-4-alpha2",
-            "bytefray-rules-4-alpha1",
             "bytefray-rules-1",
         }
         assert not any("r1" in str(item) or "r2" in str(item) for item in offered)

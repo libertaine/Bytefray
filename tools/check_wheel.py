@@ -72,7 +72,10 @@ EXPECTED_SCRIPTS = {
     "bytefray-agent-designer": "app.agent_designer:main",
     "bytefray-replay-viewer": "app.replay_viewer:main",
 }
-ALLOWED_PMARS_PATHS = {"battle_engine/pmars.py"}
+# V6 retired the pMARS integration entirely (docs/research/v6's Phase 2B.6
+# retirement report); this guard is kept permanently as a negative
+# anti-regression check now that nothing is allow-listed.
+ALLOWED_PMARS_PATHS: frozenset[str] = frozenset()
 
 
 def _wheel_version(wheel: Path) -> str:
