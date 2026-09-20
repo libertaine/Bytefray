@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -221,8 +222,6 @@ def test_verify_detects_result_replay_header_disagreement(tmp_path: Path):
     # header-tampered) bytes, so this test isolates header/envelope
     # disagreement from a plain digest mismatch (already covered by
     # test_verify_detects_replay_digest_tamper).
-    import hashlib
-
     data = json.loads(result_path.read_text(encoding="utf-8"))
     data["replay"]["sha256"] = hashlib.sha256(replay_path.read_bytes()).hexdigest()
     result_path.write_text(json.dumps(data), encoding="utf-8")
@@ -297,6 +296,18 @@ def test_frozen_schema6_group_cell_is_readable_and_deep_verifiable(tmp_path: Pat
     outcome = verify_cell(cell, root, summary.candidate_identity)
     assert outcome.eligible is True
     assert outcome.verified is True
+
+
+def test_frozen_schema6_group_replay_digest_hashes_exact_repository_bytes():
+    """Fixture digests cover committed bytes, not host-native text output."""
+    cell_dir = _GROUP_FIXTURE / "matches" / _GROUP_CELL_DIR
+    replay_bytes = (cell_dir / "replay.jsonl").read_bytes()
+    result = json.loads((cell_dir / "result.json").read_text(encoding="utf-8"))
+
+    recorded_digest = result["replay"]["sha256"]
+    assert b"\r\n" not in replay_bytes
+    assert hashlib.sha256(replay_bytes).hexdigest() == recorded_digest
+    assert hashlib.sha256(replay_bytes.replace(b"\n", b"\r\n")).hexdigest() != recorded_digest
 
 
 def test_frozen_schema6_group_cell_rejects_corrupt_entrant_order(tmp_path: Path):
