@@ -14,14 +14,20 @@ before it.
 
 **One structural difference from the Phase 2B.9 precedent, deliberately
 tested here rather than assumed:** unlike the three Scope-A identities
-(all members of both core-status tables), only ``bytefray-rules-4-alpha1``
-is a member of ``VULNERABLE_CORE_RULESET_IDS``/``OBSERVABLE_CORE_RULESET_IDS``
--- ``bytefray-rules-4-alpha2`` never was (it uses seed-derived placement
-with no vulnerable-core mechanic, exactly like the stable control it was
-promoted into). Asserting alpha2's *non*-membership is as important as
-asserting alpha1's membership: silently adding alpha2 to either table
-would misrepresent a real gameplay difference between the two alphas as a
-uniform "all v4 identities are the same" retirement.
+(all members of ``VULNERABLE_CORE_RULESET_IDS``), only
+``bytefray-rules-4-alpha1`` is a member of it -- ``bytefray-rules-4-alpha2``
+never was (it uses seed-derived placement with no vulnerable-core
+mechanic, exactly like the stable control it was promoted into). Asserting
+alpha2's *non*-membership is as important as asserting alpha1's
+membership: silently adding alpha2 to the table would misrepresent a real
+gameplay difference between the two alphas as a uniform "all v4 identities
+are the same" retirement.
+
+V6 Phase 2B.12 removed the sibling ``OBSERVABLE_CORE_RULESET_IDS`` table
+and ``has_observable_core`` themselves
+(docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md): no
+historical reader ever consulted it, so this file's assertions now cover
+``VULNERABLE_CORE_RULESET_IDS`` only.
 """
 
 from __future__ import annotations
@@ -32,9 +38,7 @@ import pytest
 from battle_engine.config import Config
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
 from battle_engine.python_runtime import (
-    OBSERVABLE_CORE_RULESET_IDS,
     VULNERABLE_CORE_RULESET_IDS,
-    has_observable_core,
     has_vulnerable_core,
 )
 from battle_engine.replay import (
@@ -197,30 +201,24 @@ def test_retired_identity_result_envelope_still_resolves(retired_id: str) -> Non
 # ---------------------------------------------------------------------------
 
 
-def test_vulnerable_and_observable_core_membership_survives_for_v4_alpha1() -> None:
+def test_vulnerable_core_membership_survives_for_v4_alpha1() -> None:
     assert BYTEFRAY_RULESET_V4_ALPHA1_ID in VULNERABLE_CORE_RULESET_IDS
-    assert BYTEFRAY_RULESET_V4_ALPHA1_ID in OBSERVABLE_CORE_RULESET_IDS
     assert has_vulnerable_core(BYTEFRAY_RULESET_V4_ALPHA1_ID) is True
-    assert has_observable_core(BYTEFRAY_RULESET_V4_ALPHA1_ID) is True
 
 
-def test_v4_alpha2_was_never_a_vulnerable_or_observable_core_member() -> None:
+def test_v4_alpha2_was_never_a_vulnerable_core_member() -> None:
     """Not a retirement-scoping question -- a pre-existing, unchanged
     gameplay fact this phase must not disturb. Alpha2 (and the stable
     control it was promoted into) never had vulnerable-core semantics."""
 
     assert BYTEFRAY_RULESET_V4_ALPHA2_ID not in VULNERABLE_CORE_RULESET_IDS
-    assert BYTEFRAY_RULESET_V4_ALPHA2_ID not in OBSERVABLE_CORE_RULESET_IDS
     assert has_vulnerable_core(BYTEFRAY_RULESET_V4_ALPHA2_ID) is False
-    assert has_observable_core(BYTEFRAY_RULESET_V4_ALPHA2_ID) is False
 
 
-def test_stable_v4_control_also_stays_outside_both_core_tables() -> None:
+def test_stable_v4_control_also_stays_outside_the_vulnerable_core_table() -> None:
     """The frozen control's own core-status classification is unchanged by
     this phase -- confirms Scope B touched no gameplay-observable behavior
     for bytefray-rules-4 itself, not just its retired predecessors."""
 
     assert BYTEFRAY_RULESET_V4_ID not in VULNERABLE_CORE_RULESET_IDS
-    assert BYTEFRAY_RULESET_V4_ID not in OBSERVABLE_CORE_RULESET_IDS
     assert has_vulnerable_core(BYTEFRAY_RULESET_V4_ID) is False
-    assert has_observable_core(BYTEFRAY_RULESET_V4_ID) is False

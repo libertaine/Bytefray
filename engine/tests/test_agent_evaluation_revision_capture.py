@@ -31,7 +31,7 @@ from battle_engine.agent_revisions import (
     walk_agent_files,
 )
 
-NOP_ACTION = "AgentAction(ActionKind.NOP)"
+NOP_ACTION = "AgentAction(ActionKindV2.READ, 0)"
 
 
 def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> Path:
@@ -41,7 +41,7 @@ def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> Path
         json.dumps(
             {
                 "kind": "python",
-                "api_version": 1,
+                "api_version": 2,
                 "entrypoint": "agent.py:create_agent",
                 "version": "1.0",
             }
@@ -50,8 +50,9 @@ def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> Path
     )
     (directory / "agent.py").write_text(
         f"""
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
+    def declare_processes(self): return [ProcessDeclaration("main", 1, 1.0)]
     def reset(self, context): pass
     def act(self, observation): return {action}
 def create_agent(): return Agent()
@@ -188,7 +189,7 @@ def test_source_mutation_during_freeze_aborts_before_any_cell_executes(
         if not mutated["done"] and agent_dir == candidate_dir:
             mutated["done"] = True
             (agent_dir / "agent.py").write_text(
-                "from battle_engine.agent_api import ActionKind, AgentAction\n"
+                "from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration\n"
                 "class Agent:\n"
                 "    def reset(self, context): pass\n"
                 f"    def act(self, observation): return {NOP_ACTION}\n"
@@ -232,7 +233,7 @@ def test_no_cell_executes_after_freeze_mismatch_with_a_larger_matrix(
         if not mutated["done"] and agent_dir == candidate_dir:
             mutated["done"] = True
             (agent_dir / "agent.py").write_text(
-                "from battle_engine.agent_api import ActionKind, AgentAction\n"
+                "from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration\n"
                 "class Agent:\n"
                 "    def reset(self, context): pass\n"
                 f"    def act(self, observation): return {NOP_ACTION}\n"

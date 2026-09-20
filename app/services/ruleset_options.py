@@ -5,9 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 
-from battle_engine.rules import BYTEFRAY_RULESET_ID
 from battle_engine.ruleset_policy import (
-    BYTEFRAY_RULESET_V2_ID,
     BYTEFRAY_RULESET_V4_ID,
     UnknownRulesetError,
     agent_supported_by_ruleset,
@@ -21,22 +19,18 @@ class DesignerRulesetOption:
     label: str
 
 
-RULESET_V2_OPTION = DesignerRulesetOption(
-    BYTEFRAY_RULESET_V2_ID, "Ruleset v2 — Current / Recommended"
-)
 # v4.0.0-rc1 Phase 2: the permanent stable identity (see
 # docs/research/v4/V4_RC1_PHASE2_STABLE_CONTRACT_PROMOTION.md), gameplay-
-# identical to alpha2. This is now the option Simple/Advanced/Evaluation all
-# prefer for an Agent API v2 selection. V6 Phase 2B.10 Scope B removed the
-# alpha1/alpha2 options that used to sit alongside this one below (they
-# were retained through v5.0.0 as explicit historical-reproduction
-# choices; see docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md)
-# -- this is now the only Agent API v2 option any Designer surface offers.
+# identical to alpha2. V6 Phase 2B.10 Scope B removed the alpha1/alpha2
+# options that used to sit alongside this one (see
+# docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md); V6 Phase
+# 2B.12 removed ``RULESET_V1_OPTION``/``RULESET_V2_OPTION`` the same way,
+# retiring Agent API v1 and VM/blob execution entirely
+# (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md). This is now
+# the only Ruleset option any Designer surface offers, so the "(Agent API
+# v2)" qualifier no longer distinguishes it from anything.
 RULESET_V4_OPTION = DesignerRulesetOption(
-    BYTEFRAY_RULESET_V4_ID, "Ruleset v4 — Current / Recommended (Agent API v2)"
-)
-RULESET_V1_OPTION = DesignerRulesetOption(
-    BYTEFRAY_RULESET_ID, "Ruleset v1 — Compatibility (Python and VM/blob)"
+    BYTEFRAY_RULESET_V4_ID, "Ruleset v4 — Current / Recommended"
 )
 
 # V5 Alpha 1 Phase 1: the Designer's canonical new-session/fresh-state
@@ -59,87 +53,35 @@ RULESET_V1_OPTION = DesignerRulesetOption(
 # exactly as before, using the same unchanged product-preference order.
 DEFAULT_DESIGNER_RULESET_ID = BYTEFRAY_RULESET_V4_ID
 
-# Simple offers current gameplay only, the policy it has followed since
-# v3.0.0-alpha2: one current Agent API v1 Ruleset and one current Agent API
-# v2 Ruleset. v4.0.0-rc1 Phase 2: the stable identity now occupies the
-# Agent API v2 slot, replacing alpha2 there exactly as alpha2 replaced
-# alpha1 before it -- Simple's whole promise is "the gameplay you get if
-# you do not think about it", and that gameplay is now the permanent
-# contract, not a prerelease preview. Neither alpha is removed from the
-# product, just from the surface that must never require a user to
-# understand prerelease history to get current gameplay.
-SIMPLE_RULESET_OPTIONS = (RULESET_V2_OPTION, RULESET_V4_OPTION)
-# v4.0.0-rc1 Phase 1 introduced v4-seeded evaluation (the `ruleset_v4_
-# seeded_placements` methodology: arena pinned to 512, 8 deterministic
-# placement samples, both orientations paired over the same seat-bound
-# geometry -- see docs/research/v4/V4_RC1_PHASE1_EVALUATION_METHODOLOGY.md)
-# for alpha2, since evaluating it under the historical fixed-placement
-# methodology would have produced an artifact labelled alpha2 that actually
-# ran alpha1's fixed placement. v4.0.0-rc1 Phase 2 promotes the permanent
-# stable identity into the same methodology, unmodified, and gives it first
-# preference (mirroring `battle_engine.ruleset_policy.
-# OMITTED_RULESET_CANDIDATES`'s own product-preference order): an Agent
-# API v2 selection with no prior Ruleset choice lands on the stable v4
-# identity. V6 Phase 2B.10 Scope B removed alpha2 and alpha1 from this
-# tuple alongside their executable registration -- reproducing an earlier
-# prerelease evaluation under either is no longer offered from any GUI
-# surface (docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md).
-# Kept as its own explicit tuple rather than a filter over
-# DESIGNER_RULESET_OPTIONS so the exact offered set is visible at the
-# point of definition.
-EVALUATION_RULESET_OPTIONS = (
-    RULESET_V2_OPTION,
-    RULESET_V4_OPTION,
-    RULESET_V1_OPTION,
-)
-# V6 Phase 2B.10 Scope B removed both v4 alphas from this tuple alongside
-# their executable registration: Advanced/Development no longer offer a
-# way to launch a *new* alpha1/alpha2 match from the GUI (or the CLI --
-# see docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md). Order
-# is the product preference ``best_designer_ruleset_for_agents`` walks.
-DESIGNER_RULESET_OPTIONS = (
-    *SIMPLE_RULESET_OPTIONS,
-    RULESET_V1_OPTION,
-)
+# V6 Phase 2B.12 narrowed every Designer Ruleset surface to the single
+# retained control (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md):
+# Agent API v1 and VM/blob execution are retired, so ``bytefray-rules-4`` is
+# the only Ruleset any of them can offer. Kept as separate tuples (rather
+# than collapsed into one shared constant) so a future Ruleset 6 has three
+# obvious, independently-decidable places to be added back, mirroring the
+# pre-2B.12 precedent these replace.
+SIMPLE_RULESET_OPTIONS = (RULESET_V4_OPTION,)
+EVALUATION_RULESET_OPTIONS = (RULESET_V4_OPTION,)
+DESIGNER_RULESET_OPTIONS = (RULESET_V4_OPTION,)
 
-# Accurate on both axes, which the previous "Legacy / VM compatibility"
-# wording was not: Ruleset v1 is not Python-incompatible (a Python agent
-# runs unmodified under either identity -- see docs/COMPATIBILITY.md's
-# "The same Agent API v1 Python agent source may execute under more than
-# one compatible Ruleset"), it is merely not the current gameplay. What is
-# genuinely exclusive is the other direction: only v1 executes VM/blob
-# entrants. Deliberately says nothing about the retired, historical
-# Redcode/pMARS execution path, which used no Bytefray Ruleset at all
-# (docs/RULES.md's "Redcode/pMARS -- not Ruleset v1 (historical)") and
-# must never be implied to have been a Ruleset-v1 format.
 RULESET_DESCRIPTION = (
-    "Ruleset v2 is Bytefray's current gameplay ruleset and runs Python agents only. "
-    "Ruleset v4 is the current, permanent process-agent gameplay contract and "
-    "requires Agent API v2; it places entrant cores from the match seed and rotates "
-    "action slots between an entrant's own processes. "
-    "Ruleset v1 also runs Agent API v1 Python agents and is the only Bytefray "
-    "ruleset that runs VM/blob agents."
-)
-
-# Shown next to a Ruleset selector whenever the current entrant selection
-# includes a VM/blob agent.
-VM_RULESET_EXPLANATION = (
-    "VM/blob agents run under Ruleset v1 only. Rulesets v2 and v4 are Python-agent "
-    "only."
+    "Ruleset v4 is Bytefray's current, permanent process-agent gameplay "
+    "contract and requires Agent API v2; it places entrant cores from the "
+    "match seed and rotates action slots between an entrant's own "
+    "processes."
 )
 
 
 def ruleset_supports_runtime_kinds(ruleset_id: str, kinds: set[str]) -> bool:
     """Project the engine policy's authoritative *runtime-kind* compatibility.
 
-    Deliberately answers only half the compatibility question: it cannot
-    tell ``bytefray-rules-2`` from the ``bytefray-rules-4``/``-alpha*``
-    identities, which are all Python-only and differ by Agent API version --
-    nor tell the three v4 identities apart at all, since they share both
-    axes. Every Designer surface that decides which Rulesets to *offer* therefore uses
-    :func:`ruleset_supports_agent_metadata` instead. This remains for the
-    VM/Python launch guard in ``validate_designer_ruleset``, where the
-    runtime kind genuinely is the whole question.
+    Deliberately answers only half the compatibility question: with a
+    single retained Ruleset, every Designer surface that decides which
+    Rulesets to *offer* uses :func:`ruleset_supports_agent_metadata`
+    instead, which also checks Agent API version. This remains for the
+    launch guard in ``validate_designer_ruleset``, where the runtime kind
+    genuinely is the whole question -- it is what rejects a VM/blob agent
+    (no longer executable under any Ruleset) before a match launches.
     """
     try:
         policy = resolve_ruleset_policy(ruleset_id)
@@ -211,7 +153,7 @@ def validate_designer_ruleset(ruleset_id: str, kinds: set[str]) -> None:
         kinds_text = ", ".join(sorted(kinds)) or "selected"
         raise ValueError(
             f"Ruleset {ruleset_id} does not support {kinds_text} entrants. "
-            "Use Ruleset v1 for VM/blob matches."
+            "Only Agent API v2 (process) Python agents are executable."
         )
 
 

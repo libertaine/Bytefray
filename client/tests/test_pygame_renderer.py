@@ -139,25 +139,31 @@ def _no_events_session(tmp_path):
 
 
 NOP_SOURCE = """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 
 class Agent:
     def reset(self, context):
         pass
 
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
     def act(self, observation):
-        return AgentAction(ActionKind.NOP)
+        return AgentAction(ActionKindV2.READ, 0)
 
 def create_agent():
     return Agent()
 """
 
 FAILING_SOURCE = """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import AgentAction, ProcessDeclaration
 
 class Agent:
     def reset(self, context):
         pass
+
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
 
     def act(self, observation):
         raise RuntimeError("boom")
@@ -177,7 +183,7 @@ def _python_spec(root, name, source):
     (directory / "agent.yaml").write_text(
         json.dumps(
             {
-                "kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent",
+                "kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent",
                 "name": name, "display": name.title(), "version": "1.0",
             }
         ),
@@ -195,12 +201,12 @@ def _python_session(tmp_path):
 
     entrants = (
         MatchEntrant.python("A", "a", 0, _python_spec(tmp_path, "a", NOP_SOURCE)),
-        MatchEntrant.python("B", "b", 4, _python_spec(tmp_path, "b", NOP_SOURCE)),
+        MatchEntrant.python("B", "b", 16, _python_spec(tmp_path, "b", NOP_SOURCE)),
     )
     replay_path = tmp_path / "python_replay.jsonl"
     NativeMatchService().run(
         MatchRequest(
-            Config(arena_size=32, instr_per_tick=1, seed=1),
+            Config(arena_size=32, instr_per_tick=8, seed=1),
             entrants, max_ticks=2, replay_path=replay_path, verbose=False,
         )
     )
@@ -222,7 +228,7 @@ def _python_forfeit_session(tmp_path):
     replay_path = tmp_path / "forfeit_replay.jsonl"
     NativeMatchService().run(
         MatchRequest(
-            Config(arena_size=32, instr_per_tick=1, seed=1),
+            Config(arena_size=32, instr_per_tick=8, seed=1),
             entrants, max_ticks=2, replay_path=replay_path, verbose=False,
         )
     )

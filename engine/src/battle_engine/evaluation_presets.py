@@ -17,7 +17,8 @@ indistinguishable from one typed out explicitly at the CLI.
 
 This module is deliberately one-way: it depends only on ``battle_engine.
 paths``/``battle_engine.result_model`` (path-safety and content-fingerprint
-primitives already established for agents/results), never on
+primitives already established for agents/results) and ``battle_engine.
+rules`` (the dependency-free Ruleset-identity constant), never on
 ``battle_engine.agent_evaluation`` -- ``agent_evaluation`` imports *this*
 module for ``--preset`` support, so the reverse import would be circular.
 The two ``ORIENTATION_*`` constants below are therefore plain string
@@ -40,6 +41,7 @@ import yaml
 
 from battle_engine.paths import contained_path, get_data_root
 from battle_engine.result_model import stable_id
+from battle_engine.rules import BYTEFRAY_RULESET_V4_ID
 
 SCHEMA_NAME = "bytefray.evaluation_preset"
 SCHEMA_VERSION = 1
@@ -74,11 +76,14 @@ _ALLOWED_FIELDS = {
 }
 _REQUIRED_FIELDS = {"schema", "schema_version"}
 
-# v2.0.0-beta2 Phase 1: mirrors battle_engine.agent_evaluation's own
-# --ruleset choices exactly (see that module's docstring for why these are
-# duplicated literals rather than an import -- this module must stay
-# import-independent of agent_evaluation).
-_VALID_RULESETS = ("bytefray-rules-1", "bytefray-rules-2")
+# V6 Phase 2B.12 (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md):
+# repointed at the retained control after this tuple was found to name only
+# retired identities (`bytefray-rules-1`/`bytefray-rules-2`) -- and, since
+# v2.0.0-beta2, to have already drifted from `agent_evaluation`'s own
+# `--ruleset` choices, which have included the control since v4.0.0-rc1
+# Phase 2. A finite tuple (not a bare constant) so a future evaluation
+# Ruleset (e.g. `bytefray-rules-6`) has one obvious place to be added.
+_VALID_RULESETS = (BYTEFRAY_RULESET_V4_ID,)
 
 _NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
 
@@ -437,7 +442,7 @@ def _print_show(preset: EvaluationPreset) -> None:
     else:
         print(
             "seeds: (not set by this preset -- explicit override, or the ordinary "
-            "default for the resolved Ruleset: 5 standard seeds for v2, 1 for v1)"
+            "default for the resolved Ruleset: 8 standard seeds for bytefray-rules-4)"
         )
     print(f"ticks: {preset.ticks if preset.ticks is not None else '(not set -- ordinary default)'}")
     _unset = "(not set -- ordinary default)"
@@ -449,7 +454,7 @@ def _print_show(preset: EvaluationPreset) -> None:
     print(f"orientation: {preset.orientation or '(not set -- ordinary default: both)'}")
     print(
         "ruleset: "
-        f"{preset.ruleset_id or '(not set -- ordinary default: bytefray-rules-2, evaluation entrants are always Python)'}"
+        f"{preset.ruleset_id or '(not set -- ordinary default: bytefray-rules-4, evaluation entrants are always Python)'}"
     )
     print(
         "This preset supplies a partial EvaluationRequest: any field it does not set falls "

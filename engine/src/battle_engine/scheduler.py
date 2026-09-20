@@ -1,20 +1,15 @@
-"""Shared Ruleset-v1 sequential-quota entrant scheduler.
+"""Ruleset scheduler primitives retained by the stable v4 process runtime.
 
-The VM (``match.MatchRunner``), unsupervised Python
-(``python_runtime.PythonEntrantController``), and supervised Python
-(``supervised_runtime.SupervisedPythonEntrantController``) execution paths
-each drive their entrants/execution-states through the identical shape:
-give each live state, in order, up to a fixed per-tick quota of sequential
-execution opportunities, stopping early -- for that state only -- the
-moment it dies. This module is the one shared implementation of that
-shape, replacing three separately maintained copies of it.
+The sequential helper preserves the original scheduler contract for direct
+characterization, while stable Ruleset v4 dispatches through the chunked
+quota helper. Both operate on generic live execution states and callbacks;
+retired VM and Agent API v1 controllers are not runtime consumers.
 
 It answers only: which execution state receives the next execution
 opportunity, in what order, how many opportunities per tick, and when to
 stop offering more because the state died. It has no opinion on what an
 "execution opportunity" does -- that is entirely up to each runtime's
-``execute_slot`` callback (a VM instruction step, a Python ``act()`` call,
-a supervised worker round-trip). It does not know about scoring,
+``execute_slot`` callback (currently an Agent API v2 process action). It does not know about scoring,
 statistics, replay, termination, or which runtime it is scheduling.
 """
 
@@ -115,4 +110,3 @@ def run_interleaved_quota(
 
 
 __all__ = ["run_chunked_quota", "run_interleaved_quota", "run_sequential_quota"]
-

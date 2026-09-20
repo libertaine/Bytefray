@@ -22,16 +22,32 @@ AGENT_API_VERSION = 2
 # than maintaining its own hand-written list or comparing against
 # ``AGENT_API_VERSION`` (the *newest* generation, not the full supported
 # range) -- see the Phase 1 B1 remediation this set exists to anchor.
-SUPPORTED_AGENT_API_VERSIONS = frozenset({1, 2})
+#
+# V6 Phase 2B.12 narrowed this from ``{1, 2}`` to ``{2}``, retiring Agent
+# API v1 execution (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md).
+# An Agent API v1 package remains inspectable
+# (``agent_package._check_compatibility`` gates only ``compatible``, never
+# ``valid``) but is refused at import with ``PackageCompatibilityError``. No
+# automatic migration is offered: a v1 agent implements ``reset``/``act``
+# against ``Observation``, while ``bytefray-rules-4`` requires the v2
+# ``declare_processes`` contract -- that is a rewrite, not a remap.
+SUPPORTED_AGENT_API_VERSIONS = frozenset({2})
 
 
 def describe_supported_agent_api_versions() -> str:
-    """Render :data:`SUPPORTED_AGENT_API_VERSIONS` for a user-facing message."""
+    """Render :data:`SUPPORTED_AGENT_API_VERSIONS` for a user-facing message.
+
+    Includes the singular/plural noun itself (``"version 2"`` vs.
+    ``"versions 1 and 2"``) so a caller never has to hard-code "versions"
+    and risk mismatched grammar once only one generation is supported --
+    exactly the defect V6 Phase 2B.12 fixed here (both call sites used to
+    read "supports versions 2").
+    """
 
     ordered = sorted(SUPPORTED_AGENT_API_VERSIONS)
     if len(ordered) == 1:
-        return str(ordered[0])
-    return ", ".join(str(version) for version in ordered[:-1]) + f" and {ordered[-1]}"
+        return f"version {ordered[0]}"
+    return "versions " + ", ".join(str(version) for version in ordered[:-1]) + f" and {ordered[-1]}"
 
 
 class AgentValidationError(ValueError):
@@ -390,7 +406,7 @@ def load_python_agent(agent_spec: Any) -> LoadedPythonAgent:
     if api_version not in SUPPORTED_AGENT_API_VERSIONS:
         raise UnsupportedAgentAPIVersionError(
             f"Python agent {agent_spec.name!r} declares API version {api_version!r}; "
-            f"Bytefray supports versions {describe_supported_agent_api_versions()}.",
+            f"Bytefray supports {describe_supported_agent_api_versions()}.",
             path=agent_spec.dir,
         )
     entry_point = getattr(agent_spec, "entry_point", None)
@@ -420,18 +436,14 @@ def load_python_agent(agent_spec: Any) -> LoadedPythonAgent:
             f"Python agent factory {entry_point!r} failed: {type(exc).__name__}: {exc}",
             path=source_path,
         ) from exc
-    protocol: type[AgentV1 | AgentV2]
-    required_methods: tuple[str, ...]
-    if api_version == 2:
-        protocol = AgentV2
-        required_methods = ("reset", "declare_processes", "act")
-    else:
-        protocol = AgentV1
-        required_methods = ("reset", "act")
+    # ``SUPPORTED_AGENT_API_VERSIONS`` rejects every historical generation
+    # before import.  Keep the v1 protocol/data types for compatibility with
+    # historical readers, but do not retain a dormant v1 execution arm here.
+    required_methods = ("reset", "declare_processes", "act")
     missing = [
         name for name in required_methods if not callable(getattr(instance, name, None))
     ]
-    if missing or not isinstance(instance, protocol):
+    if missing or not isinstance(instance, AgentV2):
         detail = ", ".join(missing) or f"AgentV{api_version} lifecycle methods"
         raise AgentContractError(
             f"Python agent factory {entry_point!r} returned {type(instance).__name__}; "

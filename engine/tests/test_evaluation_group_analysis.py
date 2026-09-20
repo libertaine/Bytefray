@@ -83,7 +83,7 @@ def _write_group_result(
         "reproducibility": {},
         "replay": None,
         "backend": None,
-        "ruleset_id": "bytefray-rules-2",
+        "ruleset_id": "bytefray-rules-4",
     }
     write_json_atomic(path, payload)
 

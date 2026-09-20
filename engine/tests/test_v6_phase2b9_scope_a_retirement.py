@@ -18,9 +18,7 @@ from pathlib import Path
 
 import pytest
 from battle_engine.python_runtime import (
-    OBSERVABLE_CORE_RULESET_IDS,
     VULNERABLE_CORE_RULESET_IDS,
-    has_observable_core,
     has_vulnerable_core,
 )
 from battle_engine.replay import (
@@ -149,25 +147,27 @@ def test_retired_identity_result_envelope_still_resolves(retired_id: str) -> Non
 # Historical replay core-status display: T-9, "the most commonly mis-scoped
 # item in the whole retirement" per the audit -- membership must survive
 # even though the policy object is gone.
+#
+# V6 Phase 2B.12 removed ``OBSERVABLE_CORE_RULESET_IDS``/``has_observable_core``
+# themselves (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md,
+# correcting Phase 2B.8's original T-9 assumption that this table and
+# ``VULNERABLE_CORE_RULESET_IDS`` were an inseparable pair): unlike the
+# vulnerable-core table, no historical reader ever consulted it, so its
+# membership assertions below were removed along with it. Only
+# ``VULNERABLE_CORE_RULESET_IDS`` membership remains meaningful to pin.
 # ---------------------------------------------------------------------------
 
 
-def test_vulnerable_and_observable_core_membership_survives_for_v2_alpha1() -> None:
+def test_vulnerable_core_membership_survives_for_v2_alpha1() -> None:
     assert BYTEFRAY_RULESET_V2_ALPHA1_ID in VULNERABLE_CORE_RULESET_IDS
-    assert BYTEFRAY_RULESET_V2_ALPHA1_ID not in OBSERVABLE_CORE_RULESET_IDS
     assert has_vulnerable_core(BYTEFRAY_RULESET_V2_ALPHA1_ID) is True
-    assert has_observable_core(BYTEFRAY_RULESET_V2_ALPHA1_ID) is False
 
 
-def test_vulnerable_and_observable_core_membership_survives_for_v2_alpha11() -> None:
+def test_vulnerable_core_membership_survives_for_v2_alpha11() -> None:
     assert BYTEFRAY_RULESET_V2_ALPHA11_ID in VULNERABLE_CORE_RULESET_IDS
-    assert BYTEFRAY_RULESET_V2_ALPHA11_ID in OBSERVABLE_CORE_RULESET_IDS
     assert has_vulnerable_core(BYTEFRAY_RULESET_V2_ALPHA11_ID) is True
-    assert has_observable_core(BYTEFRAY_RULESET_V2_ALPHA11_ID) is True
 
 
-def test_vulnerable_and_observable_core_membership_survives_for_v3_alpha1() -> None:
+def test_vulnerable_core_membership_survives_for_v3_alpha1() -> None:
     assert BYTEFRAY_RULESET_V3_ALPHA1_ID in VULNERABLE_CORE_RULESET_IDS
-    assert BYTEFRAY_RULESET_V3_ALPHA1_ID in OBSERVABLE_CORE_RULESET_IDS
     assert has_vulnerable_core(BYTEFRAY_RULESET_V3_ALPHA1_ID) is True
-    assert has_observable_core(BYTEFRAY_RULESET_V3_ALPHA1_ID) is True

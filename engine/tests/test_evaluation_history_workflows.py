@@ -23,7 +23,12 @@ from pathlib import Path
 
 import pytest
 from battle_engine.agent_evaluation import EvaluationRequest, EvaluationService
-from battle_engine.evaluation_history import ComparisonRow, FieldConfidence, HealthCode
+from battle_engine.evaluation_history import (
+    ComparisonRow,
+    ConfidenceValue,
+    FieldConfidence,
+    HealthCode,
+)
 
 from app.services.designer_workflows import DesignerValidationError
 from app.services.evaluation_history_workflows import (
@@ -40,7 +45,7 @@ from app.services.evaluation_history_workflows import (
     sorted_listing_entries,
 )
 
-NOP_ACTION = "AgentAction(ActionKind.NOP)"
+NOP_ACTION = "AgentAction(ActionKindV2.READ, 0)"
 
 
 def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> None:
@@ -48,14 +53,15 @@ def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> None
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
     (directory / "agent.py").write_text(
         f"""
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
+    def declare_processes(self): return [ProcessDeclaration("main", 1, 1.0)]
     def reset(self, context): pass
     def act(self, observation): return {action}
 def create_agent(): return Agent()
@@ -69,7 +75,7 @@ def _write_reset_failing_agent(root: Path, name: str, message: str = "boom") -> 
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
@@ -530,7 +536,9 @@ def test_format_evaluation_summary_text_hides_default_conditions(tmp_path: Path)
     summary, verify_error = load_evaluation_summary(path, verify=False)
     assert verify_error is None
     text = format_evaluation_summary_text(summary)
-    assert "arena size" not in text
+    # Stable Ruleset 4 deliberately pins 512 rather than Config's global
+    # arena default, so that methodology condition is disclosed.
+    assert "arena size: 512 (non-default)" in text
     assert "action budget" not in text
     assert "kill weight" not in text
     assert "locality reach" not in text
@@ -546,12 +554,24 @@ def test_format_evaluation_summary_text_discloses_non_default_conditions(tmp_pat
 
     _write_python_agent(tmp_path, "candidate")
     _write_python_agent(tmp_path, "opponent")
-    path = _run_evaluation(
-        tmp_path, "eval-nondefault", arena_size=1024, instr_per_tick=4, kill_weight=9.0
-    )
+    path = _run_evaluation(tmp_path, "eval-nondefault", instr_per_tick=4, kill_weight=9.0)
 
     summary, verify_error = load_evaluation_summary(path, verify=False)
     assert verify_error is None
+    # Exercise the reader/presenter with a deterministic historically-valid
+    # Ruleset-2 conditions record. This is a pure model fixture; it does not
+    # mutate a current artifact or claim that Ruleset 4 executed at 1024.
+    summary = replace(
+        summary,
+        rules_compatibility_id=ConfidenceValue.recorded("bytefray-rules-2"),
+        effective_conditions=ConfidenceValue.recorded(
+            {
+                "arena_size": 1024,
+                "action_budget": 4,
+                "weights": {"kill": 9.0},
+            }
+        ),
+    )
     text = format_evaluation_summary_text(summary)
     assert "arena size: 1024 (non-default)" in text
     assert "action budget/tick: 4 (non-default)" in text
@@ -600,8 +620,9 @@ def test_load_agent_revision_reports_current_source_status_transitions(tmp_path:
     assert "MATCHES the agent's current on-disk source" in text
 
     (tmp_path / "agents" / "candidate" / "agent.py").write_text(
-        "from battle_engine.agent_api import ActionKind, AgentAction\n"
+        "from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration\n"
         "class Agent:\n    def reset(self, context): pass\n"
+        "    def declare_processes(self): return [ProcessDeclaration('main', 1, 1.0)]\n"
         f"    def act(self, observation): return {NOP_ACTION}\n"
         "    # changed\n"
         "def create_agent(): return Agent()\n",

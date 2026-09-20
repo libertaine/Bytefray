@@ -1,38 +1,31 @@
-"""Direct unit tests for the Ruleset-v1 policy/resolver dispatch seam.
-
-These pin the policy and resolver in isolation, independent of any runtime
-(VM/Python/supervised) that consumes them -- runtime-integration coverage
-that the policy actually reaches each execution path lives in
-``test_scheduler_characterization.py``, ``test_python_scheduler_characterization.py``,
-and ``test_supervised_runtime.py`` (unchanged this phase, proving the wiring
-introduced no behavior change).
-"""
+"""Unit coverage for the sole executable Ruleset policy after Scope C."""
 
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError, dataclass
 
 import pytest
-from battle_engine.rules import BYTEFRAY_RULESET_ID, normalize_ruleset_id
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ALPHA1_ID,
+    BYTEFRAY_RULESET_V2_ALPHA11_ID,
     BYTEFRAY_RULESET_V2_ID,
+    BYTEFRAY_RULESET_V3_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
     OMITTED_RULESET_CANDIDATES,
-    RULESET_V1,
-    RULESET_V2,
+    PROCESS_RULESET_IDS,
+    RULESET_V4,
     NoCompatibleRulesetError,
     RulesetPolicy,
     TerminationDecision,
     TerminationReason,
     UnknownRulesetError,
+    agent_supported_by_ruleset,
     resolve_omitted_ruleset_for_agents,
     resolve_omitted_ruleset_id,
     resolve_ruleset_policy,
 )
-from battle_engine.scheduler import run_sequential_quota
 
 
 @dataclass
@@ -41,340 +34,137 @@ class _FakeState:
     alive: bool = True
 
 
-def test_current_ruleset_id_resolves_to_the_v1_policy() -> None:
-    assert resolve_ruleset_policy("bytefray-rules-1") is RULESET_V1
+def _python(api_version: object = 2, agent_id: str = "probe") -> dict[str, object]:
+    return {"agent_id": agent_id, "kind": "python", "api_version": api_version}
 
 
-def test_resolved_policy_identity_matches_the_frozen_ruleset_id() -> None:
-    policy = resolve_ruleset_policy(BYTEFRAY_RULESET_ID)
-    assert policy.ruleset_id == "bytefray-rules-1" == BYTEFRAY_RULESET_ID
+def test_stable_v4_is_the_only_registered_and_automatic_policy() -> None:
+    assert resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ID) is RULESET_V4
+    assert OMITTED_RULESET_CANDIDATES == (BYTEFRAY_RULESET_V4_ID,)
+    assert PROCESS_RULESET_IDS == frozenset({BYTEFRAY_RULESET_V4_ID})
+    assert resolve_omitted_ruleset_for_agents(None, [_python()]) == BYTEFRAY_RULESET_V4_ID
 
 
-def test_ruleset_v1_singleton_identity_is_the_frozen_constant() -> None:
-    assert RULESET_V1.ruleset_id == BYTEFRAY_RULESET_ID
-
-
-def test_policy_scheduler_matches_the_phase_2_sequential_quota_behavior() -> None:
-    """The policy's ``run_scheduler`` must reproduce
-    ``scheduler.run_sequential_quota`` exactly -- same call order, same
-    mid-quota mortality handling -- since this phase moves only *where*
-    runtime code obtains the scheduler, not what it does.
-    """
-
-    states = [_FakeState("A"), _FakeState("B"), _FakeState("C")]
-    via_policy: list[str] = []
-
-    def execute_via_policy(state: _FakeState, slot: int) -> None:
-        via_policy.append(f"{state.name}{slot}")
-        if state.name == "B" and slot == 1:
-            state.alive = False
-
-    RULESET_V1.run_scheduler(states, 3, execute_via_policy)
-
-    states_direct = [_FakeState("A"), _FakeState("B"), _FakeState("C")]
-    via_direct: list[str] = []
-
-    def execute_direct(state: _FakeState, slot: int) -> None:
-        via_direct.append(f"{state.name}{slot}")
-        if state.name == "B" and slot == 1:
-            state.alive = False
-
-    run_sequential_quota(states_direct, 3, execute_direct)
-
-    assert via_policy == via_direct == ["A0", "A1", "A2", "B0", "B1", "C0", "C1", "C2"]
-
-
-def test_permanent_v2_ruleset_id_resolves_to_its_own_distinct_policy() -> None:
-    """v2.0.0-beta1's permanent identity: registered under its own explicit
-    key, distinct from -- and never aliased to or from -- Ruleset v1
-    (docs/V2_0_BETA1_PLAN.md).
-    """
-
-    policy = resolve_ruleset_policy(BYTEFRAY_RULESET_V2_ID)
-    assert policy is RULESET_V2
-    assert policy.ruleset_id == "bytefray-rules-2"
-    assert policy is not RULESET_V1
-    assert policy.ruleset_id != RULESET_V1.ruleset_id
-
-
-def test_permanent_v2_scheduling_and_termination_are_identical_to_v1() -> None:
-    states = [_FakeState("A"), _FakeState("B")]
-    calls: list[str] = []
-    RULESET_V2.run_scheduler(states, 2, lambda s, slot: calls.append(f"{s.name}{slot}"))
-    assert calls == ["A0", "A1", "B0", "B1"]
-    assert RULESET_V2.resolve_termination(
-        alive_count=1, tick=1, max_ticks=10
-    ) == TerminationDecision(terminated=True, reason=TerminationReason.LAST_AGENT_STANDING)
+def test_stable_v4_fields_remain_pinned() -> None:
+    assert RULESET_V4.supported_runtime_kinds == frozenset({"python"})
+    assert RULESET_V4.supported_python_api_versions == frozenset({2})
+    assert (
+        RULESET_V4.scheduler_mode,
+        RULESET_V4.scheduler_chunk_size,
+        RULESET_V4.scheduler_rotate_start,
+        RULESET_V4.core_placement,
+        RULESET_V4.process_selection,
+    ) == ("chunked", 2, True, "seeded", "round_robin")
 
 
 @pytest.mark.parametrize(
-    "unknown_id",
+    "retired_id",
     [
-        "bytefray-rules-3",
-        "unknown",
-        "evaluation-rules-999",
-        "evaluation-rules-1",
-        "bytefray-rules-2-alpha2",
-        "bytefray-rules-2-alpha12",
-        "",
+        "bytefray-rules-1",
+        BYTEFRAY_RULESET_V2_ALPHA1_ID,
+        BYTEFRAY_RULESET_V2_ALPHA11_ID,
+        BYTEFRAY_RULESET_V2_ID,
+        BYTEFRAY_RULESET_V3_ALPHA1_ID,
+        BYTEFRAY_RULESET_V4_ALPHA1_ID,
+        BYTEFRAY_RULESET_V4_ALPHA2_ID,
     ],
 )
-def test_unknown_ruleset_id_fails_closed_rather_than_resolving_to_v1(
-    unknown_id: str,
-) -> None:
-    """No unrecognized ID -- including the historical artifact-provenance
-    alias ``evaluation-rules-1`` -- may silently execute as Ruleset v1.
-    Runtime dispatch and historical artifact-identity attribution
-    (``rules.normalize_ruleset_id``) are deliberately different concerns;
-    see ``docs/archive/v1/V1_5_PHASE3_RULESET_POLICY_DISPATCH.md``.
-    """
+def test_retired_rulesets_fail_closed(retired_id: str) -> None:
+    with pytest.raises(UnknownRulesetError) as caught:
+        resolve_ruleset_policy(retired_id)
+    assert caught.value.ruleset_id == retired_id
 
-    with pytest.raises(UnknownRulesetError) as excinfo:
+
+@pytest.mark.parametrize("unknown_id", ["", "unknown", "bytefray-rules-99"])
+def test_unknown_rulesets_fail_closed(unknown_id: str) -> None:
+    with pytest.raises(UnknownRulesetError):
         resolve_ruleset_policy(unknown_id)
-    assert excinfo.value.ruleset_id == unknown_id
-
-
-def test_ruleset_policy_is_immutable() -> None:
-    policy = RulesetPolicy(ruleset_id="bytefray-rules-1")
-    with pytest.raises(FrozenInstanceError):
-        policy.ruleset_id = "tampered"  # type: ignore[misc]
-
-
-def test_termination_continues_when_multiple_alive_below_tick_limit() -> None:
-    decision = RULESET_V1.resolve_termination(alive_count=3, tick=1, max_ticks=10)
-    assert decision == TerminationDecision(terminated=False, reason=None)
-
-
-def test_termination_reports_last_agent_standing_when_exactly_one_alive() -> None:
-    decision = RULESET_V1.resolve_termination(alive_count=1, tick=1, max_ticks=10)
-    assert decision == TerminationDecision(
-        terminated=True, reason=TerminationReason.LAST_AGENT_STANDING
-    )
-
-
-def test_termination_reports_all_agents_dead_when_none_alive() -> None:
-    decision = RULESET_V1.resolve_termination(alive_count=0, tick=1, max_ticks=10)
-    assert decision == TerminationDecision(
-        terminated=True, reason=TerminationReason.ALL_AGENTS_DEAD
-    )
-
-
-def test_termination_reports_tick_limit_when_multiple_alive_at_the_limit() -> None:
-    decision = RULESET_V1.resolve_termination(alive_count=2, tick=10, max_ticks=10)
-    assert decision == TerminationDecision(terminated=True, reason=TerminationReason.TICK_LIMIT)
 
 
 @pytest.mark.parametrize(
-    ("alive_count", "expected_reason"),
+    "agent",
     [
-        (0, TerminationReason.ALL_AGENTS_DEAD),
-        (1, TerminationReason.LAST_AGENT_STANDING),
+        _python(1),
+        _python(None),
+        _python(True),
+        {"kind": "builtin", "api_version": None},
+        {"kind": "blob", "api_version": None},
+        {"kind": "vm", "api_version": None},
+        {"kind": "unknown", "api_version": 2},
     ],
 )
-def test_termination_precedence_prefers_alive_count_over_tick_limit(
-    alive_count: int, expected_reason: TerminationReason
-) -> None:
-    """When the alive-count condition and the tick limit are both true on
-    the same tick, the alive-count-based reason wins -- matching the
-    pre-Phase-4 duplicated ``if alive_count == 0 / == 1 / else`` blocks,
-    where the tick-limit case was always the trailing ``else``.
-    """
+def test_retired_runtime_metadata_never_resolves_automatically(agent: dict[str, object]) -> None:
+    with pytest.raises(NoCompatibleRulesetError):
+        resolve_omitted_ruleset_for_agents(None, [agent])
 
-    decision = RULESET_V1.resolve_termination(
-        alive_count=alive_count, tick=10, max_ticks=10
+
+def test_empty_and_mixed_rosters_fail_closed() -> None:
+    with pytest.raises(NoCompatibleRulesetError):
+        resolve_omitted_ruleset_for_agents(None, [])
+    with pytest.raises(NoCompatibleRulesetError):
+        resolve_omitted_ruleset_for_agents(None, [_python(2), _python(1, "legacy")])
+
+
+def test_explicit_selection_is_passthrough_not_implicit_registration() -> None:
+    assert resolve_omitted_ruleset_for_agents(BYTEFRAY_RULESET_V2_ID, [_python()]) == (
+        BYTEFRAY_RULESET_V2_ID
     )
-    assert decision == TerminationDecision(terminated=True, reason=expected_reason)
+    with pytest.raises(UnknownRulesetError):
+        resolve_ruleset_policy(BYTEFRAY_RULESET_V2_ID)
 
 
-def test_termination_decision_is_immutable() -> None:
-    decision = RULESET_V1.resolve_termination(alive_count=3, tick=1, max_ticks=10)
+def test_kind_only_compatibility_surface_projects_python_as_api_v2() -> None:
+    assert resolve_omitted_ruleset_id(None, {"python"}) == BYTEFRAY_RULESET_V4_ID
+    for kinds in (set(), {"vm"}, {"builtin"}, {"blob"}, {"python", "vm"}):
+        with pytest.raises(NoCompatibleRulesetError):
+            resolve_omitted_ruleset_id(None, kinds)
+
+
+def test_agent_support_is_metadata_only_and_current_only() -> None:
+    assert agent_supported_by_ruleset(_python(), BYTEFRAY_RULESET_V4_ID)
+    assert not agent_supported_by_ruleset(_python(1), BYTEFRAY_RULESET_V4_ID)
+    assert not agent_supported_by_ruleset(_python(), BYTEFRAY_RULESET_V2_ID)
+
+
+def test_scheduler_is_round_robin_with_two_slot_chunks() -> None:
+    states = [_FakeState("A"), _FakeState("B"), _FakeState("C")]
+    calls: list[str] = []
+    RULESET_V4.run_scheduler(
+        states, 3, lambda state, slot: calls.append(f"{state.name}{slot}"), tick=1
+    )
+    assert calls == ["A0", "A1", "B0", "B1", "C0", "C1", "A2", "B2", "C2"]
+
+
+@pytest.mark.parametrize(
+    ("alive_count", "tick", "expected"),
+    [
+        (3, 1, TerminationDecision(False, None)),
+        (1, 1, TerminationDecision(True, TerminationReason.LAST_AGENT_STANDING)),
+        (0, 1, TerminationDecision(True, TerminationReason.ALL_AGENTS_DEAD)),
+        (2, 10, TerminationDecision(True, TerminationReason.TICK_LIMIT)),
+        (1, 10, TerminationDecision(True, TerminationReason.LAST_AGENT_STANDING)),
+    ],
+)
+def test_termination_semantics_are_preserved(
+    alive_count: int, tick: int, expected: TerminationDecision
+) -> None:
+    assert RULESET_V4.resolve_termination(
+        alive_count=alive_count, tick=tick, max_ticks=10
+    ) == expected
+
+
+def test_policy_and_decision_are_immutable() -> None:
+    with pytest.raises(FrozenInstanceError):
+        RULESET_V4.ruleset_id = "tampered"  # type: ignore[misc]
+    decision = RULESET_V4.resolve_termination(alive_count=2, tick=1, max_ticks=10)
     with pytest.raises(FrozenInstanceError):
         decision.terminated = True  # type: ignore[misc]
 
 
-# ---------------------------------------------------------------------------
-# Phase 2 H1: Agent-API-aware omitted-Ruleset resolution
-# ---------------------------------------------------------------------------
-
-
-def _python(api_version: object, agent_id: str = "probe") -> dict[str, object]:
-    return {"agent_id": agent_id, "kind": "python", "api_version": api_version}
-
-
-_VM = {"agent_id": "runner", "kind": "builtin", "api_version": None}
-
-
 @pytest.mark.parametrize(
-    ("roster", "expected"),
-    [
-        # Historical Agent API v1 Python gameplay is unchanged.
-        ([_python(1)], BYTEFRAY_RULESET_V2_ID),
-        ([_python(1, "a"), _python(1, "b")], BYTEFRAY_RULESET_V2_ID),
-        # Agent API v2 reaches the process-agent Ruleset without the author
-        # ever naming it -- the H1 defect this resolution exists to fix. The
-        # identity it reaches is the *current* v4 gameplay contract: the
-        # permanent stable identity as of v4.0.0-rc1 Phase 2 (alpha2 from
-        # v4.0.0-alpha2 through Phase 1); both alphas stay explicitly
-        # selectable (asserted directly below) but are no longer what an
-        # omitted Ruleset lands on.
-        ([_python(2)], BYTEFRAY_RULESET_V4_ID),
-        ([_python(2, "a"), _python(2, "b")], BYTEFRAY_RULESET_V4_ID),
-        # VM/blob composition keeps resolving to the only Ruleset that runs it.
-        ([_VM], BYTEFRAY_RULESET_ID),
-        ([_VM, _VM], BYTEFRAY_RULESET_ID),
-        # A mixed Python/VM roster still resolves to v1 exactly as before:
-        # v1 supports both, and NativeMatchService's own homogeneity guard --
-        # not Ruleset resolution -- remains what rejects the composition.
-        ([_python(1), _VM], BYTEFRAY_RULESET_ID),
-        # Nothing to derive a Ruleset from keeps the historical default.
-        ([], BYTEFRAY_RULESET_ID),
-    ],
+    ("field", "value"),
+    [("core_placement", "invented"), ("process_selection", "invented")],
 )
-def test_omitted_ruleset_resolves_from_runtime_kind_and_api_version(
-    roster: list[dict[str, object]], expected: str
-) -> None:
-    assert resolve_omitted_ruleset_for_agents(None, roster) == expected
-
-
-@pytest.mark.parametrize(
-    "roster",
-    [
-        # No single Ruleset supports both Agent API generations at once.
-        [_python(1, "legacy"), _python(2, "process")],
-        # An Agent API v2 entrant cannot join a VM roster under v1 either.
-        [_python(2), _VM],
-        # Python metadata with no usable API version fails closed, matching
-        # the loader's own fail-closed treatment of it.
-        [{"agent_id": "unversioned", "kind": "python", "api_version": None}],
-        [_python(True)],
-    ],
-)
-def test_incompatible_roster_fails_closed_instead_of_guessing(
-    roster: list[dict[str, object]],
-) -> None:
-    with pytest.raises(NoCompatibleRulesetError) as caught:
-        resolve_omitted_ruleset_for_agents(None, roster)
-
-    assert caught.value.code == "ruleset_resolution_failed"
-    assert "No Bytefray Ruleset supports" in str(caught.value)
-
-
-@pytest.mark.parametrize(
-    ("requested", "roster"),
-    [
-        # Compatible explicit selections are returned unchanged...
-        (BYTEFRAY_RULESET_V4_ALPHA1_ID, [_python(2)]),
-        (BYTEFRAY_RULESET_V2_ID, [_python(1)]),
-        # ...and so are incompatible ones: resolution never overrides a
-        # user's explicit choice, leaving NativeMatchService to reject it
-        # with the clean configuration error the Phase 1 work established.
-        (BYTEFRAY_RULESET_V2_ID, [_python(2)]),
-        (BYTEFRAY_RULESET_V4_ALPHA1_ID, [_python(1)]),
-        # Including a roster automatic resolution would have refused.
-        (BYTEFRAY_RULESET_V2_ID, [_python(1), _python(2)]),
-        # Including an experimental identity automatic resolution never picks.
-        (BYTEFRAY_RULESET_V2_ALPHA1_ID, [_python(1)]),
-    ],
-)
-def test_explicit_ruleset_selection_is_always_authoritative(
-    requested: str, roster: list[dict[str, object]]
-) -> None:
-    assert resolve_omitted_ruleset_for_agents(requested, roster) == requested
-
-
-def test_automatic_resolution_never_selects_an_experimental_identity() -> None:
-    """Automatic resolution may only ever land on a product Ruleset.
-
-    An omitted selection must never wander into an experimental identity
-    (``bytefray-rules-2-alpha1``/``-alpha11``/``bytefray-rules-3-alpha1``)
-    that the user did not ask for by name.
-    """
-
-    assert OMITTED_RULESET_CANDIDATES == (
-        BYTEFRAY_RULESET_V2_ID,
-        BYTEFRAY_RULESET_V4_ID,
-        BYTEFRAY_RULESET_ID,
-    )
-    assert all("alpha" not in candidate for candidate in OMITTED_RULESET_CANDIDATES[:1])
-    # The v4 prerelease slot holds exactly one identity. Listing both v4
-    # alphas would make whichever came second unreachable (they accept
-    # identical rosters), so the tuple must never grow a second one rather
-    # than quietly carrying a candidate no roster can select.
-    assert (
-        sum(
-            candidate.startswith("bytefray-rules-4")
-            for candidate in OMITTED_RULESET_CANDIDATES
-        )
-        == 1
-    )
-
-
-def test_v4_alphas_are_no_longer_selectable_after_v6_phase_2b10_retirement() -> None:
-    """Supersedes the pre-Phase-2B.10 test of the same shape.
-
-    v4.0.0-rc1 Phase 2 made the permanent stable identity the automatic v4
-    choice without retiring either alpha: naming one explicitly still
-    resolved and executed it. V6 Phase 2B.10 Scope B changed that --
-    ``resolve_omitted_ruleset_for_agents`` still returns an explicit
-    selection unchanged (it never validates a caller's own choice, by
-    design), but ``resolve_ruleset_policy`` now raises for both, so that
-    passthrough id can no longer be dispatched. The frozen field values
-    each alpha used to expose (``core_placement``/``process_selection``,
-    otherwise identical to each other and to the stable identity) are
-    preserved as documentation in ``ruleset_policy.py``'s own retirement
-    comment and as locally-reconstructed ``RulesetPolicy`` objects in
-    ``test_v4_runtime_default_ruleset.py``/``test_v4_alpha2_scheduler.py``,
-    not by resolving them here.
-    """
-
-    assert (
-        resolve_omitted_ruleset_for_agents(BYTEFRAY_RULESET_V4_ALPHA1_ID, [_python(2)])
-        == BYTEFRAY_RULESET_V4_ALPHA1_ID
-    )
-    assert (
-        resolve_omitted_ruleset_for_agents(BYTEFRAY_RULESET_V4_ALPHA2_ID, [_python(2)])
-        == BYTEFRAY_RULESET_V4_ALPHA2_ID
-    )
-    with pytest.raises(UnknownRulesetError):
-        resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ALPHA1_ID)
-    with pytest.raises(UnknownRulesetError):
-        resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ALPHA2_ID)
-    # Neither retired id was quietly folded into the stable identity.
-    assert normalize_ruleset_id(BYTEFRAY_RULESET_V4_ALPHA1_ID) == BYTEFRAY_RULESET_V4_ALPHA1_ID
-    assert normalize_ruleset_id(BYTEFRAY_RULESET_V4_ALPHA2_ID) == BYTEFRAY_RULESET_V4_ALPHA2_ID
-    stable = resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ID)
-    assert (stable.core_placement, stable.process_selection) == (
-        "seeded",
-        "round_robin",
-    )
-
-
-@pytest.mark.parametrize(
-    ("kinds", "expected"),
-    [
-        ({"python"}, BYTEFRAY_RULESET_V2_ID),
-        ({"vm"}, BYTEFRAY_RULESET_ID),
-        ({"python", "vm"}, BYTEFRAY_RULESET_ID),
-        (set(), BYTEFRAY_RULESET_ID),
-        ({"unrecognized"}, BYTEFRAY_RULESET_ID),
-    ],
-)
-def test_kind_only_compatibility_surface_keeps_its_historical_behavior(
-    kinds: set[str], expected: str
-) -> None:
-    """``resolve_omitted_ruleset_id`` is retained for out-of-tree callers.
-
-    It now delegates to the API-aware resolver (so the two cannot drift),
-    projecting a bare ``python`` kind as Agent API v1 -- the assumption its
-    signature always encoded -- and must therefore still answer exactly what
-    it answered before that delegation existed, never raising.
-    """
-
-    assert resolve_omitted_ruleset_id(None, kinds) == expected
-
-
-def test_kind_only_surface_still_passes_explicit_selections_through() -> None:
-    assert (
-        resolve_omitted_ruleset_id(BYTEFRAY_RULESET_V4_ALPHA1_ID, {"python"})
-        == BYTEFRAY_RULESET_V4_ALPHA1_ID
-    )
+def test_policy_rejects_unknown_semantic_modes(field: str, value: str) -> None:
+    with pytest.raises(ValueError):
+        RulesetPolicy("probe", **{field: value})

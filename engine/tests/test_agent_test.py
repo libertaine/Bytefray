@@ -26,13 +26,19 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def _write_python_agent(root: Path, name: str, action: str) -> Path:
+    """Write a real, discoverable Agent API v2 agent whose ``act()`` body is
+    exactly ``action`` (a single expression, evaluated with ``ActionKindV2``
+    and ``AgentAction`` in scope -- V6 Phase 2B.12 retired Agent API v1
+    execution, so every direct call site's ``action`` string is v2-shaped
+    now)."""
+
     directory = root / "agents" / name
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
             {
                 "kind": "python",
-                "api_version": 1,
+                "api_version": 2,
                 "entrypoint": "agent.py:create_agent",
                 "version": "1.0",
             }
@@ -41,9 +47,10 @@ def _write_python_agent(root: Path, name: str, action: str) -> Path:
     )
     (directory / "agent.py").write_text(
         f"""
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
-    def reset(self, context): pass
+    def reset(self, context): self.arena_size = context.arena_size
+    def declare_processes(self): return [ProcessDeclaration(id="main", reach=self.arena_size - 1, share=1.0)]
     def act(self, observation): return {action}
 def create_agent(): return Agent()
 """,
@@ -59,7 +66,7 @@ def _write_reset_failing_agent(root: Path, name: str, message: str = "boom") -> 
         json.dumps(
             {
                 "kind": "python",
-                "api_version": 1,
+                "api_version": 2,
                 "entrypoint": "agent.py:create_agent",
                 "version": "1.0",
             }
@@ -68,9 +75,12 @@ def _write_reset_failing_agent(root: Path, name: str, message: str = "boom") -> 
     )
     (directory / "agent.py").write_text(
         f"""
+from battle_engine.agent_api import ProcessDeclaration
 class Agent:
     def reset(self, context):
         raise RuntimeError({message!r})
+    def declare_processes(self):
+        return [ProcessDeclaration(id="main", reach=1, share=1.0)]
     def act(self, observation):
         return None
 def create_agent(): return Agent()
@@ -125,37 +135,16 @@ def test_scaffolded_agent_tests_successfully_against_reference(tmp_path):
     assert outcome.summary_path.is_file()
 
 
-def test_ruleset_kwarg_omitted_defaults_to_v1(tmp_path):
+def test_ruleset_kwarg_omitted_defaults_to_the_retained_control(tmp_path):
+    """V6 Phase 2B.12 retired bytefray-rules-1: an omitted ``ruleset_id``
+    now resolves to the sole remaining Ruleset, bytefray-rules-4."""
     scaffold_create_agent("example", data_root=tmp_path, resource_root=ROOT)
 
     outcome = run_development_test("example", data_root=tmp_path, resource_root=ROOT)
 
-    assert outcome.ruleset_id == "bytefray-rules-1"
+    assert outcome.ruleset_id == "bytefray-rules-4"
     data = json.loads(outcome.match_result.result_path.read_text(encoding="utf-8"))
-    assert data["ruleset_id"] == "bytefray-rules-1"
-
-
-def test_ruleset_kwarg_explicit_v2_produces_v2_artifact_identity(tmp_path):
-    scaffold_create_agent("example", data_root=tmp_path, resource_root=ROOT)
-
-    outcome = run_development_test(
-        "example",
-        data_root=tmp_path,
-        resource_root=ROOT,
-        ruleset_id="bytefray-rules-2",
-    )
-
-    assert outcome.ruleset_id == "bytefray-rules-2"
-    data = json.loads(outcome.match_result.result_path.read_text(encoding="utf-8"))
-    assert data["ruleset_id"] == "bytefray-rules-2"
-    from battle_engine.replay import ReplayHeader, iter_replay
-
-    header = next(
-        record
-        for record in iter_replay(outcome.match_result.replay_path)
-        if isinstance(record, ReplayHeader)
-    )
-    assert header.ruleset_id == "bytefray-rules-2"
+    assert data["ruleset_id"] == "bytefray-rules-4"
 
 
 def test_cli_omitted_ruleset_resolves_current_v4_for_a_scaffolded_api_v2_agent(
@@ -202,18 +191,57 @@ def test_cli_explicit_v4_alpha1_is_rejected_as_an_unknown_ruleset(
     assert "invalid choice" in capsys.readouterr().err
 
 
-def test_cli_omitted_ruleset_still_resolves_v2_for_a_scaffolded_api_v1_agent(
+def _write_python_agent_v1(root: Path, name: str) -> Path:
+    """Hand-write an Agent API v1 manifest directly -- V6 Phase 2B.12
+    narrowed ``agent_scaffold.create_agent``'s own template set to Agent
+    API v2 only, so it can no longer produce a v1 agent at all (and
+    ``scaffold_create_agent(..., api_version=1)`` now raises
+    ``AgentScaffoldError``); these tests still need one real, discoverable
+    v1 agent on disk to exercise the loader's own version rejection."""
+
+    directory = root / "agents" / name
+    directory.mkdir(parents=True)
+    (directory / "agent.yaml").write_text(
+        json.dumps(
+            {
+                "kind": "python",
+                "api_version": 1,
+                "entrypoint": "agent.py:create_agent",
+                "version": "1.0",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (directory / "agent.py").write_text(
+        "from battle_engine.agent_api import ActionKind, AgentAction\n"
+        "class Agent:\n"
+        "    def reset(self, context): pass\n"
+        "    def act(self, observation): return AgentAction(ActionKind.NOP)\n"
+        "def create_agent(): return Agent()\n",
+        encoding="utf-8",
+    )
+    return directory
+
+
+def test_cli_omitted_ruleset_fails_closed_for_a_hand_written_api_v1_agent(
     tmp_path, monkeypatch, capsys
 ):
-    """The historical Agent API v1 development loop is unchanged."""
+    """V6 Phase 2B.12 retired Agent API v1 execution entirely: a v1 agent
+    (which the scaffold tool itself can no longer even produce -- see
+    ``_write_python_agent_v1``) can no longer resolve to any Ruleset, so an
+    omitted --ruleset must fail closed rather than silently falling back to
+    the retired bytefray-rules-2 identity this test previously exercised."""
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
-    scaffold_create_agent("legacy_probe", data_root=tmp_path, resource_root=ROOT)
+    _write_python_agent_v1(tmp_path, "legacy_probe")
 
     exit_code = main(["legacy_probe", "--ticks", "10"])
     captured = capsys.readouterr()
 
-    assert exit_code == 0, captured.err
-    assert "ruleset: bytefray-rules-2" in captured.out
+    assert exit_code == 2
+    assert "stage: configuration" in captured.err
+    assert "code: ruleset_resolution_failed" in captured.err
+    assert "No Bytefray Ruleset supports" in captured.err
+    assert "Traceback" not in captured.err
 
 
 def test_cli_omitted_ruleset_fails_closed_on_mixed_api_opponent(
@@ -223,7 +251,7 @@ def test_cli_omitted_ruleset_fails_closed_on_mixed_api_opponent(
     mixed Agent API pairing is refused deterministically rather than
     resolved to one entrant's Ruleset."""
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
-    scaffold_create_agent("legacy_probe", data_root=tmp_path, resource_root=ROOT)
+    _write_python_agent_v1(tmp_path, "legacy_probe")
     scaffold_create_agent(
         "process_probe", data_root=tmp_path, resource_root=ROOT, api_version=2
     )
@@ -264,44 +292,42 @@ def _write_python_agent_v2(root: Path, name: str) -> Path:
     return directory
 
 
-def test_ruleset_agent_unsupported_is_a_configuration_tool_error(tmp_path):
-    """H2 regression: an API-v2 agent tested under a Ruleset that only
-    supports API-v1 entrants (``bytefray-rules-2``) must be classified as a
-    configuration diagnostic carrying the specific ``ruleset_agent_unsupported``
-    code -- never the generic ``agent_test_internal_error``."""
+def test_api_v1_agent_is_rejected_before_test_artifacts(tmp_path):
+    """Agent API v1 is rejected at discovery, before any run is created."""
 
-    _write_python_agent_v2(tmp_path, "v2_agent")
+    _write_python_agent_v1(tmp_path, "v1_agent")
     _write_python_agent_v2(tmp_path, "v2_opponent")
 
     with pytest.raises(AgentTestError) as caught:
         run_development_test(
-            "v2_agent",
+            "v1_agent",
             opponent="v2_opponent",
             data_root=tmp_path,
             resource_root=ROOT,
-            ruleset_id="bytefray-rules-2",
+            ruleset_id="bytefray-rules-4",
         )
 
-    assert caught.value.diagnostic.stage == "configuration"
-    assert caught.value.diagnostic.code == "ruleset_agent_unsupported"
+    assert caught.value.diagnostic.stage == "discovery"
+    assert caught.value.diagnostic.code == "agent_api_version_unsupported"
+    assert not (tmp_path / "runs" / "agents_test" / "v1_agent").exists()
 
 
-def test_cli_ruleset_agent_unsupported_reports_configuration_diagnostic(
+def test_cli_explicit_v4_rejects_api_v1_at_discovery(
     tmp_path, monkeypatch, capsys
 ):
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
-    _write_python_agent_v2(tmp_path, "v2_agent")
+    _write_python_agent_v1(tmp_path, "v1_agent")
     _write_python_agent_v2(tmp_path, "v2_opponent")
 
     exit_code = main(
-        ["v2_agent", "--opponent", "v2_opponent", "--ruleset", "bytefray-rules-2"]
+        ["v1_agent", "--opponent", "v2_opponent", "--ruleset", "bytefray-rules-4"]
     )
     captured = capsys.readouterr()
 
     assert exit_code == 2
     assert "status: error" in captured.err
-    assert "stage: configuration" in captured.err
-    assert "code: ruleset_agent_unsupported" in captured.err
+    assert "stage: discovery" in captured.err
+    assert "code: agent_api_version_unsupported" in captured.err
     assert "agent_test_internal_error" not in captured.err
     assert "Traceback" not in captured.err
 
@@ -312,7 +338,7 @@ def test_non_python_tested_agent_rejected_even_with_explicit_v2(tmp_path):
     A non-Python agent is rejected by ``_resolve_python_entrant``'s existing
     ``agent_kind_unsupported`` check regardless of Ruleset -- it never
     reaches ``NativeMatchService``, so this is the same, pre-existing tool
-    error whether or not ``--ruleset bytefray-rules-2`` was requested.
+    error whether or not ``--ruleset bytefray-rules-4`` was requested.
     """
 
     _write_builtin_agent(tmp_path, "builtin_agent")
@@ -322,7 +348,7 @@ def test_non_python_tested_agent_rejected_even_with_explicit_v2(tmp_path):
             "builtin_agent",
             data_root=tmp_path,
             resource_root=ROOT,
-            ruleset_id="bytefray-rules-2",
+            ruleset_id="bytefray-rules-4",
         )
 
     assert caught.value.diagnostic.code == "agent_kind_unsupported"
@@ -376,7 +402,7 @@ def test_ticks_override_changes_effective_ticks(tmp_path):
 
 def test_explicit_python_opponent_substitutes_for_reference(tmp_path):
     scaffold_create_agent("example", data_root=tmp_path, resource_root=ROOT)
-    _write_python_agent(tmp_path, "other", "AgentAction(ActionKind.NOP)")
+    _write_python_agent(tmp_path, "other", "AgentAction(ActionKindV2.READ, observation.self_anchor)")
 
     outcome = run_development_test(
         "example", opponent="other", data_root=tmp_path, resource_root=ROOT
@@ -435,7 +461,7 @@ def test_repeated_runs_do_not_overwrite_artifacts(tmp_path):
 def test_tested_agent_loss_is_a_successful_test(tmp_path):
     # A passive agent (NOP forever) reliably loses territory/alive scoring
     # to the reference opponent, which writes every tick.
-    _write_python_agent(tmp_path, "passive", "AgentAction(ActionKind.NOP)")
+    _write_python_agent(tmp_path, "passive", "AgentAction(ActionKindV2.READ, observation.self_anchor)")
 
     outcome = run_development_test("passive", data_root=tmp_path, resource_root=ROOT)
 
@@ -457,7 +483,7 @@ def test_tested_agent_runtime_forfeit_from_act_exception(tmp_path):
 
 
 def test_tested_agent_invalid_returned_action_forfeits(tmp_path):
-    _write_python_agent(tmp_path, "invalid_action", "AgentAction(ActionKind.SET_A, 'nope')")
+    _write_python_agent(tmp_path, "invalid_action", "AgentAction(ActionKindV2.WRITE, 'nope', 1)")
 
     outcome = run_development_test("invalid_action", data_root=tmp_path, resource_root=ROOT)
 
@@ -565,7 +591,7 @@ def test_reference_opponent_reset_failure_is_a_tool_error(tmp_path, monkeypatch)
             blob=None,
             defaults={},
             kind="python",
-            api_version=1,
+            api_version=2,
             version="0.1.0",
             source_path=(broken_reference / "agent.py").resolve(),
             entry_point="agent.py:create_agent",
@@ -767,13 +793,12 @@ def test_forfeit_line_present_on_tested_agent_forfeit(tmp_path, monkeypatch, cap
     assert "forfeit: raises stage=action code=agent_action_failed" in captured.out
 
 
-def test_cli_ruleset_flag_omitted_defaults_to_v2(tmp_path, monkeypatch, capsys):
-    """RC1 default-Ruleset-defect fix: `agents test` entrants are always
-    Python, so an omitted --ruleset now resolves to current Python gameplay
-    (v2), matching Agent Designer's own default -- not the historical v1
-    fallback (see test_cli_ruleset_flag_explicit_v1_succeeds below for that
-    still-available explicit choice).
-    """
+def test_cli_ruleset_flag_omitted_defaults_to_the_retained_control(
+    tmp_path, monkeypatch, capsys
+):
+    """V6 Phase 2B.12 retired every Ruleset but bytefray-rules-4: an
+    omitted --ruleset now resolves to it, not the historical v1/v2
+    fallbacks this test previously distinguished."""
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
     scaffold_create_agent("example", data_root=tmp_path, resource_root=ROOT)
 
@@ -781,38 +806,23 @@ def test_cli_ruleset_flag_omitted_defaults_to_v2(tmp_path, monkeypatch, capsys):
     captured = capsys.readouterr()
 
     assert exit_code == 0
-    assert "ruleset: bytefray-rules-2" in captured.out
+    assert "ruleset: bytefray-rules-4" in captured.out
 
 
-def test_cli_ruleset_flag_explicit_v2_succeeds_and_prints_identity(
+def test_cli_ruleset_flag_explicit_succeeds_and_prints_identity(
     tmp_path, monkeypatch, capsys
 ):
+    """An explicit --ruleset stays authoritative over the omitted default,
+    even though V6 Phase 2B.12 left only one Ruleset for it to name."""
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
     scaffold_create_agent("example", data_root=tmp_path, resource_root=ROOT)
 
-    exit_code = main(["example", "--ticks", "5", "--ruleset", "bytefray-rules-2"])
+    exit_code = main(["example", "--ticks", "5", "--ruleset", "bytefray-rules-4"])
     captured = capsys.readouterr()
 
     assert exit_code == 0
     assert captured.err == ""
-    assert "ruleset: bytefray-rules-2" in captured.out
-    assert "Traceback" not in captured.out
-
-
-def test_cli_ruleset_flag_explicit_v1_succeeds_and_prints_identity(
-    tmp_path, monkeypatch, capsys
-):
-    """An explicit --ruleset always remains authoritative over the new
-    Python-only omitted default (RC1 default-Ruleset-defect fix, sec 7)."""
-    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
-    scaffold_create_agent("example", data_root=tmp_path, resource_root=ROOT)
-
-    exit_code = main(["example", "--ticks", "5", "--ruleset", "bytefray-rules-1"])
-    captured = capsys.readouterr()
-
-    assert exit_code == 0
-    assert captured.err == ""
-    assert "ruleset: bytefray-rules-1" in captured.out
+    assert "ruleset: bytefray-rules-4" in captured.out
     assert "Traceback" not in captured.out
 
 
@@ -823,16 +833,18 @@ def test_cli_ruleset_flag_unknown_value_fails_closed(capsys):
     assert "invalid choice" in capsys.readouterr().err
 
 
-def test_cli_help_lists_product_rulesets_excluding_retired_v4_alphas(capsys):
-    """V6 Phase 2B.10 Scope B removed bytefray-rules-4-alpha1/-alpha2 from
-    this CLI's ``--ruleset`` choices alongside their executable
-    registration (Scope A already removed the three Class-1 identities)."""
+def test_cli_help_lists_only_the_retained_control_ruleset(capsys):
+    """V6 Phase 2B.12 (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md)
+    retired bytefray-rules-1/-2 execution alongside every v4-alpha identity
+    (already gone as of Phase 2B.9/2B.10): only bytefray-rules-4 remains as
+    a selectable ``--ruleset`` choice."""
     with pytest.raises(SystemExit):
         main(["--help"])
     out = capsys.readouterr().out
     assert "--ruleset" in out
-    assert "bytefray-rules-1" in out
-    assert "bytefray-rules-2" in out
+    assert "bytefray-rules-4" in out
+    assert "bytefray-rules-1" not in out
+    assert "bytefray-rules-2" not in out
     assert "bytefray-rules-4-alpha1" not in out
     assert "bytefray-rules-4-alpha2" not in out
     assert "bytefray-rules-2-alpha1" not in out
@@ -888,9 +900,13 @@ def test_hanging_tested_agent_is_forfeited_under_cli_default_timeout(tmp_path):
     _write_python_agent(tmp_path, "hangy", "None")
     (tmp_path / "agents" / "hangy" / "agent.py").write_text(
         """
+from battle_engine.agent_api import ProcessDeclaration
+
 class Agent:
     def reset(self, context):
-        pass
+        self.arena_size = context.arena_size
+    def declare_processes(self):
+        return [ProcessDeclaration(id="main", reach=self.arena_size - 1, share=1.0)]
     def act(self, observation):
         while True:
             pass
@@ -914,7 +930,7 @@ def create_agent():
 
 
 def test_no_trace_flag_omits_trace_artifact(tmp_path):
-    _write_python_agent(tmp_path, "example", "AgentAction(ActionKind.NOP)")
+    _write_python_agent(tmp_path, "example", "AgentAction(ActionKindV2.READ, observation.self_anchor)")
 
     outcome = run_development_test(
         "example", data_root=tmp_path, resource_root=ROOT, trace=False, ticks=3

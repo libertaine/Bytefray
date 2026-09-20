@@ -691,8 +691,7 @@ def _check_compatibility(data: dict[str, Any]) -> tuple[bool, tuple[str, ...]]:
         compatible = False
         notes.append(
             f"package requires unsupported Agent API v{api_version!r}; this "
-            f"installation supports Agent API versions "
-            f"{describe_supported_agent_api_versions()}."
+            f"installation supports Agent API {describe_supported_agent_api_versions()}."
         )
 
     return compatible, tuple(notes)

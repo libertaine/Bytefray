@@ -8,8 +8,6 @@ from pathlib import Path
 
 import pytest
 from battle_engine.agent_evaluation import (
-    EVALUATION_RULES_COMPATIBILITY_ID,
-    SCHEMA_VERSION,
     EvaluationRequest,
     EvaluationService,
 )
@@ -25,7 +23,7 @@ from battle_engine.evaluation_history import (
     resolve_selector,
 )
 
-NOP_ACTION = "AgentAction(ActionKind.NOP)"
+NOP_ACTION = "AgentAction(ActionKindV2.READ, 0)"
 
 
 def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> None:
@@ -33,14 +31,15 @@ def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> None
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
     (directory / "agent.py").write_text(
         f"""
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
+    def declare_processes(self): return [ProcessDeclaration("main", 1, 1.0)]
     def reset(self, context): pass
     def act(self, observation): return {action}
 def create_agent(): return Agent()
@@ -95,11 +94,12 @@ def test_v2_round_trip_via_adapt_any(tmp_path: Path):
     # v2-adapter-compatible (SUPPORTED_V2_VERSIONS), so this comparison is
     # against the live constant, not a second hardcoded literal to keep in
     # sync by hand on the next legitimate bump.
-    assert summary.schema.schema_version == SCHEMA_VERSION
+    from battle_engine.agent_evaluation import SCHEMA_VERSION_V4
+    assert summary.schema.schema_version == SCHEMA_VERSION_V4
     assert summary.candidate_id == "candidate"
     assert summary.lifecycle_state.value == "finished"
     assert summary.lifecycle_state.confidence == FieldConfidence.RECORDED
-    assert summary.rules_compatibility_id.value == EVALUATION_RULES_COMPATIBILITY_ID
+    assert summary.rules_compatibility_id.value == "bytefray-rules-4"
     assert len(summary.cells) == 1
     cell = summary.cells[0]
     assert cell.opponent_index.confidence == FieldConfidence.RECORDED
@@ -402,7 +402,7 @@ def test_v2_identity_version_2_artifact_not_falsely_flagged_inconsistent(tmp_pat
     candidate_identity = {
         "agent_id": "candidate",
         "kind": "python",
-        "api_version": 1,
+        "api_version": 2,
         "agent_version": "1.0",
         "entry_point": "agent.py:create_agent",
         "source_sha256": "abc",
@@ -875,7 +875,7 @@ def test_v2_malformed_execution_context_cannot_participate_in_direct_comparison(
     from battle_engine.evaluation_history import adapt_v2, align
 
     opponent_identity = {
-        "agent_id": "opponent", "kind": "python", "api_version": 1,
+        "agent_id": "opponent", "kind": "python", "api_version": 2,
         "agent_version": "1.0", "entry_point": "agent.py:create_agent",
         "source_sha256": "abc", "local_source_fingerprint": "def",
     }

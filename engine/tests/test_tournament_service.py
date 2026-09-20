@@ -7,12 +7,12 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from battle_engine.agents import resolve_agent
+from battle_engine.agents import agent_spec_from_dir, resolve_agent
 from battle_engine.config import Config
-from battle_engine.core import NOP, enc
 from battle_engine.match_service import MatchEntrant, MatchRequest, canonical_match_id
 from battle_engine.replay import MatchConfiguration, ReplayHeader, write_replay
 from battle_engine.result_model import ReplayReference, ResultEnvelope
+from battle_engine.starters import starter_agent_resource_dir
 from battle_engine.tournament_cli import _print_result
 from battle_engine.tournament_cli import main as tournament_cli_main
 from battle_engine.tournament_service import (
@@ -24,26 +24,32 @@ from battle_engine.tournament_service import (
     derive_match_seed,
 )
 
+_TOURNAMENT_AGENTS = ("v4_claimer", "v4_scout", "v4_local_defender")
+
+
+def _entrant(agent_id: str, index: int) -> MatchEntrant:
+    name = _TOURNAMENT_AGENTS[index % len(_TOURNAMENT_AGENTS)]
+    spec = agent_spec_from_dir(starter_agent_resource_dir(name))
+    assert spec is not None
+    return MatchEntrant.python(agent_id, name, index * 32, spec)
+
 
 def _entrants(count: int = 3):
-    return tuple(
-        MatchEntrant(chr(65 + index), f"Agent {index}", index * 32, enc(NOP))
-        for index in range(count)
-    )
+    return tuple(_entrant(chr(65 + index), index) for index in range(count))
 
 
 def test_tie_is_a_reserved_entrant_id(tmp_path):
     entrants = (
-        MatchEntrant("tie", "Agent 0", 0, enc(NOP)),
-        MatchEntrant("B", "Agent 1", 32, enc(NOP)),
+        _entrant("tie", 0),
+        _entrant("B", 1),
     )
     with pytest.raises(TournamentConfigurationError, match="reserved"):
         TournamentService().run(_request(tmp_path, entrants=entrants))
 
     # Reservation is case-insensitive: "Tie" is just as ambiguous as "tie".
     entrants = (
-        MatchEntrant("Tie", "Agent 0", 0, enc(NOP)),
-        MatchEntrant("B", "Agent 1", 32, enc(NOP)),
+        _entrant("Tie", 0),
+        _entrant("B", 1),
     )
     with pytest.raises(TournamentConfigurationError, match="reserved"):
         TournamentService().run(_request(tmp_path, entrants=entrants))
@@ -64,7 +70,7 @@ def test_cli_status_reports_corrupted_matches(capsys):
 def _request(tmp_path, **changes):
     values = {
         "entrants": _entrants(),
-        "config": Config(arena_size=128, instr_per_tick=1),
+        "config": Config(arena_size=128, instr_per_tick=8),
         "rounds": 2,
         "max_ticks": 2,
         "output_dir": tmp_path,
@@ -84,7 +90,9 @@ def test_round_robin_schedule_standings_and_artifacts_are_deterministic(tmp_path
         ("A", "C"),
         ("B", "C"),
     ]
-    assert all(match.status == "completed" for match in result.matches)
+    assert all(match.status == "completed" for match in result.matches), [
+        (match.status, match.error_code, match.error_message) for match in result.matches
+    ]
     assert all((match.artifact_dir / "result.json").is_file() for match in result.matches)
     assert all((match.artifact_dir / "replay.jsonl").is_file() for match in result.matches)
     assert [(row.agent_id, row.played, row.ties) for row in result.standings] == [
@@ -119,33 +127,14 @@ def test_seed_derivation_is_stable_and_sensitive():
     assert derive_match_seed(7, 1, "A", "B") != derive_match_seed(7, 1, "B", "A")
 
 
-def test_mixed_division_is_rejected_before_artifacts(tmp_path):
-    entrants = (
-        _entrants(1)[0],
-        MatchEntrant.python("P", "Python", 32, object()),
-    )
-    with pytest.raises(TournamentConfigurationError, match="mixed groups"):
-        TournamentService().run(_request(tmp_path, entrants=entrants))
-    assert not list(tmp_path.iterdir())
-
-
-def test_ruleset_id_omitted_defaults_to_v1(tmp_path):
-    """Direct TournamentService/TournamentRequest library usage: ``None``
-    keeps resolving to Ruleset v1 exactly as before the RC1 default-
-    Ruleset-defect fix -- that fix changes only tournament_cli.main()'s CLI
-    boundary (see the two CLI-level tests below), never this library
-    default, so every direct/test/tool caller stays byte-for-byte
-    unaffected."""
+def test_ruleset_id_omitted_defaults_to_stable_v4(tmp_path):
     result = TournamentService().run(_request(tmp_path, entrants=_entrants(2), rounds=1))
     envelope = json.loads((result.matches[0].artifact_dir / "result.json").read_text())
-    assert envelope["ruleset_id"] == "bytefray-rules-1"
+    assert envelope["ruleset_id"] == "bytefray-rules-4"
 
 
-def test_cli_ruleset_omitted_defaults_to_v2_for_all_python_roster(tmp_path, monkeypatch):
-    """RC1 default-Ruleset-defect fix (sec 13): a Python-only tournament
-    roster with --ruleset omitted now resolves to Ruleset v2 through the
-    real `bytefray tournament` CLI entry point, matching `bytefray run`'s
-    own Python-only resolution."""
+def test_cli_ruleset_omitted_defaults_to_v4_for_all_python_roster(tmp_path, monkeypatch):
+    """An API-v2 tournament with no explicit Ruleset uses stable Ruleset 4."""
     root = tmp_path / "root"
     _write_python_agent(root, "alpha_agent")
     _write_python_agent(root, "beta_agent")
@@ -162,104 +151,27 @@ def test_cli_ruleset_omitted_defaults_to_v2_for_all_python_roster(tmp_path, monk
     result_paths = sorted(output.rglob("result.json"))
     assert result_paths, "expected at least one tournament match result artifact"
     for path in result_paths:
-        assert json.loads(path.read_text())["ruleset_id"] == "bytefray-rules-2"
+        assert json.loads(path.read_text())["ruleset_id"] == "bytefray-rules-4"
 
 
-def test_cli_ruleset_omitted_defaults_to_v1_for_all_vm_roster(tmp_path, monkeypatch):
-    """RC1 default-Ruleset-defect fix (sec 9/13): an all-VM tournament
-    roster with --ruleset omitted must keep resolving to Ruleset v1 through
-    the real `bytefray tournament` CLI entry point -- convenient VM
-    workflows are unaffected by the Python-only default."""
-    root = tmp_path / "root"
-    monkeypatch.setenv("BYTEFRAY_ROOT", str(root))
-    output = tmp_path / "out"
-
-    exit_code = tournament_cli_main(
-        [
-            "writer", "runner", "--rounds", "1", "--ticks", "5",
-            "--output", str(output), "--quiet",
-        ]
-    )
-    assert exit_code == 0
-    result_paths = sorted(output.rglob("result.json"))
-    assert result_paths, "expected at least one tournament match result artifact"
-    for path in result_paths:
-        assert json.loads(path.read_text())["ruleset_id"] == "bytefray-rules-1"
-
-
-def test_permanent_v2_rejects_vm_entrants_per_match_with_no_artifacts(tmp_path):
-    result = TournamentService().run(
-        _request(
-            tmp_path,
-            entrants=_entrants(2),
-            rounds=1,
-            ruleset_id="bytefray-rules-2",
-        )
-    )
-    assert len(result.matches) == 1
-    match = result.matches[0]
-    assert match.status == "rejected"
-    assert match.error_code == "ruleset_runtime_unsupported"
-    assert "Python entrants only" in match.error_message
-    assert not match.artifact_dir.exists()
-
-
-def test_ruleset_agent_unsupported_is_reported_cleanly_per_match(tmp_path):
-    """H2 tournament control: Phase 0 found tournament already reports
-    RulesetAgentUnsupportedError cleanly through TournamentService's
-    existing per-match diagnostic classification (the same ``except
-    Exception`` catch proven above for RulesetRuntimeUnsupportedError) --
-    no crash, and the match carries the specific ``ruleset_agent_unsupported``
-    code, unlike the `run`/`agents test` presentation defects this phase
-    fixes."""
-    entrants = tuple(
-        MatchEntrant.python(
-            chr(65 + index),
-            f"Agent {index}",
-            index * 32,
-            SimpleNamespace(kind="python", api_version=2),
-        )
-        for index in range(2)
-    )
-    result = TournamentService().run(
-        _request(
-            tmp_path,
-            entrants=entrants,
-            rounds=1,
-            ruleset_id="bytefray-rules-2",
-        )
-    )
-    assert len(result.matches) == 1
-    match = result.matches[0]
-    assert match.status in ("failed", "rejected")
-    assert match.error_code == "ruleset_agent_unsupported"
-    assert "does not support entrant metadata" in match.error_message
-    assert not match.artifact_dir.exists()
-
-
-def test_cli_help_lists_product_rulesets_excluding_retired_v4_alphas(capsys):
-    """V6 Phase 2B.10 Scope B removed bytefray-rules-4-alpha1/-alpha2 from
-    this CLI's ``--ruleset`` choices alongside their executable
-    registration."""
+def test_cli_help_lists_only_the_executable_ruleset(capsys):
     with pytest.raises(SystemExit):
         tournament_cli_main(["--help"])
     out = capsys.readouterr().out
     assert "--ruleset" in out
-    assert "bytefray-rules-1" in out
-    assert "bytefray-rules-2" in out
+    assert "bytefray-rules-4" in out
+    assert "bytefray-rules-1" not in out
+    assert "bytefray-rules-2" not in out
     assert "bytefray-rules-4-alpha1" not in out
     assert "bytefray-rules-4-alpha2" not in out
     assert "bytefray-rules-2-alpha1" not in out
     assert "bytefray-rules-3-alpha1" not in out
-    assert "homogeneous" in out
-    normalized = " ".join(out.split())
-    assert "mixed Python/VM rosters are rejected" in normalized
-    assert "without an explicit choice uses" not in normalized
+    assert "Agent API v2" in out
 
 
 def test_cli_ruleset_flag_unknown_value_fails_closed(capsys):
     with pytest.raises(SystemExit) as caught:
-        tournament_cli_main(["writer", "runner", "--ruleset", "bytefray-rules-99"])
+        tournament_cli_main(["v4_claimer", "v4_scout", "--ruleset", "bytefray-rules-99"])
     assert caught.value.code == 2
     assert "invalid choice" in capsys.readouterr().err
 
@@ -400,15 +312,16 @@ def _write_python_agent(root: Path, name: str) -> None:
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
     (directory / "agent.py").write_text(
-        "from battle_engine.agent_api import ActionKind, AgentAction\n"
+        "from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration\n"
         "class Agent:\n"
         "    def reset(self, context): pass\n"
-        "    def act(self, observation): return AgentAction(ActionKind.NOP)\n"
+        "    def declare_processes(self): return [ProcessDeclaration('main', 1, 1.0)]\n"
+        "    def act(self, observation): return AgentAction(ActionKindV2.READ, 0)\n"
         "def create_agent(): return Agent()\n",
         encoding="utf-8",
     )
@@ -554,10 +467,7 @@ def test_resumed_result_mismatch_accepts_matching_ruleset_id(tmp_path):
 def test_resume_rejects_result_copied_from_another_tournament(tmp_path):
     donor_dir = tmp_path / "donor"
     victim_dir = tmp_path / "victim"
-    donor_entrants = (
-        MatchEntrant("X", "Agent X", 0, enc(NOP)),
-        MatchEntrant("Y", "Agent Y", 32, enc(NOP)),
-    )
+    donor_entrants = (_entrant("X", 0), _entrant("Y", 1))
 
     donor = TournamentService().run(_request(donor_dir, entrants=donor_entrants, rounds=1))
     victim = TournamentService().run(_request(victim_dir, entrants=_entrants(2), rounds=1))
@@ -717,7 +627,7 @@ def test_resume_rejects_foreign_result_with_same_entrants_seed_different_config(
         tmp_path / "victim",
         entrants=_entrants(2),
         rounds=1,
-        config=Config(arena_size=256, instr_per_tick=1),
+        config=Config(arena_size=256, instr_per_tick=8),
     )
     victim = TournamentService().run(victim_request)
     donor_match, victim_match = donor.matches[0], victim.matches[0]

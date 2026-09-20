@@ -345,15 +345,11 @@ def test_dirty_checkout_still_packages_the_neighbouring_resources(
     produced = {f"{destination}/{Path(source).name}" for source, destination in datas}
 
     required = {
-        "battle_engine/data/agent_template/agent.py",
-        "battle_engine/data/agent_template/agent.yaml",
-        "battle_engine/data/agent_template_annotated/agent.py",
-        "battle_engine/data/agent_template_annotated/agent.yaml",
         "battle_engine/data/agent_template_v2/agent.py",
         "battle_engine/data/agent_template_v2/agent.yaml",
         "battle_engine/data/agent_template_v2_annotated/agent.py",
         "battle_engine/data/agent_template_v2_annotated/agent.yaml",
-        "battle_engine/data/starter_agents/hunter/agent.yaml",
+        "battle_engine/data/starter_agents/v4_claimer/agent.yaml",
         "assets/branding/bytefray-icon.png",
     }
     assert required <= produced, (

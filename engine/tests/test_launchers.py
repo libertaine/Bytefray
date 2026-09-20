@@ -29,7 +29,7 @@ def _set_frozen(monkeypatch, executable: Path) -> None:
 
 def test_source_match_uses_primary_dispatcher_and_preserves_arguments(monkeypatch, tmp_path):
     python = tmp_path / "Python With Spaces" / "python.exe"
-    arguments = ["--ticks", "25", "--a-blob", str(tmp_path / "Agent A" / "a.blob")]
+    arguments = ["--ticks", "25", "--a-type", "agent with spaces"]
     _set_source(monkeypatch, python)
 
     command = launchers.build_match_command(arguments)
@@ -203,17 +203,12 @@ def test_data_root_does_not_redirect_executable_discovery(monkeypatch, tmp_path)
 
 
 def test_designer_match_arguments_preserve_simple_and_advanced_options(tmp_path):
-    a_blob = tmp_path / "Agent A" / "model one.blob"
-    b_blob = tmp_path / "Agent B" / "model two.blob"
-
     arguments = launchers.build_designer_match_arguments(
         ticks=600,
         arena=512,
         a_type="alpha",
         b_type="beta",
-        ruleset_id="bytefray-rules-2",
-        a_blob=a_blob,
-        b_blob=b_blob,
+        ruleset_id="bytefray-rules-4",
         alive_w=0.25,
         kill_w=2.5,
         territory_w=0.75,
@@ -226,9 +221,7 @@ def test_designer_match_arguments_preserve_simple_and_advanced_options(tmp_path)
         "--arena", "512",
         "--a-type", "alpha",
         "--b-type", "beta",
-        "--ruleset", "bytefray-rules-2",
-        "--a-blob", str(a_blob),
-        "--b-blob", str(b_blob),
+        "--ruleset", "bytefray-rules-4",
         "--alive-w", "0.25",
         "--kill-w", "2.5",
         "--territory-w", "0.75",
@@ -236,31 +229,18 @@ def test_designer_match_arguments_preserve_simple_and_advanced_options(tmp_path)
         "--seed", "123",
     ]
 
-    assert "--a-blob" not in launchers.build_designer_match_arguments(
-        ticks=1,
-        arena=64,
-        a_type="alpha",
-        b_type="beta",
-        ruleset_id="bytefray-rules-1",
-        a_blob="",
-    )
-
-
 def test_designer_match_arguments_forward_optional_third_entrant(tmp_path):
     """Phase 4: Advanced's dynamic roster forwards a third entrant through
-    the exact ``--c-type``/``--c-blob`` flags ``cli.py``'s ``run`` subcommand
+    the exact ``--c-type`` flag ``cli.py``'s ``run`` subcommand
     has supported since before this parameter existed -- this is additive
     forwarding, not a new CLI surface."""
-    c_blob = tmp_path / "Agent C" / "model three.blob"
-
     arguments = launchers.build_designer_match_arguments(
         ticks=600,
         arena=512,
         a_type="alpha",
         b_type="beta",
-        ruleset_id="bytefray-rules-2",
+        ruleset_id="bytefray-rules-4",
         c_type="gamma",
-        c_blob=c_blob,
     )
 
     assert arguments == [
@@ -269,8 +249,7 @@ def test_designer_match_arguments_forward_optional_third_entrant(tmp_path):
         "--a-type", "alpha",
         "--b-type", "beta",
         "--c-type", "gamma",
-        "--ruleset", "bytefray-rules-2",
-        "--c-blob", str(c_blob),
+        "--ruleset", "bytefray-rules-4",
     ]
 
 
@@ -282,11 +261,10 @@ def test_designer_match_arguments_omit_third_entrant_by_default():
         arena=512,
         a_type="alpha",
         b_type="beta",
-        ruleset_id="bytefray-rules-2",
+        ruleset_id="bytefray-rules-4",
     )
 
     assert "--c-type" not in arguments
-    assert "--c-blob" not in arguments
 
 
 def test_engine_runner_uses_shared_match_builder_and_preserves_config(monkeypatch, tmp_path):
@@ -296,7 +274,7 @@ def test_engine_runner_uses_shared_match_builder_and_preserves_config(monkeypatc
     config = engine_commands.RunConfig(
         a_type="alpha",
         b_type="beta",
-        ruleset_id="bytefray-rules-2",
+        ruleset_id="bytefray-rules-4",
         arena=256,
         ticks=40,
         alive_w=0.5,
@@ -316,7 +294,7 @@ def test_engine_runner_uses_shared_match_builder_and_preserves_config(monkeypatc
         "--replay", str(paths.replay_path),
         "--a-type", "alpha",
         "--b-type", "beta",
-        "--ruleset", "bytefray-rules-2",
+        "--ruleset", "bytefray-rules-4",
         "--alive-w", "0.5",
         "--kill-w", "3.0",
         "--territory-w", "0.25",

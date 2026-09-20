@@ -1,11 +1,8 @@
-"""v3.0.0-alpha2: runtime-kind disclosure in ``bytefray agents`` listing.
+"""Runtime-kind disclosure in the current ``bytefray agents`` listing.
 
-The Agent Designer's match selectors have decorated every entry with its
-runtime kind since RC2 (``claimer [Python]``, ``runner [VM]``), so a user
-learns before attempting a match that VM entrants cannot run under Ruleset
-v2. The CLI listing showed no such distinction, which mattered more once
-the bundled starter set mixed five Python agents with four VM ones. These
-tests pin the disclosure and the vocabulary shared with the GUI.
+V6 Phase 2B.12 leaves one executable runtime contract: Agent API v2 Python
+agents under stable Ruleset 4. These tests pin the listing to that boundary
+and to the vocabulary shared with the GUI.
 
 Presentation only: the listing has no JSON/machine-readable form, and no
 persisted artifact schema carries a runtime label, so nothing here
@@ -19,7 +16,8 @@ from pathlib import Path
 import pytest
 from battle_engine.agents import agent_runtime_label, discover_agents
 from battle_engine.command import main as cli_main
-from battle_engine.starters import ensure_starter_agents
+from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID, agent_supported_by_ruleset
+from battle_engine.starters import STARTER_AGENT_NAMES, ensure_starter_agents
 
 
 def _resource_root() -> Path:
@@ -33,7 +31,7 @@ def data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return tmp_path
 
 
-def test_listing_labels_python_and_vm_starters(data_root: Path, capsys) -> None:
+def test_listing_labels_only_current_python_starters(data_root: Path, capsys) -> None:
     assert cli_main(["agents"]) == 0
     lines = capsys.readouterr().out.splitlines()
     labelled = {
@@ -42,30 +40,38 @@ def test_listing_labels_python_and_vm_starters(data_root: Path, capsys) -> None:
         if line.startswith(" - ") and (parts := line.split())
     }
 
-    for python_agent in ("claimer", "strider", "hunter", "wanderer", "adaptive", "raider", "sentinel"):
-        assert "[Python]" in labelled[python_agent], labelled[python_agent]
-        assert "[VM]" not in labelled[python_agent]
-    for vm_agent in ("runner", "writer", "seeker", "spiral"):
-        assert "[VM]" in labelled[vm_agent], labelled[vm_agent]
-        assert "[Python]" not in labelled[vm_agent]
+    assert set(labelled) == set(STARTER_AGENT_NAMES)
+    for agent_name in STARTER_AGENT_NAMES:
+        assert "[Python]" in labelled[agent_name], labelled[agent_name]
+        assert "[VM]" not in labelled[agent_name]
+
+    retired = {
+        "claimer",
+        "strider",
+        "hunter",
+        "wanderer",
+        "adaptive",
+        "raider",
+        "sentinel",
+        "runner",
+        "writer",
+        "seeker",
+        "spiral",
+    }
+    assert retired.isdisjoint(labelled)
 
 
-def test_listing_explains_which_rulesets_each_runtime_kind_can_use(
+def test_listing_explains_the_single_current_runtime_contract(
     data_root: Path, capsys
 ) -> None:
-    """The legend must state the rule in both directions, and never mention Redcode.
-
-    V6 has retired Redcode/pMARS execution entirely, and even the historical
-    pMARS backend ran under no Bytefray Ruleset at all (docs/RULES.md's
-    "Redcode/pMARS -- not Ruleset v1 (historical)"), so naming it beside a
-    Ruleset would teach the exact falsehood this disclosure exists to
-    prevent.
-    """
+    """The legend names only the remaining executable Ruleset/API pairing."""
 
     assert cli_main(["agents"]) == 0
     out = capsys.readouterr().out
-    assert "[Python] agents run under Ruleset v1 or v2" in out
-    assert "[VM] agents run under Ruleset v1 only." in out
+    assert "[Python] agents run under bytefray-rules-4 with Agent API v2." in out
+    assert "Ruleset v1" not in out
+    assert "Ruleset v2" not in out
+    assert "[VM]" not in out
     assert "edcode" not in out
     assert "pMARS" not in out
 
@@ -98,11 +104,9 @@ def test_runtime_label_matches_the_designers_own_vocabulary(data_root: Path) -> 
         assert engine_label == f"[{designer_label(rows[agent_id])}]"
 
 
-def test_labelling_follows_the_engines_own_ruleset_v2_restriction(data_root: Path) -> None:
-    """``[Python]`` must mean exactly "may execute under Ruleset v2"."""
-
-    from battle_engine.ruleset_policy import RULESET_V2
+def test_labelling_follows_the_engines_current_ruleset_restriction(data_root: Path) -> None:
+    """Every listed ``[Python]`` starter must execute under stable Ruleset 4."""
 
     for spec in discover_agents(data_root).values():
-        allowed = not RULESET_V2.unsupported_runtime_kinds({spec.kind})
-        assert (agent_runtime_label(spec) == "[Python]") is allowed
+        assert agent_runtime_label(spec) == "[Python]"
+        assert agent_supported_by_ruleset(spec, BYTEFRAY_RULESET_V4_ID)

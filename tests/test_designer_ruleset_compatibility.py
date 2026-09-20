@@ -83,11 +83,7 @@ def _offered(combo) -> set[str]:
 @pytest.mark.gui
 @pytest.mark.parametrize(
     ("ruleset_id", "expected_agents"),
-    [
-        (BYTEFRAY_RULESET_V2_ID, ["legacy"]),
-        (BYTEFRAY_RULESET_V4_ID, ["proc"]),
-        (BYTEFRAY_RULESET_ID, ["legacy", "vm_agent"]),
-    ],
+    [(BYTEFRAY_RULESET_V4_ID, ["proc"])],
 )
 def test_advanced_offers_only_agents_the_selected_ruleset_can_run(
     tmp_path, ruleset_id, expected_agents
@@ -117,35 +113,34 @@ def test_advanced_offers_only_agents_the_selected_ruleset_can_run(
 
 
 @pytest.mark.gui
-def test_advanced_preserves_compatible_agent_and_replaces_only_the_incompatible_one(tmp_path):
-    """UX-17 items 2/3: Ruleset v1 admits both Python API v1 and VM/blob
-    agents, so a mixed A/B selection survives it; switching to the
-    Python-only Ruleset v2 must then replace only the now-incompatible VM
-    entrant, leaving the still-compatible Python one untouched."""
+def test_advanced_preserves_current_selections_across_catalog_refresh(tmp_path):
+    """Eligible API-v2 selections survive a catalog refresh by identifier."""
 
     _make_app()
     from app.views.advanced import AdvancedPanel
 
     panel = AdvancedPanel(catalog=None, data_root=tmp_path)
     try:
-        panel.setAgents([_row("legacy", "python", 1), _row("vm_agent", "builtin")])
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_ID))
-        panel.agentA.setCurrentIndex(panel.agentA.findData("legacy"))
-        panel.agentB.setCurrentIndex(panel.agentB.findData("vm_agent"))
-
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
-        assert panel.agentA.currentData() == "legacy"  # preserved
-        assert panel.agentB.currentData() not in (None, "vm_agent")  # replaced
+        rows = [
+            _row("legacy", "python", 1),
+            _row("proc", "python", 2),
+            _row("proc2", "python", 2),
+            _row("vm_agent", "builtin"),
+        ]
+        panel.setAgents(rows)
+        panel.agentA.setCurrentIndex(panel.agentA.findData("proc2"))
+        panel.agentB.setCurrentIndex(panel.agentB.findData("proc"))
+        panel.setAgents(rows)
+        assert panel.agentA.currentData() == "proc2"
+        assert panel.agentB.currentData() == "proc"
         assert panel.btnRun.isEnabled()
     finally:
         panel.deleteLater()
 
 
 @pytest.mark.gui
-def test_advanced_replaces_both_selections_when_neither_remains_compatible(tmp_path):
-    """UX-17 items 4/5: an Agent API v1 pair has no representative under an
-    Agent API v2 Ruleset, so both selections -- not just one -- are replaced
-    by the deterministic first compatible option."""
+def test_advanced_replaces_both_selections_when_catalog_removes_them(tmp_path):
+    """A refreshed current roster deterministically repairs both selections."""
 
     _make_app()
     from app.views.advanced import AdvancedPanel
@@ -154,19 +149,21 @@ def test_advanced_replaces_both_selections_when_neither_remains_compatible(tmp_p
     try:
         panel.setAgents(
             [
-                _row("legacy", "python", 1),
-                _row("legacy2", "python", 1),
                 _row("proc", "python", 2),
                 _row("proc2", "python", 2),
             ]
         )
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
-        panel.agentA.setCurrentIndex(panel.agentA.findData("legacy"))
-        panel.agentB.setCurrentIndex(panel.agentB.findData("legacy2"))
-
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
-        assert panel.agentA.currentData() == "proc"
-        assert panel.agentB.currentData() == "proc2"
+        panel.agentA.setCurrentIndex(panel.agentA.findData("proc2"))
+        panel.agentB.setCurrentIndex(panel.agentB.findData("proc"))
+        panel.setAgents(
+            [
+                _row("legacy", "python", 1),
+                _row("proc3", "python", 2),
+                _row("proc4", "python", 2),
+            ]
+        )
+        assert panel.agentA.currentData() == "proc3"
+        assert panel.agentB.currentData() == "proc4"
         assert panel.btnRun.isEnabled()
     finally:
         panel.deleteLater()
@@ -176,19 +173,17 @@ def test_advanced_replaces_both_selections_when_neither_remains_compatible(tmp_p
 def test_advanced_handles_zero_compatible_agents_without_crashing_or_stale_selection(tmp_path):
     """UX-18 / the empty-degenerate case: a Ruleset with no discovered
     compatible agent must disable Run, show an explanation, and never
-    retain a stale selection from before the Ruleset change. Returning to
-    the previous Ruleset must recover cleanly (F.6)."""
+    retain a stale selection. Restoring a current catalog must recover."""
 
     _make_app()
     from app.views.advanced import AdvancedPanel
 
     panel = AdvancedPanel(catalog=None, data_root=tmp_path)
     try:
-        panel.setAgents([_row("legacy", "python", 1)])
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
+        panel.setAgents([_row("proc", "python", 2)])
         assert panel.btnRun.isEnabled()
 
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
+        panel.setAgents([_row("legacy", "python", 1)])
         assert not panel.btnRun.isEnabled()
         assert panel.agentA.itemText(0) == "(none found)"
         assert panel.agentB.itemText(0) == "(none found)"
@@ -199,9 +194,9 @@ def test_advanced_handles_zero_compatible_agents_without_crashing_or_stale_selec
         panel.setBusy(False)
         assert not panel.btnRun.isEnabled()
 
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
+        panel.setAgents([_row("proc", "python", 2)])
         assert panel.btnRun.isEnabled()
-        assert panel.agentA.currentData() == "legacy"
+        assert panel.agentA.currentData() == "proc"
     finally:
         panel.deleteLater()
 
@@ -214,10 +209,7 @@ def test_advanced_handles_zero_compatible_agents_without_crashing_or_stale_selec
 @pytest.mark.gui
 @pytest.mark.parametrize(
     ("ruleset_id", "expected_agents"),
-    [
-        (BYTEFRAY_RULESET_V2_ID, ["legacy"]),
-        (BYTEFRAY_RULESET_V4_ID, ["proc"]),
-    ],
+    [(BYTEFRAY_RULESET_V4_ID, ["proc"])],
 )
 def test_simple_still_filters_agents_by_the_selected_ruleset(
     ruleset_id, expected_agents
@@ -253,7 +245,9 @@ def test_simple_offers_current_gameplay_only_and_not_the_historical_v4_alphas():
     panel = SimplePanel(catalog=None)
     try:
         offered = _offered(panel.ruleset)
-        assert BYTEFRAY_RULESET_V4_ID in offered
+        assert offered == ALL_V4_IDENTITIES
+        assert BYTEFRAY_RULESET_ID not in offered
+        assert BYTEFRAY_RULESET_V2_ID not in offered
         assert BYTEFRAY_RULESET_V4_ALPHA2_ID not in offered
         assert BYTEFRAY_RULESET_V4_ALPHA1_ID not in offered
     finally:
@@ -269,7 +263,7 @@ def test_simple_offers_current_gameplay_only_and_not_the_historical_v4_alphas():
 @pytest.mark.parametrize(
     ("api_version", "expected_offered"),
     [
-        (1, {BYTEFRAY_RULESET_V2_ID, BYTEFRAY_RULESET_ID}),
+        (1, set()),
         (2, ALL_V4_IDENTITIES),
     ],
 )
@@ -284,16 +278,18 @@ def test_development_offers_only_rulesets_the_selected_agent_can_run(
         panel.setAgents([_row("probe", "python", api_version)])
         panel.selectAgent("probe")
         assert _offered(panel.rulesetCombo) == expected_offered
-        assert panel.selected_ruleset_id() in expected_offered
-        assert panel.btnTest.isEnabled()
+        if expected_offered:
+            assert panel.selected_ruleset_id() in expected_offered
+            assert panel.btnTest.isEnabled()
+        else:
+            assert not panel.btnTest.isEnabled()
     finally:
         panel.deleteLater()
 
 
 @pytest.mark.gui
-def test_development_keeps_listing_every_python_agent_regardless_of_api_version():
-    """Only the Ruleset choices narrow: this tab must stay usable for
-    historical Agent API v1 agents and current Agent API v2 ones alike."""
+def test_development_lists_historical_agents_but_disables_their_execution():
+    """Historical packages remain inspectable but have no executable Ruleset."""
 
     _make_app()
     from app.views.development import AgentDevelopmentPanel
@@ -303,6 +299,9 @@ def test_development_keeps_listing_every_python_agent_regardless_of_api_version(
         panel.setAgents([_row("legacy", "python", 1), _row("proc", "python", 2)])
         listed = [panel.agentCombo.itemData(i) for i in range(panel.agentCombo.count())]
         assert listed == ["legacy", "proc"]
+        panel.selectAgent("legacy")
+        assert _offered(panel.rulesetCombo) == set()
+        assert not panel.btnTest.isEnabled()
     finally:
         panel.deleteLater()
 
@@ -316,7 +315,8 @@ def test_development_reapplies_compatibility_when_the_selection_changes():
     try:
         panel.setAgents([_row("legacy", "python", 1), _row("proc", "python", 2)])
         panel.selectAgent("legacy")
-        assert panel.selected_ruleset_id() == BYTEFRAY_RULESET_V2_ID
+        assert _offered(panel.rulesetCombo) == set()
+        assert not panel.btnTest.isEnabled()
 
         panel.selectAgent("proc")
         assert panel.selected_ruleset_id() == BYTEFRAY_RULESET_V4_ID
@@ -376,7 +376,7 @@ def _evaluation_dialog(tmp_path, default_candidate, with_metadata=True):
 @pytest.mark.parametrize(
     ("candidate", "expected_offered"),
     [
-        ("legacy", {BYTEFRAY_RULESET_V2_ID, BYTEFRAY_RULESET_ID}),
+        ("legacy", set()),
         # V6 Phase 2B.10 Scope B: only the stable v4 identity remains --
         # `agents evaluate` no longer accepts either alpha at all (see
         # test_evaluation_defaults_to_stable_v4_for_api_v2_roster below).
@@ -390,8 +390,11 @@ def test_evaluation_offers_only_rulesets_the_candidate_can_run(
     dialog = _evaluation_dialog(tmp_path, candidate)
     try:
         assert _offered(dialog.pairwiseRulesetCombo) == expected_offered
-        assert dialog.pairwise_ruleset_id() in expected_offered
-        assert dialog.runButton.isEnabled()
+        if expected_offered:
+            assert dialog.pairwise_ruleset_id() in expected_offered
+            assert dialog.runButton.isEnabled()
+        else:
+            assert not dialog.runButton.isEnabled()
     finally:
         dialog.deleteLater()
 

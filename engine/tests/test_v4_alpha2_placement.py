@@ -275,11 +275,11 @@ def test_alpha2_does_not_expose_closed_form_opposite_placement(
 @pytest.mark.parametrize(
     ("ruleset_id", "expected"),
     [
-        (None, "zero"),
+        (None, "seeded"),
         (BYTEFRAY_RULESET_ID, "zero"),
         (BYTEFRAY_RULESET_V2_ALPHA1_ID, "zero"),
         ("bytefray-rules-not-a-real-identity", "zero"),
-        (BYTEFRAY_RULESET_V2_ID, "seat_spread"),
+        (BYTEFRAY_RULESET_V2_ID, "zero"),
         # V6 Phase 2B.9 retired bytefray-rules-3-alpha1 from executable
         # registration; it now takes the same masked fail-safe "zero"
         # default as any other unregistered ID (audit finding T-4) rather
@@ -311,10 +311,8 @@ def test_each_ruleset_keeps_its_own_placement_mode(
 @pytest.mark.parametrize(
     "ruleset_id",
     [
-        None,
         BYTEFRAY_RULESET_ID,
         BYTEFRAY_RULESET_V2_ALPHA1_ID,
-        BYTEFRAY_RULESET_V2_ID,
         BYTEFRAY_RULESET_V3_ALPHA1_ID,
         BYTEFRAY_RULESET_V4_ALPHA1_ID,
     ],

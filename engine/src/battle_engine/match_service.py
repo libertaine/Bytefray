@@ -1,8 +1,15 @@
 """Application service for resolved native Bytefray matches.
 
-The service owns homogeneous VM/Python routing, execution, and partial-artifact
-cleanup. Agent discovery, CLI parsing, and external result persistence remain
-outside this native boundary.
+The service owns homogeneous Python-agent routing, execution, and
+partial-artifact cleanup. Agent discovery, CLI parsing, and external result
+persistence remain outside this native boundary.
+
+V6 Phase 2B.12 retired VM/blob execution and Agent API v1 execution
+(docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md): this module
+used to route a homogeneous match to one of three dispatch arms (VM,
+unsupervised/supervised Agent API v1 Python, or the Agent API v2 process
+controller); only the process-controller arm remains reachable now, since
+``resolve_ruleset_policy`` accepts only ``bytefray-rules-4``.
 """
 
 from __future__ import annotations
@@ -17,20 +24,16 @@ from types import MappingProxyType
 from typing import Any, cast
 
 from battle_engine.agent_trace import (
-    TRACE_SCHEMA_VERSION,
     TRACE_SCHEMA_VERSION_V2,
     TraceHeader,
     TraceWriter,
 )
 from battle_engine.config import Config
-from battle_engine.core import Kernel
 from battle_engine.entrant_identity import EntrantIdentity
 from battle_engine.process_runtime import ProcessMatchController
 from battle_engine.project_info import get_project_info
 from battle_engine.python_runtime import (
-    PythonEntrantController,
     PythonEntrantInitializationError,
-    PythonRuntimeResult,
     RuntimeDiagnostic,
     TerminationReason,
     core_addresses,
@@ -55,16 +58,12 @@ from battle_engine.result_model import (
     write_json_atomic,
 )
 from battle_engine.results import WINNER_TIE_SENTINEL
-from battle_engine.rules import BYTEFRAY_RULESET_ID
 from battle_engine.ruleset_policy import (
-    BYTEFRAY_RULESET_V2_ID,
     BYTEFRAY_RULESET_V4_ID,
-    PROCESS_RULESET_IDS,
     RulesetPolicy,
     resolve_ruleset_policy,
 )
-from battle_engine.supervised_runtime import SupervisedPythonEntrantController
-from battle_engine.telemetry import JSONLSink, NullSummarySink
+from battle_engine.telemetry import JSONLSink
 
 
 @dataclass(frozen=True, init=False)
@@ -73,7 +72,7 @@ class MatchEntrant:
 
     Composes the entrant's :class:`~battle_engine.entrant_identity.
     EntrantIdentity` (who) with this match's resolved participation data --
-    ``start``/``code``/``kind``/``python_spec`` (how this entrant
+    ``start``/``kind``/``python_spec`` (how this entrant
     participates in *this* match) -- rather than storing ``agent_id``/
     ``name`` as independent fields. See
     ``docs/archive/v1/V1_5_PHASE5_ENTRANT_IDENTITY_EXECUTION_STATE.md``. ``agent_id``/
@@ -84,8 +83,7 @@ class MatchEntrant:
 
     identity: EntrantIdentity
     start: int
-    code: bytes | None
-    kind: str = "vm"
+    kind: str = "python"
     python_spec: Any | None = None
     #: This entrant's fully resolved agent parameters (V5 Alpha 1 Phase D),
     #: already validated by ``agent_parameters.resolve_parameters`` before a
@@ -118,14 +116,12 @@ class MatchEntrant:
         agent_id: str,
         name: str,
         start: int,
-        code: bytes | None,
-        kind: str = "vm",
+        kind: str = "python",
         python_spec: Any | None = None,
         parameters: Mapping[str, Any] | None = None,
     ) -> None:
         object.__setattr__(self, "identity", EntrantIdentity(agent_id=agent_id, name=name))
         object.__setattr__(self, "start", start)
-        object.__setattr__(self, "code", code)
         object.__setattr__(self, "kind", kind)
         object.__setattr__(self, "python_spec", python_spec)
         object.__setattr__(
@@ -149,7 +145,7 @@ class MatchEntrant:
         spec: Any,
         parameters: Mapping[str, Any] | None = None,
     ) -> MatchEntrant:
-        return cls(agent_id, name, start, None, "python", spec, parameters)
+        return cls(agent_id, name, start, "python", spec, parameters)
 
 
 @dataclass(frozen=True)
@@ -160,25 +156,17 @@ class MatchRequest:
     independently optional development-time additions
     (``docs/specs/agent_lab.md`` §4). Both default to ``None`` -- the
     "normal match path" (``bytefray run``/tournament) never sets either
-    unless a caller opts in, so an ordinary invocation still executes the
-    exact unmodified v0.4.0
-    :class:`~battle_engine.python_runtime.PythonEntrantController` code
-    path. ``bytefray run --trace PATH`` is the one normal-path caller that
-    sets ``trace_path`` explicitly (Alpha3 follow-up Phase 1); omitting
-    ``--trace`` leaves it ``None`` exactly as before. Only Python
-    compositions honor either field; a VM match request that happens to
-    set them is a no-op, since VM matches have no Python Agent API
-    boundary to trace or supervise.
+    unless a caller opts in, so an ordinary invocation runs through the
+    current :class:`~battle_engine.process_runtime.ProcessMatchController`
+    path without per-call timeout supervision.
+    ``bytefray run --trace PATH`` is the one normal-path caller that sets
+    ``trace_path`` explicitly (Alpha3 follow-up Phase 1); omitting
+    ``--trace`` leaves it ``None`` exactly as before.
 
-    ``ruleset_id`` is v2.0.0-alpha.1's one additive selector (see
-    ``docs/archive/v2/V2_0_ALPHA_ARCHITECTURE.md`` Sec 6): ``None`` continues to
-    resolve to ``BYTEFRAY_RULESET_ID`` exactly as before this field
-    existed, so every existing caller is unaffected. Never persisted on
-    ``MatchRequest`` itself -- the *resolved* identity (this value, or the
-    frozen default) is what gets threaded into the canonical match/result
-    identity and the replay/result ``ruleset_id`` fields by
-    ``canonical_match_id``/``_finalize_native_artifacts``, so an alpha
-    artifact can never masquerade as a Ruleset-v1 one after the fact.
+    ``ruleset_id`` remains an explicit selector and provenance input.
+    ``None`` now resolves to the sole executable identity,
+    ``BYTEFRAY_RULESET_V4_ID``. The resolved identity is threaded into the
+    canonical match/result identity and replay/result metadata.
     """
 
     config: Config
@@ -251,7 +239,7 @@ class NativeAgentResult:
 
 @dataclass(frozen=True)
 class NativeMatchResult:
-    """Canonical internal result of one native VM or Python match."""
+    """Canonical internal result of one Agent API v2 process match."""
 
     winner: str
     ticks_run: int
@@ -297,14 +285,15 @@ class RulesetRuntimeUnsupportedError(ValueError):
     """A match's entrant runtime kind(s) are not supported by its requested Ruleset.
 
     Distinct from :class:`UnsupportedMatchCompositionError`: that error
-    rejects *heterogeneous* entrant composition (VM mixed with Python)
-    regardless of which Ruleset was requested, and is checked first. This
-    error rejects an otherwise-homogeneous composition whose single runtime
-    kind the *requested Ruleset* itself does not support -- currently only
-    ``bytefray-rules-2``, which supports Python entrants only (Beta1
-    Phase 2; see ``docs/archive/v2/V2_0_BETA1_PHASE2_PRODUCT_EXECUTION.md``). Raised by
-    ``NativeMatchService.run`` before any entrant executes and before any
-    replay/result artifact is written.
+    rejects non-uniform entrant composition regardless of which Ruleset was
+    requested, and is checked first. This error rejects an otherwise-
+    homogeneous composition whose single runtime kind the *requested
+    Ruleset* itself does not support. V6 Phase 2B.12 retired VM/blob
+    execution entirely, so ``bytefray-rules-4`` -- the sole remaining
+    Ruleset -- is the only ``ruleset_id`` this can ever be raised for now,
+    and only for a non-Python entrant kind, which no Ruleset executes any
+    longer. Raised by ``NativeMatchService.run`` before any entrant
+    executes and before any replay/result artifact is written.
     """
 
     code = "ruleset_runtime_unsupported"
@@ -312,9 +301,8 @@ class RulesetRuntimeUnsupportedError(ValueError):
     def __init__(self, ruleset_id: str, unsupported_kinds: Iterable[str]):
         kinds = ", ".join(sorted(unsupported_kinds))
         message = (
-            f"Ruleset {ruleset_id!r} currently supports Python entrants only "
-            f"(requested runtime kind(s): {kinds}). Use {BYTEFRAY_RULESET_ID!r} "
-            "for VM entrants."
+            f"Ruleset {ruleset_id!r} does not support runtime kind(s): {kinds}. "
+            "Only Agent API v2 (process) Python agents are executable."
         )
         super().__init__(message)
         self.ruleset_id = ruleset_id
@@ -355,20 +343,20 @@ class RulesetAgentUnsupportedError(ValueError):
 
 
 class OverlappingCoreError(ValueError):
-    """Two or more entrants' permanent Ruleset-v2 vulnerable cores overlap.
+    """Two or more entrants' guarded-Ruleset cores overlap.
 
     RC2's engine-side fail-closed guard for v2.0.0-rc1's release-blocking
-    defect: under the permanent identity (``bytefray-rules-2`` only -- never
-    the historical ``bytefray-rules-2-alpha1``/``-alpha11`` identities, whose
-    pre-existing unguarded execution semantics this deliberately leaves
-    untouched), every entrant's ``CORE_SIZE``-wide core window
-    (``python_runtime.core_addresses``, using ordinary modular arena
-    wraparound) must be disjoint from every other entrant's. Raised by
-    ``NativeMatchService.run`` before any entrant executes and before any
-    replay/result artifact is written, so this is the one authoritative gate
-    every caller -- CLI, Designer, tests, and any future programmatic
-    ``MatchRequest`` construction -- passes through, regardless of whether
-    the overlapping starts arrived explicitly or via placement defaults.
+    defect, originally written for the then-permanent ``bytefray-rules-2``
+    identity and now protecting ``bytefray-rules-4`` (see
+    :data:`_CORE_PLACEMENT_GUARDED_RULESET_IDS`): every entrant's
+    ``CORE_SIZE``-wide core window (``python_runtime.core_addresses``, using
+    ordinary modular arena wraparound) must be disjoint from every other
+    entrant's. Raised by ``NativeMatchService.run`` before any entrant
+    executes and before any replay/result artifact is written, so this is
+    the one authoritative gate every caller -- CLI, Designer, tests, and any
+    future programmatic ``MatchRequest`` construction -- passes through,
+    regardless of whether the overlapping starts arrived explicitly or via
+    placement defaults.
     """
 
     code = "ruleset_v2_overlapping_cores"
@@ -391,30 +379,35 @@ class OverlappingCoreError(ValueError):
 
 
 # Which Ruleset identities reject overlapping entrant cores before
-# execution. ``bytefray-rules-2`` is the permanent product identity the RC2
-# guard was written for. The historical vulnerable-core alpha identities are
-# deliberately still excluded: their execution semantics are frozen.
+# execution. ``bytefray-rules-2`` was the permanent product identity the
+# RC2 guard was originally written for. The historical vulnerable-core
+# alpha identities were deliberately excluded even while still executable:
+# their frozen execution semantics were never touched by this guard.
 #
 # V6 Phase 2B.9 removed ``bytefray-rules-3-alpha1`` from this set: it was
 # added because the locality mechanic inherited this identical
 # vulnerable-core mechanic, but locality's only executable identity was
 # retired from execution, so the membership was dead.
 #
-# V6 Phase 2B.10 Scope B removed ``bytefray-rules-4-alpha1``/
-# ``-alpha2`` from this set for the identical reason: this table gates a
-# pre-execution guard on entrant placement for a match *about to run* --
-# it is never consulted by any historical reader (unlike
-# ``VULNERABLE_CORE_RULESET_IDS``/``OBSERVABLE_CORE_RULESET_IDS`` in
-# ``python_runtime.py``, whose membership for both alphas is retained
-# because replay/result readers do consult them) -- so retiring both
-# alphas' executable registration made their membership here dead.
-# ``bytefray-rules-4`` keeps the guard: it shares alpha2's exact
-# seeded-placement gameplay, and a behavioral divergence here (silently
-# allowing overlapping cores under the stable identity) would be exactly
-# the kind of gameplay difference the promotion must not introduce.
+# V6 Phase 2B.10 Scope B removed ``bytefray-rules-4-alpha1``/``-alpha2``
+# from this set for the identical reason: this table gates a pre-execution
+# guard on entrant placement for a match *about to run* -- it is never
+# consulted by any historical reader (unlike ``VULNERABLE_CORE_RULESET_IDS``/
+# ``OBSERVABLE_CORE_RULESET_IDS`` in ``python_runtime.py``, whose membership
+# for both alphas is retained because replay/result readers do consult
+# them) -- so retiring both alphas' executable registration made their
+# membership here dead.
+#
+# V6 Phase 2B.12 Scope C removed ``bytefray-rules-2`` itself alongside its
+# executable registration (docs/research/v6/
+# V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md): the guard it was written for
+# can no longer execute at all. ``bytefray-rules-4`` keeps the guard: it
+# shares alpha2's exact seeded-placement gameplay, and a behavioral
+# divergence here (silently allowing overlapping cores under the stable
+# identity) would be exactly the kind of gameplay difference the promotion
+# must not introduce.
 _CORE_PLACEMENT_GUARDED_RULESET_IDS: frozenset[str] = frozenset(
     {
-        BYTEFRAY_RULESET_V2_ID,
         BYTEFRAY_RULESET_V4_ID,
     }
 )
@@ -426,13 +419,13 @@ def _validate_v2_core_placement(
     entrants: tuple[MatchEntrant, ...],
     arena_size: int,
 ) -> None:
-    """Fail closed before execution if permanent Ruleset-v2 cores overlap.
+    """Fail closed before execution if a guarded Ruleset's cores overlap.
 
-    Scoped to exactly ``BYTEFRAY_RULESET_V2_ID`` -- the permanent product
-    identity this RC2 guard exists to protect (see :class:`OverlappingCoreError`).
-    Every other Ruleset identity, including the historical vulnerable-core
-    alpha identities, is unaffected: this function returns immediately for
-    them, exactly as it did not exist before this fix.
+    Scoped to exactly :data:`_CORE_PLACEMENT_GUARDED_RULESET_IDS` -- today
+    only ``bytefray-rules-4`` -- the RC2 guard this function implements
+    (see :class:`OverlappingCoreError`). Every other Ruleset identity is
+    unaffected: this function returns immediately for them, exactly as it
+    did not exist before this fix.
     """
 
     if ruleset_policy.ruleset_id not in _CORE_PLACEMENT_GUARDED_RULESET_IDS:
@@ -504,20 +497,29 @@ def _resolve_ruleset_id(request: MatchRequest) -> str:
     (dispatch), ``canonical_match_id`` (identity hashing), and
     ``_finalize_native_artifacts`` (persisted ``ruleset_id`` fields) all
     call this instead of each independently repeating ``request.ruleset_id
-    or BYTEFRAY_RULESET_ID``, so the dispatched, hashed, and persisted
+    or BYTEFRAY_RULESET_V4_ID``, so the dispatched, hashed, and persisted
     identity can never drift apart for the same request.
+
+    V6 Phase 2B.12 re-pointed the omitted-``ruleset_id`` default from the
+    retired ``BYTEFRAY_RULESET_ID`` (bytefray-rules-1) to the retained
+    control ``BYTEFRAY_RULESET_V4_ID`` (trap F-1,
+    docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md). This
+    deliberately changes ``match_id``/``result_id``/``replay_id`` for every
+    caller that constructs a ``MatchRequest`` without an explicit
+    ``ruleset_id`` -- an intended, recorded consequence, not an oversight;
+    see the completion report's identity-derivation section.
     """
 
-    return request.ruleset_id or BYTEFRAY_RULESET_ID
+    return request.ruleset_id or BYTEFRAY_RULESET_V4_ID
 
 
 def _effective_winner(raw_winner: str) -> str:
     """Map ``resolve_winner``'s "no winner" empty string to a display value.
 
     ``raw_winner`` is always already ``results.resolve_winner``'s own output
-    (see ``Kernel.run`` and ``PythonEntrantController.run``), which already
-    applies every win-mode-specific rule -- there is nothing left for this
-    function to recompute. It exists only to give ``NativeMatchResult`` and
+    (see ``ProcessMatchController.run``), which already applies every
+    win-mode-specific rule -- there is nothing left for this function to
+    recompute. It exists only to give ``NativeMatchResult`` and
     ``result.json`` a stable, non-empty display value for "no single winner",
     since both currently type ``winner`` as a required string rather than
     ``str | None`` (see ``_finalize_native_artifacts`` for the canonical
@@ -525,159 +527,6 @@ def _effective_winner(raw_winner: str) -> str:
     """
 
     return raw_winner or WINNER_TIE_SENTINEL
-
-
-def _build_result(
-    kernel: Kernel,
-    entrants: tuple[MatchEntrant, ...],
-    kernel_winner: str,
-    replay_path: Path,
-    max_ticks: int,
-) -> NativeMatchResult:
-    ticks_run = int(kernel.tick or 0)
-    arena_size = int(kernel.cfg.arena_size or 0)
-    names = {entrant.agent_id: entrant.name for entrant in entrants}
-    agent_results: list[NativeAgentResult] = []
-    for agent in kernel.agents:
-        statistics = kernel.stats.get(agent.agent_id, {})
-        territory_sum = int(statistics.get("territory_sum", 0) or 0)
-        territory_last = int(statistics.get("territory_last", 0) or 0)
-        territory_max = int(statistics.get("territory_max", 0) or 0)
-        territory_avg = territory_sum / max(1, ticks_run)
-        agent_results.append(
-            NativeAgentResult(
-                agent_id=agent.agent_id,
-                name=names.get(agent.agent_id, agent.agent_id),
-                alive=bool(agent.alive),
-                score=kernel.score.get(agent.agent_id, 0),
-                alive_ticks=int(statistics.get("alive_ticks", 0) or 0),
-                kills=int(statistics.get("kills", 0) or 0),
-                deaths=int(statistics.get("deaths", 0) or 0),
-                cpu_total=int(statistics.get("total_cpu", 0) or 0),
-                mem_writes=int(statistics.get("total_mem_writes", 0) or 0),
-                territory_last=territory_last,
-                territory_max=territory_max,
-                territory_avg=territory_avg,
-                territory_pct_last=(territory_last * 100.0 / arena_size if arena_size else 0.0),
-                territory_pct_max=(territory_max * 100.0 / arena_size if arena_size else 0.0),
-                territory_pct_avg=(territory_avg * 100.0 / arena_size if arena_size else 0.0),
-                metadata=MappingProxyType(
-                    {
-                        "kind": "vm",
-                        "entry": next(
-                            (entry.start for entry in entrants if entry.agent_id == agent.agent_id),
-                            0,
-                        ),
-                        "code_sha256": hashlib.sha256(
-                            next(
-                                entry.code or b""
-                                for entry in entrants
-                                if entry.agent_id == agent.agent_id
-                            )
-                        ).hexdigest(),
-                    }
-                ),
-            )
-        )
-    score = MappingProxyType(dict(kernel.score))
-    termination_decision = kernel.ruleset_policy.resolve_termination(
-        alive_count=sum(agent.alive for agent in kernel.agents),
-        tick=ticks_run,
-        max_ticks=max_ticks,
-    )
-    assert termination_decision.reason is not None
-    return NativeMatchResult(
-        winner=_effective_winner(kernel_winner),
-        ticks_run=ticks_run,
-        score=score,
-        agents=tuple(agent_results),
-        replay_path=replay_path,
-        termination_reason=termination_decision.reason,
-    )
-
-
-def _build_python_result(
-    runtime: PythonRuntimeResult,
-    config: Config,
-    replay_path: Path,
-) -> NativeMatchResult:
-    arena_size = config.arena_size
-    results: list[NativeAgentResult] = []
-    for state in runtime.states:
-        statistics = runtime.statistics[state.agent_id]
-        territory_sum = int(statistics.get("territory_sum", 0) or 0)
-        territory_last = int(statistics.get("territory_last", 0) or 0)
-        territory_max = int(statistics.get("territory_max", 0) or 0)
-        territory_avg = territory_sum / max(1, runtime.ticks_run)
-        results.append(
-            NativeAgentResult(
-                agent_id=state.agent_id,
-                name=state.name,
-                alive=state.alive,
-                score=runtime.score.get(state.agent_id, 0),
-                alive_ticks=int(statistics.get("alive_ticks", 0) or 0),
-                kills=int(statistics.get("kills", 0) or 0),
-                deaths=0 if state.alive else 1,
-                cpu_total=int(statistics.get("total_cpu", 0) or 0),
-                mem_writes=int(statistics.get("total_mem_writes", 0) or 0),
-                territory_last=territory_last,
-                territory_max=territory_max,
-                territory_avg=territory_avg,
-                territory_pct_last=(
-                    territory_last * 100.0 / arena_size if arena_size else 0.0
-                ),
-                territory_pct_max=(
-                    territory_max * 100.0 / arena_size if arena_size else 0.0
-                ),
-                territory_pct_avg=(
-                    territory_avg * 100.0 / arena_size if arena_size else 0.0
-                ),
-                diagnostic=state.diagnostic,
-                termination_reason=state.entrant_termination,
-                metadata=MappingProxyType(
-                    {
-                        "kind": "python",
-                        "slot": state.slot,
-                        "derived_seed": state.derived_seed,
-                        "source_sha256": state.source_digest,
-                        "api_version": state.loaded.metadata.api_version,
-                        "agent_version": state.loaded.metadata.version,
-                        # B1 (v0.7 closure pass): additive executor-recorded
-                        # identity evidence -- the entry point string the
-                        # executor actually resolved and imported from, and
-                        # a fingerprint of every local .py file under the
-                        # agent directory it actually loaded from. Both are
-                        # computed once by the executor at load time (see
-                        # python_runtime.PythonEntrantController/
-                        # supervised_runtime), never re-derived here. Purely
-                        # additive to this free-form metadata dict; readers
-                        # that only know the older three keys are
-                        # unaffected.
-                        "entry_point": state.loaded.entry_point,
-                        "local_source_fingerprint": state.local_source_fingerprint,
-                        # Lazy-import closure pass: a *second* fingerprint,
-                        # over the identical scope, computed once the whole
-                        # match has finished (every act() call already
-                        # happened) -- catches a local helper imported lazily
-                        # from inside reset()/act() (rather than at module
-                        # load time) that changed after the fingerprint
-                        # above was captured but before that lazy import
-                        # actually executed. See python_runtime.
-                        # PythonEntrantController.run/supervised_runtime.
-                        # SupervisedPythonEntrantController.run.
-                        "local_source_fingerprint_final": state.local_source_fingerprint_final,
-                    }
-                ),
-            )
-        )
-    return NativeMatchResult(
-        winner=_effective_winner(runtime.winner),
-        ticks_run=runtime.ticks_run,
-        score=MappingProxyType(dict(runtime.score)),
-        agents=tuple(results),
-        replay_path=replay_path,
-        termination_reason=runtime.termination_reason,
-    )
 
 
 def _build_process_result(
@@ -893,102 +742,6 @@ def _run_v4_process_match(
             temporary_path.unlink(missing_ok=True)
 
 
-def _run_python_match_traced(
-    request: MatchRequest,
-    replay_path: Path,
-    summary_path: Path,
-    trace_writer: TraceWriter | None,
-    ruleset_policy: RulesetPolicy,
-) -> NativeMatchResult:
-    try:
-        if request.agent_call_timeout is not None:
-            controller: PythonEntrantController | SupervisedPythonEntrantController = (
-                SupervisedPythonEntrantController(
-                    request.config,
-                    request.entrants,
-                    request.max_ticks,
-                    agent_call_timeout=request.agent_call_timeout,
-                    trace_writer=trace_writer,
-                    ruleset_policy=ruleset_policy,
-                    locality_reach=request.locality_reach,
-                )
-            )
-        else:
-            controller = PythonEntrantController(
-                request.config,
-                request.entrants,
-                request.max_ticks,
-                trace_writer=trace_writer,
-                ruleset_policy=ruleset_policy,
-                locality_reach=request.locality_reach,
-            )
-    except PythonEntrantInitializationError:
-        _remove_python_artifacts(replay_path, summary_path)
-        raise
-    except Exception as exc:
-        _remove_python_artifacts(replay_path, summary_path)
-        raise PythonMatchExecutionError(
-            RuntimeDiagnostic(
-                code="engine_failed",
-                stage="initialization",
-                message=f"Python match initialization failed: {type(exc).__name__}: {exc}",
-                exception_type=type(exc).__name__,
-            )
-        ) from exc
-
-    temporary_path: Path | None = None
-    sink: JSONLSink | None = None
-    try:
-        replay_path.parent.mkdir(parents=True, exist_ok=True)
-        descriptor, temporary_name = tempfile.mkstemp(
-            prefix=f".{replay_path.name}.", suffix=".tmp", dir=replay_path.parent
-        )
-        os.close(descriptor)
-        temporary_path = Path(temporary_name)
-        sink = JSONLSink(str(temporary_path))
-        runtime = controller.run(sink, verbose=request.verbose)
-        sink = None  # The controller closes the replay publisher.
-        recorded_path = temporary_path
-        temporary_path = None
-        return _build_python_result(runtime, request.config, recorded_path)
-    except OSError as exc:
-        raise PythonMatchExecutionError(
-            RuntimeDiagnostic(
-                code="artifact_write_failed",
-                stage="artifact",
-                message=f"Python replay could not be written: {type(exc).__name__}: {exc}",
-                exception_type=type(exc).__name__,
-            )
-        ) from exc
-    except PythonMatchExecutionError:
-        raise
-    except Exception as exc:
-        raise PythonMatchExecutionError(
-            RuntimeDiagnostic(
-                code="engine_failed",
-                stage="execution",
-                message=f"Python match engine failed: {type(exc).__name__}: {exc}",
-                exception_type=type(exc).__name__,
-            )
-        ) from exc
-    finally:
-        if sink is not None:
-            try:
-                sink.close()
-            except OSError:
-                pass
-        if temporary_path is not None:
-            try:
-                temporary_path.unlink(missing_ok=True)
-            except OSError:
-                pass
-        if temporary_path is not None or not replay_path.exists():
-            try:
-                summary_path.unlink(missing_ok=True)
-            except OSError:
-                pass
-
-
 def _identity_safe_diagnostic(diagnostic: Any) -> dict[str, Any] | None:
     """Strip human-readable exception text before it enters an identity hash.
 
@@ -1029,75 +782,34 @@ def canonical_match_id(request: MatchRequest) -> str:
 
     entrant_identities = []
     for slot, entrant in enumerate(request.entrants):
-        if entrant.kind == "vm":
-            metadata = {
-                "kind": "vm",
-                "entry": entrant.start,
-                "code_sha256": hashlib.sha256(entrant.code or b"").hexdigest(),
+        spec = entrant.python_spec
+        source = getattr(spec, "source_path", None)
+        api_version = getattr(spec, "api_version", None) or 2
+        metadata = {
+            "kind": "python",
+            "slot": slot,
+            "derived_seed": derive_agent_seed(
+                request.config.seed, slot, entrant.agent_id, api_version
+            ),
+            "source_sha256": (
+                hashlib.sha256(source.read_bytes()).hexdigest()
+                if isinstance(source, Path) and source.is_file()
+                else ""
+            ),
+            "api_version": api_version,
+            "agent_version": getattr(spec, "version", None),
+        }
+        # A Python entrant's start address is a gameplay-relevant identity
+        # input. It is gated on non-default to preserve historical start=0
+        # identities; see docs/COMPATIBILITY.md's placement note.
+        if entrant.start != 0:
+            metadata["start"] = entrant.start
+        # Resolved parameters are gameplay-relevant identity input. The key
+        # is gated on non-empty for compatibility and sorted for stability.
+        if entrant.parameters:
+            metadata["parameters"] = {
+                key: entrant.parameters[key] for key in sorted(entrant.parameters)
             }
-        else:
-            spec = entrant.python_spec
-            source = getattr(spec, "source_path", None)
-            api_version = getattr(spec, "api_version", None) or 1
-            metadata = {
-                "kind": "python",
-                "slot": slot,
-                "derived_seed": derive_agent_seed(
-                    request.config.seed, slot, entrant.agent_id, api_version
-                ),
-                "source_sha256": (
-                    hashlib.sha256(source.read_bytes()).hexdigest()
-                    if isinstance(source, Path) and source.is_file()
-                    else ""
-                ),
-                "api_version": api_version,
-                "agent_version": getattr(spec, "version", None),
-            }
-            # v2.0.0-beta2 Phase 1: a Python entrant's start address is a
-            # genuine gameplay-relevant identity input under Ruleset v2
-            # (it determines core placement/capture geometry -- see
-            # agent_evaluation.EvaluationPlacement), so two match requests
-            # differing only by start must not share match_id. Included
-            # only when non-default (unlike the "vm" branch's unconditional
-            # "entry" key above) so this key's absence at start=0 keeps
-            # every historical *start=0* Python match_id, result_id, and
-            # replay_id byte-for-byte unchanged.
-            #
-            # H4 (Beta2 Phase 4.1 correction): this is NOT a no-op for every
-            # historical Python match -- non-zero Python starts are not a
-            # historical impossibility this key's gating retroactively
-            # avoids disturbing. `bytefray run --a-start/--b-start/
-            # --c-start` and `tournament_cli`'s own `index * spacing`
-            # entrant-placement formula (every tournament entrant past the
-            # first) have both always been able to produce one. For such a
-            # match, this is a deliberate, one-time identity transition --
-            # the same kind `canonical_match_id`'s own docstring already
-            # documents for adding `BYTEFRAY_RULESET_ID` -- not an
-            # unconditionally-safe additive fix: a pre-Beta2 match_id/
-            # result_id/replay_id computed for a non-zero-start Python
-            # entrant differs from what this build now computes for the
-            # identical inputs. See docs/COMPATIBILITY.md's "Placement"
-            # note for the full, corrected compatibility statement and its
-            # resume consequence (`tournament_service._resumed_result_
-            # mismatch` fails closed on the mismatch rather than silently
-            # trusting the stale id).
-            if entrant.start != 0:
-                metadata["start"] = entrant.start
-            # V5 Alpha 1 Phase D: resolved agent parameters are a genuine
-            # gameplay-relevant identity input -- an agent handed a different
-            # sweep width plays a different match -- so two requests differing
-            # only by parameters must not share a match_id.
-            #
-            # Gated on non-empty exactly like `start` above, and for the same
-            # reason: before Phase D no Python entrant could carry parameters
-            # at all, so an empty mapping omits the key entirely and every
-            # historical match_id, result_id and replay_id stays byte-for-byte
-            # what this build computed before. Sorted so a caller's dict
-            # ordering can never change the hash.
-            if entrant.parameters:
-                metadata["parameters"] = {
-                    key: entrant.parameters[key] for key in sorted(entrant.parameters)
-                }
         entrant_identities.append(
             {"agent_id": entrant.agent_id, "name": entrant.name, "metadata": metadata}
         )
@@ -1165,16 +877,17 @@ def _finalize_native_artifacts(
     # (NativeMatchService.run rejects mixed composition before execution),
     # so one discriminator on the header describes every entrant. The cast
     # is safe because that same validation already restricts `kind` to
-    # exactly "vm" or "python" before a request can reach this function.
+    # exactly "python" before a request can reach this function.
     runtime_kind = cast(RuntimeKind, request.entrants[0].kind)
     resolved_ruleset_id = _resolve_ruleset_id(request)
 
-    # Schema 4 is the process-agent replay shape, not one Ruleset's: v4
-    # alpha2 records the identical schema-4 structure alpha1 does, so this
-    # asks which *runtime* produced the replay rather than naming Rulesets
-    # one at a time. See docs/V4_ALPHA2_DESIGN.md's schema section for why
-    # alpha2 does not bump the replay schema.
-    replay_schema_version = 4 if resolved_ruleset_id in PROCESS_RULESET_IDS else 3
+    # Schema 4 is the process-agent replay shape. V6 Phase 2B.12 retired
+    # every non-process Ruleset (bytefray-rules-1/-2, schema 3's only
+    # writers), so this is now the only schema any current match writes --
+    # see docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md.
+    # ``replay.SUPPORTED_SCHEMA_VERSIONS`` still reads schema 3 (and 2) for
+    # historical artifacts; only the writer's own selection collapses here.
+    replay_schema_version = 4
     header: ReplayHeader | None = None
     ticks: list[Any] = []
     for record in iter_replay(source_replay_path):
@@ -1280,88 +993,26 @@ def _finalize_native_artifacts(
             publish_path.with_name("summary.json").unlink(missing_ok=True)
 
 
-def _run_vm_match(
-    request: MatchRequest,
-    replay_path: Path,
-    summary_path: Path,
-    ruleset_policy: RulesetPolicy,
-) -> NativeMatchResult:
-    """Run a VM match, publishing its replay atomically.
-
-    Mirrors ``_run_python_match``'s temp-file-then-rename shape: nothing is
-    ever written at ``replay_path`` itself until the run has fully
-    succeeded, so a failure at any point -- kernel construction, spawning,
-    execution, or the write itself -- can never leave a partial file visible
-    at the requested final path.
-    """
-
-    # Clear stale artifacts from a previous run at this exact path up front
-    # (not only on failure), so a failed attempt here can never leave an old
-    # success-shaped replay/summary/result sitting at the requested location
-    # looking like this run's output.
-    for stale in (replay_path, summary_path, replay_path.with_name("result.json")):
-        stale.unlink(missing_ok=True)
-    replay_path.parent.mkdir(parents=True, exist_ok=True)
-
-    temporary_path: Path | None = None
-    sink: JSONLSink | None = None
-    try:
-        descriptor, temporary_name = tempfile.mkstemp(
-            prefix=f".{replay_path.name}.", suffix=".tmp", dir=replay_path.parent
-        )
-        os.close(descriptor)
-        temporary_path = Path(temporary_name)
-        sink = JSONLSink(str(temporary_path))
-        kernel = Kernel(
-            request.config,
-            sink,
-            summary_sink=NullSummarySink(),
-            ruleset_policy=ruleset_policy,
-        )
-        for entrant in request.entrants:
-            assert entrant.code is not None
-            kernel.spawn(
-                entrant.agent_id,
-                entrant.start % request.config.arena_size,
-                entrant.code,
-            )
-        kernel_winner = kernel.run(max_ticks=request.max_ticks, verbose=request.verbose)
-        sink.close()
-        sink = None  # Closed successfully; avoid a redundant close in finally.
-        recorded_path = temporary_path
-        temporary_path = None
-        return _build_result(
-            kernel, request.entrants, kernel_winner, recorded_path, request.max_ticks
-        )
-    finally:
-        if sink is not None:
-            try:
-                sink.close()
-            except OSError:
-                pass
-        if temporary_path is not None:
-            try:
-                temporary_path.unlink(missing_ok=True)
-            except OSError:
-                pass
-
-
 class NativeMatchService:
-    """Route homogeneous VM or Python entrants through their native controller."""
+    """Route homogeneous Python-agent entrants through the process controller.
+
+    V6 Phase 2B.12 retired VM/blob execution and Agent API v1 execution
+    (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md): every
+    entrant this service accepts must now be a Python (Agent API v2)
+    entrant with a resolved ``python_spec``, and ``resolve_ruleset_policy``
+    accepts only ``bytefray-rules-4``, so the three-way runtime dispatch
+    this method used to perform (VM / Agent API v1 Python / Agent API v2
+    process) has collapsed to the one remaining arm.
+    """
 
     def run(self, request: MatchRequest) -> NativeMatchResult:
         kinds = {entrant.kind for entrant in request.entrants}
-        if not request.entrants or not kinds <= {"vm", "python"} or len(kinds) != 1:
+        if not request.entrants or kinds != {"python"}:
             values = ", ".join(sorted(kinds)) or "none"
             raise UnsupportedMatchCompositionError(
-                "Native matches must contain either all VM entrants or all Python "
-                f"entrants; received: {values}. Mixed VM/Python matches are not supported."
+                f"Native matches must contain only Python entrants; received: {values}."
             )
-        if "vm" in kinds and any(entrant.code is None for entrant in request.entrants):
-            raise UnsupportedMatchCompositionError("Every VM entrant requires bytecode.")
-        if "python" in kinds and any(
-            entrant.python_spec is None for entrant in request.entrants
-        ):
+        if any(entrant.python_spec is None for entrant in request.entrants):
             raise UnsupportedMatchCompositionError(
                 "Every Python entrant requires a resolved Python AgentSpec."
             )
@@ -1377,10 +1028,10 @@ class NativeMatchService:
         # and threaded through to whichever runtime executes, rather than
         # each runtime resolving it itself. ``request.ruleset_id`` selects
         # the Ruleset (v2.0.0-alpha.1 additive selector); ``None`` resolves
-        # to the frozen ``BYTEFRAY_RULESET_ID`` exactly as every caller from
-        # before this field existed still does. ``resolve_ruleset_policy``
-        # fails closed for any unrecognized ID instead of silently executing
-        # as Ruleset v1.
+        # to the retained control ``BYTEFRAY_RULESET_V4_ID`` exactly as
+        # every caller that omits it does. ``resolve_ruleset_policy`` fails
+        # closed for any unrecognized or retired ID instead of silently
+        # executing under a different identity.
         ruleset_policy = resolve_ruleset_policy(_resolve_ruleset_id(request))
         if request.scheduler_chunk_size is not None or request.scheduler_rotate_start:
             ruleset_policy = replace(
@@ -1404,11 +1055,7 @@ class NativeMatchService:
 
         unsupported_agents = []
         for entrant in request.entrants:
-            api_version = (
-                getattr(entrant.python_spec, "api_version", None)
-                if entrant.kind == "python"
-                else None
-            )
+            api_version = getattr(entrant.python_spec, "api_version", None)
             if not ruleset_policy.supports_agent(
                 kind=entrant.kind, api_version=api_version
             ):
@@ -1420,66 +1067,47 @@ class NativeMatchService:
                 ruleset_policy.ruleset_id, unsupported_agents
             )
 
-        # RC2 fail-closed guard (v2.0.0-rc1's release-blocking defect): an
-        # invalid permanent-Ruleset-v2 request whose entrants' vulnerable
-        # cores overlap must never silently seed core ownership in entrant
-        # order and eliminate an earlier entrant before its first action.
-        # Fires here -- after composition/runtime-kind validation, before
-        # either runtime is invoked and before any replay/result artifact
-        # exists at ``replay_path`` -- for every caller, not only ones that
-        # went through CLI/Designer default-placement resolution.
+        # RC2 fail-closed guard (v2.0.0-rc1's release-blocking defect,
+        # inherited by the stable v4 control -- see
+        # ``_CORE_PLACEMENT_GUARDED_RULESET_IDS``): an invalid guarded-
+        # Ruleset request whose entrants' vulnerable cores overlap must
+        # never silently seed core ownership in entrant order and eliminate
+        # an earlier entrant before its first action. Fires here -- after
+        # composition/runtime-kind validation, before the runtime is
+        # invoked and before any replay/result artifact exists at
+        # ``replay_path`` -- for every caller, not only ones that went
+        # through CLI/Designer default-placement resolution.
         _validate_v2_core_placement(ruleset_policy, request.entrants, request.config.arena_size)
 
         replay_path = request.replay_path.resolve()
         summary_path = replay_path.with_name("summary.json")
-        if "python" in kinds:
-            _remove_python_artifacts(replay_path, summary_path)
-            is_v4_process_match = ruleset_policy.ruleset_id in PROCESS_RULESET_IDS
-            trace_writer = _open_trace_writer(
-                request,
-                schema_version=(
-                    TRACE_SCHEMA_VERSION_V2 if is_v4_process_match else TRACE_SCHEMA_VERSION
-                ),
+        _remove_python_artifacts(replay_path, summary_path)
+        trace_writer = _open_trace_writer(request, schema_version=TRACE_SCHEMA_VERSION_V2)
+        try:
+            recorded = _run_v4_process_match(
+                request, replay_path, summary_path, trace_writer, ruleset_policy
             )
             try:
-                recorded = (
-                    _run_v4_process_match(
-                        request, replay_path, summary_path, trace_writer, ruleset_policy
-                    )
-                    if is_v4_process_match
-                    else _run_python_match_traced(
-                        request, replay_path, summary_path, trace_writer, ruleset_policy
-                    )
+                final = _finalize_native_artifacts(
+                    request, recorded, final_replay_path=replay_path
                 )
-                try:
-                    final = _finalize_native_artifacts(
-                        request, recorded, final_replay_path=replay_path
-                    )
-                    if trace_writer is not None:
-                        import hashlib
-
-                        from battle_engine.agent_trace import BindingRecord
-                        sha = hashlib.sha256(replay_path.read_bytes()).hexdigest()
-                        trace_writer.write_binding(BindingRecord(
-                            match_id=canonical_match_id(request),
-                            ruleset_id=ruleset_policy.ruleset_id,
-                            entrant_identities=tuple(e.agent_id for e in request.entrants),
-                            replay_sha256=sha,
-                        ))
-                    return final
-                finally:
-                    recorded.replay_path.unlink(missing_ok=True)
-            finally:
                 if trace_writer is not None:
-                    trace_writer.close()
-                    
-        recorded = _run_vm_match(request, replay_path, summary_path, ruleset_policy)
-        try:
-            return _finalize_native_artifacts(
-                request, recorded, final_replay_path=replay_path
-            )
+                    import hashlib
+
+                    from battle_engine.agent_trace import BindingRecord
+                    sha = hashlib.sha256(replay_path.read_bytes()).hexdigest()
+                    trace_writer.write_binding(BindingRecord(
+                        match_id=canonical_match_id(request),
+                        ruleset_id=ruleset_policy.ruleset_id,
+                        entrant_identities=tuple(e.agent_id for e in request.entrants),
+                        replay_sha256=sha,
+                    ))
+                return final
+            finally:
+                recorded.replay_path.unlink(missing_ok=True)
         finally:
-            recorded.replay_path.unlink(missing_ok=True)
+            if trace_writer is not None:
+                trace_writer.close()
 
 
 __all__ = [

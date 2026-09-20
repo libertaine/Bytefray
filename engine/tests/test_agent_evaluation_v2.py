@@ -16,14 +16,12 @@ from pathlib import Path
 import pytest
 from battle_engine.agent_evaluation import (
     EVALUATION_RULES_COMPATIBILITY_ID,
-    IDENTITY_VERSION,
-    SCHEMA_VERSION,
     EvaluationRequest,
     EvaluationService,
     build_matrix,
 )
 
-NOP_ACTION = "AgentAction(ActionKind.NOP)"
+NOP_ACTION = "AgentAction(ActionKindV2.READ, observation.self_anchor)"
 
 
 def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> Path:
@@ -31,14 +29,15 @@ def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> Path
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
     (directory / "agent.py").write_text(
         f"""
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
+    def declare_processes(self): return [ProcessDeclaration("main", 1, 1.0)]
     def reset(self, context): pass
     def act(self, observation): return {action}
 def create_agent(): return Agent()
@@ -74,6 +73,72 @@ def two_agents(tmp_path: Path) -> Path:
     _write_python_agent(tmp_path, "candidate")
     _write_python_agent(tmp_path, "opponent")
     return tmp_path
+
+
+def _independent_identity(root: Path, agent_id: str) -> dict:
+    """Encode this fixture's source identity without reading evaluation.json."""
+
+    content = (root / "agents" / agent_id / "agent.py").read_bytes()
+    local = hashlib.sha256()
+    local.update(b"1")  # LOCAL_SOURCE_FINGERPRINT_VERSION
+    local.update(b"\0agent.py\0")
+    local.update(hashlib.sha256(content).digest())
+    return {
+        "agent_id": agent_id,
+        "kind": "python",
+        "api_version": 2,
+        "agent_version": "1.0",
+        "entry_point": "agent.py:create_agent",
+        "source_sha256": hashlib.sha256(content).hexdigest(),
+        "local_source_fingerprint": local.hexdigest(),
+    }
+
+
+def _independent_single_seed_v4_evaluation_id(root: Path) -> tuple[str, dict]:
+    """Pinned canonical payload for ``_request(root)``.
+
+    The payload comes from request inputs and fixture source bytes, not from
+    the produced artifact. Seed 1's arena-512 placement ``(380, 263)`` is a
+    frozen Ruleset-4 vector encoded independently of the production helper.
+    """
+
+    from battle_engine.result_model import stable_id
+
+    planned = {
+        "candidate": _independent_identity(root, "candidate"),
+        "baseline": None,
+        "opponents": [_independent_identity(root, "opponent")],
+    }
+    payload = {
+        "identity_version": 7,
+        **planned,
+        "seeds": [1],
+        "ticks": 10,
+        "effective_conditions": {
+            "tick_limit": 10,
+            "arena_size": 512,
+            "action_budget": 8,
+            "win_mode": "score_fallback",
+            "weights": {
+                "alive": 1.0,
+                "kill": 5.0,
+                "territory": 1.0,
+                "territory_bucket": 64,
+            },
+            "agent_api_version": 2,
+            "subject_slot": "A",
+            "opponent_slot": "B",
+            "entrant_order": ["A", "B"],
+            "runtime_kind": "python",
+            "supervision": "unsupervised",
+            "tracing": "untraced",
+        },
+        "rules_compatibility_id": "bytefray-rules-4",
+        "arena_alignment_mode": "ruleset_v4_seeded_placements",
+        "orientation_mode": "candidate_first_only",
+        "placements": [{"seed": 1, "subject_start": 380, "opponent_start": 263}],
+    }
+    return stable_id("evaluation-v2", payload), planned
 
 
 # ---------------------------------------------------------------------------
@@ -121,12 +186,12 @@ def test_v2_artifact_records_effective_conditions_and_rules_id(two_agents: Path)
     # for the additive "agent_revisions" field; comparing only against the
     # imported constant (not a second hardcoded literal) so this assertion
     # doesn't itself go stale on the next legitimate, reviewed bump.
-    assert data["schema_version"] == SCHEMA_VERSION
-    assert data["identity_version"] == IDENTITY_VERSION
-    assert data["rules_compatibility_id"] == EVALUATION_RULES_COMPATIBILITY_ID
+    assert data["schema_version"] == 7
+    assert data["identity_version"] == 7
+    assert data["rules_compatibility_id"] == "bytefray-rules-4"
     conditions = data["effective_conditions"]
     assert conditions["tick_limit"] == 10
-    assert conditions["arena_size"] == 4096
+    assert conditions["arena_size"] == 512
     assert conditions["subject_slot"] == "A"
     assert conditions["opponent_slot"] == "B"
     assert data["effective_conditions_fingerprint"].startswith("evaluation-conditions_")
@@ -158,21 +223,21 @@ def test_evaluation_cells_always_execute_under_ruleset_v1(two_agents: Path):
     service = EvaluationService()
     result = service.run(_request(two_agents))
     data = json.loads(result.state_path.read_text(encoding="utf-8"))
-    assert data["rules_compatibility_id"] == EVALUATION_RULES_COMPATIBILITY_ID
+    assert data["rules_compatibility_id"] == "bytefray-rules-4"
     assert EVALUATION_RULES_COMPATIBILITY_ID == "bytefray-rules-1"
     assert data["cells"]
     for cell in data["cells"]:
         cell_dir = result.state_path.parent / cell["artifact_dir"]
         match_result_data = json.loads((cell_dir / "result.json").read_text(encoding="utf-8"))
-        assert match_result_data["ruleset_id"] == "bytefray-rules-1"
+        assert match_result_data["ruleset_id"] == "bytefray-rules-4"
 
 
 def test_evaluate_cli_exposes_the_product_ruleset_choices_excluding_retired_v4_alphas(
     capsys,
 ):
-    """Evaluation exposes the historical Rulesets plus the stable v4
-    identity. V6 Phase 2B.10 Scope B removed both v4 prerelease alphas
-    from this choice list alongside their executable registration."""
+    """Evaluation exposes the retained control v4 identity. V6 Phase 2B.12
+    Scope C retired bytefray-rules-1 and bytefray-rules-2 from new execution
+    alongside the retired prerelease alphas."""
 
     from battle_engine.agent_evaluation import main as evaluate_main
 
@@ -180,8 +245,10 @@ def test_evaluate_cli_exposes_the_product_ruleset_choices_excluding_retired_v4_a
         evaluate_main(["--help"])
     out = capsys.readouterr().out
     assert (
-        "--ruleset {bytefray-rules-1,bytefray-rules-2,bytefray-rules-4}" in out
+        "--ruleset {bytefray-rules-4}" in out
     )
+    assert "{bytefray-rules-1" not in out
+    assert "{bytefray-rules-2" not in out
     assert "bytefray-rules-4-alpha1" not in out
     assert "bytefray-rules-4-alpha2" not in out
 
@@ -229,7 +296,7 @@ def test_v2_execution_context_recorded_for_freshly_executed_cells(two_agents: Pa
     data = json.loads(result.state_path.read_text(encoding="utf-8"))
     assert len(data["execution_contexts"]) == 1
     context = data["execution_contexts"][0]
-    assert context["rules_compatibility_id"] == EVALUATION_RULES_COMPATIBILITY_ID
+    assert context["rules_compatibility_id"] == "bytefray-rules-4"
     for cell in data["cells"]:
         assert cell["execution_context_id"] == context["context_id"]
 
@@ -280,7 +347,7 @@ def test_v2_no_op_resume_under_a_mocked_different_runtime_preserves_completion_c
         lambda rules_id: mod.ExecutionContext(
             context_id="evaluation-context_mockedmockedmockedmocked",
             bytefray_version="9.9.9-mocked",
-            agent_api_version=1,
+            agent_api_version=2,
             python_version="9.9.9",
             result_schema_version=1,
             replay_schema_version=3,
@@ -316,7 +383,7 @@ def test_v2_retry_under_new_context_appends_a_second_execution_context(two_agent
         lambda rules_id: mod.ExecutionContext(
             context_id="evaluation-context_deadbeefdeadbeefdeadbeef",
             bytefray_version="9.9.9-test",
-            agent_api_version=1,
+            agent_api_version=2,
             python_version="9.9.9",
             result_schema_version=1,
             replay_schema_version=3,
@@ -541,7 +608,7 @@ def test_toctou_edit_during_execution_is_detected(tmp_path: Path, monkeypatch):
     request = _request(tmp_path)
     service = EvaluationService()
 
-    import battle_engine.python_runtime as runtime_mod
+    import battle_engine.process_runtime as runtime_mod
 
     opponent_path = tmp_path / "agents" / "opponent" / "agent.py"
     original_source = opponent_path.read_text(encoding="utf-8")
@@ -615,10 +682,11 @@ def test_toctou_manifest_entry_point_change_is_detected(tmp_path: Path, monkeypa
     alt_path = tmp_path / "agents" / "candidate" / "alt_agent.py"
     alt_path.write_text(
         """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
+    def declare_processes(self): return [ProcessDeclaration("main", 1, 1.0)]
     def reset(self, context): pass
-    def act(self, observation): return AgentAction(ActionKind.NOP)  # a distinct revision
+    def act(self, observation): return AgentAction(ActionKindV2.READ, 0)  # a distinct revision
 def create_agent(): return Agent()
 """,
         encoding="utf-8",
@@ -636,7 +704,7 @@ def create_agent(): return Agent()
             json.dumps(
                 {
                     "kind": "python",
-                    "api_version": 1,
+                    "api_version": 2,
                     "entrypoint": "alt_agent.py:create_agent",
                     "version": "1.0",
                 }
@@ -673,10 +741,11 @@ def test_toctou_same_file_factory_retarget_is_detected(tmp_path: Path, monkeypat
     candidate_dir = _write_python_agent(tmp_path, "candidate")
     (candidate_dir / "agent.py").write_text(
         """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
+    def declare_processes(self): return [ProcessDeclaration("main", 1, 1.0)]
     def reset(self, context): pass
-    def act(self, observation): return AgentAction(ActionKind.NOP)
+    def act(self, observation): return AgentAction(ActionKindV2.READ, 0)
 def create_agent(): return Agent()
 def create_alt(): return Agent()
 """,
@@ -695,7 +764,7 @@ def create_alt(): return Agent()
     def _retarget_factory_then_run(*args, **kwargs):
         manifest_path.write_text(
             json.dumps(
-                {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_alt", "version": "1.0"}
+                {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_alt", "version": "1.0"}
             ),
             encoding="utf-8",
         )
@@ -719,31 +788,13 @@ def create_alt(): return Agent()
     planned_candidate = data["planned_identities"]["candidate"]
     assert planned_candidate["entry_point"] == "agent.py:create_agent"
 
-    # The evaluation ID must still reproduce deterministically from the
-    # exact persisted plan (identity_version/candidate/baseline/opponents/
-    # seeds/ticks/effective_conditions/rules_compatibility_id) -- the drift
-    # abort must never have mutated the frozen plan that defines it.
-    from battle_engine.agent_evaluation import IDENTITY_VERSION as CURRENT_IDENTITY_VERSION
-    from battle_engine.result_model import stable_id
-
-    recomputed = stable_id(
-        "evaluation-v2",
-        {
-            "identity_version": data["identity_version"],
-            "candidate": data["planned_identities"]["candidate"],
-            "baseline": data["planned_identities"]["baseline"],
-            "opponents": data["planned_identities"]["opponents"],
-            "seeds": data["seeds"],
-            "ticks": data["ticks"],
-            "effective_conditions": data["effective_conditions"],
-            "rules_compatibility_id": data["rules_compatibility_id"],
-            # v0.9 Phase 6 (Sec J.2/AA.4.2): new sibling payload keys.
-            "orientation_mode": data["orientation_mode"],
-            "arena_alignment_mode": data["arena_alignment_mode"],
-        },
-    )
-    assert data["identity_version"] == CURRENT_IDENTITY_VERSION
-    assert recomputed == data["evaluation_id"]
+    # Independently encode the canonical payload from the frozen inputs.
+    # Reading evaluation.json back into the expected payload would only
+    # prove that the artifact agrees with itself.
+    expected_id, expected_plan = _independent_single_seed_v4_evaluation_id(tmp_path)
+    assert data["identity_version"] == 7
+    assert data["planned_identities"] == expected_plan
+    assert data["evaluation_id"] == expected_id
 
 
 def test_toctou_local_helper_edit_after_precheck_is_detected(tmp_path: Path, monkeypatch):
@@ -812,17 +863,20 @@ def _write_lazy_helper_candidate(root: Path) -> tuple[Path, Path]:
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
     (directory / "agent.py").write_text(
         """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 import importlib.util
 from pathlib import Path
 
 class Agent:
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
     def reset(self, context):
         pass
 
@@ -832,8 +886,8 @@ class Agent:
         helper = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(helper)
         if helper.VALUE == 2:
-            return AgentAction(ActionKind.HALT)
-        return AgentAction(ActionKind.NOP)
+            raise RuntimeError("saw value 2")
+        return AgentAction(ActionKindV2.READ, observation.self_anchor)
 
 def create_agent(): return Agent()
 """,
@@ -858,20 +912,15 @@ def test_lazy_import_helper_edit_after_initial_fingerprint_is_detected(
     request = _request(tmp_path, ticks=20)
     service = EvaluationService()
 
-    import battle_engine.python_runtime as runtime_mod
+    import battle_engine.process_runtime as runtime_mod
 
-    real_run = runtime_mod.PythonEntrantController.run
+    real_run = runtime_mod.ProcessMatchController.run
 
-    def _edit_helper_then_run(self, sink, *, verbose):
-        # PythonEntrantController.__init__ has already captured the
-        # *initial* load-time fingerprint (over "VALUE = 1") by the time
-        # `.run()` is called. Edit the helper now -- strictly between that
-        # capture and the tick loop's act() calls -- so the lazy import
-        # inside act() observes this edit.
+    def _edit_helper_then_run(self, sink=None, *, verbose=False):
         helper_path.write_text("VALUE = 2  # edited after initial fingerprint\n", encoding="utf-8")
         return real_run(self, sink, verbose=verbose)
 
-    monkeypatch.setattr(runtime_mod.PythonEntrantController, "run", _edit_helper_then_run)
+    monkeypatch.setattr(runtime_mod.ProcessMatchController, "run", _edit_helper_then_run)
     result = service.run(request)
 
     data = json.loads(result.state_path.read_text(encoding="utf-8"))
@@ -933,17 +982,20 @@ def test_lazy_import_helper_edit_and_restore_before_final_check_is_not_falsely_f
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
     (directory / "agent.py").write_text(
         """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 import importlib.util
 from pathlib import Path
 
 class Agent:
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
     def reset(self, context):
         pass
 
@@ -955,8 +1007,8 @@ class Agent:
         observed = helper.VALUE
         helper_path.write_text("VALUE = 1")
         if observed == 2:
-            return AgentAction(ActionKind.HALT)
-        return AgentAction(ActionKind.NOP)
+            raise RuntimeError("saw value 2")
+        return AgentAction(ActionKindV2.READ, observation.self_anchor)
 
 def create_agent(): return Agent()
 """,
@@ -971,15 +1023,15 @@ def create_agent(): return Agent()
     request = _request(tmp_path, ticks=20)
     service = EvaluationService()
 
-    import battle_engine.python_runtime as runtime_mod
+    import battle_engine.process_runtime as runtime_mod
 
-    real_run = runtime_mod.PythonEntrantController.run
+    real_run = runtime_mod.ProcessMatchController.run
 
-    def _edit_then_run(self, sink, *, verbose):
+    def _edit_then_run(self, sink=None, *, verbose=False):
         helper_path.write_text("VALUE = 2", encoding="utf-8")
         return real_run(self, sink, verbose=verbose)
 
-    monkeypatch.setattr(runtime_mod.PythonEntrantController, "run", _edit_then_run)
+    monkeypatch.setattr(runtime_mod.ProcessMatchController, "run", _edit_then_run)
     result = service.run(request)
 
     data = json.loads(result.state_path.read_text(encoding="utf-8"))
@@ -1018,10 +1070,11 @@ def test_toctou_initialization_failure_after_intervening_source_change_is_flagge
     def _break_then_run(*args, **kwargs):
         agent_path.write_text(
             """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
+    def declare_processes(self): return [ProcessDeclaration("main", 1, 1.0)]
     def reset(self, context): raise RuntimeError("boom")
-    def act(self, observation): return AgentAction(ActionKind.NOP)
+    def act(self, observation): return AgentAction(ActionKindV2.READ, 0)
 def create_agent(): return Agent()
 """,
             encoding="utf-8",
@@ -1044,27 +1097,12 @@ def test_persisted_planned_identity_rehashes_to_the_recorded_evaluation_id(two_a
     having persisted a different one.
     """
 
-    from battle_engine.agent_evaluation import EVALUATION_RULES_COMPATIBILITY_ID
-    from battle_engine.result_model import stable_id
-
     service = EvaluationService()
     result = service.run(_request(two_agents))
     data = json.loads(result.state_path.read_text(encoding="utf-8"))
-    planned = data["planned_identities"]
-    payload = {
-        "identity_version": IDENTITY_VERSION,
-        "candidate": planned["candidate"],
-        "baseline": planned["baseline"],
-        "opponents": planned["opponents"],
-        "seeds": data["seeds"],
-        "ticks": data["ticks"],
-        "effective_conditions": data["effective_conditions"],
-        "rules_compatibility_id": EVALUATION_RULES_COMPATIBILITY_ID,
-        # v0.9 Phase 6 (Sec J.2/AA.4.2): new sibling payload keys.
-        "orientation_mode": data["orientation_mode"],
-        "arena_alignment_mode": data["arena_alignment_mode"],
-    }
-    assert stable_id("evaluation-v2", payload) == data["evaluation_id"]
+    expected_id, expected_plan = _independent_single_seed_v4_evaluation_id(two_agents)
+    assert data["planned_identities"] == expected_plan
+    assert result.evaluation_id == data["evaluation_id"] == expected_id
 
 
 # ---------------------------------------------------------------------------
@@ -1366,7 +1404,7 @@ def _write_helper_agent(root: Path, name: str) -> Path:
     agent_dir.mkdir(parents=True)
     (agent_dir / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
@@ -1375,17 +1413,18 @@ def _write_helper_agent(root: Path, name: str) -> Path:
 import os, sys
 sys.path.insert(0, os.path.dirname(__file__))
 import helper
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
+    def declare_processes(self): return [ProcessDeclaration("main", 1, 1.0)]
     def reset(self, context): pass
-    def act(self, observation): return helper.pick_action()
+    def act(self, observation): return helper.pick_action(observation)
 def create_agent(): return Agent()
 """,
         encoding="utf-8",
     )
     (agent_dir / "helper.py").write_text(
-        "from battle_engine.agent_api import ActionKind, AgentAction\n"
-        "def pick_action(): return AgentAction(ActionKind.NOP)\n",
+        "from battle_engine.agent_api import ActionKindV2, AgentAction\n"
+        "def pick_action(obs): return AgentAction(ActionKindV2.READ, obs.self_anchor)\n",
         encoding="utf-8",
     )
     return agent_dir
@@ -1413,8 +1452,8 @@ def test_local_source_fingerprint_changes_when_imported_helper_edited(tmp_path: 
     fingerprint_before = local_source_fingerprint(agent_dir)
 
     (agent_dir / "helper.py").write_text(
-        "from battle_engine.agent_api import ActionKind, AgentAction\n"
-        "def pick_action(): return AgentAction(ActionKind.NOP)  # edited helper\n",
+        "from battle_engine.agent_api import ActionKindV2, AgentAction\n"
+        "def pick_action(obs): return AgentAction(ActionKindV2.READ, obs.self_anchor)  # edited helper\n",
         encoding="utf-8",
     )
 
@@ -1483,8 +1522,8 @@ def test_evaluation_id_changes_after_helper_only_edit(tmp_path: Path):
 
     helper_path = tmp_path / "agents" / "candidate" / "helper.py"
     helper_path.write_text(
-        "from battle_engine.agent_api import ActionKind, AgentAction\n"
-        "def pick_action(): return AgentAction(ActionKind.NOP)  # edited\n",
+        "from battle_engine.agent_api import ActionKindV2, AgentAction\n"
+        "def pick_action(obs): return AgentAction(ActionKindV2.READ, obs.self_anchor)  # edited\n",
         encoding="utf-8",
     )
     _specs_after, evaluation_id_after = service.preflight(
@@ -1513,8 +1552,8 @@ def test_resume_after_helper_edit_requires_a_new_plan_not_a_silent_new_revision(
 
     helper_path = tmp_path / "agents" / "candidate" / "helper.py"
     helper_path.write_text(
-        "from battle_engine.agent_api import ActionKind, AgentAction\n"
-        "def pick_action(): return AgentAction(ActionKind.NOP)  # edited\n",
+        "from battle_engine.agent_api import ActionKindV2, AgentAction\n"
+        "def pick_action(obs): return AgentAction(ActionKindV2.READ, obs.self_anchor)  # edited\n",
         encoding="utf-8",
     )
 

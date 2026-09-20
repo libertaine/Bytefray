@@ -17,11 +17,11 @@ termination decision/reason (``RulesetPolicy.resolve_termination``) -- and
 provides one fail-closed resolver from a Ruleset ID string to its policy.
 
 This is deliberately a thin seam, not a Ruleset framework. Exactly one
-Ruleset exists (Ruleset v1); the resolver exists so runtime construction
+Ruleset is executable (stable Ruleset v4); the resolver exists so runtime construction
 has one obvious place to obtain Ruleset-owned scheduling/termination
 semantics instead of duplicating them per runtime, and so an unrecognized
 Ruleset ID fails before any gameplay executes rather than silently running
-as v1. Scoring, statistics, and winner resolution are not yet
+as a retired or unknown identity. Scoring, statistics, and winner resolution are not yet
 Ruleset-policy-owned -- see ``docs/archive/v1/V1_5_PHASE4_TERMINATION_POLICY.md`` for
 what remains outside this seam and why.
 """
@@ -34,7 +34,6 @@ from enum import Enum
 from typing import ClassVar
 
 from battle_engine.rules import (
-    BYTEFRAY_RULESET_ID,
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
@@ -82,17 +81,11 @@ class RulesetPolicy:
     concern of the callers that hold a ``RulesetPolicy``, not of the policy
     itself.
 
-    ``supported_runtime_kinds``: ``None`` (the default) means this Ruleset
-    imposes no restriction -- every runtime kind
-    :class:`~battle_engine.match_service.NativeMatchService` already accepts
-    ("vm", "python") may execute under it, exactly as before this field
-    existed. A non-``None`` frozenset is this Ruleset's exhaustive supported
-    set; see :meth:`unsupported_runtime_kinds`. Only the permanent
-    permanent/current process Rulesets set this to Python-only. Ruleset v1
-    and the historical v2 alpha identities remain runtime-kind unrestricted,
-    preserving their exact existing behavior (including alpha's inert-on-VM
-    dispatch). ``supported_python_api_versions`` adds the orthogonal Agent API
-    requirement used by v1/v2 (API v1) and v4 alpha1 (API v2).
+    ``supported_runtime_kinds``: ``None`` means a policy imposes no runtime-kind
+    restriction; a non-``None`` frozenset is exhaustive. The sole registered
+    policy is explicitly Python-only and supports only Agent API v2. Retired
+    identities have no policy objects here; their constants and provenance
+    remain solely for historical artifact recognition.
     """
 
     ruleset_id: str
@@ -234,12 +227,19 @@ class RulesetPolicy:
         return TerminationDecision(False, None)
 
 
-# The frozen Ruleset. ``ruleset_id`` is exactly ``BYTEFRAY_RULESET_ID`` --
-# this module never mints its own identity for it.
-RULESET_V1 = RulesetPolicy(
-    ruleset_id=BYTEFRAY_RULESET_ID,
-    supported_python_api_versions=frozenset({1}),
-)
+# Ruleset v1 -- the original VM/blob-and-Agent-API-v1 identity (see
+# docs/RULES.md). Retired from executable registration by V6 Phase 2B.12
+# Scope C (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md),
+# alongside Agent API v1 and VM/blob execution entirely: it was the only
+# registered Ruleset that ever executed a VM/blob entrant. The ID constant
+# (``rules.BYTEFRAY_RULESET_ID``, still ``"bytefray-rules-1"``) is kept --
+# unlike the removed ``RulesetPolicy`` object -- because historical
+# artifacts recorded under it (including the 673 in this repository's own
+# corpus that carry no explicit ``ruleset_id`` and are recovered as this
+# identity, see ``result_model.resolve_result_ruleset``/``replay.
+# resolve_replay_ruleset``) must remain readable, attributable, and
+# replayable indefinitely. ``resolve_ruleset_policy`` now raises
+# ``UnknownRulesetError`` for it, like any other unregistered ID.
 
 
 # v2.0.0-alpha.1's experimental identity (see
@@ -272,49 +272,23 @@ BYTEFRAY_RULESET_V2_ALPHA11_ID = "bytefray-rules-2-alpha11"
 
 
 # v2.0.0-beta1's permanent identity (see docs/V2_0_BETA1_PLAN.md and
-# docs/V2_0_ALPHA11_RULESET_V2_CANDIDATE_RESOLUTION.md Sec 25-26). The alpha
-# program validated "Vulnerable Core" plus "Consistent Core Observability"
-# as a beta-ready candidate under the experimental identity
-# ``bytefray-rules-2-alpha11``; beta1 promotes that evidence-backed
-# semantic into a real, permanent compatibility identity.
-#
-# Deliberately its own explicit key, never an alias of
-# ``bytefray-rules-2-alpha11``: ``rules._RULESET_ALIASES`` gets no entry for
-# it, and this table does not collapse the two together. Historical alpha11
-# artifacts must remain distinctly, honestly identified as alpha11 --
-# reusing that identity here would silently reinterpret ten alphas' worth of
-# experimental evidence as a permanent product contract, and would let a
-# future evaluation accidentally align an experimental run against a
-# permanent one under one canonical match identity. The two share their
-# behavioral implementation in ``battle_engine.python_runtime`` (the
-# semantics are intentionally identical at promotion time -- proven live
-# through V6 Phase 2B.8, and preserved since Phase 2B.9 retired alpha11's
-# own executable registration as a frozen-golden characterization of this
-# identity -- see ``engine/tests/test_ruleset_v2_promotion_equivalence.py``'s
-# module docstring) but are registered, dispatched, and persisted as
-# separate identities.
-#
-# Scheduling and termination are again *identical* to Ruleset v1 -- neither
-# ``run_scheduler`` nor ``resolve_termination`` reads ``self.ruleset_id``.
-#
-# Beta1 Phase 2 gives this identity -- and only this identity -- a runtime-
-# kind restriction: ``supported_runtime_kinds={"python"}``. Permanent
-# Ruleset-v2 gameplay depends on Python-runtime Vulnerable Core semantics
-# that have no VM implementation; unlike ``bytefray-rules-2-alpha1``/
-# ``-alpha11`` (which keep dispatching successfully but inertly on a VM
-# entrant, their exact pre-existing historical behavior, deliberately
-# preserved), a VM entrant requested under this permanent identity is
-# rejected by ``NativeMatchService`` before any entrant executes -- see
-# ``docs/archive/v2/V2_0_BETA1_PHASE2_PRODUCT_EXECUTION.md``. This is an execution
-# compatibility boundary, not a gameplay change: the frozen semantics this
-# policy's ``run_scheduler``/``resolve_termination`` expose are untouched.
+# docs/V2_0_ALPHA11_RULESET_V2_CANDIDATE_RESOLUTION.md Sec 25-26). Retired
+# from executable registration by V6 Phase 2B.12 Scope C
+# (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md), alongside
+# Agent API v1 execution entirely: this was the current gameplay contract
+# for every Agent API v1 Python roster, and 58% of this repository's own
+# historical artifact corpus was recorded under it. The ID constant is kept
+# -- unlike the removed ``RulesetPolicy`` object -- because those historical
+# artifacts must remain readable, attributable, and replayable
+# indefinitely. ``resolve_ruleset_policy`` now raises
+# ``UnknownRulesetError`` for it, like any other unregistered ID. Its
+# promotion proof from ``bytefray-rules-2-alpha11`` -- the frozen-golden
+# characterization Phase 2B.9 converted -- was deliberately deleted by
+# Phase 2B.12 rather than kept, since once neither side of that comparison
+# executes at all, a frozen-vs-frozen digest no longer detects any live
+# drift; the historical evidence survives in Git history and in Phase
+# 2B.9's own report.
 BYTEFRAY_RULESET_V2_ID = "bytefray-rules-2"
-RULESET_V2 = RulesetPolicy(
-    ruleset_id=BYTEFRAY_RULESET_V2_ID,
-    supported_runtime_kinds=frozenset({"python"}),
-    supported_python_api_versions=frozenset({1}),
-    core_placement="seat_spread",
-)
 
 
 # v3 research Phase 2's experimental bounded-locality identity (see
@@ -400,8 +374,7 @@ RULESET_V4 = RulesetPolicy(
 
 
 # Which Ruleset identities execute on the Agent API v2 process runtime
-# (``battle_engine.process_runtime.ProcessMatchController``) rather than the
-# Agent API v1 ``PythonEntrantController``. A finite, explicit set for the
+# (``battle_engine.process_runtime.ProcessMatchController``). A finite, explicit set for the
 # same reason ``_RULESET_POLICIES`` is a finite table -- and the one place
 # ``match_service`` asks the question, so adding a future process Ruleset
 # never means hunting down scattered ``== BYTEFRAY_RULESET_V4_ID``
@@ -425,7 +398,8 @@ class UnknownRulesetError(LookupError):
     Raised by :func:`resolve_ruleset_policy` for any ID not present in
     :data:`_RULESET_POLICIES`. Deliberately fails closed: an unrecognized
     Ruleset ID -- including a plausible-looking but unregistered future
-    identity -- must never silently resolve to Ruleset v1.
+    identity, or a retired one such as ``bytefray-rules-1``/``-2`` -- must
+    never silently resolve to the current control.
     """
 
     def __init__(self, ruleset_id: str):
@@ -452,16 +426,19 @@ class UnknownRulesetError(LookupError):
 # ``bytefray-rules-3-alpha1`` (docs/research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md).
 # V6 Phase 2B.10 Scope B removed two more -- ``bytefray-rules-4-alpha1`` and
 # ``bytefray-rules-4-alpha2`` (docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md).
-# Neither was ever selectable from any product surface after this phase;
-# each ID constant is retained above for historical-artifact recognition,
-# but ``resolve_ruleset_policy`` now raises ``UnknownRulesetError`` for all
-# five like any other unregistered ID. Do not re-add them here, and never
-# map them to ``bytefray-rules-2`` or ``bytefray-rules-4`` elsewhere in this
-# module -- historical recognition and executable registration are
-# deliberately separate concerns (see ``rules.py``'s alias-table docstring).
+# V6 Phase 2B.12 Scope C removed the final two -- ``bytefray-rules-1`` and
+# ``bytefray-rules-2`` -- retiring Agent API v1 and VM/blob execution
+# entirely (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md).
+# None of these seven was ever selectable from any product surface after
+# its own retirement phase; each ID constant is retained above for
+# historical-artifact recognition, but ``resolve_ruleset_policy`` now
+# raises ``UnknownRulesetError`` for all seven like any other unregistered
+# ID. Do not re-add them here, and never map them to ``bytefray-rules-4``
+# elsewhere in this module -- historical recognition and executable
+# registration are deliberately separate concerns (see ``rules.py``'s
+# alias-table docstring). ``bytefray-rules-4`` is now the sole executable
+# entry.
 _RULESET_POLICIES: Mapping[str, RulesetPolicy] = {
-    RULESET_V1.ruleset_id: RULESET_V1,
-    RULESET_V2.ruleset_id: RULESET_V2,
     RULESET_V4.ruleset_id: RULESET_V4,
 }
 
@@ -541,13 +518,25 @@ class NoCompatibleRulesetError(ValueError):
 
     def __init__(self, agents: Iterable[object]) -> None:
         roster = tuple(agents)
-        details = ", ".join(_describe_agent(agent) for agent in roster)
-        message = (
-            "No Bytefray Ruleset supports this match's entrants together: "
-            f"{details}. Entrants must share one compatible runtime kind and "
-            "Agent API version; select a compatible roster, or pass an "
-            "explicit Ruleset to override automatic selection."
-        )
+        if not roster:
+            # V6 Phase 2B.12 (trap F-2): an empty roster used to resolve
+            # silently to the retired bytefray-rules-1. There is no
+            # Ruleset-independent reason to prefer one identity over
+            # another for zero entrants, and a retired identity is strictly
+            # worse than an explicit failure, so this now fails closed too.
+            message = (
+                "No Bytefray Ruleset can be resolved for an empty entrant "
+                "roster; select a compatible roster, or pass an explicit "
+                "Ruleset to override automatic selection."
+            )
+        else:
+            details = ", ".join(_describe_agent(agent) for agent in roster)
+            message = (
+                "No Bytefray Ruleset supports this match's entrants together: "
+                f"{details}. Entrants must share one compatible runtime kind and "
+                "Agent API version; select a compatible roster, or pass an "
+                "explicit Ruleset to override automatic selection."
+            )
         super().__init__(message)
         self.agents = roster
         self.message = message
@@ -556,47 +545,27 @@ class NoCompatibleRulesetError(ValueError):
 # Which Rulesets an omitted selection may resolve to, in product-preference
 # order. A finite, explicit tuple for the same reason ``_RULESET_POLICIES``
 # is a finite table: automatic resolution must never wander into an
-# experimental identity (``bytefray-rules-2-alpha1``/``-alpha11``/
-# ``bytefray-rules-3-alpha1``) that a user did not ask for by name. Order is
-# the product preference -- current Python gameplay first, then the
-# process-agent contract, then the historical compatibility identity that is
-# the only one executing VM/blob entrants.
+# experimental identity that a user did not ask for by name.
 #
-# v4.0.0-rc1 Phase 2: the permanent stable identity now occupies the
-# process-agent slot, replacing alpha2 there exactly as alpha2 replaced
-# alpha1 before it (see the superseded comment this one replaces, preserved
-# in git history). Every v4 identity accepts exactly the same rosters
-# (Python-only, Agent API v2), so a candidate walk that reached an older one
-# first would make the newer one unreachable, and one that listed an older
-# identity after a newer one would list an entry no roster could ever
-# select automatically. The product intent this tuple has always encoded is
-# "an omitted Ruleset gets the *current* v4 gameplay contract" -- prerelease
-# during alpha1/alpha2, permanent now that a stable identity exists. Neither
-# alpha1 nor alpha2 is hidden by this: both stay fully registered in
-# ``_RULESET_POLICIES``, explicitly selectable by name from every CLI and
-# Designer surface, and are still what every persisted alpha1/alpha2
-# artifact resolves to -- see docs/COMPATIBILITY.md's v4 identity section.
+# V6 Phase 2B.12 (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md)
+# narrowed this from ``(rules-2, rules-4, rules-1)`` to its single remaining
+# member: Agent API v1 and VM/blob execution are retired, so no roster can
+# ever resolve to ``bytefray-rules-2`` or ``bytefray-rules-1`` here again --
+# an Agent-API-v1 or VM/blob roster now fails closed with
+# :class:`NoCompatibleRulesetError` instead (see
+# :func:`resolve_omitted_ruleset_for_agents`). Kept as a tuple, not
+# collapsed to a bare constant, so a future Ruleset (``bytefray-rules-6``)
+# has one obvious place to be added -- see the V5-research constraint below,
+# which still applies unchanged.
 #
-# V5 research constraint (pre-Phase-0 baseline remediation). An experimental
-# V5 Ruleset must require *explicit* selection: it must not be added to this
-# tuple, and must never become what an existing Agent API v2 roster receives
-# when the Ruleset is omitted. Stable ``bytefray-rules-4`` is the immutable
-# scientific control the V5 program measures against, so silently
-# reassigning the omitted-selection slot to an experimental identity would
-# contaminate every comparison made against it -- the same class of defect
-# as the ``ProcessMatchController`` alpha1 fallback corrected alongside this
-# note (see test_v4_runtime_default_ruleset.py). The v4 promotion precedent
-# above is not a counter-example: alpha1 -> alpha2 -> stable moved this slot
-# only between identities that were already the *current shipped* v4
-# gameplay contract, never onto an experimental one.
-# ``test_automatic_resolution_never_selects_an_experimental_identity`` and
-# ``test_omitted_ruleset_resolves_from_runtime_kind_and_api_version`` in
-# engine/tests/test_ruleset_policy.py already enforce both halves of this.
-OMITTED_RULESET_CANDIDATES: tuple[str, ...] = (
-    BYTEFRAY_RULESET_V2_ID,
-    BYTEFRAY_RULESET_V4_ID,
-    BYTEFRAY_RULESET_ID,
-)
+# V5 research constraint (pre-Phase-0 baseline remediation), preserved: an
+# experimental Ruleset must require *explicit* selection: it must not be
+# added to this tuple, and must never become what an existing Agent API v2
+# roster receives when the Ruleset is omitted. Stable ``bytefray-rules-4``
+# is the immutable scientific control the V5/V6 research programs measure
+# against, so silently reassigning the omitted-selection slot to an
+# experimental identity would contaminate every comparison made against it.
+OMITTED_RULESET_CANDIDATES: tuple[str, ...] = (BYTEFRAY_RULESET_V4_ID,)
 
 
 def resolve_omitted_ruleset_for_agents(
@@ -617,15 +586,17 @@ def resolve_omitted_ruleset_for_agents(
     identity, as of ``v4.0.0-rc1`` Phase 2 -- earlier product history saw
     this same seam resolve to ``bytefray-rules-4-alpha1`` and then
     ``bytefray-rules-4-alpha2`` in turn, entirely by walking
-    :data:`OMITTED_RULESET_CANDIDATES`, never by a change here) automatically
-    while an Agent API v1 roster keeps resolving to ``bytefray-rules-2``,
-    with neither spelling an internal Ruleset identity by hand.
+    :data:`OMITTED_RULESET_CANDIDATES`, never by a change here) automatically.
+    An Agent API v1 or VM/blob roster raises :class:`NoCompatibleRulesetError`
+    (V6 Phase 2B.12 retired both from execution), with no internal Ruleset
+    identity ever spelled out by hand.
 
     ``agents`` is the resolved entrant metadata for *this* request -- any
     projection :func:`agent_supported_by_ruleset` accepts (an ``AgentSpec``,
-    a manifest mapping, a catalog row's metadata). An empty roster keeps the
-    historical :data:`~battle_engine.rules.BYTEFRAY_RULESET_ID` default:
-    there is nothing to derive a Ruleset from.
+    a manifest mapping, a catalog row's metadata). An empty roster now fails
+    closed with :class:`NoCompatibleRulesetError` too (V6 Phase 2B.12, trap
+    F-2): there is nothing to derive a Ruleset from, and no Ruleset should
+    be preferred over any other for zero entrants.
 
     An explicit ``requested_ruleset_id`` is always returned unchanged --
     this function never validates, corrects, or overrides a user's own
@@ -640,7 +611,7 @@ def resolve_omitted_ruleset_for_agents(
         return requested_ruleset_id
     roster = tuple(agents)
     if not roster:
-        return BYTEFRAY_RULESET_ID
+        raise NoCompatibleRulesetError(roster)
     for candidate in candidates:
         if all(agent_supported_by_ruleset(agent, candidate) for agent in roster):
             return candidate
@@ -676,81 +647,41 @@ def resolve_omitted_ruleset_id(
 ) -> str:
     """Resolve an optional ``--ruleset`` from entrant runtime kinds alone.
 
-    This is the RC1 default-Ruleset-defect fix: the seam a user-facing
-    caller (``bytefray run``, ``bytefray agents test``, ``bytefray agents
-    evaluate``, ``bytefray tournament``) called, with the entrant runtime
-    kinds it already knows for *this* request, to turn a caller's omitted
-    ``--ruleset`` into the same current-gameplay identity Agent Designer has
-    used since v3.0.0-alpha2 (see ``app/services/ruleset_options.py``),
-    instead of the historical Ruleset-v1 identity every native execution
-    path fell back to before this fix.
-
-    **A runtime kind alone is no longer enough information to resolve a
-    Ruleset**, because ``bytefray-rules-2`` and ``bytefray-rules-4-alpha1``
-    are both Python-only and are told apart by Agent API version, not
-    runtime kind. Every in-tree product entry point therefore now calls
-    :func:`resolve_omitted_ruleset_for_agents` with real entrant metadata.
-    This function is retained as the kind-only compatibility surface for
-    out-of-tree callers, delegating to that same resolver with Python
-    projected as Agent API v1 -- the assumption its signature has always
-    encoded -- so its documented behavior below is unchanged.
+    Retained as a thin, kind-only compatibility surface for out-of-tree
+    callers -- every in-tree product entry point calls the API-aware
+    :func:`resolve_omitted_ruleset_for_agents` directly, since a runtime
+    kind alone has not been enough information to resolve a Ruleset since
+    Agent API v2 was introduced. This function delegates to that same
+    resolver rather than repeating its candidate walk, so this surface can
+    never drift from it.
 
     ``requested_ruleset_id`` is ``None`` for "the caller omitted --ruleset"
     and any other value for "the caller explicitly selected this Ruleset".
     An explicit selection is always returned unchanged -- this function
-    never validates, corrects, or overrides one, including a selection that
-    a downstream runtime-compatibility check (
-    :meth:`RulesetPolicy.unsupported_runtime_kinds`, raised as
-    ``RulesetRuntimeUnsupportedError``) will go on to reject as
-    incompatible with ``runtime_kinds``. Only an omitted Ruleset is ever
-    resolved here.
+    never validates, corrects, or overrides one. Only an omitted Ruleset is
+    ever resolved here.
 
-    ``runtime_kinds`` is the resolved entrant ``kind`` set for this
-    specific request (``MatchEntrant.kind`` values: ``"python"``/``"vm"``,
-    or an evaluation/tournament roster's equivalent). An omitted Ruleset
-    resolves to :data:`BYTEFRAY_RULESET_V2_ID` exactly when every requested
-    entrant is Python (a non-empty subset of :data:`_PYTHON_ONLY_KINDS`);
-    every other case -- VM-only, mixed Python/VM, or an empty/unknown kind
-    set -- resolves to the frozen :data:`~battle_engine.rules.
-    BYTEFRAY_RULESET_ID` (Ruleset v1), exactly the historical omitted
-    default. A mixed Python/VM roster therefore still resolves to Ruleset
-    v1 here (v1 imposes no runtime-kind restriction, so it always executes
-    a mixed roster); this function never itself raises for an incompatible
-    composition -- that stays ``NativeMatchService``'s job, unchanged, and
-    is only reachable from an *explicit* incompatible selection, never from
-    an omitted one.
-
-    Callers that construct their own ``MatchRequest``/``EvaluationRequest``/
-    ``TournamentRequest`` directly (existing tests, research tools in
-    ``tools/``, and any other library caller that never goes through one of
-    the product CLIs above) are completely unaffected: none of those types'
-    own ``ruleset_id: str | None = None`` defaults change meaning by this
-    function existing. Only a CLI entry point that explicitly calls this
-    function, and then threads its return value into the request it
-    constructs, sees the new omitted-Ruleset behavior -- see each CLI
-    module's own ``main()`` for where that happens.
+    ``runtime_kinds`` is the resolved entrant ``kind`` set for this specific
+    request. V6 Phase 2B.12 retired Agent API v1 and VM/blob execution
+    (trap F-3, docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md):
+    a bare runtime kind carries no Agent API version, so Python is now
+    projected as Agent API v2 -- the only Agent API generation any Ruleset
+    still executes -- rather than the historical v1 projection. An empty,
+    VM-only, or mixed kind set now raises :class:`NoCompatibleRulesetError`
+    instead of silently falling back to the retired ``bytefray-rules-1``:
+    this function used to swallow that exception and return a retired
+    identity for every such input, which was strictly worse than the clean
+    failure ``NativeMatchService``/callers already handle everywhere else.
     """
 
     if requested_ruleset_id is not None:
         return requested_ruleset_id
     kinds = frozenset(runtime_kinds)
-    if not kinds:
-        return BYTEFRAY_RULESET_ID
-    # Delegates to the one resolution implementation rather than repeating
-    # its candidate walk, so this compatibility surface cannot drift from
-    # the API-aware resolver. A bare runtime kind carries no Agent API
-    # version, so Python is projected as Agent API v1 -- exactly the
-    # assumption this signature has always encoded -- and any roster no
-    # candidate supports keeps this function's historical Ruleset-v1
-    # fallback instead of raising a new exception at an old call site.
     projected = [
-        {"kind": kind, "api_version": 1 if kind in _PYTHON_ONLY_KINDS else None}
+        {"kind": kind, "api_version": 2 if kind in _PYTHON_ONLY_KINDS else None}
         for kind in sorted(kinds)
     ]
-    try:
-        return resolve_omitted_ruleset_for_agents(None, projected)
-    except NoCompatibleRulesetError:
-        return BYTEFRAY_RULESET_ID
+    return resolve_omitted_ruleset_for_agents(None, projected)
 
 
 __all__ = [
@@ -763,8 +694,6 @@ __all__ = [
     "BYTEFRAY_RULESET_V4_ID",
     "OMITTED_RULESET_CANDIDATES",
     "PROCESS_RULESET_IDS",
-    "RULESET_V1",
-    "RULESET_V2",
     "RULESET_V4",
     "NoCompatibleRulesetError",
     "RulesetPolicy",

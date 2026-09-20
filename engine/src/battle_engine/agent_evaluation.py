@@ -50,12 +50,9 @@ from battle_engine.agent_test import (
     OPPONENT_SLOT,
     TESTED_AGENT_SLOT,
     AgentTestError,
-    GroupEntrantSpec,
-    GroupInitializationFailureOutcome,
     InitializationFailureOutcome,
     _resolve_default_parameters,
     test_agent,
-    test_agents,
 )
 from battle_engine.agents import AgentSpec, resolve_agent
 from battle_engine.config import Config
@@ -93,9 +90,6 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
-    PROCESS_RULESET_IDS,
-    NoCompatibleRulesetError,
-    resolve_omitted_ruleset_for_agents,
 )
 
 SCHEMA_NAME = "bytefray.evaluation"
@@ -590,15 +584,25 @@ def standard_layouts(entrant_count: int, arena_size: int | None = None) -> tuple
 def resolve_evaluation_ruleset_id(ruleset_id: str | None) -> str:
     """The ``rules_compatibility_id`` a request's optional ``--ruleset`` resolves to.
 
-    ``None`` (omitted) and the explicit v1 identity resolve to the exact
-    same historical value evaluation has always used -- Phase 1H's
-    "omitted" and "v1" cases are one and the same resolved methodology, byte-
-    identical in every downstream hash payload (see ``EvaluationRequest.
-    resolved_rules_compatibility_id``).
+    V6 Phase 2B.12 (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md)
+    split this function's two prior uses of ``EVALUATION_RULES_COMPATIBILITY_ID``
+    apart, per its own trap T-K-1: that constant remains ``bytefray-rules-1``
+    forever, because it is the historical attribution value stamped on
+    every evaluation artifact recorded before this phase and must keep
+    meaning exactly that -- never the current control. This function's
+    *new-request* omitted-``--ruleset`` default is a different concern
+    (which methodology a *new* evaluation with no explicit selection
+    actually runs under), and now resolves to the retained control
+    ``BYTEFRAY_RULESET_V4_ID`` instead, since ``bytefray-rules-1`` can no
+    longer execute at all. An explicit ``--ruleset`` is still returned
+    unchanged (normalized), including a historical explicit selection such
+    as ``bytefray-rules-4-alpha2`` for reproducing a prerelease methodology
+    -- ``EvaluationService._validate`` is what rejects a now-unsupported
+    explicit choice, not this resolver.
     """
 
     if ruleset_id is None:
-        return EVALUATION_RULES_COMPATIBILITY_ID
+        return BYTEFRAY_RULESET_V4_ID
     return normalize_ruleset_id(ruleset_id)
 
 
@@ -641,13 +645,9 @@ def is_ruleset_v2_methodology(rules_compatibility_id: str) -> bool:
 #: it has always had it; only the identities whose defining gameplay change
 #: *is* seed-derived placement -- alpha2, and now its permanent promotion
 #: `BYTEFRAY_RULESET_V4_ID` -- get the methodology that actually lets them
-#: place. Phase 2 does not remove alpha2 from this set: an explicit
-#: `--ruleset bytefray-rules-4-alpha2` evaluation remains a fully supported,
-#: honestly-attributed historical-prerelease-methodology artifact (schema 7,
-#: `rules_compatibility_id: "bytefray-rules-4-alpha2"`) -- only the
-#: *omitted*-Ruleset default for an Agent API v2 roster changes, and that
-#: change lives entirely in `ruleset_policy.OMITTED_RULESET_CANDIDATES`, not
-#: here.
+#: place. Alpha2 remains in this *classification* table so historical schema-7
+#: artifacts retain their methodology attribution; new-run validation rejects
+#: that retired identity before execution.
 _V4_METHODOLOGY_RULESET_IDS: frozenset[str] = frozenset(
     {BYTEFRAY_RULESET_V4_ALPHA2_ID, BYTEFRAY_RULESET_V4_ID}
 )
@@ -972,6 +972,11 @@ def _resolve_python_agent(root: Path, agent_id: str) -> AgentSpec:
         raise EvaluationConfigurationError(
             f"Agent {agent_id!r} is kind {spec.kind!r}; evaluation requires Python "
             "agents only (see docs/specs/agent_evaluation.md Sec 17)."
+        )
+    if spec.api_version != 2:
+        raise EvaluationConfigurationError(
+            f"Agent {agent_id!r} declares Agent API v{spec.api_version}; new evaluations "
+            "require Agent API v2. Historical evaluation artifacts remain readable."
         )
     return spec
 
@@ -1348,14 +1353,9 @@ class EvaluationRequest:
     # count must never affect what an evaluation *means*, only how fast it
     # runs.
     workers: int = 1
-    # v2.0.0-beta2 Phase 1: explicit Ruleset selection for `agents evaluate`,
-    # mirroring `agent_test`'s own `--ruleset` precedent. `None` (the
-    # default) and the explicit v1 identity both resolve to the exact
-    # historical v1 evaluation methodology, byte-identical in every
-    # downstream identity hash -- see `resolved_rules_compatibility_id`/
-    # `resolve_evaluation_ruleset_id`. Only `BYTEFRAY_RULESET_V2_ID`
-    # activates the balanced-placement/standard-seed/capture-metric v2
-    # methodology.
+    # Explicit Ruleset selection for `agents evaluate`. For new requests,
+    # `None` resolves to stable v4; retired explicit identities are preserved
+    # as data long enough for validation to reject them clearly, never execute.
     ruleset_id: str | None = None
     # v2.0.0-beta2 Phase 2: opt into multi-entrant ("group") methodology --
     # `candidate_id` plus every `opponent_ids` entry are fielded TOGETHER as
@@ -1777,9 +1777,9 @@ def build_matrix(
     # (subject x opponent x seed x placement x orientation) -- it lives in
     # its own function and returns early, rather than threading a "group"
     # branch through every line of the pairwise loop.
-    if request.group and resolved_is_v2:
-        return _build_group_matrix(
-            request, evaluation_id, resolved_rules_id, specs, conditions_fingerprint
+    if request.group:
+        raise EvaluationConfigurationError(
+            "Multi-entrant evaluation is retired and cannot build a new execution matrix."
         )
 
     # v3 Phase 0D: placements are pure functions of arena size, so they
@@ -3329,7 +3329,7 @@ class EvaluationService:
         if request.workers < 1:
             raise EvaluationConfigurationError("Evaluation requires a positive worker count.")
         # v3 Phase 0D: fail closed rather than letting a nonsensical arena
-        # reach the VM. The lower bound is not arbitrary: `standard_
+        # reach match execution. The lower bound is not arbitrary: `standard_
         # placements`/`standard_layouts` derive every start address as a
         # fraction of arena size, and both are documented non-overlapping
         # only while that fraction stays larger than one core (CORE_SIZE,
@@ -3366,9 +3366,8 @@ class EvaluationService:
                 "Candidate and baseline must be different agents."
             )
         # Phase 1H: evaluation is product-facing and must never expose a
-        # historical alpha Ruleset identity, even though
-        # resolve_ruleset_policy would happily resolve one -- mirrors
-        # agent_test's own --ruleset choices exactly. Every entrant is
+        # historical alpha Ruleset identity. This mirrors agent_test's own
+        # --ruleset choices exactly. Every entrant is
         # already restricted to Python agents by _resolve_python_agent
         # below regardless of Ruleset, so this never needs to separately
         # duplicate the runtime-kind check Beta1's runtime boundary already
@@ -3377,17 +3376,16 @@ class EvaluationService:
         #
         # V6 Phase 2B.10 Scope B removed bytefray-rules-4-alpha1/-alpha2
         # from this allow-list alongside their executable registration
-        # (docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md):
-        # neither can create a new evaluation artifact any longer.
-        if request.ruleset_id is not None and request.ruleset_id not in (
-            BYTEFRAY_RULESET_ID,
-            BYTEFRAY_RULESET_V2_ID,
-            BYTEFRAY_RULESET_V4_ID,
-        ):
+        # (docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md).
+        # V6 Phase 2B.12 removed bytefray-rules-1/-2 the same way, retiring
+        # Agent API v1 and VM/blob execution entirely
+        # (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md):
+        # bytefray-rules-4 is the only Ruleset that can create a new
+        # evaluation artifact now.
+        if request.ruleset_id is not None and request.ruleset_id != BYTEFRAY_RULESET_V4_ID:
             raise EvaluationConfigurationError(
                 f"Unsupported evaluation --ruleset {request.ruleset_id!r}; expected "
-                f"{BYTEFRAY_RULESET_ID!r}, {BYTEFRAY_RULESET_V2_ID!r}, "
-                f"or {BYTEFRAY_RULESET_V4_ID!r}."
+                f"{BYTEFRAY_RULESET_V4_ID!r}."
             )
 
         # v4.0.0-rc1 Phase 1 (research report Sec H.1 item 3/Sec 6.2 of the
@@ -3426,21 +3424,26 @@ class EvaluationService:
         # v2.0.0-beta2 Phase 2: multi-entrant ("group") methodology
         # constraints -- fail closed rather than silently degrading to
         # pairwise or silently ignoring `group`.
+        #
+        # V6 Phase 2B.12 retired bytefray-rules-2, the only Ruleset identity
+        # `is_v2_methodology` ever accepts for a *new* request (the gate at
+        # the top of this method already rejects any explicit --ruleset
+        # other than bytefray-rules-4, so `request.is_v2_methodology` can
+        # never be true here any longer): multi-entrant evaluation's
+        # methodology -- balanced placement, standard seeds, capture
+        # metrics -- was defined specifically for Ruleset v2 gameplay, and
+        # redesigning it for Ruleset v4's placement/scoring model is a
+        # gameplay-methodology decision this retirement phase does not make
+        # (see docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md
+        # Sec 51's "no Ruleset 4 gameplay changes" boundary). A historical
+        # group evaluation artifact (schema 6) remains fully readable --
+        # only creating a *new* one is retired.
         if request.group:
-            if not request.is_v2_methodology:
-                raise EvaluationConfigurationError(
-                    "Multi-entrant (--group) evaluation requires --ruleset bytefray-rules-2."
-                )
-            if request.baseline_id is not None:
-                raise EvaluationConfigurationError(
-                    "Multi-entrant (--group) evaluation does not support --baseline "
-                    "comparison in this phase; compare two separate evaluations instead."
-                )
-            if len(request.opponent_ids) < 2:
-                raise EvaluationConfigurationError(
-                    "Multi-entrant (--group) evaluation requires at least two opponents "
-                    "(a 3+ entrant roster); use ordinary 1v1 evaluation for a single opponent."
-                )
+            raise EvaluationConfigurationError(
+                "Multi-entrant (--group) evaluation is retired: it required Ruleset "
+                "bytefray-rules-2, which V6 Phase 2B.12 retired. Existing group "
+                "evaluation artifacts remain readable."
+            )
         subject_ids = [request.candidate_id]
         if request.baseline_id is not None:
             subject_ids.append(request.baseline_id)
@@ -3449,18 +3452,10 @@ class EvaluationService:
         return {agent_id: _resolve_python_agent(root, agent_id) for agent_id in all_ids}
 
     def _effective_conditions(self, request: EvaluationRequest) -> EffectiveConditions:
-        # Agent API version is part of the persisted and identity-bearing
-        # evaluation conditions.  Rulesets v1-v3 are historical Agent API v1
-        # methodologies; a later installation-wide API bump must not silently
-        # redefine their recipes.  Only the process-agent Rulesets (v4
-        # alpha1 and alpha2 -- PROCESS_RULESET_IDS, the same finite set
-        # match_service uses to decide which entrant controller to run) use
-        # the installation's current Agent API version.
-        agent_api_version = (
-            get_project_info().agent_api_version
-            if request.resolved_rules_compatibility_id in PROCESS_RULESET_IDS
-            else 1
-        )
+        # New evaluation execution is exclusively Agent API v2 / Ruleset 4.
+        # Historical adapters read their recorded value directly and never
+        # call this new-run conditions builder.
+        agent_api_version = get_project_info().agent_api_version
         return effective_conditions_for(
             request.ticks,
             agent_api_version,
@@ -3759,24 +3754,11 @@ class EvaluationService:
         if drift is not None:
             return CellExecutionResult(cell=replace(cell, status="drift_detected", **drift))
 
-        # v2.0.0-beta2 Phase 2: a group cell is executed through an
-        # entirely separate branch (agent_test.test_agents, not test_agent)
-        # -- the pairwise path below is completely unmodified by this
-        # addition, byte-for-byte, matching build_matrix's own "separate
-        # function, early return" precedent for the same reason.
+        # Persisted group cells remain readable/resumable, but Scope C
+        # retired their Ruleset and therefore their new execution path.
         if cell.is_group:
-            return self._execute_group_cell(
-                cell,
-                ticks,
-                data_root,
-                root,
-                planned_identities,
-                arena_size=arena_size,
-                instr_per_tick=instr_per_tick,
-                locality_reach=locality_reach,
-                kill_weight=kill_weight,
-                scheduler_chunk_size=scheduler_chunk_size,
-                scheduler_rotate_start=scheduler_rotate_start,
+            raise EvaluationConfigurationError(
+                "Multi-entrant evaluation execution is retired; historical cells are read-only."
             )
 
         # v0.9 Phase 6 (Phase 5 spec Sec H.1/T.4): `candidate_first` reuses
@@ -3900,122 +3882,6 @@ class EvaluationService:
         return CellExecutionResult(
             cell=replace(
                 _cell_from_match_result(cell, outcome.match_result),
-                execution_context_id=context.context_id,
-            ),
-            execution_context=context,
-        )
-
-    def _execute_group_cell(
-        self,
-        cell: EvaluationCell,
-        ticks: int,
-        data_root: Path | None,
-        root: Path,
-        planned_identities: Mapping[str, dict[str, Any]],
-        *,
-        arena_size: int | None = None,
-        instr_per_tick: int | None = None,
-        locality_reach: int | None = None,
-        kill_weight: float | None = None,
-        scheduler_chunk_size: int | None = None,
-        scheduler_rotate_start: bool = False,
-    ) -> CellExecutionResult:
-        """The multi-entrant generalization of the pairwise branch of
-        :meth:`_execute_cell` (v2.0.0-beta2 Phase 2).
-
-        Same purity contract (pure apart from filesystem I/O under
-        ``cell.artifact_dir``/reading agent source under ``root``) --
-        called only from ``_execute_cell``, after the shared pre-execution
-        drift check has already passed.
-        """
-
-        context = current_execution_context(cell.rules_compatibility_id)
-        entrants = [
-            GroupEntrantSpec(seat=seat_label(index), agent_id=agent_id, start=start)
-            for index, (agent_id, start) in enumerate(
-                zip(cell.seat_agent_ids, cell.seat_starts, strict=True)
-            )
-        ]
-
-        try:
-            outcome = test_agents(
-                entrants,
-                seed=cell.seed,
-                ticks=ticks,
-                timeout=None,
-                trace=False,
-                run_dir=cell.artifact_dir,
-                data_root=data_root,
-                ruleset_id=cell.rules_compatibility_id,
-                arena_size=arena_size,
-                instr_per_tick=instr_per_tick,
-                locality_reach=locality_reach,
-                kill_weight=kill_weight,
-                scheduler_chunk_size=scheduler_chunk_size,
-                scheduler_rotate_start=scheduler_rotate_start,
-            )
-
-        except AgentTestError as exc:
-            return CellExecutionResult(
-                cell=replace(
-                    cell,
-                    status="failed",
-                    outcome=None,
-                    error_code=exc.diagnostic.code,
-                    error_message=" ".join(str(exc).split())[:240],
-                    execution_context_id=context.context_id,
-                ),
-                execution_context=context,
-            )
-        if isinstance(outcome, GroupInitializationFailureOutcome):
-            post_init_drift = self._detect_pre_execution_drift(cell, planned_identities, root)
-            if post_init_drift is not None:
-                return CellExecutionResult(
-                    cell=replace(
-                        cell,
-                        status="drift_detected",
-                        **post_init_drift,
-                        execution_context_id=context.context_id,
-                    ),
-                    execution_context=context,
-                )
-            # "subject_init_failed" only when the *candidate's own* seat is
-            # the one that failed to initialize -- any other failed seat is
-            # reported as "opponent_init_failed", mirroring the pairwise
-            # path's exact two-value vocabulary (Phase 2 does not introduce
-            # a third "which opponent" outcome value here; the failed
-            # agent's own id/seat is still fully recorded in error_message).
-            result_outcome = (
-                "subject_init_failed" if outcome.seat == cell.subject_seat else "opponent_init_failed"
-            )
-            return CellExecutionResult(
-                cell=replace(
-                    cell,
-                    status="completed",
-                    outcome=result_outcome,
-                    error_code=outcome.diagnostic.code,
-                    error_message=(
-                        f"seat {outcome.seat} ({outcome.agent_id}): "
-                        + " ".join(outcome.diagnostic.message.split())
-                    )[:240],
-                    execution_context_id=context.context_id,
-                ),
-                execution_context=context,
-            )
-        post_drift = _post_execution_identity_drift_group(cell, outcome.match_result, planned_identities)
-        if post_drift is not None:
-            return CellExecutionResult(
-                cell=replace(
-                    cell,
-                    status="drift_detected",
-                    **post_drift,
-                    execution_context_id=context.context_id,
-                ),
-                execution_context=context,
-            )
-        return CellExecutionResult(
-            cell=replace(
-                _cell_from_match_result_group(cell, outcome.match_result),
                 execution_context_id=context.context_id,
             ),
             execution_context=context,
@@ -4367,30 +4233,20 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--ruleset",
-        choices=[
-            BYTEFRAY_RULESET_ID,
-            BYTEFRAY_RULESET_V2_ID,
-            BYTEFRAY_RULESET_V4_ID,
-        ],
+        choices=[BYTEFRAY_RULESET_V4_ID],
         default=None,
         help=(
-            "gameplay Ruleset identity. If omitted (and no --preset supplies one), "
-            "resolves automatically from the candidate/baseline/opponent roster's "
-            f"declared Agent API version: an Agent API v1 roster resolves to "
-            f"{BYTEFRAY_RULESET_V2_ID}; an Agent API v2 roster resolves to "
-            f"{BYTEFRAY_RULESET_V4_ID} (the stable v4 evaluation methodology). "
-            f"{BYTEFRAY_RULESET_V2_ID} runs the balanced Ruleset-v2 1v1 methodology: "
-            "standard placement set, standard seed set default, and capture/core "
-            f"evidence. {BYTEFRAY_RULESET_ID} keeps the historical v1 evaluation "
-            f"methodology. {BYTEFRAY_RULESET_V4_ID} runs Agent API v2 process "
-            "entrants through the same production match service under the stable v4 "
-            "seeded-placement methodology: arena pinned to "
-            f"{STANDARD_V4_ARENA_SIZE}, {len(STANDARD_V4_SEEDS)} deterministic "
-            "placement samples by default, both orientations paired over the same "
-            "seat-bound geometry. See "
-            "docs/research/v4/V4_RC1_PHASE2_STABLE_CONTRACT_PROMOTION.md, "
-            "docs/research/v4/V4_RC1_PHASE1_EVALUATION_METHODOLOGY.md, and "
-            "docs/V2_0_BETA2_PHASE1_EVALUATION_METHODOLOGY.md."
+            f"gameplay Ruleset identity. {BYTEFRAY_RULESET_V4_ID} is the only "
+            "Ruleset Agent API v2 rosters can evaluate under, and is selected "
+            "automatically when this flag is omitted (and no --preset "
+            f"supplies one). {BYTEFRAY_RULESET_V4_ID} runs Agent API v2 "
+            "process entrants through the same production match service "
+            "under the stable v4 seeded-placement methodology: arena pinned "
+            f"to {STANDARD_V4_ARENA_SIZE}, {len(STANDARD_V4_SEEDS)} "
+            "deterministic placement samples by default, both orientations "
+            "paired over the same seat-bound geometry. See "
+            "docs/research/v4/V4_RC1_PHASE2_STABLE_CONTRACT_PROMOTION.md and "
+            "docs/research/v4/V4_RC1_PHASE1_EVALUATION_METHODOLOGY.md."
         ),
     )
     parser.add_argument(
@@ -4402,12 +4258,9 @@ def _parser() -> argparse.ArgumentParser:
         "--group",
         action="store_true",
         help=(
-            "multi-entrant methodology: field the candidate and every --opponents "
-            "entry TOGETHER as one N-entrant roster each cell (standard layouts x "
-            "standard seat permutations), instead of one pairwise 1v1 cell per "
-            "opponent. Requires --ruleset bytefray-rules-2 and at least two "
-            "--opponents (a 3+ entrant roster); does not support --baseline in this "
-            "phase. See docs/V2_0_BETA2_PHASE2_MULTI_ENTRANT_EVALUATION.md."
+            "retired compatibility flag: new group evaluations can no longer be "
+            "created because their Ruleset 2 methodology is retired; historical "
+            "group artifacts remain readable"
         ),
     )
     seed_group = parser.add_mutually_exclusive_group()
@@ -5204,37 +5057,7 @@ def main(argv: list[str] | None = None) -> int:
         if ruleset_id is None and preset is not None:
             ruleset_id = preset.ruleset_id
         if ruleset_id is None:
-            # F.6 fix (docs/research/v4/V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md
-            # Sec F.6): this used to call the kind-only
-            # `resolve_omitted_ruleset_id(None, {"python"})`, hardcoding
-            # "python" runtime kind with no Agent API version -- which
-            # always resolved to bytefray-rules-2 regardless of whether the
-            # actual roster declared Agent API v1 or v2, silently
-            # producing an evaluation in which every cell failed
-            # `ruleset_agent_unsupported`. `run`/`agents test`/`tournament`
-            # were migrated to the metadata-aware
-            # `resolve_omitted_ruleset_for_agents` for exactly this reason
-            # when it was introduced; `agents evaluate` was never migrated
-            # with its siblings. Resolving real roster metadata here (the
-            # same Python-only constraint `_validate` enforces regardless
-            # of Ruleset) makes an Agent API v1 roster keep resolving to
-            # bytefray-rules-2 unchanged, and makes an Agent API v2 roster
-            # resolve to the v4-methodology evaluation contract -- alpha2
-            # at F.6's own introduction, and (v4.0.0-rc1 Phase 2) the
-            # permanent bytefray-rules-4 identity today, since both share
-            # `OMITTED_RULESET_CANDIDATES`'s one product-preference table --
-            # instead of an artifact whose every cell fails. This also
-            # means an omitted --ruleset with
-            # --group now satisfies --group's existing v2-methodology
-            # requirement instead of failing closed on it -- pairwise and
-            # group no longer diverge merely because one passed an
-            # explicit Ruleset and the other inherited a stale default.
-            root = get_data_root()
-            roster_ids = [candidate_id, *((baseline_id,) if baseline_id is not None else ()), *opponent_ids]
-            roster_specs = [_resolve_python_agent(root, agent_id) for agent_id in roster_ids]
-            ruleset_id = resolve_omitted_ruleset_for_agents(None, roster_specs)
-        resolved_is_v2 = is_ruleset_v2_methodology(resolve_evaluation_ruleset_id(ruleset_id))
-        resolved_is_v4 = is_ruleset_v4_methodology(resolve_evaluation_ruleset_id(ruleset_id))
+            ruleset_id = BYTEFRAY_RULESET_V4_ID
 
         if args.seeds is not None or args.seed_range is not None:
             seeds = _resolve_seeds(args)
@@ -5242,22 +5065,14 @@ def main(argv: list[str] | None = None) -> int:
             seeds = preset.seeds
         elif preset is not None and preset.seed_range is not None:
             seeds = tuple(range(preset.seed_range[0], preset.seed_range[1] + 1))
-        elif resolved_is_v4:
+        else:
             # v4.0.0-rc1 Phase 1 (research report Sec H.1 item 2): the
             # stable v4 methodology's own standard sample set -- an
             # explicit --seeds/--seed-range or --preset seed selection
             # always overrides this (see the branches above, checked
             # first).
             seeds = STANDARD_V4_SEEDS
-        elif resolved_is_v2:
-            # Phase 1D: permanent-v2's standard seed methodology -- an
-            # explicit --seeds/--seed-range or --preset seed selection
-            # always overrides this (see the branches above, checked
-            # first).
-            seeds = STANDARD_V2_SEEDS
-        else:
-            seeds = (Config().seed,)
-    except (EvaluationConfigurationError, NoCompatibleRulesetError) as exc:
+    except EvaluationConfigurationError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
 

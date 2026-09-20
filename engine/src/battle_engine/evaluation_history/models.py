@@ -163,7 +163,10 @@ def resolve_contained_path(base_dir: Path, relative: str | Path) -> Path:
         )
 
     base_resolved = Path(base_dir).resolve()
-    candidate = Path(base_dir) / Path(raw)
+    # Persisted artifacts are portable data. Older Windows writers recorded
+    # ``Path`` values with backslashes, which must remain readable when the
+    # same artifact is inspected on Linux/macOS.
+    candidate = Path(base_dir) / Path(raw.replace("\\", "/"))
     resolved = candidate.resolve()
     try:
         resolved.relative_to(base_resolved)

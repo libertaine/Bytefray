@@ -25,7 +25,6 @@ Two fixture styles, mirroring the project's existing convention (see
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from battle_client.replay_status import CoreStatus, EntrantReplayStatus, get_entrant_statuses
@@ -526,112 +525,17 @@ def test_v4_replay_schema_bump_is_exposed_to_the_client():
     assert SCHEMA_VERSION == 4
 
 
-# ---------------------------------------------------------------------------
-# Real matches: prove the hand-built fixtures' assumed tick-0 shape matches
-# genuine engine output, for every core-having historical/permanent identity.
-# ---------------------------------------------------------------------------
-def _write_agent(agent_dir: Path, agent_id: str, source: bytes) -> None:
-    agent_dir.mkdir(parents=True)
-    manifest = {
-        "kind": "python",
-        "api_version": 1,
-        "entrypoint": "agent.py:create_agent",
-        "name": agent_id,
-        "display": agent_id.title(),
-        "version": "1.0",
-    }
-    agent_dir.joinpath("agent.yaml").write_bytes(
-        json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    )
-    agent_dir.joinpath("agent.py").write_bytes(source)
-
-
-def _python_entrant(root: Path, agent_id: str, source: bytes, *, slot: str, start: int):
-    from battle_engine.agents import resolve_agent
-    from battle_engine.match_service import MatchEntrant
-
-    agent_dir = root / "agents" / agent_id
-    _write_agent(agent_dir, agent_id, source)
-    return MatchEntrant.python(slot, agent_id, start, resolve_agent(root, agent_id))
-
-
-NOP_SOURCE = b"""from battle_engine.agent_api import ActionKind, AgentAction
-
-class Agent:
-    def reset(self, context):
-        pass
-
-    def act(self, observation):
-        return AgentAction(ActionKind.NOP)
-
-def create_agent():
-    return Agent()
-"""
-
-
-def _scripted_writer_source(addresses: list[int], value: int = 0xAA) -> bytes:
-    return (
-        "from battle_engine.agent_api import ActionKind, AgentAction\n\n"
-        f"ADDRESSES = {addresses!r}\n\n"
-        "class Agent:\n"
-        "    def reset(self, context):\n"
-        "        self.index = 0\n\n"
-        "    def act(self, observation):\n"
-        "        if self.index < len(ADDRESSES):\n"
-        "            addr = ADDRESSES[self.index]\n"
-        "            self.index += 1\n"
-        f"            return AgentAction(ActionKind.WRITE, addr, {value})\n"
-        "        return AgentAction(ActionKind.NOP)\n\n"
-        "def create_agent():\n"
-        "    return Agent()\n"
-    ).encode()
-
-
-def _run_real_match(tmp_path: Path, *, ruleset_id: str, attack: bool = False):
-    from battle_engine.config import Config
-    from battle_engine.match_service import MatchRequest, NativeMatchService
-
-    core = list(core_addresses(20, 128))
-    attacker_source = _scripted_writer_source(core) if attack else NOP_SOURCE
-    entrants = (
-        _python_entrant(tmp_path, "victim", NOP_SOURCE, slot="A", start=20),
-        _python_entrant(tmp_path, "attacker", attacker_source, slot="B", start=60),
-    )
-    request = MatchRequest(
-        Config(arena_size=128, instr_per_tick=8),
-        entrants,
-        max_ticks=20,
-        replay_path=tmp_path / "run" / "replay.jsonl",
-        verbose=False,
-        ruleset_id=ruleset_id,
-    )
-    result = NativeMatchService().run(request)
-    session = ReplaySession()
-    session.load(result.replay_path)
-    session.seek(session.final_tick)
-    return session, core
-
-
-def test_real_permanent_v2_capture_matches_engine_ground_truth(tmp_path):
-    # ``_python_entrant``'s ``slot`` ("A"/"B") becomes ``MatchEntrant.agent_id``;
-    # "victim"/"attacker" becomes its display ``name`` -- see
-    # ``engine/tests/test_ruleset_v2.py``'s identical ``agents_by_id["A"]``
-    # convention, which this mirrors.
-    session, _core = _run_real_match(tmp_path, ruleset_id=V2, attack=True)
-
-    statuses = {status.agent_id: status for status in get_entrant_statuses(session)}
-    victim, attacker = statuses["A"], statuses["B"]
-    assert victim.name == "victim"
-    assert attacker.name == "attacker"
-    assert victim.alive is False
-    assert victim.core.captured is True
-    assert victim.core.intact_cells == 0
-    assert victim.killer_id == "B"
-    assert attacker.alive is True
-    assert attacker.core.intact_cells == 8
-
-
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures" / "replay_status"
+SCOPE_C_GROUP_REPLAY = (
+    Path(__file__).resolve().parents[2]
+    / "engine"
+    / "tests"
+    / "fixtures"
+    / "v6_scope_c_group_evaluation"
+    / "matches"
+    / "0009-group-core_seeker-claimer-hunter-seed1-spread-shifted"
+    / "replay.jsonl"
+)
 
 
 def _load_fixture(name: str) -> ReplaySession:
@@ -665,20 +569,20 @@ def test_frozen_alpha1_core_derived_without_beacon_assumption():
     assert victim.core.core_addresses == core_addresses(20, 128)
 
 
-def test_frozen_alpha11_and_real_v2_both_work_and_stay_distinct(tmp_path):
-    """alpha11's side is frozen for the same reason as the test above
-    (``fixtures/replay_status/alpha11_no_attack_replay.jsonl``); v2 remains
-    executable, so it is still run live here -- proving the real, current
-    code path continues to work, not just the frozen historical one."""
+def test_frozen_alpha11_and_permanent_v2_artifacts_both_read_and_stay_distinct():
+    """Both retired identities are covered by genuine frozen artifacts."""
 
     session_11 = _load_fixture("alpha11_no_attack_replay.jsonl")
-    session_v2, _ = _run_real_match(tmp_path / "v2", ruleset_id=V2)
+    session_v2 = ReplaySession()
+    session_v2.load(SCOPE_C_GROUP_REPLAY)
+    session_v2.seek(session_v2.final_tick)
 
-    for session in (session_11, session_v2):
-        statuses = get_entrant_statuses(session)
-        for status in statuses:
-            assert status.core is not None
-            assert status.core.intact_cells == 8
+    for status in get_entrant_statuses(session_11):
+        assert status.core is not None
+        assert status.core.intact_cells == 8
+    for status in get_entrant_statuses(session_v2):
+        assert status.core is not None
+        assert 0 <= status.core.intact_cells <= CORE_SIZE
 
     assert session_11.header.ruleset_id == ALPHA11
     assert session_v2.header.ruleset_id == V2

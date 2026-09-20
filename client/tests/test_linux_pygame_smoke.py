@@ -13,8 +13,8 @@ def test_pygame_renders_replay_and_exits_on_quit(tmp_path, monkeypatch):
     replay = tmp_path / "replay.jsonl"
     assert engine_main(
         [
-            "--ticks", "3", "--arena", "128", "--a-type", "writer",
-            "--b-type", "runner", "--b-start", "64", "--replay", str(replay), "--quiet",
+            "--ticks", "3", "--arena", "128", "--a-type", "v4_scout",
+            "--b-type", "v5_region_attacker", "--b-start", "64", "--replay", str(replay), "--quiet",
         ]
     ) == 0
 
@@ -39,13 +39,13 @@ def test_pygame_step_and_seek_advance_a_real_replay(tmp_path, monkeypatch):
     from battle_client.renderers.pygame_renderer import PygameRenderer
 
     replay = tmp_path / "replay.jsonl"
-    # "runner" vs "runner" reliably survives the full tick budget (unlike
+    # "v5_region_attacker" vs "v5_region_attacker" reliably survives the full tick budget (unlike
     # writer/runner at close range, which can end the match after tick 1),
     # so there are enough ticks here to step forward twice and back once.
     assert engine_main(
         [
-            "--ticks", "5", "--arena", "256", "--a-type", "runner",
-            "--b-type", "runner", "--replay", str(replay), "--quiet",
+            "--ticks", "5", "--arena", "256", "--a-type", "v5_region_attacker",
+            "--b-type", "v5_region_attacker", "--replay", str(replay), "--quiet",
         ]
     ) == 0
 

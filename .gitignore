@@ -32,6 +32,10 @@ agent_revisions/
 # retired rulesets (bytefray-rules-4-alpha1/-alpha2), committed deliberately --
 # see engine/tests/test_v4_historical_immutability.py's module docstring.
 !engine/tests/fixtures/v4_historical_immutability/*.jsonl
+# V6 Phase 2B.12: one real schema-6 Ruleset-2 group-evaluation cell is kept
+# byte-for-byte so the historical adapter/deep-verifier remains covered after
+# new group evaluation execution is retired.
+!engine/tests/fixtures/v6_scope_c_group_evaluation/**/*.jsonl
 # V6 Phase 2B.10 Scope B: a frozen real bytefray-rules-4-alpha1 replay+trace
 # pair, committed deliberately because stable bytefray-rules-4 structurally
 # cannot reproduce this fixture's precondition (it is not a member of

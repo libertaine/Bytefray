@@ -39,7 +39,7 @@ from battle_engine.evaluation_history.comparison import align
 from battle_engine.match_service import NativeAgentResult, NativeMatchResult
 from battle_engine.python_runtime import TerminationReason
 
-NOP_ACTION = "AgentAction(ActionKind.NOP)"
+NOP_ACTION = "AgentAction(ActionKindV2.READ, observation.self_anchor)"
 
 
 def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> Path:
@@ -47,14 +47,15 @@ def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> Path
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
     (directory / "agent.py").write_text(
         f"""
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
+    def declare_processes(self): return [ProcessDeclaration("main", 1, 1.0)]
     def reset(self, context): pass
     def act(self, observation): return {action}
 def create_agent(): return Agent()
@@ -76,20 +77,22 @@ def _write_active_agent(root: Path, name: str) -> Path:
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
     (directory / "agent.py").write_text(
         """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 250, 1.0)]
     def reset(self, context):
-        self.addr = 0
+        self.offset = 0
     def act(self, observation):
-        addr = self.addr
-        self.addr += 1
-        return AgentAction(ActionKind.WRITE, operand=addr, value=1)
+        target = observation.self_anchor + (self.offset % 200)
+        self.offset += 1
+        return AgentAction(ActionKindV2.WRITE, operand=target, value=1)
 def create_agent(): return Agent()
 """,
         encoding="utf-8",
@@ -102,7 +105,7 @@ def _write_reset_failing_agent(root: Path, name: str, message: str = "boom") -> 
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
@@ -251,10 +254,10 @@ def test_schema_and_identity_v4_round_trip(tmp_path):
     data = json.loads(result.state_path.read_text(encoding="utf-8"))
     assert SCHEMA_VERSION == 4
     assert IDENTITY_VERSION == 4
-    assert data["schema_version"] == 4
-    assert data["identity_version"] == 4
+    assert data["schema_version"] == 7
+    assert data["identity_version"] == 7
     assert data["orientation_mode"] == ORIENTATION_MODE_BOTH == "both"
-    assert data["arena_alignment_mode"] == EVALUATION_ARENA_ALIGNMENT_MODE == "fixed"
+    assert data["arena_alignment_mode"] == "ruleset_v4_seeded_placements"
     cell_orientations = {cell["orientation"] for cell in data["cells"]}
     assert cell_orientations == {"candidate_first", "opponent_first"}
 
@@ -266,8 +269,9 @@ def test_rules_compatibility_id_unchanged_by_orientation(tmp_path):
     single = service.run(_request(root, output_dir=root / "single", both_orientations=False))
     data_both = json.loads(both.state_path.read_text(encoding="utf-8"))
     data_single = json.loads(single.state_path.read_text(encoding="utf-8"))
-    assert data_both["rules_compatibility_id"] == EVALUATION_RULES_COMPATIBILITY_ID
-    assert data_single["rules_compatibility_id"] == EVALUATION_RULES_COMPATIBILITY_ID
+    assert data_both["rules_compatibility_id"] == "bytefray-rules-4"
+    assert data_single["rules_compatibility_id"] == "bytefray-rules-4"
+    assert data_both["rules_compatibility_id"] == data_single["rules_compatibility_id"]
 
 
 def test_single_orientation_run_reproduces_legacy_cell_count_and_shape(tmp_path):
@@ -586,23 +590,103 @@ def test_legacy_v1_artifact_orientation_recovered_candidate_first(tmp_path):
     assert summary.cells[0].orientation.confidence == FieldConfidence.RECOVERED
 
 
-def test_legacy_v2_shaped_artifact_orientation_and_alignment_recovered(tmp_path):
-    root = _two_agents(tmp_path)
-    service = EvaluationService()
-    result = service.run(_request(root, both_orientations=False))
-    data = json.loads(result.state_path.read_text(encoding="utf-8"))
-    # Reshape into a pre-Phase-6 v2-family artifact (schema_version 3):
-    # strip the v0.9 fields entirely, exactly as a genuine old artifact
-    # would never have had them.
-    data["schema_version"] = 3
-    data["identity_version"] = 3
-    del data["orientation_mode"]
-    del data["arena_alignment_mode"]
-    for cell in data["cells"]:
-        del cell["orientation"]
-        del cell["orientation_index"]
-    path = tmp_path / "v3-shaped.json"
-    path.write_text(json.dumps(data), encoding="utf-8")
+def _historical_orientation_document(*, schema_version: int, both: bool) -> dict:
+    """A deterministic, historically-valid Ruleset-1 evaluation document.
+
+    Schema 3 predates orientation fields; schema 4 records them. This is
+    encoded independently from current Ruleset-4 output so the adapter tests
+    cannot be made green by reshaping an artifact that could never have
+    existed under the historical schema.
+    """
+
+    base_cell = {
+        "subject_role": "candidate",
+        "subject_id": "candidate",
+        "opponent_id": "opponent",
+        "seed": 1,
+        "artifact_dir": "matches/0001",
+        "status": "completed",
+        "outcome": "win",
+        "match_id": "match_historical_candidate_first",
+        "result_id": "result_historical_candidate_first",
+        "score_subject": 1.0,
+        "score_opponent": 0.0,
+        "territory_subject": None,
+        "territory_opponent": None,
+        "error_code": None,
+        "error_message": None,
+        "opponent_index": 0,
+        "seed_index": 0,
+        "condition_occurrence_index": 0,
+        "condition_fingerprint": "condition_historical",
+    }
+    cells = [dict(base_cell, schedule_id="cell_candidate_first")]
+    data = {
+        "schema": "bytefray.evaluation",
+        "schema_version": schema_version,
+        "identity_version": schema_version,
+        "evaluation_id": f"evaluation_historical_schema{schema_version}",
+        "candidate_id": "candidate",
+        "baseline_id": None,
+        "opponent_ids": ["opponent"],
+        "seeds": [1],
+        "ticks": 10,
+        "matrix_size": 2 if both else 1,
+        "rules_compatibility_id": "bytefray-rules-1",
+        "planned_identities": {
+            "candidate": {
+                "agent_id": "candidate",
+                "source_sha256": "candidate-source",
+                "entry_point": "agent.py:create_agent",
+                "api_version": 1,
+                "local_source_fingerprint": "candidate-tree",
+            },
+            "baseline": None,
+            "opponents": [
+                {
+                    "agent_id": "opponent",
+                    "source_sha256": "opponent-source",
+                    "entry_point": "agent.py:create_agent",
+                    "api_version": 1,
+                    "local_source_fingerprint": "opponent-tree",
+                }
+            ],
+        },
+        "effective_conditions": {
+            "ticks": 10,
+            "agent_api_version": 1,
+            "arena_size": 4096,
+            "instr_per_tick": 1,
+        },
+        "lifecycle_state": "finished",
+        "complete": True,
+        "cells": cells,
+        "aggregates": [],
+        "comparison": [],
+    }
+    if schema_version >= 4:
+        data["orientation_mode"] = "both" if both else "candidate_first_only"
+        data["arena_alignment_mode"] = "fixed"
+        cells[0].update(orientation="candidate_first", orientation_index=0)
+        if both:
+            reverse = dict(
+                base_cell,
+                schedule_id="cell_opponent_first",
+                match_id="match_historical_opponent_first",
+                result_id="result_historical_opponent_first",
+                orientation="opponent_first",
+                orientation_index=1,
+            )
+            cells.append(reverse)
+    return data
+
+
+def test_legacy_schema3_artifact_orientation_and_alignment_recovered(tmp_path):
+    path = tmp_path / "historical-schema3.json"
+    path.write_text(
+        json.dumps(_historical_orientation_document(schema_version=3, both=False)),
+        encoding="utf-8",
+    )
 
     summary = adapt_any(path)
     assert summary.schema.schema_version == 3
@@ -616,25 +700,19 @@ def test_legacy_v2_shaped_artifact_orientation_and_alignment_recovered(tmp_path)
 
 
 def test_new_both_orientations_evaluation_vs_legacy_leaves_opponent_first_unmatched(tmp_path):
-    root = _two_agents(tmp_path)
-    service = EvaluationService()
-
-    legacy_result = service.run(_request(root, output_dir=root / "legacy", both_orientations=False))
-    legacy_data = json.loads(legacy_result.state_path.read_text(encoding="utf-8"))
-    legacy_data["schema_version"] = 3
-    legacy_data["identity_version"] = 3
-    del legacy_data["orientation_mode"]
-    del legacy_data["arena_alignment_mode"]
-    for cell in legacy_data["cells"]:
-        del cell["orientation"]
-        del cell["orientation_index"]
-    legacy_path = root / "legacy" / "evaluation.json"
-    legacy_path.write_text(json.dumps(legacy_data), encoding="utf-8")
-
-    new_result = service.run(_request(root, output_dir=root / "new", both_orientations=True))
+    legacy_path = tmp_path / "historical-schema3.json"
+    oriented_path = tmp_path / "historical-schema4.json"
+    legacy_path.write_text(
+        json.dumps(_historical_orientation_document(schema_version=3, both=False)),
+        encoding="utf-8",
+    )
+    oriented_path.write_text(
+        json.dumps(_historical_orientation_document(schema_version=4, both=True)),
+        encoding="utf-8",
+    )
 
     left = adapt_any(legacy_path)
-    right = adapt_any(new_result.state_path)
+    right = adapt_any(oriented_path)
     comparison = align(left, right)
 
     # The candidate_first cell aligns; the opponent_first cell has no
@@ -660,13 +738,13 @@ def test_cli_default_run_reports_both_orientations_methodology(tmp_path, monkeyp
     _write_python_agent(tmp_path, "opp")
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
     exit_code = main(
-        ["cand", "--opponents", "opp", "--seeds", "1", "--dry-run", "--ruleset", "bytefray-rules-1"]
+        ["cand", "--opponents", "opp", "--seeds", "1", "--dry-run", "--ruleset", "bytefray-rules-4"]
     )
     assert exit_code == 0
     out = capsys.readouterr().out
     assert "matches: 2" in out
     assert "Entrant orientation: both" in out
-    assert "Arena alignment: fixed" in out
+    assert "Arena alignment: ruleset_v4_seeded_placements" in out
     assert "translation robustness not evaluated" in out
 
 
@@ -679,7 +757,7 @@ def test_cli_single_orientation_flag_reproduces_legacy_matrix_and_label(tmp_path
     exit_code = main(
         [
             "cand", "--opponents", "opp", "--seeds", "1", "--dry-run",
-            "--single-orientation", "--ruleset", "bytefray-rules-1",
+            "--single-orientation", "--ruleset", "bytefray-rules-4",
         ]
     )
     assert exit_code == 0
@@ -687,7 +765,7 @@ def test_cli_single_orientation_flag_reproduces_legacy_matrix_and_label(tmp_path
     assert "matches: 1" in out
     assert "candidate-first only" in out
     assert "does not generalize across entrant order" in out
-    assert "Arena alignment: fixed" in out
+    assert "Arena alignment: ruleset_v4_seeded_placements" in out
 
 
 def test_methodology_lines_never_claim_unbiased_or_fully_robust():
@@ -775,5 +853,5 @@ def test_evaluations_show_prints_methodology_lines(tmp_path, capsys):
     assert exit_code == 0
     out = capsys.readouterr().out
     assert "Entrant orientation: both" in out
-    assert "Arena alignment: fixed" in out
+    assert "Arena alignment: ruleset_v4_seeded_placements" in out
     assert "orientation_mode: both" in out

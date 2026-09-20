@@ -30,6 +30,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+import pytest
 from battle_engine.config import Config, Weights
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
 from battle_engine.replay import TickSnapshot, iter_replay
@@ -37,6 +38,7 @@ from battle_engine.rules import BYTEFRAY_RULESET_ID
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ID,
     BYTEFRAY_RULESET_V4_ID,
+    UnknownRulesetError,
     resolve_ruleset_policy,
 )
 from battle_engine.scheduler import run_chunked_quota, run_interleaved_quota, run_sequential_quota
@@ -307,26 +309,21 @@ def test_interleaved_vs_sequential_quota_parity_at_quota_one() -> None:
 
 
 def test_ruleset_policy_dispatch_modes() -> None:
-    """Confirm that existing rulesets use sequential and v4 uses K=2 rotating."""
-    policy_v1 = resolve_ruleset_policy(BYTEFRAY_RULESET_ID)
-    policy_v2 = resolve_ruleset_policy(BYTEFRAY_RULESET_V2_ID)
-    policy_v4 = resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ID)
+    """Confirm that v4 uses K=2 rotating and retired rulesets fail closed."""
+    with pytest.raises(UnknownRulesetError):
+        resolve_ruleset_policy(BYTEFRAY_RULESET_ID)
+    with pytest.raises(UnknownRulesetError):
+        resolve_ruleset_policy(BYTEFRAY_RULESET_V2_ID)
 
-    assert policy_v1.scheduler_mode == "sequential"
-    assert policy_v2.scheduler_mode == "sequential"
+    policy_v4 = resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ID)
     assert policy_v4.scheduler_mode == "chunked"
     assert policy_v4.scheduler_chunk_size == 2
     assert policy_v4.scheduler_rotate_start is True
 
     # Verify run_scheduler execution
     states = [_MockState("A"), _MockState("B")]
-    calls_v2: list[tuple[str, int]] = []
     calls_v4: list[tuple[str, int]] = []
-
-    policy_v2.run_scheduler(states, 2, lambda s, slot: calls_v2.append((s.agent_id, slot)))
     policy_v4.run_scheduler(states, 2, lambda s, slot: calls_v4.append((s.agent_id, slot)))
-
-    assert calls_v2 == [("A", 0), ("A", 1), ("B", 0), ("B", 1)]
     assert calls_v4 == [("A", 0), ("A", 1), ("B", 0), ("B", 1)]
 
 

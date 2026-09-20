@@ -21,7 +21,7 @@ from battle_engine.evaluation_presets import SCHEMA_NAME as PRESET_SCHEMA_NAME
 from battle_engine.evaluation_presets import SCHEMA_VERSION as PRESET_SCHEMA_VERSION
 from battle_engine.evaluation_presets import presets_root
 
-NOP_ACTION = "AgentAction(ActionKind.NOP)"
+NOP_ACTION = "AgentAction(ActionKindV2.READ, 0)"
 
 
 def _write_agent(root: Path, name: str, action: str = NOP_ACTION) -> Path:
@@ -29,14 +29,15 @@ def _write_agent(root: Path, name: str, action: str = NOP_ACTION) -> Path:
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
     (directory / "agent.py").write_text(
         f"""
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
+    def declare_processes(self): return [ProcessDeclaration("main", 1, 1.0)]
     def reset(self, context): pass
     def act(self, observation): return {action}
 def create_agent(): return Agent()
@@ -303,7 +304,7 @@ def test_orientation_omitted_from_preset_defaults_to_both(three_agents, monkeypa
     _write_preset(
         three_agents,
         "no_orientation",
-        {"opponents": ["opp_a"], "seeds": [1], "ruleset": "bytefray-rules-1"},
+        {"opponents": ["opp_a"], "seeds": [1], "ruleset": "bytefray-rules-4"},
     )
     exit_code = evaluate_main(["candidate", "--preset", "no_orientation", "--dry-run"])
     assert exit_code == 0
@@ -315,7 +316,7 @@ def test_orientation_preset_explicit_both(three_agents, monkeypatch, capsys):
     _write_preset(
         three_agents,
         "both",
-        {"opponents": ["opp_a"], "seeds": [1], "orientation": "both", "ruleset": "bytefray-rules-1"},
+        {"opponents": ["opp_a"], "seeds": [1], "orientation": "both", "ruleset": "bytefray-rules-4"},
     )
     exit_code = evaluate_main(["candidate", "--preset", "both", "--dry-run"])
     assert exit_code == 0
@@ -329,7 +330,7 @@ def test_orientation_preset_explicit_single(three_agents, monkeypatch, capsys):
         "single",
         {
             "opponents": ["opp_a"], "seeds": [1], "orientation": "candidate_first_only",
-            "ruleset": "bytefray-rules-1",
+            "ruleset": "bytefray-rules-4",
         },
     )
     exit_code = evaluate_main(["candidate", "--preset", "single", "--dry-run"])
@@ -342,7 +343,7 @@ def test_cli_override_preset_both_to_single(three_agents, monkeypatch, capsys):
     _write_preset(
         three_agents,
         "both",
-        {"opponents": ["opp_a"], "seeds": [1], "orientation": "both", "ruleset": "bytefray-rules-1"},
+        {"opponents": ["opp_a"], "seeds": [1], "orientation": "both", "ruleset": "bytefray-rules-4"},
     )
     exit_code = evaluate_main(
         ["candidate", "--preset", "both", "--single-orientation", "--dry-run"]
@@ -358,7 +359,7 @@ def test_cli_override_preset_single_to_both(three_agents, monkeypatch, capsys):
         "single",
         {
             "opponents": ["opp_a"], "seeds": [1], "orientation": "candidate_first_only",
-            "ruleset": "bytefray-rules-1",
+            "ruleset": "bytefray-rules-4",
         },
     )
     exit_code = evaluate_main(
@@ -429,7 +430,7 @@ def test_resume_authority_modified_preset_is_rejected_not_reinterpreted(three_ag
         "growing",
         {
             "opponents": opponents, "seeds": [1, 2, 3], "ticks": 5,
-            "orientation": "candidate_first_only", "ruleset": "bytefray-rules-1",
+            "orientation": "candidate_first_only", "ruleset": "bytefray-rules-4",
         },
     )
     out_dir = three_agents / "eval-out"
@@ -465,7 +466,7 @@ def test_resume_authority_modified_preset_is_rejected_not_reinterpreted(three_ag
         "growing",
         {
             "opponents": opponents[:-1], "seeds": [1, 2, 3], "ticks": 5,
-            "orientation": "candidate_first_only", "ruleset": "bytefray-rules-1",
+            "orientation": "candidate_first_only", "ruleset": "bytefray-rules-4",
         },
     )
 
@@ -499,7 +500,7 @@ def test_resume_authority_modified_preset_is_rejected_not_reinterpreted(three_ag
         [
             "candidate", "--opponents", ",".join(opponents), "--seeds", "1,2,3", "--ticks", "5",
             "--single-orientation", "--output", str(out_dir), "--quiet",
-            "--ruleset", "bytefray-rules-1",
+            "--ruleset", "bytefray-rules-4",
         ]
     )
     assert exit_code == 0
@@ -528,7 +529,7 @@ def test_preset_originated_evaluation_readable_by_evaluation_history(three_agent
     _write_preset(
         three_agents,
         "standard",
-        {"opponents": ["opp_a"], "seeds": [1], "ticks": 5, "ruleset": "bytefray-rules-1"},
+        {"opponents": ["opp_a"], "seeds": [1], "ticks": 5, "ruleset": "bytefray-rules-4"},
     )
     out_dir = three_agents / "runs" / "evaluations" / "via-preset"
     exit_code = evaluate_main(

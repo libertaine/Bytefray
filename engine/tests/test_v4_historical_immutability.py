@@ -33,26 +33,13 @@ executable policy solely to keep the test convenient"):
    distinct from, and unaffected by, live re-execution.
 
 2. **Cross-execution state isolation** for the *live, currently-
-   executable* control is preserved as a live regression test, but
-   necessarily generalized: the original test proved "no shared
-   module-level state leaks from a stable-v4 execution into a
-   *subsequent alpha1* execution reading it." With alpha1 retired, there
-   is no second live process-Ruleset left to interleave with (after this
-   phase, ``PROCESS_RULESET_IDS`` has exactly one member --
-   ``bytefray-rules-4`` itself). The live claim is therefore restated as
-   "no state leaks from an interceding execution under any other
-   *currently executable* Ruleset into a subsequent stable-v4 execution,"
-   using ``bytefray-rules-2`` (a different runtime controller entirely --
-   ``PythonEntrantController``, not ``ProcessMatchController``) as the
-   interceding execution. This is an honestly narrower guarantee than the
-   original in one respect (it no longer specifically proves isolation
-   between two *process*-Ruleset executions, since only one exists), but
-   the strongest remaining evidence for that specific narrower claim is
-   structural, not behavioral, and unchanged by this phase:
-   ``process_runtime.py`` still contains zero Ruleset-identity branching
-   at all (docs/research/v6/V6_PHASE2B8_LEGACY_RULESET_RETIREMENT_AUDIT.md
-   Sec E.1), so there is no Ruleset-conditional code path for a second
-   process-Ruleset to have exercised differently in the first place.
+   executable* control remains a live regression test. With stable
+   ``bytefray-rules-4`` now the sole executable Ruleset, the test runs one
+   pinned control, interleaves a different-seed stable-v4 match, and reruns
+   the original control. Matching identities, reproducibility metadata,
+   and replay bytes prove that process-controller state did not leak across
+   live executions without resurrecting a retired Ruleset merely as a test
+   convenience.
 
    In addition, this file retains a frozen check that the *last live
    confirmation* of the original claim (two fixture replays, captured
@@ -87,8 +74,7 @@ from battle_engine.config import Config
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
 from battle_engine.placement import resolve_direct_match_starts
 from battle_engine.replay import ReplayHeader, iter_replay
-from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V2_ID, BYTEFRAY_RULESET_V4_ID
-from battle_engine.starters import ensure_starter_agents
+from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 STARTER_SOURCE_DIRS = (
@@ -119,7 +105,7 @@ def _bootstrap_agent(tmp_path: Path, name: str) -> None:
     raise FileNotFoundError(f"no source found for agent {name!r}")
 
 
-def _run_control(tmp_path: Path, seed: int, label: str) -> ReplayHeader:
+def _run_control(tmp_path: Path, seed: int, label: str) -> tuple[ReplayHeader, bytes]:
     names = ("v4_claimer", "v4_scout")
     for name in names:
         _bootstrap_agent(tmp_path, name)
@@ -147,41 +133,8 @@ def _run_control(tmp_path: Path, seed: int, label: str) -> ReplayHeader:
         ruleset_id=BYTEFRAY_RULESET_V4_ID,
     )
     NativeMatchService().run(request)
-    return next(r for r in iter_replay(replay_path) if isinstance(r, ReplayHeader))
-
-
-def _run_interceding_ruleset2(tmp_path: Path, seed: int, label: str) -> None:
-    """Run one throwaway match under the still-executable
-    ``bytefray-rules-2`` -- a different runtime controller entirely
-    (``PythonEntrantController``, Agent API v1) -- purely to occupy the
-    shared engine machinery between two control runs."""
-
-    ensure_starter_agents(data_root=tmp_path)
-    names = ("claimer", "hunter")
-    specs = tuple(resolve_agent(tmp_path, name) for name in names)
-    starts = resolve_direct_match_starts(
-        ruleset_id=BYTEFRAY_RULESET_V2_ID,
-        arena_size=1024,
-        entrant_count=2,
-        supplied_starts=[None, None],
-        seed=seed,
-    )
-    entrants = tuple(
-        MatchEntrant.python(chr(ord("A") + i), name, starts[i], spec)
-        for i, (name, spec) in enumerate(zip(names, specs, strict=True))
-    )
-    run_dir = tmp_path / "runs" / label
-    run_dir.mkdir(parents=True)
-    replay_path = run_dir / "replay.jsonl"
-    request = MatchRequest(
-        config=Config(seed=seed, arena_size=1024, instr_per_tick=8),
-        entrants=entrants,
-        max_ticks=50,
-        replay_path=replay_path,
-        verbose=False,
-        ruleset_id=BYTEFRAY_RULESET_V2_ID,
-    )
-    NativeMatchService().run(request)
+    header = next(r for r in iter_replay(replay_path) if isinstance(r, ReplayHeader))
+    return header, replay_path.read_bytes()
 
 
 def _fixture_header(name: str) -> ReplayHeader:
@@ -231,30 +184,16 @@ def test_frozen_interleave_fixtures_confirm_alpha1_was_immune_to_control_interle
     assert first.reproducibility == second.reproducibility
 
 
-# ---------------------------------------------------------------------------
-# Concern 2: cross-execution state isolation for the live control, restated
-# using the only other Ruleset family still executable post-retirement.
-# ---------------------------------------------------------------------------
+def test_live_stable_v4_control_is_immune_to_interceding_execution(tmp_path):
+    first_header, first_replay = _run_control(tmp_path, seed=9, label="control-first")
+    _run_control(tmp_path, seed=13, label="interceding")
+    second_header, second_replay = _run_control(tmp_path, seed=9, label="control-second")
 
+    assert first_header.match_id == second_header.match_id
+    assert first_header.result_id == second_header.result_id
+    assert first_header.reproducibility == second_header.reproducibility
+    assert first_replay == second_replay
 
-def test_stable_v4_execution_is_unaffected_by_an_interceding_execution_under_a_different_ruleset(
-    tmp_path: Path,
-):
-    """Runs the control, then an interceding match under the differently-
-    implemented ``bytefray-rules-2``, then the control again with
-    identical inputs -- the second control run must reproduce the first
-    exactly. Proves no cross-Ruleset shared/global state (module-level
-    caches, mutable registries, RNG state) leaks between the two
-    Ruleset families that remain executable after alpha1/alpha2's
-    retirement."""
-
-    first = _run_control(tmp_path, seed=9, label="isolation-first")
-    _run_interceding_ruleset2(tmp_path, seed=9, label="isolation-interceding")
-    second = _run_control(tmp_path, seed=9, label="isolation-second")
-
-    assert first.match_id == second.match_id
-    assert first.result_id == second.result_id
-    assert first.reproducibility == second.reproducibility
 
 
 # ---------------------------------------------------------------------------

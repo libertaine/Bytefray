@@ -9,7 +9,6 @@ from typing import Any
 from battle_engine.agent_api import AgentValidationError
 from battle_engine.agent_parameters import EMPTY_PARAMETER_SCHEMA, resolve_parameters
 from battle_engine.agents import agent_runtime_label, discover_agents, resolve_agent
-from battle_engine.builtins import SUPPORTED, build_agent
 from battle_engine.core import Config, Weights
 from battle_engine.match_service import (
     MatchEntrant,
@@ -24,9 +23,7 @@ from battle_engine.match_service import (
 from battle_engine.paths import get_data_root
 from battle_engine.placement import resolve_direct_match_starts
 from battle_engine.python_runtime import PythonEntrantInitializationError
-from battle_engine.rules import BYTEFRAY_RULESET_ID
 from battle_engine.ruleset_policy import (
-    BYTEFRAY_RULESET_V2_ID,
     BYTEFRAY_RULESET_V4_ID,
     NoCompatibleRulesetError,
     resolve_omitted_ruleset_for_agents,
@@ -88,14 +85,6 @@ def _parse_env_json(varname: str) -> dict[str, Any]:
         )
 
     return obj
-
-
-def _merge_params(
-    defaults: dict[str, Any], overrides: dict[str, Any]
-) -> dict[str, Any]:
-    merged = dict(defaults or {})
-    merged.update(overrides or {})
-    return merged
 
 
 def _parse_param_assignment(raw: str) -> tuple[str, str]:
@@ -197,33 +186,6 @@ def _keys_preview(d: dict[str, Any]) -> str:
     return "{" + ", ".join(sorted(map(str, (d or {}).keys()))) + "}"
 
 
-def read_blob(path: str | os.PathLike[str]) -> bytes:
-    p = Path(path).expanduser().resolve()
-    return p.read_bytes()
-
-
-def _load_agents_spec_from_env() -> tuple[dict[str, Any], Path | None]:
-    """
-    Back-compat:
-      BYTEFRAY_AGENTS_JSON='{"A":{"type":"blob","path":"agents/x/model.blob"}}'
-    """
-    raw = os.environ.get("BYTEFRAY_AGENTS_JSON", "").strip()
-    if not raw:
-        return {}, None
-
-    try:
-        spec = json.loads(raw)
-    except Exception as exc:
-        raise SystemExit(f"Malformed JSON in $BYTEFRAY_AGENTS_JSON: {exc}")
-
-    if not isinstance(spec, dict):
-        raise SystemExit("$BYTEFRAY_AGENTS_JSON must be a JSON object.")
-
-    base = os.environ.get("BYTEFRAY_AGENTS_DIR", "").strip()
-    base_dir = Path(base).expanduser().resolve() if base else _data_root()
-    return spec, base_dir
-
-
 # ----------------------------
 # CLI
 # ----------------------------
@@ -289,24 +251,12 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     )
     p.add_argument(
         "--ruleset",
-        choices=[
-            BYTEFRAY_RULESET_ID,
-            BYTEFRAY_RULESET_V2_ID,
-            BYTEFRAY_RULESET_V4_ID,
-        ],
+        choices=[BYTEFRAY_RULESET_V4_ID],
         default=None,
         help=(
-            "gameplay Ruleset identity. If omitted, Agent API v1 Python-only "
-            f"matches use {BYTEFRAY_RULESET_V2_ID}, Agent API v2 Python-only "
-            f"matches use {BYTEFRAY_RULESET_V4_ID}, and VM/blob matches "
-            f"use {BYTEFRAY_RULESET_ID}; a mixed Python/VM match without an "
-            f"explicit choice uses {BYTEFRAY_RULESET_ID}. "
-            f"{BYTEFRAY_RULESET_V2_ID}, {BYTEFRAY_RULESET_V4_ID}, and both v4 "
-            "alphas support Python entrants only; every v4 identity requires "
-            f"Agent API v2. {BYTEFRAY_RULESET_V4_ID} is the current, permanent "
-            "v4 gameplay contract and is what an omitted Ruleset selects for "
-            "an Agent API v2 roster; v4 alpha1/alpha2 remain selectable by "
-            "name to reproduce historical prerelease matches. Affects "
+            f"gameplay Ruleset identity. {BYTEFRAY_RULESET_V4_ID} is the "
+            "only Ruleset Agent API v2 (process) agents can run under, and "
+            "is selected automatically when this flag is omitted. Affects "
             "gameplay semantics and is recorded in the match's result/replay "
             "artifacts."
         ),
@@ -316,26 +266,21 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     p.add_argument(
         "--a-type",
         type=str,
-        default="writer",
-        help="Agent name for side A (folder under /agents/<name> or builtin)",
+        default="v4_claimer",
+        help="Agent name for side A (folder under /agents/<name>)",
     )
     p.add_argument(
         "--b-type",
         type=str,
-        default="runner",
-        help="Agent name for side B (folder under /agents/<name> or builtin)",
+        default="v4_scout",
+        help="Agent name for side B (folder under /agents/<name>)",
     )
     p.add_argument(
         "--c-type",
         type=str,
         default="",
-        help="Optional agent name for side C (folder under /agents/<name> or builtin)",
+        help="Optional agent name for side C (folder under /agents/<name>)",
     )
-
-    # Direct blob overrides
-    p.add_argument("--a-blob")
-    p.add_argument("--b-blob")
-    p.add_argument("--c-blob")
 
     p.add_argument(
         "--list-agents",
@@ -374,34 +319,6 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
             help=f"select a declared parameter preset for agent {_letter.upper()}",
         )
 
-    # Common agent params
-    p.add_argument(
-        "--byte",
-        type=lambda x: int(x, 0),
-        default="0x99",
-        help="general byte value used by agents",
-    )
-    p.add_argument("--offset", type=int, default=128, help="writer offset from entry")
-    p.add_argument("--stride", type=int, default=64, help="bomber/seeker stride")
-    p.add_argument(
-        "--ptr", type=int, default=512, help="initial pointer for pointer-based agents"
-    )
-    p.add_argument("--writes", type=int, help="flooder: writes per loop")
-    p.add_argument("--step", type=int, help="spiral: fixed pointer step")
-    p.add_argument(
-        "--delta",
-        type=int,
-        help="spiral: A-register delta per loop (does not change pointer step)",
-    )
-    p.add_argument(
-        "--target", type=lambda x: int(x, 0), help="seeker: target byte to find"
-    )
-    p.add_argument(
-        "--attack-byte",
-        type=lambda x: int(x, 0),
-        help="optional alias for --byte (overrides it if provided)",
-    )
-
     p.add_argument("--quiet", action="store_true")
     return p.parse_args(argv)
 
@@ -413,58 +330,23 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
 
 def _resolve_agent(
     letter: str,
-    spec: dict[str, Any],
-    spec_dir: Path | None,
     args: argparse.Namespace,
-    cfg: Config,
-    common_kwargs: dict[str, Any],
-) -> tuple[bytes | None, str, int, Any | None]:
-    """
-    Resolve an agent for slot A/B/C.
+) -> tuple[str, int, Any | None]:
+    """Resolve a discovered Python agent for slot A/B/C.
 
-    Precedence:
-      1) BYTEFRAY_AGENTS_JSON
-      2) --a-blob / --b-blob / --c-blob
-      3) discovered agent under /agents
-      4) built-in by name
+    V6 Phase 2B.12 retired VM/blob execution: the only remaining resolution
+    path is discovery by name under ``/agents``, and every match entrant is
+    a Python (Agent API v2) agent. ``start`` is read from ``args`` rather
+    than computed here -- ``main()`` resolves every slot's effective start
+    address up front via ``resolve_direct_match_starts`` before any agent is
+    looked up.
     """
-    del cfg  # currently unused here, kept for compatibility
     start = getattr(args, f"{letter.lower()}_start")
-
-    # 1) env agents spec
-    if spec and letter in spec:
-        s = spec[letter]
-        ttype = s.get("type")
-
-        if ttype == "blob":
-            path = s["path"]
-            if spec_dir is not None and not os.path.isabs(path):
-                path = str((spec_dir / path).resolve())
-            code = read_blob(path)
-            name = s.get("name") or f"{letter}_blob"
-            return code, name, start, None
-
-        if ttype == "builtin":
-            agent_id = s["id"]
-            code = build_agent(agent_id, start, **common_kwargs)
-            return code, agent_id, start, None
-
-        print(f"ERROR: unknown agent type for {letter}: {ttype}", file=sys.stderr)
-        sys.exit(2)
-
-    # 2) direct blob flag
-    blob = getattr(args, f"{letter.lower()}_blob")
-    if blob:
-        code = read_blob(blob)
-        return code, f"{letter}_blob", start, None
-
-    # 3) discovery agent
     agent_name = getattr(args, f"{letter.lower()}_type")
     if not agent_name:
-        return None, "", start, None
+        return "", start, None
 
     root = _data_root()
-
     try:
         spec_obj = resolve_agent(root, agent_name)
     except AgentValidationError as exc:
@@ -472,68 +354,24 @@ def _resolve_agent(
     except SystemExit:
         spec_obj = None
 
-    if spec_obj is not None:
-        side_env = _parameter_overrides(letter, args)
+    if spec_obj is None or spec_obj.kind != "python":
+        print(
+            f"ERROR: Unknown agent '{agent_name}'. Expected a discovered "
+            f"Python agent under {root / 'agents' / agent_name} with "
+            "agent.yaml and agent.py.",
+            file=sys.stderr,
+        )
+        sys.exit(2)
 
-        if spec_obj.kind == "python":
-            # A Python entrant's parameters are resolved against its declared
-            # schema in `main` (`_resolve_entrant_parameters`) and travel on
-            # the MatchEntrant, because only the schema can say what
-            # `sweep_span_cores=2` means. The VM branches below keep their
-            # historical free-form kwargs path unchanged.
-            return None, agent_name, start, spec_obj
-
-        env_blob = side_env.get("blob_path")
-        blob_path: Path | None
-        if isinstance(env_blob, str) and env_blob:
-            blob_path = Path(env_blob).expanduser()
-            if not blob_path.is_absolute():
-                blob_path = (root / blob_path).resolve()
-            else:
-                blob_path = blob_path.resolve()
-        else:
-            blob_path = spec_obj.blob
-
-        # Manifest-only starter agents may intentionally select an existing
-        # built-in implementation. Other discovered agents still require code.
-        if (
-            not (spec_obj.dir / "agent.py").exists()
-            and agent_name not in SUPPORTED
-            and (blob_path is None or not blob_path.exists())
-        ):
-            raise SystemExit(
-                f"No blob specified for agent '{agent_name}'. "
-                f"Provide model.blob in agents/{agent_name}/ or pass via env JSON "
-                f"key 'blob_path' in $BYTEFRAY_AGENT_{letter}_PARAMS_JSON or use "
-                f"--{letter.lower()}-blob."
-            )
-
-        if blob_path is not None and blob_path.exists():
-            code = read_blob(str(blob_path))
-            return code, agent_name, start, None
-
-    # 4) built-in fallback
-    if agent_name in SUPPORTED:
-        side_env = _parameter_overrides(letter, args)
-        code = build_agent(agent_name, start, **_merge_params(common_kwargs, side_env))
-        return code, agent_name, start, None
-
-    print(
-        f"ERROR: Unknown agent '{agent_name}'. "
-        f"Expected a built-in ({', '.join(SUPPORTED)}) or a folder "
-        f"{root / 'agents' / agent_name} with agent.yaml (JSON) or agent.py",
-        file=sys.stderr,
-    )
-    sys.exit(2)
+    return agent_name, start, spec_obj
 
 
 def _requested_entrant_metadata(
-    letter: str, spec: dict[str, Any], args: argparse.Namespace, root: Path
+    letter: str, args: argparse.Namespace, root: Path
 ) -> dict[str, Any] | None:
     """Determine slot ``letter``'s compatibility metadata without building it.
 
-    Mirrors ``_resolve_agent``'s own precedence chain (env-JSON spec, direct
-    blob flag, discovery, built-in fallback) exactly, minus anything that
+    Mirrors ``_resolve_agent``'s own discovery lookup, minus anything that
     requires a resolved start address -- so the omitted-Ruleset default
     (which start-address *placement* itself depends on, via
     ``resolve_direct_match_starts``) can be computed before any agent is
@@ -543,19 +381,7 @@ def _requested_entrant_metadata(
     ``_resolve_agent`` once agent construction actually runs, so a wrong
     guess here can never let an invalid invocation execute -- it can only
     affect which Ruleset an already-valid invocation defaults to.
-
-    Reports both authoritative compatibility fields (``kind`` and, for a
-    discovered Python agent, its declared ``api_version``) rather than the
-    runtime kind alone: ``bytefray-rules-2`` and ``bytefray-rules-4-alpha1``
-    are both Python-only and are told apart by Agent API version, so the
-    kind by itself can no longer choose between them.
     """
-    if spec and letter in spec:
-        return {"kind": "vm", "api_version": None}  # env-JSON entrants are blob/builtin.
-
-    if getattr(args, f"{letter.lower()}_blob"):
-        return {"kind": "vm", "api_version": None}
-
     agent_name = getattr(args, f"{letter.lower()}_type")
     if not agent_name:
         return None
@@ -571,7 +397,11 @@ def _requested_entrant_metadata(
             "kind": "python",
             "api_version": spec_obj.api_version,
         }
-    return {"agent_id": agent_name, "kind": "vm", "api_version": None}
+    # An unresolvable name is projected as a current Agent API v2 entrant so
+    # ruleset resolution succeeds and control reaches `_resolve_agent`, which
+    # raises the specific "Unknown agent" diagnostic -- never a generic
+    # ruleset-compatibility error for what is really a typo.
+    return {"agent_id": agent_name, "kind": "python", "api_version": 2}
 
 
 # ----------------------------
@@ -619,11 +449,7 @@ def main(argv: Iterable[str] | None = None) -> int:
             # `result: none` / `replay: none`).
             blob = spec.blob.name if spec.blob else "none"
             print(f" - {name:20} {disp:20} {agent_runtime_label(spec):8} blob={blob}")
-        print(
-            "\n[Python] agents run under Ruleset v1 or v2 with Agent API v1; "
-            "Ruleset v4 uses Agent API v2."
-            "\n[VM] agents run under Ruleset v1 only."
-        )
+        print("\n[Python] agents run under bytefray-rules-4 with Agent API v2.")
         return 0
 
     # Build current Config correctly against Config.weights
@@ -657,25 +483,6 @@ def main(argv: Iterable[str] | None = None) -> int:
     summary_path = replay_path.with_name("summary.json")
     trace_path = _resolve_trace_path(args.trace)
 
-    byte = args.byte
-    if args.attack_byte is not None:
-        byte = args.attack_byte
-
-    common_kwargs = {
-        "byte": byte,
-        "offset": args.offset,
-        "stride": args.stride,
-        "ptr": args.ptr,
-        "writes": args.writes,
-        "step": args.step,
-        "delta": args.delta,
-        "target": args.target,
-    }
-    common_kwargs = {
-        key: value for key, value in common_kwargs.items() if value is not None
-    }
-
-    env_spec, spec_dir = _load_agents_spec_from_env()
     root = _data_root()
 
     # A direct match is a valid first command in a fresh installation.  Seed
@@ -692,14 +499,11 @@ def main(argv: Iterable[str] | None = None) -> int:
     if warning:
         print(f"WARNING: {warning}", file=sys.stderr)
 
-    # Resolve effective start addresses once, before any agent is built --
-    # builtin construction bakes ``start`` into the agent's own bytecode
-    # (``build_agent``), so the resolved value must be in place before
-    # ``_resolve_agent`` runs, not applied to its return value after the
-    # fact. ``args.c_start`` only participates when a C entrant was actually
+    # Resolve effective start addresses once, before any agent is built.
+    # ``args.c_start`` only participates when a C entrant was actually
     # requested; an unused, un-omitted ``--c-start`` is otherwise inert (C
     # never becomes a match entrant) and is left as the caller supplied it.
-    c_requested = bool(args.c_type) or bool(args.c_blob) or ("C" in env_spec)
+    c_requested = bool(args.c_type)
     entrant_count = 3 if c_requested else 2
     supplied_starts = [args.a_start, args.b_start]
     if c_requested:
@@ -714,9 +518,9 @@ def main(argv: Iterable[str] | None = None) -> int:
     requested_entrants = [
         metadata
         for metadata in (
-            _requested_entrant_metadata("A", env_spec, args, root),
-            _requested_entrant_metadata("B", env_spec, args, root),
-            _requested_entrant_metadata("C", env_spec, args, root) if c_requested else None,
+            _requested_entrant_metadata("A", args, root),
+            _requested_entrant_metadata("B", args, root),
+            _requested_entrant_metadata("C", args, root) if c_requested else None,
         )
         if metadata is not None
     ]
@@ -744,15 +548,9 @@ def main(argv: Iterable[str] | None = None) -> int:
     elif args.c_start is None:
         args.c_start = 0
 
-    codeA, nameA, startA, pythonA = _resolve_agent(
-        "A", env_spec, spec_dir, args, cfg, common_kwargs
-    )
-    codeB, nameB, startB, pythonB = _resolve_agent(
-        "B", env_spec, spec_dir, args, cfg, common_kwargs
-    )
-    codeC, nameC, startC, pythonC = _resolve_agent(
-        "C", env_spec, spec_dir, args, cfg, common_kwargs
-    )
+    nameA, startA, pythonA = _resolve_agent("A", args)
+    nameB, startB, pythonB = _resolve_agent("B", args)
+    nameC, startC, pythonC = _resolve_agent("C", args)
 
     # A Python entrant's parameters are resolved here, before any agent
     # module is imported: an unknown key, an out-of-range value or an unknown
@@ -766,10 +564,8 @@ def main(argv: Iterable[str] | None = None) -> int:
         resolved_preview = {"A": paramsA, "B": paramsB, "C": paramsC}
 
         def preview(letter: str, name: str) -> str:
-            # For a Python entrant this reports the values that were actually
-            # resolved and will actually reach the agent. For a VM entrant it
-            # reports the free-form kwargs its program is built from, which is
-            # the only parameter notion that path has ever had.
+            # Reports the values that were actually resolved and will
+            # actually reach the agent.
             resolved = resolved_preview[letter]
             if resolved:
                 return " ".join(
@@ -785,9 +581,9 @@ def main(argv: Iterable[str] | None = None) -> int:
     except Exception:
         pass
 
-    if (codeA is None and pythonA is None) or (codeB is None and pythonB is None):
+    if pythonA is None or pythonB is None:
         print(
-            "ERROR: agents A and B must be executable built-in, blob, or Python agents",
+            "ERROR: agents A and B must be discovered Python agents",
             file=sys.stderr,
         )
         return 2
@@ -795,23 +591,11 @@ def main(argv: Iterable[str] | None = None) -> int:
     # Agent validation above must complete before this owned output is opened;
     # otherwise an invalid invocation could truncate an existing replay.
     entrants = [
-        (
-            MatchEntrant.python("A", nameA, startA, pythonA, paramsA)
-            if pythonA is not None
-            else MatchEntrant("A", nameA, startA, codeA)
-        ),
-        (
-            MatchEntrant.python("B", nameB, startB, pythonB, paramsB)
-            if pythonB is not None
-            else MatchEntrant("B", nameB, startB, codeB)
-        ),
+        MatchEntrant.python("A", nameA, startA, pythonA, paramsA),
+        MatchEntrant.python("B", nameB, startB, pythonB, paramsB),
     ]
-    if nameC and (codeC is not None or pythonC is not None):
-        entrants.append(
-            MatchEntrant.python("C", nameC, startC, pythonC, paramsC)
-            if pythonC is not None
-            else MatchEntrant("C", nameC, startC, codeC)
-        )
+    if nameC and pythonC is not None:
+        entrants.append(MatchEntrant.python("C", nameC, startC, pythonC, paramsC))
     try:
         match_result = NativeMatchService().run(
             MatchRequest(

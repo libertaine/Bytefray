@@ -58,13 +58,10 @@ from types import MappingProxyType
 from typing import Any
 
 from battle_engine.agent_api import (
-    ActionKind,
     ActionKindV2,
     AgentAction,
     AgentValidationError,
-    MatchContext,
     MatchContextV2,
-    Observation,
     ObservationV2,
     ProcessDeclaration,
     load_python_agent,
@@ -250,7 +247,7 @@ class AgentWorkerHandle:
         )
 
     def act(
-        self, observation: Observation | ObservationV2, *, action_slot: int, timeout: float
+        self, observation: ObservationV2, *, action_slot: int, timeout: float
     ) -> WorkerCallResult:
         if isinstance(observation, ObservationV2):
             observation_payload = {
@@ -430,26 +427,28 @@ def _handle_reset(state: _WorkerState, request: dict[str, Any], out: Any) -> Non
         return
     match_seed = request["match_seed"]
     api_version = request["api_version"]
+    if api_version != 2 or api_version != state.loaded.metadata.api_version:
+        diagnostic = RuntimeDiagnostic(
+            code="agent_api_version_unsupported",
+            stage="reset",
+            message=(
+                f"Worker reset requires loaded Agent API v2 metadata; received "
+                f"request version {api_version!r}."
+            ),
+            agent_id=state.agent_id,
+            slot=state.slot,
+        )
+        _respond(out, {"ok": False, "diagnostic": asdict(diagnostic)})
+        return
     seed = derive_agent_seed(match_seed, state.slot or 0, state.agent_id or "", api_version)
-    if api_version == 2:
-        context: MatchContext | MatchContextV2 = MatchContextV2(
-            agent_id=state.agent_id or "",
-            seed=seed,
-            arena_size=request["arena_size"],
-            tick_limit=request["tick_limit"],
-            rng=random.Random(seed),
-            parameters=MappingProxyType(dict(request.get("parameters") or {})),
-        )
-    else:
-        context = MatchContext(
-            agent_id=state.agent_id or "",
-            seed=seed,
-            arena_size=request["arena_size"],
-            tick_limit=request["tick_limit"],
-            action_budget=request["action_budget"],
-            rng=random.Random(seed),
-            locality_reach=request.get("locality_reach"),
-        )
+    context = MatchContextV2(
+        agent_id=state.agent_id or "",
+        seed=seed,
+        arena_size=request["arena_size"],
+        tick_limit=request["tick_limit"],
+        rng=random.Random(seed),
+        parameters=MappingProxyType(dict(request.get("parameters") or {})),
+    )
     try:
         state.loaded.instance.reset(context)
     except Exception as exc:
@@ -504,35 +503,22 @@ def _handle_act(state: _WorkerState, request: dict[str, Any], out: Any) -> None:
         _respond(out, {"ok": False, "diagnostic": asdict(diagnostic)})
         return
     observation_payload = request["observation"]
-    if state.loaded.metadata.api_version == 2:
-        observation: Observation | ObservationV2 = ObservationV2(
-            current_tick=observation_payload["current_tick"],
-            last_callback_tick=observation_payload["last_callback_tick"],
-            previous_action_tick=observation_payload["previous_action_tick"],
-            self_process_id=observation_payload["self_process_id"],
-            self_anchor=observation_payload["self_anchor"],
-            self_reach=observation_payload["self_reach"],
-            own_core_base=observation_payload["own_core_base"],
-            own_core_size=observation_payload["own_core_size"],
-            visible_enemy_anchor_addresses=tuple(
-                observation_payload["visible_enemy_anchor_addresses"]
-            ),
-            previous_action_applied=observation_payload["previous_action_applied"],
-            previous_read_value=observation_payload.get("previous_read_value"),
-            previous_read_owner=observation_payload.get("previous_read_owner"),
-        )
-    else:
-        observation = Observation(
-            tick=observation_payload["tick"],
-            agent_id=observation_payload["agent_id"],
-            pc=observation_payload["pc"],
-            register_a=observation_payload["register_a"],
-            register_p=observation_payload["register_p"],
-            zero_flag=observation_payload["zero_flag"],
-            last_read=observation_payload.get("last_read"),
-            alive=observation_payload["alive"],
-            locus=observation_payload.get("locus"),
-        )
+    observation = ObservationV2(
+        current_tick=observation_payload["current_tick"],
+        last_callback_tick=observation_payload["last_callback_tick"],
+        previous_action_tick=observation_payload["previous_action_tick"],
+        self_process_id=observation_payload["self_process_id"],
+        self_anchor=observation_payload["self_anchor"],
+        self_reach=observation_payload["self_reach"],
+        own_core_base=observation_payload["own_core_base"],
+        own_core_size=observation_payload["own_core_size"],
+        visible_enemy_anchor_addresses=tuple(
+            observation_payload["visible_enemy_anchor_addresses"]
+        ),
+        previous_action_applied=observation_payload["previous_action_applied"],
+        previous_read_value=observation_payload.get("previous_read_value"),
+        previous_read_owner=observation_payload.get("previous_read_owner"),
+    )
     action_slot = request.get("action_slot", 0)
     try:
         action = state.loaded.instance.act(observation)
@@ -541,17 +527,12 @@ def _handle_act(state: _WorkerState, request: dict[str, Any], out: Any) -> None:
             exc,
             agent_id=state.agent_id or "",
             slot=state.slot or 0,
-            tick=(
-                observation.current_tick
-                if isinstance(observation, ObservationV2)
-                else observation.tick
-            ),
+            tick=observation.current_tick,
             action_slot=action_slot,
         )
         _respond(out, {"ok": False, "diagnostic": asdict(diagnostic)})
         return
-    expected_kind = ActionKindV2 if state.loaded.metadata.api_version == 2 else ActionKind
-    if isinstance(action, AgentAction) and isinstance(action.kind, expected_kind):
+    if isinstance(action, AgentAction) and isinstance(action.kind, ActionKindV2):
         _respond(
             out,
             {
@@ -565,7 +546,7 @@ def _handle_act(state: _WorkerState, request: dict[str, Any], out: Any) -> None:
         )
     else:
         # Not a valid AgentAction shape at all: forward as "no action",
-        # which validate_action rejects on the parent identically to an
+        # which parent-side Agent API v2 action validation rejects identically to an
         # in-process call returning the same malformed value -- see
         # docs/specs/agent_lab.md §6 and this module's docstring.
         _respond(out, {"ok": True, "action": None})

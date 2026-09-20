@@ -82,8 +82,10 @@ Issues = "https://github.com/libertaine/Bytefray/issues"
 # -------------------- setuptools config --------------------
 
 [tool.setuptools]
-# Include non-Python files (see [tool.setuptools.package-data] below)
-include-package-data = true
+# Ship only the explicitly enumerated runtime resources below. Research-only
+# Agent API v1 packages remain tracked in the repository but must not enter a
+# wheel/sdist through setuptools' automatic data-file discovery.
+include-package-data = false
 
 # Discover packages from BOTH trees.
 [tool.setuptools.packages.find]
@@ -105,7 +107,10 @@ app = [
   "sounds/**/*",
 ]
 battle_engine = [
-  "data/**/*",
+  "data/agent_template_v2/*",
+  "data/agent_template_v2_annotated/*",
+  "data/starter_agents/v4_*/*",
+  "data/starter_agents/v5_*/*",
 ]
 
 # Runtime imports can create bytecode beneath package-data agent directories.

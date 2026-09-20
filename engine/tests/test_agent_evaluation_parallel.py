@@ -28,7 +28,7 @@ from battle_engine.agent_evaluation import (
     main as evaluate_main,
 )
 
-NOP_ACTION = "AgentAction(ActionKind.NOP)"
+NOP_ACTION = "AgentAction(ActionKindV2.READ, 0)"
 
 
 def _write_agent(root: Path, name: str, act_body: str) -> Path:
@@ -36,14 +36,15 @@ def _write_agent(root: Path, name: str, act_body: str) -> Path:
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
     (directory / "agent.py").write_text(
         f"""
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
+    def declare_processes(self): return [ProcessDeclaration("main", 1, 1.0)]
     def reset(self, context): pass
     def act(self, observation):
 {act_body}
@@ -382,7 +383,7 @@ def test_workers_flag_parses_and_threads_through_cli(matrix_agents: Path, monkey
             str(matrix_agents / "cli-out"),
             "--quiet",
             "--ruleset",
-            "bytefray-rules-1",
+            "bytefray-rules-4",
         ]
     )
     assert exit_code == 0
