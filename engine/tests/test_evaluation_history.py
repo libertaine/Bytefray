@@ -147,6 +147,7 @@ def test_v2_adapter_rejects_malformed_json(tmp_path: Path):
 
 def test_v2_health_reflects_source_drift_abort(tmp_path: Path, monkeypatch):
     import battle_engine.agent_evaluation as mod
+    import battle_engine.evaluation_cell_execution as cell_execution
 
     _write_python_agent(tmp_path, "candidate")
     _write_python_agent(tmp_path, "opp_a")
@@ -160,13 +161,13 @@ def test_v2_health_reflects_source_drift_abort(tmp_path: Path, monkeypatch):
         data_root=tmp_path,
     )
 
-    def _detect_with_injected_drift(self, cell, planned_identities, root):
+    def _detect_with_injected_drift(cell, planned_identities, root):
         if cell.opponent_id == "opp_b":
             return {"error_code": "pre_execution_source_drift", "error_message": "boom"}
         return None
 
     monkeypatch.setattr(
-        mod.EvaluationService, "_detect_pre_execution_drift", _detect_with_injected_drift
+        cell_execution, "_detect_pre_execution_drift", _detect_with_injected_drift
     )
     result = mod.EvaluationService().run(request)
     summary = adapt_any(result.state_path)

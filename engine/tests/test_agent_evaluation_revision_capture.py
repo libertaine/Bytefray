@@ -202,13 +202,13 @@ def test_source_mutation_during_freeze_aborts_before_any_cell_executes(
     monkeypatch.setattr(agent_evaluation, "walk_agent_files", mutating_walk)
 
     execute_calls: list[object] = []
-    real_execute_cell = EvaluationService._execute_cell
+    real_execute_cell = agent_evaluation.execute_cell
 
-    def spying_execute_cell(self, *args, **kwargs):
+    def spying_execute_cell(*args, **kwargs):
         execute_calls.append(args)
-        return real_execute_cell(self, *args, **kwargs)
+        return real_execute_cell(*args, **kwargs)
 
-    monkeypatch.setattr(EvaluationService, "_execute_cell", spying_execute_cell)
+    monkeypatch.setattr(agent_evaluation, "execute_cell", spying_execute_cell)
 
     request = _request(two_agents)
     with pytest.raises(EvaluationConfigurationError):

@@ -27,13 +27,13 @@ from battle_engine.agent_evaluation import (
     SCHEMA_VERSION,
     EvaluationRequest,
     EvaluationService,
-    _post_execution_identity_drift,
     agent_identity,
     build_matrix,
     main,
     methodology_lines,
 )
 from battle_engine.agents import resolve_agent
+from battle_engine.evaluation_cell_execution import _post_execution_identity_drift
 from battle_engine.evaluation_history import FieldConfidence, adapt_any
 from battle_engine.evaluation_history.comparison import align
 from battle_engine.match_service import NativeAgentResult, NativeMatchResult
@@ -289,16 +289,16 @@ def test_single_orientation_run_reproduces_legacy_cell_count_and_shape(tmp_path)
 
 def test_opponent_first_calls_executor_with_roles_physically_swapped(tmp_path, monkeypatch):
     root = _two_agents(tmp_path)
-    import battle_engine.agent_evaluation as mod
+    import battle_engine.evaluation_cell_execution as cell_execution
 
-    real_test_agent = mod.test_agent
+    real_test_agent = cell_execution.test_agent
     calls: list[tuple[str, str]] = []
 
     def _spy(agent_id, *, opponent, **kwargs):
         calls.append((agent_id, opponent))
         return real_test_agent(agent_id, opponent=opponent, **kwargs)
 
-    monkeypatch.setattr(mod, "test_agent", _spy)
+    monkeypatch.setattr(cell_execution, "test_agent", _spy)
     service = EvaluationService()
     service.run(_request(root))
 
@@ -486,14 +486,14 @@ def test_resume_executes_only_the_missing_orientation(tmp_path, monkeypatch):
     root = _two_agents(tmp_path)
     import battle_engine.agent_evaluation as mod
 
-    real_execute_cell = mod.EvaluationService._execute_cell
+    real_execute_cell = mod.execute_cell
     executed: list[str] = []
 
-    def _tracking_execute_cell(self, cell, *args, **kwargs):
+    def _tracking_execute_cell(cell, *args, **kwargs):
         executed.append(cell.orientation)
-        return real_execute_cell(self, cell, *args, **kwargs)
+        return real_execute_cell(cell, *args, **kwargs)
 
-    monkeypatch.setattr(mod.EvaluationService, "_execute_cell", _tracking_execute_cell)
+    monkeypatch.setattr(mod, "execute_cell", _tracking_execute_cell)
 
     request = _request(root)
     service = EvaluationService()
@@ -533,14 +533,14 @@ def test_retry_failed_reruns_only_the_failed_orientation(tmp_path, monkeypatch):
 
     import battle_engine.agent_evaluation as mod
 
-    real_execute_cell = mod.EvaluationService._execute_cell
+    real_execute_cell = mod.execute_cell
     executed: list[str] = []
 
-    def _tracking_execute_cell(self, cell, *args, **kwargs):
+    def _tracking_execute_cell(cell, *args, **kwargs):
         executed.append(cell.orientation)
-        return real_execute_cell(self, cell, *args, **kwargs)
+        return real_execute_cell(cell, *args, **kwargs)
 
-    monkeypatch.setattr(mod.EvaluationService, "_execute_cell", _tracking_execute_cell)
+    monkeypatch.setattr(mod, "execute_cell", _tracking_execute_cell)
 
     retry_request = _request(root, retry_failures=True)
     result = service.run(retry_request)

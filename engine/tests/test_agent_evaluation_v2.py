@@ -262,6 +262,7 @@ def test_v2_first_checkpoint_exists_before_any_cell_executes(two_agents: Path, m
     """A crash mid-first-cell still leaves discoverable running lifecycle state."""
 
     import battle_engine.agent_evaluation as mod
+    import battle_engine.evaluation_cell_execution as cell_execution
 
     request = _request(two_agents)
     state_path = request.output_dir / "evaluation.json"
@@ -274,7 +275,7 @@ def test_v2_first_checkpoint_exists_before_any_cell_executes(two_agents: Path, m
         assert data["cells"] == []
         raise RuntimeError("simulated crash before first cell finishes")
 
-    monkeypatch.setattr(mod, "test_agent", _boom)
+    monkeypatch.setattr(cell_execution, "test_agent", _boom)
     with pytest.raises(RuntimeError):
         mod.EvaluationService().run(request)
 
@@ -415,20 +416,20 @@ def test_v2_source_drift_between_cells_stops_the_matrix(tmp_path: Path, monkeypa
     )
     service = EvaluationService()
 
-    import battle_engine.agent_evaluation as mod
+    import battle_engine.evaluation_cell_execution as cell_execution
 
-    original_detect = mod.EvaluationService._detect_pre_execution_drift
+    original_detect = cell_execution._detect_pre_execution_drift
 
-    def _detect_with_injected_drift(self, cell, planned_identities, root):
+    def _detect_with_injected_drift(cell, planned_identities, root):
         if cell.opponent_id == "opp_b":
             return {
                 "error_code": "pre_execution_source_drift",
                 "error_message": "opponent 'opp_b' identity changed since preflight (fields: source_sha256).",
             }
-        return original_detect(self, cell, planned_identities, root)
+        return original_detect(cell, planned_identities, root)
 
     monkeypatch.setattr(
-        mod.EvaluationService, "_detect_pre_execution_drift", _detect_with_injected_drift
+        cell_execution, "_detect_pre_execution_drift", _detect_with_injected_drift
     )
     result = service.run(request)
 
@@ -471,15 +472,15 @@ def test_drift_artifact_retry_failed_does_not_retry_while_source_remains_changed
     request = _request(tmp_path, opponent_ids=("opp_a", "opp_b"), seeds=(1,))
     service = EvaluationService()
 
-    import battle_engine.agent_evaluation as mod
+    import battle_engine.evaluation_cell_execution as cell_execution
 
-    def _detect_with_injected_drift(self, cell, planned_identities, root):
+    def _detect_with_injected_drift(cell, planned_identities, root):
         if cell.opponent_id == "opp_b":
             return {"error_code": "pre_execution_source_drift", "error_message": "boom"}
         return None
 
     monkeypatch.setattr(
-        mod.EvaluationService, "_detect_pre_execution_drift", _detect_with_injected_drift
+        cell_execution, "_detect_pre_execution_drift", _detect_with_injected_drift
     )
     first = service.run(request)
     assert first.cells[-1].status == "drift_detected"
@@ -510,24 +511,24 @@ def test_drift_artifact_retry_failed_does_not_retry_even_after_source_restored(
     request = _request(tmp_path, opponent_ids=("opp_a", "opp_b"), seeds=(1,))
     service = EvaluationService()
 
-    import battle_engine.agent_evaluation as mod
+    import battle_engine.evaluation_cell_execution as cell_execution
 
-    original_detect = mod.EvaluationService._detect_pre_execution_drift
+    original_detect = cell_execution._detect_pre_execution_drift
 
-    def _detect_with_injected_drift(self, cell, planned_identities, root):
+    def _detect_with_injected_drift(cell, planned_identities, root):
         if cell.opponent_id == "opp_b":
             return {"error_code": "pre_execution_source_drift", "error_message": "boom"}
-        return original_detect(self, cell, planned_identities, root)
+        return original_detect(cell, planned_identities, root)
 
     monkeypatch.setattr(
-        mod.EvaluationService, "_detect_pre_execution_drift", _detect_with_injected_drift
+        cell_execution, "_detect_pre_execution_drift", _detect_with_injected_drift
     )
     first = service.run(request)
     assert first.cells[-1].status == "drift_detected"
 
     # "Source restored": the injected drift condition is removed entirely,
     # as if the underlying edit had been reverted.
-    monkeypatch.setattr(mod.EvaluationService, "_detect_pre_execution_drift", original_detect)
+    monkeypatch.setattr(cell_execution, "_detect_pre_execution_drift", original_detect)
 
     from dataclasses import replace as _replace
 
@@ -561,9 +562,9 @@ def test_toctou_edit_between_precheck_and_execution_is_detected(tmp_path: Path, 
     request = _request(tmp_path)
     service = EvaluationService()
 
-    import battle_engine.agent_evaluation as mod
+    import battle_engine.evaluation_cell_execution as cell_execution
 
-    real_test_agent = mod.test_agent
+    real_test_agent = cell_execution.test_agent
     agent_path = tmp_path / "agents" / "candidate" / "agent.py"
     original_source = agent_path.read_text(encoding="utf-8")
     # Hashed straight off disk (not re-encoded from the text read above) so
@@ -577,7 +578,7 @@ def test_toctou_edit_between_precheck_and_execution_is_detected(tmp_path: Path, 
         )
         return real_test_agent(*args, **kwargs)
 
-    monkeypatch.setattr(mod, "test_agent", _edit_then_run)
+    monkeypatch.setattr(cell_execution, "test_agent", _edit_then_run)
     result = service.run(request)
 
     data = json.loads(result.state_path.read_text(encoding="utf-8"))
@@ -647,9 +648,9 @@ def test_toctou_edit_then_restore_is_not_falsely_flagged(tmp_path: Path, monkeyp
     request = _request(tmp_path)
     service = EvaluationService()
 
-    import battle_engine.agent_evaluation as mod
+    import battle_engine.evaluation_cell_execution as cell_execution
 
-    real_test_agent = mod.test_agent
+    real_test_agent = cell_execution.test_agent
     agent_path = tmp_path / "agents" / "candidate" / "agent.py"
     original_source = agent_path.read_text(encoding="utf-8")
 
@@ -660,7 +661,7 @@ def test_toctou_edit_then_restore_is_not_falsely_flagged(tmp_path: Path, monkeyp
         agent_path.write_text(original_source, encoding="utf-8")
         return real_test_agent(*args, **kwargs)
 
-    monkeypatch.setattr(mod, "test_agent", _edit_restore_then_run)
+    monkeypatch.setattr(cell_execution, "test_agent", _edit_restore_then_run)
     result = service.run(request)
 
     data = json.loads(result.state_path.read_text(encoding="utf-8"))
@@ -695,9 +696,9 @@ def create_agent(): return Agent()
     request = _request(tmp_path)
     service = EvaluationService()
 
-    import battle_engine.agent_evaluation as mod
+    import battle_engine.evaluation_cell_execution as cell_execution
 
-    real_test_agent = mod.test_agent
+    real_test_agent = cell_execution.test_agent
 
     def _retarget_entry_point_then_run(*args, **kwargs):
         manifest_path.write_text(
@@ -713,7 +714,7 @@ def create_agent(): return Agent()
         )
         return real_test_agent(*args, **kwargs)
 
-    monkeypatch.setattr(mod, "test_agent", _retarget_entry_point_then_run)
+    monkeypatch.setattr(cell_execution, "test_agent", _retarget_entry_point_then_run)
     result = service.run(request)
 
     data = json.loads(result.state_path.read_text(encoding="utf-8"))
@@ -757,9 +758,9 @@ def create_alt(): return Agent()
     request = _request(tmp_path)
     service = EvaluationService()
 
-    import battle_engine.agent_evaluation as mod
+    import battle_engine.evaluation_cell_execution as cell_execution
 
-    real_test_agent = mod.test_agent
+    real_test_agent = cell_execution.test_agent
 
     def _retarget_factory_then_run(*args, **kwargs):
         manifest_path.write_text(
@@ -770,7 +771,7 @@ def create_alt(): return Agent()
         )
         return real_test_agent(*args, **kwargs)
 
-    monkeypatch.setattr(mod, "test_agent", _retarget_factory_then_run)
+    monkeypatch.setattr(cell_execution, "test_agent", _retarget_factory_then_run)
     result = service.run(request)
 
     data = json.loads(result.state_path.read_text(encoding="utf-8"))
@@ -811,15 +812,15 @@ def test_toctou_local_helper_edit_after_precheck_is_detected(tmp_path: Path, mon
     request = _request(tmp_path)
     service = EvaluationService()
 
-    import battle_engine.agent_evaluation as mod
+    import battle_engine.evaluation_cell_execution as cell_execution
 
-    real_test_agent = mod.test_agent
+    real_test_agent = cell_execution.test_agent
 
     def _edit_helper_then_run(*args, **kwargs):
         helper_path.write_text("VALUE = 2  # edited after precheck, left in place\n", encoding="utf-8")
         return real_test_agent(*args, **kwargs)
 
-    monkeypatch.setattr(mod, "test_agent", _edit_helper_then_run)
+    monkeypatch.setattr(cell_execution, "test_agent", _edit_helper_then_run)
     result = service.run(request)
 
     data = json.loads(result.state_path.read_text(encoding="utf-8"))
@@ -1062,9 +1063,9 @@ def test_toctou_initialization_failure_after_intervening_source_change_is_flagge
     request = _request(tmp_path)
     service = EvaluationService()
 
-    import battle_engine.agent_evaluation as mod
+    import battle_engine.evaluation_cell_execution as cell_execution
 
-    real_test_agent = mod.test_agent
+    real_test_agent = cell_execution.test_agent
     agent_path = tmp_path / "agents" / "candidate" / "agent.py"
 
     def _break_then_run(*args, **kwargs):
@@ -1081,7 +1082,7 @@ def create_agent(): return Agent()
         )
         return real_test_agent(*args, **kwargs)
 
-    monkeypatch.setattr(mod, "test_agent", _break_then_run)
+    monkeypatch.setattr(cell_execution, "test_agent", _break_then_run)
     result = service.run(request)
 
     data = json.loads(result.state_path.read_text(encoding="utf-8"))
@@ -1309,7 +1310,7 @@ def test_fresh_evaluation_still_gets_the_first_checkpoint_before_any_cell(
     genuinely *new* evaluation, which has no prior cells to protect.
     """
 
-    import battle_engine.agent_evaluation as mod
+    import battle_engine.evaluation_cell_execution as cell_execution
 
     request = _request(two_agents)
     state_path = request.output_dir / "evaluation.json"
@@ -1320,7 +1321,7 @@ def test_fresh_evaluation_still_gets_the_first_checkpoint_before_any_cell(
         assert data["cells"] == []
         raise RuntimeError("simulated crash before first cell finishes")
 
-    monkeypatch.setattr(mod, "test_agent", _boom)
+    monkeypatch.setattr(cell_execution, "test_agent", _boom)
     with pytest.raises(RuntimeError):
         EvaluationService().run(request)
 

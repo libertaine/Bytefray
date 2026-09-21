@@ -9,8 +9,9 @@ build_agents_command`, a hidden ``bytefray agents _evaluation_worker`` verb,
 newline-delimited JSON on stdin/stdout, and Windows Job Object / POSIX
 parent-death containment via :mod:`battle_engine.process_containment` -- but
 carries a completely different, much simpler protocol: **one request is one
-whole ``EvaluationCell`` job** (an entire match, executed via the existing
-``EvaluationService._execute_cell``), not a live per-tick ``load``/``reset``/
+whole ``EvaluationCell`` job** (an entire match, executed via
+``evaluation_cell_execution.execute_cell`` -- the same canonical primitive
+the serial path uses, V6 Phase 3H), not a live per-tick ``load``/``reset``/
 ``act`` exchange. No ``multiprocessing`` is used, for the same reason
 ``agent_worker.py`` avoids it: the worker is just another invocation of the
 already-frozen executable, so there is no Windows ``freeze_support()``
@@ -30,6 +31,14 @@ checkpoint persistence, execution-context deduplication, drift/failure
 policy) all stay in ``agent_evaluation.EvaluationService.run`` -- this module
 is intentionally "dumb": it knows how to run one cell and report the result,
 nothing about evaluation-wide state.
+
+V6 Phase 3H removed the last edge back up to that coordinator. This module
+previously reached ``EvaluationService._execute_cell`` through a
+function-local import of ``agent_evaluation`` (and a throwaway
+``EvaluationService()`` instance) purely to escape the resulting import
+cycle; it now depends only downward, on ``evaluation_cell_execution``, so
+neither the service class nor the ``agent_evaluation`` facade is imported
+here at all. The wire protocol is unchanged by that move.
 """
 
 from __future__ import annotations
@@ -46,6 +55,7 @@ from pathlib import Path
 from typing import Any
 
 from battle_engine.agent_worker import WorkerCallResult, WorkerCallStatus
+from battle_engine.evaluation_cell_execution import execute_cell
 from battle_engine.evaluation_contracts import EvaluationCell
 from battle_engine.launchers import build_agents_command
 from battle_engine.process_containment import (
@@ -290,13 +300,6 @@ def _respond(stream: Any, payload: dict[str, Any]) -> None:
 
 
 def _handle_run_cell(request: dict[str, Any], out: Any) -> None:
-    # Function-local import: agent_evaluation.py needs EvaluationCellWorkerHandle
-    # from this module for its coordinator (parallel dispatch), so a module-top
-    # import in this direction would be a circular import. This module can
-    # safely import agent_evaluation at module scope (it is the "leaf"), but
-    # the worker-side dispatch function only needs it lazily, at call time.
-    from battle_engine.agent_evaluation import EvaluationService
-
     cell = _cell_from_wire(request["cell"])
     ticks = request["ticks"]
     data_root = Path(request["data_root"]) if request.get("data_root") else None
@@ -312,7 +315,7 @@ def _handle_run_cell(request: dict[str, Any], out: Any) -> None:
     scheduler_rotate_start = bool(request.get("scheduler_rotate_start", False))
 
     try:
-        result = EvaluationService()._execute_cell(
+        result = execute_cell(
             cell,
             ticks,
             data_root,
@@ -325,7 +328,7 @@ def _handle_run_cell(request: dict[str, Any], out: Any) -> None:
             scheduler_rotate_start=scheduler_rotate_start,
         )
 
-    except Exception as exc:  # belt-and-suspenders: _execute_cell/test_agent
+    except Exception as exc:  # belt-and-suspenders: execute_cell/test_agent
         # already catch nearly everything internally (agent_test.test_agent's
         # own docstring); this should rarely fire.
         _respond(
@@ -357,7 +360,7 @@ def run_worker(*, stdin: Any = None, stdout: Any = None) -> int:
 
     Redirects ``sys.stdout``/``sys.stdin`` the same way (and for the same
     reason) ``agent_worker.run_worker`` does: evaluated agent code running
-    inside ``_execute_cell`` must never be able to corrupt or desynchronize
+    inside ``execute_cell`` must never be able to corrupt or desynchronize
     the protocol stream via ``print()``/``input()``.
     """
 

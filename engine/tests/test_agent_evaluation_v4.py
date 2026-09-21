@@ -26,7 +26,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import battle_engine.agent_evaluation as agent_evaluation_module
+import battle_engine.evaluation_cell_execution as cell_execution_module
 import pytest
 from battle_engine.agent_evaluation import (
     IDENTITY_VERSION_V4,
@@ -137,7 +137,7 @@ def _v4_request(tmp_path: Path, **overrides) -> EvaluationRequest:
 def _inject_agent_test_failure(monkeypatch, *failing_agent_ids: str):
     """Make cells involving selected current agents fail at the tool seam."""
 
-    original = agent_evaluation_module.test_agent
+    original = cell_execution_module.test_agent
     failing = frozenset(failing_agent_ids)
 
     def _test_agent(agent_id: str, *args, **kwargs):
@@ -152,7 +152,7 @@ def _inject_agent_test_failure(monkeypatch, *failing_agent_ids: str):
             )
         return original(agent_id, *args, **kwargs)
 
-    monkeypatch.setattr(agent_evaluation_module, "test_agent", _test_agent)
+    monkeypatch.setattr(cell_execution_module, "test_agent", _test_agent)
     return original
 
 
@@ -400,7 +400,7 @@ def test_resume_never_converts_historical_failed_cells_into_success(
     # A bare resume (default resume=True, retry_failures=False): nothing new
     # is scheduled, since the failed cell is already terminally resolved. Restore
     # normal execution first so an accidental retry would turn the cells green.
-    monkeypatch.setattr(agent_evaluation_module, "test_agent", original_test_agent)
+    monkeypatch.setattr(cell_execution_module, "test_agent", original_test_agent)
     resumed = EvaluationService().run(request)
     resumed_data = json.loads(resumed.state_path.read_text(encoding="utf-8"))
     assert all(cell.status == "failed" for cell in resumed.cells)
