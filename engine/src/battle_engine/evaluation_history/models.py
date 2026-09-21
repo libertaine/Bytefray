@@ -610,7 +610,7 @@ def evaluation_cells_from_raw(
 ) -> tuple[EvaluationCell, ...]:
     """Rebuild real ``EvaluationCell`` objects from parsed JSON.
 
-    Lets the adapters reuse ``agent_evaluation.aggregate_cells``/
+    Lets the adapters reuse ``evaluation_analysis.aggregate_cells``/
     ``compare_candidate_baseline`` unchanged instead of a second, drifting
     aggregation implementation (docs/specs/evaluation_history.md Sec 11's
     "derived fields must never override contradictory canonical cell

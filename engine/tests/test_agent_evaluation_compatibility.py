@@ -13,6 +13,7 @@ from pathlib import Path
 
 import battle_engine.agent_evaluation as evaluation
 import battle_engine.agent_test as agent_test_module
+import battle_engine.evaluation_analysis as analysis
 import battle_engine.evaluation_contracts as contracts
 import pytest
 from battle_engine.config import Config
@@ -119,6 +120,19 @@ def test_every_compatibility_name_is_importable_by_name() -> None:
     imported = __import__("battle_engine.agent_evaluation", fromlist=list(names))
     for name in names:
         assert getattr(imported, name) is getattr(evaluation, name)
+
+
+@pytest.mark.parametrize(
+    "name",
+    (
+        "aggregate_cells",
+        "all_subject_aggregates",
+        "classify",
+        "compare_candidate_baseline",
+    ),
+)
+def test_facade_reexports_the_canonical_analysis_function_object(name: str) -> None:
+    assert getattr(evaluation, name) is getattr(analysis, name)
 
 
 CONTRACT_MODEL_TYPES = (

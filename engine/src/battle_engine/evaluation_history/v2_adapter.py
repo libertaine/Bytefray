@@ -7,11 +7,13 @@ from pathlib import Path
 from typing import Any
 
 from battle_engine.agent_evaluation import (
-    all_subject_aggregates,
-    compare_candidate_baseline,
     resolve_v4_seed_geometry,
     standard_layouts,
     standard_placements,
+)
+from battle_engine.evaluation_analysis import (
+    all_subject_aggregates,
+    compare_candidate_baseline,
 )
 from battle_engine.evaluation_analysis import analyze as analyze_evaluation
 from battle_engine.evaluation_contracts import (
