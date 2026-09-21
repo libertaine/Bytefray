@@ -6,11 +6,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-from battle_engine.agent_evaluation import (
-    resolve_v4_seed_geometry,
-    standard_layouts,
-    standard_placements,
-)
 from battle_engine.evaluation_analysis import (
     all_subject_aggregates,
     compare_candidate_baseline,
@@ -27,6 +22,11 @@ from battle_engine.evaluation_identity import (
     layout_identity_payload,
     placement_identity_payload,
     seeded_placement_identity_payload,
+)
+from battle_engine.evaluation_planning import (
+    resolve_v4_seed_geometry,
+    standard_layouts,
+    standard_placements,
 )
 
 from .models import (

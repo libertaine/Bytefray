@@ -22,7 +22,6 @@ from battle_engine.agent_evaluation import (
     EvaluationConfigurationError,
     EvaluationRequest,
     EvaluationService,
-    build_matrix,
     is_ruleset_v2_methodology,
     parse_opponents,
     parse_seed_list,
@@ -47,6 +46,7 @@ from battle_engine.evaluation_group_analysis import (
     group_cell_ref_from_evaluation_cell,
 )
 from battle_engine.evaluation_history.models import evaluation_cells_from_raw
+from battle_engine.evaluation_planning import build_matrix
 from battle_engine.launchers import build_agents_command, build_tournament_command
 from battle_engine.result_model import read_result
 from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID

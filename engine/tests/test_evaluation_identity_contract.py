@@ -15,6 +15,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import battle_engine.agent_evaluation as evaluation
+import battle_engine.evaluation_planning as planning
 import pytest
 from battle_engine.evaluation_history import HealthCode
 from battle_engine.evaluation_history.v2_adapter import adapt_v2
@@ -432,7 +433,11 @@ def test_pairwise_schedule_and_condition_producer_agree_with_independent_referen
     request = _request_for_version(version, tmp_path / f"matrix-v{version}")
     identities = _identities(local=True)
     specs = {agent_id: SimpleNamespace(name=agent_id) for agent_id in identities}
-    monkeypatch.setattr(evaluation, "agent_identity", lambda spec: identities[spec.name])
+    # V6 Phase 3G: the matrix compiler lives in ``evaluation_planning``, so
+    # its ``agent_identity`` seam is the one a synthetic spec must replace.
+    # ``evaluation.build_matrix`` below is still called through the permanent
+    # facade, which re-exports the very same function object.
+    monkeypatch.setattr(planning, "agent_identity", lambda spec: identities[spec.name])
     conditions_fingerprint = "evaluation-conditions_89abcdef0123456789abcdef"
     alignment_mode = payload["arena_alignment_mode"]
 

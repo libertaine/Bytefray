@@ -13,7 +13,6 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
-from battle_engine.agent_evaluation import resolve_v4_seed_geometry
 from battle_engine.agent_revisions import agent_revisions_root, verify_revision
 from battle_engine.agent_test import OPPONENT_SLOT, TESTED_AGENT_SLOT
 from battle_engine.evaluation_contracts import (
@@ -23,6 +22,7 @@ from battle_engine.evaluation_contracts import (
     physical_slots_for_orientation,
     seat_label,
 )
+from battle_engine.evaluation_planning import resolve_v4_seed_geometry
 from battle_engine.paths import contained_path, get_data_root
 from battle_engine.replay import ReplayHeader, iter_replay
 from battle_engine.result_model import ReplayIntegrityError, read_result, verify_replay_digest
