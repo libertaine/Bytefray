@@ -21,7 +21,13 @@ from battle_engine.evaluation_contracts import (
     LIFECYCLE_STATE_FINISHED_WITH_FAILURES,
     SCHEMA_NAME,
 )
-from battle_engine.result_model import stable_id
+from battle_engine.evaluation_identity import (
+    build_evaluation_id,
+    build_pairwise_condition_fingerprint,
+    layout_identity_payload,
+    placement_identity_payload,
+    seeded_placement_identity_payload,
+)
 
 from .models import (
     AdaptedCell,
@@ -96,11 +102,11 @@ def _recomputed_v1v1_placements() -> list[dict[str, Any]]:
     payload construction exactly, for the self-consistency rehash below."""
 
     return [
-        {
-            "placement_id": placement.placement_id,
-            "subject_start": placement.subject_start,
-            "opponent_start": placement.opponent_start,
-        }
+        placement_identity_payload(
+            placement.placement_id,
+            placement.subject_start,
+            placement.opponent_start,
+        )
         for placement in standard_placements()
     ]
 
@@ -110,7 +116,7 @@ def _recomputed_group_layouts(entrant_count: int) -> list[dict[str, Any]]:
     payload construction exactly, for the self-consistency rehash below."""
 
     return [
-        {"layout_id": layout.layout_id, "seat_starts": list(layout.seat_starts)}
+        layout_identity_payload(layout.layout_id, layout.seat_starts)
         for layout in standard_layouts(entrant_count)
     ]
 
@@ -136,7 +142,7 @@ def _recomputed_v4_placements(
         if not isinstance(seed, int) or isinstance(seed, bool):
             continue
         seat_a, seat_b = resolve_v4_seed_geometry(rules_id, arena_size, seed)
-        placements.append({"seed": seed, "subject_start": seat_a, "opponent_start": seat_b})
+        placements.append(seeded_placement_identity_payload(seed, seat_a, seat_b))
     return placements
 
 # A cell that lacks any of these, or has the wrong type, cannot even be
@@ -685,16 +691,9 @@ def adapt_v2_data(data: dict[str, Any], path: Path) -> EvaluationSummary:
         and isinstance(identity_version, int)
         and not isinstance(identity_version, bool)
     ):
-        recomputed_payload = {
-            "identity_version": identity_version,
-            "candidate": planned.get("candidate"),
-            "baseline": planned.get("baseline"),
-            "opponents": opponent_identities,
-            "seeds": seeds,
-            "ticks": ticks,
-            "effective_conditions": effective_conditions,
-            "rules_compatibility_id": rules_id,
-        }
+        recomputed_group = False
+        recomputed_layouts: list[dict[str, Any]] | None = None
+        recomputed_placements: list[dict[str, Any]] | None = None
         # v0.9 Phase 6 (Sec J.1/AA.4.8): identity_version 4's payload gains
         # two sibling keys -- gated on the artifact's own recorded
         # identity_version (M1's existing precedent), never the current
@@ -711,15 +710,11 @@ def adapt_v2_data(data: dict[str, Any], path: Path) -> EvaluationSummary:
         # (found via a real v5 artifact's `evaluations show` health line
         # during Phase 2 characterization -- a genuine Phase 1 gap, not a
         # new Phase 2 requirement).
-        if identity_version >= 4:
-            recomputed_payload["orientation_mode"] = data.get("orientation_mode")
-            recomputed_payload["arena_alignment_mode"] = data.get("arena_alignment_mode")
         if identity_version >= 6 and data.get("group") is True:
-            recomputed_payload.pop("orientation_mode", None)
+            recomputed_group = True
             roster_agent_ids = data.get("roster_agent_ids")
             if isinstance(roster_agent_ids, list):
-                recomputed_payload["group"] = True
-                recomputed_payload["layouts"] = _recomputed_group_layouts(len(roster_agent_ids))
+                recomputed_layouts = _recomputed_group_layouts(len(roster_agent_ids))
         elif identity_version == IDENTITY_VERSION_V4:
             # v4.0.0-rc1 Phase 1: the v4-seeded methodology's own "placements"
             # recipe (research report Sec H.1 item 7) -- must be checked
@@ -728,12 +723,26 @@ def adapt_v2_data(data: dict[str, Any], path: Path) -> EvaluationSummary:
             # formula.
             arena_size = effective_conditions.get("arena_size")
             if isinstance(arena_size, int) and not isinstance(arena_size, bool):
-                recomputed_payload["placements"] = _recomputed_v4_placements(
+                recomputed_placements = _recomputed_v4_placements(
                     rules_id, arena_size, seeds
                 )
         elif identity_version >= 5:
-            recomputed_payload["placements"] = _recomputed_v1v1_placements()
-        recomputed_id = stable_id("evaluation-v2", recomputed_payload)
+            recomputed_placements = _recomputed_v1v1_placements()
+        recomputed_id = build_evaluation_id(
+            identity_version=identity_version,
+            candidate=planned.get("candidate"),
+            baseline=planned.get("baseline"),
+            opponents=opponent_identities,
+            seeds=seeds,
+            ticks=ticks,
+            effective_conditions=effective_conditions,
+            rules_compatibility_id=rules_id,
+            orientation_mode=data.get("orientation_mode"),
+            arena_alignment_mode=data.get("arena_alignment_mode"),
+            group=recomputed_group,
+            layouts=recomputed_layouts,
+            placements=recomputed_placements,
+        )
         if recomputed_id != data.get("evaluation_id"):
             codes.append(HealthCode.PLANNED_IDENTITY_INCONSISTENT)
             detail.append(
@@ -784,34 +793,20 @@ def adapt_v2_data(data: dict[str, Any], path: Path) -> EvaluationSummary:
                 continue
             if idx >= len(opponent_identities):
                 continue
-            fp_payload = {
-                "opponent": opponent_identities[idx],
-                "seed": raw.get("seed"),
-                "effective_conditions": conditions_fp,
-                "rules_compatibility_id": rules_id,
-                "condition_occurrence_index": occurrence,
-            }
-            # v0.9 Phase 6 (Sec I.3/AA.4.3): identity_version 4's per-cell
-            # condition_fingerprint payload gains two sibling keys -- same
-            # identity_version gate as the evaluation_id recomputation
-            # above, for the identical "don't flag a valid older artifact"
-            # reason.
-            if isinstance(identity_version, int) and identity_version >= 4:
-                fp_payload["orientation"] = raw.get("orientation")
-                fp_payload["arena_alignment_mode"] = data.get("arena_alignment_mode")
-            # v2.0.0-beta2 Phase 2 fix: identity_version 5 (Phase 1) also
-            # adds a per-cell "placement" key to this payload
-            # (build_matrix's own fp_payload construction) -- missing here
-            # was the same genuine Phase 1 gap as the evaluation_id
-            # recomputation above, found via the identical real-artifact
-            # health check.
-            if isinstance(identity_version, int) and identity_version >= 5 and data.get("group") is not True:
-                fp_payload["placement"] = {
-                    "placement_id": raw.get("placement_id"),
-                    "subject_start": raw.get("subject_start"),
-                    "opponent_start": raw.get("opponent_start"),
-                }
-            expected_fp = stable_id("evaluation-condition", fp_payload)
+            expected_fp = build_pairwise_condition_fingerprint(
+                identity_version=identity_version,
+                opponent=opponent_identities[idx],
+                seed=raw.get("seed"),
+                effective_conditions=conditions_fp,
+                rules_compatibility_id=rules_id,
+                condition_occurrence_index=occurrence,
+                orientation=raw.get("orientation"),
+                arena_alignment_mode=data.get("arena_alignment_mode"),
+                group=data.get("group") is True,
+                placement_id=raw.get("placement_id"),
+                subject_start=raw.get("subject_start"),
+                opponent_start=raw.get("opponent_start"),
+            )
             if expected_fp != recorded_fp:
                 inconsistent_fingerprints.append(raw["schedule_id"])
         if inconsistent_fingerprints:

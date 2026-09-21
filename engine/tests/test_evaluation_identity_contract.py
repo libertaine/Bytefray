@@ -18,6 +18,7 @@ import battle_engine.agent_evaluation as evaluation
 import pytest
 from battle_engine.evaluation_history import HealthCode
 from battle_engine.evaluation_history.v2_adapter import adapt_v2
+from battle_engine.evaluation_identity import build_evaluation_id
 from battle_engine.rules import BYTEFRAY_RULESET_ID, BYTEFRAY_RULESET_V4_ID
 from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V2_ID
 
@@ -300,6 +301,24 @@ def test_cross_version_evaluation_identity_golden_and_history_agreement(
     ]
     assert payload["seeds"] == [1, 7, 1]
     assert _reference_stable_id("evaluation-v2", payload) == expected
+    assert (
+        build_evaluation_id(
+            identity_version=version,
+            candidate=payload["candidate"],
+            baseline=payload["baseline"],
+            opponents=payload["opponents"],
+            seeds=payload["seeds"],
+            ticks=payload["ticks"],
+            effective_conditions=payload["effective_conditions"],
+            rules_compatibility_id=payload["rules_compatibility_id"],
+            orientation_mode=payload.get("orientation_mode"),
+            arena_alignment_mode=payload.get("arena_alignment_mode"),
+            group=payload.get("group") is True,
+            layouts=payload.get("layouts"),
+            placements=payload.get("placements"),
+        )
+        == expected
+    )
 
     # Only v7 is a currently executable producer recipe.  Versions 2-6 are
     # checked as independently specified historical artifacts; calling the

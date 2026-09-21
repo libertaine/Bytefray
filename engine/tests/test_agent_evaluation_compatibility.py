@@ -15,6 +15,7 @@ import battle_engine.agent_evaluation as evaluation
 import battle_engine.agent_test as agent_test_module
 import battle_engine.evaluation_analysis as analysis
 import battle_engine.evaluation_contracts as contracts
+import battle_engine.evaluation_identity as identity
 import pytest
 from battle_engine.config import Config
 from battle_engine.rules import (
@@ -133,6 +134,18 @@ def test_every_compatibility_name_is_importable_by_name() -> None:
 )
 def test_facade_reexports_the_canonical_analysis_function_object(name: str) -> None:
     assert getattr(evaluation, name) is getattr(analysis, name)
+
+
+@pytest.mark.parametrize(
+    "name",
+    (
+        "agent_identity",
+        "effective_conditions_payload",
+        "source_digest",
+    ),
+)
+def test_facade_reexports_the_canonical_identity_function_object(name: str) -> None:
+    assert getattr(evaluation, name) is getattr(identity, name)
 
 
 CONTRACT_MODEL_TYPES = (

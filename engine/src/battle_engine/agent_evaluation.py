@@ -18,7 +18,6 @@ This module is Qt-free and headless: it executes agent code only via
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import queue
 import re
@@ -33,6 +32,7 @@ from pathlib import Path
 from typing import Any
 
 import battle_engine.evaluation_contracts as _evaluation_contracts
+import battle_engine.evaluation_identity as _evaluation_identity
 from battle_engine.agent_api import (
     LOCAL_SOURCE_FINGERPRINT_VERSION,
     AgentValidationError,
@@ -107,6 +107,11 @@ from battle_engine.evaluation_contracts import (
     resolved_identity_version,
     resolved_schema_version,
     seat_label,
+)
+from battle_engine.evaluation_identity import (
+    agent_identity,
+    effective_conditions_payload,
+    source_digest,
 )
 from battle_engine.evaluation_presets import (
     ORIENTATION_BOTH as _PRESET_ORIENTATION_BOTH,
@@ -313,80 +318,6 @@ def resolve_v4_seed_geometry(
         seed=seed,
     )
     return starts[0], starts[1]
-
-
-
-
-# ---------------------------------------------------------------------------
-# Identity (docs/specs/agent_evaluation.md Sec 8)
-# ---------------------------------------------------------------------------
-
-
-def source_digest(source_path: Path | None) -> str | None:
-    """Hash an entry-point source file's bytes, or ``None`` if unavailable.
-
-    The one primitive genuinely shared with ``tournament_service.
-    _entrant_identity``/``match_service.canonical_match_id`` -- each of
-    those builds its own differently shaped identity dict for its own
-    purpose and is left untouched (see Sec 8/Sec 2 finding 8 of the spec
-    for why unifying the dict shapes themselves would be a premature
-    abstraction).
-    """
-
-    if source_path is None or not source_path.is_file():
-        return None
-    return hashlib.sha256(source_path.read_bytes()).hexdigest()
-
-
-def agent_identity(spec: AgentSpec) -> dict[str, Any]:
-    """A stable, hashable identity fingerprint for one resolved Python agent."""
-
-    return {
-        "agent_id": spec.name,
-        "kind": spec.kind,
-        "api_version": spec.api_version,
-        "agent_version": spec.version,
-        "entry_point": spec.entry_point,
-        "source_sha256": source_digest(spec.source_path),
-        # H3/B1(v0.7 closure pass): catches an imported local helper/nested
-        # local package edit that source_sha256 alone (entry-point file
-        # only) would miss. Cross-checked post-execution against the
-        # executor's own recorded ``NativeAgentResult.metadata`` -- which
-        # now carries a matching ``local_source_fingerprint`` computed by
-        # the executor itself at load time (``python_runtime``/
-        # ``supervised_runtime``), not a second independent disk read by
-        # this module -- see ``_ACTUAL_IDENTITY_FIELDS``/
-        # ``_post_execution_identity_drift``.
-        "local_source_fingerprint": local_source_fingerprint(spec.dir),
-    }
-
-
-
-
-def effective_conditions_payload(
-    conditions: EffectiveConditions, locality_reach: int | None = None
-) -> dict[str, Any]:
-    """The hashed/persisted form of one evaluation's effective conditions.
-
-    ``asdict(conditions)`` verbatim, plus -- for a bounded-locality
-    evaluation only -- the resolved reach ``R``.
-
-    Reach is deliberately *not* a field of :class:`EffectiveConditions`
-    itself. Adding one would put ``"locality_reach": null`` into
-    ``asdict()`` for every evaluation ever run, changing every
-    ``evaluation_id`` and every ``effective_conditions_fingerprint`` in the
-    project's history to disclose a condition that does not apply to them.
-    Gating the key here keeps every non-locality payload byte-identical
-    while still making reach fully identity-bearing and
-    comparability-gating where it is real: two locality evaluations that
-    differ only in ``R`` get different ids and are correctly reported as
-    running under different conditions.
-    """
-
-    payload = asdict(conditions)
-    if locality_reach is not None:
-        payload["locality_reach"] = locality_reach
-    return payload
 
 
 
@@ -886,6 +817,7 @@ def build_matrix(
         raise EvaluationConfigurationError(
             "Multi-entrant evaluation is retired and cannot build a new execution matrix."
         )
+    identity_version = resolved_identity_version(resolved_is_v2, False, resolved_is_v4)
 
     # v3 Phase 0D: placements are pure functions of arena size, so they
     # MUST be derived from this request's own resolved arena size, never
@@ -999,18 +931,17 @@ def build_matrix(
                         # own "conditionally add, never for v1" discipline:
                         # `placement_id` joins this payload only when
                         # `placement` is not `None` (v2 methodology).
-                        schedule_id_payload: dict[str, Any] = {
-                            "evaluation_id": evaluation_id,
-                            "role": role,
-                            "subject_id": subject_id,
-                            "opponent_id": opponent_id,
-                            "seed": seed,
-                            "orientation": orientation,
-                            "ordinal": ordinal,
-                        }
-                        if placement is not None:
-                            schedule_id_payload["placement_id"] = placement_id
-                        schedule_id = stable_id("evaluation-cell", schedule_id_payload)
+                        schedule_id = _evaluation_identity.build_pairwise_schedule_id(
+                            identity_version=identity_version,
+                            evaluation_id=evaluation_id,
+                            role=role,
+                            subject_id=subject_id,
+                            opponent_id=opponent_id,
+                            seed=seed,
+                            orientation=orientation,
+                            ordinal=ordinal,
+                            placement_id=placement_id,
+                        )
                         label = (
                             f"{ordinal:04d}-{role}-{_safe_path_segment(subject_id)}"
                             f"-vs-{_safe_path_segment(opponent_id)}-seed{seed}"
@@ -1021,28 +952,21 @@ def build_matrix(
                         )
                         condition_fingerprint = None
                         if specs is not None and conditions_fingerprint is not None:
-                            fp_payload: dict[str, Any] = {
-                                "opponent": agent_identity(specs[opponent_id]),
-                                "seed": seed,
-                                "effective_conditions": conditions_fingerprint,
-                                "rules_compatibility_id": rules_compatibility_id,
-                                "condition_occurrence_index": condition_occurrence_index,
-                                "orientation": orientation,
-                                "arena_alignment_mode": arena_alignment_mode,
-                            }
-                            # Only added when placement genuinely varies
-                            # (v2) -- an unconditional key here would change
-                            # every v1 condition_fingerprint's hash for a
-                            # dimension that never actually varies under v1
-                            # methodology (Phase 1F/1G: smallest honest
-                            # identity evolution, byte-identical v1 output).
-                            if placement is not None:
-                                fp_payload["placement"] = {
-                                    "placement_id": placement.placement_id,
-                                    "subject_start": cell_subject_start,
-                                    "opponent_start": cell_opponent_start,
-                                }
-                            condition_fingerprint = stable_id("evaluation-condition", fp_payload)
+                            condition_fingerprint = (
+                                _evaluation_identity.build_pairwise_condition_fingerprint(
+                                    identity_version=identity_version,
+                                    opponent=agent_identity(specs[opponent_id]),
+                                    seed=seed,
+                                    effective_conditions=conditions_fingerprint,
+                                    rules_compatibility_id=rules_compatibility_id,
+                                    condition_occurrence_index=condition_occurrence_index,
+                                    orientation=orientation,
+                                    arena_alignment_mode=arena_alignment_mode,
+                                    placement_id=placement_id,
+                                    subject_start=cell_subject_start,
+                                    opponent_start=cell_opponent_start,
+                                )
+                            )
                         cells.append(
                             EvaluationCell(
                                 schedule_id=schedule_id,
@@ -1109,17 +1033,14 @@ def _build_group_matrix(
                 # user-supplied duplicate seed) -- the identical defensive
                 # role `ordinal` already plays in the pairwise matrix above
                 # (Phase 1F/v0.9 Phase 6 precedent).
-                schedule_id = stable_id(
-                    "evaluation-cell",
-                    {
-                        "evaluation_id": evaluation_id,
-                        "role": CANDIDATE,
-                        "roster": list(canonical_roster),
-                        "seat_agent_ids": list(seat_agent_ids),
-                        "seed": seed,
-                        "layout_id": layout.layout_id,
-                        "ordinal": ordinal,
-                    },
+                schedule_id = _evaluation_identity.build_group_schedule_id(
+                    evaluation_id=evaluation_id,
+                    role=CANDIDATE,
+                    roster=canonical_roster,
+                    seat_agent_ids=seat_agent_ids,
+                    seed=seed,
+                    layout_id=layout.layout_id,
+                    ordinal=ordinal,
                 )
                 label = (
                     f"{ordinal:04d}-group-"
@@ -1127,19 +1048,21 @@ def _build_group_matrix(
                 )
                 condition_fingerprint = None
                 if specs is not None and conditions_fingerprint is not None:
-                    fp_payload: dict[str, Any] = {
-                        "roster": [agent_identity(specs[agent_id]) for agent_id in canonical_roster],
-                        "seat_agent_ids": list(seat_agent_ids),
-                        "seed": seed,
-                        "effective_conditions": conditions_fingerprint,
-                        "rules_compatibility_id": resolved_rules_id,
-                        "arena_alignment_mode": arena_alignment_mode,
-                        "layout": {
-                            "layout_id": layout.layout_id,
-                            "seat_starts": list(layout.seat_starts),
-                        },
-                    }
-                    condition_fingerprint = stable_id("evaluation-condition", fp_payload)
+                    condition_fingerprint = (
+                        _evaluation_identity.build_group_condition_fingerprint(
+                            roster=[
+                                agent_identity(specs[agent_id])
+                                for agent_id in canonical_roster
+                            ],
+                            seat_agent_ids=seat_agent_ids,
+                            seed=seed,
+                            effective_conditions=conditions_fingerprint,
+                            rules_compatibility_id=resolved_rules_id,
+                            arena_alignment_mode=arena_alignment_mode,
+                            layout_id=layout.layout_id,
+                            seat_starts=layout.seat_starts,
+                        )
+                    )
                 cells.append(
                     EvaluationCell(
                         schedule_id=schedule_id,
@@ -1827,8 +1750,7 @@ class EvaluationService:
         # `evaluation_id` -- see `_evaluation_id` and `_write_state` below.
         planned_identities = {agent_id: agent_identity(spec) for agent_id, spec in specs.items()}
         conditions = self._effective_conditions(request)
-        conditions_fp = stable_id(
-            "evaluation-conditions",
+        conditions_fp = _evaluation_identity.effective_conditions_fingerprint(
             effective_conditions_payload(conditions, request.resolved_locality_reach),
         )
         evaluation_id = self._evaluation_id(request, planned_identities, conditions)
@@ -2367,37 +2289,11 @@ class EvaluationService:
         resolved_is_v2 = is_ruleset_v2_methodology(resolved_rules_id)
         resolved_is_v4 = is_ruleset_v4_methodology(resolved_rules_id)
         resolved_group = request.group and resolved_is_v2
-        payload: dict[str, Any] = {
-            "identity_version": resolved_identity_version(resolved_is_v2, resolved_group, resolved_is_v4),
-            "candidate": identities[request.candidate_id],
-            "baseline": (
-                identities[request.baseline_id] if request.baseline_id is not None else None
-            ),
-            "opponents": [identities[opponent_id] for opponent_id in request.opponent_ids],
-            "seeds": list(request.seeds),
-            "ticks": request.ticks,
-            "effective_conditions": effective_conditions_payload(
-                conditions, request.resolved_locality_reach
-            ),
-            # v0.10 Phase 2/v2.0.0-beta2 Phase 1: was the module constant
-            # EVALUATION_RULES_COMPATIBILITY_ID unconditionally; now the
-            # request's own resolved value -- for every v1 request (omitted
-            # or explicit bytefray-rules-1) that resolved value is exactly
-            # EVALUATION_RULES_COMPATIBILITY_ID, so this key's contribution
-            # to the hash is byte-identical to before for every v1
-            # evaluation_id ever computed. Only an explicit --ruleset
-            # bytefray-rules-2 request ever changes this key's value.
-            "rules_compatibility_id": resolved_rules_id,
-            # v0.9 Phase 6 (Phase 5 spec Sec J.2/AA.4.2, sibling key, never
-            # folded into "effective_conditions"): "fixed" for v0.9, a
-            # second value for v2.0.0-beta2 Phase 1 1v1, a third for Phase
-            # 2 group mode, a fourth for v4.0.0-rc1 Phase 1
-            # (resolved_arena_alignment_mode) -- never collides across
-            # methodologies.
-            "arena_alignment_mode": resolved_arena_alignment_mode(
-                resolved_is_v2, resolved_group, resolved_is_v4
-            ),
-        }
+        identity_version = resolved_identity_version(
+            resolved_is_v2, resolved_group, resolved_is_v4
+        )
+        layouts: list[dict[str, Any]] | None = None
+        placements: list[dict[str, Any]] | None = None
         if resolved_group:
             # v2.0.0-beta2 Phase 2: multi-entrant identity. `orientation_
             # mode` is not meaningful here -- seat assignment (per cell,
@@ -2407,27 +2303,27 @@ class EvaluationService:
             # label) enters the hash directly, mirroring Phase 1F's own
             # "placements" precedent exactly -- two different N-seat
             # layout sets must never collide on evaluation_id.
-            payload["group"] = True
-            payload["layouts"] = [
-                {"layout_id": layout.layout_id, "seat_starts": list(layout.seat_starts)}
+            layouts = [
+                _evaluation_identity.layout_identity_payload(
+                    layout.layout_id, layout.seat_starts
+                )
                 for layout in standard_layouts(
                     len(request.roster_agent_ids), request.resolved_arena_size
                 )
             ]
         else:
-            payload["orientation_mode"] = request.orientation_mode
             # Phase 1F: the actual resolved placement set, not just a mode
             # label -- two different v2 placement sets must never collide
             # on evaluation_id. Omitted entirely for v1 (placements is
             # always `None` there) so a v1 payload's key set is byte-
             # identical to every evaluation_id ever computed before Phase 1.
             if resolved_is_v2:
-                payload["placements"] = [
-                    {
-                        "placement_id": placement.placement_id,
-                        "subject_start": placement.subject_start,
-                        "opponent_start": placement.opponent_start,
-                    }
+                placements = [
+                    _evaluation_identity.placement_identity_payload(
+                        placement.placement_id,
+                        placement.subject_start,
+                        placement.opponent_start,
+                    )
                     for placement in standard_placements(request.resolved_arena_size)
                 ]
             elif resolved_is_v4:
@@ -2440,16 +2336,37 @@ class EvaluationService:
                 # size differs) can never collide on evaluation_id, and two
                 # evaluations at different sample counts (say seeds 1-8 vs
                 # 1-16) share a prefix rather than colliding wholesale.
-                v4_placements: list[dict[str, int]] = []
+                placements = []
                 for seed in request.seeds:
                     seat_a, seat_b = resolve_v4_seed_geometry(
                         resolved_rules_id, request.resolved_arena_size, seed
                     )
-                    v4_placements.append(
-                        {"seed": seed, "subject_start": seat_a, "opponent_start": seat_b}
+                    placements.append(
+                        _evaluation_identity.seeded_placement_identity_payload(
+                            seed, seat_a, seat_b
+                        )
                     )
-                payload["placements"] = v4_placements
-        return stable_id("evaluation-v2", payload)
+        return _evaluation_identity.build_evaluation_id(
+            identity_version=identity_version,
+            candidate=identities[request.candidate_id],
+            baseline=(
+                identities[request.baseline_id] if request.baseline_id is not None else None
+            ),
+            opponents=[identities[opponent_id] for opponent_id in request.opponent_ids],
+            seeds=request.seeds,
+            ticks=request.ticks,
+            effective_conditions=effective_conditions_payload(
+                conditions, request.resolved_locality_reach
+            ),
+            rules_compatibility_id=resolved_rules_id,
+            orientation_mode=request.orientation_mode,
+            arena_alignment_mode=resolved_arena_alignment_mode(
+                resolved_is_v2, resolved_group, resolved_is_v4
+            ),
+            group=resolved_group,
+            layouts=layouts,
+            placements=placements,
+        )
 
     def _resolve_revision_results(
         self,
@@ -2969,8 +2886,8 @@ class EvaluationService:
                 "planned_identities": planned_identities_payload,
                 "agent_revisions": agent_revisions_payload,
                 "effective_conditions": conditions_dict,
-                "effective_conditions_fingerprint": stable_id(
-                    "evaluation-conditions", conditions_dict
+                "effective_conditions_fingerprint": (
+                    _evaluation_identity.effective_conditions_fingerprint(conditions_dict)
                 ),
                 "rules_compatibility_id": resolved_rules_id,
                 # v0.9 Phase 6: sibling top-level fields, same pattern as
