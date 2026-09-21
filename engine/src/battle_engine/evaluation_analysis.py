@@ -38,6 +38,10 @@ from statistics import NormalDist
 from typing import Any
 
 from battle_engine.agent_evaluation import (
+    all_subject_aggregates,
+    compare_candidate_baseline,
+)
+from battle_engine.evaluation_contracts import (
     BASELINE,
     CANDIDATE,
     ORIENTATION_CANDIDATE_FIRST,
@@ -45,8 +49,6 @@ from battle_engine.agent_evaluation import (
     ComparisonEntry,
     EvaluationCell,
     SubjectAggregate,
-    all_subject_aggregates,
-    compare_candidate_baseline,
 )
 
 DEFAULT_CONFIDENCE_LEVEL = 0.95

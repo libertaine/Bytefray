@@ -7,9 +7,6 @@ from pathlib import Path
 from typing import Any
 
 from battle_engine.agent_evaluation import (
-    IDENTITY_VERSION_V4,
-    LIFECYCLE_STATE_FINISHED_WITH_FAILURES,
-    SCHEMA_NAME,
     all_subject_aggregates,
     compare_candidate_baseline,
     resolve_v4_seed_geometry,
@@ -17,6 +14,11 @@ from battle_engine.agent_evaluation import (
     standard_placements,
 )
 from battle_engine.evaluation_analysis import analyze as analyze_evaluation
+from battle_engine.evaluation_contracts import (
+    IDENTITY_VERSION_V4,
+    LIFECYCLE_STATE_FINISHED_WITH_FAILURES,
+    SCHEMA_NAME,
+)
 from battle_engine.result_model import stable_id
 
 from .models import (

@@ -13,6 +13,7 @@ from pathlib import Path
 
 import battle_engine.agent_evaluation as evaluation
 import battle_engine.agent_test as agent_test_module
+import battle_engine.evaluation_contracts as contracts
 import pytest
 from battle_engine.config import Config
 from battle_engine.rules import (
@@ -132,6 +133,16 @@ CONTRACT_MODEL_TYPES = (
     evaluation.ExecutionContext,
     evaluation.SubjectAggregate,
 )
+
+MOVED_CLASS_NAMES = (
+    "EvaluationConfigurationError",
+    *(contract_type.__name__ for contract_type in CONTRACT_MODEL_TYPES),
+)
+
+
+@pytest.mark.parametrize("name", MOVED_CLASS_NAMES)
+def test_facade_reexports_the_canonical_contract_class_object(name: str) -> None:
+    assert getattr(evaluation, name) is getattr(contracts, name)
 
 
 @pytest.mark.parametrize("contract_type", CONTRACT_MODEL_TYPES, ids=lambda value: value.__name__)

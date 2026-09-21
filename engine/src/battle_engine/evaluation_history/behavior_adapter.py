@@ -19,8 +19,8 @@ design doc).
 
 from __future__ import annotations
 
-from battle_engine.agent_evaluation import ORIENTATION_CANDIDATE_FIRST
 from battle_engine.evaluation_behavior import CellRef
+from battle_engine.evaluation_contracts import ORIENTATION_CANDIDATE_FIRST
 
 from .models import ArtifactPathEscapeError, EvaluationSummary, resolve_contained_path
 

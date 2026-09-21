@@ -13,9 +13,9 @@ from enum import Enum
 from pathlib import Path, PureWindowsPath
 from typing import Any
 
-from battle_engine.agent_evaluation import ComparisonEntry, EvaluationCell, SubjectAggregate
 from battle_engine.config import Config
 from battle_engine.evaluation_analysis import EvaluationAnalysis
+from battle_engine.evaluation_contracts import ComparisonEntry, EvaluationCell, SubjectAggregate
 from battle_engine.result_model import stable_id
 
 

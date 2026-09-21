@@ -46,6 +46,7 @@ from pathlib import Path
 from typing import Any
 
 from battle_engine.agent_worker import WorkerCallResult, WorkerCallStatus
+from battle_engine.evaluation_contracts import EvaluationCell
 from battle_engine.launchers import build_agents_command
 from battle_engine.process_containment import (
     ChildLifetimeBinding,
@@ -80,8 +81,6 @@ def _cell_to_wire(cell: Any) -> dict[str, Any]:
 
 
 def _cell_from_wire(payload: Mapping[str, Any]) -> Any:
-    from battle_engine.agent_evaluation import EvaluationCell
-
     data = dict(payload)
     data["artifact_dir"] = Path(data["artifact_dir"])
     return EvaluationCell(**data)
