@@ -37,6 +37,7 @@ from battle_engine.rules import (
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
 )
 from battle_engine.scheduler import StateT, run_chunked_quota
 
@@ -373,6 +374,43 @@ RULESET_V4 = RulesetPolicy(
 )
 
 
+# V6 Phase 4B: the variable-arena research identity (see
+# ``BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID``'s own docstring in ``rules.py``
+# for the naming/promotion rationale, and
+# docs/research/v6/V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md Sec 10/15.1 for
+# the design). Every field below is a deliberate, independent literal copy of
+# ``RULESET_V4``'s own values -- never ``dataclasses.replace(RULESET_V4,
+# ...)`` or any other live reference to it. A derived-from-V4 object would
+# mean a future edit to ``RULESET_V4``'s fields silently changes this
+# research Ruleset's semantics too, which is exactly the "hidden coupling"
+# risk the governing task explicitly warns against: this identity's own
+# historical research artifacts must keep meaning what they meant when they
+# were recorded, independent of whatever stable v4 becomes later. The two
+# objects being field-for-field equal (`ruleset_id` aside) is instead a
+# *verified* fact, checked permanently by a live equality test
+# (``engine/tests/test_ruleset_v6_research_scale.py``) that fails loudly the
+# moment one drifts from the other without an explicit, reviewed edit here.
+#
+# The only semantic this policy exists to change lives one layer up, in
+# evaluation methodology (``evaluation_contracts.py``/``evaluation_
+# service.py``): stable v4 evaluations are locked to the 512-cell control
+# arena; this Ruleset's evaluations may specify any arena size in the
+# Phase 4A research range. Nothing on `RulesetPolicy` itself expresses
+# arena size (it is per-match configuration, never Ruleset identity --
+# ``docs/RULES.md``'s "Configuration values are not Ruleset identity"), so
+# that permission is not, and could not be, expressed here.
+RULESET_V6_RESEARCH_SCALE = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seeded",
+    process_selection="round_robin",
+)
+
+
 # Which Ruleset identities execute on the Agent API v2 process runtime
 # (``battle_engine.process_runtime.ProcessMatchController``). A finite, explicit set for the
 # same reason ``_RULESET_POLICIES`` is a finite table -- and the one place
@@ -385,9 +423,15 @@ RULESET_V4 = RulesetPolicy(
 # runtime *dispatch* (and, via ``match_service.py:1212``, replay schema
 # selection) for a match about to execute, so it is execution-only,
 # unlike the two core-status tables in ``python_runtime.py``.
+#
+# V6 Phase 4B added ``BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID``: it executes
+# on the exact same Agent API v2 process runtime as stable v4 (its
+# ``RulesetPolicy`` declares the same ``supported_runtime_kinds``), so it
+# belongs in this set on the same terms V4 is here.
 PROCESS_RULESET_IDS: frozenset[str] = frozenset(
     {
         BYTEFRAY_RULESET_V4_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     }
 )
 
@@ -436,10 +480,14 @@ class UnknownRulesetError(LookupError):
 # ID. Do not re-add them here, and never map them to ``bytefray-rules-4``
 # elsewhere in this module -- historical recognition and executable
 # registration are deliberately separate concerns (see ``rules.py``'s
-# alias-table docstring). ``bytefray-rules-4`` is now the sole executable
-# entry.
+# alias-table docstring). ``bytefray-rules-4`` was the sole executable
+# entry until V6 Phase 4B registered the variable-arena research identity
+# ``bytefray-rules-6-research-scale`` (``RULESET_V6_RESEARCH_SCALE``)
+# alongside it -- explicitly, by its own entry here, never by widening
+# ``bytefray-rules-4``'s own registration.
 _RULESET_POLICIES: Mapping[str, RulesetPolicy] = {
     RULESET_V4.ruleset_id: RULESET_V4,
+    RULESET_V6_RESEARCH_SCALE.ruleset_id: RULESET_V6_RESEARCH_SCALE,
 }
 
 
@@ -692,9 +740,11 @@ __all__ = [
     "BYTEFRAY_RULESET_V4_ALPHA1_ID",
     "BYTEFRAY_RULESET_V4_ALPHA2_ID",
     "BYTEFRAY_RULESET_V4_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID",
     "OMITTED_RULESET_CANDIDATES",
     "PROCESS_RULESET_IDS",
     "RULESET_V4",
+    "RULESET_V6_RESEARCH_SCALE",
     "NoCompatibleRulesetError",
     "RulesetPolicy",
     "TerminationDecision",

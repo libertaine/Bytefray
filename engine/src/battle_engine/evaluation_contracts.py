@@ -20,6 +20,7 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
 )
 
 # These values are part of the evaluation contract.  They deliberately do
@@ -176,6 +177,38 @@ EVALUATION_ARENA_ALIGNMENT_MODE_V4_SEEDED = "ruleset_v4_seeded_placements"
 # _V2_METHODOLOGY_RULESET_IDS, which never includes alpha2).
 IDENTITY_VERSION_V4 = 7
 SCHEMA_VERSION_V4 = 7
+
+# V6 Phase 4B (docs/research/v6/V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md
+# Sec 9): the variable-arena research Ruleset's own arena-alignment
+# identifier -- a fifth sibling value to EVALUATION_ARENA_ALIGNMENT_MODE/
+# _V2_STANDARD/_V2_GROUP_STANDARD/_V4_SEEDED above, never a replacement for
+# any of them. Selected only when a request's --ruleset resolves to
+# BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID. The underlying placement
+# *mechanism* is identical to _V4_SEEDED (both Rulesets declare
+# ``core_placement="seeded"`` and resolve through the same
+# ``placement.seeded_seat_starts``), but this research Ruleset is not
+# locked to arena 512 the way stable v4 is, so reusing the literal string
+# "ruleset_v4_seeded_placements" here would let a downstream reader assume
+# a 512-cell arena from the mode label alone -- true for every artifact
+# that string has ever appeared on until now, and no longer true for this
+# one. A distinct label keeps that assumption safe for every existing
+# reader while `rules_compatibility_id`/`effective_conditions.arena_size`
+# (already unconditionally hashed into evaluation_id/condition_fingerprint,
+# see `evaluation_identity.build_evaluation_id`/`build_pairwise_condition_
+# fingerprint`) remain the authoritative identity-bearing fields.
+EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_SCALE = "ruleset_v6_research_scale_seeded_placements"
+
+# V6 Phase 4B (task Sec 7): the Phase 4A research methodology's own
+# arena-size range for the variable-arena research Ruleset -- the narrowest
+# range the methodology and current engine constraints jointly support.
+# `RESEARCH_SCALE_MIN_ARENA_SIZE` mirrors the methodology doc's stated
+# floor (Sec 15.1's "64 <= arena_size <= 65536"); `RESEARCH_SCALE_MAX_
+# ARENA_SIZE` is the Phase 4A logarithmic progression's own ceiling
+# (Sec 4.1's five-arena sweep, the "maximum architectural boundary" point).
+# `EvaluationService._validate` rejects any explicit --arena-size for this
+# Ruleset outside this range -- clearly, never by silent clamping.
+RESEARCH_SCALE_MIN_ARENA_SIZE: int = 64
+RESEARCH_SCALE_MAX_ARENA_SIZE: int = 65536
 
 # Stable v4 evaluation methodology (research report Sec H.1 items 2/3):
 # eight deterministic placement samples, and the arena size the methodology
@@ -338,14 +371,72 @@ def is_ruleset_v4_methodology(rules_compatibility_id: str) -> bool:
     this question; this is its v4 sibling; Sec H.1 item 6 of
     docs/research/v4/V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md is the
     accepted decision this implements.
+
+    Deliberately NOT widened to include
+    ``BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID`` (V6 Phase 4B): every existing
+    caller of this predicate treats a ``True`` result as "this evaluation is
+    stable v4, therefore pinned to the 512-cell control arena"
+    (``EvaluationRequest.resolved_arena_size``,
+    ``EvaluationService._validate``'s stable-v4 arena lock) -- a claim that
+    is true for stable v4 and its retired alpha2 promotion source, but false
+    for the variable-arena research Ruleset. See
+    `is_ruleset_v4_derived_methodology` for the broader "shares v4's
+    seeded-placement/identity-v7/schema-v7 machinery" question this
+    predicate deliberately does not answer.
     """
 
     return rules_compatibility_id in _V4_METHODOLOGY_RULESET_IDS
 
 
+def is_ruleset_v6_research_scale_methodology(rules_compatibility_id: str) -> bool:
+    """Whether a resolved rules-compatibility id is the V6 Phase 4B research Ruleset.
+
+    True only for ``BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID``
+    (``bytefray-rules-6-research-scale``, docs/research/v6/
+    V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md Sec 10.2). A single-member
+    predicate, not a set-membership table, since exactly one Ruleset
+    identity currently has this methodology -- see
+    `is_ruleset_v4_derived_methodology` for how callers that want the
+    seeded-placement machinery this Ruleset shares with stable v4 combine
+    the two.
+    """
+
+    return rules_compatibility_id == BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID
+
+
+def is_ruleset_v4_derived_methodology(rules_compatibility_id: str) -> bool:
+    """Whether a resolved rules-compatibility id uses v4's seeded evaluation machinery.
+
+    True for everything `is_ruleset_v4_methodology` is true for, plus
+    `BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID` (V6 Phase 4B): all three share
+    one identical recipe -- seed-derived seat geometry
+    (`resolve_v4_seed_geometry`), `IDENTITY_VERSION_V4`/`SCHEMA_VERSION_V4`
+    (7) -- because the research Ruleset's `RulesetPolicy` declares the
+    same `core_placement="seeded"` stable v4 does and is evaluated by the
+    same seeded-pairwise-geometry methodology, never legacy fixed
+    placements or identity version 2.
+
+    This is deliberately a *different, broader* question than
+    `is_ruleset_v4_methodology` answers (see that predicate's docstring):
+    "does this evaluation use the seeded-placement/identity-v7 recipe" is
+    not the same claim as "is this evaluation pinned to the 512-cell
+    control arena". Callers that need the arena-locking claim must keep
+    using `is_ruleset_v4_methodology` directly, never this predicate.
+    """
+
+    return is_ruleset_v4_methodology(
+        rules_compatibility_id
+    ) or is_ruleset_v6_research_scale_methodology(rules_compatibility_id)
+
+
 def resolved_arena_alignment_mode(
-    is_v2_methodology: bool, group: bool = False, is_v4_methodology: bool = False
+    is_v2_methodology: bool,
+    group: bool = False,
+    is_v4_methodology: bool = False,
+    is_v6_research_scale_methodology: bool = False,
 ) -> str:
+    if is_v6_research_scale_methodology:
+        return EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_SCALE
     if is_v4_methodology:
         return EVALUATION_ARENA_ALIGNMENT_MODE_V4_SEEDED
     if is_v2_methodology and group:
@@ -358,9 +449,12 @@ def resolved_arena_alignment_mode(
 
 
 def resolved_identity_version(
-    is_v2_methodology: bool, group: bool = False, is_v4_methodology: bool = False
+    is_v2_methodology: bool,
+    group: bool = False,
+    is_v4_methodology: bool = False,
+    is_v6_research_scale_methodology: bool = False,
 ) -> int:
-    if is_v4_methodology:
+    if is_v4_methodology or is_v6_research_scale_methodology:
         return IDENTITY_VERSION_V4
     if is_v2_methodology and group:
         return IDENTITY_VERSION_V2_GROUP
@@ -368,9 +462,12 @@ def resolved_identity_version(
 
 
 def resolved_schema_version(
-    is_v2_methodology: bool, group: bool = False, is_v4_methodology: bool = False
+    is_v2_methodology: bool,
+    group: bool = False,
+    is_v4_methodology: bool = False,
+    is_v6_research_scale_methodology: bool = False,
 ) -> int:
-    if is_v4_methodology:
+    if is_v4_methodology or is_v6_research_scale_methodology:
         return SCHEMA_VERSION_V4
     if is_v2_methodology and group:
         return SCHEMA_VERSION_V2_GROUP
@@ -693,11 +790,20 @@ class EvaluationRequest:
         request, so by the time this property is read on a validated
         request, ``self.arena_size`` is either ``None`` or already exactly
         ``STANDARD_V4_ARENA_SIZE`` here.
+
+        V6 Phase 4B: an omitted ``arena_size`` under the variable-arena
+        research methodology resolves the same way, to
+        ``STANDARD_V4_ARENA_SIZE`` -- a sensible "V4-equivalent research
+        environment" default for the one case this Ruleset exists to make
+        variable (task Sec 2's mission statement), not a pin: unlike stable
+        v4, ``_validate`` freely accepts an *explicit* ``arena_size`` for
+        this Ruleset anywhere in the Phase 4A research range
+        (``RESEARCH_SCALE_MIN_ARENA_SIZE``..``RESEARCH_SCALE_MAX_ARENA_SIZE``).
         """
 
         if self.arena_size is not None:
             return self.arena_size
-        if self.is_v4_methodology:
+        if self.is_v4_methodology or self.is_v6_research_scale_methodology:
             return STANDARD_V4_ARENA_SIZE
         return Config().arena_size
 
@@ -728,6 +834,19 @@ class EvaluationRequest:
     @property
     def is_v4_methodology(self) -> bool:
         return is_ruleset_v4_methodology(self.resolved_rules_compatibility_id)
+
+    @property
+    def is_v6_research_scale_methodology(self) -> bool:
+        """Whether this request's resolved Ruleset is the V6 Phase 4B research identity.
+
+        See `is_ruleset_v6_research_scale_methodology`'s module-level
+        docstring: `True` only for `BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID`,
+        never for stable v4 -- deliberately a sibling of `is_v4_methodology`,
+        not folded into it, since the two predicates answer different
+        questions (arena-locked vs. seeded-placement-methodology).
+        """
+
+        return is_ruleset_v6_research_scale_methodology(self.resolved_rules_compatibility_id)
 
     @property
     def roster_agent_ids(self) -> tuple[str, ...]:

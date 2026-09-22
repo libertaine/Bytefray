@@ -59,7 +59,10 @@ from battle_engine.evaluation_presets import (
 )
 from battle_engine.evaluation_service import EvaluationService
 from battle_engine.paths import get_data_root
-from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
+from battle_engine.ruleset_policy import (
+    BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+)
 
 
 def rerun_command(
@@ -174,11 +177,10 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--ruleset",
-        choices=[BYTEFRAY_RULESET_V4_ID],
+        choices=[BYTEFRAY_RULESET_V4_ID, BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID],
         default=None,
         help=(
-            f"gameplay Ruleset identity. {BYTEFRAY_RULESET_V4_ID} is the only "
-            "Ruleset Agent API v2 rosters can evaluate under, and is selected "
+            f"gameplay Ruleset identity. {BYTEFRAY_RULESET_V4_ID} is selected "
             "automatically when this flag is omitted (and no --preset "
             f"supplies one). {BYTEFRAY_RULESET_V4_ID} runs Agent API v2 "
             "process entrants through the same production match service "
@@ -187,7 +189,16 @@ def _parser() -> argparse.ArgumentParser:
             "deterministic placement samples by default, both orientations "
             "paired over the same seat-bound geometry. See "
             "docs/research/v4/V4_RC1_PHASE2_STABLE_CONTRACT_PROMOTION.md and "
-            "docs/research/v4/V4_RC1_PHASE1_EVALUATION_METHODOLOGY.md."
+            f"docs/research/v4/V4_RC1_PHASE1_EVALUATION_METHODOLOGY.md. "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID} is the V6 Phase 4B "
+            "variable-arena research identity: behaviorally identical to "
+            f"{BYTEFRAY_RULESET_V4_ID} (same scheduler, seeded placement, "
+            "process selection, scoring, quota, and termination), but "
+            "--arena-size may be set to any value in the Phase 4A research "
+            "range instead of being pinned to the stable-v4 control arena. "
+            "Not selected automatically for any request; must be named "
+            "explicitly. See "
+            "docs/research/v6/V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md."
         ),
     )
     parser.add_argument(
@@ -446,7 +457,10 @@ def _print_matrix(
     _, alignment_line = methodology_lines(
         request.orientation_mode,
         arena_alignment_mode=resolved_arena_alignment_mode(
-            request.is_v2_methodology, request.group, request.is_v4_methodology
+            request.is_v2_methodology,
+            request.group,
+            request.is_v4_methodology,
+            request.is_v6_research_scale_methodology,
         ),
     )
     if not request.group:
@@ -474,7 +488,10 @@ def _matrix_to_json(
         "group": request.group,
         "orientation_mode": request.orientation_mode,
         "arena_alignment_mode": resolved_arena_alignment_mode(
-            request.is_v2_methodology, request.group, request.is_v4_methodology
+            request.is_v2_methodology,
+            request.group,
+            request.is_v4_methodology,
+            request.is_v6_research_scale_methodology,
         ),
     }
 
@@ -830,7 +847,10 @@ def _print_result(result: EvaluationResult, request: EvaluationRequest) -> None:
     orientation_line, alignment_line = methodology_lines(
         request.orientation_mode,
         arena_alignment_mode=resolved_arena_alignment_mode(
-            request.is_v2_methodology, request.group, request.is_v4_methodology
+            request.is_v2_methodology,
+            request.group,
+            request.is_v4_methodology,
+            request.is_v6_research_scale_methodology,
         ),
     )
     if not request.group:

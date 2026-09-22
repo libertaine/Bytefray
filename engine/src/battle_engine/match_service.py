@@ -60,6 +60,7 @@ from battle_engine.result_model import (
 from battle_engine.results import WINNER_TIE_SENTINEL
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     RulesetPolicy,
     resolve_ruleset_policy,
 )
@@ -409,6 +410,13 @@ class OverlappingCoreError(ValueError):
 _CORE_PLACEMENT_GUARDED_RULESET_IDS: frozenset[str] = frozenset(
     {
         BYTEFRAY_RULESET_V4_ID,
+        # V6 Phase 4B: the variable-arena research Ruleset shares
+        # `core_placement="seeded"` and the same vulnerable-core semantics
+        # as stable v4 (it executes on the identical Agent API v2 process
+        # runtime), so an overlapping-core request must fail closed for it
+        # exactly as it does for stable v4, never silently seed core
+        # ownership in entrant order at an unusual arena size.
+        BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     }
 )
 

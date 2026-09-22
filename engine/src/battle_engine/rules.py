@@ -95,6 +95,27 @@ BYTEFRAY_RULESET_V4_ALPHA2_ID = "bytefray-rules-4-alpha2"
 BYTEFRAY_RULESET_V4_ID = "bytefray-rules-4"
 
 
+# V6 Phase 4B's explicit variable-arena research identity (see
+# docs/research/v6/V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md Sec 10.2 and
+# docs/research/v6/V6_PHASE4B_ARENA_SCALING_STUDY.md). A *separate* identity,
+# never a mutation or alias of ``BYTEFRAY_RULESET_V4_ID``: it exists to
+# permit the one evaluation-methodology variance stable v4 forbids -- an
+# arena size other than 512 cells -- as an explicit, identity-bearing
+# experimental parameter, while every other gameplay semantic (scheduler,
+# seeded placement, process selection, scoring, quota, reach, termination)
+# stays byte-for-byte identical to stable v4 (verified live, not merely
+# documented -- see ``engine/tests/test_ruleset_v6_research_scale.py``).
+#
+# Prefixed ``bytefray-rules-6-research-<topic>`` per the V6 research naming
+# convention: an experimental Ruleset must never reuse a stable ID, and a
+# mechanic ratified for release would receive its own new permanent identity
+# via a frozen promotion proof, exactly as ``bytefray-rules-4-alpha2`` ->
+# ``bytefray-rules-4`` already did. Deliberately not selectable from
+# ``bytefray run``/``agents test``/tournament CLI surfaces or
+# ``OMITTED_RULESET_CANDIDATES`` (``ruleset_policy.py``) -- only
+# ``agents evaluate`` can select it, and only by explicit ``--ruleset`` name.
+BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID = "bytefray-rules-6-research-scale"
+
 
 # v0.10 Phase 4: a finite, explicit historical-alias table -- deliberately
 # not a generic "normalize any evaluation-rules-N-shaped string" function.
@@ -160,6 +181,7 @@ __all__ = [
     "BYTEFRAY_RULESET_V4_ALPHA1_ID",
     "BYTEFRAY_RULESET_V4_ALPHA2_ID",
     "BYTEFRAY_RULESET_V4_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID",
     "RulesetConfidence",
     "RulesetProvenance",
     "normalize_ruleset_id",

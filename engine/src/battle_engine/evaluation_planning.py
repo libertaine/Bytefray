@@ -47,6 +47,7 @@ from battle_engine.evaluation_contracts import (
     EvaluationSeatAssignment,
     is_ruleset_v2_methodology,
     is_ruleset_v4_methodology,
+    is_ruleset_v6_research_scale_methodology,
     resolved_identity_version,
 )
 from battle_engine.evaluation_identity import agent_identity
@@ -295,7 +296,12 @@ def build_matrix(
     itself a function of the seed (``resolve_v4_seed_geometry``), and the
     two orientation cells for one seed share that placement's resolved
     geometry with occupants swapped rather than each keeping its own
-    role-anchored start (research report Sec H.1 items 1/4).
+    role-anchored start (research report Sec H.1 items 1/4). A
+    v6-research-scale-methodology request (``bytefray-rules-6-research-
+    scale``, V6 Phase 4B, via ``request.is_v6_research_scale_methodology``)
+    takes this exact v4 branch too -- same seeded-geometry resolution, same
+    orientation-swap behavior -- differing only in which arena sizes
+    ``request.resolved_arena_size`` may resolve to.
 
     ``specs``/``conditions_fingerprint``/``rules_compatibility_id``/
     ``arena_alignment_mode`` are optional and, when given, feed only
@@ -317,6 +323,7 @@ def build_matrix(
     resolved_rules_id = request.resolved_rules_compatibility_id
     resolved_is_v2 = is_ruleset_v2_methodology(resolved_rules_id)
     resolved_is_v4 = is_ruleset_v4_methodology(resolved_rules_id)
+    resolved_is_v6_research_scale = is_ruleset_v6_research_scale_methodology(resolved_rules_id)
 
     # v2.0.0-beta2 Phase 2: multi-entrant ("group") matrix generation is a
     # structurally different generation strategy (seed x layout x seat
@@ -328,7 +335,9 @@ def build_matrix(
         raise EvaluationConfigurationError(
             "Multi-entrant evaluation is retired and cannot build a new execution matrix."
         )
-    identity_version = resolved_identity_version(resolved_is_v2, False, resolved_is_v4)
+    identity_version = resolved_identity_version(
+        resolved_is_v2, False, resolved_is_v4, resolved_is_v6_research_scale
+    )
 
     # v3 Phase 0D: placements are pure functions of arena size, so they
     # MUST be derived from this request's own resolved arena size, never
@@ -363,7 +372,13 @@ def build_matrix(
                 # resolved seat, never draws a second, independent
                 # placement for the reverse orientation).
                 seed_placements: tuple[EvaluationPlacement | None, ...]
-                if resolved_is_v4:
+                if resolved_is_v4 or resolved_is_v6_research_scale:
+                    # V6 Phase 4B: the research Ruleset shares this exact
+                    # branch -- `resolve_v4_seed_geometry` resolves seeded
+                    # placement through `resolved_rules_id`'s own registered
+                    # `RulesetPolicy.core_placement`, so it already produces
+                    # this Ruleset's correct seeded geometry at whatever
+                    # arena size the request specifies.
                     seat_a, seat_b = resolve_v4_seed_geometry(
                         resolved_rules_id, request.resolved_arena_size, seed
                     )
@@ -394,7 +409,10 @@ def build_matrix(
                         # in, unaffected by this branch: `cell_subject_
                         # start`/`cell_opponent_start` equal `subject_start`/
                         # `opponent_start` unconditionally there).
-                        if resolved_is_v4 and orientation == ORIENTATION_OPPONENT_FIRST:
+                        if (
+                            (resolved_is_v4 or resolved_is_v6_research_scale)
+                            and orientation == ORIENTATION_OPPONENT_FIRST
+                        ):
                             cell_subject_start, cell_opponent_start = opponent_start, subject_start
                         else:
                             cell_subject_start, cell_opponent_start = subject_start, opponent_start
@@ -462,7 +480,7 @@ def build_matrix(
                             seed=seed,
                             placement_id=placement_id,
                             orientation=orientation,
-                            include_placement=resolved_is_v2 or resolved_is_v4,
+                            include_placement=resolved_is_v2 or resolved_is_v4 or resolved_is_v6_research_scale,
                         )
                         condition_fingerprint = None
                         if specs is not None and conditions_fingerprint is not None:

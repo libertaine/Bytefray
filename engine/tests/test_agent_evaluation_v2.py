@@ -235,9 +235,10 @@ def test_evaluation_cells_always_execute_under_ruleset_v1(two_agents: Path):
 def test_evaluate_cli_exposes_the_product_ruleset_choices_excluding_retired_v4_alphas(
     capsys,
 ):
-    """Evaluation exposes the retained control v4 identity. V6 Phase 2B.12
-    Scope C retired bytefray-rules-1 and bytefray-rules-2 from new execution
-    alongside the retired prerelease alphas."""
+    """Evaluation exposes the retained control v4 identity, plus the V6
+    Phase 4B variable-arena research identity registered alongside it. V6
+    Phase 2B.12 Scope C retired bytefray-rules-1 and bytefray-rules-2 from
+    new execution alongside the retired prerelease alphas."""
 
     from battle_engine.agent_evaluation import main as evaluate_main
 
@@ -245,7 +246,7 @@ def test_evaluate_cli_exposes_the_product_ruleset_choices_excluding_retired_v4_a
         evaluate_main(["--help"])
     out = capsys.readouterr().out
     assert (
-        "--ruleset {bytefray-rules-4}" in out
+        "--ruleset {bytefray-rules-4,bytefray-rules-6-research-scale}" in out
     )
     assert "{bytefray-rules-1" not in out
     assert "{bytefray-rules-2" not in out

@@ -18,7 +18,7 @@ from battle_engine.agent_test import OPPONENT_SLOT, TESTED_AGENT_SLOT
 from battle_engine.evaluation_contracts import (
     ORIENTATION_CANDIDATE_FIRST,
     ORIENTATION_OPPONENT_FIRST,
-    is_ruleset_v4_methodology,
+    is_ruleset_v4_derived_methodology,
     physical_slots_for_orientation,
     seat_label,
 )
@@ -465,15 +465,22 @@ def verify_summary(
     # id/effective_conditions -- never per cell, since both are constant
     # across one evaluation. `None` (rather than raising) for anything not
     # confidently a v4-seeded evaluation at a known arena size: a v1/v2/
-    # group evaluation, or a v4 one whose arena size could not be
-    # confidently recovered, simply gets no placement-reconstruction check
-    # (`verify_cell`'s existing checks are unaffected either way).
+    # group evaluation, or a v4/research-scale one whose arena size could
+    # not be confidently recovered, simply gets no placement-reconstruction
+    # check (`verify_cell`'s existing checks are unaffected either way).
+    #
+    # V6 Phase 4B: `is_ruleset_v4_derived_methodology` (rather than
+    # `is_ruleset_v4_methodology`) so a `bytefray-rules-6-research-scale`
+    # summary also gets geometry reconstruction -- it shares the identical
+    # seeded-placement recipe `resolve_v4_seed_geometry` below resolves
+    # (via the ruleset id's own registered `RulesetPolicy`), just not the
+    # 512-cell arena lock that predicate's narrower sibling implies.
     rules_id = (
         summary.rules_compatibility_id.value
         if summary.rules_compatibility_id.confidence == FieldConfidence.RECORDED
         else None
     )
-    is_v4_seeded = isinstance(rules_id, str) and is_ruleset_v4_methodology(rules_id)
+    is_v4_seeded = isinstance(rules_id, str) and is_ruleset_v4_derived_methodology(rules_id)
     v4_arena_size: int | None = None
     if is_v4_seeded and summary.effective_conditions.confidence == FieldConfidence.RECORDED:
         conditions_value = summary.effective_conditions.value

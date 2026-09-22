@@ -1,8 +1,9 @@
-"""Unit coverage for the sole executable Ruleset policy after Scope C."""
+"""Unit coverage for the executable Ruleset policies (stable v4, plus the V6
+Phase 4B variable-arena research identity registered alongside it)."""
 
 from __future__ import annotations
 
-from dataclasses import FrozenInstanceError, dataclass
+from dataclasses import FrozenInstanceError, dataclass, replace
 
 import pytest
 from battle_engine.ruleset_policy import (
@@ -13,9 +14,11 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     OMITTED_RULESET_CANDIDATES,
     PROCESS_RULESET_IDS,
     RULESET_V4,
+    RULESET_V6_RESEARCH_SCALE,
     NoCompatibleRulesetError,
     RulesetPolicy,
     TerminationDecision,
@@ -38,11 +41,32 @@ def _python(api_version: object = 2, agent_id: str = "probe") -> dict[str, objec
     return {"agent_id": agent_id, "kind": "python", "api_version": api_version}
 
 
-def test_stable_v4_is_the_only_registered_and_automatic_policy() -> None:
+def test_stable_v4_is_the_only_automatic_policy() -> None:
     assert resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ID) is RULESET_V4
     assert OMITTED_RULESET_CANDIDATES == (BYTEFRAY_RULESET_V4_ID,)
-    assert PROCESS_RULESET_IDS == frozenset({BYTEFRAY_RULESET_V4_ID})
     assert resolve_omitted_ruleset_for_agents(None, [_python()]) == BYTEFRAY_RULESET_V4_ID
+
+
+def test_v6_research_scale_is_registered_but_never_automatic() -> None:
+    # V6 Phase 4B: registered and executable (both are members of
+    # PROCESS_RULESET_IDS), but never what an omitted --ruleset selection
+    # resolves to -- an explicit roster must name it by hand.
+    assert resolve_ruleset_policy(BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID) is RULESET_V6_RESEARCH_SCALE
+    assert BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID not in OMITTED_RULESET_CANDIDATES
+    assert PROCESS_RULESET_IDS == frozenset(
+        {BYTEFRAY_RULESET_V4_ID, BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID}
+    )
+    assert resolve_omitted_ruleset_for_agents(None, [_python()]) != BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID
+
+
+def test_v6_research_scale_matches_stable_v4_fields_except_id() -> None:
+    # The research Ruleset is a deliberate independent literal copy of
+    # RULESET_V4 (never a live `dataclasses.replace(RULESET_V4, ...)`
+    # reference -- see RULESET_V6_RESEARCH_SCALE's own docstring). This is
+    # the permanent regression guard that the two stay field-for-field
+    # equal (ruleset_id aside) even though they are maintained as two
+    # separate object literals.
+    assert replace(RULESET_V6_RESEARCH_SCALE, ruleset_id=RULESET_V4.ruleset_id) == RULESET_V4
 
 
 def test_stable_v4_fields_remain_pinned() -> None:

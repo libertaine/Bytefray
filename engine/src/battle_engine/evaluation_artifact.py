@@ -76,6 +76,7 @@ from battle_engine.evaluation_contracts import (
     SubjectAggregate,
     is_ruleset_v2_methodology,
     is_ruleset_v4_methodology,
+    is_ruleset_v6_research_scale_methodology,
     physical_slots_for_orientation,
     resolved_arena_alignment_mode,
     resolved_identity_version,
@@ -938,6 +939,7 @@ def write_evaluation_state(
     resolved_rules_id = request.resolved_rules_compatibility_id
     resolved_is_v2 = is_ruleset_v2_methodology(resolved_rules_id)
     resolved_is_v4 = is_ruleset_v4_methodology(resolved_rules_id)
+    resolved_is_v6_research_scale = is_ruleset_v6_research_scale_methodology(resolved_rules_id)
     resolved_group = request.group and resolved_is_v2
     write_json_atomic(
         path,
@@ -956,8 +958,12 @@ def write_evaluation_state(
             # IDENTITY_VERSION_V4 (7, v4.0.0-rc1 Phase 1) -- each a
             # brand-new artifact shape with no historical instance to
             # stay compatible with.
-            "schema_version": resolved_schema_version(resolved_is_v2, resolved_group, resolved_is_v4),
-            "identity_version": resolved_identity_version(resolved_is_v2, resolved_group, resolved_is_v4),
+            "schema_version": resolved_schema_version(
+                resolved_is_v2, resolved_group, resolved_is_v4, resolved_is_v6_research_scale
+            ),
+            "identity_version": resolved_identity_version(
+                resolved_is_v2, resolved_group, resolved_is_v4, resolved_is_v6_research_scale
+            ),
             "evaluation_id": evaluation_id,
             "candidate_id": request.candidate_id,
             "baseline_id": request.baseline_id,
@@ -978,7 +984,7 @@ def write_evaluation_state(
             # folded into effective_conditions.
             "orientation_mode": request.orientation_mode,
             "arena_alignment_mode": resolved_arena_alignment_mode(
-                resolved_is_v2, resolved_group, resolved_is_v4
+                resolved_is_v2, resolved_group, resolved_is_v4, resolved_is_v6_research_scale
             ),
             # v2.0.0-beta2 Phase 2: additive top-level disclosure of
             # multi-entrant methodology -- never identity-affecting on
