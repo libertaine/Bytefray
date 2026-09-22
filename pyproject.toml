@@ -137,6 +137,7 @@ extend-exclude = [
   "_legacy/main.py",
   "_legacy/renderers.py",
   "_legacy/agents_tooling",
+  "tools/research/v6/fixtures/agents",
 ]
 
 [tool.ruff.lint]

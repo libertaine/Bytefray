@@ -37,21 +37,28 @@ import json
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT / "engine" / "src"))
+sys.path.insert(0, str(REPO_ROOT))
 
 from battle_engine.agent_revisions import (
     agent_revision_fingerprint,
     agent_revision_id,
 )
-from battle_engine.agents import resolve_agent
+from battle_engine.agents import AgentSpec, agent_spec_from_dir, resolve_agent
 from battle_engine.evaluation_contracts import STANDARD_V4_SEEDS
 from battle_engine.evaluation_service import EvaluationRequest, EvaluationService
 from battle_engine.paths import get_data_root
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+)
+
+from tools.research.v6.experiment_harness import (
+    find_tracked_agent_source,
+    prepare_benchmark_data_root,
 )
 
 # The frozen V6-Bench-8 field (V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md
@@ -88,17 +95,29 @@ def verify_and_fingerprint_field(field: tuple[str, ...], data_root: Path | None 
     """Verify every field agent resolves and executes, and record its
     content-addressed revision fingerprint/id (task Sec 15)."""
 
-    root = data_root if data_root is not None else get_data_root()
     out: dict[str, dict[str, str]] = {}
     for name in field:
-        spec = resolve_agent(root, name)  # raises if not discoverable/loadable
-        fingerprint = agent_revision_fingerprint(spec.dir)
+        source_path: Path
+        spec: AgentSpec | None = None
+        if data_root is not None:
+            spec = resolve_agent(data_root, name)
+            source_path = spec.dir
+        else:
+            tracked = find_tracked_agent_source(name)
+            if tracked is None:
+                root = get_data_root()
+                spec = resolve_agent(root, name)
+                source_path = spec.dir
+            else:
+                source_path = tracked
+                spec = agent_spec_from_dir(source_path)
+        fingerprint = agent_revision_fingerprint(source_path)
         if fingerprint is None:
-            raise RuntimeError(f"agent {name!r} at {spec.dir} has no computable revision fingerprint")
+            raise RuntimeError(f"agent {name!r} at {source_path} has no computable revision fingerprint")
         out[name] = {
-            "path": str(spec.dir),
-            "kind": spec.kind,
-            "api_version": str(spec.api_version),
+            "path": str(source_path),
+            "kind": spec.kind if spec else "unknown",
+            "api_version": str(spec.api_version) if spec else "unknown",
             "fingerprint": fingerprint,
             "agent_revision_id": agent_revision_id(fingerprint),
         }
@@ -114,6 +133,7 @@ def _triangular_pair_requests(
     ticks: int,
     output_root: Path,
     workers: int,
+    data_root: Path | None = None,
 ) -> list[EvaluationRequest]:
     requests: list[EvaluationRequest] = []
     for i, candidate in enumerate(field):
@@ -130,6 +150,7 @@ def _triangular_pair_requests(
                 ruleset_id=ruleset_id,
                 arena_size=arena_size,
                 both_orientations=True,
+                data_root=data_root,
                 resume=True,
                 workers=workers,
             )
@@ -146,6 +167,7 @@ def run_round_robin(
     ticks: int,
     output_root: Path,
     workers: int = 1,
+    data_root: Path | None = None,
 ) -> dict:
     """Run one full round-robin condition; return a summary dict.
 
@@ -153,6 +175,9 @@ def run_round_robin(
     clock, and (for a small sample) replay sizes -- never mutates gameplay
     code, never edits results by hand.
     """
+
+    if data_root is None:
+        data_root = prepare_benchmark_data_root(output_root / "env", field)
 
     requests = _triangular_pair_requests(
         field,
@@ -162,6 +187,7 @@ def run_round_robin(
         ticks=ticks,
         output_root=output_root,
         workers=workers,
+        data_root=data_root,
     )
     started = time.monotonic()
     per_request: list[dict] = []
@@ -203,7 +229,7 @@ def cmd_fingerprints(args: argparse.Namespace) -> None:
 
 
 def cmd_smoke(args: argparse.Namespace) -> None:
-    summary = {"conditions": []}
+    summary: dict[str, Any] = {"conditions": []}
     for arena_size in (512, 65536):
         output_root = _output_dir("smoke", f"a{arena_size}")
         result = run_round_robin(

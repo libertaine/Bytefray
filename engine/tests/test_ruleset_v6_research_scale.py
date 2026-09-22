@@ -75,7 +75,7 @@ from battle_engine.ruleset_policy import (
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 STARTER_SOURCE_DIRS = (
-    REPO_ROOT / "agents",
+    REPO_ROOT / "tools" / "research" / "v6" / "fixtures" / "agents",
     REPO_ROOT / "engine" / "src" / "battle_engine" / "data" / "starter_agents",
 )
 
