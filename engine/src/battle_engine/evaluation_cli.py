@@ -492,6 +492,7 @@ def _matrix_to_json(
             request.group,
             request.is_v4_methodology,
             request.is_v6_research_scale_methodology,
+            request.is_v6_research_scale_move_methodology,
         ),
     }
 
@@ -851,6 +852,7 @@ def _print_result(result: EvaluationResult, request: EvaluationRequest) -> None:
             request.group,
             request.is_v4_methodology,
             request.is_v6_research_scale_methodology,
+            request.is_v6_research_scale_move_methodology,
         ),
     )
     if not request.group:

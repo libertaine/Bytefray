@@ -117,6 +117,23 @@ BYTEFRAY_RULESET_V4_ID = "bytefray-rules-4"
 BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID = "bytefray-rules-6-research-scale"
 
 
+# V6 Phase 4C's movement-normalized variable-arena research identity (see
+# docs/research/v6/V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md Sec 10.2 and
+# docs/research/v6/V6_PHASE4C_MOVEMENT_NORMALIZATION_STUDY.md). A distinct
+# research identity, never an alias of stable v4 or raw research-scale: its
+# sole intended gameplay difference from ``bytefray-rules-6-research-scale``
+# is that maximum displacement per MOVE action scales proportionally with
+# arena size according to ``max_move_delta(A) = max(64, floor(A / 8))``.
+#
+# At A=512, max(64, 512 // 8) = 64, preserving behavioral equivalence to the
+# control arena. At larger arenas (1024, 4096, 16384, 65536), allowed movement
+# stride increases (128, 512, 2048, 8192 cells) to test whether mobility/search
+# latency explains the Phase 4B raw-scaling effects. Deliberately not
+# selectable from ``OMITTED_RULESET_CANDIDATES`` -- requires explicit
+# ``--ruleset`` selection.
+BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID = "bytefray-rules-6-research-scale-move"
+
+
 # v0.10 Phase 4: a finite, explicit historical-alias table -- deliberately
 # not a generic "normalize any evaluation-rules-N-shaped string" function.
 # Each entry records a relationship actually established by git-history
@@ -182,6 +199,7 @@ __all__ = [
     "BYTEFRAY_RULESET_V4_ALPHA2_ID",
     "BYTEFRAY_RULESET_V4_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID",
     "RulesetConfidence",
     "RulesetProvenance",
     "normalize_ruleset_id",

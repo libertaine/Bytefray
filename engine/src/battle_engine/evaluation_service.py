@@ -70,6 +70,7 @@ from battle_engine.evaluation_contracts import (
     is_ruleset_v2_methodology,
     is_ruleset_v4_methodology,
     is_ruleset_v6_research_scale_methodology,
+    is_ruleset_v6_research_scale_move_methodology,
     resolved_arena_alignment_mode,
     resolved_identity_version,
     resolved_schema_version,
@@ -95,18 +96,23 @@ from battle_engine.python_runtime import CORE_SIZE
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
 )
 
-# V6 Phase 4B (task Sec 6): the finite, explicit set of Ruleset identities
-# `agents evaluate` may create a *new* evaluation artifact under. Mirrors
-# `ruleset_policy._RULESET_POLICIES`'s own "finite table, never a naming
+# V6 Phase 4B (task Sec 6) and Phase 4C: the finite, explicit set of Ruleset
+# identities `agents evaluate` may create a *new* evaluation artifact under.
+# Mirrors `ruleset_policy._RULESET_POLICIES`'s own "finite table, never a naming
 # convention check" philosophy -- an experimental Ruleset becomes evaluable
 # only by an explicit, reviewed addition here, never by broadening this
 # check to "anything `resolve_ruleset_policy` recognizes" (which would also
 # admit any future non-evaluation-scoped Ruleset the moment it gets a
 # `RulesetPolicy`).
 _EVALUATION_ALLOWED_RULESET_IDS: frozenset[str] = frozenset(
-    {BYTEFRAY_RULESET_V4_ID, BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID}
+    {
+        BYTEFRAY_RULESET_V4_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
+    }
 )
 
 
@@ -398,6 +404,9 @@ class EvaluationService:
         resolved_is_v2 = is_ruleset_v2_methodology(resolved_rules_id)
         resolved_is_v4 = is_ruleset_v4_methodology(resolved_rules_id)
         resolved_is_v6_research_scale = is_ruleset_v6_research_scale_methodology(resolved_rules_id)
+        resolved_is_v6_research_scale_move = is_ruleset_v6_research_scale_move_methodology(
+            resolved_rules_id
+        )
         resolved_group = request.group and resolved_is_v2
         state_path = request.output_dir / "evaluation.json"
         prior = (
@@ -405,7 +414,11 @@ class EvaluationService:
                 state_path,
                 evaluation_id,
                 resolved_schema_version(
-                    resolved_is_v2, resolved_group, resolved_is_v4, resolved_is_v6_research_scale
+                    resolved_is_v2,
+                    resolved_group,
+                    resolved_is_v4,
+                    resolved_is_v6_research_scale,
+                    resolved_is_v6_research_scale_move,
                 ),
             )
             if request.resume
@@ -427,7 +440,11 @@ class EvaluationService:
             conditions_fp,
             resolved_rules_id,
             resolved_arena_alignment_mode(
-                resolved_is_v2, resolved_group, resolved_is_v4, resolved_is_v6_research_scale
+                resolved_is_v2,
+                resolved_group,
+                resolved_is_v4,
+                resolved_is_v6_research_scale,
+                resolved_is_v6_research_scale_move,
             ),
         )
 
@@ -870,19 +887,19 @@ class EvaluationService:
                 "--arena-size, or select a different --ruleset for a non-standard arena."
             )
 
-        # V6 Phase 4B (task Sec 7): the variable-arena research Ruleset
-        # accepts any explicit arena size within the Phase 4A research
-        # range, but is not an unbounded escape hatch -- an out-of-range
+        # V6 Phase 4B/4C: the variable-arena research Rulesets
+        # accept any explicit arena size within the Phase 4A research
+        # range, but are not an unbounded escape hatch -- an out-of-range
         # value fails closed with a clear diagnostic, never silently
         # clamped to the nearest supported bound.
         if (
-            request.is_v6_research_scale_methodology
+            (request.is_v6_research_scale_methodology or request.is_v6_research_scale_move_methodology)
             and request.arena_size is not None
             and not (RESEARCH_SCALE_MIN_ARENA_SIZE <= request.arena_size <= RESEARCH_SCALE_MAX_ARENA_SIZE)
         ):
             raise EvaluationConfigurationError(
                 f"Evaluation --arena-size {request.arena_size} is outside the "
-                f"bytefray-rules-6-research-scale evaluation methodology's supported "
+                f"{request.resolved_rules_compatibility_id} evaluation methodology's supported "
                 f"range [{RESEARCH_SCALE_MIN_ARENA_SIZE}, {RESEARCH_SCALE_MAX_ARENA_SIZE}]."
             )
 
@@ -984,9 +1001,16 @@ class EvaluationService:
         resolved_is_v2 = is_ruleset_v2_methodology(resolved_rules_id)
         resolved_is_v4 = is_ruleset_v4_methodology(resolved_rules_id)
         resolved_is_v6_research_scale = is_ruleset_v6_research_scale_methodology(resolved_rules_id)
+        resolved_is_v6_research_scale_move = is_ruleset_v6_research_scale_move_methodology(
+            resolved_rules_id
+        )
         resolved_group = request.group and resolved_is_v2
         identity_version = resolved_identity_version(
-            resolved_is_v2, resolved_group, resolved_is_v4, resolved_is_v6_research_scale
+            resolved_is_v2,
+            resolved_group,
+            resolved_is_v4,
+            resolved_is_v6_research_scale,
+            resolved_is_v6_research_scale_move,
         )
         layouts: list[dict[str, Any]] | None = None
         placements: list[dict[str, Any]] | None = None
@@ -1022,7 +1046,11 @@ class EvaluationService:
                     )
                     for placement in standard_placements(request.resolved_arena_size)
                 ]
-            elif resolved_is_v4 or resolved_is_v6_research_scale:
+            elif (
+                resolved_is_v4
+                or resolved_is_v6_research_scale
+                or resolved_is_v6_research_scale_move
+            ):
                 # v4.0.0-rc1 Phase 1 (research report Sec H.1 item 7): the
                 # methodology's actual resolved *sample set* -- each seed's
                 # resolved seat geometry -- enters the hash directly, the
@@ -1033,7 +1061,7 @@ class EvaluationService:
                 # evaluations at different sample counts (say seeds 1-8 vs
                 # 1-16) share a prefix rather than colliding wholesale.
                 #
-                # V6 Phase 4B: the variable-arena research Ruleset shares
+                # V6 Phase 4B/4C: the variable-arena research Rulesets share
                 # this exact branch -- `resolve_v4_seed_geometry` resolves
                 # through `resolved_rules_id`'s own registered
                 # `RulesetPolicy.core_placement`, so it already produces the
@@ -1065,7 +1093,11 @@ class EvaluationService:
             rules_compatibility_id=resolved_rules_id,
             orientation_mode=request.orientation_mode,
             arena_alignment_mode=resolved_arena_alignment_mode(
-                resolved_is_v2, resolved_group, resolved_is_v4, resolved_is_v6_research_scale
+                resolved_is_v2,
+                resolved_group,
+                resolved_is_v4,
+                resolved_is_v6_research_scale,
+                resolved_is_v6_research_scale_move,
             ),
             group=resolved_group,
             layouts=layouts,

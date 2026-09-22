@@ -48,6 +48,7 @@ from battle_engine.evaluation_contracts import (
     is_ruleset_v2_methodology,
     is_ruleset_v4_methodology,
     is_ruleset_v6_research_scale_methodology,
+    is_ruleset_v6_research_scale_move_methodology,
     resolved_identity_version,
 )
 from battle_engine.evaluation_identity import agent_identity
@@ -324,6 +325,9 @@ def build_matrix(
     resolved_is_v2 = is_ruleset_v2_methodology(resolved_rules_id)
     resolved_is_v4 = is_ruleset_v4_methodology(resolved_rules_id)
     resolved_is_v6_research_scale = is_ruleset_v6_research_scale_methodology(resolved_rules_id)
+    resolved_is_v6_research_scale_move = is_ruleset_v6_research_scale_move_methodology(
+        resolved_rules_id
+    )
 
     # v2.0.0-beta2 Phase 2: multi-entrant ("group") matrix generation is a
     # structurally different generation strategy (seed x layout x seat
@@ -336,7 +340,11 @@ def build_matrix(
             "Multi-entrant evaluation is retired and cannot build a new execution matrix."
         )
     identity_version = resolved_identity_version(
-        resolved_is_v2, False, resolved_is_v4, resolved_is_v6_research_scale
+        resolved_is_v2,
+        False,
+        resolved_is_v4,
+        resolved_is_v6_research_scale,
+        resolved_is_v6_research_scale_move,
     )
 
     # v3 Phase 0D: placements are pure functions of arena size, so they
@@ -372,8 +380,12 @@ def build_matrix(
                 # resolved seat, never draws a second, independent
                 # placement for the reverse orientation).
                 seed_placements: tuple[EvaluationPlacement | None, ...]
-                if resolved_is_v4 or resolved_is_v6_research_scale:
-                    # V6 Phase 4B: the research Ruleset shares this exact
+                if (
+                    resolved_is_v4
+                    or resolved_is_v6_research_scale
+                    or resolved_is_v6_research_scale_move
+                ):
+                    # V6 Phase 4B/4C: the research Rulesets share this exact
                     # branch -- `resolve_v4_seed_geometry` resolves seeded
                     # placement through `resolved_rules_id`'s own registered
                     # `RulesetPolicy.core_placement`, so it already produces
@@ -410,7 +422,11 @@ def build_matrix(
                         # start`/`cell_opponent_start` equal `subject_start`/
                         # `opponent_start` unconditionally there).
                         if (
-                            (resolved_is_v4 or resolved_is_v6_research_scale)
+                            (
+                                resolved_is_v4
+                                or resolved_is_v6_research_scale
+                                or resolved_is_v6_research_scale_move
+                            )
                             and orientation == ORIENTATION_OPPONENT_FIRST
                         ):
                             cell_subject_start, cell_opponent_start = opponent_start, subject_start
@@ -480,7 +496,12 @@ def build_matrix(
                             seed=seed,
                             placement_id=placement_id,
                             orientation=orientation,
-                            include_placement=resolved_is_v2 or resolved_is_v4 or resolved_is_v6_research_scale,
+                            include_placement=(
+                                resolved_is_v2
+                                or resolved_is_v4
+                                or resolved_is_v6_research_scale
+                                or resolved_is_v6_research_scale_move
+                            ),
                         )
                         condition_fingerprint = None
                         if specs is not None and conditions_fingerprint is not None:

@@ -61,6 +61,7 @@ from battle_engine.results import WINNER_TIE_SENTINEL
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
     RulesetPolicy,
     resolve_ruleset_policy,
 )
@@ -417,6 +418,9 @@ _CORE_PLACEMENT_GUARDED_RULESET_IDS: frozenset[str] = frozenset(
         # exactly as it does for stable v4, never silently seed core
         # ownership in entrant order at an unusual arena size.
         BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+        # V6 Phase 4C: movement-normalized research Ruleset also shares
+        # seeded placement and vulnerable-core semantics.
+        BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
     }
 )
 

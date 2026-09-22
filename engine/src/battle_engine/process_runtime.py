@@ -629,7 +629,7 @@ class ProcessMatchController:
         entrant_specs: list[ProcessEntrantSpec],
         max_ticks: int,
         ruleset_policy: RulesetPolicy | None = None,
-        max_move_delta: int = 64,
+        max_move_delta: int | None = None,
         trace_writer: TraceWriter | None = None,
         **kwargs
     ):
@@ -638,7 +638,11 @@ class ProcessMatchController:
         self.max_ticks = max_ticks
         self.ruleset_policy = ruleset_policy or RULESET_V4
         self.disruption_duration = 1
-        self.max_move_delta = max_move_delta
+        self.max_move_delta = (
+            max_move_delta
+            if max_move_delta is not None
+            else self.ruleset_policy.resolve_max_move_delta(config.arena_size)
+        )
         self.trace_writer = trace_writer
         # v4 alpha2's round-robin process-selection cursor: for each entrant,
         # the index its next intra-entrant selection scan starts from. Alpha1

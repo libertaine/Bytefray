@@ -38,6 +38,7 @@ from battle_engine.rules import (
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
 )
 from battle_engine.scheduler import StateT, run_chunked_quota
 
@@ -97,6 +98,7 @@ class RulesetPolicy:
     scheduler_rotate_start: bool = False
     core_placement: str = "zero"
     process_selection: str = "priority"
+    movement_stride: str = "fixed_64"
 
     #: Every value :attr:`core_placement` may take. ``"zero"`` is every
     #: Ruleset whose omitted start addresses historically defaulted to the
@@ -115,6 +117,15 @@ class RulesetPolicy:
     PROCESS_SELECTION_MODES: ClassVar[frozenset[str]] = frozenset(
         {"priority", "round_robin"}
     )
+    #: Every value :attr:`movement_stride` may take. ``"fixed_64"`` is the
+    #: stable v4 and raw-scale research policy where displacement per MOVE
+    #: action is bounded at 64 cells regardless of arena size.
+    #: ``"scale_normalized"`` is V6 Phase 4C's movement-normalized policy
+    #: where maximum displacement scales with arena size according to
+    #: ``max_move_delta(A) = max(64, floor(A / 8))``.
+    MOVEMENT_STRIDE_MODES: ClassVar[frozenset[str]] = frozenset(
+        {"fixed_64", "scale_normalized"}
+    )
 
     def __post_init__(self) -> None:
         if self.core_placement not in self.CORE_PLACEMENT_MODES:
@@ -129,6 +140,30 @@ class RulesetPolicy:
                 f"Ruleset {self.ruleset_id!r}; expected one of "
                 f"{sorted(self.PROCESS_SELECTION_MODES)!r}"
             )
+        if self.movement_stride not in self.MOVEMENT_STRIDE_MODES:
+            raise ValueError(
+                f"unknown movement_stride {self.movement_stride!r} for Ruleset "
+                f"{self.ruleset_id!r}; expected one of "
+                f"{sorted(self.MOVEMENT_STRIDE_MODES)!r}"
+            )
+
+    def resolve_max_move_delta(self, arena_size: int) -> int:
+        """Return the maximum allowed displacement per MOVE action for this arena.
+
+        For ``movement_stride == "fixed_64"`` (stable v4 and raw-scaling
+        research), returns 64 for all arena sizes. For
+        ``movement_stride == "scale_normalized"`` (V6 Phase 4C), returns
+        ``max(64, arena_size // 8)``, preserving the 64-cell bound at
+        the 512 control arena while scaling displacement proportionally
+        at larger arenas.
+        """
+        if self.movement_stride == "fixed_64":
+            return 64
+        if self.movement_stride == "scale_normalized":
+            return max(64, arena_size // 8)
+        raise ValueError(
+            f"unknown movement_stride {self.movement_stride!r} for Ruleset {self.ruleset_id!r}"
+        )
 
     def unsupported_runtime_kinds(self, kinds: Iterable[str]) -> frozenset[str]:
         """Return which of ``kinds`` this Ruleset does not support executing.
@@ -408,6 +443,27 @@ RULESET_V6_RESEARCH_SCALE = RulesetPolicy(
     scheduler_rotate_start=True,
     core_placement="seeded",
     process_selection="round_robin",
+    movement_stride="fixed_64",
+)
+
+
+# V6 Phase 4C: the movement-normalized variable-arena research identity (see
+# ``BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID``'s own docstring in ``rules.py``
+# and docs/research/v6/V6_PHASE4C_MOVEMENT_NORMALIZATION_STUDY.md). Every
+# field below is an independent literal copy of ``RULESET_V6_RESEARCH_SCALE``'s
+# values except ``movement_stride="scale_normalized"``, which scales allowed
+# displacement per MOVE action proportionally with arena size according to
+# ``max_move_delta(A) = max(64, floor(A / 8))``.
+RULESET_V6_RESEARCH_SCALE_MOVE = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seeded",
+    process_selection="round_robin",
+    movement_stride="scale_normalized",
 )
 
 
@@ -428,10 +484,15 @@ RULESET_V6_RESEARCH_SCALE = RulesetPolicy(
 # on the exact same Agent API v2 process runtime as stable v4 (its
 # ``RulesetPolicy`` declares the same ``supported_runtime_kinds``), so it
 # belongs in this set on the same terms V4 is here.
+#
+# V6 Phase 4C added ``BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID``: it also
+# executes on the Agent API v2 process runtime, differing only in movement
+# stride normalization.
 PROCESS_RULESET_IDS: frozenset[str] = frozenset(
     {
         BYTEFRAY_RULESET_V4_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
     }
 )
 
@@ -488,6 +549,7 @@ class UnknownRulesetError(LookupError):
 _RULESET_POLICIES: Mapping[str, RulesetPolicy] = {
     RULESET_V4.ruleset_id: RULESET_V4,
     RULESET_V6_RESEARCH_SCALE.ruleset_id: RULESET_V6_RESEARCH_SCALE,
+    RULESET_V6_RESEARCH_SCALE_MOVE.ruleset_id: RULESET_V6_RESEARCH_SCALE_MOVE,
 }
 
 
@@ -741,10 +803,12 @@ __all__ = [
     "BYTEFRAY_RULESET_V4_ALPHA2_ID",
     "BYTEFRAY_RULESET_V4_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID",
     "OMITTED_RULESET_CANDIDATES",
     "PROCESS_RULESET_IDS",
     "RULESET_V4",
     "RULESET_V6_RESEARCH_SCALE",
+    "RULESET_V6_RESEARCH_SCALE_MOVE",
     "NoCompatibleRulesetError",
     "RulesetPolicy",
     "TerminationDecision",

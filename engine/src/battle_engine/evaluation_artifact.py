@@ -77,6 +77,7 @@ from battle_engine.evaluation_contracts import (
     is_ruleset_v2_methodology,
     is_ruleset_v4_methodology,
     is_ruleset_v6_research_scale_methodology,
+    is_ruleset_v6_research_scale_move_methodology,
     physical_slots_for_orientation,
     resolved_arena_alignment_mode,
     resolved_identity_version,
@@ -940,6 +941,9 @@ def write_evaluation_state(
     resolved_is_v2 = is_ruleset_v2_methodology(resolved_rules_id)
     resolved_is_v4 = is_ruleset_v4_methodology(resolved_rules_id)
     resolved_is_v6_research_scale = is_ruleset_v6_research_scale_methodology(resolved_rules_id)
+    resolved_is_v6_research_scale_move = is_ruleset_v6_research_scale_move_methodology(
+        resolved_rules_id
+    )
     resolved_group = request.group and resolved_is_v2
     write_json_atomic(
         path,
@@ -959,10 +963,18 @@ def write_evaluation_state(
             # brand-new artifact shape with no historical instance to
             # stay compatible with.
             "schema_version": resolved_schema_version(
-                resolved_is_v2, resolved_group, resolved_is_v4, resolved_is_v6_research_scale
+                resolved_is_v2,
+                resolved_group,
+                resolved_is_v4,
+                resolved_is_v6_research_scale,
+                resolved_is_v6_research_scale_move,
             ),
             "identity_version": resolved_identity_version(
-                resolved_is_v2, resolved_group, resolved_is_v4, resolved_is_v6_research_scale
+                resolved_is_v2,
+                resolved_group,
+                resolved_is_v4,
+                resolved_is_v6_research_scale,
+                resolved_is_v6_research_scale_move,
             ),
             "evaluation_id": evaluation_id,
             "candidate_id": request.candidate_id,

@@ -15,10 +15,12 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
     OMITTED_RULESET_CANDIDATES,
     PROCESS_RULESET_IDS,
     RULESET_V4,
     RULESET_V6_RESEARCH_SCALE,
+    RULESET_V6_RESEARCH_SCALE_MOVE,
     NoCompatibleRulesetError,
     RulesetPolicy,
     TerminationDecision,
@@ -54,9 +56,21 @@ def test_v6_research_scale_is_registered_but_never_automatic() -> None:
     assert resolve_ruleset_policy(BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID) is RULESET_V6_RESEARCH_SCALE
     assert BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID not in OMITTED_RULESET_CANDIDATES
     assert PROCESS_RULESET_IDS == frozenset(
-        {BYTEFRAY_RULESET_V4_ID, BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID}
+        {
+            BYTEFRAY_RULESET_V4_ID,
+            BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+            BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
+        }
     )
     assert resolve_omitted_ruleset_for_agents(None, [_python()]) != BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID
+
+
+def test_v6_research_scale_move_is_registered_but_never_automatic() -> None:
+    # V6 Phase 4C: registered and executable, but never what an omitted
+    # --ruleset selection resolves to -- requires explicit name.
+    assert resolve_ruleset_policy(BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID) is RULESET_V6_RESEARCH_SCALE_MOVE
+    assert BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID not in OMITTED_RULESET_CANDIDATES
+    assert resolve_omitted_ruleset_for_agents(None, [_python()]) != BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID
 
 
 def test_v6_research_scale_matches_stable_v4_fields_except_id() -> None:
@@ -69,6 +83,19 @@ def test_v6_research_scale_matches_stable_v4_fields_except_id() -> None:
     assert replace(RULESET_V6_RESEARCH_SCALE, ruleset_id=RULESET_V4.ruleset_id) == RULESET_V4
 
 
+def test_v6_research_scale_move_matches_research_scale_except_id_and_movement() -> None:
+    # V6 Phase 4C: matches raw research-scale in every gameplay field except
+    # movement stride normalization.
+    assert replace(
+        RULESET_V6_RESEARCH_SCALE_MOVE,
+        ruleset_id=RULESET_V6_RESEARCH_SCALE.ruleset_id,
+        movement_stride="fixed_64",
+    ) == RULESET_V6_RESEARCH_SCALE
+    assert RULESET_V6_RESEARCH_SCALE_MOVE.movement_stride == "scale_normalized"
+    assert RULESET_V6_RESEARCH_SCALE.movement_stride == "fixed_64"
+    assert RULESET_V4.movement_stride == "fixed_64"
+
+
 def test_stable_v4_fields_remain_pinned() -> None:
     assert RULESET_V4.supported_runtime_kinds == frozenset({"python"})
     assert RULESET_V4.supported_python_api_versions == frozenset({2})
@@ -78,7 +105,31 @@ def test_stable_v4_fields_remain_pinned() -> None:
         RULESET_V4.scheduler_rotate_start,
         RULESET_V4.core_placement,
         RULESET_V4.process_selection,
-    ) == ("chunked", 2, True, "seeded", "round_robin")
+        RULESET_V4.movement_stride,
+    ) == ("chunked", 2, True, "seeded", "round_robin", "fixed_64")
+
+
+def test_movement_stride_resolution_and_bounds() -> None:
+    arenas = [64, 256, 512, 1024, 4096, 16384, 65536]
+    # Stable v4: always 64
+    for a in arenas:
+        assert RULESET_V4.resolve_max_move_delta(a) == 64
+
+    # Raw-scale research control (Phase 4B): always 64
+    for a in arenas:
+        assert RULESET_V6_RESEARCH_SCALE.resolve_max_move_delta(a) == 64
+
+    # Movement-normalized research (Phase 4C): max(64, floor(A / 8))
+    # Anchor invariant: A=512 -> 64
+    assert RULESET_V6_RESEARCH_SCALE_MOVE.resolve_max_move_delta(512) == 64
+    # Scaled values:
+    assert RULESET_V6_RESEARCH_SCALE_MOVE.resolve_max_move_delta(1024) == 128
+    assert RULESET_V6_RESEARCH_SCALE_MOVE.resolve_max_move_delta(4096) == 512
+    assert RULESET_V6_RESEARCH_SCALE_MOVE.resolve_max_move_delta(16384) == 2048
+    assert RULESET_V6_RESEARCH_SCALE_MOVE.resolve_max_move_delta(65536) == 8192
+    # Floor behavior below 512:
+    assert RULESET_V6_RESEARCH_SCALE_MOVE.resolve_max_move_delta(64) == 64
+    assert RULESET_V6_RESEARCH_SCALE_MOVE.resolve_max_move_delta(256) == 64
 
 
 @pytest.mark.parametrize(
