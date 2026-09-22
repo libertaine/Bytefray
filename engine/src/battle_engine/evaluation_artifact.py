@@ -996,7 +996,11 @@ def write_evaluation_state(
             # folded into effective_conditions.
             "orientation_mode": request.orientation_mode,
             "arena_alignment_mode": resolved_arena_alignment_mode(
-                resolved_is_v2, resolved_group, resolved_is_v4, resolved_is_v6_research_scale
+                resolved_is_v2,
+                resolved_group,
+                resolved_is_v4,
+                resolved_is_v6_research_scale,
+                resolved_is_v6_research_scale_move,
             ),
             # v2.0.0-beta2 Phase 2: additive top-level disclosure of
             # multi-entrant methodology -- never identity-affecting on

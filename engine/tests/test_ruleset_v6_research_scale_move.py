@@ -27,6 +27,7 @@ Phase 4C task specifications. Proves with real live execution that:
 
 from __future__ import annotations
 
+import json
 import shutil
 from dataclasses import asdict, replace
 from pathlib import Path
@@ -43,6 +44,7 @@ from battle_engine.agent_evaluation import (
 )
 from battle_engine.agents import agent_spec_from_dir, resolve_agent
 from battle_engine.config import Config
+from battle_engine.evaluation_cli import main as evaluate_main
 from battle_engine.evaluation_contracts import (
     EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_SCALE,
     EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_SCALE_MOVE,
@@ -503,3 +505,78 @@ def test_stable_v4_remains_isolated_at_512(tmp_path: Path) -> None:
     )
     with pytest.raises(EvaluationConfigurationError, match="incompatible with the stable v4"):
         EvaluationService().run(request)
+
+
+def test_evaluation_artifact_records_scale_move_arena_alignment_mode(tmp_path: Path) -> None:
+    """Proves write_evaluation_state persists the exact scale-move arena alignment mode."""
+    _write_api_v2_agent(tmp_path, "candidate")
+    _write_api_v2_agent(tmp_path, "opponent")
+    out_dir = tmp_path / "eval_out"
+    request = _research_move_request(tmp_path, arena_size=1024, output_dir=out_dir)
+    EvaluationService().run(request)
+
+    data = json.loads((out_dir / "evaluation.json").read_text(encoding="utf-8"))
+    assert data["arena_alignment_mode"] == EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_SCALE_MOVE
+    assert data["rules_compatibility_id"] == BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID
+
+
+# ---------------------------------------------------------------------------
+# 7. CLI surface: --ruleset accepts the new identity explicitly, rejects out-of-range
+# ---------------------------------------------------------------------------
+
+
+def test_evaluate_cli_accepts_research_scale_move_explicitly(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _write_api_v2_agent(tmp_path, "candidate")
+    _write_api_v2_agent(tmp_path, "opponent")
+    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
+    exit_code = evaluate_main(
+        [
+            "candidate",
+            "--opponents",
+            "opponent",
+            "--ruleset",
+            BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
+            "--arena-size",
+            "1024",
+            "--seeds",
+            "1",
+            "--ticks",
+            "5",
+            "--output",
+            str(tmp_path / "out"),
+        ]
+    )
+    assert exit_code == 0
+    capsys.readouterr()
+    data = json.loads((tmp_path / "out" / "evaluation.json").read_text(encoding="utf-8"))
+    assert data["arena_alignment_mode"] == EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_SCALE_MOVE
+
+
+def test_evaluate_cli_rejects_out_of_range_arena_for_research_scale_move(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _write_api_v2_agent(tmp_path, "candidate")
+    _write_api_v2_agent(tmp_path, "opponent")
+    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
+    exit_code = evaluate_main(
+        [
+            "candidate",
+            "--opponents",
+            "opponent",
+            "--ruleset",
+            BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
+            "--arena-size",
+            "100000",
+            "--seeds",
+            "1",
+            "--ticks",
+            "5",
+            "--output",
+            str(tmp_path / "out"),
+        ]
+    )
+    assert exit_code != 0
+    capsys.readouterr()
+    assert not (tmp_path / "out" / "evaluation.json").exists()

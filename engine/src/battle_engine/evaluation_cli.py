@@ -62,6 +62,7 @@ from battle_engine.paths import get_data_root
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
 )
 
 
@@ -177,7 +178,11 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--ruleset",
-        choices=[BYTEFRAY_RULESET_V4_ID, BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID],
+        choices=[
+            BYTEFRAY_RULESET_V4_ID,
+            BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+            BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
+        ],
         default=None,
         help=(
             f"gameplay Ruleset identity. {BYTEFRAY_RULESET_V4_ID} is selected "
@@ -198,7 +203,14 @@ def _parser() -> argparse.ArgumentParser:
             "range instead of being pinned to the stable-v4 control arena. "
             "Not selected automatically for any request; must be named "
             "explicitly. See "
-            "docs/research/v6/V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md."
+            "docs/research/v6/V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md. "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID} is the V6 Phase 4C "
+            "movement-normalized variable-arena research identity: identical to "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID} except maximum displacement "
+            "per MOVE action scales proportionally with arena size according to "
+            "max_move_delta(A) = max(64, floor(A / 8)). Not selected automatically; "
+            "must be named explicitly. See "
+            "docs/research/v6/V6_PHASE4C_MOVEMENT_NORMALIZATION_STUDY.md."
         ),
     )
     parser.add_argument(
@@ -461,6 +473,7 @@ def _print_matrix(
             request.group,
             request.is_v4_methodology,
             request.is_v6_research_scale_methodology,
+            request.is_v6_research_scale_move_methodology,
         ),
     )
     if not request.group:
