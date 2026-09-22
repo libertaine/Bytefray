@@ -141,8 +141,10 @@ $$A \in \{512, 1024, 4096, 16384, 65536\}$$
 |  Scale spatial geometry coherently with arena size:                   |
 |  - Placement Separation: scaled proportionally (min_sep = A / 8)      |
 |  - Locality Reach: bounded ladders (R in {64, 256, sqrt(A), A / 8})   |
-|  - Movement Range: evaluated under scaled max_move_delta (~ sqrt(A))  |
-|  - Tick Horizon: evaluated under scale-aware time (T ~ sqrt(A))       |
+|  - Movement Range: evaluated under scaled max_move_delta (candidates  |
+|    include A/8 and sqrt(A)*2, both anchored to equal 64 at A=512)     |
+|  - Tick Horizon: evaluated under scale-aware time (Linear T~A primary;|
+|    Fixed T=1000 shared control; Square-Root/Log as cost fallbacks)    |
 |  Exposes: Separates inherent geometry changes from 512-tuned constants|
 |  Guards: Checks for the V3 Phase 2 "bulldozer effect" under locality. |
 +-----------------------------------------------------------------------+
@@ -160,6 +162,7 @@ $$A \in \{512, 1024, 4096, 16384, 65536\}$$
   - Does global reach turn into an instant teleporting weapon across 65,536 cells?
   - Do local agents ever make mutual contact before the 1,000-tick timeout?
   - Does the draw/timeout rate approach 100% for non-global agents?
+  - **Surprising or poor results under raw scaling are evidence, not failures.** A high timeout rate, a collapsed leaderboard, or degenerate agent behavior at large $A$ is exactly the data Experiment A exists to produce. It must be recorded and analyzed as-is; it does not by itself justify skipping ahead to Experiment B's normalized geometry, and Experiment B's normalization candidates (§4.2 below) must not be substituted into Experiment A's controlled invariants to "fix" an unwelcome result.
   - **Stride & Traversal Dynamics:** At $A = 512$, a single 64-cell MOVE covers 12.5% of the arena circumference, and an agent dedicating all 8 actions to movement can traverse the entire arena in a single tick ($8 \times 64 = 512$). At $A = 65,536$, however, a 64-cell MOVE covers only $\frac{64}{65536} \approx 0.098\%$ ($1/1024$) of the arena. Traversing half the arena ($32,768$ cells) requires at least $\lceil 32,768 / 64 \rceil = 512$ dedicated `MOVE` actions, or 64 dedicated ticks of pure movement (with zero READ/WRITE actions). For active searchers that interleave sensing and moving (e.g. 1 READ per 1 MOVE), traversal takes $\ge 128$ ticks.
 
 #### Experiment B — Scale-Normalized Geometry
@@ -167,8 +170,12 @@ Conducted after Experiment A to separate "large arenas inherently break gameplay
 - **Candidate Scaling Parameters:**
   1. **Placement Separation:** Scale minimum separation proportionally:
      $$\text{min\_sep}(A) = \max\left(64, \left\lfloor \frac{A}{8} \right\rfloor\right)$$
-     Prevents two entrants in a 65,536 arena from spawning 64 cells apart (an artificial 0.1% separation).
-  2. **Movement Stride / Budget:** If `max_move_delta` remains 64, relative spatial traversal slows by $128\times$. Candidates include scaling `max_move_delta` with arena size (e.g. $\text{max\_move\_delta}(A) = \max(64, \lfloor \sqrt{A} \times 2 \rfloor)$ or $\lfloor A / 64 \rfloor$) to test whether normalized traversal restores dynamic contact without trivializing positioning.
+     **Verified (Phase 4A.1 audit):** This satisfies the control-equivalence anchor invariant $f(512) = 64$ exactly ($\lfloor 512/8 \rfloor = 64$), scales as a constant 12.5% of arena size thereafter, and remains feasible at $A=65536$ (min_sep of 8,192 cells is well within the $A/2 = 32,768$ maximum possible separation between the two entrants placed per match) and well above `core_size` (8 cells) at every tested scale. No correction needed. Prevents two entrants in a 65,536 arena from spawning 64 cells apart (an artificial 0.1% separation).
+  2. **Movement Stride / Budget:** If `max_move_delta` remains 64, relative spatial traversal slows by $128\times$. Any scale-normalized candidate intended to be control-equivalent must satisfy the anchor invariant $f(512) = 64$ (the raw-scaling control value at the base arena). Candidates satisfying this invariant:
+     - **Proportional (primary):** $\text{max\_move\_delta}(A) = \max\left(64, \left\lfloor \frac{A}{8} \right\rfloor\right)$ — equivalently $64 \times (A/512)$ — preserves the control's exact 12.5%-of-arena-per-`MOVE` ratio at every scale.
+     - **Sub-linear (secondary):** $\text{max\_move\_delta}(A) = \max\left(64, \lfloor \sqrt{A} \times 2 \rfloor\right)$ — the outer `max(64, ...)` floor is load-bearing here: $\lfloor\sqrt{512}\times 2\rfloor = 45 < 64$, so without the floor this candidate would *not* reproduce the control at $A=512$.
+
+     **Correction (Phase 4A.1 audit):** An earlier candidate, $\lfloor A / 64 \rfloor$ (without a floor), does **not** satisfy the anchor invariant — $\lfloor 512 / 64 \rfloor = 8 \ne 64$ — and must not be used as a scale-normalized `max_move_delta` formula. It has been removed from the candidate list above.
   3. **Reach Normalization:** Investigate capped reach rungs ($R \in \{64, 256, \sqrt{A}, A/8\}$) to evaluate local perception.
      - *Critical Guard:* Must evaluate whether bounded reach triggers the V3 Phase 2 "bulldozer effect" (where contiguous claiming incidentally destroys cores while search collapses into slow expansion and defense is crippled by movement overhead).
 
@@ -186,17 +193,25 @@ In scaling experiments, match duration ($T_{\max}$) cannot remain an unexamined 
   - At $A = 65536$, $S = 0.122$ (deep starvation; $P(\text{contact}) \approx 0.12$).
   Non-global agents will experience catastrophic timeout inflation as $S \ll 1$.
 
+  **Verified (Phase 4A.1 audit):** This $S = Q \cdot T_{\max} / A = 8000/A$ formula and the five listed values (15.625, 7.8125, 1.953, 0.488, 0.122) match the historical V3 definition exactly — [`docs/archive/v3/V3_PHASE1_ARENA_ACTION_DENSITY.md:56`](file:///d:/Projects/BATTLE2/docs/archive/v3/V3_PHASE1_ARENA_ACTION_DENSITY.md#L56): "`S = (instr_per_tick x ticks) / arena_size`" — with `instr_per_tick = Q = 8` and `ticks = T_max = 1000`. No correction is required to the formula or the values in §4.1 or here.
+
 ### 5.2 Scale-Aware Time Horizon ($T_{\max}(A)$)
 Four scaling models are evaluated:
 
 | Model | Formula | $A=512$ | $A=1024$ | $A=4096$ | $A=16384$ | $A=65536$ | Rationale / Computational Feasibility |
 |---|---|---:|---:|---:|---:|---:|---|
-| **Linear** | $1000 \times (A / 512)$ | 1,000 | 2,000 | 8,000 | 32,000 | 128,000 | Maintains proportional traversal opportunity; **prohibitively expensive** at 65k (128k ticks/match). |
-| **Square-Root** | $1000 \times \sqrt{A / 512}$ | 1,000 | 1,414 | 2,828 | 5,657 | 11,314 | Matches 2D diffusive search and radial expansion bounds; computationally feasible. |
+| **Linear** | $1000 \times (A / 512)$ | 1,000 | 2,000 | 8,000 | 32,000 | 128,000 | Directly traversal-normalized: preserves the same ticks-per-arena-cell ratio the control has at 512, matching Experiment A's own stride/traversal accounting (§4.2). **Prohibitively expensive** at 65k (128k ticks/match). |
+| **Square-Root** | $1000 \times \sqrt{A / 512}$ | 1,000 | 1,414 | 2,828 | 5,657 | 11,314 | A sub-linear compromise between Fixed and Linear cost; computationally feasible at all five sizes. |
 | **Logarithmic** | $1000 \times [1 + \log_2(A / 512)]$ | 1,000 | 2,000 | 4,000 | 6,000 | 8,000 | Moderate expansion; tests whether information scaling suffices without linear inflation. |
-| **Fixed Control** | $1000$ | 1,000 | 1,000 | 1,000 | 1,000 | 1,000 | Pure computational equality baseline. |
+| **Fixed Control** | $1000$ | 1,000 | 1,000 | 1,000 | 1,000 | 1,000 | Pure computational equality baseline; the horizon already used, unchanged, throughout Experiment A. |
 
-**Methodology Recommendation:** Experiment A must run under **Fixed Control ($T = 1000$)** to isolate spatial effects. Experiment B will compare Fixed Control against **Square-Root Scaling ($T \propto \sqrt{A}$)**.
+**Correction (Phase 4A.1 audit):** The Square-Root row was previously justified as matching "2D diffusive search and radial expansion bounds." That rationale does not apply to this engine: [`docs/RULES.md:62`](file:///d:/Projects/BATTLE2/docs/RULES.md#L62) defines the arena as a **circular, one-dimensional byte array**, not a 2D spatial field, and no V2/V3/V4/V5 archive document models search as 2D diffusion. The formula and values above are unchanged (the arithmetic was already correct), but the justification is corrected here to avoid misleading Phase 4B's interpretation.
+
+**Methodology Recommendation:** Experiment A continues to run under **Fixed Control ($T = 1000$)** to isolate spatial effects; this is unchanged. For Experiment B, the primary traversal-normalized candidate is **Linear Scaling ($T \propto A$)**, because it is the horizon that is actually derived from this engine's 1D circular traversal mathematics (§4.2's own stride/traversal accounting: covering half the arena at fixed stride costs $\Theta(A)$ actions, not $\Theta(\sqrt{A})$). Experiment B should test **both**:
+1. **Fixed Control ($T=1000$)**, shared with Experiment A, as the no-compensation baseline, and
+2. **Linear ($T \propto A$)**, as the traversal-normalized candidate, understanding that its 65,536-cell cost (128,000 ticks/match) may be computationally prohibitive for the full Tier 2 sweep.
+
+**Square-Root is retained only as a fallback candidate**, to be exercised specifically if Linear proves too expensive during Phase 4B smoke qualification — it is a practical compromise on cost, not a physically-motivated model of this engine's search dynamics. Logarithmic remains available as a third fallback for the same reason. Phase 4B should benchmark Linear's actual wall-clock cost at $A=65536$ during smoke qualification before deciding whether the full Tier 2 sweep can afford it, or must fall back to Square-Root/Logarithmic.
 
 ---
 
@@ -220,7 +235,7 @@ Metrics are categorized by availability into three tiers:
 | (Replay Schema 4: TickSnapshot, processes, memory_diffs, events)         |
 | - First Contact Tick: min tick where dist(anchor_A, anchor_B) <= reach   |
 | - First Hostile Interaction: tick of first WRITE to enemy-owned cell     |
-| - Traversal Displacement: sum of abs(anchor(t) - anchor(t-1))            |
+| - Traversal Displacement: sum of circ_dist(anchor(t), anchor(t-1))       |
 | - Spatial Dispersion: mean pairwise circular distance between processes  |
 | - Stagnation Runs: consecutive ticks with zero memory diffs              |
 | - Unique Footprint: count of unique addresses written per entrant        |
@@ -244,6 +259,15 @@ Metrics are categorized by availability into three tiers:
    $$\eta_{\text{spatial}} = \frac{\text{Unique Cells Written}}{\text{Total Memory Writes}}$$
    Measures whether an agent explores new space ($\eta \to 1$) or repeatedly bombards a static window ($\eta \to 0$).
 4. **Dispersal Index ($D_{\text{process}}$):** For multi-process entrants, the mean circular separation of their active anchors.
+
+### 6.2 Tier 2 Feasibility Verification (Phase 4A.1 audit)
+
+Every Tier 2 metric was checked against [`docs/REPLAY_SCHEMA.md`](file:///d:/Projects/BATTLE2/docs/REPLAY_SCHEMA.md)'s actual Schema 4 field list (`processes[].anchor`, `processes[].reach`, `processes[].disrupted`, `memory_diffs[].{address,length,owner,values}`, `events`). All six are **directly replay-derivable** from Schema 4 alone, with two clarifications:
+
+- **First Hostile Interaction** ("first WRITE to enemy-owned cell") requires a full linear reconstruction pass (per "Memory reconstruction" in `REPLAY_SCHEMA.md`) to know who owned a cell *before* a given write, not a single-field lookup — still purely replay data, no additional metadata needed.
+- **Traversal Displacement** must use circular (modular) distance, not raw `abs(anchor(t) - anchor(t-1))` — corrected in the Tier 2 table above. A process whose anchor moves from address 511 to address 0 in a 512-cell arena has traversed 1 cell, not 511; the un-corrected formula would silently overcount every wraparound step.
+
+No Tier 2 metric requires reclassification to Tier 3.
 
 ---
 
@@ -270,6 +294,8 @@ A match state is defined as entering a **Stagnation State** if, over a sliding w
    $$H(t) = H(t - p) \quad \text{for period } p \le 16, \quad \forall t \in [t_0, t_0 + W]$$
 4. **Permanent Disruption Lock:**
    A single-process agent remains disrupted for $W$ consecutive ticks ($\text{disrupted} == \text{True}$) while the disruptor makes no progress toward capturing the core.
+
+**Feasibility (Phase 4A.1 audit):** Criteria 1–3 are computable from Schema 4 replay data alone (`memory_diffs`, `processes[].anchor`, `processes[].reach`). Criterion 4 additionally needs the defending entrant's core address range to test "progress toward capturing the core." That range is not itself a per-tick replay field; it must be derived from the entrant's seeded start coordinate, which is Tier 1 data already carried in `NativeAgentResult`/`result.json` metadata (`match_service.py`'s `entrant.start`, combined with `core_addresses(start, arena_size)`). This criterion is therefore **computable now**, but only by combining the replay stream with existing Tier 1 result metadata — it does not require new instrumentation. Implementers should note that current metadata omits the `start` key entirely when it equals `0` (`match_service.py:864-865`); a missing key must be treated as `start = 0`, not as "unknown."
 
 ### 7.3 Diagnostic Classification
 When a match terminates by `TICK_LIMIT`, the post-hoc analyzer classifies the non-resolution into:
@@ -299,7 +325,7 @@ Kendall's W -> 1.0                     Kendall's W << 1.0, 3-cycles present
 
 ### 8.2 Quantitative Measures
 1. **Transitivity Index ($T_{\text{tourn}}$):** Computed via Landau's transitivity index or the count of transitive triples vs cyclic triples in the tournament graph.
-   - Let a directed edge exist from $i \to j$ if $M_{ij} > 0.55$ ($p < 0.05$).
+   - Let a directed edge exist from $i \to j$ if $M_{ij} > 0.55$. **This is a practical dominance threshold, not a statistically significant one** — Tier 2's 16 matches per pairing (8 seeds x 2 orientations) cannot support a "$p < 0.05$" claim at this effect size: a two-sided exact binomial test of 0.55 vs. a null of 0.5 needs several hundred trials per pairing to reach $p < 0.05$, not 16 (Tier 3's 32 per pairing is still far short). An earlier draft of this document attached "($p < 0.05$)" to this threshold; that annotation is incorrect for the planned sample sizes and has been removed. If a statistically validated edge is wanted instead of the heuristic 0.55 cut, compute a per-pairing exact binomial test (or Wilson confidence interval) against $p_0 = 0.5$ using the actual win/loss counts, and report the interval alongside the heuristic threshold rather than substituting for it.
    - Count directed 3-cycles: $i \to j \to k \to i$.
    - A healthy game exhibits non-zero 3-cycles. A purely degenerate race yields exactly 0 cycles.
 2. **Opponent-Conditioned Performance Variance ($\sigma_{\text{opp}}^2$):**
@@ -426,7 +452,7 @@ To prevent confounding multiple unverified mechanics, V6 research will adhere st
 +------------------------------------------------------------------------+
 | STAGE 2: GEOMETRIC NORMALIZATION & TICK HORIZONS                       |
 | - Proportional placement separation                                    |
-| - Square-root tick limits (T ~ sqrt(A))                                |
+| - Traversal-normalized tick limits (Linear T~A primary; see Sec 5)     |
 | - Scaled movement strides                                              |
 | - Question: Does normalized travel restore baseline dynamics?          |
 +------------------------------------------------------------------------+
@@ -502,15 +528,12 @@ $$\text{Total Matches} = A_{\text{count}} \times \frac{N(N - 1)}{2} \times S \ti
 Using Tier 2 (`V6-Bench-8`, $N=8$, $P=28$, $S=8$, $O=2$):
 - Matches per Arena Size: $28 \times 16 = 448$ matches.
 - Across 5 Arena Sizes: $5 \times 448 = \mathbf{2,240\text{ matches}}$.
-- Execution Timing (measured on 16-core workstation with parallel evaluation service):
-  - At 512 cells: $\approx 1.5\text{ ms / cell}$ $\implies \approx 0.7\text{ seconds}$ per 448-match batch.
-  - At 65,536 cells (1000 ticks): sparse memory and O(1) VM execution keep per-match cost under $5\text{ ms}$ $\implies \approx 2.5\text{ seconds}$ per batch.
-  - Entire 2,240-match sweep executes in **under 30 seconds** wall-clock time!
+- Execution Timing — **planning estimate, not a measurement of this workload (Phase 4A.1 audit).** The `bytefray-rules-6-research-scale` ruleset does not exist yet, and no 1000-tick/$Q=8$ match at $A \ge 4096$ has been run and timed under it, so "under 30 seconds" cannot be a measurement of this specific sweep. It is a projection extrapolated from smaller-scale, 512-cell `bytefray-rules-4` per-match costs, assuming per-match execution time is independent of `arena_size` (plausible, since territory/CPU statistics are tracked incrementally rather than by scanning the arena — see `match_service.py:577-604` — but not verified at $A=16384$ or $A=65536$). Treat the "$<5\text{ ms}$ at 65,536 cells" and "under 30 seconds total" figures as **planning estimates**, and **benchmark during Phase 4B smoke qualification before launching the full sweep** rather than treating them as a guarantee.
 - Replay Storage and Bounded Footprint:
   - In a 2-entrant match with quota $Q = 8$, the maximum number of cell mutations per tick is bounded by $\Delta_{\text{writes}} \le 2 \times Q = 16\text{ diffs/tick}$.
-  - Over a 1,000-tick match, total memory diffs cannot exceed $16,000$ entries.
-  - Because Replay Schema 4 records sparse deltas rather than dense memory snapshots, an individual 1,000-tick match at $A = 65,536$ produces a replay JSONL artifact of **$< 1\text{ MB}$** (typically 300–600 KB).
-  - Sweeps emit full replays only for representative vectors or diagnostic anomalies; the entire 2,240-match evaluation produces $< 15\text{ MB}$ of summary and result artifacts.
+  - Over a 1,000-tick match, total memory diffs cannot exceed $16,000$ entries. **This diff-count bound alone does not prove a byte-size bound (Phase 4A.1 audit)** — JSON/event serialization overhead (address, length, owner, and per-byte `values` fields, plus per-tick process/agent-state records) is not accounted for by the diff count.
+  - The **"$< 1\text{ MB}$ (typically 300–600 KB)"** per-match replay-size figure at $A=65{,}536$ is therefore an **analytical estimate, not a proven guarantee**, informed by two data points that bracket rather than confirm it: (a) [`docs/specs/agent_lab.md:161`](file:///d:/Projects/BATTLE2/docs/specs/agent_lab.md#L161) measured a 200-tick, 2-agent match's `replay.jsonl` at ~193 KB under the same $Q=8$ quota; linearly extrapolating to 1,000 ticks (replay volume scales with `instr_per_tick x realized ticks`, independent of `arena_size`, per the next finding) gives ~965 KB — consistent with, but not itself proof of, the "$<1$ MB" claim. (b) [`docs/archive/v3/V3_PHASE1_ARENA_ACTION_DENSITY.md:832,840`](file:///d:/Projects/BATTLE2/docs/archive/v3/V3_PHASE1_ARENA_ACTION_DENSITY.md#L832) measured a mean `replay.jsonl` of **4,762 KB** at $A=65{,}536$ under a much higher `instr_per_tick=128` budget (16x this methodology's $Q=8$) — confirming replay size scales with `instr_per_tick x ticks`, not arena size, but also showing actual measured sizes can be several megabytes once the action budget is large, so "$<1$ MB" holds specifically *because* $Q=8$ is a low budget, not because arena size is 65,536. **Label this per-match figure as an analytical estimate pending direct benchmarking at $Q=8$, $T_{\max}=1000$, $A=65{,}536$ during Phase 4B smoke qualification**, not a guarantee.
+  - Sweeps emit full replays only for representative vectors or diagnostic anomalies (the count of which Phase 4B must still decide); the entire 2,240-match evaluation produces $< 15\text{ MB}$ of **summary and result artifacts only** — this figure does not include whatever subset of full replays are retained for representative/anomalous matches, which is a separate, additive storage category sized by the per-match replay estimate above times however many replays Phase 4B chooses to retain.
 
 ---
 
@@ -520,8 +543,8 @@ Using Tier 2 (`V6-Bench-8`, $N=8$, $P=28$, $S=8$, $O=2$):
 The current replay schema is **`battle2.replay` Schema 4** ([`docs/REPLAY_SCHEMA.md`](file:///d:/Projects/BATTLE2/docs/REPLAY_SCHEMA.md)):
 - `arena_size` is already a first-class integer on `ReplayHeader.config.arena_size`.
 - `processes` in `TickSnapshot` already record absolute integer `anchor` and `reach`.
-- **Sparse Memory Representation:** Memory diffs are sparse address-value tuples (`address`, `length`, `owner`, `values`), recording only mutated bytes. Since each entrant has quota $Q=8$, tick mutations are strictly capped at $\le 2 \times Q = 16$ cells/tick. Replay size is governed by ticks and actions, completely independent of total arena dimension $A$. A match in a 65,536 arena produces a compact replay ($< 1\text{ MB}$) that readers parse with identical O(1) memory delta logic.
-- **Conclusion:** Replay Schema 4 **requires zero modifications** to support arena sizes up to 65,536.
+- **Sparse Memory Representation:** Memory diffs are sparse address-value tuples (`address`, `length`, `owner`, `values`), recording only mutated bytes. Since each entrant has quota $Q=8$, tick mutations are strictly capped at $\le 2 \times Q = 16$ cells/tick. Replay volume is governed by ticks and action budget, not by total arena dimension $A$ — confirmed by V3 Phase 1's own finding that "replay volume scales with `instr_per_tick x realized ticks`, not with arena size" ([`V3_PHASE1_ARENA_ACTION_DENSITY.md:840`](file:///d:/Projects/BATTLE2/docs/archive/v3/V3_PHASE1_ARENA_ACTION_DENSITY.md#L840)). A match in a 65,536 arena is expected to produce a replay on the order of the estimate in §13.2 (analytical, pending Phase 4B benchmarking — **not** an already-proven $<1\text{ MB}$ figure), parsed by readers with identical O(1)-per-diff memory delta logic regardless of arena size.
+- **Conclusion:** Replay Schema 4 **requires zero modifications** to support arena sizes up to 65,536 — this is a wire-format/schema-compatibility conclusion, independent of the still-to-be-benchmarked storage-size estimate above.
 
 ### 14.2 Result Schema Compatibility
 - `result.json` records final scores, winner, ticks, and agent statistics.
@@ -555,10 +578,11 @@ The design establishes that the cleanest, lowest-risk entry into V6 gameplay exp
          process_selection="round_robin",
      )
      ```
-   - Behaviorally **identical to `bytefray-rules-4` at 512 cells**.
+   - Behaviorally **identical to `bytefray-rules-4` at 512 cells** — verified consistent: `RulesetPolicy` (`ruleset_policy.py`) carries only scheduler/placement/process-selection/runtime-kind fields, and the sketch above copies every one of `bytefray-rules-4`'s values unchanged. `quota`, `core_size`, and `reach` are not `RulesetPolicy` fields at all (they live elsewhere as engine-wide constants/config), so omitting them from this sketch does not risk behavioral drift.
 2. **Support Variable Arena Evaluation:**
    - In `evaluation_service.py`, allow non-512 `--arena-size` specifically when `ruleset_id == BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID`.
    - Keep `bytefray-rules-4` strictly locked to 512 cells.
+   - **Additional prerequisite found (Phase 4A.1 audit):** this alone is not sufficient. `evaluation_service.py`'s existing ruleset allow-list ([`evaluation_service.py:808`](file:///d:/Projects/BATTLE2/engine/src/battle_engine/evaluation_service.py#L808)) currently rejects *any* `--ruleset` other than `bytefray-rules-4` outright, with the explicit comment "`bytefray-rules-4` is the only Ruleset that can create a new evaluation artifact now." Phase 4B must also extend this gate to admit `BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID`, or the new ruleset will be rejected before the arena-size check is ever reached. This is a concrete implementation prerequisite Phase 4B must explicitly test (a request with the new ruleset ID and a non-512 arena size must reach and pass the arena-size check, not fail earlier at the allow-list).
 3. **Execute the Experiment A Sweep:**
    - Execute the 2,240-match Tier 2 matrix across $A \in \{512, 1024, 4096, 16384, 65536\}$.
    - Record and publish the empirical findings in `docs/research/v6/V6_PHASE4B_ARENA_SCALING_STUDY.md`.
