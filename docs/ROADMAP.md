@@ -17,8 +17,8 @@ and [FUTURE_PLANS.md](FUTURE_PLANS.md) for catalogued future ideas and research 
 | **Current Stable Release** | `5.0.0` | **Released** (2026-09-15) | Shipped stable product line atop `bytefray-rules-4` and Agent API v2. |
 | **Active Development Line** | `V6` (`v6-research`) | **In Progress** | Repository diet, architecture modernization, and runtime retirement program. |
 | **Active Ruleset Control** | `bytefray-rules-4` | **Stable Control** | Sole executable v4 ruleset; production gameplay baseline. |
-| **Current Phase** | Phase 4A | **Complete** | Gameplay research methodology design; see `docs/research/v6/V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md`. |
-| **Immediate Next Phase** | Phase 4B | **Planned** | Raw arena scaling experimentation and variable-arena research ruleset candidate. |
+| **Current Phase** | Phase 4B | **Complete** | Raw arena-scaling study under the new `bytefray-rules-6-research-scale` research ruleset; see `docs/research/v6/V6_PHASE4B_ARENA_SCALING_STUDY.md`. |
+| **Immediate Next Phase** | Phase 4C / Experiment B | **Candidate** | Scale-normalized movement stride (and, separately, territory-scoring normalization) — see Phase 4B's recommendation. |
 
 ## Terminology
 
@@ -160,14 +160,28 @@ and runtime modernization program**. Its guiding operational rule is:
   metrics hierarchy, operational stagnation criteria, and staged experimental
   roadmap for investigating spatial scaling and non-transitive counterplay
   ([`docs/research/v6/V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md`](research/v6/V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md)).
+* **Phase 4B — Raw Arena-Scaling Study: Complete.** Registered
+  `bytefray-rules-6-research-scale`, an explicit variable-arena research
+  Ruleset live-verified behaviorally identical to `bytefray-rules-4` at 512
+  cells (448/448 matches byte-identical, full V6-Bench-8 field, all seeds,
+  both orientations), then ran the full 2,240-match raw-scaling sweep
+  (512 → 65,536 cells, all other gameplay mechanics unchanged). Findings:
+  the aggregate competitive hierarchy is scale-robust (Spearman ρ ≥ 0.95
+  against the 512-cell baseline throughout), but individual matchups can
+  invert completely, territorial-expansion archetypes collapse under
+  arena-size-normalized scoring, and uncapped global reach remains close to
+  scale-immune. No runtime gameplay code changed after the sweep began
+  ([`docs/research/v6/V6_PHASE4B_ARENA_SCALING_STUDY.md`](research/v6/V6_PHASE4B_ARENA_SCALING_STUDY.md)).
 
 ### Current and Immediate Next Phase
 
-Phase 4A completed the gameplay research methodology design. The immediate next
-phase is **Phase 4B (Raw Arena Scaling Experimentation)**, which introduces an
-explicit variable-arena research ruleset candidate
-(`bytefray-rules-6-research-scale`) behaviorally identical to `bytefray-rules-4`
-at 512 cells to evaluate the benchmark field across arena sizes 512 to 65,536.
+Phase 4B completed the raw arena-scaling study. It recommends, but does not
+implement, two normalization candidates for a future Experiment B: (1)
+scale-normalized movement stride (`max_move_delta(A)`), the strongest
+evidence-backed lever behind the contact-delay/timeout effects measured; and
+(2), as a separate controlled variable, a non-percentage-based scoring
+treatment for territorial-expansion archetypes. Neither is scheduled as an
+active phase yet.
 
 ### Near-Term Planned Work (V6 Program Follow-Ups)
 
