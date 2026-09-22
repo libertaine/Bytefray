@@ -62,7 +62,16 @@ V6_BENCH_8: tuple[str, ...] = (
     "v4_local_defender",
 )
 
-SMOKE_FIELD: tuple[str, ...] = ("Octave", "v4_claimer", "v5_core_defender")
+# Task Section 18 Smoke Gate: mobile agents with clearly different authored
+
+# movement patterns plus one stationary agent
+SMOKE_FIELD: tuple[str, ...] = (
+    "v5_scout_striker",
+    "v5_dual_team",
+    "v4_claimer",
+    "nemesis_alpha2",
+)
+
 
 TICKS = 1000
 ARENA_SIZES: tuple[int, ...] = (512, 1024, 4096, 16384, 65536)

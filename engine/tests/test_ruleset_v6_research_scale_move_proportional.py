@@ -304,6 +304,36 @@ def test_literal_controls_remain_literal() -> None:
             assert RULESET_V6_RESEARCH_SCALE_MOVE.resolve_movement_displacement(op, a) == op
 
 
+def test_movement_displacement_non_power_of_two_and_boundary_arenas() -> None:
+    policy = RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL
+
+    # 1. Non-power-of-two arena (A = 777)
+    # op = 40: floor(40 * 777 / 512) = floor(31080 / 512) = 60
+    assert policy.resolve_movement_displacement(40, 777) == 60
+    assert policy.resolve_movement_displacement(-40, 777) == -60
+    assert policy.resolve_movement_displacement(0, 777) == 0
+    # op = 1: floor(1 * 777 / 512) = 1
+    assert policy.resolve_movement_displacement(1, 777) == 1
+    assert policy.resolve_movement_displacement(-1, 777) == -1
+
+    # 2. Minimum research boundary arena (A = 64)
+    # op = 1: floor(1 * 64 / 512) = floor(64 / 512) = 0 (integer truncation below 1 stride)
+    assert policy.resolve_movement_displacement(1, 64) == 0
+    assert policy.resolve_movement_displacement(7, 64) == 0
+    # op = 8: floor(8 * 64 / 512) = floor(512 / 512) = 1
+    assert policy.resolve_movement_displacement(8, 64) == 1
+    assert policy.resolve_movement_displacement(-8, 64) == -1
+    # op = 64: floor(64 * 64 / 512) = 8
+    assert policy.resolve_movement_displacement(64, 64) == 8
+
+    # 3. Extreme scale arena (A = 2^24 = 16,777,216)
+    extreme_a = 16_777_216
+    expected_extreme = 40 * (extreme_a // 512)
+    assert policy.resolve_movement_displacement(40, extreme_a) == expected_extreme
+    assert isinstance(policy.resolve_movement_displacement(40, extreme_a), int)
+
+
+
 # ---------------------------------------------------------------------------
 # 3. Live process runtime movement execution
 # ---------------------------------------------------------------------------
@@ -398,6 +428,51 @@ def create_agent():
     assert (raw_pos[-1] - start_pos) % 1024 == 40
     # Proportional: 40 * (1024 // 512) = 80 displacement
     assert (prop_pos[-1] - start_pos) % 1024 == 80
+
+
+def test_smoke_gate_benchmark_mobile_agents_trajectory_divergence_at_scale(tmp_path: Path) -> None:
+    """Smoke Gate: prove that unlike Phase 4C, actual trajectories of mobile agents
+    diverge between Phase 4B raw-scale and Phase 4D proportional movement at A=65536."""
+    for name in ("v5_scout_striker", "nemesis_alpha2"):
+        _bootstrap_agent(tmp_path, name)
+
+    raw_replay = _run_under_ruleset(
+        tmp_path,
+        ("v5_scout_striker", "nemesis_alpha2"),
+        ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+        arena_size=65536,
+        seed=1,
+        ticks=10,
+        run_label="smoke-raw-65k",
+    )
+    prop_replay = _run_under_ruleset(
+        tmp_path,
+        ("v5_scout_striker", "nemesis_alpha2"),
+        ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
+        arena_size=65536,
+        seed=1,
+        ticks=10,
+        run_label="smoke-prop-65k",
+    )
+
+    def _extract_scout_anchors(path: Path) -> list[int]:
+        anchors = []
+        for rec in iter_replay(path):
+            if isinstance(rec, TickSnapshot) and rec.processes:
+                for p in rec.processes:
+                    if p.entrant_id == "A":
+                        anchors.append(p.anchor)
+        return anchors
+
+    raw_anchors = _extract_scout_anchors(raw_replay)
+    prop_anchors = _extract_scout_anchors(prop_replay)
+
+    assert raw_anchors[0] == prop_anchors[0]  # Same starting seed placement
+    # Divergence proof: at A=65536, proportional displacement moves 128x faster,
+    # so positions diverge immediately after tick 0
+    assert raw_anchors != prop_anchors
+    assert raw_anchors[1] != prop_anchors[1]
+
 
 
 # ---------------------------------------------------------------------------
