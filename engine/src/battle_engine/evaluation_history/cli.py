@@ -7,10 +7,14 @@ import json
 import sys
 from pathlib import Path
 
-from battle_engine.agent_evaluation import methodology_lines
 from battle_engine.evaluation_analysis import EvidenceState, paired_evidence_from_verdicts
 from battle_engine.evaluation_behavior import BehaviorProfile, analyze_behavior
 from battle_engine.evaluation_capture import analyze_capture
+
+# V6 Phase 3K: the shared methodology-disclosure text is owned by
+# ``evaluation_cli`` -- reached directly rather than through the
+# ``agent_evaluation`` compatibility facade.
+from battle_engine.evaluation_cli import methodology_lines
 from battle_engine.evaluation_contracts import (
     ORIENTATION_MODE_CANDIDATE_FIRST_ONLY,
     is_ruleset_v2_methodology,

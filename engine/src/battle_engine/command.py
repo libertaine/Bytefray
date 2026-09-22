@@ -96,7 +96,7 @@ def _agents(argv: list[str]) -> int:
 
         return test_main(argv[1:])
     if argv and argv[0] == "evaluate":
-        from battle_engine.agent_evaluation import main as evaluate_main
+        from battle_engine.evaluation_cli import main as evaluate_main
 
         return evaluate_main(argv[1:])
     if argv and argv[0] == "evaluations":

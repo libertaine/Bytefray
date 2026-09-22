@@ -22,11 +22,7 @@ from battle_engine.agent_evaluation import (
     EvaluationConfigurationError,
     EvaluationRequest,
     is_ruleset_v2_methodology,
-    parse_opponents,
-    parse_seed_list,
-    parse_seed_range,
     read_evaluation,
-    rerun_command,
 )
 from battle_engine.agent_parameters import (
     EMPTY_PARAMETER_SCHEMA,
@@ -39,6 +35,17 @@ from battle_engine.evaluation_behavior import BehaviorAnalysis, cell_ref_from_ev
 from battle_engine.evaluation_behavior import analyze_behavior as analyze_behavior_evaluation
 from battle_engine.evaluation_capture import CaptureAnalysis
 from battle_engine.evaluation_capture import analyze_capture as analyze_capture_evaluation
+
+# V6 Phase 3K: the CLI/Designer parsing and rerun-command helpers are owned
+# by ``evaluation_cli`` -- Designer reaches them directly rather than
+# through the CLI/presentation facade, mirroring how it already reaches
+# ``EvaluationService`` directly (see the Phase 3J note below).
+from battle_engine.evaluation_cli import (
+    parse_opponents,
+    parse_seed_list,
+    parse_seed_range,
+    rerun_command,
+)
 from battle_engine.evaluation_group_analysis import (
     GroupAnalysis,
     analyze_group,

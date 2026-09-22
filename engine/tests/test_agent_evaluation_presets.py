@@ -15,8 +15,8 @@ from pathlib import Path
 
 import pytest
 import yaml
-from battle_engine.agent_evaluation import _parser
 from battle_engine.agent_evaluation import main as evaluate_main
+from battle_engine.evaluation_cli import _parser
 from battle_engine.evaluation_presets import SCHEMA_NAME as PRESET_SCHEMA_NAME
 from battle_engine.evaluation_presets import SCHEMA_VERSION as PRESET_SCHEMA_VERSION
 from battle_engine.evaluation_presets import presets_root

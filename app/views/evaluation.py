@@ -24,11 +24,14 @@ from battle_engine.agent_evaluation import (
     ORIENTATION_CANDIDATE_FIRST,
     ORIENTATION_MODE_BOTH,
     ORIENTATION_OPPONENT_FIRST,
-    methodology_lines,
     seat_label,
 )
 from battle_engine.evaluation_analysis import EvaluationAnalysis, EvidenceState
 from battle_engine.evaluation_behavior import BehaviorAnalysis
+
+# V6 Phase 3K: the shared methodology-disclosure text is owned by
+# ``evaluation_cli`` -- reached directly rather than through the CLI facade.
+from battle_engine.evaluation_cli import methodology_lines
 from battle_engine.evaluation_presets import ORIENTATION_BOTH as PRESET_ORIENTATION_BOTH
 from battle_engine.evaluation_presets import EvaluationPreset
 from PySide6.QtCore import Qt, Signal

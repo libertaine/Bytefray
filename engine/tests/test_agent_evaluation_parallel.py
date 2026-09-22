@@ -21,12 +21,12 @@ import pytest
 from battle_engine.agent_evaluation import (
     EvaluationRequest,
     EvaluationService,
-    _parser,
     agent_identity,
 )
 from battle_engine.agent_evaluation import (
     main as evaluate_main,
 )
+from battle_engine.evaluation_cli import _parser
 
 NOP_ACTION = "AgentAction(ActionKindV2.READ, 0)"
 
