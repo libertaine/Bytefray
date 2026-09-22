@@ -17,8 +17,8 @@ and [FUTURE_PLANS.md](FUTURE_PLANS.md) for catalogued future ideas and research 
 | **Current Stable Release** | `5.0.0` | **Released** (2026-09-15) | Shipped stable product line atop `bytefray-rules-4` and Agent API v2. |
 | **Active Development Line** | `V6` (`v6-research`) | **In Progress** | Repository diet, architecture modernization, and runtime retirement program. |
 | **Active Ruleset Control** | `bytefray-rules-4` | **Stable Control** | Sole executable v4 ruleset; production gameplay baseline. |
-| **Current Phase** | Phase 4B | **Complete** | Raw arena-scaling study under the new `bytefray-rules-6-research-scale` research ruleset; see `docs/research/v6/V6_PHASE4B_ARENA_SCALING_STUDY.md`. |
-| **Immediate Next Phase** | Phase 4C / Experiment B | **Candidate** | Scale-normalized movement stride (and, separately, territory-scoring normalization) — see Phase 4B's recommendation. |
+| **Current Phase** | Phase 4C | **Complete** | Movement normalization study under `bytefray-rules-6-research-scale-move`; see `docs/research/v6/V6_PHASE4C_MOVEMENT_NORMALIZATION_STUDY.md`. |
+| **Immediate Next Phase** | Phase 4D / Experiment B Follow-Up | **Candidate** | Multiplicative movement scaling, territory-scoring normalization, or scale-aware agent adaptation study — see Phase 4C's recommendations. |
 
 ## Terminology
 
@@ -172,16 +172,30 @@ and runtime modernization program**. Its guiding operational rule is:
   arena-size-normalized scoring, and uncapped global reach remains close to
   scale-immune. No runtime gameplay code changed after the sweep began
   ([`docs/research/v6/V6_PHASE4B_ARENA_SCALING_STUDY.md`](research/v6/V6_PHASE4B_ARENA_SCALING_STUDY.md)).
+* **Phase 4C — Movement Normalization Study: Complete.** Registered
+  `bytefray-rules-6-research-scale-move`, an explicit movement-normalized research
+  Ruleset that dynamically scales allowed displacement bound
+  $\text{max\_move\_delta}(A) = \max(64, \lfloor A/8 \rfloor)$ while holding every
+  other gameplay mechanic and evaluation parameter fixed. Live-verified behaviorally
+  identical to the Phase 4B control at 512 cells (448/448 matches byte-identical,
+  0 mismatches). Ran the full 2,240-match sweep across the five standard arenas
+  (512 → 65,536 cells) over the frozen `V6-Bench-8` benchmark field with 0 source
+  drift. Key finding: ruleset-level movement stride normalization provides
+  environmental headroom, but is completely inert for legacy agents authored with
+  internal clamping to 64 cells or reach $\le 1$; observed gameplay deltas across
+  all 2,240 matches were exactly 0.0, establishing that spatial scalability cannot
+  be solved by passive environmental headroom alone without agent adaptation or
+  multiplicative scaling
+  ([`docs/research/v6/V6_PHASE4C_MOVEMENT_NORMALIZATION_STUDY.md`](research/v6/V6_PHASE4C_MOVEMENT_NORMALIZATION_STUDY.md)).
 
 ### Current and Immediate Next Phase
 
-Phase 4B completed the raw arena-scaling study. It recommends, but does not
-implement, two normalization candidates for a future Experiment B: (1)
-scale-normalized movement stride (`max_move_delta(A)`), the strongest
-evidence-backed lever behind the contact-delay/timeout effects measured; and
-(2), as a separate controlled variable, a non-percentage-based scoring
-treatment for territorial-expansion archetypes. Neither is scheduled as an
-active phase yet.
+Phase 4C completed the movement normalization study. It establishes that passive
+environmental headroom is inert for hardcoded agents, and recommends three candidates
+for Phase 4D / Experiment B follow-up:
+1. **Multiplicative movement scaling:** runtime-level traversal scaling ($\Delta_{\text{actual}} = \Delta_{\text{requested}} \times A / 512$) to force proportional movement for all agents regardless of internal clamp.
+2. **Territory-scoring normalization:** non-percentage-based or thresholded scoring to address the 16-fold collapse of expansion-oriented archetypes.
+3. **Agent adaptation study:** benchmarking scale-aware agent revisions designed to query and exploit normalized bounds.
 
 ### Near-Term Planned Work (V6 Program Follow-Ups)
 
