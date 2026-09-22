@@ -347,9 +347,35 @@ class EvaluationService:
         planned_identities = {agent_id: agent_identity(spec) for agent_id, spec in specs.items()}
         conditions = self._effective_conditions(request)
         conditions_fp = _evaluation_identity.effective_conditions_fingerprint(
-            effective_conditions_payload(conditions, request.resolved_locality_reach),
+            effective_conditions_payload(
+                conditions, request.resolved_locality_reach, self._scheduler_override(request)
+            ),
         )
         evaluation_id = self._evaluation_id(request, planned_identities, conditions)
+        # V6 research-integrity hardening (preflight/run double-freeze):
+        # `preflight()` and `run()` each independently resolve agents and
+        # compute `evaluation_id` from whatever is on disk *at that call*.
+        # A caller (the CLI in particular) that addresses `output_dir` by a
+        # preflight-resolved id and only then calls `run()` leaves a window
+        # where a source edit between the two calls makes this freshly
+        # resolved id disagree with the directory's own name -- silently
+        # writing evaluation_id-B's artifact into evaluation_id-A's
+        # supposedly content-addressed directory. `output_dir.name` is only
+        # ever a bare evaluation id when a caller built it that way (see
+        # `looks_like_evaluation_id`); an explicit, arbitrary `--output`
+        # never matches this shape and is completely unaffected. Fires
+        # before any state is loaded or written for this invocation.
+        if (
+            _evaluation_identity.looks_like_evaluation_id(request.output_dir.name)
+            and request.output_dir.name != evaluation_id
+        ):
+            raise EvaluationConfigurationError(
+                f"Output directory {request.output_dir} is addressed by evaluation id "
+                f"{request.output_dir.name!r}, but this request's freshly resolved agent "
+                f"source now yields evaluation id {evaluation_id!r}. Agent source likely "
+                "changed since preflight; re-run preflight (or pass an explicit --output) "
+                "before running."
+            )
         resolved_rules_id = request.resolved_rules_compatibility_id
         resolved_is_v2 = is_ruleset_v2_methodology(resolved_rules_id)
         resolved_is_v4 = is_ruleset_v4_methodology(resolved_rules_id)
@@ -848,6 +874,27 @@ class EvaluationService:
         root = request.data_root or get_data_root()
         return {agent_id: _resolve_python_agent(root, agent_id) for agent_id in all_ids}
 
+    def _scheduler_override(self, request: EvaluationRequest) -> dict[str, Any] | None:
+        """The resolved scheduler research override, or ``None`` if unused.
+
+        Gated on the same non-default condition ``match_service.
+        _effective_ruleset_policy`` uses to decide whether to override a
+        cell's ``RulesetPolicy`` at all: an ordinary evaluation (the
+        override omitted, as every evaluation before it existed and every
+        one since that does not opt in still is) resolves ``None`` here, so
+        callers that fold this into an identity payload get a byte-identical
+        payload and therefore an unchanged historical id (V6
+        research-integrity hardening; mirrors ``match_service.
+        canonical_match_id``'s identical gate at the single-match layer).
+        """
+
+        if request.scheduler_chunk_size is None and not request.scheduler_rotate_start:
+            return None
+        return {
+            "chunk_size": request.scheduler_chunk_size,
+            "rotate_start": request.scheduler_rotate_start,
+        }
+
     def _effective_conditions(self, request: EvaluationRequest) -> EffectiveConditions:
         # New evaluation execution is exclusively Agent API v2 / Ruleset 4.
         # Historical adapters read their recorded value directly and never
@@ -950,7 +997,7 @@ class EvaluationService:
             seeds=request.seeds,
             ticks=request.ticks,
             effective_conditions=effective_conditions_payload(
-                conditions, request.resolved_locality_reach
+                conditions, request.resolved_locality_reach, self._scheduler_override(request)
             ),
             rules_compatibility_id=resolved_rules_id,
             orientation_mode=request.orientation_mode,

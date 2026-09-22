@@ -513,6 +513,35 @@ def _resolve_ruleset_id(request: MatchRequest) -> str:
     return request.ruleset_id or BYTEFRAY_RULESET_V4_ID
 
 
+def _effective_ruleset_policy(request: MatchRequest) -> RulesetPolicy:
+    """Return the :class:`RulesetPolicy` ``request`` actually executes under.
+
+    The one place a request's scheduler research override
+    (``scheduler_chunk_size``/``scheduler_rotate_start``) is folded onto the
+    resolved base policy -- both :meth:`NativeMatchService.run` (dispatch)
+    and :func:`canonical_match_id` (identity hashing) call this instead of
+    each independently repeating the override ``replace()``, so the policy
+    that actually schedules entrants and the policy whose semantics are
+    hashed into ``match_id`` can never drift apart for the same request.
+
+    Gated on the override fields' non-default values, exactly like
+    ``canonical_match_id``'s own ``locality_reach``/``start``/``parameters``
+    gates: an ordinary request (the override omitted, as every caller before
+    this override existed and every caller since that does not opt in still
+    does) resolves the identical, untouched base policy it always has, so no
+    historical ``match_id`` changes.
+    """
+
+    policy = resolve_ruleset_policy(_resolve_ruleset_id(request))
+    if request.scheduler_chunk_size is not None or request.scheduler_rotate_start:
+        policy = replace(
+            policy,
+            scheduler_chunk_size=request.scheduler_chunk_size,
+            scheduler_rotate_start=request.scheduler_rotate_start,
+        )
+    return policy
+
+
 def _effective_winner(raw_winner: str) -> str:
     """Map ``resolve_winner``'s "no winner" empty string to a display value.
 
@@ -761,7 +790,11 @@ def _identity_safe_diagnostic(diagnostic: Any) -> dict[str, Any] | None:
     return {key: value for key, value in diagnostic.items() if key != "message"}
 
 
-def canonical_match_id(request: MatchRequest) -> str:
+def canonical_match_id(
+    request: MatchRequest,
+    *,
+    frozen_source_digests: Mapping[str, str] | None = None,
+) -> str:
     """Derive canonical match identity entirely from request inputs.
 
     Includes ``BYTEFRAY_RULESET_ID`` as a first-class identity axis, sibling
@@ -778,6 +811,22 @@ def canonical_match_id(request: MatchRequest) -> str:
     logical inputs relative to a pre-v0.10 build -- see
     docs/RESULT_SCHEMA.md's "Identity recipe" and docs/COMPATIBILITY.md for
     the full rationale and the resume-compatibility consequence.
+
+    ``frozen_source_digests`` (V6 research-integrity hardening): an optional
+    ``agent_id -> source SHA-256`` snapshot a caller already froze *before*
+    execution began (see ``process_runtime.ProcessMatchController.
+    from_python_entrants``, which hashes each entrant's loaded source once,
+    before ticking starts). When an entrant's ``agent_id`` is present here,
+    its digest is used verbatim instead of this function re-reading
+    ``spec.source_path`` from disk. Omitted (the default) for every
+    pre-execution caller -- request planning, resume verification,
+    tournament scheduling -- which have no execution to freeze against and
+    must keep reading each entrant's *current* on-disk source exactly as
+    before. Supplying it for an *already-executed* match closes a TOCTOU
+    window: without it, a source file edited between execution start and
+    this call could make the persisted ``match_id`` describe different code
+    than what actually ran, even though ``result.json``'s own per-agent
+    ``source_sha256`` (also frozen at load time) correctly describes it.
     """
 
     entrant_identities = []
@@ -785,17 +834,27 @@ def canonical_match_id(request: MatchRequest) -> str:
         spec = entrant.python_spec
         source = getattr(spec, "source_path", None)
         api_version = getattr(spec, "api_version", None) or 2
+        frozen_digest = (
+            frozen_source_digests.get(entrant.agent_id)
+            if frozen_source_digests is not None
+            else None
+        )
+        source_sha256 = (
+            frozen_digest
+            if frozen_digest is not None
+            else (
+                hashlib.sha256(source.read_bytes()).hexdigest()
+                if isinstance(source, Path) and source.is_file()
+                else ""
+            )
+        )
         metadata = {
             "kind": "python",
             "slot": slot,
             "derived_seed": derive_agent_seed(
                 request.config.seed, slot, entrant.agent_id, api_version
             ),
-            "source_sha256": (
-                hashlib.sha256(source.read_bytes()).hexdigest()
-                if isinstance(source, Path) and source.is_file()
-                else ""
-            ),
+            "source_sha256": source_sha256,
             "api_version": api_version,
             "agent_version": getattr(spec, "version", None),
         }
@@ -814,15 +873,29 @@ def canonical_match_id(request: MatchRequest) -> str:
             {"agent_id": entrant.agent_id, "name": entrant.name, "metadata": metadata}
         )
     reproducibility = _reproducibility(request)
-    return stable_id(
-        "match",
-        {
-            "mode": "b2",
-            "ruleset_id": _resolve_ruleset_id(request),
-            "reproducibility": reproducibility,
-            "entrants": entrant_identities,
-        },
-    )
+    payload: dict[str, Any] = {
+        "mode": "b2",
+        "ruleset_id": _resolve_ruleset_id(request),
+        "reproducibility": reproducibility,
+        "entrants": entrant_identities,
+    }
+    # Gameplay scheduler semantics (V6 research-integrity hardening): gated
+    # on the same non-default condition ``_effective_ruleset_policy`` uses,
+    # so an ordinary request -- the override omitted, as every match ever
+    # run before this override existed and every one since that does not
+    # opt in still is -- gets a byte-identical payload and therefore an
+    # unchanged historical ``match_id``. A request that *does* override
+    # scheduler semantics folds the resolved effective policy's scheduling
+    # fields in directly, so two otherwise-identical requests that actually
+    # schedule entrants differently can never collide on ``match_id``.
+    if request.scheduler_chunk_size is not None or request.scheduler_rotate_start:
+        effective_policy = _effective_ruleset_policy(request)
+        payload["scheduler"] = {
+            "mode": effective_policy.scheduler_mode,
+            "chunk_size": effective_policy.scheduler_chunk_size,
+            "rotate_start": effective_policy.scheduler_rotate_start,
+        }
+    return stable_id("match", payload)
 
 
 def _finalize_native_artifacts(
@@ -856,7 +929,21 @@ def _finalize_native_artifacts(
         }
         for agent in result.agents
     ]
-    match_id = canonical_match_id(request)
+    # V6 research-integrity hardening: each entrant's source digest was
+    # already frozen before this match ticked once (``ProcessEntrantSpec.
+    # source_digest`` inside ``from_python_entrants``) and is carried here
+    # verbatim as ``metadata["source_sha256"]`` -- reuse it rather than
+    # letting ``canonical_match_id`` re-read ``spec.source_path`` from disk
+    # a second time now that execution has already finished. Without this,
+    # a source edit landing between execution start and this finalize call
+    # could mint a ``match_id`` describing different code than what the
+    # entrant metadata/replay above already (correctly) attribute to it.
+    frozen_source_digests = {
+        agent.agent_id: agent.metadata["source_sha256"]
+        for agent in result.agents
+        if isinstance(agent.metadata.get("source_sha256"), str) and agent.metadata["source_sha256"]
+    }
+    match_id = canonical_match_id(request, frozen_source_digests=frozen_source_digests)
     result_identity_entrants = [
         {**entrant, "diagnostic": _identity_safe_diagnostic(entrant["diagnostic"])}
         for entrant in entrants
@@ -1031,15 +1118,13 @@ class NativeMatchService:
         # to the retained control ``BYTEFRAY_RULESET_V4_ID`` exactly as
         # every caller that omits it does. ``resolve_ruleset_policy`` fails
         # closed for any unrecognized or retired ID instead of silently
-        # executing under a different identity.
-        ruleset_policy = resolve_ruleset_policy(_resolve_ruleset_id(request))
-        if request.scheduler_chunk_size is not None or request.scheduler_rotate_start:
-            ruleset_policy = replace(
-                ruleset_policy,
-                scheduler_chunk_size=request.scheduler_chunk_size,
-                scheduler_rotate_start=request.scheduler_rotate_start,
-            )
-
+        # executing under a different identity. ``_effective_ruleset_policy``
+        # folds in the scheduler research override, if any -- the same
+        # resolution ``canonical_match_id`` uses, so the policy that
+        # schedules entrants here and the policy whose semantics are hashed
+        # into this match's identity can never drift apart (V6 research-
+        # integrity hardening).
+        ruleset_policy = _effective_ruleset_policy(request)
 
         # Beta1 Phase 2's authoritative runtime-compatibility boundary:
         # ``kinds`` (already validated as homogeneous above) and
@@ -1096,8 +1181,13 @@ class NativeMatchService:
 
                     from battle_engine.agent_trace import BindingRecord
                     sha = hashlib.sha256(replay_path.read_bytes()).hexdigest()
+                    # V6 research-integrity hardening: reuse the match_id
+                    # `_finalize_native_artifacts` already froze above,
+                    # rather than a third independent `canonical_match_id`
+                    # call re-reading entrant source from disk -- the same
+                    # TOCTOU window that call's own frozen-digest fix closes.
                     trace_writer.write_binding(BindingRecord(
-                        match_id=canonical_match_id(request),
+                        match_id=final.match_id,
                         ruleset_id=ruleset_policy.ruleset_id,
                         entrant_identities=tuple(e.agent_id for e in request.entrants),
                         replay_sha256=sha,

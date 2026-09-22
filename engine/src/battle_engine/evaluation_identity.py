@@ -13,6 +13,7 @@ methodologies executable.
 from __future__ import annotations
 
 import hashlib
+import re
 from collections.abc import Mapping, Sequence
 from dataclasses import asdict
 from pathlib import Path
@@ -64,12 +65,16 @@ def agent_identity(spec: AgentSpec) -> dict[str, Any]:
 
 
 def effective_conditions_payload(
-    conditions: EffectiveConditions, locality_reach: int | None = None
+    conditions: EffectiveConditions,
+    locality_reach: int | None = None,
+    scheduler_override: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """The hashed/persisted form of one evaluation's effective conditions.
 
     ``asdict(conditions)`` verbatim, plus -- for a bounded-locality
-    evaluation only -- the resolved reach ``R``.
+    evaluation only -- the resolved reach ``R``, plus -- for an evaluation
+    that overrides gameplay scheduler semantics only -- the resolved
+    effective scheduler fields.
 
     Reach is deliberately *not* a field of :class:`EffectiveConditions`
     itself. Adding one would put ``"locality_reach": null`` into
@@ -81,11 +86,25 @@ def effective_conditions_payload(
     comparability-gating where it is real: two locality evaluations that
     differ only in ``R`` get different ids and are correctly reported as
     running under different conditions.
+
+    ``scheduler_override`` follows the identical precedent (V6 research-
+    integrity hardening): ``None`` for every evaluation that does not opt
+    into the ``scheduler_chunk_size``/``scheduler_rotate_start`` research
+    override -- which is every evaluation before that override existed and
+    every one since that omits it -- keeps this payload, and therefore
+    ``evaluation_id``, byte-identical to before. An evaluation that *does*
+    override scheduler semantics folds the resolved effective policy's
+    scheduling fields in directly, so two otherwise-identical evaluations
+    that actually schedule entrants differently can never collide on
+    ``evaluation_id`` (closing the scheduler-identity defect this override
+    used to admit).
     """
 
     payload = asdict(conditions)
     if locality_reach is not None:
         payload["locality_reach"] = locality_reach
+    if scheduler_override is not None:
+        payload["scheduler_override"] = dict(scheduler_override)
     return payload
 
 
@@ -213,6 +232,34 @@ def build_evaluation_id(
             placements=placements,
         ),
     )
+
+
+#: The exact shape :func:`build_evaluation_id` always produces --
+#: ``stable_id``'s literal ``"evaluation-v2"`` prefix plus its 24-hex-digit
+#: truncated SHA-256 -- regardless of the ``identity_version`` embedded
+#: inside the hashed payload. Used only to *recognize* a directory that was
+#: named verbatim after an evaluation id (see ``looks_like_evaluation_id``);
+#: never used to validate or reconstruct one.
+_EVALUATION_ID_PATTERN = re.compile(r"^evaluation-v2_[0-9a-f]{24}$")
+
+
+def looks_like_evaluation_id(name: str) -> bool:
+    """Return whether ``name`` has the exact shape ``build_evaluation_id`` produces.
+
+    V6 research-integrity hardening (preflight/run double-freeze): a
+    content-addressed output directory is always named verbatim after its
+    evaluation id (``evaluation_cli._default_output_dir``), and no arbitrary
+    user-chosen directory name ever accidentally has this exact shape. This
+    lets :meth:`~battle_engine.evaluation_service.EvaluationService.run`
+    recognize "this destination claims to be addressed by a specific
+    evaluation id" from ``output_dir`` alone, with no caller needing to say
+    so explicitly, and cross-check that claim against what this run's own
+    freshly resolved agent source actually yields -- while leaving every
+    explicit, non-addressed ``--output`` directory (which never matches this
+    shape) completely unaffected.
+    """
+
+    return bool(_EVALUATION_ID_PATTERN.match(name))
 
 
 def build_pairwise_schedule_id(

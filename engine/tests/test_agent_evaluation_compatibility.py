@@ -565,14 +565,18 @@ def test_scheduler_overrides_propagate_to_each_cell_match_request(
     assert result.cells[0].status == "failed"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "Known defect: scheduler overrides reach execution but are omitted from evaluation identity; "
-        "the desired invariant is that execution-changing inputs cannot silently collide."
-    ),
-)
 def test_scheduler_overrides_that_change_execution_must_change_evaluation_identity() -> None:
+    """V6 research-integrity hardening, Part A: scheduler overrides that
+    reach execution (``EvaluationRequest.scheduler_chunk_size``/
+    ``scheduler_rotate_start``) must change evaluation identity -- they used
+    to be silently omitted from ``_evaluation_id``'s hash payload, so two
+    evaluations that actually scheduled entrants differently could collide
+    on one ``evaluation_id``. Formerly a strict xfail; now a genuine
+    passing regression guard following the fix (``EvaluationService.
+    _scheduler_override`` folds the resolved override into
+    ``effective_conditions_payload``, gated on non-default so every
+    ordinary evaluation's id is unaffected).
+    """
     identities = {
         "candidate": {"agent_id": "candidate", "source_sha256": "candidate"},
         "opponent": {"agent_id": "opponent", "source_sha256": "opponent"},
@@ -634,16 +638,19 @@ def test_preflight_and_run_freeze_the_same_identity_when_source_is_stable(
     assert json.loads(result.state_path.read_text(encoding="utf-8"))["evaluation_id"] == preflight_id
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "Known defect: run freezes source independently after preflight, so a preflight-addressed "
-        "directory can receive an artifact carrying a different evaluation id."
-    ),
-)
 def test_preflight_addressed_output_must_not_silently_accept_a_different_run_identity(
     evaluation_agents: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """V6 research-integrity hardening, Part C: ``run()`` must not silently
+    accept a preflight-addressed output directory whose name no longer
+    matches this call's own freshly resolved evaluation id. Formerly a
+    strict xfail; now a genuine passing regression guard following the fix
+    (``EvaluationService.run`` recognizes a content-addressed
+    ``output_dir`` -- see ``evaluation_identity.looks_like_evaluation_id``
+    -- and fails closed with ``EvaluationConfigurationError`` on a mismatch,
+    rather than writing evaluation-id-B's artifact into evaluation-id-A's
+    directory).
+    """
     captured: list = []
     _fail_match_after_request_capture(monkeypatch, captured)
     service = evaluation.EvaluationService()
