@@ -302,10 +302,16 @@ Current status across the repository:
   that `bytefray-rules-4` reproduces alpha2's exact gameplay via frozen
   golden characterization (`engine/tests/test_v4_stable_ruleset_equivalence.py`).
   Historical artifacts remain fully readable and replayable.
-- **Future rulesets (e.g., Ruleset 6):** **Postponed.** No new gameplay
-  ruleset will be created during the active V6 cleanup and modernization
-  program. Any future ruleset must be justified by post-cleanup empirical
-  research.
+- **`bytefray-rules-6-research-scale`** — **Active Research Ruleset.**
+  Variable-arena baseline retained as an active research control for the upcoming
+  E2 (Multi-Tick Capture Hold) causal experiment.
+- **`bytefray-rules-6-research-scale-move`, `bytefray-rules-6-research-scale-move-proportional`** —
+  **Retired Research Rulesets.** Closed research identities from the Phase 4
+  movement line. Retained for historical characterization test verification and
+  persisted artifact readability; retired from ongoing research development.
+- **Future gameplay mechanics (E2 — Multi-Tick Capture Hold):** **Planned.**
+  Controlled experiment investigating multi-tick core capture hold mechanics to
+  remediate the deterministic tick-1 Seat-A forced capture identified in stable V4.
 
 ---
 

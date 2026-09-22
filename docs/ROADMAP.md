@@ -17,8 +17,8 @@ and [FUTURE_PLANS.md](FUTURE_PLANS.md) for catalogued future ideas and research 
 | **Current Stable Release** | `5.0.0` | **Released** (2026-09-15) | Shipped stable product line atop `bytefray-rules-4` and Agent API v2. |
 | **Active Development Line** | `V6` (`v6-research`) | **In Progress** | Repository diet, architecture modernization, and runtime retirement program. |
 | **Active Ruleset Control** | `bytefray-rules-4` | **Stable Control** | Sole executable v4 ruleset; production gameplay baseline. |
-| **Current Phase** | Phase 4D | **Complete** | Proportional movement semantics study under `bytefray-rules-6-research-scale-move-proportional`; see `docs/research/v6/V6_PHASE4D_PROPORTIONAL_MOVEMENT_STUDY.md`. |
-| **Immediate Next Phase** | Phase 4E / Territory & Perception Follow-Up | **Candidate** | Coupled reach-movement scaling, territory-scoring normalization, or scale-aware agent adaptation study — see Phase 4D's recommendations. |
+| **Current Phase** | V6 Research-Integrity Remediation | **In Progress** | Remediating research test defects, provenance, benchmark reproducibility, and characterizing V4 tick-1 forced capture. |
+| **Immediate Next Phase** | E2 — Multi-Tick Capture Hold | **Planned** | Controlled causal experiment testing multi-tick capture hold to address Seat-A tick-1 exploit. |
 
 ## Terminology
 
@@ -192,15 +192,14 @@ and runtime modernization program**. Its guiding operational rule is:
   Ruleset interpreting MOVE operands proportionally to arena scale ($\text{actual\_delta} = \text{sgn}(op) \lfloor |op| \times A / 512 \rfloor$) while holding all agent code, scoring, reach, placement, action budget, and tick horizon ($T=1000$) completely frozen. Live-verified behaviorally identical to Phase 4B control at 512 cells (448/448 matches byte-identical, 0 mismatches). Ran the full 2,240-match sweep across the five standard arenas (512 → 65,536 cells) over the frozen `V6-Bench-8` field with 0 source drift. Key findings: proportional movement displacement does not restore scale-invariance; instead, it induces discrete sublattice tunneling (49.6% never-contact rate at $A=65536$), causes timeouts to surge to 66.7% (+27.7%), triggers catastrophic overshoot dyspraxia in precision combat agents (Scout Striker collapses by -38.4%), and artificially elevates area-claim agents (Claimer surges by +21.4% to #2 rank)
   ([`docs/research/v6/V6_PHASE4D_PROPORTIONAL_MOVEMENT_STUDY.md`](research/v6/V6_PHASE4D_PROPORTIONAL_MOVEMENT_STUDY.md)).
 
+* **Phase 4E — Territory Scoring Invariance Characterization: Complete.** Proved that territory scoring in Bytefray is discrete-integer bucket division ($\lfloor \text{cells} / 64 \rfloor$) and is inherently independent of arena size, refuting prior hypotheses of scoring percentage dilution ([`docs/research/v6/V6_PHASE4E_TERRITORY_SCORING_STUDY.md`](research/v6/V6_PHASE4E_TERRITORY_SCORING_STUDY.md)).
+* **Phase 4 Line Closure & V6 Research-Integrity Remediation: Active.** Two independent reviews confirmed stable V4 contains a deterministic tick-1 Seat-A forced core capture under competent global-reach play, which was the actual unacknowledged driver of global probe lethality. The arena-scaling and movement research line is closed. All benchmark fixtures are now tracked, non-testing tests repaired, provenance recorded, evaluation alignment reporting and partial scheduler overrides fixed, and misleading metrics ($\sigma^2_{\text{opp}}$) retired.
+
 ### Current and Immediate Next Phase
 
-Phase 4D completed the proportional movement semantics study. It establishes that
-proportional movement displacement without perceptual reach scaling breaks cellular
-locality and causes discrete sublattice aliasing, and recommends three candidates
-for Phase 4E follow-up:
-1. **Coupled reach-movement scaling:** scaling perceptual and action reach in tandem with traversal stride ($\Delta \propto A \implies R \propto A$) to satisfy the cellular spatial Nyquist criterion.
-2. **Territory-scoring normalization:** non-percentage-based or thresholded scoring to decouple territorial viability from pure arena geometry.
-3. **Scale-aware agent API adaptation:** exposing arena scale in the Agent API (`ObservationV2.arena_size`) so authored agents can adapt their own strategic stride and targeting.
+With the research harness remediated and reproducible, active gameplay research pivots directly to:
+
+- **E2 — Multi-Tick Capture Hold (Planned):** A rigorously controlled causal experiment introducing multi-tick core capture hold mechanics to eliminate the tick-1 Seat-A forced win, restoring defensive counterplay under competent play.
 
 ### Near-Term Planned Work (V6 Program Follow-Ups)
 
