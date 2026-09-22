@@ -80,7 +80,6 @@ from battle_engine.evaluation_contracts import (
     is_ruleset_v6_research_scale_move_methodology,
     is_ruleset_v6_research_scale_move_proportional_methodology,
     physical_slots_for_orientation,
-    resolved_arena_alignment_mode,
     resolved_identity_version,
     resolved_schema_version,
     seat_label,
@@ -1001,14 +1000,7 @@ def write_evaluation_state(
             # Sec AA.3/AA.4) -- evaluation-wide methodology, never
             # folded into effective_conditions.
             "orientation_mode": request.orientation_mode,
-            "arena_alignment_mode": resolved_arena_alignment_mode(
-                resolved_is_v2,
-                resolved_group,
-                resolved_is_v4,
-                resolved_is_v6_research_scale,
-                resolved_is_v6_research_scale_move,
-                resolved_is_v6_research_scale_move_proportional,
-            ),
+            "arena_alignment_mode": request.resolved_arena_alignment_mode,
             # v2.0.0-beta2 Phase 2: additive top-level disclosure of
             # multi-entrant methodology -- never identity-affecting on
             # its own (the resolved layout set already is, via

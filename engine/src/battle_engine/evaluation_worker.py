@@ -200,7 +200,7 @@ class EvaluationCellWorkerHandle:
         locality_reach: int | None = None,
         kill_weight: float | None = None,
         scheduler_chunk_size: int | None = None,
-        scheduler_rotate_start: bool = False,
+        scheduler_rotate_start: bool | None = None,
     ) -> WorkerCallResult:
         """One blocking round trip: run exactly one evaluation cell.
 
@@ -312,7 +312,7 @@ def _handle_run_cell(request: dict[str, Any], out: Any) -> None:
     locality_reach = request.get("locality_reach")
     kill_weight = request.get("kill_weight")
     scheduler_chunk_size = request.get("scheduler_chunk_size")
-    scheduler_rotate_start = bool(request.get("scheduler_rotate_start", False))
+    scheduler_rotate_start = request.get("scheduler_rotate_start")
 
     try:
         result = execute_cell(

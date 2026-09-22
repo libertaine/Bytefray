@@ -496,6 +496,20 @@ def resolved_arena_alignment_mode(
     )
 
 
+def arena_alignment_mode_for_ruleset(rules_compatibility_id: str, group: bool = False) -> str:
+    """Consolidated descriptor that resolves the canonical arena_alignment_mode
+    directly from a rules_compatibility_id, eliminating per-ruleset positional-boolean errors."""
+    return resolved_arena_alignment_mode(
+        is_v2_methodology=is_ruleset_v2_methodology(rules_compatibility_id),
+        group=group,
+        is_v4_methodology=is_ruleset_v4_methodology(rules_compatibility_id),
+        is_v6_research_scale_methodology=is_ruleset_v6_research_scale_methodology(rules_compatibility_id),
+        is_v6_research_scale_move_methodology=is_ruleset_v6_research_scale_move_methodology(rules_compatibility_id),
+        is_v6_research_scale_move_proportional_methodology=is_ruleset_v6_research_scale_move_proportional_methodology(rules_compatibility_id),
+    )
+
+
+
 def resolved_identity_version(
     is_v2_methodology: bool,
     group: bool = False,
@@ -813,7 +827,7 @@ class EvaluationRequest:
     # `canonical_match_id`'s `reproducibility` block.
     kill_weight: float | None = None
     scheduler_chunk_size: int | None = None
-    scheduler_rotate_start: bool = False
+    scheduler_rotate_start: bool | None = None
 
 
     @property
@@ -928,6 +942,19 @@ class EvaluationRequest:
         return is_ruleset_v6_research_scale_move_proportional_methodology(
             self.resolved_rules_compatibility_id
         )
+
+    @property
+    def resolved_arena_alignment_mode(self) -> str:
+        """The canonical arena alignment mode resolved for this request.
+
+        Consolidates reporting across CLI outputs, --dry-run, --dry-run --json,
+        and persisted artifacts to prevent positional-boolean omissions.
+        """
+        return arena_alignment_mode_for_ruleset(
+            self.resolved_rules_compatibility_id,
+            group=self.group,
+        )
+
 
     @property
     def roster_agent_ids(self) -> tuple[str, ...]:

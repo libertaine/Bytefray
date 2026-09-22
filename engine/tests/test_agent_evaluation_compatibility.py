@@ -304,7 +304,7 @@ def test_evaluation_request_defaults_and_derived_methodology_are_stable() -> Non
     assert request.locality_reach is None
     assert request.kill_weight is None
     assert request.scheduler_chunk_size is None
-    assert request.scheduler_rotate_start is False
+    assert request.scheduler_rotate_start is None
     assert request.orientation_mode == evaluation.ORIENTATION_MODE_BOTH
     assert request.resolved_rules_compatibility_id == BYTEFRAY_RULESET_V4_ID
     assert request.is_v2_methodology is False

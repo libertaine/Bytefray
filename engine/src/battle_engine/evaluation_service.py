@@ -72,7 +72,6 @@ from battle_engine.evaluation_contracts import (
     is_ruleset_v6_research_scale_methodology,
     is_ruleset_v6_research_scale_move_methodology,
     is_ruleset_v6_research_scale_move_proportional_methodology,
-    resolved_arena_alignment_mode,
     resolved_identity_version,
     resolved_schema_version,
 )
@@ -99,6 +98,7 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
+    resolve_ruleset_policy,
 )
 
 # V6 Phase 4B (task Sec 6), Phase 4C, and Phase 4D: the finite, explicit set of Ruleset
@@ -190,7 +190,7 @@ def _evaluation_dispatcher_loop(
     locality_reach: int | None = None,
     kill_weight: float | None = None,
     scheduler_chunk_size: int | None = None,
-    scheduler_rotate_start: bool = False,
+    scheduler_rotate_start: bool | None = None,
 ) -> None:
     """One dispatcher thread's body: owns exactly one worker subprocess handle
     for its entire lifetime, processing cells strictly one at a time against
@@ -446,14 +446,7 @@ class EvaluationService:
             specs,
             conditions_fp,
             resolved_rules_id,
-            resolved_arena_alignment_mode(
-                resolved_is_v2,
-                resolved_group,
-                resolved_is_v4,
-                resolved_is_v6_research_scale,
-                resolved_is_v6_research_scale_move,
-                resolved_is_v6_research_scale_move_proportional,
-            ),
+            request.resolved_arena_alignment_mode,
         )
 
         created_at = prior.get("created_at") or _utc_now_iso()
@@ -971,11 +964,22 @@ class EvaluationService:
         canonical_match_id``'s identical gate at the single-match layer).
         """
 
-        if request.scheduler_chunk_size is None and not request.scheduler_rotate_start:
+        if request.scheduler_chunk_size is None and request.scheduler_rotate_start is None:
             return None
+        effective_policy = resolve_ruleset_policy(request.resolved_rules_compatibility_id)
+        chunk_size = (
+            request.scheduler_chunk_size
+            if request.scheduler_chunk_size is not None
+            else effective_policy.scheduler_chunk_size
+        )
+        rotate_start = (
+            request.scheduler_rotate_start
+            if request.scheduler_rotate_start is not None
+            else effective_policy.scheduler_rotate_start
+        )
         return {
-            "chunk_size": request.scheduler_chunk_size,
-            "rotate_start": request.scheduler_rotate_start,
+            "chunk_size": chunk_size,
+            "rotate_start": rotate_start,
         }
 
     def _effective_conditions(self, request: EvaluationRequest) -> EffectiveConditions:
@@ -1109,14 +1113,7 @@ class EvaluationService:
             ),
             rules_compatibility_id=resolved_rules_id,
             orientation_mode=request.orientation_mode,
-            arena_alignment_mode=resolved_arena_alignment_mode(
-                resolved_is_v2,
-                resolved_group,
-                resolved_is_v4,
-                resolved_is_v6_research_scale,
-                resolved_is_v6_research_scale_move,
-                resolved_is_v6_research_scale_move_proportional,
-            ),
+            arena_alignment_mode=request.resolved_arena_alignment_mode,
             group=resolved_group,
             layouts=layouts,
             placements=placements,

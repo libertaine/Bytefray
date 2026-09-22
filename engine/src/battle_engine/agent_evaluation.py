@@ -90,6 +90,7 @@ from battle_engine.evaluation_contracts import (
     EvaluationSeatAssignment,
     ExecutionContext,
     SubjectAggregate,
+    arena_alignment_mode_for_ruleset,  # noqa: F401 -- live facade attribute
     effective_conditions_for,
     is_ruleset_v2_methodology,
     is_ruleset_v4_methodology,  # noqa: F401 -- live facade attribute, no internal caller post-Phase-3J

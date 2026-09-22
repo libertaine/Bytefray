@@ -41,7 +41,6 @@ from battle_engine.evaluation_contracts import (
     EvaluationRequest,
     EvaluationResult,
     SubjectAggregate,
-    resolved_arena_alignment_mode,
 )
 from battle_engine.evaluation_planning import (
     build_matrix,
@@ -477,14 +476,7 @@ def _print_matrix(
     print(f"matches: {len(matrix)}")
     _, alignment_line = methodology_lines(
         request.orientation_mode,
-        arena_alignment_mode=resolved_arena_alignment_mode(
-            request.is_v2_methodology,
-            request.group,
-            request.is_v4_methodology,
-            request.is_v6_research_scale_methodology,
-            request.is_v6_research_scale_move_methodology,
-            request.is_v6_research_scale_move_proportional_methodology,
-        ),
+        arena_alignment_mode=request.resolved_arena_alignment_mode,
     )
     if not request.group:
         orientation_line, _ = methodology_lines(request.orientation_mode)
@@ -510,13 +502,7 @@ def _matrix_to_json(
         "matrix_size": len(matrix),
         "group": request.group,
         "orientation_mode": request.orientation_mode,
-        "arena_alignment_mode": resolved_arena_alignment_mode(
-            request.is_v2_methodology,
-            request.group,
-            request.is_v4_methodology,
-            request.is_v6_research_scale_methodology,
-            request.is_v6_research_scale_move_methodology,
-        ),
+        "arena_alignment_mode": request.resolved_arena_alignment_mode,
     }
 
 
@@ -870,13 +856,7 @@ def _print_result(result: EvaluationResult, request: EvaluationRequest) -> None:
     # for a group evaluation -- see _print_matrix's identical guard.
     orientation_line, alignment_line = methodology_lines(
         request.orientation_mode,
-        arena_alignment_mode=resolved_arena_alignment_mode(
-            request.is_v2_methodology,
-            request.group,
-            request.is_v4_methodology,
-            request.is_v6_research_scale_methodology,
-            request.is_v6_research_scale_move_methodology,
-        ),
+        arena_alignment_mode=request.resolved_arena_alignment_mode,
     )
     if not request.group:
         print(orientation_line)

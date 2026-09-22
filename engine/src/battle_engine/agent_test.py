@@ -318,7 +318,7 @@ def test_agent(
     alive_weight: float | None = None,
     territory_weight: float | None = None,
     scheduler_chunk_size: int | None = None,
-    scheduler_rotate_start: bool = False,
+    scheduler_rotate_start: bool | None = None,
 ) -> DevelopmentTestOutcome | InitializationFailureOutcome:
     """Run one short, real development match for ``agent_id``."""
     try:
@@ -378,7 +378,7 @@ def _test_agent(
     alive_weight: float | None = None,
     territory_weight: float | None = None,
     scheduler_chunk_size: int | None = None,
-    scheduler_rotate_start: bool = False,
+    scheduler_rotate_start: bool | None = None,
 ) -> DevelopmentTestOutcome | InitializationFailureOutcome:
     root = (data_root or get_data_root()).expanduser().resolve()
     resources = resource_root or get_resource_root()
@@ -639,7 +639,7 @@ def test_agents(
     alive_weight: float | None = None,
     territory_weight: float | None = None,
     scheduler_chunk_size: int | None = None,
-    scheduler_rotate_start: bool = False,
+    scheduler_rotate_start: bool | None = None,
 ) -> GroupTestOutcome | GroupInitializationFailureOutcome:
     """Run one short, real N-entrant (N >= 2) development match."""
     try:
@@ -691,7 +691,7 @@ def _test_agents(
     alive_weight: float | None = None,
     territory_weight: float | None = None,
     scheduler_chunk_size: int | None = None,
-    scheduler_rotate_start: bool = False,
+    scheduler_rotate_start: bool | None = None,
 ) -> GroupTestOutcome | GroupInitializationFailureOutcome:
 
     if len(entrants) < 2:

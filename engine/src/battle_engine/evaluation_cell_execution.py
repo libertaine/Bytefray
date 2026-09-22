@@ -424,7 +424,7 @@ def execute_cell(
     locality_reach: int | None = None,
     kill_weight: float | None = None,
     scheduler_chunk_size: int | None = None,
-    scheduler_rotate_start: bool = False,
+    scheduler_rotate_start: bool | None = None,
 ) -> CellExecutionResult:
     """Execute one cell. Pure apart from filesystem I/O under ``cell.artifact_
     dir`` and reading agent source under ``data_root``/the default data

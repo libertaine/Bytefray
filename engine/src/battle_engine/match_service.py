@@ -190,7 +190,7 @@ class MatchRequest:
     # ``_resolve_locality_reach``, which always returns ``None`` now).
     locality_reach: int | None = None
     scheduler_chunk_size: int | None = None
-    scheduler_rotate_start: bool = False
+    scheduler_rotate_start: bool | None = None
 
 
 
@@ -549,12 +549,13 @@ def _effective_ruleset_policy(request: MatchRequest) -> RulesetPolicy:
     """
 
     policy = resolve_ruleset_policy(_resolve_ruleset_id(request))
-    if request.scheduler_chunk_size is not None or request.scheduler_rotate_start:
-        policy = replace(
-            policy,
-            scheduler_chunk_size=request.scheduler_chunk_size,
-            scheduler_rotate_start=request.scheduler_rotate_start,
-        )
+    kwargs: dict[str, Any] = {}
+    if request.scheduler_chunk_size is not None:
+        kwargs["scheduler_chunk_size"] = request.scheduler_chunk_size
+    if request.scheduler_rotate_start is not None:
+        kwargs["scheduler_rotate_start"] = request.scheduler_rotate_start
+    if kwargs:
+        policy = replace(policy, **kwargs)
     return policy
 
 
@@ -904,7 +905,7 @@ def canonical_match_id(
     # scheduler semantics folds the resolved effective policy's scheduling
     # fields in directly, so two otherwise-identical requests that actually
     # schedule entrants differently can never collide on ``match_id``.
-    if request.scheduler_chunk_size is not None or request.scheduler_rotate_start:
+    if request.scheduler_chunk_size is not None or request.scheduler_rotate_start is not None:
         effective_policy = _effective_ruleset_policy(request)
         payload["scheduler"] = {
             "mode": effective_policy.scheduler_mode,
