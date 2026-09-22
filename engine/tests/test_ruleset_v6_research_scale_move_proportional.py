@@ -79,7 +79,7 @@ from battle_engine.ruleset_policy import (
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 STARTER_SOURCE_DIRS = (
-    REPO_ROOT / "agents",
+    REPO_ROOT / "tools" / "research" / "v6" / "fixtures" / "agents",
     REPO_ROOT / "engine" / "src" / "battle_engine" / "data" / "starter_agents",
 )
 
@@ -184,7 +184,7 @@ class Agent:
     def declare_processes(self):
         return [ProcessDeclaration("p", 16, 1.0)]
     def act(self, observation):
-        return AgentAction(ActionKindV2.NOP, 0)
+        return AgentAction(ActionKindV2.READ, 0)
 
 def create_agent():
     return Agent()
@@ -354,7 +354,7 @@ class MoverAgent:
         if not self.moved:
             self.moved = True
             return AgentAction(ActionKindV2.MOVE, operand=40)
-        return AgentAction(ActionKindV2.NOP, 0)
+        return AgentAction(ActionKindV2.READ, 0)
 
 def create_agent():
     return MoverAgent()
@@ -367,7 +367,7 @@ class PassiveAgent:
     def declare_processes(self):
         return [ProcessDeclaration("p", reach=10, share=1.0)]
     def act(self, obs: ObservationV2):
-        return AgentAction(ActionKindV2.NOP, 0)
+        return AgentAction(ActionKindV2.READ, 0)
 
 def create_agent():
     return PassiveAgent()
@@ -408,6 +408,17 @@ def create_agent():
         ticks=5,
         run_label="prop-mover-1024",
     )
+
+    # Verify that neither agent crashed or forfeited in either match
+    for replay_path in (raw_replay_path, prop_replay_path):
+        result_rec = next(r for r in iter_replay(replay_path) if isinstance(r, MatchResult))
+        assert result_rec.termination_reason == "tick_limit", (
+            f"{replay_path}: match unexpectedly ended with {result_rec.termination_reason}, expected tick_limit"
+        )
+        assert result_rec.winner is None or result_rec.winner == "", f"{replay_path}: match had premature winner {result_rec.winner}"
+        for snap in iter_replay(replay_path):
+            if isinstance(snap, TickSnapshot):
+                assert not any(getattr(ev, "event_type", None) == "forfeit" for ev in snap.events)
 
     def _get_mover_positions(replay_path: Path) -> list[int]:
         positions = []
