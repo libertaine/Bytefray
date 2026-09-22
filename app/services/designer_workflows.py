@@ -21,7 +21,6 @@ from battle_engine.agent_evaluation import (
     EvaluationCell,
     EvaluationConfigurationError,
     EvaluationRequest,
-    EvaluationService,
     is_ruleset_v2_methodology,
     parse_opponents,
     parse_seed_list,
@@ -47,6 +46,11 @@ from battle_engine.evaluation_group_analysis import (
 )
 from battle_engine.evaluation_history.models import evaluation_cells_from_raw
 from battle_engine.evaluation_planning import build_matrix
+
+# V6 Phase 3J: Designer constructs the coordinator directly through its
+# canonical owner rather than through the CLI/presentation facade -- see
+# docs/specs/agent_evaluation.md Sec 13 and AGENTS.md's Designer boundary.
+from battle_engine.evaluation_service import EvaluationService
 from battle_engine.launchers import build_agents_command, build_tournament_command
 from battle_engine.result_model import read_result
 from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID

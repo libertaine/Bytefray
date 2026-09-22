@@ -105,7 +105,7 @@ class CellExecutionResult:
     :func:`execute_cell` run unchanged inside a worker subprocess: the worker
     reports the context it observed, and only the coordinator (never a
     worker) decides whether it is new and appends it -- see
-    ``agent_evaluation._register_execution_context`` (coordinator-owned,
+    ``evaluation_service._register_execution_context`` (coordinator-owned,
     deliberately not part of this module).
     """
 

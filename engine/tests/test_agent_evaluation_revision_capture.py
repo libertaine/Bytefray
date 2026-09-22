@@ -15,7 +15,7 @@ import shutil
 from pathlib import Path
 
 import pytest
-from battle_engine import agent_evaluation, evaluation_artifact
+from battle_engine import evaluation_artifact, evaluation_service
 from battle_engine.agent_evaluation import (
     EvaluationConfigurationError,
     EvaluationRequest,
@@ -202,13 +202,17 @@ def test_source_mutation_during_freeze_aborts_before_any_cell_executes(
     monkeypatch.setattr(evaluation_artifact, "walk_agent_files", mutating_walk)
 
     execute_calls: list[object] = []
-    real_execute_cell = agent_evaluation.execute_cell
+    # V6 Phase 3J: ``EvaluationService.run`` now looks up ``execute_cell`` in
+    # ``evaluation_service``'s own module globals, not ``agent_evaluation``'s
+    # (the facade re-exports the same function object, but patching it there
+    # would no longer be observed at the actual call site).
+    real_execute_cell = evaluation_service.execute_cell
 
     def spying_execute_cell(*args, **kwargs):
         execute_calls.append(args)
         return real_execute_cell(*args, **kwargs)
 
-    monkeypatch.setattr(agent_evaluation, "execute_cell", spying_execute_cell)
+    monkeypatch.setattr(evaluation_service, "execute_cell", spying_execute_cell)
 
     request = _request(two_agents)
     with pytest.raises(EvaluationConfigurationError):

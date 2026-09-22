@@ -7,15 +7,20 @@ strict xfails while the production behavior remains unfixed.
 
 from __future__ import annotations
 
+import ast
 import json
+import subprocess
+import sys
 from dataclasses import FrozenInstanceError, is_dataclass, replace
 from pathlib import Path
 
 import battle_engine.agent_evaluation as evaluation
 import battle_engine.agent_test as agent_test_module
 import battle_engine.evaluation_analysis as analysis
+import battle_engine.evaluation_cell_execution as cell_execution
 import battle_engine.evaluation_contracts as contracts
 import battle_engine.evaluation_identity as identity
+import battle_engine.evaluation_service as service
 import pytest
 from battle_engine.config import Config
 from battle_engine.rules import (
@@ -97,10 +102,30 @@ EXPECTED_ALL = (
 # the Phase 3C baseline found exactly these live named imports outside
 # ``__all__``.  They remain facade attributes, but this test deliberately
 # does not promote them into the star-import contract above.
+#
+# V6 Phase 3J independently re-ran that inventory (this time over the whole
+# repository, production and test code alike, both plain
+# ``from battle_engine.agent_evaluation import X`` and
+# ``getattr(evaluation, "X")`` access) rather than trusting this list to
+# still be complete: it found five more live non-``__all__`` attributes --
+# ``LIFECYCLE_STATE_FINISHED``, ``SCHEMA_VERSION_V4`` and
+# ``STANDARD_V4_ARENA_SIZE`` (constants), plus ``effective_conditions_
+# payload`` (compared against its canonical owner exactly like
+# ``agent_identity``/``source_digest`` below) and ``execute_cell`` (compared
+# against its canonical owner in ``test_both_execution_routes_resolve_the_
+# same_canonical_function``, engine/tests/test_evaluation_cell_execution.py,
+# and load-bearing for several tests' crash/tracking seams). None of these
+# are promoted into ``__all__`` either -- this is characterization of the
+# already-live surface, not an expansion of it.
 LIVE_PRODUCTION_ATTRIBUTES_OUTSIDE_ALL = (
     "IDENTITY_VERSION_V4",
+    "LIFECYCLE_STATE_FINISHED",
     "LIFECYCLE_STATE_FINISHED_WITH_FAILURES",
+    "SCHEMA_VERSION_V4",
+    "STANDARD_V4_ARENA_SIZE",
     "STANDARD_V4_SEEDS",
+    "effective_conditions_payload",
+    "execute_cell",
     "is_ruleset_v4_methodology",
     "resolve_v4_seed_geometry",
 )
@@ -121,6 +146,85 @@ def test_every_compatibility_name_is_importable_by_name() -> None:
     imported = __import__("battle_engine.agent_evaluation", fromlist=list(names))
     for name in names:
         assert getattr(imported, name) is getattr(evaluation, name)
+
+
+# ---------------------------------------------------------------------------
+# V6 Phase 3J: service ownership extraction guards
+# ---------------------------------------------------------------------------
+
+
+def test_evaluation_service_is_the_one_canonical_class_object() -> None:
+    """``agent_evaluation.EvaluationService`` is a direct re-export of
+    ``evaluation_service.EvaluationService`` -- never a subclass, a wrapper,
+    or a second implementation. Monkeypatching a method on either name
+    (``mod.EvaluationService._write_state`` and friends, as several
+    checkpoint/interruption tests do) therefore always reaches the one
+    class every caller -- CLI, Designer, and both facades -- actually
+    constructs.
+    """
+
+    assert evaluation.EvaluationService is service.EvaluationService
+
+
+def test_execute_cell_is_the_one_canonical_function_object() -> None:
+    """Mirrors :func:`test_evaluation_service_is_the_one_canonical_class_object`
+    for the free function ``EvaluationService.run`` dispatches through --
+    see engine/tests/test_evaluation_cell_execution.py for the equivalent
+    guard against the worker's own import.
+    """
+
+    assert evaluation.execute_cell is service.execute_cell is cell_execution.execute_cell
+
+
+def test_evaluation_service_module_does_not_import_the_facade_or_upward_layers() -> None:
+    """The coordinator must sit *below* its own CLI/presentation facade, not
+    beside or above it: an import of ``agent_evaluation`` here would
+    reintroduce a cycle (the facade already imports ``evaluation_service``),
+    and an import of Designer/app code or ``evaluation_history`` would give
+    the orchestrator a reason to know about either. Checked statically
+    (AST) so a lazy/function-local import cannot hide.
+    """
+
+    module_path = Path(service.__file__)
+    tree = ast.parse(module_path.read_text(encoding="utf-8"))
+    imported: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imported.add(node.module)
+
+    forbidden = {
+        "battle_engine.agent_evaluation",
+        "battle_engine.evaluation_cli",
+        "battle_engine.designer",
+    }
+    assert imported.isdisjoint(forbidden), sorted(imported & forbidden)
+    assert not any(name.startswith("battle_engine.evaluation_history") for name in imported)
+    assert not any(name.startswith("battle_client") for name in imported)
+
+
+def test_agent_evaluation_facade_depends_downward_on_the_service() -> None:
+    module_path = Path(evaluation.__file__)
+    tree = ast.parse(module_path.read_text(encoding="utf-8"))
+    modules = {
+        node.module
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ImportFrom) and node.module
+    }
+    assert "battle_engine.evaluation_service" in modules
+
+
+def test_fresh_process_can_import_evaluation_service_without_the_facade() -> None:
+    """``evaluation_service`` must be importable on its own -- the facade
+    depends on it, never the other way around."""
+
+    code = (
+        "import sys\n"
+        "import battle_engine.evaluation_service\n"
+        "assert 'battle_engine.agent_evaluation' not in sys.modules\n"
+    )
+    subprocess.run([sys.executable, "-c", code], check=True)
 
 
 @pytest.mark.parametrize(

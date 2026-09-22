@@ -484,7 +484,11 @@ def test_noop_resume_of_a_fully_completed_both_orientations_evaluation_does_not_
 
 def test_resume_executes_only_the_missing_orientation(tmp_path, monkeypatch):
     root = _two_agents(tmp_path)
-    import battle_engine.agent_evaluation as mod
+    # V6 Phase 3J: ``EvaluationService.run`` now looks up ``execute_cell`` in
+    # ``evaluation_service``'s own module globals, not ``agent_evaluation``'s
+    # (the facade re-exports the same function object, but patching it there
+    # would no longer be observed at the actual call site).
+    import battle_engine.evaluation_service as mod
 
     real_execute_cell = mod.execute_cell
     executed: list[str] = []
@@ -531,7 +535,9 @@ def test_retry_failed_reruns_only_the_failed_orientation(tmp_path, monkeypatch):
     data["complete"] = True
     state_path.write_text(json.dumps(data), encoding="utf-8")
 
-    import battle_engine.agent_evaluation as mod
+    # V6 Phase 3J: see the identical comment in
+    # test_resume_executes_only_the_missing_orientation above.
+    import battle_engine.evaluation_service as mod
 
     real_execute_cell = mod.execute_cell
     executed: list[str] = []
