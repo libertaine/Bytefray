@@ -17,8 +17,8 @@ and [FUTURE_PLANS.md](FUTURE_PLANS.md) for catalogued future ideas and research 
 | **Current Stable Release** | `5.0.0` | **Released** (2026-09-15) | Shipped stable product line atop `bytefray-rules-4` and Agent API v2. |
 | **Active Development Line** | `V6` (`v6-research`) | **In Progress** | Repository diet, architecture modernization, and runtime retirement program. |
 | **Active Ruleset Control** | `bytefray-rules-4` | **Stable Control** | Sole executable v4 ruleset; production gameplay baseline. |
-| **Current Phase** | Phase 3 (3A-3L) | **Complete** | Evaluation architecture decomposition and context-locality review; see `docs/research/v6/V6_PHASE3_ARCHITECTURE_CONTEXT_LOCALITY_REVIEW.md`. |
-| **Immediate Next Phase** | — | **Undetermined** | Phase 3 closeout recommends a disposition (bounded cleanup, targeted defect correction, or a return to V6 gameplay research); not yet selected. |
+| **Current Phase** | Phase 4A | **Complete** | Gameplay research methodology design; see `docs/research/v6/V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md`. |
+| **Immediate Next Phase** | Phase 4B | **Planned** | Raw arena scaling experimentation and variable-arena research ruleset candidate. |
 
 ## Terminology
 
@@ -155,14 +155,19 @@ and runtime modernization program**. Its guiding operational rule is:
   architecture as part of the same review
   ([`docs/research/v6/V6_PHASE3_ARCHITECTURE_CONTEXT_LOCALITY_REVIEW.md`](research/v6/V6_PHASE3_ARCHITECTURE_CONTEXT_LOCALITY_REVIEW.md)).
 
+* **Phase 4A — Gameplay Research Methodology Design: Complete.**
+  Established the scientific framework, benchmark controls (`V6-Bench-8`),
+  metrics hierarchy, operational stagnation criteria, and staged experimental
+  roadmap for investigating spatial scaling and non-transitive counterplay
+  ([`docs/research/v6/V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md`](research/v6/V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md)).
+
 ### Current and Immediate Next Phase
 
-Phase 3 closed out the repository-diet/architecture-modernization work
-queued after Phase 2 (above). No successor phase has been selected yet; see
-the Phase 3 report's recommendation for the candidate dispositions (bounded
-cleanup of the deferred candidates it recorded, targeted correctness work on
-one of the two known defects, or returning to the postponed V6
-gameplay-research candidates in [`FUTURE_PLANS.md`](FUTURE_PLANS.md)).
+Phase 4A completed the gameplay research methodology design. The immediate next
+phase is **Phase 4B (Raw Arena Scaling Experimentation)**, which introduces an
+explicit variable-arena research ruleset candidate
+(`bytefray-rules-6-research-scale`) behaviorally identical to `bytefray-rules-4`
+at 512 cells to evaluate the benchmark field across arena sizes 512 to 65,536.
 
 ### Near-Term Planned Work (V6 Program Follow-Ups)
 
