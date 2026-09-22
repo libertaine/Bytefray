@@ -16,11 +16,13 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
     OMITTED_RULESET_CANDIDATES,
     PROCESS_RULESET_IDS,
     RULESET_V4,
     RULESET_V6_RESEARCH_SCALE,
     RULESET_V6_RESEARCH_SCALE_MOVE,
+    RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL,
     NoCompatibleRulesetError,
     RulesetPolicy,
     TerminationDecision,
@@ -60,6 +62,7 @@ def test_v6_research_scale_is_registered_but_never_automatic() -> None:
             BYTEFRAY_RULESET_V4_ID,
             BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
             BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
+            BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
         }
     )
     assert resolve_omitted_ruleset_for_agents(None, [_python()]) != BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID
@@ -71,6 +74,20 @@ def test_v6_research_scale_move_is_registered_but_never_automatic() -> None:
     assert resolve_ruleset_policy(BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID) is RULESET_V6_RESEARCH_SCALE_MOVE
     assert BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID not in OMITTED_RULESET_CANDIDATES
     assert resolve_omitted_ruleset_for_agents(None, [_python()]) != BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID
+
+
+def test_v6_research_scale_move_proportional_is_registered_but_never_automatic() -> None:
+    # V6 Phase 4D: registered and executable, but never what an omitted
+    # --ruleset selection resolves to -- requires explicit name.
+    assert (
+        resolve_ruleset_policy(BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID)
+        is RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL
+    )
+    assert BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID not in OMITTED_RULESET_CANDIDATES
+    assert (
+        resolve_omitted_ruleset_for_agents(None, [_python()])
+        != BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID
+    )
 
 
 def test_v6_research_scale_matches_stable_v4_fields_except_id() -> None:
@@ -92,8 +109,26 @@ def test_v6_research_scale_move_matches_research_scale_except_id_and_movement() 
         movement_stride="fixed_64",
     ) == RULESET_V6_RESEARCH_SCALE
     assert RULESET_V6_RESEARCH_SCALE_MOVE.movement_stride == "scale_normalized"
+    assert RULESET_V6_RESEARCH_SCALE_MOVE.movement_displacement == "literal"
     assert RULESET_V6_RESEARCH_SCALE.movement_stride == "fixed_64"
+    assert RULESET_V6_RESEARCH_SCALE.movement_displacement == "literal"
     assert RULESET_V4.movement_stride == "fixed_64"
+    assert RULESET_V4.movement_displacement == "literal"
+
+
+def test_v6_research_scale_move_proportional_matches_research_scale_except_id_and_movement() -> None:
+    # V6 Phase 4D: matches raw research-scale in every gameplay field except
+    # proportional movement displacement transform.
+    assert replace(
+        RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL,
+        ruleset_id=RULESET_V6_RESEARCH_SCALE.ruleset_id,
+        movement_displacement="literal",
+    ) == RULESET_V6_RESEARCH_SCALE
+    assert RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL.movement_stride == "fixed_64"
+    assert (
+        RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL.movement_displacement
+        == "scale_from_512"
+    )
 
 
 def test_stable_v4_fields_remain_pinned() -> None:
@@ -106,7 +141,8 @@ def test_stable_v4_fields_remain_pinned() -> None:
         RULESET_V4.core_placement,
         RULESET_V4.process_selection,
         RULESET_V4.movement_stride,
-    ) == ("chunked", 2, True, "seeded", "round_robin", "fixed_64")
+        RULESET_V4.movement_displacement,
+    ) == ("chunked", 2, True, "seeded", "round_robin", "fixed_64", "literal")
 
 
 def test_movement_stride_resolution_and_bounds() -> None:
@@ -238,8 +274,58 @@ def test_policy_and_decision_are_immutable() -> None:
 
 @pytest.mark.parametrize(
     ("field", "value"),
-    [("core_placement", "invented"), ("process_selection", "invented")],
+    [
+        ("core_placement", "invented"),
+        ("process_selection", "invented"),
+        ("movement_stride", "invented"),
+        ("movement_displacement", "invented"),
+    ],
 )
 def test_policy_rejects_unknown_semantic_modes(field: str, value: str) -> None:
     with pytest.raises(ValueError):
         RulesetPolicy("probe", **{field: value})
+
+
+def test_movement_displacement_resolution_and_proportionality() -> None:
+    arenas = [512, 1024, 4096, 16384, 65536]
+    operands = [0, 1, -1, 2, -2, 40, -40, 64, -64]
+
+    # Literal policies: stable v4, Phase 4B raw-scale, Phase 4C scale-move
+    # Always return requested delta unchanged
+    for a in arenas:
+        for op in operands:
+            assert RULESET_V4.resolve_movement_displacement(op, a) == op
+            assert RULESET_V6_RESEARCH_SCALE.resolve_movement_displacement(op, a) == op
+            assert RULESET_V6_RESEARCH_SCALE_MOVE.resolve_movement_displacement(op, a) == op
+
+    # Proportional policy (Phase 4D):
+    # Anchor invariant: at A=512, actual_delta == requested_delta exactly
+    for op in operands:
+        assert (
+            RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL.resolve_movement_displacement(
+                op, 512
+            )
+            == op
+        )
+
+    # Scaling factors:
+    # 512: 1x, 1024: 2x, 4096: 8x, 16384: 32x, 65536: 128x
+    expected_factors = {
+        512: 1,
+        1024: 2,
+        4096: 8,
+        16384: 32,
+        65536: 128,
+    }
+    for a, factor in expected_factors.items():
+        for op in operands:
+            actual = RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL.resolve_movement_displacement(
+                op, a
+            )
+            expected = op * factor
+            assert actual == expected
+            # Sign symmetry: actual(-op) == -actual(op)
+            neg_actual = RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL.resolve_movement_displacement(
+                -op, a
+            )
+            assert neg_actual == -actual

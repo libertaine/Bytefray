@@ -63,6 +63,7 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
 )
 
 
@@ -182,6 +183,7 @@ def _parser() -> argparse.ArgumentParser:
             BYTEFRAY_RULESET_V4_ID,
             BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
             BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
+            BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
         ],
         default=None,
         help=(
@@ -210,7 +212,14 @@ def _parser() -> argparse.ArgumentParser:
             "per MOVE action scales proportionally with arena size according to "
             "max_move_delta(A) = max(64, floor(A / 8)). Not selected automatically; "
             "must be named explicitly. See "
-            "docs/research/v6/V6_PHASE4C_MOVEMENT_NORMALIZATION_STUDY.md."
+            "docs/research/v6/V6_PHASE4C_MOVEMENT_NORMALIZATION_STUDY.md. "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID} is the V6 Phase 4D "
+            "proportional-movement variable-arena research identity: identical to "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID} except accepted MOVE operands "
+            "(clamped to 64) scale into proportional physical displacement from the "
+            "512-cell reference world: actual_delta = sign(op) * floor(abs(op) * arena_size / 512). "
+            "Not selected automatically; must be named explicitly. See "
+            "docs/research/v6/V6_PHASE4D_PROPORTIONAL_MOVEMENT_STUDY.md."
         ),
     )
     parser.add_argument(
@@ -474,6 +483,7 @@ def _print_matrix(
             request.is_v4_methodology,
             request.is_v6_research_scale_methodology,
             request.is_v6_research_scale_move_methodology,
+            request.is_v6_research_scale_move_proportional_methodology,
         ),
     )
     if not request.group:

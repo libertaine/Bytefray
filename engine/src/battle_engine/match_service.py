@@ -62,6 +62,7 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
     RulesetPolicy,
     resolve_ruleset_policy,
 )
@@ -421,6 +422,9 @@ _CORE_PLACEMENT_GUARDED_RULESET_IDS: frozenset[str] = frozenset(
         # V6 Phase 4C: movement-normalized research Ruleset also shares
         # seeded placement and vulnerable-core semantics.
         BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
+        # V6 Phase 4D: proportional-movement research Ruleset also shares
+        # seeded placement and vulnerable-core semantics.
+        BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
     }
 )
 

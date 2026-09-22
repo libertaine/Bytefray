@@ -22,6 +22,7 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
 )
 
 # These values are part of the evaluation contract.  They deliberately do
@@ -200,6 +201,9 @@ SCHEMA_VERSION_V4 = 7
 EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_SCALE = "ruleset_v6_research_scale_seeded_placements"
 EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_SCALE_MOVE = (
     "ruleset_v6_research_scale_move_seeded_placements"
+)
+EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL = (
+    "ruleset_v6_research_scale_move_proportional_seeded_placements"
 )
 
 # V6 Phase 4B (task Sec 7): the Phase 4A research methodology's own
@@ -419,13 +423,30 @@ def is_ruleset_v6_research_scale_move_methodology(rules_compatibility_id: str) -
     return rules_compatibility_id == BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID
 
 
+def is_ruleset_v6_research_scale_move_proportional_methodology(
+    rules_compatibility_id: str,
+) -> bool:
+    """Whether a resolved rules-compatibility id is the V6 Phase 4D proportional-movement research Ruleset.
+
+    True only for ``BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID``
+    (``bytefray-rules-6-research-scale-move-proportional``, docs/research/v6/
+    V6_PHASE4D_PROPORTIONAL_MOVEMENT_STUDY.md).
+    """
+
+    return (
+        rules_compatibility_id
+        == BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID
+    )
+
+
 def is_ruleset_v4_derived_methodology(rules_compatibility_id: str) -> bool:
     """Whether a resolved rules-compatibility id uses v4's seeded evaluation machinery.
 
     True for everything `is_ruleset_v4_methodology` is true for, plus
-    `BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID` (V6 Phase 4B) and
-    `BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID` (V6 Phase 4C): all share
-    one identical recipe -- seed-derived seat geometry
+    `BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID` (V6 Phase 4B),
+    `BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID` (V6 Phase 4C), and
+    `BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID` (V6 Phase 4D):
+    all share one identical recipe -- seed-derived seat geometry
     (`resolve_v4_seed_geometry`), `IDENTITY_VERSION_V4`/`SCHEMA_VERSION_V4`
     (7) -- because the research Rulesets declare the same
     `core_placement="seeded"` stable v4 does and are evaluated by the
@@ -444,6 +465,9 @@ def is_ruleset_v4_derived_methodology(rules_compatibility_id: str) -> bool:
         is_ruleset_v4_methodology(rules_compatibility_id)
         or is_ruleset_v6_research_scale_methodology(rules_compatibility_id)
         or is_ruleset_v6_research_scale_move_methodology(rules_compatibility_id)
+        or is_ruleset_v6_research_scale_move_proportional_methodology(
+            rules_compatibility_id
+        )
     )
 
 
@@ -453,7 +477,10 @@ def resolved_arena_alignment_mode(
     is_v4_methodology: bool = False,
     is_v6_research_scale_methodology: bool = False,
     is_v6_research_scale_move_methodology: bool = False,
+    is_v6_research_scale_move_proportional_methodology: bool = False,
 ) -> str:
+    if is_v6_research_scale_move_proportional_methodology:
+        return EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL
     if is_v6_research_scale_move_methodology:
         return EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_SCALE_MOVE
     if is_v6_research_scale_methodology:
@@ -475,11 +502,13 @@ def resolved_identity_version(
     is_v4_methodology: bool = False,
     is_v6_research_scale_methodology: bool = False,
     is_v6_research_scale_move_methodology: bool = False,
+    is_v6_research_scale_move_proportional_methodology: bool = False,
 ) -> int:
     if (
         is_v4_methodology
         or is_v6_research_scale_methodology
         or is_v6_research_scale_move_methodology
+        or is_v6_research_scale_move_proportional_methodology
     ):
         return IDENTITY_VERSION_V4
     if is_v2_methodology and group:
@@ -493,11 +522,13 @@ def resolved_schema_version(
     is_v4_methodology: bool = False,
     is_v6_research_scale_methodology: bool = False,
     is_v6_research_scale_move_methodology: bool = False,
+    is_v6_research_scale_move_proportional_methodology: bool = False,
 ) -> int:
     if (
         is_v4_methodology
         or is_v6_research_scale_methodology
         or is_v6_research_scale_move_methodology
+        or is_v6_research_scale_move_proportional_methodology
     ):
         return SCHEMA_VERSION_V4
     if is_v2_methodology and group:
@@ -838,6 +869,7 @@ class EvaluationRequest:
             self.is_v4_methodology
             or self.is_v6_research_scale_methodology
             or self.is_v6_research_scale_move_methodology
+            or self.is_v6_research_scale_move_proportional_methodology
         ):
             return STANDARD_V4_ARENA_SIZE
         return Config().arena_size
@@ -888,6 +920,14 @@ class EvaluationRequest:
         """Whether this request's resolved Ruleset is the V6 Phase 4C movement-normalized research identity."""
 
         return is_ruleset_v6_research_scale_move_methodology(self.resolved_rules_compatibility_id)
+
+    @property
+    def is_v6_research_scale_move_proportional_methodology(self) -> bool:
+        """Whether this request's resolved Ruleset is the V6 Phase 4D proportional-movement research identity."""
+
+        return is_ruleset_v6_research_scale_move_proportional_methodology(
+            self.resolved_rules_compatibility_id
+        )
 
     @property
     def roster_agent_ids(self) -> tuple[str, ...]:

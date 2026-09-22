@@ -1185,7 +1185,10 @@ class ProcessMatchController:
                 elif action.kind in (ActionKind.MOVE, ActionKindV2.MOVE):
                     if active_proc.position is not None:
                         op = action.operand if action.operand is not None else 0
-                        delta = max(-self.max_move_delta, min(op, self.max_move_delta))
+                        clamped_op = max(-self.max_move_delta, min(op, self.max_move_delta))
+                        delta = self.ruleset_policy.resolve_movement_displacement(
+                            clamped_op, self.config.arena_size
+                        )
                         new_pos = (active_proc.position + delta) % self.config.arena_size
                         active_proc.position = new_pos
                         active_proc.telemetry.total_moves += 1

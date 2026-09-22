@@ -246,7 +246,7 @@ def test_evaluate_cli_exposes_the_product_ruleset_choices_excluding_retired_v4_a
         evaluate_main(["--help"])
     out = capsys.readouterr().out
     assert (
-        "--ruleset {bytefray-rules-4,bytefray-rules-6-research-scale,bytefray-rules-6-research-scale-move}"
+        "--ruleset {bytefray-rules-4,bytefray-rules-6-research-scale,bytefray-rules-6-research-scale-move,bytefray-rules-6-research-scale-move-proportional}"
         in out
     )
     assert "{bytefray-rules-1" not in out

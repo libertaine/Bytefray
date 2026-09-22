@@ -39,6 +39,7 @@ from battle_engine.rules import (
     BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
 )
 from battle_engine.scheduler import StateT, run_chunked_quota
 
@@ -99,6 +100,7 @@ class RulesetPolicy:
     core_placement: str = "zero"
     process_selection: str = "priority"
     movement_stride: str = "fixed_64"
+    movement_displacement: str = "literal"
 
     #: Every value :attr:`core_placement` may take. ``"zero"`` is every
     #: Ruleset whose omitted start addresses historically defaulted to the
@@ -126,6 +128,16 @@ class RulesetPolicy:
     MOVEMENT_STRIDE_MODES: ClassVar[frozenset[str]] = frozenset(
         {"fixed_64", "scale_normalized"}
     )
+    #: Every value :attr:`movement_displacement` may take. ``"literal"`` is the
+    #: stable v4, Phase 4B raw-scaling, and Phase 4C movement-normalized
+    #: policy where accepted MOVE operands translate 1:1 into world-space
+    #: displacement. ``"scale_from_512"`` is V6 Phase 4D's proportional-movement
+    #: policy where accepted operands scale proportionally from a 512-cell
+    #: reference world:
+    #: ``actual_delta = sign(delta) * (abs(delta) * arena_size // 512)``.
+    MOVEMENT_DISPLACEMENT_MODES: ClassVar[frozenset[str]] = frozenset(
+        {"literal", "scale_from_512"}
+    )
 
     def __post_init__(self) -> None:
         if self.core_placement not in self.CORE_PLACEMENT_MODES:
@@ -146,6 +158,12 @@ class RulesetPolicy:
                 f"{self.ruleset_id!r}; expected one of "
                 f"{sorted(self.MOVEMENT_STRIDE_MODES)!r}"
             )
+        if self.movement_displacement not in self.MOVEMENT_DISPLACEMENT_MODES:
+            raise ValueError(
+                f"unknown movement_displacement {self.movement_displacement!r} for Ruleset "
+                f"{self.ruleset_id!r}; expected one of "
+                f"{sorted(self.MOVEMENT_DISPLACEMENT_MODES)!r}"
+            )
 
     def resolve_max_move_delta(self, arena_size: int) -> int:
         """Return the maximum allowed displacement per MOVE action for this arena.
@@ -163,6 +181,30 @@ class RulesetPolicy:
             return max(64, arena_size // 8)
         raise ValueError(
             f"unknown movement_stride {self.movement_stride!r} for Ruleset {self.ruleset_id!r}"
+        )
+
+    def resolve_movement_displacement(self, requested_delta: int, arena_size: int) -> int:
+        """Return the effective physical world-space displacement for an accepted MOVE delta.
+
+        For ``movement_displacement == "literal"`` (stable v4, Phase 4B raw-scaling,
+        and Phase 4C movement-normalized headroom), returns ``requested_delta``
+        unchanged.
+
+        For ``movement_displacement == "scale_from_512"`` (V6 Phase 4D), returns
+        displacement scaled proportionally from the 512-cell reference world:
+            actual_delta = sign(delta) * (abs(delta) * arena_size // 512)
+        preserving exact equivalence at A=512 while scaling by A/512 at larger
+        arenas using deterministic integer-only arithmetic.
+        """
+        if self.movement_displacement == "literal":
+            return requested_delta
+        if self.movement_displacement == "scale_from_512":
+            if requested_delta == 0:
+                return 0
+            sign = 1 if requested_delta > 0 else -1
+            return sign * (abs(requested_delta) * arena_size // 512)
+        raise ValueError(
+            f"unknown movement_displacement {self.movement_displacement!r} for Ruleset {self.ruleset_id!r}"
         )
 
     def unsupported_runtime_kinds(self, kinds: Iterable[str]) -> frozenset[str]:
@@ -467,6 +509,28 @@ RULESET_V6_RESEARCH_SCALE_MOVE = RulesetPolicy(
 )
 
 
+# V6 Phase 4D: the proportional-movement variable-arena research identity (see
+# ``BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID``'s own docstring in ``rules.py``
+# and docs/research/v6/V6_PHASE4D_PROPORTIONAL_MOVEMENT_STUDY.md). Every
+# field below is an independent literal copy of ``RULESET_V6_RESEARCH_SCALE``'s
+# values except ``movement_displacement="scale_from_512"``, which scales executed
+# physical displacement per MOVE action proportionally with arena size according to
+# ``actual_delta = sign(op) * floor(abs(op) * arena_size / 512)`` while leaving
+# ``movement_stride="fixed_64"`` (authored control input remains in [-64, 64]).
+RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seeded",
+    process_selection="round_robin",
+    movement_stride="fixed_64",
+    movement_displacement="scale_from_512",
+)
+
+
 # Which Ruleset identities execute on the Agent API v2 process runtime
 # (``battle_engine.process_runtime.ProcessMatchController``). A finite, explicit set for the
 # same reason ``_RULESET_POLICIES`` is a finite table -- and the one place
@@ -488,11 +552,16 @@ RULESET_V6_RESEARCH_SCALE_MOVE = RulesetPolicy(
 # V6 Phase 4C added ``BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID``: it also
 # executes on the Agent API v2 process runtime, differing only in movement
 # stride normalization.
+#
+# V6 Phase 4D added ``BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID``:
+# it executes on the Agent API v2 process runtime, differing in proportional
+# physical movement displacement.
 PROCESS_RULESET_IDS: frozenset[str] = frozenset(
     {
         BYTEFRAY_RULESET_V4_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
     }
 )
 
@@ -550,6 +619,9 @@ _RULESET_POLICIES: Mapping[str, RulesetPolicy] = {
     RULESET_V4.ruleset_id: RULESET_V4,
     RULESET_V6_RESEARCH_SCALE.ruleset_id: RULESET_V6_RESEARCH_SCALE,
     RULESET_V6_RESEARCH_SCALE_MOVE.ruleset_id: RULESET_V6_RESEARCH_SCALE_MOVE,
+    RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL.ruleset_id: (
+        RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL
+    ),
 }
 
 
@@ -804,11 +876,13 @@ __all__ = [
     "BYTEFRAY_RULESET_V4_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID",
     "OMITTED_RULESET_CANDIDATES",
     "PROCESS_RULESET_IDS",
     "RULESET_V4",
     "RULESET_V6_RESEARCH_SCALE",
     "RULESET_V6_RESEARCH_SCALE_MOVE",
+    "RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL",
     "NoCompatibleRulesetError",
     "RulesetPolicy",
     "TerminationDecision",

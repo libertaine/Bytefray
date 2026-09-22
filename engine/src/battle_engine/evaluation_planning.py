@@ -49,6 +49,7 @@ from battle_engine.evaluation_contracts import (
     is_ruleset_v4_methodology,
     is_ruleset_v6_research_scale_methodology,
     is_ruleset_v6_research_scale_move_methodology,
+    is_ruleset_v6_research_scale_move_proportional_methodology,
     resolved_identity_version,
 )
 from battle_engine.evaluation_identity import agent_identity
@@ -328,6 +329,9 @@ def build_matrix(
     resolved_is_v6_research_scale_move = is_ruleset_v6_research_scale_move_methodology(
         resolved_rules_id
     )
+    resolved_is_v6_research_scale_move_proportional = (
+        is_ruleset_v6_research_scale_move_proportional_methodology(resolved_rules_id)
+    )
 
     # v2.0.0-beta2 Phase 2: multi-entrant ("group") matrix generation is a
     # structurally different generation strategy (seed x layout x seat
@@ -345,6 +349,7 @@ def build_matrix(
         resolved_is_v4,
         resolved_is_v6_research_scale,
         resolved_is_v6_research_scale_move,
+        resolved_is_v6_research_scale_move_proportional,
     )
 
     # v3 Phase 0D: placements are pure functions of arena size, so they
@@ -384,8 +389,9 @@ def build_matrix(
                     resolved_is_v4
                     or resolved_is_v6_research_scale
                     or resolved_is_v6_research_scale_move
+                    or resolved_is_v6_research_scale_move_proportional
                 ):
-                    # V6 Phase 4B/4C: the research Rulesets share this exact
+                    # V6 Phase 4B/4C/4D: the research Rulesets share this exact
                     # branch -- `resolve_v4_seed_geometry` resolves seeded
                     # placement through `resolved_rules_id`'s own registered
                     # `RulesetPolicy.core_placement`, so it already produces
@@ -426,6 +432,7 @@ def build_matrix(
                                 resolved_is_v4
                                 or resolved_is_v6_research_scale
                                 or resolved_is_v6_research_scale_move
+                                or resolved_is_v6_research_scale_move_proportional
                             )
                             and orientation == ORIENTATION_OPPONENT_FIRST
                         ):
@@ -501,6 +508,7 @@ def build_matrix(
                                 or resolved_is_v4
                                 or resolved_is_v6_research_scale
                                 or resolved_is_v6_research_scale_move
+                                or resolved_is_v6_research_scale_move_proportional
                             ),
                         )
                         condition_fingerprint = None

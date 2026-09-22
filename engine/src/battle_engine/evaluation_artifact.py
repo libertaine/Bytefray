@@ -78,6 +78,7 @@ from battle_engine.evaluation_contracts import (
     is_ruleset_v4_methodology,
     is_ruleset_v6_research_scale_methodology,
     is_ruleset_v6_research_scale_move_methodology,
+    is_ruleset_v6_research_scale_move_proportional_methodology,
     physical_slots_for_orientation,
     resolved_arena_alignment_mode,
     resolved_identity_version,
@@ -944,6 +945,9 @@ def write_evaluation_state(
     resolved_is_v6_research_scale_move = is_ruleset_v6_research_scale_move_methodology(
         resolved_rules_id
     )
+    resolved_is_v6_research_scale_move_proportional = (
+        is_ruleset_v6_research_scale_move_proportional_methodology(resolved_rules_id)
+    )
     resolved_group = request.group and resolved_is_v2
     write_json_atomic(
         path,
@@ -968,6 +972,7 @@ def write_evaluation_state(
                 resolved_is_v4,
                 resolved_is_v6_research_scale,
                 resolved_is_v6_research_scale_move,
+                resolved_is_v6_research_scale_move_proportional,
             ),
             "identity_version": resolved_identity_version(
                 resolved_is_v2,
@@ -975,6 +980,7 @@ def write_evaluation_state(
                 resolved_is_v4,
                 resolved_is_v6_research_scale,
                 resolved_is_v6_research_scale_move,
+                resolved_is_v6_research_scale_move_proportional,
             ),
             "evaluation_id": evaluation_id,
             "candidate_id": request.candidate_id,
@@ -1001,6 +1007,7 @@ def write_evaluation_state(
                 resolved_is_v4,
                 resolved_is_v6_research_scale,
                 resolved_is_v6_research_scale_move,
+                resolved_is_v6_research_scale_move_proportional,
             ),
             # v2.0.0-beta2 Phase 2: additive top-level disclosure of
             # multi-entrant methodology -- never identity-affecting on
