@@ -192,30 +192,52 @@ The empirical data examined in this study encompasses the complete Phase 4B benc
 
 A deep empirical analysis of the 2,240 matches reveals how territory ownership and match scores actually evolved as arena size scaled:
 
-### Table I.1: Mean Performance Metrics by Arena Size
+### Table I.1: Mean Performance Metrics by Arena Size (Full V6-Bench-8 Corpus)
+
+Generated deterministically by `tools/research/v6/phase4e_analyzer.py` across all 2,240 matches:
 
 | Entrant | Metric | $A=512$ | $A=1024$ | $A=4096$ | $A=16384$ | $A=65536$ | Scaling Trend |
 |---|---|---:|---:|---:|---:|---:|:---:|
-| **`v4_claimer`** | Win Rate | 0.4375 | 0.4554 | 0.5000 | 0.5446 | 0.5714 | **+13.4% (Monotonic Rise)** |
-| | Mean Match Score | 2,421.5 | 5,011.4 | 13,990.0 | 14,507.0 | 16,765.0 | **+592.3% (6.9× Increase)** |
-| | Mean Owned Cells | 240.2 | 484.7 | 1,736.6 | 1,769.5 | 1,948.8 | **+711.3% (8.1× Increase)** |
-| | Diagnostic Territory % | 46.91% | 47.33% | 42.40% | 10.80% | 2.97% | −93.7% (Artifact of $A$) |
-| **`Octave`** | Win Rate | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.9375 | −6.3% (Mild Hunter Decay) |
-| | Mean Match Score | 23.7 | 99.9 | 178.7 | 99.4 | 121.8 | Combat-limited |
-| | Mean Owned Cells | 24.7 | 56.0 | 48.0 | 27.4 | 15.7 | Low (core + kill trajectory) |
-| | Diagnostic Territory % | 4.83% | 5.47% | 1.17% | 0.17% | 0.02% | Dilution |
-| **`nemesis_alpha2`**| Win Rate | 0.5446 | 0.6518 | 0.7054 | 0.7321 | 0.7500 | **+20.5% (Rise via Timeout)** |
-| | Mean Match Score | 420.7 | 694.6 | 1,935.0 | 5,173.3 | 10,251.1 | **+2,336% (24.4× Increase)** |
-| | Mean Owned Cells | 36.0 | 56.4 | 162.3 | 557.4 | 1,313.0 | **+3,547% (36.5× Increase)** |
-| | Diagnostic Territory % | 7.02% | 5.51% | 3.96% | 3.40% | 2.00% | Stable writing |
-| **`v5_scout_striker`**| Win Rate | 0.5982 | 0.4821 | 0.5089 | 0.5714 | 0.5536 | Stable (0.50–0.60) |
-| | Mean Match Score | 414.3 | 1,086.3 | 3,383.7 | 3,253.0 | 2,925.5 | Moderate increase |
-| | Mean Owned Cells | 64.9 | 135.3 | 393.6 | 387.5 | 358.2 | Moderate capacity |
-| | Diagnostic Territory % | 12.67% | 13.22% | 9.61% | 2.37% | 0.55% | Dilution |
-| **`v5_region_attacker`**| Win Rate | 0.4196 | 0.4196 | 0.4018 | 0.3571 | 0.4196 | Invariant (~0.41) |
-| | Mean Match Score | 718.6 | 1,232.8 | 2,147.9 | 1,981.6 | 1,566.9 | Modest increase |
-| | Mean Owned Cells | 51.1 | 84.0 | 233.4 | 215.6 | 182.9 | Modest capacity |
-| | Diagnostic Territory % | 9.99% | 8.20% | 5.70% | 1.32% | 0.28% | Dilution |
+| **`Octave`** | Pure Win Rate ($W/N$) | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.9375 | −6.2% (7 ties at $A=65k$) |
+|  | Tournament Rate ($(W+0.5T)/N$) | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.9688 | −3.1% (Recorded in Phase 4B) |
+|  | Mean Match Score | 23.7 | 99.9 | 178.7 | 99.4 | 121.8 | Combat-limited |
+|  | Mean Owned Cells | 24.7 | 56.0 | 48.0 | 27.4 | 15.7 | Low (core + kill trajectory) |
+|  | Diagnostic Territory % | 4.83% | 5.47% | 1.17% | 0.17% | 0.02% | Dilution by $A$ |
+| **`nemesis_alpha2`** | Pure Win Rate ($W/N$) | 0.5446 | 0.6518 | 0.7054 | 0.7321 | 0.7500 | **+20.5% (Rise via Timeout)** |
+|  | Tournament Rate ($(W+0.5T)/N$) | 0.6205 | 0.6830 | 0.7054 | 0.7321 | 0.7500 | +13.0% (Recorded in Phase 4B) |
+|  | Mean Match Score | 420.7 | 694.6 | 1,935.0 | 5,173.3 | 10,251.1 | **+2,336% (24.4× Increase)** |
+|  | Mean Owned Cells | 36.0 | 56.4 | 162.3 | 557.4 | 1,313.0 | **+3,547% (36.5× Increase)** |
+|  | Diagnostic Territory % | 7.02% | 5.51% | 3.96% | 3.40% | 2.00% | Persistent writing |
+| **`v5_scout_striker`** | Pure Win Rate ($W/N$) | 0.5982 | 0.4821 | 0.5089 | 0.5714 | 0.5536 | −4.5% (Stable 0.50–0.60) |
+|  | Tournament Rate ($(W+0.5T)/N$) | 0.7188 | 0.6518 | 0.6518 | 0.6786 | 0.6830 | −3.6% (Recorded in Phase 4B) |
+|  | Mean Match Score | 414.3 | 1,086.3 | 3,383.7 | 3,253.0 | 2,925.5 | Moderate increase |
+|  | Mean Owned Cells | 64.9 | 135.3 | 393.6 | 387.5 | 358.2 | Moderate capacity |
+|  | Diagnostic Territory % | 12.67% | 13.22% | 9.61% | 2.37% | 0.55% | Dilution by $A$ |
+| **`v4_claimer`** | Pure Win Rate ($W/N$) | 0.4375 | 0.4554 | 0.5000 | 0.5446 | 0.5714 | **+13.4% (Monotonic Rise)** |
+|  | Tournament Rate ($(W+0.5T)/N$) | 0.4375 | 0.4554 | 0.5000 | 0.5446 | 0.5714 | **+13.4% (0 ties at all $A$)** |
+|  | Mean Match Score | 2,421.5 | 5,011.4 | 13,990.0 | 14,507.0 | 16,765.0 | **+592.3% (6.9× Increase)** |
+|  | Mean Owned Cells | 240.2 | 484.7 | 1,736.6 | 1,769.5 | 1,948.8 | **+711.3% (8.1× Increase)** |
+|  | Diagnostic Territory % | 46.91% | 47.33% | 42.40% | 10.80% | 2.97% | −93.7% (Artifact of $A$) |
+| **`v5_region_attacker`** | Pure Win Rate ($W/N$) | 0.4196 | 0.4196 | 0.4018 | 0.3571 | 0.4196 | Invariant (~0.41) |
+|  | Tournament Rate ($(W+0.5T)/N$) | 0.5804 | 0.5625 | 0.5223 | 0.4777 | 0.5089 | −7.1% (Recorded in Phase 4B) |
+|  | Mean Match Score | 718.6 | 1,232.8 | 2,147.9 | 1,981.6 | 1,566.9 | Modest increase |
+|  | Mean Owned Cells | 51.1 | 84.0 | 233.4 | 215.6 | 182.9 | Modest capacity |
+|  | Diagnostic Territory % | 9.99% | 8.20% | 5.70% | 1.32% | 0.28% | Dilution by $A$ |
+| **`v5_dual_team`** | Pure Win Rate ($W/N$) | 0.1696 | 0.1875 | 0.1875 | 0.1607 | 0.1696 | Invariant (~0.17) |
+|  | Tournament Rate ($(W+0.5T)/N$) | 0.3795 | 0.3750 | 0.3393 | 0.2946 | 0.2634 | −11.6% (Combat decay) |
+|  | Mean Match Score | 692.7 | 889.4 | 961.2 | 881.1 | 722.5 | Modest plateau |
+|  | Mean Owned Cells | 24.1 | 36.7 | 76.6 | 72.5 | 58.3 | Modest capacity |
+|  | Diagnostic Territory % | 4.71% | 3.58% | 1.87% | 0.44% | 0.09% | Dilution by $A$ |
+| **`v5_core_defender`** | Pure Win Rate ($W/N$) | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0 wins across all $A$ |
+|  | Tournament Rate ($(W+0.5T)/N$) | 0.1696 | 0.1696 | 0.1786 | 0.1696 | 0.1607 | Stable ties only (~0.17) |
+|  | Mean Match Score | 486.1 | 486.3 | 505.7 | 494.8 | 513.2 | Invariant alive baseline |
+|  | Mean Owned Cells | 4.1 | 4.2 | 4.2 | 3.7 | 3.3 | Sub-bucket core holding |
+|  | Diagnostic Territory % | 0.80% | 0.41% | 0.10% | 0.02% | 0.01% | Dilution by $A$ |
+| **`v4_local_defender`** | Pure Win Rate ($W/N$) | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0 wins across all $A$ |
+|  | Tournament Rate ($(W+0.5T)/N$) | 0.0938 | 0.1027 | 0.1027 | 0.1027 | 0.0938 | Stable ties only (~0.10) |
+|  | Mean Match Score | 220.2 | 265.5 | 356.4 | 370.1 | 415.6 | Modest alive baseline |
+|  | Mean Owned Cells | 1.5 | 1.6 | 1.9 | 2.3 | 2.4 | Sub-bucket core holding |
+|  | Diagnostic Territory % | 0.30% | 0.15% | 0.05% | 0.01% | 0.00% | Dilution by $A$ |
 
 ---
 
@@ -237,7 +259,7 @@ The performance of `v4_claimer` demonstrates conclusively that expansion economi
 
 - **Score Growth:** Average score surged from **2,421.5** at $A=512$ to **16,765.0** at $A=65536$ (+592%).
 - **Cell Retention:** Retained owned cells surged from **240.2** at $A=512$ to **1,948.8** at $A=65536$ (+711%).
-- **Win Rate:** Win rate increased monotonically from **0.4375** to **0.5714**, moving Claimer from rank 5 up to rank 4 across the benchmark field.
+- **Win Rate:** Win rate increased monotonically from **0.4375** to **0.5714**, moving Claimer from rank 5 up to rank 4 across the benchmark field. Claimer recorded 0 ties across all 2,240 matches, so its pure win rate equals its tournament score rate.
 - **Why Claimer thrived:** In larger arenas, hunters experienced search delays and failed to locate Claimer. Because Claimer survived more ticks (mean alive ticks rose from 410.8 to 715.4), and because the arena did not force self-overwriting, Claimer claimed more unique cells, accrued more buckets per tick, and accumulated massive territory scores.
 
 ---
@@ -246,7 +268,10 @@ The performance of `v4_claimer` demonstrates conclusively that expansion economi
 
 Octave represents the lethal hunting archetype:
 - At $A=512$, Octave achieved a **1.0000** win rate with an average match length of 10.1 ticks and average score of 23.7 (10 alive points + 5 kill points + 8 core-cell territory points).
-- At $A=65536$, Octave maintained a **0.9375** win rate (105 wins, 0 losses, 7 timeouts/ties), with mean ticks rising to 117.1.
+- At $A=65536$, Octave achieved 105 wins, 7 ties, and 0 losses across 112 matches:
+  - **Pure Win Rate ($W/N$):** $105 / 112 = \mathbf{0.9375}$ (93.75%).
+  - **Tournament Score Rate ($(W+0.5T)/N$):** $(105 + 3.5) / 112 = \mathbf{0.9688}$ (96.875%, matching `phase4b_analysis.json`).
+  - Average match length increased to 117.1 ticks as Octave spent more time navigating to locate opponents.
 - In every decisive match, Octave won via single-survivor combat termination (`len(alive) == 1`), which bypasses score comparison entirely.
 - Territory scoring never interfered with Octave's combat lethality; Octave's mild decay was entirely driven by spatial search time, not territory economics.
 
@@ -315,3 +340,32 @@ Scoring is already invariant to arena size. Future research must address the phy
 1. **Perceptual / Sensor Scaling:** Sensor/radar mechanics or core-direction signals that scale with arena dimensions.
 2. **Action / Tick Density:** Dynamic tick limits ($T_{\max}(A)$) or instruction scaling.
 3. **Scale-Aware Entrant Architecture:** Allowing agents to query `context.arena_size` and adapt patrol radii and movement operands accordingly.
+
+---
+
+## R. Research Tooling
+
+The Phase 4E analysis tool is committed under:
+`tools/research/v6/phase4e_analyzer.py`
+
+It operates deterministically without mutating engine runtime or telemetry:
+- Ingests all 2,240 Phase 4B match result envelopes (`runs/research_v6_phase4b/equivalence/research-scale` and `runs/research_v6_phase4b/sweep/a*`).
+- Computes exact mean match scores, mean cells owned, diagnostic territory percentages, pure win rates ($W/N$), and tournament score rates ($(W+0.5T)/N$) for all 8 benchmark entrants across all 5 arena sizes.
+- Computes the head-to-head resolution of `v5_region_attacker` vs `v4_claimer`.
+- Generates the direct deterministic score characterization table.
+
+---
+
+## S. Test Suite & Characterization Verification
+
+A dedicated regression and characterization test suite is committed under:
+`engine/tests/test_v6_phase4e_territory_scoring.py`
+
+It validates:
+1. **Bucket Floor Division:** `ScoringPolicy.score_territory` evaluates $\lfloor \text{cells} / 64 \rfloor \times 1.0$, awarding 0 points for $<64$ cells and integer-bucket multiples thereafter.
+2. **Arena Size Independence:** `ScoringPolicy` and `Weights` have zero parameters or dependencies relating to `arena_size`. Scoring identical holdings yields identical points per tick across all 5 arenas.
+3. **Control-Anchor $A=512$ Equivalence:** Score contribution at $A=512$ matches $A \in \{1024, 4096, 16384, 65536\}$ for all tested holdings.
+4. **Diagnostic Telemetry Separation:** `build_summary` in `results.py` computes `territory_pct_*` by dividing by `arena_size`, but gameplay score is strictly the accumulated integer-bucket score.
+5. **Score-Fallback Timeout Resolution:** In 1,000-tick timeouts with equal alive points, the entrant with more territory buckets wins decisively.
+6. **Ruleset Isolation:** Stable `bytefray-rules-4` and research `bytefray-rules-6-research-scale` remain isolated, with no spurious ruleset registered.
+7. **Live Match Execution:** End-to-end match execution with starter agents confirms live score accumulation and telemetry recording.
