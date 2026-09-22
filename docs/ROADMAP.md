@@ -17,8 +17,8 @@ and [FUTURE_PLANS.md](FUTURE_PLANS.md) for catalogued future ideas and research 
 | **Current Stable Release** | `5.0.0` | **Released** (2026-09-15) | Shipped stable product line atop `bytefray-rules-4` and Agent API v2. |
 | **Active Development Line** | `V6` (`v6-research`) | **In Progress** | Repository diet, architecture modernization, and runtime retirement program. |
 | **Active Ruleset Control** | `bytefray-rules-4` | **Stable Control** | Sole executable v4 ruleset; production gameplay baseline. |
-| **Current Phase** | Phase 2B.11 | **Audit Complete** | Scope C audit for Agent API v1 & VM execution retirement. |
-| **Immediate Next Phase** | Phase 2B.12 | **Planned / Immediate** | Implementation of Scope C retirement while preserving historical readers. |
+| **Current Phase** | Phase 3 (3A-3L) | **Complete** | Evaluation architecture decomposition and context-locality review; see `docs/research/v6/V6_PHASE3_ARCHITECTURE_CONTEXT_LOCALITY_REVIEW.md`. |
+| **Immediate Next Phase** | — | **Undetermined** | Phase 3 closeout recommends a disposition (bounded cleanup, targeted defect correction, or a return to V6 gameplay research); not yet selected. |
 
 ## Terminology
 
@@ -133,37 +133,49 @@ and runtime modernization program**. Its guiding operational rule is:
     blockers (CLI default agents, scaffold API default, preset ruleset list,
     omitted-ruleset resolution) and outlined the phased retirement strategy
     ([`docs/research/v6/V6_PHASE2B11_API_V1_VM_RETIREMENT_AUDIT.md`](research/v6/V6_PHASE2B11_API_V1_VM_RETIREMENT_AUDIT.md)).
+  * **Phase 2B.12 — Scope C Implementation:** Retired `bytefray-rules-1` and
+    `bytefray-rules-2` from executable registration along with VM/blob and
+    Agent API v1 execution, leaving `bytefray-rules-4` as the sole executable
+    gameplay control. Closed by **Phase 2 Final Qualification**, which
+    remediated a historical-fixture integrity defect found during initial
+    qualification and reached a **QUALIFIED** verdict on the remediated tree
+    ([`docs/research/v6/V6_PHASE2_FINAL_QUALIFICATION.md`](research/v6/V6_PHASE2_FINAL_QUALIFICATION.md)).
+* **Phase 3 — Architecture & Context-Locality Review (3A-3L): Complete.**
+  Decomposed the 5,258-line `agent_evaluation.py` monolith (identified as the
+  primary context-locality hotspot by Phase 2's own handoff) into eight
+  single-responsibility modules — `evaluation_contracts`,
+  `evaluation_analysis`, `evaluation_identity`, `evaluation_planning`,
+  `evaluation_cell_execution`, `evaluation_worker`, `evaluation_artifact`,
+  `evaluation_service`, and `evaluation_cli` — behind a permanent, 263-line
+  compatibility facade, verified behavior-preserving at every step by
+  differential testing against the pre-extraction implementation. Two known
+  behavioral defects (scheduler-override identity collision; preflight/run
+  double freeze) remain open, tracked as strict `xfail` guards, not fixed by
+  this program. `ARCHITECTURE.md` was synchronized with the resulting
+  architecture as part of the same review
+  ([`docs/research/v6/V6_PHASE3_ARCHITECTURE_CONTEXT_LOCALITY_REVIEW.md`](research/v6/V6_PHASE3_ARCHITECTURE_CONTEXT_LOCALITY_REVIEW.md)).
 
 ### Current and Immediate Next Phase
 
-* **Phase 2B.11 (Audit Complete) → Phase 2B.12 (Scope C Implementation):**
-  * **Goal:** Retire `bytefray-rules-1` and `bytefray-rules-2` from executable
-    registration, along with VM/blob execution and Agent API v1 execution,
-    leaving `bytefray-rules-4` as the single executable gameplay control.
-  * **Key implementation requirements:**
-    1. Resolve Blockers B-1 through B-4: update `bytefray run` defaults to
-       Agent API v2 Python agents, update `bytefray agents create` scaffold
-       default to API v2, update `evaluation_presets` valid rulesets to
-       `bytefray-rules-4`, and ensure omitted-ruleset resolution points
-       cleanly to `bytefray-rules-4`.
-    2. Convert affected live-match tests (approx. 393 cases across 52 files)
-       to use `bytefray-rules-4` or frozen replay fixtures so that reader
-       coverage is preserved.
-    3. Maintain 100% backward compatibility for decoding and replaying
-       historical VM and API v1 matches.
+Phase 3 closed out the repository-diet/architecture-modernization work
+queued after Phase 2 (above). No successor phase has been selected yet; see
+the Phase 3 report's recommendation for the candidate dispositions (bounded
+cleanup of the deferred candidates it recorded, targeted correctness work on
+one of the two known defects, or returning to the postponed V6
+gameplay-research candidates in [`FUTURE_PLANS.md`](FUTURE_PLANS.md)).
 
 ### Near-Term Planned Work (V6 Program Follow-Ups)
 
-* **Repository diet and modularity:**
-  * Address oversized modules identified in Phase 1 (e.g., `agent_evaluation.py`
-    at ~5,400 LOC) by separating concerns without introducing behavioral regressions.
-  * Remove partially dead runtime modules (e.g., pruning unused controllers in
-    `supervised_runtime.py` while keeping necessary diagnostic helpers).
-  * Improve context locality and subsystem encapsulation to streamline AI-agent
-    and developer workflows.
-* **Documentation synchronization:**
-  * Bring `ARCHITECTURE.md` into alignment with post-v4/v5 architecture,
-    documenting Spectator/Fight Night, Replay History, and recent retirements.
+* **Repository diet and modularity:** the `agent_evaluation.py` oversized-module
+  concern Phase 1 identified is resolved by Phase 3 (above). The Phase 2
+  handoff separately named `match_service.py`, the process-runtime modules,
+  and `ruleset_policy.py` as further locality candidates; Phase 3 did not
+  address them, and whether they warrant a future, separately authorized
+  locality pass is undecided.
+* **Documentation synchronization:** `ARCHITECTURE.md` is aligned with the
+  post-v4/v5 architecture and the Phase 3 evaluation decomposition. Spectator/
+  Fight Night and Replay History are documented in "Runtime components"
+  above.
 
 ### Later Research Candidates (Post-Cleanup)
 

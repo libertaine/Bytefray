@@ -16,7 +16,10 @@ artifact, and the Designer's Evaluate dialog) added in v0.6, the
 default Python starter-agent roster added in v0.6.1, and the
 `bytefray.evaluation` v2 capture hardening plus the Qt-free
 `battle_engine.evaluation_history` discovery/comparison package and
-`bytefray agents evaluations list/show/compare` added in v0.7). It
+`bytefray agents evaluations list/show/compare` added in v0.7). V6 Phase 3
+subsequently decomposed the evaluation implementation into dedicated modules
+behind the permanent `battle_engine.agent_evaluation` compatibility facade
+(see "Evaluation architecture (V6 Phase 3 decomposition)" below). It
 supersedes the v0.2-era architecture document; that superseded text
 remains available in git history (see the `v0.2.0` tag) and in
 [`docs/V0_2_MIGRATION.md`](docs/archive/v1/V0_2_MIGRATION.md) for migration context.
@@ -133,6 +136,80 @@ copies.
 `bomber`, `flooder`, `spiral`, and `seeker` VM programs into bytecode. This
 is retained historical/compatibility code; the resulting VM entrants are no
 longer executable by a current Ruleset.
+
+### Evaluation architecture (V6 Phase 3 decomposition)
+
+V6 Phase 3 (3A-3L; see
+[`docs/research/v6/V6_PHASE3_ARCHITECTURE_CONTEXT_LOCALITY_REVIEW.md`](docs/research/v6/V6_PHASE3_ARCHITECTURE_CONTEXT_LOCALITY_REVIEW.md))
+partitioned the evaluation subsystem that used to share one 5,258-line
+`agent_evaluation.py` context into single-responsibility modules, so one
+evaluation concept can be understood and safely changed without loading the
+others. This is a context-locality result, not primarily a size reduction:
+the functionality is fully present today, just no longer concentrated in one
+file. Verified current ownership:
+
+- **`evaluation_contracts.py`** — low-level stable contracts and methodology
+  vocabulary (`EvaluationCell`/`EvaluationRequest`/`EvaluationResult` and the
+  identity/schema/orientation constants), interpretable without constructing
+  a matrix, executing a match, reading an artifact, or aggregating results.
+- **`evaluation_identity.py`** — pure construction of canonical identity
+  payloads (`agent_identity`, effective-conditions/cell/condition hashing;
+  identity versions 2-7). Depends only on `evaluation_contracts`; does not
+  depend on planning.
+- **`evaluation_planning.py`** — the deterministic `EvaluationRequest` ->
+  ordered-matrix compiler: placement geometry, every deterministic axis, and
+  artifact path labels. Consumes identity; executes and persists nothing.
+- **`evaluation_cell_execution.py`** — the single canonical `execute_cell`
+  primitive ("run this already-planned cell exactly once"), shared unchanged
+  by serial (`EvaluationService.run`) and parallel (`evaluation_worker`)
+  dispatch. This closed the historical `EvaluationService` &lt;-&gt;
+  `evaluation_worker` import cycle a worker-local, throwaway
+  `EvaluationService()` instance used to paper over.
+- **`evaluation_worker.py`** — the whole-process-lifetime parallel-execution
+  subprocess. Depends only downward, on `evaluation_cell_execution` and
+  `evaluation_contracts`; never calls back into `EvaluationService` or the
+  facade.
+- **`evaluation_artifact.py`** — artifact persistence and resume-trust
+  mechanics (state load/write, resumed-cell trust verification, revision
+  restoration) as plain functions over explicit arguments, independent of
+  coordinator policy.
+- **`evaluation_service.py`** — `EvaluationService`, the coordinator that
+  validates, freezes, dispatches, checkpoints, and finalizes one evaluation
+  run by composing every module above plus `evaluation_analysis`. Does not
+  import the CLI or the facade.
+- **`evaluation_cli.py`** — `bytefray agents evaluate` argument parsing,
+  input resolution, and presentation (text and `--json`), calling
+  `EvaluationService` directly. Does not import the facade.
+- **`battle_engine.agent_evaluation`** — the permanent compatibility facade,
+  263 LOC. It is not an implementation owner: it imports and re-exports the
+  60-entry public `__all__` (plus a small set of live non-`__all__`
+  attributes) so every existing import — including `main`, the canonical CLI
+  entry point — keeps working unchanged. Internal modules use the canonical
+  owners above directly; external/research callers may keep using the
+  facade indefinitely, with no migration required.
+
+Dependency direction, verified by AST import audit: `evaluation_contracts`
+has no internal evaluation dependency; `evaluation_identity` depends only on
+`evaluation_contracts`; `evaluation_planning`/`evaluation_cell_execution`/
+`evaluation_artifact` each depend only on `evaluation_contracts`/
+`evaluation_identity`; `evaluation_worker` depends only on
+`evaluation_cell_execution`/`evaluation_contracts`; `evaluation_service`
+composes all of the above plus `evaluation_analysis`; `evaluation_cli`
+depends on `evaluation_service`, never the facade; `agent_evaluation` is the
+only module that imports the CLI. No cycle exists.
+
+`battle_engine.evaluation_history` remains a separate, Qt-free reader/trust
+boundary over already-written `evaluation.json` artifacts (discovery, v1/v2
+adaptation, comparison) — a consumer of the evaluation modules' public
+contracts, never part of the live-evaluation write path.
+
+Two behavioral characteristics remain open, tracked as strict `xfail`
+regression guards rather than fixed defects: `scheduler_chunk_size`/
+`scheduler_rotate_start` can change execution without changing evaluation
+identity, and `preflight`/`run` independently freeze identity, so a source
+change between the two stages can address a preflight-named directory with a
+different run identity. See the Phase 3 report linked above for the full
+evidence trail and deferred cleanup candidates.
 
 ### Engine CLI (`battle_engine.cli`, `battle_engine.command`)
 

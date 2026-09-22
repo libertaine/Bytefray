@@ -803,9 +803,9 @@ class EvaluationCell:
     # cell (`rules_compatibility_id == BYTEFRAY_RULESET_V2_ID`) ever sets
     # `placement_id` to anything other than "fixed" or either start to a
     # nonzero address. `rules_compatibility_id` is stored per cell (not
-    # read from a module constant at execution time) because `_execute_cell`
+    # read from a module constant at execution time) because `execute_cell`
     # must stay a pure function of its own arguments (v1.6 Phase 2's worker-
-    # purity invariant) -- see EvaluationService._execute_cell.
+    # purity invariant) -- see evaluation_cell_execution.execute_cell.
     rules_compatibility_id: str = EVALUATION_RULES_COMPATIBILITY_ID
     placement_id: str = "fixed"
     subject_start: int = 0
