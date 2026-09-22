@@ -392,8 +392,9 @@ def adapt_v2_data(data: dict[str, Any], path: Path) -> EvaluationSummary:
                 # "opponent_identity" already uses -- safe for duplicate/self-
                 # play opponent occurrences because every position for the same
                 # opponent_id was populated from the identical, once-per-agent-
-                # id dict (agent_evaluation._resolve_revision_results resolves
-                # one _RevisionPlanEntry per distinct agent_id, exactly as
+                # id dict (evaluation_artifact.resolve_revision_results
+                # resolves one RevisionPlanEntry per distinct agent_id,
+                # exactly as
                 # agent_identity() does for planned_identities).
                 idx = opponent_ids_list.index(raw.get("opponent_id"))
                 if idx < len(opponent_identities):
@@ -753,7 +754,8 @@ def adapt_v2_data(data: dict[str, Any], path: Path) -> EvaluationSummary:
     # H2: a cell's recorded condition_fingerprint must itself rehash from
     # the same inputs build_matrix() used to compute it, using the
     # artifact's own recorded effective_conditions_fingerprint (already
-    # persisted verbatim by _write_state) rather than re-deriving one --
+    # persisted verbatim by evaluation_artifact.write_evaluation_state)
+    # rather than re-deriving one --
     # this validates internal cross-consistency of the artifact, not a
     # second independent recomputation of effective_conditions itself.
     conditions_fp = data.get("effective_conditions_fingerprint")

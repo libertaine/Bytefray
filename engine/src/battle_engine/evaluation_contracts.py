@@ -219,8 +219,9 @@ ORIENTATION_MODE_CANDIDATE_FIRST_ONLY = "candidate_first_only"
 # evaluation gets, with `"complete": true` alongside it -- a reader had to
 # open `cells[]` and count statuses to discover the evaluation had not
 # actually succeeded. See `_resolved_lifecycle_state` below, the one
-# function both `EvaluationService.run` and `_write_state` now go through
-# for this decision.
+# function both `EvaluationService.run` and
+# `evaluation_artifact.write_evaluation_state` now go through for this
+# decision.
 LIFECYCLE_STATE_RUNNING = "running"
 LIFECYCLE_STATE_FINISHED = "finished"
 LIFECYCLE_STATE_FINISHED_WITH_FAILURES = "finished_with_failures"

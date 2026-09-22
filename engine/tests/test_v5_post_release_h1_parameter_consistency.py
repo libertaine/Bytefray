@@ -39,7 +39,6 @@ from pathlib import Path
 
 import pytest
 from _hang_safety import hang_safety_timeout
-from battle_engine.agent_evaluation import _expected_cell_match_id
 from battle_engine.agent_parameters import (
     EMPTY_PARAMETER_SCHEMA,
     resolve_entrant_parameters,
@@ -49,6 +48,7 @@ from battle_engine.agent_test import test_agent as run_development_test
 from battle_engine.agent_test import test_agents as run_group_development_test
 from battle_engine.agents import resolve_agent
 from battle_engine.config import Config
+from battle_engine.evaluation_artifact import expected_cell_match_id
 from battle_engine.match_service import MatchEntrant
 from battle_engine.tournament_cli import _resolve_entrant as resolve_tournament_entrant
 
@@ -279,7 +279,7 @@ class TestAgentTestEntrantResolution:
 
 
 class TestAgentEvaluationExpectedMatchIdMirrorsAgentTest:
-    """The most important FIND-01 regression: `_expected_cell_match_id` must
+    """The most important FIND-01 regression: `expected_cell_match_id` must
     never drift from what `agent_test.test_agent` (the real per-cell
     executor) actually produces, or every schema-enabled resumed cell would
     register a false `resumed_result_mismatch`.
@@ -299,7 +299,7 @@ class TestAgentEvaluationExpectedMatchIdMirrorsAgentTest:
         )
         spec_a = resolve_agent(REPO_ROOT, SCHEMA_STARTER)
         spec_b = resolve_agent(REPO_ROOT, OTHER_SCHEMA_STARTER)
-        expected = _expected_cell_match_id(
+        expected = expected_cell_match_id(
             subject_spec=spec_a,
             subject_id=SCHEMA_STARTER,
             opponent_spec=spec_b,

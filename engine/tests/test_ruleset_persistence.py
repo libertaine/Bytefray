@@ -15,10 +15,11 @@ import hashlib
 import json
 from pathlib import Path
 
-from battle_engine.agent_evaluation import EvaluationCell, _resumed_cell_mismatch
+from battle_engine.agent_evaluation import EvaluationCell
 from battle_engine.agent_test import OPPONENT_SLOT, TESTED_AGENT_SLOT
 from battle_engine.agents import resolve_agent
 from battle_engine.config import Config
+from battle_engine.evaluation_artifact import resumed_cell_mismatch
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
 from battle_engine.replay import (
     MatchConfiguration,
@@ -281,7 +282,8 @@ def test_native_python_match_records_ruleset_id_in_result_and_replay(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# Cross-artifact consistency: evaluation resume (agent_evaluation._resumed_cell_mismatch)
+# Cross-artifact consistency: evaluation resume
+# (evaluation_artifact.resumed_cell_mismatch)
 # ---------------------------------------------------------------------------
 
 
@@ -322,7 +324,7 @@ def test_resumed_cell_mismatch_detects_ruleset_id_divergence(tmp_path):
         replay=ReplayReference("r", digest, "replay.jsonl"),
         ruleset_id="corrupted-ruleset-id",
     )
-    reason = _resumed_cell_mismatch(envelope, _cell(tmp_path), "match_x")
+    reason = resumed_cell_mismatch(envelope, _cell(tmp_path), "match_x")
     assert reason is not None and "ruleset_id" in reason
 
 
@@ -352,7 +354,7 @@ def test_resumed_cell_mismatch_accepts_matching_ruleset_id(tmp_path):
         replay=ReplayReference("r", digest, "replay.jsonl"),
         ruleset_id=BYTEFRAY_RULESET_ID,
     )
-    assert _resumed_cell_mismatch(envelope, _cell(tmp_path), "match_x") is None
+    assert resumed_cell_mismatch(envelope, _cell(tmp_path), "match_x") is None
 
 
 def test_resumed_cell_mismatch_accepts_historical_pair_both_missing(tmp_path):
@@ -378,4 +380,4 @@ def test_resumed_cell_mismatch_accepts_historical_pair_both_missing(tmp_path):
         reproducibility={"seed": 5},
         replay=ReplayReference("r", digest, "replay.jsonl"),
     )
-    assert _resumed_cell_mismatch(envelope, _cell(tmp_path), "match_x") is None
+    assert resumed_cell_mismatch(envelope, _cell(tmp_path), "match_x") is None

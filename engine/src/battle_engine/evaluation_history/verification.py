@@ -232,7 +232,7 @@ def verify_cell(
 
     # H1 (Beta2 Phase 4.1): a group (multi-entrant, N>=3) cell's physical
     # entrant order is seat_label(0..N-1), not the fixed 2-entrant (A, B)
-    # pair -- mirrors agent_evaluation._resumed_cell_mismatch's identical
+    # pair -- mirrors evaluation_artifact.resumed_cell_mismatch's identical
     # generalization for the live resume path exactly (Sec Identity, Beta2
     # Phase 2). `cell.seat_agent_ids` (recorded seat assignment, RECORDED
     # for a real schema-6 cell) is the source of truth for N here, not
@@ -274,8 +274,9 @@ def verify_cell(
     # `physical_slots_for_orientation` (a fixed A/B pairing) must never be
     # consulted for one. Its subject's physical seat instead comes from the
     # cell's own recorded seat assignment, exactly mirroring
-    # `EvaluationCell.subject_seat`/`agent_evaluation._cell_from_envelope_
-    # group`'s identical live-run convention: the first (lowest-index) seat
+    # `EvaluationCell.subject_seat`/`evaluation_artifact._cell_from_
+    # envelope_group`'s identical live-run convention: the first
+    # (lowest-index) seat
     # `cell.subject_id` occupies (self-play, a duplicate agent id in the
     # roster, resolves to that same first occurrence there too -- Sec
     # Identity). There is no single well-defined "opponent slot" for N>=3,

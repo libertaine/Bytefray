@@ -404,8 +404,9 @@ def build_matrix(
                         # distinct cells above -- still gets a distinct
                         # schedule_id. Without it, duplicate cells collide
                         # in the resume-state lookup dict
-                        # (EvaluationService._resolve_from_state keys prior
-                        # cells by schedule_id), which silently
+                        # (evaluation_artifact.resolve_cell_from_state is
+                        # fed prior cells keyed by schedule_id), which
+                        # silently
                         # misattributes one duplicate's persisted state to
                         # another and can demote a legitimately never-yet-
                         # run duplicate to "corrupted". `orientation` is
