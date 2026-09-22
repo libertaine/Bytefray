@@ -302,4 +302,3 @@ def test_live_match_territory_scoring_invariance(tmp_path: Path) -> None:
     assert "B" in result.score
     assert result.score["A"] >= 25.0  # At least 25 alive points
     assert result.score["B"] >= 25.0
-
