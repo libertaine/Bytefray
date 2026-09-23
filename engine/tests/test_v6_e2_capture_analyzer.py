@@ -5,7 +5,9 @@ canonical replay. Preconditions are asserted from the replay itself (the
 engine's own events, ticks and diffs) before the analyzer's telemetry is
 asserted by value. Scripted agents are test-only; the Sec D mechanics use the
 tracked E2 research fixtures at seed 42, arena 512 (review Sec D.1 geometry:
-Seat A's core at 485, Seat B's at 203).
+Seat A's core at 485, Seat B's at 203). Cores that wrap the arena end are
+covered by the real seed-23 geometry of the E2 matrix (Seat A's core at 506)
+and by a scripted core at 509.
 """
 
 from __future__ import annotations
@@ -102,6 +104,21 @@ class Agent(Scripted):
             return write(obs.own_core_base + 1)
         return None
 """,
+    # Tick 1: the first seven enemy core cells, sparing the last. Tick 2: the last one.
+    "wrap_attacker": """
+class Agent(Scripted):
+    def step(self, obs, tick, index):
+        if tick == 1 and index < 7:
+            return write((self.enemy + index) % self.arena)
+        if tick == 2 and index == 0:
+            return write((self.enemy + 7) % self.arena)
+        return None
+""",
+    "idle": """
+class Agent(Scripted):
+    def step(self, obs, tick, index):
+        return None
+""",
 }
 
 
@@ -128,16 +145,30 @@ def data_root(tmp_path_factory: pytest.TempPathFactory) -> Path:
     return root
 
 
-def run(root: Path, seat_a: str, seat_b: str, *, ruleset_id: str = E2_ID, max_ticks: int = 200) -> Path:
-    starts = resolve_direct_match_starts(
-        ruleset_id=ruleset_id, arena_size=512, entrant_count=2, supplied_starts=[None, None], seed=SEED
-    )
-    assert starts == (A_CORE, B_CORE)
-    replay = root / "runs" / ruleset_id / f"{seat_a}-vs-{seat_b}-{max_ticks}" / "replay.jsonl"
+def run(
+    root: Path,
+    seat_a: str,
+    seat_b: str,
+    *,
+    ruleset_id: str = E2_ID,
+    max_ticks: int = 200,
+    seed: int = SEED,
+    starts: tuple[int, int] | None = None,
+) -> Path:
+    name = f"{seat_a}-vs-{seat_b}-{max_ticks}"
+    if starts is None:
+        starts = resolve_direct_match_starts(
+            ruleset_id=ruleset_id, arena_size=512, entrant_count=2, supplied_starts=[None, None], seed=seed
+        )
+        if seed == SEED:
+            assert starts == (A_CORE, B_CORE)
+    if (seed, starts) != (SEED, (A_CORE, B_CORE)):
+        name += f"-seed{seed}-{starts[0]}-{starts[1]}"
+    replay = root / "runs" / ruleset_id / name / "replay.jsonl"
     replay.parent.mkdir(parents=True)
     NativeMatchService().run(
         MatchRequest(
-            config=Config(seed=SEED, arena_size=512, instr_per_tick=8),
+            config=Config(seed=seed, arena_size=512, instr_per_tick=8),
             entrants=(
                 MatchEntrant.python("A", seat_a, starts[0], resolve_agent(root, seat_a)),
                 MatchEntrant.python("B", seat_b, starts[1], resolve_agent(root, seat_b)),
@@ -264,6 +295,106 @@ def test_d3_probe_mirror_zero_core_winner(data_root: Path) -> None:
     assert telemetry["winner_at_zero_core"] is True
     assert telemetry["all_completions_attributed"] and telemetry["attribution_matches_onset"]
     assert telemetry["consistent_with_engine"] is True
+
+
+# ---------------------------------------------------------------------------
+# Cores that wrap the arena end (analyzer version 2)
+# ---------------------------------------------------------------------------
+
+
+def _tick(replay: Path, tick: int) -> TickSnapshot:
+    (snapshot,) = [r for r in iter_replay(replay) if isinstance(r, TickSnapshot) and r.tick == tick]
+    return snapshot
+
+
+def _diffs(snapshot: TickSnapshot) -> list[tuple[int, int, str | None]]:
+    return [(diff.address, diff.length, diff.owner) for diff in snapshot.memory_diffs]
+
+
+def test_seed_23_core_wrapping_the_arena_end_is_rebuilt_from_its_start(data_root: Path) -> None:
+    # Seed 23 is the E2 matrix seed that version 1 could not analyze: Seat A's
+    # core base is 506, so its cells are 506..511, 0, 1.
+    replay = run(data_root, "v4_probe", "v4_probe_twin", seed=23)
+    # Preconditions from the replay: the core is seeded as two diffs across the
+    # arena end, and B's tick-2 attack on it is recorded across the end too.
+    assert _diffs(_tick(replay, 0)) == [(506, 6, "A"), (0, 2, "A"), (160, 8, "B")]
+    assert _diffs(_tick(replay, 2)) == [(506, 6, "B"), (0, 2, "B")]
+    result, events = engine_record(replay)
+    assert (result.winner, result.ticks) == ("A", 2) and events == [(2, "kill", "B", "A")]
+
+    telemetry = analyze_replay(replay)
+    a, b = telemetry["entrants"]["A"], telemetry["entrants"]["B"]
+    assert (a["core_base"], a["core_size"], b["core_base"], b["core_size"]) == (506, 8, 160, 8)
+    # A is at zero at tick 2 only because the wrapped cells 0 and 1 count.
+    assert (a["onset_ticks"], a["zero_core_ticks"], a["final_owned"]) == ([2], [2], 0)
+    assert (b["onset_ticks"], b["zero_core_ticks"], b["completion_tick"]) == ([1], [1, 2], 2)
+    assert telemetry["winner_at_zero_core"] is True
+    assert telemetry["all_completions_attributed"] and telemetry["attribution_matches_onset"]
+    assert telemetry["consistent_with_engine"] is True
+
+    # The same geometry under V4: A never loses a cell and owns all eight,
+    # including the two past the arena end.
+    v4 = analyze_replay(run(data_root, "v4_probe", "v4_probe_twin", ruleset_id=BYTEFRAY_RULESET_V4_ID, seed=23))
+    assert (v4["entrants"]["A"]["core_size"], v4["entrants"]["A"]["final_owned"]) == (8, 8)
+    assert v4["consistent_with_engine"] is True
+
+
+@pytest.fixture(scope="module")
+def wrapped_replay(data_root: Path) -> Path:
+    """A real match in which B's core at 509 wraps the arena end (cells 509..511, 0..4)."""
+    return run(data_root, "wrap_attacker", "idle", starts=(200, 509), max_ticks=10)
+
+
+def test_synthetic_wrapped_core_counts_its_cells_past_the_arena_end(wrapped_replay: Path) -> None:
+    # Independent of seed 23: B's core at 509 is cells 509..511, 0..4. The
+    # attacker takes seven cells on tick 1 and spares cell 4, past the arena
+    # end, then takes it on tick 2.
+    replay = wrapped_replay
+    assert _diffs(_tick(replay, 0)) == [(200, 8, "A"), (509, 3, "B"), (0, 5, "B")]
+    result, events = engine_record(replay)
+    assert (result.winner, result.ticks, result.termination_reason) == ("A", 3, "last_agent_standing")
+    assert events == [(3, "kill", "B", "A")]
+
+    b = analyze_replay(replay)["entrants"]["B"]
+    assert (b["core_base"], b["core_size"]) == (509, 8)
+    # One owned cell (4) at the end of tick 1 is no onset; a core cut at the
+    # arena end would have been at zero there.
+    assert b["onset_ticks"] == [2]
+    assert (b["zero_core_ticks"], b["completion_tick"], b["final_owned"]) == ([2, 3], 3, 0)
+    assert b["onset_capturers"] == ["A"]
+
+
+def test_wrapped_core_telemetry_does_not_depend_on_seeding_diff_order(wrapped_replay: Path, tmp_path: Path) -> None:
+    replay = wrapped_replay
+    lines = replay.read_text(encoding="utf-8").splitlines()
+    index = next(i for i, line in enumerate(lines) if json.loads(line).get("tick") == 0)
+    tick0 = json.loads(lines[index])
+    tick0["memory_diffs"] = list(reversed(tick0["memory_diffs"]))
+    lines[index] = json.dumps(tick0)
+    reordered = tmp_path / "replay.jsonl"
+    reordered.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    # Precondition: the wrapped core's low segment now comes first.
+    assert _diffs(_tick(reordered, 0)) == [(0, 5, "B"), (509, 3, "B"), (200, 8, "A")]
+
+    original, shuffled = analyze_replay(replay), analyze_replay(reordered)
+    original.pop("replay")
+    shuffled.pop("replay")
+    assert shuffled == original
+
+
+def test_seeded_core_that_is_not_a_run_from_its_pc_fails_closed(wrapped_replay: Path, tmp_path: Path) -> None:
+    replay = wrapped_replay
+    lines = replay.read_text(encoding="utf-8").splitlines()
+    index = next(i for i, line in enumerate(lines) if json.loads(line).get("tick") == 0)
+    tick0 = json.loads(lines[index])
+    (agent_b,) = [agent for agent in tick0["agents"] if agent["id"] == "B"]
+    assert agent_b["pc"] == 509
+    agent_b["pc"] = 510
+    lines[index] = json.dumps(tick0)
+    broken = tmp_path / "replay.jsonl"
+    broken.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="not the contiguous run starting at its recorded pc"):
+        analyze_replay(broken)
 
 
 def test_d4_sniper_vs_pure_repair_guard_has_no_recovery(data_root: Path) -> None:

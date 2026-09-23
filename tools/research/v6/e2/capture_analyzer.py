@@ -6,8 +6,11 @@ the runtime applies (review Sec C.2):
 
 * ownership: the tick-0 seeding diffs, then every tick's memory diffs in
   execution order (each diff records its writer);
-* each entrant's core: its tick-0 seeding diff, cross-checked against the
-  entrant's recorded ``region`` / ``pc`` (both equal the core base);
+* each entrant's core: the contiguous run of its seeded cells starting at
+  its recorded ``pc`` (the core base), modulo the arena, cross-checked
+  against its tick-0 seeding diffs -- two diffs when the core wraps the
+  arena end (analyzer version 2; version 1 assumed one diff per core and
+  raised on every wrapped core);
 * the hold length K: the header's ``ruleset_id`` resolved through the
   executable Ruleset registry (``capture_hold_ticks``);
 * the first mover of each tick: the same policy's chunked scheduler with
@@ -55,7 +58,7 @@ from battle_engine.replay import (
 )
 from battle_engine.ruleset_policy import resolve_ruleset_policy
 
-CAPTURE_ANALYZER_VERSION = 1
+CAPTURE_ANALYZER_VERSION = 2
 
 
 @dataclass
@@ -281,18 +284,26 @@ def analyze_replay(
     }
 
     owners: dict[int, str | None] = {}
-    cores: dict[str, list[int]] = {}
+    seeded: dict[str, list[int]] = {}
     for diff in ticks[0].memory_diffs:
         cells = _addresses(diff.address, diff.length, arena)
         for address in cells:
             owners[address] = diff.owner
         if diff.owner in seat_of:
-            cores[diff.owner] = cells
+            seeded.setdefault(diff.owner, []).extend(cells)
+    # A core that wraps the arena end is seeded as more than one diff, so the
+    # core is rebuilt from the recorded start address and checked against the
+    # union of its seeding cells, independent of diff order.
+    cores: dict[str, list[int]] = {}
     for agent in ticks[0].agents:
-        if agent.agent_id not in cores or cores[agent.agent_id][0] != agent.pc:
+        cells = seeded.get(agent.agent_id, [])
+        core = _addresses(agent.pc, len(cells), arena) if isinstance(agent.pc, int) else []
+        if not cells or len(set(cells)) != len(cells) or set(core) != set(cells):
             raise ValueError(
-                f"{replay_path}: seeded core of {agent.agent_id!r} does not match its recorded pc"
+                f"{replay_path}: seeded core of {agent.agent_id!r} is not the contiguous run "
+                "starting at its recorded pc"
             )
+        cores[agent.agent_id] = core
 
     entrants = {
         agent_id: EntrantCapture(
