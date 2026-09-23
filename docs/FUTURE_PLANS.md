@@ -321,8 +321,11 @@ Current status across the repository:
   additional qualifying tick creates meaningful opponent-dependent response, or
   merely transforms the original forced line into delay, scheduler-locked
   draws, or another seat pathology. The research Ruleset is implemented and
-  qualified; the experiment matrix has not been run
-  ([`docs/research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md`](research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md)).
+  qualified, and the research apparatus -- fixtures, capture analyzer, harness
+  remediation, frozen matrix and hypotheses, control gate -- is in place; the
+  experiment matrix has not been run
+  ([`docs/research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md`](research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md),
+  [`docs/research/v6/V6_E2_EXPERIMENT_FREEZE.md`](research/v6/V6_E2_EXPERIMENT_FREEZE.md)).
 
 ---
 
