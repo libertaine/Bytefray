@@ -10,8 +10,9 @@ required to change (``ruleset_id``, ``match_id``, ``result_id``,
 ``replay_id``, replay digest, timestamps, occurrence ids).
 
 Any mismatch fails the gate, and a failed or missing gate blocks every
-T-E2 execution and interpretation (``require_control_gate``). Reads
-artifacts only; executes nothing.
+T-E2 execution and interpretation (``require_control_gate``). From analysis
+freeze v2 on, the gate that unlocks T-E2 is re-run under the current freeze
+and carries its ``freeze_id``. Reads artifacts only; executes nothing.
 """
 
 from __future__ import annotations
@@ -138,8 +139,13 @@ def write_gate_record(
     expected_matches: Mapping[str, int],
     sample: bool,
     provenance: Mapping[str, Any],
+    freeze_id: str | None = None,
 ) -> dict[str, Any]:
-    """Persist the gate verdict. A sample gate can never unlock T-E2."""
+    """Persist the gate verdict. A sample gate can never unlock T-E2.
+
+    ``freeze_id`` names the analysis freeze the gate was run under; T-E2
+    accepts only a gate from its own freeze.
+    """
     complete = not sample and all(
         fields.get(field_id, {}).get("cells_compared") == count
         for field_id, count in expected_matches.items()
@@ -148,6 +154,7 @@ def write_gate_record(
     record = {
         "gate_version": GATE_VERSION,
         "matrix_id": matrix_id,
+        "freeze_id": freeze_id,
         "sample": sample,
         "fields": dict(fields),
         "expected_matches": dict(expected_matches),
@@ -162,15 +169,22 @@ def write_gate_record(
 
 
 def require_control_gate(
-    record_path: Path, *, matrix_id: str, expected_matches: Mapping[str, int]
+    record_path: Path,
+    *,
+    matrix_id: str,
+    expected_matches: Mapping[str, int],
+    freeze_id: str | None = None,
 ) -> dict[str, Any]:
-    """Fail closed unless a complete, passing gate exists for this exact matrix."""
+    """Fail closed unless a complete, passing gate exists for this exact matrix
+    (and, when ``freeze_id`` is given, was run under that analysis freeze)."""
     if not record_path.is_file():
         raise ControlGateError(f"No control gate record at {record_path}; run the C-V4/C-RS gate first.")
     record: dict[str, Any] = _load_json(record_path)
     problems = []
     if record.get("matrix_id") != matrix_id:
         problems.append(f"matrix_id {record.get('matrix_id')!r} != {matrix_id!r}")
+    if freeze_id is not None and record.get("freeze_id") != freeze_id:
+        problems.append(f"freeze_id {record.get('freeze_id')!r} != {freeze_id!r}")
     if record.get("sample"):
         problems.append("the gate was run on a sample, not the full control matrix")
     if record.get("status") != "PASS":

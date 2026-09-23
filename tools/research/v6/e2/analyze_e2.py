@@ -10,7 +10,9 @@ metric exactly as ``preregistration.json`` operationalizes it.
 It computes metrics and criterion values; it does not declare hypothesis
 verdicts -- those are read under the Sec I.5 interpretation rules. T-E2 is
 never analyzed unless a complete, passing C-V4 / C-RS control gate exists
-for the same frozen matrix (Sec I.5 rule 3).
+for the same frozen matrix (Sec I.5 rule 3), recorded -- together with a
+passing control-data requalification -- under the committed analysis freeze
+(``analysis_freeze.py``).
 """
 
 from __future__ import annotations
@@ -27,16 +29,14 @@ from typing import Any
 
 from tools.research.v6 import experiment_harness as harness
 from tools.research.v6.e2 import matrix
+from tools.research.v6.e2.analysis_freeze import FREEZE_RECORD_PATH, AnalysisFreezeError
 from tools.research.v6.e2.capture_analyzer import CAPTURE_ANALYZER_VERSION, analyze_replay
-from tools.research.v6.e2.control_gate import (
-    GATE_RECORD_NAME,
-    ControlGateError,
-    require_control_gate,
-)
+from tools.research.v6.e2.control_gate import ControlGateError
 from tools.research.v6.e2.preregistration import load_preregistration, preregistration_digest
-from tools.research.v6.e2.run_e2 import DEFAULT_RUN_ROOT, condition_root
+from tools.research.v6.e2.requalification import RequalificationError
+from tools.research.v6.e2.run_e2 import DEFAULT_RUN_ROOT, condition_root, treatment_unlock
 
-E2_ANALYSIS_VERSION = 1
+E2_ANALYSIS_VERSION = 2
 
 Cell = Mapping[str, Any]
 Telemetry = Mapping[str, Any]
@@ -479,20 +479,18 @@ def hypothesis_metrics(
     return out
 
 
-def analyze_matrix(run_root: Path = DEFAULT_RUN_ROOT) -> dict[str, Any]:
-    """Analyze every completed condition/field; T-E2 only behind a passing gate."""
+def analyze_matrix(
+    run_root: Path = DEFAULT_RUN_ROOT, *, freeze_path: Path = FREEZE_RECORD_PATH
+) -> dict[str, Any]:
+    """Analyze every completed condition/field; T-E2 only behind ``run_e2.treatment_unlock``
+    (a committed analysis freeze, and a passing gate and requalification under it)."""
     matrix.verify_frozen_matrix()
     prereg = load_preregistration()
-    gate_path = run_root / matrix.matrix_id() / GATE_RECORD_NAME
     try:
-        gate = require_control_gate(
-            gate_path,
-            matrix_id=matrix.matrix_id(),
-            expected_matches={f.field_id: f.expected_matches for f in matrix.FIELDS},
-        )
-        gate_error = None
-    except ControlGateError as exc:
-        gate, gate_error = None, str(exc)
+        unlock = treatment_unlock(run_root, freeze_path=freeze_path)
+        gate, freeze, gate_error = unlock["gate"], unlock["freeze"], None
+    except (AnalysisFreezeError, ControlGateError, RequalificationError) as exc:
+        gate, freeze, gate_error = None, None, str(exc)
     runs: dict[tuple[str, str], FieldRun] = {}
     for cond in matrix.CONDITIONS:
         if cond.condition_id == matrix.TREATMENT_CONDITION and gate is None:
@@ -509,6 +507,11 @@ def analyze_matrix(run_root: Path = DEFAULT_RUN_ROOT) -> dict[str, Any]:
         "matrix_id": matrix.matrix_id(),
         "preregistration_sha256": preregistration_digest(),
         "control_gate": gate if gate is not None else {"status": "BLOCKED", "reason": gate_error},
+        "analysis_freeze": None if freeze is None else {
+            "freeze_id": freeze["freeze_id"],
+            "freeze_digest": freeze["freeze_digest"],
+            "identity": freeze["identity"],
+        },
         "fields": {f"{c}/{f}": analyze_field_run(run) for (c, f), run in sorted(runs.items())},
         "transitions": {
             fld.field_id: harness.outcome_transitions(

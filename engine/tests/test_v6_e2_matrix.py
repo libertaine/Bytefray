@@ -24,6 +24,11 @@ from battle_engine.ruleset_policy import (
 )
 
 from tools.research.v6.e2 import matrix
+from tools.research.v6.e2.analysis_freeze import (
+    AnalysisFreezeError,
+    build_freeze_record,
+    identity_inputs,
+)
 from tools.research.v6.e2.control_gate import (
     ControlGateError,
     compare_control_runs,
@@ -238,10 +243,16 @@ def test_execute_never_runs_without_explicit_confirmation(tmp_path: Path) -> Non
     assert list(tmp_path.iterdir()) == []
 
 
-def test_treatment_refuses_without_a_complete_passing_control_gate(tmp_path: Path) -> None:
+def test_treatment_refuses_without_a_freeze_and_a_complete_passing_control_gate(tmp_path: Path) -> None:
+    runs = tmp_path / "runs"
+    with pytest.raises(AnalysisFreezeError, match="No analysis freeze record"):
+        execute("T-E2", "F1", run_root=runs, confirm=True, freeze_path=tmp_path / "missing.json")
+    freeze = tmp_path / "freeze.json"
+    identity = identity_inputs(tooling_source_sha="a" * 40, match_generation_tree="b" * 40)
+    freeze.write_text(json.dumps(build_freeze_record(identity, {})), encoding="utf-8")
     with pytest.raises(ControlGateError, match="No control gate record"):
-        execute("T-E2", "F1", run_root=tmp_path, confirm=True)
-    assert list(tmp_path.iterdir()) == []
+        execute("T-E2", "F1", run_root=runs, confirm=True, freeze_path=freeze)
+    assert not runs.exists()
     with pytest.raises(E2ConfigurationError, match="no sample mode"):
         experiment_config("T-E2", "F1", sample=True)
 
@@ -271,6 +282,18 @@ def test_control_gate_record_rules(tmp_path: Path) -> None:
         write(**bad)
         with pytest.raises(ControlGateError, match=message):
             check()
+
+    # A gate recorded under one analysis freeze never unlocks another.
+    write(freeze_id="v6-e2-freeze-v2-aaaaaaaaaaaa")
+    assert require_control_gate(
+        path, matrix_id=matrix.matrix_id(), expected_matches=expected, freeze_id="v6-e2-freeze-v2-aaaaaaaaaaaa"
+    )["unlocks_treatment"]
+    for other in ("v6-e2-freeze-v2-bbbbbbbbbbbb", None):
+        write(freeze_id=other)
+        with pytest.raises(ControlGateError, match="freeze_id"):
+            require_control_gate(
+                path, matrix_id=matrix.matrix_id(), expected_matches=expected, freeze_id="v6-e2-freeze-v2-aaaaaaaaaaaa"
+            )
 
 
 def test_dry_run_counts_every_cell_with_the_real_planner_and_runs_nothing(tmp_path: Path) -> None:

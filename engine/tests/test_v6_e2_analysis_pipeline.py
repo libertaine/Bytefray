@@ -6,7 +6,8 @@
   metrics consume is proven from real replays in
   test_v6_e2_capture_analyzer.py.)
 * ``analyze_matrix`` is run on real control artifacts to prove it refuses to
-  analyze T-E2 without a complete, passing control gate.
+  analyze T-E2 without an analysis freeze and a complete, passing control
+  gate recorded under it.
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ from typing import Any
 from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
 
 from tools.research.v6.e2 import matrix
+from tools.research.v6.e2.analysis_freeze import build_freeze_record, identity_inputs
 from tools.research.v6.e2.analyze_e2 import (
     FieldRun,
     analyze_matrix,
@@ -196,7 +198,16 @@ def test_analysis_refuses_to_interpret_treatment_without_a_passing_gate(tmp_path
     treatment.mkdir(parents=True)
     shutil.copy(control / "experiment_result.json", treatment / "experiment_result.json")
 
-    report = analyze_matrix(tmp_path)
+    # Without an analysis freeze, T-E2 is blocked before any gate is looked for.
+    unfrozen = analyze_matrix(tmp_path, freeze_path=tmp_path / "missing.json")
+    assert unfrozen["control_gate"]["status"] == "BLOCKED"
+    assert "No analysis freeze record" in unfrozen["control_gate"]["reason"]
+    assert unfrozen["analysis_freeze"] is None and unfrozen["hypothesis_metrics"] is None
+
+    freeze = tmp_path / "freeze.json"
+    identity = identity_inputs(tooling_source_sha="a" * 40, match_generation_tree="b" * 40)
+    freeze.write_text(json.dumps(build_freeze_record(identity, {})), encoding="utf-8")
+    report = analyze_matrix(tmp_path, freeze_path=freeze)
     assert report["control_gate"]["status"] == "BLOCKED"
     assert "No control gate record" in report["control_gate"]["reason"]
     assert list(report["fields"]) == ["C-V4/F2"]
