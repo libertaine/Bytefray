@@ -20,6 +20,7 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
@@ -204,6 +205,15 @@ EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_SCALE_MOVE = (
 )
 EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL = (
     "ruleset_v6_research_scale_move_proportional_seeded_placements"
+)
+# V6 E2 (docs/research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md Sec E.2/K):
+# the capture-hold research Ruleset's own label. Same seeded-placement
+# mechanism as its research-scale control, but a distinct label for the
+# same reason every research identity above has one: a reader must never
+# be able to treat an E2 artifact as a research-scale (or stable-v4) one
+# from the mode label alone.
+EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_CAPTURE_HOLD_K2 = (
+    "ruleset_v6_research_capture_hold_k2_seeded_placements"
 )
 
 # V6 Phase 4B (task Sec 7): the Phase 4A research methodology's own
@@ -439,13 +449,28 @@ def is_ruleset_v6_research_scale_move_proportional_methodology(
     )
 
 
+def is_ruleset_v6_research_capture_hold_methodology(rules_compatibility_id: str) -> bool:
+    """Whether a resolved rules-compatibility id is the V6 E2 capture-hold research Ruleset.
+
+    True only for ``BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID``
+    (``bytefray-rules-6-research-capture-hold-k2``, docs/research/v6/
+    V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md). A separate single-member
+    predicate rather than a widening of
+    `is_ruleset_v6_research_scale_methodology`, which is documented as true
+    only for research-scale itself (design review Sec E.2).
+    """
+
+    return rules_compatibility_id == BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID
+
+
 def is_ruleset_v4_derived_methodology(rules_compatibility_id: str) -> bool:
     """Whether a resolved rules-compatibility id uses v4's seeded evaluation machinery.
 
     True for everything `is_ruleset_v4_methodology` is true for, plus
     `BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID` (V6 Phase 4B),
-    `BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID` (V6 Phase 4C), and
-    `BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID` (V6 Phase 4D):
+    `BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID` (V6 Phase 4C),
+    `BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID` (V6 Phase 4D), and
+    `BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID` (V6 E2):
     all share one identical recipe -- seed-derived seat geometry
     (`resolve_v4_seed_geometry`), `IDENTITY_VERSION_V4`/`SCHEMA_VERSION_V4`
     (7) -- because the research Rulesets declare the same
@@ -468,9 +493,14 @@ def is_ruleset_v4_derived_methodology(rules_compatibility_id: str) -> bool:
         or is_ruleset_v6_research_scale_move_proportional_methodology(
             rules_compatibility_id
         )
+        or is_ruleset_v6_research_capture_hold_methodology(rules_compatibility_id)
     )
 
 
+# V6 E2: ``is_v6_research_capture_hold_methodology`` is keyword-only on the
+# three resolvers below (unlike the older flags, which callers pass
+# positionally), so a call site can never set it by position by accident --
+# the positional-boolean omission trap the E2 design review Sec E.2 names.
 def resolved_arena_alignment_mode(
     is_v2_methodology: bool,
     group: bool = False,
@@ -478,7 +508,11 @@ def resolved_arena_alignment_mode(
     is_v6_research_scale_methodology: bool = False,
     is_v6_research_scale_move_methodology: bool = False,
     is_v6_research_scale_move_proportional_methodology: bool = False,
+    *,
+    is_v6_research_capture_hold_methodology: bool = False,
 ) -> str:
+    if is_v6_research_capture_hold_methodology:
+        return EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_CAPTURE_HOLD_K2
     if is_v6_research_scale_move_proportional_methodology:
         return EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL
     if is_v6_research_scale_move_methodology:
@@ -506,6 +540,9 @@ def arena_alignment_mode_for_ruleset(rules_compatibility_id: str, group: bool = 
         is_v6_research_scale_methodology=is_ruleset_v6_research_scale_methodology(rules_compatibility_id),
         is_v6_research_scale_move_methodology=is_ruleset_v6_research_scale_move_methodology(rules_compatibility_id),
         is_v6_research_scale_move_proportional_methodology=is_ruleset_v6_research_scale_move_proportional_methodology(rules_compatibility_id),
+        is_v6_research_capture_hold_methodology=is_ruleset_v6_research_capture_hold_methodology(
+            rules_compatibility_id
+        ),
     )
 
 
@@ -517,12 +554,15 @@ def resolved_identity_version(
     is_v6_research_scale_methodology: bool = False,
     is_v6_research_scale_move_methodology: bool = False,
     is_v6_research_scale_move_proportional_methodology: bool = False,
+    *,
+    is_v6_research_capture_hold_methodology: bool = False,
 ) -> int:
     if (
         is_v4_methodology
         or is_v6_research_scale_methodology
         or is_v6_research_scale_move_methodology
         or is_v6_research_scale_move_proportional_methodology
+        or is_v6_research_capture_hold_methodology
     ):
         return IDENTITY_VERSION_V4
     if is_v2_methodology and group:
@@ -537,12 +577,15 @@ def resolved_schema_version(
     is_v6_research_scale_methodology: bool = False,
     is_v6_research_scale_move_methodology: bool = False,
     is_v6_research_scale_move_proportional_methodology: bool = False,
+    *,
+    is_v6_research_capture_hold_methodology: bool = False,
 ) -> int:
     if (
         is_v4_methodology
         or is_v6_research_scale_methodology
         or is_v6_research_scale_move_methodology
         or is_v6_research_scale_move_proportional_methodology
+        or is_v6_research_capture_hold_methodology
     ):
         return SCHEMA_VERSION_V4
     if is_v2_methodology and group:
@@ -875,6 +918,11 @@ class EvaluationRequest:
         v4, ``_validate`` freely accepts an *explicit* ``arena_size`` for
         this Ruleset anywhere in the Phase 4A research range
         (``RESEARCH_SCALE_MIN_ARENA_SIZE``..``RESEARCH_SCALE_MAX_ARENA_SIZE``).
+
+        V6 E2: the capture-hold research Ruleset inherits that research
+        methodology unchanged, including this 512 default -- omitting it
+        here would silently run an omitted-arena E2 evaluation at
+        ``Config().arena_size`` (4096) instead (design review trap F-4).
         """
 
         if self.arena_size is not None:
@@ -884,6 +932,7 @@ class EvaluationRequest:
             or self.is_v6_research_scale_methodology
             or self.is_v6_research_scale_move_methodology
             or self.is_v6_research_scale_move_proportional_methodology
+            or self.is_v6_research_capture_hold_methodology
         ):
             return STANDARD_V4_ARENA_SIZE
         return Config().arena_size
@@ -940,6 +989,14 @@ class EvaluationRequest:
         """Whether this request's resolved Ruleset is the V6 Phase 4D proportional-movement research identity."""
 
         return is_ruleset_v6_research_scale_move_proportional_methodology(
+            self.resolved_rules_compatibility_id
+        )
+
+    @property
+    def is_v6_research_capture_hold_methodology(self) -> bool:
+        """Whether this request's resolved Ruleset is the V6 E2 capture-hold research identity."""
+
+        return is_ruleset_v6_research_capture_hold_methodology(
             self.resolved_rules_compatibility_id
         )
 

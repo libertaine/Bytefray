@@ -76,6 +76,7 @@ from battle_engine.evaluation_contracts import (
     SubjectAggregate,
     is_ruleset_v2_methodology,
     is_ruleset_v4_methodology,
+    is_ruleset_v6_research_capture_hold_methodology,
     is_ruleset_v6_research_scale_methodology,
     is_ruleset_v6_research_scale_move_methodology,
     is_ruleset_v6_research_scale_move_proportional_methodology,
@@ -947,6 +948,9 @@ def write_evaluation_state(
     resolved_is_v6_research_scale_move_proportional = (
         is_ruleset_v6_research_scale_move_proportional_methodology(resolved_rules_id)
     )
+    resolved_is_v6_research_capture_hold = is_ruleset_v6_research_capture_hold_methodology(
+        resolved_rules_id
+    )
     resolved_group = request.group and resolved_is_v2
     write_json_atomic(
         path,
@@ -972,6 +976,7 @@ def write_evaluation_state(
                 resolved_is_v6_research_scale,
                 resolved_is_v6_research_scale_move,
                 resolved_is_v6_research_scale_move_proportional,
+                is_v6_research_capture_hold_methodology=resolved_is_v6_research_capture_hold,
             ),
             "identity_version": resolved_identity_version(
                 resolved_is_v2,
@@ -980,6 +985,7 @@ def write_evaluation_state(
                 resolved_is_v6_research_scale,
                 resolved_is_v6_research_scale_move,
                 resolved_is_v6_research_scale_move_proportional,
+                is_v6_research_capture_hold_methodology=resolved_is_v6_research_capture_hold,
             ),
             "evaluation_id": evaluation_id,
             "candidate_id": request.candidate_id,

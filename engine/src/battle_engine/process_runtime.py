@@ -166,6 +166,14 @@ class EntrantState:
     last_read: int | None = None
     diagnostic: RuntimeDiagnostic | None = None
     entrant_termination: str | None = None
+    # V6 E2 capture-hold progress, maintained only by
+    # ``python_runtime.apply_core_capture`` (see its docstring): consecutive
+    # zero-core capture evaluations so far, and the capturer attributed at
+    # the evaluation where that streak began. Runtime-only: replay snapshots
+    # and results read named attributes, never this dataclass wholesale, so
+    # neither field is ever serialized.
+    core_zero_streak: int = 0
+    core_zero_onset_capturer: str | None = None
 
     @property
     def core_start(self) -> int:
@@ -1282,6 +1290,7 @@ class ProcessMatchController:
                 self.statistics_collector,
                 self.statistics,
                 events,
+                hold_ticks=self.ruleset_policy.capture_hold_ticks,
             )
 
             self.statistics_collector.record_tick(

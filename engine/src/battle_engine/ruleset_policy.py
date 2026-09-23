@@ -37,6 +37,7 @@ from battle_engine.rules import (
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
@@ -101,6 +102,16 @@ class RulesetPolicy:
     process_selection: str = "priority"
     movement_stride: str = "fixed_64"
     movement_displacement: str = "literal"
+    #: How many consecutive end-of-tick capture evaluations an entrant's
+    #: core must hold zero self-owned cells before the entrant is
+    #: core-captured. ``1`` is stable v4's immediate capture and the value
+    #: every Ruleset keeps unless it states otherwise; V6 E2's research
+    #: identity uses ``2`` (docs/research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md
+    #: Sec C/E.5). An ordinal count rather than an enum, so ``1`` is
+    #: literally v4 and a further arm needs no new code. There is deliberately
+    #: no upper bound: a value above the tick limit makes capture unreachable,
+    #: which is valid if pointless.
+    capture_hold_ticks: int = 1
 
     #: Every value :attr:`core_placement` may take. ``"zero"`` is every
     #: Ruleset whose omitted start addresses historically defaulted to the
@@ -163,6 +174,17 @@ class RulesetPolicy:
                 f"unknown movement_displacement {self.movement_displacement!r} for Ruleset "
                 f"{self.ruleset_id!r}; expected one of "
                 f"{sorted(self.MOVEMENT_DISPLACEMENT_MODES)!r}"
+            )
+        # ``bool`` is rejected explicitly: it is an ``int`` subclass, so
+        # ``True`` would otherwise pass as a hold of one tick.
+        if (
+            isinstance(self.capture_hold_ticks, bool)
+            or not isinstance(self.capture_hold_ticks, int)
+            or self.capture_hold_ticks < 1
+        ):
+            raise ValueError(
+                f"invalid capture_hold_ticks {self.capture_hold_ticks!r} for Ruleset "
+                f"{self.ruleset_id!r}; expected an integer >= 1"
             )
 
     def resolve_max_move_delta(self, arena_size: int) -> int:
@@ -531,6 +553,42 @@ RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL = RulesetPolicy(
 )
 
 
+# V6 E2: the multi-tick capture-hold research identity (see
+# ``BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID``'s own docstring in
+# ``rules.py``, docs/research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md Sec C/F
+# for the semantics and their adversarial review, and
+# docs/research/v6/V6_E2_CAPTURE_HOLD_REGISTRATION.md for the registration).
+# Derived from ``RULESET_V6_RESEARCH_SCALE``, the active research control,
+# as an independent literal copy of its values -- never
+# ``dataclasses.replace(RULESET_V6_RESEARCH_SCALE, ...)`` -- for the same
+# hidden-coupling reason ``RULESET_V6_RESEARCH_SCALE`` itself gives above.
+# Every field is spelled out, including the two the control leaves at their
+# defaults, so this object's meaning never depends on a future default
+# change. The only intended gameplay difference from the control is
+# ``capture_hold_ticks=2``; that it is the *only* difference is a verified
+# fact (``engine/tests/test_ruleset_v6_research_capture_hold.py``), not
+# merely this comment's claim.
+#
+# Permanent obligation (design review Sec E.5): artifacts record only this
+# Ruleset's ID and recover its semantics through the finite
+# ``_RULESET_POLICIES`` registry, so once any E2 artifact exists these field
+# values must never change, and retiring this identity must keep it
+# resolvable.
+RULESET_V6_RESEARCH_CAPTURE_HOLD_K2 = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seeded",
+    process_selection="round_robin",
+    movement_stride="fixed_64",
+    movement_displacement="literal",
+    capture_hold_ticks=2,
+)
+
+
 # Which Ruleset identities execute on the Agent API v2 process runtime
 # (``battle_engine.process_runtime.ProcessMatchController``). A finite, explicit set for the
 # same reason ``_RULESET_POLICIES`` is a finite table -- and the one place
@@ -556,19 +614,33 @@ RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL = RulesetPolicy(
 # V6 Phase 4D added ``BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID``:
 # it executes on the Agent API v2 process runtime, differing in proportional
 # physical movement displacement.
+#
+# V6 E2 added ``BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID``: it executes
+# on the Agent API v2 process runtime, differing only in its capture hold.
 PROCESS_RULESET_IDS: frozenset[str] = frozenset(
     {
         BYTEFRAY_RULESET_V4_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
     }
 )
 
 # V6 Phase 11: Explicit Ruleset Lifecycle Sets
+#
+# Every executable identity in ``_RULESET_POLICIES`` belongs to exactly one
+# of PUBLIC_STABLE / ACTIVE_RESEARCH / RETIRED_RESEARCH (V6 E2 design review
+# Sec A.2/J.2; enforced by ``engine/tests/test_ruleset_v6_research_capture_
+# hold.py``). The per-surface exposure lists (``OMITTED_RULESET_CANDIDATES``,
+# the CLI ``--ruleset`` choices, the Designer options, the evaluation
+# allow-list) remain the actual exposure controls.
 PUBLIC_STABLE_RULESET_IDS: frozenset[str] = frozenset({BYTEFRAY_RULESET_V4_ID})
 ACTIVE_RESEARCH_RULESET_IDS: frozenset[str] = frozenset(
-    {BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID}
+    {
+        BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
+    }
 )
 RETIRED_RESEARCH_RULESET_IDS: frozenset[str] = frozenset(
     {
@@ -644,6 +716,7 @@ _RULESET_POLICIES: Mapping[str, RulesetPolicy] = {
     RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL.ruleset_id: (
         RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL
     ),
+    RULESET_V6_RESEARCH_CAPTURE_HOLD_K2.ruleset_id: RULESET_V6_RESEARCH_CAPTURE_HOLD_K2,
 }
 
 
@@ -897,6 +970,7 @@ __all__ = [
     "BYTEFRAY_RULESET_V4_ALPHA1_ID",
     "BYTEFRAY_RULESET_V4_ALPHA2_ID",
     "BYTEFRAY_RULESET_V4_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID",
@@ -906,6 +980,7 @@ __all__ = [
     "PUBLIC_STABLE_RULESET_IDS",
     "RETIRED_RESEARCH_RULESET_IDS",
     "RULESET_V4",
+    "RULESET_V6_RESEARCH_CAPTURE_HOLD_K2",
     "RULESET_V6_RESEARCH_SCALE",
     "RULESET_V6_RESEARCH_SCALE_MOVE",
     "RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL",

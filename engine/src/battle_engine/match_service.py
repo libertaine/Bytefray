@@ -60,6 +60,7 @@ from battle_engine.result_model import (
 from battle_engine.results import WINNER_TIE_SENTINEL
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
@@ -425,6 +426,11 @@ _CORE_PLACEMENT_GUARDED_RULESET_IDS: frozenset[str] = frozenset(
         # V6 Phase 4D: proportional-movement research Ruleset also shares
         # seeded placement and vulnerable-core semantics.
         BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
+        # V6 E2: the capture-hold research Ruleset shares seeded placement
+        # with its research-scale control, and core capture is exactly what
+        # it varies -- overlapping cores must fail closed here too, never
+        # seed core ownership in entrant order.
+        BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
     }
 )
 

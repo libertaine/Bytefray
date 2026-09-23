@@ -60,6 +60,7 @@ from battle_engine.evaluation_service import EvaluationService
 from battle_engine.paths import get_data_root
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
@@ -183,6 +184,7 @@ def _parser() -> argparse.ArgumentParser:
             BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
             BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
             BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
+            BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
         ],
         default=None,
         help=(
@@ -218,7 +220,13 @@ def _parser() -> argparse.ArgumentParser:
             "(clamped to 64) scale into proportional physical displacement from the "
             "512-cell reference world: actual_delta = sign(op) * floor(abs(op) * arena_size / 512). "
             "Not selected automatically; must be named explicitly. See "
-            "docs/research/v6/V6_PHASE4D_PROPORTIONAL_MOVEMENT_STUDY.md."
+            "docs/research/v6/V6_PHASE4D_PROPORTIONAL_MOVEMENT_STUDY.md. "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID} is the V6 E2 "
+            "capture-hold research identity (explicit-only research): identical to "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID} except an entrant is core-captured "
+            "only after its core holds zero self-owned cells at two consecutive "
+            "end-of-tick evaluations. Not selected automatically; must be named "
+            "explicitly. See docs/research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md."
         ),
     )
     parser.add_argument(

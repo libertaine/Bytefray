@@ -153,6 +153,29 @@ BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID = (
 )
 
 
+# V6 E2's multi-tick capture-hold research identity (see
+# docs/research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md Sec C/F and
+# docs/research/v6/V6_E2_CAPTURE_HOLD_REGISTRATION.md). A distinct research
+# identity, never an alias of stable v4 or of raw research-scale: its sole
+# intended gameplay difference from ``bytefray-rules-6-research-scale`` (its
+# direct parent and the E2 structural control) is that an entrant is
+# core-captured only after its core has held zero self-owned cells at two
+# consecutive end-of-tick capture evaluations
+# (``RulesetPolicy.capture_hold_ticks == 2``) rather than at the first one.
+#
+# Topic ``capture-hold`` per the ``bytefray-rules-6-research-<topic>``
+# convention, deliberately without ``scale`` (the topic is not arena
+# scaling, although the parent policy is research-scale); the ``-k2`` suffix
+# records the single varied value so a possible K=3 arm would be a sibling
+# ``-k3`` rather than a rename. Deliberately not selectable from
+# ``bytefray run``/``agents test``/tournament/Designer surfaces or
+# ``OMITTED_RULESET_CANDIDATES`` -- only ``agents evaluate`` (or the Python
+# API) can select it, and only by explicit ``--ruleset`` name.
+BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID = (
+    "bytefray-rules-6-research-capture-hold-k2"
+)
+
+
 # v0.10 Phase 4: a finite, explicit historical-alias table -- deliberately
 # not a generic "normalize any evaluation-rules-N-shaped string" function.
 # Each entry records a relationship actually established by git-history
@@ -217,6 +240,7 @@ __all__ = [
     "BYTEFRAY_RULESET_V4_ALPHA1_ID",
     "BYTEFRAY_RULESET_V4_ALPHA2_ID",
     "BYTEFRAY_RULESET_V4_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID",

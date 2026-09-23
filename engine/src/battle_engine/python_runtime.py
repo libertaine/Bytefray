@@ -224,6 +224,8 @@ def apply_core_capture(
     statistics_collector: StatisticsCollector,
     statistics: StatisticsMap,
     events: list[dict[str, Any]],
+    *,
+    hold_ticks: int = 1,
 ) -> None:
     """bytefray-rules-2-alpha1: kill any living entrant now core-captured.
 
@@ -236,31 +238,68 @@ def apply_core_capture(
     alive/territory score for the tick it dies on, exactly like an
     ordinary Python ``HALT``, and no hidden extra turn. Kill credit goes to
     whichever entrant's ``WRITE`` caused the final defender-owned core cell
-    to change owner this tick, when :func:`_attribute_core_capture` can
-    determine it unambiguously; otherwise this is recorded as an
-    unattributed death, exactly like an ordinary unattributed Python
-    forfeit/halt.
+    to change owner, when :func:`_attribute_core_capture` can determine it
+    unambiguously; otherwise this is recorded as an unattributed death,
+    exactly like an ordinary unattributed Python forfeit/halt.
+
+    V6 E2 capture hold (docs/research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md
+    Sec C): ``hold_ticks`` is the owning Ruleset's
+    ``RulesetPolicy.capture_hold_ticks`` (K). Capture completes only once an
+    entrant has owned zero core cells at K *consecutive* evaluations of this
+    function. Each ``state`` carries that progress as ``core_zero_streak``
+    (consecutive zero evaluations so far) and ``core_zero_onset_capturer``:
+
+    * any positive ownership (one cell or the whole core) resets the streak
+      to 0 and clears the onset attribution;
+    * the first zero evaluation of a streak (the *onset*) attributes the
+      capturer with the unchanged :func:`_attribute_core_capture`, against
+      the onset tick's own pre-tick snapshot and diffs, and keeps it;
+    * completion credits that onset capturer. Re-attributing at the
+      completion tick would find the core already at zero before the tick
+      began and return ``None``, turning every held capture into an
+      unattributed death with no kill score (review Sec C.5).
+
+    Evaluation is two-phase so simultaneous completion stays simultaneous:
+    phase 1 judges every live entrant against the same end-of-tick board
+    and changes no ``alive`` flag; phase 2 applies every completion found.
+    The *set* of completing entrants therefore never depends on iteration
+    order; seat order decides only the (deterministic) order of the
+    appended events. With ``hold_ticks == 1`` onset and completion are the
+    same evaluation, which is exactly the historical single-tick rule --
+    nothing in that rule ever read another entrant's ``alive`` flag, so the
+    two-phase form is observationally identical to it.
     """
 
+    completing: list[Any] = []
     for state in states:
         if not state.alive:
             continue
         addrs = core_addresses(state.core_start, len(vm.arena))
         owned_now = sum(1 for address in addrs if vm.writer[address] == state.agent_id)
         if owned_now > 0:
+            state.core_zero_streak = 0
+            state.core_zero_onset_capturer = None
             continue
-        before = pre_tick_core_owners.get(state.agent_id, ())
-        # ``before`` is only ever absent-or-mis-sized if this entrant somehow
-        # reached this point without a pre-tick snapshot (an invariant
-        # violation, not a real match state -- every state alive at tick
-        # start is snapshotted before any of that tick's actions run); guard
-        # defensively rather than let ``_attribute_core_capture``'s
-        # ``zip(..., strict=True)`` raise on a length mismatch.
-        killer = (
-            _attribute_core_capture(state, addrs, before, vm)
-            if len(before) == len(addrs)
-            else None
-        )
+        if state.core_zero_streak == 0:
+            before = pre_tick_core_owners.get(state.agent_id, ())
+            # ``before`` is only ever absent-or-mis-sized if this entrant
+            # somehow reached this point without a pre-tick snapshot (an
+            # invariant violation, not a real match state -- every state
+            # alive at tick start is snapshotted before any of that tick's
+            # actions run); guard defensively rather than let
+            # ``_attribute_core_capture``'s ``zip(..., strict=True)`` raise on
+            # a length mismatch.
+            state.core_zero_onset_capturer = (
+                _attribute_core_capture(state, addrs, before, vm)
+                if len(before) == len(addrs)
+                else None
+            )
+        state.core_zero_streak += 1
+        if state.core_zero_streak >= hold_ticks:
+            completing.append(state)
+
+    for state in completing:
+        killer = state.core_zero_onset_capturer
         state.alive = False
         state.entrant_termination = "core_captured"
         if killer is not None and killer != state.agent_id:
