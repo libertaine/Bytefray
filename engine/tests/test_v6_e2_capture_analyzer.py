@@ -199,6 +199,9 @@ def test_scripted_interrupted_streak_counts_onsets_recoveries_and_one_completion
     assert (victim["termination"], victim["alive_at_end"]) == ("core_captured", False)
     attacker = telemetry["entrants"]["A"]
     assert (attacker["onsets"], attacker["zero_core_ticks"], attacker["final_owned"]) == (0, [], 8)
+    # Never at zero, so never recovering: a positive evaluation is a
+    # recovery only directly after a zero streak.
+    assert (attacker["recovery_ticks"], attacker["recovery_rate"], attacker["evaluations"]) == ([], None, 6)
     assert telemetry["hold_ticks"] == 2
     assert telemetry["attributions"] == [
         {
@@ -244,6 +247,7 @@ def test_zero_core_within_a_tick_is_not_an_onset(data_root: Path) -> None:
 
     victim = analyze_replay(replay)["entrants"]["B"]
     assert (victim["onsets"], victim["zero_core_ticks"], victim["final_owned"]) == (0, [], 1)
+    assert victim["recovery_ticks"] == []
 
 
 def test_d3_probe_mirror_zero_core_winner(data_root: Path) -> None:
@@ -280,7 +284,8 @@ def test_d5_sniper_vs_disrupt_guard_alternation_is_fully_phase_locked(data_root:
     assert b["recovery_ticks"] == [2, 4, 6, 8]
     assert (b["completions"], b["max_streak"], b["phase_lock"]) == (0, 1, 1.0)
     assert b["capture_threatened_at_end"] is False
-    assert telemetry["entrants"]["A"]["zero_core_ticks"] == []
+    a = telemetry["entrants"]["A"]
+    assert (a["zero_core_ticks"], a["onset_ticks"], a["recovery_ticks"]) == ([], [], [])
     assert telemetry["completions"] == 0 and telemetry["attributions"] == []
 
 
