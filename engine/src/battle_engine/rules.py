@@ -176,6 +176,30 @@ BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID = (
 )
 
 
+# V6 E3's slot-limited disruption research identities (see
+# docs/research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md). Each is a
+# distinct research identity, never an alias of its parent: its sole intended
+# gameplay difference from that parent is that a disruptive hit suppresses a
+# victim process only for its next offer to its own entrant, still inside
+# the existing one-tick disruption window, rather than for the whole rest of
+# the tick (``RulesetPolicy.disruption_slot_limit == 1`` instead of ``None``).
+#
+# The primary treatment's parent is the E2 capture-hold identity (K=2); the
+# companion's parent is ``bytefray-rules-6-research-scale`` (K=1), so the
+# companion measures the same duration change without the capture hold. The
+# ``-slot1`` suffix records the single varied value, so a possible second
+# arm would be a sibling (``-slot2``) rather than a rename. Deliberately not
+# selectable from ``bytefray run``/``agents test``/tournament/Designer
+# surfaces or ``OMITTED_RULESET_CANDIDATES`` -- only ``agents evaluate`` (or
+# the Python API) can select either, and only by explicit ``--ruleset`` name.
+BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID = (
+    "bytefray-rules-6-research-capture-hold-k2-disruption-slot1"
+)
+BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID = (
+    "bytefray-rules-6-research-disruption-slot1"
+)
+
+
 # v0.10 Phase 4: a finite, explicit historical-alias table -- deliberately
 # not a generic "normalize any evaluation-rules-N-shaped string" function.
 # Each entry records a relationship actually established by git-history
@@ -240,7 +264,9 @@ __all__ = [
     "BYTEFRAY_RULESET_V4_ALPHA1_ID",
     "BYTEFRAY_RULESET_V4_ALPHA2_ID",
     "BYTEFRAY_RULESET_V4_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID",

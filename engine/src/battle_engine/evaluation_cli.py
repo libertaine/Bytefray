@@ -60,7 +60,9 @@ from battle_engine.evaluation_service import EvaluationService
 from battle_engine.paths import get_data_root
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
@@ -185,6 +187,8 @@ def _parser() -> argparse.ArgumentParser:
             BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
             BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
             BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
+            BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
+            BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
         ],
         default=None,
         help=(
@@ -226,7 +230,15 @@ def _parser() -> argparse.ArgumentParser:
             f"{BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID} except an entrant is core-captured "
             "only after its core holds zero self-owned cells at two consecutive "
             "end-of-tick evaluations. Not selected automatically; must be named "
-            "explicitly. See docs/research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md."
+            "explicitly. See docs/research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md. "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID} and "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID} are the V6 E3 "
+            "slot-limited disruption research identities (explicit-only research): "
+            f"identical to {BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID} and "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID} respectively, except a disrupted "
+            "process is suppressed only for its entrant's next action offer rather "
+            "than for the rest of the tick. Not selected automatically; must be named "
+            "explicitly. See docs/research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md."
         ),
     )
     parser.add_argument(

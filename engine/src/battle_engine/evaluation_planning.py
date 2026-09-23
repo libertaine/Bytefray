@@ -47,7 +47,9 @@ from battle_engine.evaluation_contracts import (
     EvaluationSeatAssignment,
     is_ruleset_v2_methodology,
     is_ruleset_v4_methodology,
+    is_ruleset_v6_research_capture_hold_disruption_slot_methodology,
     is_ruleset_v6_research_capture_hold_methodology,
+    is_ruleset_v6_research_disruption_slot_methodology,
     is_ruleset_v6_research_scale_methodology,
     is_ruleset_v6_research_scale_move_methodology,
     is_ruleset_v6_research_scale_move_proportional_methodology,
@@ -336,6 +338,12 @@ def build_matrix(
     resolved_is_v6_research_capture_hold = is_ruleset_v6_research_capture_hold_methodology(
         resolved_rules_id
     )
+    resolved_is_v6_research_capture_hold_disruption_slot = (
+        is_ruleset_v6_research_capture_hold_disruption_slot_methodology(resolved_rules_id)
+    )
+    resolved_is_v6_research_disruption_slot = is_ruleset_v6_research_disruption_slot_methodology(
+        resolved_rules_id
+    )
 
     # v2.0.0-beta2 Phase 2: multi-entrant ("group") matrix generation is a
     # structurally different generation strategy (seed x layout x seat
@@ -355,6 +363,10 @@ def build_matrix(
         resolved_is_v6_research_scale_move,
         resolved_is_v6_research_scale_move_proportional,
         is_v6_research_capture_hold_methodology=resolved_is_v6_research_capture_hold,
+        is_v6_research_capture_hold_disruption_slot_methodology=(
+            resolved_is_v6_research_capture_hold_disruption_slot
+        ),
+        is_v6_research_disruption_slot_methodology=resolved_is_v6_research_disruption_slot,
     )
 
     # v3 Phase 0D: placements are pure functions of arena size, so they
@@ -396,8 +408,10 @@ def build_matrix(
                     or resolved_is_v6_research_scale_move
                     or resolved_is_v6_research_scale_move_proportional
                     or resolved_is_v6_research_capture_hold
+                    or resolved_is_v6_research_capture_hold_disruption_slot
+                    or resolved_is_v6_research_disruption_slot
                 ):
-                    # V6 Phase 4B/4C/4D and E2: the research Rulesets share this exact
+                    # V6 Phase 4B/4C/4D, E2 and E3: the research Rulesets share this exact
                     # branch -- `resolve_v4_seed_geometry` resolves seeded
                     # placement through `resolved_rules_id`'s own registered
                     # `RulesetPolicy.core_placement`, so it already produces
@@ -440,6 +454,8 @@ def build_matrix(
                                 or resolved_is_v6_research_scale_move
                                 or resolved_is_v6_research_scale_move_proportional
                                 or resolved_is_v6_research_capture_hold
+                                or resolved_is_v6_research_capture_hold_disruption_slot
+                                or resolved_is_v6_research_disruption_slot
                             )
                             and orientation == ORIENTATION_OPPONENT_FIRST
                         ):
@@ -517,6 +533,8 @@ def build_matrix(
                                 or resolved_is_v6_research_scale_move
                                 or resolved_is_v6_research_scale_move_proportional
                                 or resolved_is_v6_research_capture_hold
+                                or resolved_is_v6_research_capture_hold_disruption_slot
+                                or resolved_is_v6_research_disruption_slot
                             ),
                         )
                         condition_fingerprint = None

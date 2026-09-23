@@ -37,7 +37,9 @@ from battle_engine.rules import (
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
@@ -112,6 +114,18 @@ class RulesetPolicy:
     #: no upper bound: a value above the tick limit makes capture unreachable,
     #: which is valid if pointless.
     capture_hold_ticks: int = 1
+    #: How long a disruptive hit suppresses a victim process inside the
+    #: existing one-tick disruption window. ``None`` is the historical rule
+    #: every Ruleset keeps unless it states otherwise: the process stays
+    #: ineligible to act, and cannot sense, for the whole rest of the tick in
+    #: which it was hit. An integer ``n >= 1`` (V6 E3, docs/research/v6/
+    #: V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md) suppresses it only for
+    #: its next ``n`` offers to its *own* entrant -- the scheduler's action
+    #: slots for that entrant, never a global slot count -- and still never
+    #: past the end of the tick. A later hit resets the count to ``n``; it
+    #: never adds to it. The tick-level window itself
+    #: (``ProcessMatchController.disruption_duration``) is unchanged.
+    disruption_slot_limit: int | None = None
 
     #: Every value :attr:`core_placement` may take. ``"zero"`` is every
     #: Ruleset whose omitted start addresses historically defaulted to the
@@ -185,6 +199,17 @@ class RulesetPolicy:
             raise ValueError(
                 f"invalid capture_hold_ticks {self.capture_hold_ticks!r} for Ruleset "
                 f"{self.ruleset_id!r}; expected an integer >= 1"
+            )
+        # Same strict shape as ``capture_hold_ticks``, with ``None`` as the
+        # one non-integer value allowed (whole-tick disruption).
+        if self.disruption_slot_limit is not None and (
+            isinstance(self.disruption_slot_limit, bool)
+            or not isinstance(self.disruption_slot_limit, int)
+            or self.disruption_slot_limit < 1
+        ):
+            raise ValueError(
+                f"invalid disruption_slot_limit {self.disruption_slot_limit!r} for Ruleset "
+                f"{self.ruleset_id!r}; expected None or an integer >= 1"
             )
 
     def resolve_max_move_delta(self, arena_size: int) -> int:
@@ -589,6 +614,56 @@ RULESET_V6_RESEARCH_CAPTURE_HOLD_K2 = RulesetPolicy(
 )
 
 
+# V6 E3: the slot-limited disruption research identities (see their
+# docstring in ``rules.py`` and
+# docs/research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md). Each is
+# an independent literal copy of its parent's values -- never
+# ``dataclasses.replace(parent, ...)`` -- for the hidden-coupling reason
+# ``RULESET_V6_RESEARCH_SCALE`` gives above. Every field is spelled out, so
+# neither object's meaning depends on a future default change. The only
+# intended gameplay difference from each parent is
+# ``disruption_slot_limit=1``; that it is the *only* difference is a
+# verified fact (``engine/tests/test_ruleset_v6_research_disruption_slot.py``),
+# not merely this comment's claim.
+#
+# Permanent obligation: artifacts record only the Ruleset ID and recover
+# its semantics through ``_RULESET_POLICIES``, so once any E3 artifact
+# exists these field values must never change, and retiring either identity
+# must keep it resolvable.
+#
+# Primary treatment; parent ``RULESET_V6_RESEARCH_CAPTURE_HOLD_K2`` (E2).
+RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1 = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seeded",
+    process_selection="round_robin",
+    movement_stride="fixed_64",
+    movement_displacement="literal",
+    capture_hold_ticks=2,
+    disruption_slot_limit=1,
+)
+
+# Companion treatment; parent ``RULESET_V6_RESEARCH_SCALE`` (K=1).
+RULESET_V6_RESEARCH_DISRUPTION_SLOT1 = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seeded",
+    process_selection="round_robin",
+    movement_stride="fixed_64",
+    movement_displacement="literal",
+    capture_hold_ticks=1,
+    disruption_slot_limit=1,
+)
+
+
 # Which Ruleset identities execute on the Agent API v2 process runtime
 # (``battle_engine.process_runtime.ProcessMatchController``). A finite, explicit set for the
 # same reason ``_RULESET_POLICIES`` is a finite table -- and the one place
@@ -617,6 +692,11 @@ RULESET_V6_RESEARCH_CAPTURE_HOLD_K2 = RulesetPolicy(
 #
 # V6 E2 added ``BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID``: it executes
 # on the Agent API v2 process runtime, differing only in its capture hold.
+#
+# V6 E3 added ``BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID``
+# and ``BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID``: both execute on the
+# Agent API v2 process runtime, each differing from its parent only in its
+# disruption slot limit.
 PROCESS_RULESET_IDS: frozenset[str] = frozenset(
     {
         BYTEFRAY_RULESET_V4_ID,
@@ -624,6 +704,8 @@ PROCESS_RULESET_IDS: frozenset[str] = frozenset(
         BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
     }
 )
 
@@ -640,6 +722,8 @@ ACTIVE_RESEARCH_RULESET_IDS: frozenset[str] = frozenset(
     {
         BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
     }
 )
 RETIRED_RESEARCH_RULESET_IDS: frozenset[str] = frozenset(
@@ -717,6 +801,10 @@ _RULESET_POLICIES: Mapping[str, RulesetPolicy] = {
         RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL
     ),
     RULESET_V6_RESEARCH_CAPTURE_HOLD_K2.ruleset_id: RULESET_V6_RESEARCH_CAPTURE_HOLD_K2,
+    RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1.ruleset_id: (
+        RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1
+    ),
+    RULESET_V6_RESEARCH_DISRUPTION_SLOT1.ruleset_id: RULESET_V6_RESEARCH_DISRUPTION_SLOT1,
 }
 
 
@@ -970,7 +1058,9 @@ __all__ = [
     "BYTEFRAY_RULESET_V4_ALPHA1_ID",
     "BYTEFRAY_RULESET_V4_ALPHA2_ID",
     "BYTEFRAY_RULESET_V4_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID",
@@ -981,6 +1071,8 @@ __all__ = [
     "RETIRED_RESEARCH_RULESET_IDS",
     "RULESET_V4",
     "RULESET_V6_RESEARCH_CAPTURE_HOLD_K2",
+    "RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1",
+    "RULESET_V6_RESEARCH_DISRUPTION_SLOT1",
     "RULESET_V6_RESEARCH_SCALE",
     "RULESET_V6_RESEARCH_SCALE_MOVE",
     "RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL",
