@@ -323,9 +323,12 @@ Current status across the repository:
   draws, or another seat pathology. The research Ruleset is implemented and
   qualified, and the research apparatus -- fixtures, capture analyzer, harness
   remediation, frozen matrix and hypotheses, control gate -- is in place; the
-  experiment matrix has not been run
+  experiment matrix was halted before its treatment condition on a
+  capture-analyzer defect, with the controls run and the control gate passed,
+  and no treatment data exists
   ([`docs/research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md`](research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md),
-  [`docs/research/v6/V6_E2_EXPERIMENT_FREEZE.md`](research/v6/V6_E2_EXPERIMENT_FREEZE.md)).
+  [`docs/research/v6/V6_E2_EXPERIMENT_FREEZE.md`](research/v6/V6_E2_EXPERIMENT_FREEZE.md),
+  [`docs/research/v6/V6_E2_MATRIX_EXECUTION_HALT.md`](research/v6/V6_E2_MATRIX_EXECUTION_HALT.md)).
 
 ---
 
