@@ -737,8 +737,11 @@ def _run_v4_process_match(
         os.close(descriptor)
         temporary_path = Path(temporary_name)
         sink = JSONLSink(str(temporary_path))
-        summary = controller.run(sink, verbose=request.verbose)
-        sink = None
+        try:
+            summary = controller.run(sink, verbose=request.verbose)
+        finally:
+            sink.close()
+            sink = None
         recorded_path = temporary_path
         temporary_path = None
         
