@@ -315,7 +315,7 @@ Current status across the repository:
   **Retired Research Rulesets.** Closed research identities from the Phase 4
   movement line. Retained for historical characterization test verification and
   persisted artifact readability; retired from ongoing research development.
-- **Future gameplay mechanics (E2 — Multi-Tick Capture Hold):** **Planned.**
+- **Future gameplay mechanics (E2 — Multi-Tick Capture Hold):** **Completed (research-only).**
   Controlled experiment on the deterministic tick-1 Seat-A forced capture
   identified in stable V4. It asks whether delaying fatal capture for one
   additional qualifying tick creates meaningful opponent-dependent response, or
@@ -326,12 +326,16 @@ Current status across the repository:
   experiment matrix was halted before its treatment condition on a
   capture-analyzer defect, with the controls run and the control gate passed;
   the analyzer has since been repaired, requalified on the control corpus and
-  re-frozen as analysis freeze `v6-e2-freeze-v2-db6458596d82`, and the
-  treatment awaits authorization with no treatment data in existence
+  re-frozen as analysis freeze `v6-e2-freeze-v2-db6458596d82`. The treatment
+  then ran under that freeze. K = 2 breaks the forced line but mainly turns it
+  into delay, scheduler-locked recovery stalemates, zero-core wins and a new
+  mirror seat inversion, without sufficient strategic opponent-dependence;
+  the Ruleset remains research-only
   ([`docs/research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md`](research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md),
   [`docs/research/v6/V6_E2_EXPERIMENT_FREEZE.md`](research/v6/V6_E2_EXPERIMENT_FREEZE.md),
   [`docs/research/v6/V6_E2_MATRIX_EXECUTION_HALT.md`](research/v6/V6_E2_MATRIX_EXECUTION_HALT.md),
-  [`docs/research/v6/V6_E2_ANALYSIS_FREEZE_V2.md`](research/v6/V6_E2_ANALYSIS_FREEZE_V2.md)).
+  [`docs/research/v6/V6_E2_ANALYSIS_FREEZE_V2.md`](research/v6/V6_E2_ANALYSIS_FREEZE_V2.md),
+  [`docs/research/v6/V6_E2_CAPTURE_HOLD_RESULTS.md`](research/v6/V6_E2_CAPTURE_HOLD_RESULTS.md)).
 
 ---
 
