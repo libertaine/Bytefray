@@ -1,0 +1,64 @@
+{
+  "schema": "bytefray.v6.e2.analysis_freeze",
+  "status": "frozen before any T-E2 matrix data exists",
+  "freeze_id": "v6-e2-freeze-v2-db6458596d82",
+  "freeze_digest": "db6458596d82127e7b563cef0be9318c83f50e47de8d1990b0d9fe9b9a5a3fc4",
+  "identity": {
+    "freeze_version": 2,
+    "matrix_id": "v6-e2-matrix-v1-9048907fdc3b",
+    "matrix_digest": "9048907fdc3b09edf82d5da323bf3659b8b2ff158d50c72043257560497427e0",
+    "preregistration_sha256": "5b0fafd3ffb1e6f79b5d6170196b642cc7461149691f1c031c24d456a9d3b856",
+    "capture_analyzer_version": 2,
+    "capture_analyzer_sha256": "b818f53e32ba160fb55386cddccd555812def9dc7c54434923c7451fa2c18f86",
+    "tooling_sha256": {
+      "tools/research/v6/experiment_harness.py": "e137c02df84f1aa20d1097472bb3885820e4a27ddbd2849fa7b1be73980e0254",
+      "tools/research/v6/e2/analysis_freeze.py": "2fe4eb7effef50d2e207164a8da904885207ec7e83e2efb09322cece96942f01",
+      "tools/research/v6/e2/analyze_e2.py": "0a4e4df369e27d732566cd18e58c2ee387224db854eaffa7748ca268cb0b6ab4",
+      "tools/research/v6/e2/capture_analyzer.py": "b818f53e32ba160fb55386cddccd555812def9dc7c54434923c7451fa2c18f86",
+      "tools/research/v6/e2/control_gate.py": "c719c04acc5764583875bbf3f5a2dcafa7c8b71870c5d5793f251e1504203bdf",
+      "tools/research/v6/e2/matrix.py": "bd8ca2a88f2945c5bf3d544ec5a59cf9293bd11b78e1548a2e443c787a131449",
+      "tools/research/v6/e2/preregistration.json": "5b0fafd3ffb1e6f79b5d6170196b642cc7461149691f1c031c24d456a9d3b856",
+      "tools/research/v6/e2/preregistration.py": "c77e916179b7383fa7e450d4afc70e212f9ba77724a635b62eaa87a088e683ca",
+      "tools/research/v6/e2/requalification.py": "752072e3bb404e7c6f2beb37b3d355c137e9cae470e03e29d4b5e8b20d5963bd",
+      "tools/research/v6/e2/run_e2.py": "7afd0149c92b7a89c20f02d5f237306ce948d2767191fb527b9f71490f873df1"
+    },
+    "tooling_source_sha": "d584ea986be36c748d01c2fbbce36f68cb11a227",
+    "control_source_sha": "062feeb28d84c8da0af3f41716e3b5468e0b3eed",
+    "match_generation_path": "engine/src",
+    "match_generation_tree": "5b7495eea683637e5cdddc4be7f08da7e2ba5ec1"
+  },
+  "requalification": {
+    "status": "PASS",
+    "note": "Control data only: no T-E2 match existed when this freeze was requalified.",
+    "records": {
+      "control_gate": {
+        "path": "runs/research_v6_e2/v6-e2-matrix-v1-9048907fdc3b/freezes/v6-e2-freeze-v2-db6458596d82/control_gate.json",
+        "sha256": "01949677a2769b8940ce3262901d5ee35e304a094cd9029c2a9494d235d40bd2"
+      },
+      "analyzer_requalification": {
+        "path": "runs/research_v6_e2/v6-e2-matrix-v1-9048907fdc3b/freezes/v6-e2-freeze-v2-db6458596d82/analyzer_requalification.json",
+        "sha256": "25fbc1f9c4def5f894f33ba24a4e1045d0c01af6c2cf6de2071aee1a88623f47"
+      }
+    },
+    "requalified_at": {
+      "git_sha": "d584ea986be36c748d01c2fbbce36f68cb11a227",
+      "git_dirty": false,
+      "timestamp_utc": "2026-09-23T19:13:44.211048Z"
+    },
+    "control_replays_analyzed": 10240,
+    "analyzer_failures": 0,
+    "engine_disagreements": 0,
+    "attribution_mismatches": 0,
+    "telemetry_differences_c_v4_vs_c_rs": 0,
+    "control_gate_cells_compared": 5120,
+    "control_gate_mismatches": 0,
+    "corpus_integrity": {
+      "C-RS/F1": "PASS",
+      "C-RS/F2": "PASS",
+      "C-RS/F3": "PASS",
+      "C-V4/F1": "PASS",
+      "C-V4/F2": "PASS",
+      "C-V4/F3": "PASS"
+    }
+  }
+}

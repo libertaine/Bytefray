@@ -324,11 +324,14 @@ Current status across the repository:
   qualified, and the research apparatus -- fixtures, capture analyzer, harness
   remediation, frozen matrix and hypotheses, control gate -- is in place; the
   experiment matrix was halted before its treatment condition on a
-  capture-analyzer defect, with the controls run and the control gate passed,
-  and no treatment data exists
+  capture-analyzer defect, with the controls run and the control gate passed;
+  the analyzer has since been repaired, requalified on the control corpus and
+  re-frozen as analysis freeze `v6-e2-freeze-v2-db6458596d82`, and the
+  treatment awaits authorization with no treatment data in existence
   ([`docs/research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md`](research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md),
   [`docs/research/v6/V6_E2_EXPERIMENT_FREEZE.md`](research/v6/V6_E2_EXPERIMENT_FREEZE.md),
-  [`docs/research/v6/V6_E2_MATRIX_EXECUTION_HALT.md`](research/v6/V6_E2_MATRIX_EXECUTION_HALT.md)).
+  [`docs/research/v6/V6_E2_MATRIX_EXECUTION_HALT.md`](research/v6/V6_E2_MATRIX_EXECUTION_HALT.md),
+  [`docs/research/v6/V6_E2_ANALYSIS_FREEZE_V2.md`](research/v6/V6_E2_ANALYSIS_FREEZE_V2.md)).
 
 ---
 

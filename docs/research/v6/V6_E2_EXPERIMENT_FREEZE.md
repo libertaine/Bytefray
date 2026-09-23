@@ -148,3 +148,11 @@ The other operationalizations pin one reading of wording that is measurable as w
   4. `analyze_e2`.
 
   A gate FAIL halts the experiment.
+
+---
+
+## Successor note (2026-09-23): analysis freeze v2
+
+*Appended after the matrix halted. Everything above is unchanged and remains the record of freeze v1.*
+
+Freeze v1's capture analyzer (version 1) could not process a replay whose seeded core wraps the arena end, so the matrix halted before T-E2 ([execution halt](V6_E2_MATRIX_EXECUTION_HALT.md)). The experiment definition above is unchanged: matrix id `v6-e2-matrix-v1-9048907fdc3b`, its digest, the pre-registration and its digest. The analysis instrument was repaired (capture analyzer version 2), requalified on the preserved C-V4/C-RS corpus, and re-frozen as `v6-e2-freeze-v2-db6458596d82` ([analysis freeze v2](V6_E2_ANALYSIS_FREEZE_V2.md)). Two parts of this note describe freeze v1 only. The capture analyzer's **Core** bullet describes version 1, whereas version 2 rebuilds each core from its recorded `pc` modulo the arena. The gate record location and the T-E2 unlock rule under **Structural-control gate** are superseded by freeze v2's freeze-scoped gate and requalification records.

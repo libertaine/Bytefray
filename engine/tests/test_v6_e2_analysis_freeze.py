@@ -102,6 +102,28 @@ def test_every_e2_tooling_file_is_inside_the_freeze() -> None:
     assert set(_identity()["tooling_sha256"]) == set(TOOLING_FILES)
 
 
+def test_committed_freeze_v2_holds_against_the_live_tooling() -> None:
+    # Fails if any analysis-tooling file, the analyzer version, the matrix or
+    # the pre-registration changes without a new freeze.
+    record = load_freeze()
+    assert record["freeze_id"] == "v6-e2-freeze-v2-db6458596d82"
+    identity = record["identity"]
+    assert (identity["matrix_id"], identity["capture_analyzer_version"]) == ("v6-e2-matrix-v1-9048907fdc3b", 2)
+    assert identity["tooling_source_sha"] == "d584ea986be36c748d01c2fbbce36f68cb11a227"
+    assert identity["control_source_sha"] == CONTROL_SOURCE_SHA
+    requalification = record["requalification"]
+    assert (
+        requalification["status"],
+        requalification["control_replays_analyzed"],
+        requalification["analyzer_failures"],
+        requalification["engine_disagreements"],
+        requalification["attribution_mismatches"],
+        requalification["telemetry_differences_c_v4_vs_c_rs"],
+        requalification["control_gate_cells_compared"],
+        requalification["control_gate_mismatches"],
+    ) == ("PASS", 10240, 0, 0, 0, 0, 5120, 0)
+
+
 def test_freeze_record_fails_closed_on_any_drift(tmp_path: Path) -> None:
     path = tmp_path / "freeze.json"
     record = _write_freeze(path)
