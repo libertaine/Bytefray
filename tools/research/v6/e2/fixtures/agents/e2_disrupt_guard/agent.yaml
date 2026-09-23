@@ -1,0 +1,7 @@
+name: e2_disrupt_guard
+display: E2 Disrupt-First Guard
+description: Research-only V6 E2 fixture (design review Sec G.2) - disrupts visible attacker anchors first, then repairs (canonical H1 defender). Not a product starter agent.
+kind: python
+api_version: 2
+entrypoint: agent.py:create_agent
+version: "1.0.0"
