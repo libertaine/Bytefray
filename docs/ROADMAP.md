@@ -18,7 +18,7 @@ and [FUTURE_PLANS.md](FUTURE_PLANS.md) for catalogued future ideas and research 
 | **Active Development Line** | `V6` (`v6-research`) | **In Progress** | Repository diet, architecture modernization, and runtime retirement program. |
 | **Active Ruleset Control** | `bytefray-rules-4` | **Stable Control** | Sole executable v4 ruleset; production gameplay baseline. |
 | **Current Phase** | V6 Research-Integrity Remediation | **In Progress** | Remediating research test defects, provenance, benchmark reproducibility, and characterizing V4 tick-1 forced capture. |
-| **Immediate Next Phase** | E2 — Multi-Tick Capture Hold | **Planned** | Controlled causal experiment testing multi-tick capture hold to address Seat-A tick-1 exploit. |
+| **Immediate Next Phase** | E2 — Multi-Tick Capture Hold | **Planned** | Research Ruleset `bytefray-rules-6-research-capture-hold-k2` implemented and qualified; experiment not yet run. Asks whether a one-tick capture hold creates opponent-dependent response or only delay, scheduler-locked draws, or another seat pathology. |
 
 ## Terminology
 
@@ -199,7 +199,7 @@ and runtime modernization program**. Its guiding operational rule is:
 
 With the research harness remediated and reproducible, active gameplay research pivots directly to:
 
-- **E2 — Multi-Tick Capture Hold (Planned):** A rigorously controlled causal experiment introducing multi-tick core capture hold mechanics to eliminate the tick-1 Seat-A forced win, restoring defensive counterplay under competent play.
+- **E2 — Multi-Tick Capture Hold (Planned):** A controlled single-variable experiment on the tick-1 Seat-A forced capture. The research Ruleset `bytefray-rules-6-research-capture-hold-k2` differs from its `bytefray-rules-6-research-scale` control only in `capture_hold_ticks = 2`: an entrant is core-captured only after its core has owned zero cells at two consecutive end-of-tick evaluations. The question is open: does delaying fatal capture by one qualifying tick create meaningful opponent-dependent response, or does it merely turn the original forced line into delay, scheduler-locked draws, or another seat pathology? The design review's exploratory probe already points to a mixed result, and a clean negative result is an acceptable outcome ([design review](research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md), [registration](research/v6/V6_E2_CAPTURE_HOLD_REGISTRATION.md)). The Ruleset is implemented and qualified. The experiment matrix has not been run; its research fixtures, capture analyzer, and harness remediation (HD-1 to HD-7) come first.
 
 ### Near-Term Planned Work (V6 Program Follow-Ups)
 

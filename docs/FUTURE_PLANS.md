@@ -305,13 +305,24 @@ Current status across the repository:
 - **`bytefray-rules-6-research-scale`** — **Active Research Ruleset.**
   Variable-arena baseline retained as an active research control for the upcoming
   E2 (Multi-Tick Capture Hold) causal experiment.
+- **`bytefray-rules-6-research-capture-hold-k2`** — **Active Research Ruleset.**
+  The E2 treatment: identical to `bytefray-rules-6-research-scale` except
+  `capture_hold_ticks = 2`. Explicit selection only (`agents evaluate --ruleset`
+  or the Python API); never automatic and absent from `run`, `agents test`,
+  tournament, and the Designer
+  ([`docs/research/v6/V6_E2_CAPTURE_HOLD_REGISTRATION.md`](research/v6/V6_E2_CAPTURE_HOLD_REGISTRATION.md)).
 - **`bytefray-rules-6-research-scale-move`, `bytefray-rules-6-research-scale-move-proportional`** —
   **Retired Research Rulesets.** Closed research identities from the Phase 4
   movement line. Retained for historical characterization test verification and
   persisted artifact readability; retired from ongoing research development.
 - **Future gameplay mechanics (E2 — Multi-Tick Capture Hold):** **Planned.**
-  Controlled experiment investigating multi-tick core capture hold mechanics to
-  remediate the deterministic tick-1 Seat-A forced capture identified in stable V4.
+  Controlled experiment on the deterministic tick-1 Seat-A forced capture
+  identified in stable V4. It asks whether delaying fatal capture for one
+  additional qualifying tick creates meaningful opponent-dependent response, or
+  merely transforms the original forced line into delay, scheduler-locked
+  draws, or another seat pathology. The research Ruleset is implemented and
+  qualified; the experiment matrix has not been run
+  ([`docs/research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md`](research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md)).
 
 ---
 
