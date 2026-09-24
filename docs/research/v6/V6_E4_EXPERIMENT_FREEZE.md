@@ -530,3 +530,21 @@ The design review's §L probe traces (seed 42) had already reported the named sc
   - during development, preserved E3 corpus cells were read to validate the analyzer and to de-risk the 9-agent field and one-orientation F2-P;
   - findings P-1 to P-4 were found after the controls ran, and they were reported rather than acted on.
 - No change to gameplay, the qualified E4 Rulesets, the scheduler, the replay or result schema, capture analyzer v2, E3 action/parity analyzer v1, E2, E3 or V4.
+
+## Addendum (2026-09-24): P-1 resolved before treatment, by pre-registration v2 and analysis freeze v2
+
+Everything above is unchanged. It remains the record of pre-registration v1, analysis freeze v1 and the control qualification.
+
+This record asked for P-1 to be decided before the treatment was authorized. It was decided while no T-E4 or T-E4K1 matrix cell existed: the project owner chose re-registration over accepting P-1 as a limitation.
+
+- **Pre-registration v2.** The O-INTERPRETATION-2 amendment changes only how the interpretation table is read:
+  - if H0 is satisfied, it takes precedence over "¬H1 ∧ H3";
+  - "H1 ∧ H3 ∧ ¬H2" keeps its registered interpretation;
+  - if H0 is refuted and no other main row applies, "¬H1 ∧ H3" is withheld and "No registered causal interpretation applies" is reported.
+
+  No hypothesis, threshold, population, metric, contest class, matrix cell, treatment or analyzer calculation changes.
+- **Analysis freeze v2.** `v6-e4-freeze-v2-68d262a0dbd1` pins freeze v1 whole and adds that reading.
+- **What stays.** Pre-registration v1, freeze v1 (`v6-e4-freeze-v1-101a941f5e30`), every file it pins, the control qualification and the frozen control populations are unchanged and still hold. Measurement records continue under freeze v1's id.
+- **P-2 to P-4** stand as recorded.
+
+See [`V6_E4_ANALYSIS_FREEZE_V2.md`](V6_E4_ANALYSIS_FREEZE_V2.md).

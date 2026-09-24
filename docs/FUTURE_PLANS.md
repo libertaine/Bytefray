@@ -380,9 +380,14 @@ Current status across the repository:
   matrix `v6-e4-matrix-v1-fc29d575dd25` and the analysis freeze
   `v6-e4-freeze-v1-101a941f5e30` are frozen. Both controls (C-E4, C-E4K1) have
   been run and reproduce the preserved E3 T-E3 and T-E3K1 corpora cell for
-  cell, and the tooling is qualified on control data only. Neither treatment
-  has been run, and no gameplay conclusion exists
+  cell, and the tooling is qualified on control data only. Pre-treatment
+  finding P-1 (a no-effect treatment would satisfy both the "H0" and the
+  "¬H1 ∧ H3" interpretation rows) was then closed, still blind to
+  treatment, by an interpretation-only amendment: pre-registration v2 and
+  analysis freeze `v6-e4-freeze-v2-68d262a0dbd1`, which pins freeze v1
+  unchanged. Neither treatment has been run, and no gameplay conclusion exists
   ([`docs/research/v6/V6_E4_EXPERIMENT_FREEZE.md`](research/v6/V6_E4_EXPERIMENT_FREEZE.md),
+  [`docs/research/v6/V6_E4_ANALYSIS_FREEZE_V2.md`](research/v6/V6_E4_ANALYSIS_FREEZE_V2.md),
   [`docs/research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md`](research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md),
   [`docs/research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md`](research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md)).
 
