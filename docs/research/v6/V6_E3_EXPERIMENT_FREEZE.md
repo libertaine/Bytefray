@@ -450,3 +450,4 @@ This phase's own work added only scenarios that are not matrix pairings under `b
 
 - **P-1 accepted as a documented pre-registration limitation.** D5's criterion stays exactly as frozen. Its "supported" branch cannot be reached in the Seat-A table, so D5 can only be read as REFUTED or NEITHER. There is no re-freeze.
 - **Treatment authorized under freeze v1.** T-E3 and T-E3K1 are authorized to run under the unchanged analysis freeze `v6-e3-freeze-v1-506811e78ad8` and matrix `v6-e3-matrix-v1-634132ec3c15`. The treatment then follows the order in §Treatment readiness: execute, treatment telemetry, treatment gates (any failure is a STOP), and the frozen analysis.
+- **Results.** Both treatments ran under this freeze and passed their gates. The frozen analysis and its literal reading are recorded in [`V6_E3_SLOT_LIMITED_DISRUPTION_RESULTS.md`](V6_E3_SLOT_LIMITED_DISRUPTION_RESULTS.md).
