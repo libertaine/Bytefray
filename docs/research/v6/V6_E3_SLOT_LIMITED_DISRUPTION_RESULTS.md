@@ -295,3 +295,24 @@ The companion arm's strong last-mover skew under K = 1 (§F.8), and the canonica
   - These are tallies of the same frozen outputs: harness cell records, `analyze_e3.outcome_class`, `transitions`, `parity_summary`, `action_summary` and `pm4_paired`, applied to the loaded runs (`run_e3.control_runs` for each condition) and to the frozen populations in `control_populations.json`.
   - The FMS bins, per-pairing medians, agent seat records and per-seed mirror winners are counts over the same rows.
   - No threshold or new metric was introduced.
+
+## Addendum, 2026-09-24: descriptive erratum and mirror-methodology clarification
+
+This addendum is additive. The report above is left exactly as written. No registered verdict, threshold, criterion, operationalization or calculation changes, and E3 is not recomputed. Both items were raised by the E4 design review ([V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md](V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md) §B, §S-7 and §S-8). Each was re-verified independently against the preserved E3 corpus before being recorded here.
+
+**Erratum: the guarded-painter mirror's seed split.** §F.9 ("A in 20 seeds, B in 12") and §G.1 ("Seat A in 20 seeds and Seat B in 12") misstate a descriptive count.
+
+- The preserved T-E3 harness cell records give **19 Seat-A seeds and 13 Seat-B seeds** (38 and 26 matches), with no mixed seeds. F2 and F2-P agree.
+- The frozen `e3_analysis.json` gives the mirror's seat bias as 0.1875 at both 1000 and 1001 ticks.
+- The bias quoted above, +0.19, was therefore already the 19/13 value: (19 − 13) / 32 = +0.1875. A 20/12 split would give +0.25.
+- The decisive-tick range (30–378) is unchanged.
+- **No registered E3 verdict changes.** D2 counted this unit exactly as registered, and no criterion reads the seed split.
+
+**Clarification: twin-mirror SDI is degenerate on decisive seeds.** Under the current harness, swapping a twin mirror's orientation is a pure relabelling. The twin's `agent.py` is byte-identical, and seat geometry and each entrant's derived RNG seed are keyed to the seat (`A`/`B`) and slot, not to the agent's name. Both orientations therefore play the same match with the names exchanged.
+
+- **Verified on the preserved corpus:** every twin-mirror orientation pair has byte-identical replay tick records and the same winning seat. That holds for 352 of 352 pairs in each of C-E2, T-E3 and T-E3K1: the 320 F2 pairs and the 32 F4 jam-mirror pairs.
+- **Consequence:** the historical mirror SDI (E2's O-SDI-UNIT, as used in E2 and E3) is 1.0 by construction on every decisive seed. For twin mirrors it measured decisiveness, not per-seed seat consistency.
+- Mirror seat bias and the favoured seat remain valid.
+- This sharpens §G.1: the guarded-painter mirror's SDI of 1.0 follows from the construction; it is not an observation.
+
+This is a prospective methodological correction only. It alters no historical calculation or verdict. From E4 onward, mirrors are analysed at the seed level, and relabel identity is a gate, not a metric (E4 design review §M.1).
