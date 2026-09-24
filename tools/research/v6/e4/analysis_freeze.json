@@ -1,6 +1,51 @@
 {
   "control_qualification": {
-    "status": "PENDING"
+    "controls": {
+      "C-E4": {
+        "cells": 3808,
+        "generated_at": [
+          [
+            "e0d39b3560477e21ac619e2fd26130e25938c798",
+            false,
+            "v6-e4-freeze-v1-101a941f5e30"
+          ]
+        ]
+      },
+      "C-E4K1": {
+        "cells": 3808,
+        "generated_at": [
+          [
+            "e0d39b3560477e21ac619e2fd26130e25938c798",
+            false,
+            "v6-e4-freeze-v1-101a941f5e30"
+          ]
+        ]
+      }
+    },
+    "note": "Control data only: no T-E4 or T-E4K1 match existed when this freeze was qualified.",
+    "populations": {
+      "path": "tools/research/v6/e4/control_populations.json",
+      "sha256": "56a8c1090b27929cb8b33fc861f385dacb8898d86e673ee6a42505e8eeef06c5"
+    },
+    "records": {
+      "analyzer_qualification.json": {
+        "path": "runs/research_v6_e4/v6-e4-matrix-v1-fc29d575dd25/freezes/v6-e4-freeze-v1-101a941f5e30/analyzer_qualification.json",
+        "sha256": "4d30af76388d094a8b0f8b9cfd977340282ec422d7a3a5d35feac8b35e661a48"
+      },
+      "d9_prime_real_fixture_gate.json": {
+        "path": "runs/research_v6_e4/v6-e4-matrix-v1-fc29d575dd25/freezes/v6-e4-freeze-v1-101a941f5e30/d9_prime_real_fixture_gate.json",
+        "sha256": "532d268bbc12d9fa97bcbc530448b097b1de67da5d8adc4c4f197ac6b8d7a4db"
+      },
+      "manipulation_gate.json": {
+        "path": "runs/research_v6_e4/v6-e4-matrix-v1-fc29d575dd25/freezes/v6-e4-freeze-v1-101a941f5e30/manipulation_gate.json",
+        "sha256": "2ad547ea4a2ac3186e0d9cc919d1d47e4ffef6410e4262df0914d55d8c9e447b"
+      },
+      "parent_reproduction.json": {
+        "path": "runs/research_v6_e4/v6-e4-matrix-v1-fc29d575dd25/freezes/v6-e4-freeze-v1-101a941f5e30/parent_reproduction.json",
+        "sha256": "4ac13444eee8677fece973a507446e7ebdf04c27b319450a3630e6e53604e5c2"
+      }
+    },
+    "status": "PASS"
   },
   "freeze_digest": "101a941f5e30cb5568322927d5a6b9ad8f3f6b1ec4f5629d0f2865bccf8c5f87",
   "freeze_id": "v6-e4-freeze-v1-101a941f5e30",
