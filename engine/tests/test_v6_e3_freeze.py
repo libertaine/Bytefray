@@ -104,3 +104,28 @@ def test_execution_source_check_needs_a_clean_tree_and_the_frozen_engine(monkeyp
     record = freeze.build_freeze_record(freeze.identity_inputs(tooling_source_sha=head, match_generation_tree="0" * 40))
     with pytest.raises(freeze.AnalysisFreezeError, match="engine/src tree"):
         freeze.verify_execution_source(record)
+
+
+FROZEN_ID = "v6-e3-freeze-v1-506811e78ad8"
+TOOLING_SOURCE_SHA = "d1f69b98c6721e08d7d3eba6bc7989c9de07a4dd"
+# engine/src of 75ed578, the qualified E3 implementation.
+MATCH_GENERATION_TREE = "67b73c9ae7d40209ef68e9512a58c5adfef0ac2f"
+
+
+def test_committed_freeze_v1_holds_against_the_live_tooling() -> None:
+    record = freeze.load_freeze()
+    identity = record["identity"]
+    assert record["freeze_id"] == FROZEN_ID and record["freeze_id"] != matrix.matrix_id()
+    assert identity["matrix_id"] == "v6-e3-matrix-v1-634132ec3c15"
+    assert identity["tooling_source_sha"] == TOOLING_SOURCE_SHA
+    assert identity["match_generation_tree"] == MATCH_GENERATION_TREE
+    if not (REPO_ROOT / ".git").exists():
+        pytest.skip("not a git checkout")
+    # Every tooling file is byte-identical to its content at the tooling commit.
+    for path, digest in identity["tooling_sha256"].items():
+        committed = subprocess.run(["git", "show", f"{TOOLING_SOURCE_SHA}:{path}"], cwd=REPO_ROOT,
+                                   capture_output=True, check=True).stdout
+        assert freeze._sha256(committed) == digest, path
+    tree = subprocess.run(["git", "rev-parse", f"{TOOLING_SOURCE_SHA}:engine/src"], cwd=REPO_ROOT,
+                          capture_output=True, text=True, check=True).stdout.strip()
+    assert tree == MATCH_GENERATION_TREE
