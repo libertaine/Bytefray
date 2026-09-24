@@ -443,3 +443,10 @@ This phase's own work added only scenarios that are not matrix pairings under `b
 - No prediction that E3 succeeds. The probe priors are predictions to be falsified.
 - No threshold, operationalization or fixture set, tuned or changed after the E3 controls ran. The pre-registration was committed (`ebdfb69`) and frozen (`b8ac343`) before any E3 control cell existed. During development, the E2 corpus was already public, and a handful of its preserved control replays were read only to validate the analyzer. The design review's own corpus facts, reproduced above, were computed after the freeze. The D5 ceiling (P-1) was found after the controls ran, and it was reported rather than acted on.
 - No change to gameplay, the qualified E3 Rulesets, the scheduler, disruption scope, the replay schema, capture analyzer v2, E2 or V4.
+
+## Addendum, 2026-09-24: P-1 decision and treatment authorization
+
+*Appended after the record above; the text above is unchanged.*
+
+- **P-1 accepted as a documented pre-registration limitation.** D5's criterion stays exactly as frozen. Its "supported" branch cannot be reached in the Seat-A table, so D5 can only be read as REFUTED or NEITHER. There is no re-freeze.
+- **Treatment authorized under freeze v1.** T-E3 and T-E3K1 are authorized to run under the unchanged analysis freeze `v6-e3-freeze-v1-506811e78ad8` and matrix `v6-e3-matrix-v1-634132ec3c15`. The treatment then follows the order in §Treatment readiness: execute, treatment telemetry, treatment gates (any failure is a STOP), and the frozen analysis.
