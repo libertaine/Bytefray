@@ -367,17 +367,23 @@ Current status across the repository:
   ([`docs/research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_RESULTS.md`](research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_RESULTS.md),
   [`docs/research/v6/V6_E3_EXPERIMENT_FREEZE.md`](research/v6/V6_E3_EXPERIMENT_FREEZE.md),
   [`docs/research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md`](research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md)).
-- **Future gameplay mechanics (E4 — Mirrored Pass Order):** **Implemented; matrix not run.**
+- **Future gameplay mechanics (E4 — Mirrored Pass Order):** **Tooling frozen; controls qualified; treatment not run.**
   The single-variable question after E3, posed as a research question rather
   than a promised improvement: does balancing pass-level response order --
   reversing which entrant goes first in the second half of each tick's passes
   -- neutralize E3's multi-pass residual order dependence while leaving
   opening-pass anchor contests unchanged? Capture, K, λ, quota, chunk size,
   rotation and scoring are unchanged. The two research Rulesets are
-  implemented and qualified. The E4 research tooling, the pre-registration and
-  the matrix are not built, no E4 matrix has been run, and no gameplay
-  conclusion exists
-  ([`docs/research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md`](research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md),
+  implemented and qualified. The research tooling (an E4 analyzer reusing
+  capture analyzer v2 and E3's action/parity analyzer unchanged, and an
+  a-priori contest-class table), the E4-H0–H8 and D9′ pre-registration, the
+  matrix `v6-e4-matrix-v1-fc29d575dd25` and the analysis freeze
+  `v6-e4-freeze-v1-101a941f5e30` are frozen. Both controls (C-E4, C-E4K1) have
+  been run and reproduce the preserved E3 T-E3 and T-E3K1 corpora cell for
+  cell, and the tooling is qualified on control data only. Neither treatment
+  has been run, and no gameplay conclusion exists
+  ([`docs/research/v6/V6_E4_EXPERIMENT_FREEZE.md`](research/v6/V6_E4_EXPERIMENT_FREEZE.md),
+  [`docs/research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md`](research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md),
   [`docs/research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md`](research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md)).
 
 ---
