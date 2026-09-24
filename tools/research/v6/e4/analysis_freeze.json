@@ -1,0 +1,81 @@
+{
+  "control_qualification": {
+    "status": "PENDING"
+  },
+  "freeze_digest": "101a941f5e30cb5568322927d5a6b9ad8f3f6b1ec4f5629d0f2865bccf8c5f87",
+  "freeze_id": "v6-e4-freeze-v1-101a941f5e30",
+  "identity": {
+    "action_parity_sha256": "86b1a557e3a31db157ba2bd8805ef3636f892f2c7e5f9468d0982961d4c4f211",
+    "action_parity_version": 1,
+    "capture_analyzer_e2_freeze_id": "v6-e2-freeze-v2-db6458596d82",
+    "capture_analyzer_sha256": "b818f53e32ba160fb55386cddccd555812def9dc7c54434923c7451fa2c18f86",
+    "capture_analyzer_version": 2,
+    "contest_classes_sha256": "47097041e36189e4a92c837080055cacd40ab53c4203f699564550d6507f7969",
+    "e4_analysis_sha256": "c891abe0a879f62b0265f5f38f46bd0a1214a860994f06977f05ca3bfaeb2ab1",
+    "e4_analysis_version": 1,
+    "e4_cell_metrics_sha256": "cbfe64242113badca6c797dcc2897dea89c88dfdb0040e7a6105f21e03e43e0b",
+    "e4_cell_metrics_version": 1,
+    "freeze_version": 1,
+    "historical_parent": {
+      "conditions": {
+        "C-E4": "T-E3",
+        "C-E4K1": "T-E3K1"
+      },
+      "freeze_id": "v6-e3-freeze-v1-506811e78ad8",
+      "generation": {
+        "engine_tree": "67b73c9ae7d40209ef68e9512a58c5adfef0ac2f",
+        "source_commit": "6f0fd3f3fb7fc6203daba5b9e049b4a4e58e801e"
+      },
+      "matrix_digest": "634132ec3c15549b8032b7414c2a0f649ff2e3a754f592c5c2a71090b37215e8",
+      "matrix_id": "v6-e3-matrix-v1-634132ec3c15"
+    },
+    "match_generation_path": "engine/src",
+    "match_generation_tree": "940a27bcf8c62268eb15210cc30c28cae4d33e50",
+    "matches_total": 15232,
+    "matrix_digest": "fc29d575dd256777a9b18c1d076716677a89a6e4eac8943ec2cefc703ceff4ef",
+    "matrix_id": "v6-e4-matrix-v1-fc29d575dd25",
+    "parent_freeze": {
+      "commit": "b144e1d",
+      "matches": 96,
+      "path": "engine/tests/test_v6_e4_parent_byte_identity.py"
+    },
+    "preregistration_sha256": "56307844e1c01a52b46b3fc1d100a34706e13d6a645614d6d2bcea94757b9973",
+    "reused_e3_freeze_id": "v6-e3-freeze-v1-506811e78ad8",
+    "tooling_sha256": {
+      "tools/research/v6/e2/capture_analyzer.py": "b818f53e32ba160fb55386cddccd555812def9dc7c54434923c7451fa2c18f86",
+      "tools/research/v6/e2/matrix.py": "bd8ca2a88f2945c5bf3d544ec5a59cf9293bd11b78e1548a2e443c787a131449",
+      "tools/research/v6/e2/requalification.py": "752072e3bb404e7c6f2beb37b3d355c137e9cae470e03e29d4b5e8b20d5963bd",
+      "tools/research/v6/e3/action_parity.py": "86b1a557e3a31db157ba2bd8805ef3636f892f2c7e5f9468d0982961d4c4f211",
+      "tools/research/v6/e3/analysis_freeze.py": "fa4152e537edc2729a303f9b3565cd7f67552b572becba7ac17f604dce530c70",
+      "tools/research/v6/e3/analyze_e3.py": "a8d0911939da5b9b9dcc554657168f6cb36800064043498ef8eaf49bd0610330",
+      "tools/research/v6/e3/control_populations.json": "878754a2c961062f822ecae2bd55c143a8e84ace4b5c3a8125cbb9e44ff2cb95",
+      "tools/research/v6/e3/d9_gate.py": "0c37b7e4d6a2c21c52cc9d6d7c0996ecad5f448bd0c4c7cfdefcccf9d8144aee",
+      "tools/research/v6/e3/entrants.py": "07ad9ee6cc5ed5709b8caf676da358925654d37466d777de091e44018ad5e72d",
+      "tools/research/v6/e3/fixtures/agents/e3_jam_sniper/agent.py": "c09053ff32a70cdd602d778f50df4549bb7c0dde96ef2055b44740a90b60cb25",
+      "tools/research/v6/e3/fixtures/agents/e3_jam_sniper/agent.yaml": "47faba076fa40f4b7648e939b409165e97751b1a2bf0b7152bf2b56276ec7810",
+      "tools/research/v6/e3/fixtures/agents/e3_jam_sniper_twin/agent.py": "c09053ff32a70cdd602d778f50df4549bb7c0dde96ef2055b44740a90b60cb25",
+      "tools/research/v6/e3/fixtures/agents/e3_jam_sniper_twin/agent.yaml": "251da379b12845d47b46917cbfcdeabdf2343da2f2e58db46d9fefd21b1fbc52",
+      "tools/research/v6/e3/gates.py": "0910fb541e9fd4a538d74a6abdcff8515ab4ddc3165ac960ce968c939d2cd9a9",
+      "tools/research/v6/e3/matrix.py": "bdbb33dcf9b4c399eeb42179af0b7f12118b2cb051aa93dd1156844772e737bb",
+      "tools/research/v6/e3/populations.py": "25ca85a94d91407d55ebc39a53bf5a5d430dcfa0867b1d855ba3be8b6ce2d01b",
+      "tools/research/v6/e4/analysis_freeze.py": "ee0c30b2c85f6b59aabe4f4f89c2af78cb0cbb2353f24e2cffa3df4d46488cd9",
+      "tools/research/v6/e4/analyze_e4.py": "c891abe0a879f62b0265f5f38f46bd0a1214a860994f06977f05ca3bfaeb2ab1",
+      "tools/research/v6/e4/cell_metrics.py": "cbfe64242113badca6c797dcc2897dea89c88dfdb0040e7a6105f21e03e43e0b",
+      "tools/research/v6/e4/contest_classes.json": "47097041e36189e4a92c837080055cacd40ab53c4203f699564550d6507f7969",
+      "tools/research/v6/e4/contest_classes.py": "2cccc6d768ae53129e6aaed33be35a77b6037799b59bcfe10f0c86fe098079a0",
+      "tools/research/v6/e4/d9_gate.py": "c01fe275a8fa478b7b0653ab644489b894741e38e9ac41882668ca61a1d0b7ec",
+      "tools/research/v6/e4/gates.py": "0ea1a03f696530467ee8a3a576712433b433c92ac362799fc168a58dca7fc969",
+      "tools/research/v6/e4/manipulation_gate.py": "d0d3b9ebcd2cd531ea5e2b64aa5406a13ab6dcf45abd94b7ff755b1c77a542c1",
+      "tools/research/v6/e4/matrix.py": "3ecd80ee234d8dd91ad7b986acc105905c64bcbf2ac10e37aa107a4eab00d583",
+      "tools/research/v6/e4/populations.py": "2ca6e913583f7299e8d1512c376abc59139a850301e496df53b0a66f0044dba2",
+      "tools/research/v6/e4/preregistration.json": "56307844e1c01a52b46b3fc1d100a34706e13d6a645614d6d2bcea94757b9973",
+      "tools/research/v6/e4/preregistration.py": "d1a5fac130067e32c25d1547673bac1aef7ae7d91f70e5735366d959d4f7d722",
+      "tools/research/v6/e4/run_e4.py": "3149996bab0e9d1d65b19cb5b39c99a963502b04abd2644db861274fcc8a0367",
+      "tools/research/v6/e4/telemetry.py": "1dd5a5956c54a9e8f3daf8aeee04b85c28872a316d2a654e098735fbae380715",
+      "tools/research/v6/experiment_harness.py": "e137c02df84f1aa20d1097472bb3885820e4a27ddbd2849fa7b1be73980e0254"
+    },
+    "tooling_source_sha": "108d08d358611c073731ae1b1020b91da8c907fb"
+  },
+  "schema": "bytefray.v6.e4.analysis_freeze",
+  "status": "frozen before any T-E4 or T-E4K1 matrix data exists"
+}

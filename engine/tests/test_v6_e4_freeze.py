@@ -115,3 +115,23 @@ def test_the_unlock_needs_a_passing_control_qualification(tmp_path: Path) -> Non
         run_e4.treatment_unlock(tmp_path, freeze_path=_record(tmp_path))
     with pytest.raises(analysis_freeze.AnalysisFreezeError, match="missing or differs"):
         run_e4.treatment_unlock(tmp_path, freeze_path=_record(tmp_path, status="PASS", records={}))
+
+
+# ---------------------------------------------------------------------------
+# The committed freeze
+# ---------------------------------------------------------------------------
+
+FREEZE_ID = "v6-e4-freeze-v1-101a941f5e30"
+TOOLING_SOURCE_SHA = "108d08d358611c073731ae1b1020b91da8c907fb"
+# engine/src of the qualified E4 implementation (107e077), unchanged since.
+ENGINE_TREE = "940a27bcf8c62268eb15210cc30c28cae4d33e50"
+
+
+def test_the_committed_freeze_holds() -> None:
+    record = analysis_freeze.load_freeze()
+    assert record["freeze_id"] == FREEZE_ID
+    assert record["status"] == "frozen before any T-E4 or T-E4K1 matrix data exists"
+    identity = record["identity"]
+    assert (identity["tooling_source_sha"], identity["match_generation_tree"]) == (TOOLING_SOURCE_SHA, ENGINE_TREE)
+    assert analysis_freeze.git_text("rev-parse", "107e077:engine/src") == ENGINE_TREE
+    assert identity["matrix_id"] == "v6-e4-matrix-v1-fc29d575dd25"
