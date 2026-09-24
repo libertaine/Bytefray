@@ -344,15 +344,20 @@ Current status across the repository:
   [`docs/research/v6/V6_E2_MATRIX_EXECUTION_HALT.md`](research/v6/V6_E2_MATRIX_EXECUTION_HALT.md),
   [`docs/research/v6/V6_E2_ANALYSIS_FREEZE_V2.md`](research/v6/V6_E2_ANALYSIS_FREEZE_V2.md),
   [`docs/research/v6/V6_E2_CAPTURE_HOLD_RESULTS.md`](research/v6/V6_E2_CAPTURE_HOLD_RESULTS.md)).
-- **Future gameplay mechanics (E3 — Slot-Limited Disruption):** **Implemented; matrix not run.**
+- **Future gameplay mechanics (E3 — Slot-Limited Disruption):** **Tooling frozen; controls qualified; treatment not run.**
   The next single-variable question after E2. It asks whether bounding a
   disruptive hit to the victim's next action offer, instead of the rest of the
   tick, removes whole-tick denial and the first-mover-takes-all tick without
   adding any mechanic. Trigger and scope are unchanged. The two research
-  Rulesets are implemented and qualified. The E3 research tooling (jam fixture,
-  parity/action analyzer), the pre-registration and the matrix are not built,
-  no E3 matrix has been run, and no gameplay conclusion exists
-  ([`docs/research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md`](research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md)).
+  Rulesets are implemented and qualified. The research tooling (the
+  `e3_jam_sniper` fixture and an action/parity analyzer), the D0–D9
+  pre-registration, the matrix `v6-e3-matrix-v1-634132ec3c15` and the analysis
+  freeze `v6-e3-freeze-v1-506811e78ad8` are frozen. Both controls have been
+  run and reproduce their historical E2 parents cell for cell, and the
+  tooling is qualified on control data only. Neither treatment has been run,
+  and no gameplay conclusion exists
+  ([`docs/research/v6/V6_E3_EXPERIMENT_FREEZE.md`](research/v6/V6_E3_EXPERIMENT_FREEZE.md),
+  [`docs/research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md`](research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md)).
 
 ---
 
