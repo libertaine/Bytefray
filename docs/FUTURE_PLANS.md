@@ -311,6 +311,14 @@ Current status across the repository:
   or the Python API); never automatic and absent from `run`, `agents test`,
   tournament, and the Designer
   ([`docs/research/v6/V6_E2_CAPTURE_HOLD_REGISTRATION.md`](research/v6/V6_E2_CAPTURE_HOLD_REGISTRATION.md)).
+- **`bytefray-rules-6-research-capture-hold-k2-disruption-slot1`, `bytefray-rules-6-research-disruption-slot1`** —
+  **Active Research Rulesets.** The E3 treatments: identical to
+  `bytefray-rules-6-research-capture-hold-k2` and `bytefray-rules-6-research-scale`
+  respectively, except `disruption_slot_limit = 1` (a disruptive hit suppresses
+  its victim processes only for their entrant's next action offer). Explicit
+  selection only (`agents evaluate --ruleset` or the Python API); never
+  automatic and absent from `run`, `agents test`, tournament, and the Designer
+  ([`docs/research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md`](research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md)).
 - **`bytefray-rules-6-research-scale-move`, `bytefray-rules-6-research-scale-move-proportional`** —
   **Retired Research Rulesets.** Closed research identities from the Phase 4
   movement line. Retained for historical characterization test verification and
@@ -336,6 +344,15 @@ Current status across the repository:
   [`docs/research/v6/V6_E2_MATRIX_EXECUTION_HALT.md`](research/v6/V6_E2_MATRIX_EXECUTION_HALT.md),
   [`docs/research/v6/V6_E2_ANALYSIS_FREEZE_V2.md`](research/v6/V6_E2_ANALYSIS_FREEZE_V2.md),
   [`docs/research/v6/V6_E2_CAPTURE_HOLD_RESULTS.md`](research/v6/V6_E2_CAPTURE_HOLD_RESULTS.md)).
+- **Future gameplay mechanics (E3 — Slot-Limited Disruption):** **Implemented; matrix not run.**
+  The next single-variable question after E2. It asks whether bounding a
+  disruptive hit to the victim's next action offer, instead of the rest of the
+  tick, removes whole-tick denial and the first-mover-takes-all tick without
+  adding any mechanic. Trigger and scope are unchanged. The two research
+  Rulesets are implemented and qualified. The E3 research tooling (jam fixture,
+  parity/action analyzer), the pre-registration and the matrix are not built,
+  no E3 matrix has been run, and no gameplay conclusion exists
+  ([`docs/research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md`](research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md)).
 
 ---
 
