@@ -4,6 +4,8 @@
 **Branch:** `v6-research`
 **Semantic authority:** `V6_E3_SLOT_LIMITED_DISRUPTION_DESIGN_REVIEW.md` is designated as the authority for E3, but **it is not in the repository**. It was not supplied to the implementation phase, and it could not be found in the working tree, the git history, any remote branch or the published artifacts. It has therefore not been preserved, and its §F–§Q could not be read. The operative specification for this phase was the phase's implementation prompt. That prompt restates the review's semantics (§§4–22): the policy field, the per-offer suppression rule, the G.3 sequences, the G.4 bound and the G.5 immunity theorem. This record describes what was built against that restatement. Before E3 research tooling begins, the review must be committed verbatim and checked against this record; see "Open item" below.
 
+> **Update, 2026-09-23:** the design review has since been preserved verbatim at [`V6_E3_SLOT_LIMITED_DISRUPTION_DESIGN_REVIEW.md`](V6_E3_SLOT_LIMITED_DISRUPTION_DESIGN_REVIEW.md) (`bfcf7e5`) and reconciled against this record, with no conflicts. See [the dated addendum](#addendum-2026-09-23-design-review-preserved-and-reconciled) at the end. The text above and below is unchanged.
+
 ## The question E3 asks
 
 Under whole-tick disruption, one successful write to the address where an entrant's processes are anchored makes all of them ineligible, and blind, for the rest of the tick. E2 showed the consequence ([results](V6_E2_CAPTURE_HOLD_RESULTS.md)). With the co-located single-write disruption of its §D.5 conditions, each tick goes to whoever moves first: the E2 treatment turned the forced capture into delay and stalemates phase-locked to the scheduler's first-mover rotation.
@@ -116,3 +118,44 @@ The E3 design review must be committed verbatim at `docs/research/v6/V6_E3_SLOT_
 - separate authorization to run the treatment.
 
 No E3 gameplay conclusion may be drawn from this implementation phase.
+
+## Addendum, 2026-09-23: design review preserved and reconciled
+
+**Chronology exception.** The Opus design review predates this implementation conceptually: it was written against baseline `9d34b01`, before any E3 code existed. It was not available to the implementing session as a repository file, so the implementation (`dd7b7b0`, `75ed578`, `a3ab15a`, `3fb9d41`) proceeded from the semantic handoff supplied in the implementation prompt. The review was subsequently preserved verbatim at `bfcf7e5`, after those commits (SHA-256 `c0d0f711942a2d73b0e4d02fe5b4b1e85334142a9560515c3c6c2b221d1a6b18`). The git history was left exactly as it happened: nothing was reordered, amended or rewritten, and the review itself was not edited. This addendum closes the "Open item" above.
+
+**Post-preservation reconciliation.** The committed implementation and tests were then reconciled directly against the review's §F–§Q.
+
+- **Conflicts: none.**
+- **Matches.**
+  - **§F.** Both arms: primary on the E2 parent, companion on research-scale.
+  - **§G.1–G.3 transition.** Per-process `disruption_slots_left`. A hit assigns the count and never accumulates it. The count is consumed by offers to the victim's own entrant. The suppressed set is fixed at offer entry, and a `finally` decrements it. Scope is every enemy process at the written anchor. Quota, selection, cursor and forfeit are unchanged. Sensing uses the new predicate, and the replay flag keeps `is_disrupted`.
+  - **§G.4 bound and §G.5 immunity.** Both are tested and hold.
+  - **§H.** Field, validation, default, IDs, literal objects, lifecycle, the absence of an override, and unchanged artifacts.
+  - **§N step 1.** The freeze was committed before any runtime change.
+  - **§O-9 and §O-14.** Semantics are set only through the policy, and `disruption_duration` is untouched.
+  - **§Q.1–Q.6.**
+- **§I mechanical predictions reproduced exactly.** The review's named probe scenarios were rerun on the committed code with the tracked fixtures; no grid was run.
+  - **Sniper vs disrupt guard:** the review's λ = 1 write sequences for ticks 1 and 2, 7/7 executed actions, and B ending ticks 1 and 2 at 7/8 and then 3/8.
+  - **Repair guard vs sniper:** 125 zero-core ticks, all on its own first-mover ticks and never consecutive, and a tie at 1000.
+  - **Spread sniper vs disrupt guard:** one lost offer per tick, and a core that settles at 4 of 8.
+  - **Probe mirror:** mutual completion at tick 3.
+  - **Guarded-painter mirror:** captures at 48 A, 72 A, 159 A, 58 B and 93 B for seeds 1–4 and 42.
+  - **Painter vs sniper:** the painter wins at 93 with no zero-core ticks.
+  - **Min guard vs sniper, and sniper vs greedy painter:** unchanged, as predicted.
+  - **One observation on the parent side.** The review gives "77" zero-core ticks for the painter under E2, while the unchanged parent path gives 77 and 78, depending on the painter's seat. This concerns the review's summary, not the implementation.
+- **Intentional deviations.** None of them is semantic.
+  1. §Q.3 places the snapshot and the `try/finally` "at the start of `execute_entrant_slot`". The implementation puts them in a wrapper around the unchanged `execute_entrant_slot`. It also hands the scheduler the unwrapped callback when λ is `None`, since the review's decrement is itself conditional on λ not being `None`. The snapshot instant is the same and every exit path is covered.
+  2. The §N step 1 freeze adds the K = 1 parent and stable V4 to the review's E2 set: 90 matches in all.
+  3. §Q.5 asks for the V4 and E2 λ = `None` goldens to be unedited, and they are. One E2 registry-inventory assertion, which is not a golden, was extended because the primary treatment inherits K = 2.
+  4. §G.5 is tested with scripted repair and disrupt-first guards against adversarial jammers. The fixture-level form (`e2_repair_guard`, `e2_disrupt_guard`) is the review's D9 stop check, a tooling-phase gate.
+- **Deferred to the tooling phase, as the review assigns (§J–§N, §Q "separate follow-up task").**
+  - `e3_jam_sniper` and its twin;
+  - the action/parity analyzer: PM-1 to PM-4, MC-1 and MC-2, the action denial fraction, and the "no zero-core ticks" category;
+  - the D0–D9 pre-registration;
+  - the F1/F2/F2-P/F4 matrix;
+  - the matrix and analysis freeze identities;
+  - controls and the parent reproduction gate;
+  - hard stops 2–11;
+  - separately authorized treatment execution.
+
+No E3 experimental matrix has been run.
