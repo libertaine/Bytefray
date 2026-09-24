@@ -385,9 +385,13 @@ Current status across the repository:
   "¬H1 ∧ H3" interpretation rows) was then closed, still blind to
   treatment, by an interpretation-only amendment: pre-registration v2 and
   analysis freeze `v6-e4-freeze-v2-68d262a0dbd1`, which pins freeze v1
-  unchanged. Neither treatment has been run, and no gameplay conclusion exists
+  unchanged. A second blind amendment (pre-registration v3, analysis freeze
+  `v6-e4-freeze-v3-80f21d822542`) gives "H2" precedence over the standalone
+  "¬H1 ∧ H3" interpretation. Neither treatment has been run, and no
+  gameplay conclusion exists
   ([`docs/research/v6/V6_E4_EXPERIMENT_FREEZE.md`](research/v6/V6_E4_EXPERIMENT_FREEZE.md),
   [`docs/research/v6/V6_E4_ANALYSIS_FREEZE_V2.md`](research/v6/V6_E4_ANALYSIS_FREEZE_V2.md),
+  [`docs/research/v6/V6_E4_ANALYSIS_FREEZE_V3.md`](research/v6/V6_E4_ANALYSIS_FREEZE_V3.md),
   [`docs/research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md`](research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md),
   [`docs/research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md`](research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md)).
 

@@ -179,3 +179,15 @@ A pinned interpretation file makes every freeze-dependent test fail on *any* edi
 - **Nothing v1 pins changed.** No hypothesis, supported-if or refuted-if clause, criterion, threshold or probe prior changed. Neither did any population, the frozen control populations, any metric, transition class or contest class, the matrix or any cell, either treatment or its Ruleset, the analyzer or any calculation, any evidence rule or hard stop, or any other operationalization. Pre-registration v1 (`56307844…`), the freeze v1 record (`2c2018b1…`) and all 31 files freeze v1 pins are byte-identical to their committed state. The v1 reading is still computed and reported beside the v2 reading.
 - **P-2 to P-4 are unchanged.** They stand as recorded limitations: P-PAR sits near the neutral boundary, MULTI-PASS P-PAR is deterministic, and the D9′ parity condition is vacuous on the primary.
 - **No E4 result.** No gameplay result and no hypothesis verdict. No treatment data existed when this amendment was registered and frozen.
+
+## Addendum (2026-09-24): the observation resolved by pre-registration v3 and analysis freeze v3
+
+Everything above is unchanged. It remains the record of pre-registration v2 and analysis freeze v2.
+
+The project owner confirmed the three mechanization choices above as written, and decided the observation above while the experiment was still blind to treatment: "¬H1 ∧ H3" can still apply beside "H2", and the two conclusions must not stand side by side.
+
+- **Pre-registration v3.** The O-INTERPRETATION-3 amendment gives "H2" precedence over the standalone "¬H1 ∧ H3" interpretation. When H2 and H3 are both SUPPORTED, it reports a combined statement after "H2". It never emits the standalone "¬H1 ∧ H3" conclusion. No hypothesis, threshold, population, metric, matrix, treatment semantics or analyzer measurement changes.
+- **Analysis freeze v3.** `v6-e4-freeze-v3-80f21d822542` pins this freeze v2 and freeze v1 whole and adds that reading.
+- **What stays.** Pre-registration v2 and freeze v2 are preserved byte for byte and still hold.
+
+See [`V6_E4_ANALYSIS_FREEZE_V3.md`](V6_E4_ANALYSIS_FREEZE_V3.md).
