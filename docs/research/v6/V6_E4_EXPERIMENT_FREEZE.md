@@ -548,3 +548,16 @@ This record asked for P-1 to be decided before the treatment was authorized. It 
 - **P-2 to P-4** stand as recorded.
 
 See [`V6_E4_ANALYSIS_FREEZE_V2.md`](V6_E4_ANALYSIS_FREEZE_V2.md).
+
+## Addendum (2026-09-24): the aborted-attempt explanation
+
+Everything above is unchanged, including the incident record under "Control execution".
+
+That record explains the aborted six-worker control attempt as "a Windows file-system race between workers writing the same evaluation file". The treatment run has since reproduced the same `PermissionError` on the atomic replace of `evaluation.json` with **one** match worker, in T-E4K1 F1 after 538 cells.
+
+- **The explanation.** A race between multiple workers is therefore no longer supported. External or transient file-handle contention on `evaluation.json` is the leading operational explanation, for example from a scanner or indexer, but it is not a demonstrated cause.
+- **What stands.** The rest of the record stands as written:
+  - the aborted control attempt was not a gameplay or tooling result;
+  - its 2,135 partial cells were set aside;
+  - they are byte-identical to the qualified corpus.
+- **The treatment incident.** It was handled the same way, and all 538 quarantined treatment cells are byte-identical to the re-run. See [`V6_E4_MIRRORED_PASS_ORDER_RESULTS.md`](V6_E4_MIRRORED_PASS_ORDER_RESULTS.md) §G.

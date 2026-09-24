@@ -367,7 +367,7 @@ Current status across the repository:
   ([`docs/research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_RESULTS.md`](research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_RESULTS.md),
   [`docs/research/v6/V6_E3_EXPERIMENT_FREEZE.md`](research/v6/V6_E3_EXPERIMENT_FREEZE.md),
   [`docs/research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md`](research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md)).
-- **Future gameplay mechanics (E4 — Mirrored Pass Order):** **Tooling frozen; controls qualified; treatment not run.**
+- **Future gameplay mechanics (E4 — Mirrored Pass Order):** **Completed (research-only).**
   The single-variable question after E3, posed as a research question rather
   than a promised improvement: does balancing pass-level response order --
   reversing which entrant goes first in the second half of each tick's passes
@@ -387,9 +387,17 @@ Current status across the repository:
   analysis freeze `v6-e4-freeze-v2-68d262a0dbd1`, which pins freeze v1
   unchanged. A second blind amendment (pre-registration v3, analysis freeze
   `v6-e4-freeze-v3-80f21d822542`) gives "H2" precedence over the standalone
-  "¬H1 ∧ H3" interpretation. Neither treatment has been run, and no
-  gameplay conclusion exists
-  ([`docs/research/v6/V6_E4_EXPERIMENT_FREEZE.md`](research/v6/V6_E4_EXPERIMENT_FREEZE.md),
+  "¬H1 ∧ H3" interpretation. Both treatments then ran under freeze v3,
+  and every hard-stop gate passed. Registered verdicts: H1, H3 and H4
+  supported; H0, H5, H6 and H8 refuted; H2 and H7 neither (2 of 18
+  multi-pass matchups follow the final chunk, one above the ≤ 1/10
+  refutation threshold); D9′ holds. No pre-registered interpretation row
+  applies. Descriptively, mirrored pass order largely neutralized
+  multi-pass response-order concentration while leaving opening-pass
+  anchor/core-0 contests largely unchanged. Both Rulesets remain
+  research-only
+  ([`docs/research/v6/V6_E4_MIRRORED_PASS_ORDER_RESULTS.md`](research/v6/V6_E4_MIRRORED_PASS_ORDER_RESULTS.md),
+  [`docs/research/v6/V6_E4_EXPERIMENT_FREEZE.md`](research/v6/V6_E4_EXPERIMENT_FREEZE.md),
   [`docs/research/v6/V6_E4_ANALYSIS_FREEZE_V2.md`](research/v6/V6_E4_ANALYSIS_FREEZE_V2.md),
   [`docs/research/v6/V6_E4_ANALYSIS_FREEZE_V3.md`](research/v6/V6_E4_ANALYSIS_FREEZE_V3.md),
   [`docs/research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md`](research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md),
