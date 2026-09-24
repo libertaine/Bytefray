@@ -319,6 +319,15 @@ Current status across the repository:
   selection only (`agents evaluate --ruleset` or the Python API); never
   automatic and absent from `run`, `agents test`, tournament, and the Designer
   ([`docs/research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md`](research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md)).
+- **`bytefray-rules-6-research-capture-hold-k2-disruption-slot1-mirrored-passes`, `bytefray-rules-6-research-disruption-slot1-mirrored-passes`** —
+  **Active Research Rulesets.** The E4 treatments: identical to
+  `bytefray-rules-6-research-capture-hold-k2-disruption-slot1` and
+  `bytefray-rules-6-research-disruption-slot1` respectively, except
+  `scheduler_pass_order = "mirrored"` (the second half of each tick's passes
+  offers the entrants in reverse order). Explicit selection only (`agents
+  evaluate --ruleset` or the Python API); never automatic and absent from
+  `run`, `agents test`, tournament, and the Designer
+  ([`docs/research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md`](research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md)).
 - **`bytefray-rules-6-research-scale-move`, `bytefray-rules-6-research-scale-move-proportional`** —
   **Retired Research Rulesets.** Closed research identities from the Phase 4
   movement line. Retained for historical characterization test verification and
@@ -358,6 +367,18 @@ Current status across the repository:
   ([`docs/research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_RESULTS.md`](research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_RESULTS.md),
   [`docs/research/v6/V6_E3_EXPERIMENT_FREEZE.md`](research/v6/V6_E3_EXPERIMENT_FREEZE.md),
   [`docs/research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md`](research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md)).
+- **Future gameplay mechanics (E4 — Mirrored Pass Order):** **Implemented; matrix not run.**
+  The single-variable question after E3, posed as a research question rather
+  than a promised improvement: does balancing pass-level response order --
+  reversing which entrant goes first in the second half of each tick's passes
+  -- neutralize E3's multi-pass residual order dependence while leaving
+  opening-pass anchor contests unchanged? Capture, K, λ, quota, chunk size,
+  rotation and scoring are unchanged. The two research Rulesets are
+  implemented and qualified. The E4 research tooling, the pre-registration and
+  the matrix are not built, no E4 matrix has been run, and no gameplay
+  conclusion exists
+  ([`docs/research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md`](research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md),
+  [`docs/research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md`](research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md)).
 
 ---
 
