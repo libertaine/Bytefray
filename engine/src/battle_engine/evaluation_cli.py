@@ -61,8 +61,10 @@ from battle_engine.paths import get_data_root
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
@@ -189,6 +191,8 @@ def _parser() -> argparse.ArgumentParser:
             BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
             BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
             BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
+            BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+            BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
         ],
         default=None,
         help=(
@@ -238,7 +242,15 @@ def _parser() -> argparse.ArgumentParser:
             f"{BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID} respectively, except a disrupted "
             "process is suppressed only for its entrant's next action offer rather "
             "than for the rest of the tick. Not selected automatically; must be named "
-            "explicitly. See docs/research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md."
+            "explicitly. See docs/research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md. "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID} and "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID} are the V6 E4 "
+            "mirrored-pass-order research identities (explicit-only research): "
+            f"identical to {BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID} and "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID} respectively, except the "
+            "scheduler reverses which entrant goes first in the second half of each "
+            "tick's passes. Not selected automatically; must be named explicitly. See "
+            "docs/research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md."
         ),
     )
     parser.add_argument(

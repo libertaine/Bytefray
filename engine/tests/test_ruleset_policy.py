@@ -15,8 +15,10 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
@@ -75,6 +77,11 @@ def test_v6_research_scale_is_registered_but_never_automatic() -> None:
             # test_ruleset_v6_research_disruption_slot.py).
             BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
             BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
+            # V6 E4: the two mirrored-pass-order research identities,
+            # registered the same way (never automatic either -- see
+            # test_ruleset_v6_research_mirrored_passes.py).
+            BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+            BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
         }
     )
     assert resolve_omitted_ruleset_for_agents(None, [_python()]) != BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID

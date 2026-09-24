@@ -200,6 +200,30 @@ BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID = (
 )
 
 
+# V6 E4's mirrored-pass-order research identities (see
+# docs/research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md Sec I-K
+# and docs/research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md). Each is a
+# distinct research identity, never an alias of its parent: its sole intended
+# gameplay difference from that parent is that the scheduler walks the
+# entrant sequence in reverse in the second half of each tick's passes
+# (``RulesetPolicy.scheduler_pass_order == "mirrored"`` instead of
+# ``"forward"``), so with two entrants the chunk owners run ``F L F L | L F L F``.
+#
+# The primary treatment's parent is the E3 primary identity (K=2); the
+# companion's parent is the E3 companion (K=1). Each ID appends
+# ``-mirrored-passes`` to its parent's, so it still names every gameplay
+# difference from V4. Deliberately not selectable from ``bytefray run``/
+# ``agents test``/tournament/Designer surfaces or
+# ``OMITTED_RULESET_CANDIDATES`` -- only ``agents evaluate`` (or the Python
+# API) can select either, and only by explicit ``--ruleset`` name.
+BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID = (
+    "bytefray-rules-6-research-capture-hold-k2-disruption-slot1-mirrored-passes"
+)
+BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID = (
+    "bytefray-rules-6-research-disruption-slot1-mirrored-passes"
+)
+
+
 # v0.10 Phase 4: a finite, explicit historical-alias table -- deliberately
 # not a generic "normalize any evaluation-rules-N-shaped string" function.
 # Each entry records a relationship actually established by git-history
@@ -265,8 +289,10 @@ __all__ = [
     "BYTEFRAY_RULESET_V4_ALPHA2_ID",
     "BYTEFRAY_RULESET_V4_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID",

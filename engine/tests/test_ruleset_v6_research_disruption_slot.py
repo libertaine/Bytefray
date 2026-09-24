@@ -83,8 +83,10 @@ from battle_engine.ruleset_policy import (
     ACTIVE_RESEARCH_RULESET_IDS,
     BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     HISTORICAL_READONLY_RULESET_IDS,
     OMITTED_RULESET_CANDIDATES,
@@ -234,9 +236,16 @@ def test_disruption_slot_limit_defaults_to_whole_tick_none() -> None:
 
 
 def test_every_registered_policy_keeps_whole_tick_disruption_except_e3() -> None:
+    # V6 E4's two treatments are E3's plus a mirrored pass order, so each
+    # inherits its parent's slot limit (test_ruleset_v6_research_mirrored_passes.py).
+    slot_limited = {
+        *E3_IDS,
+        BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+    }
     assert {
         ruleset_id: policy.disruption_slot_limit for ruleset_id, policy in _RULESET_POLICIES.items()
-    } == {ruleset_id: (1 if ruleset_id in E3_IDS else None) for ruleset_id in _RULESET_POLICIES}
+    } == {ruleset_id: (1 if ruleset_id in slot_limited else None) for ruleset_id in _RULESET_POLICIES}
 
 
 def test_there_is_no_match_request_override() -> None:
@@ -393,7 +402,8 @@ def test_e3_is_absent_from_every_designer_ruleset_option() -> None:
 def test_e3_is_explicitly_selectable_from_agents_evaluate() -> None:
     choices = _ruleset_choices(evaluation_cli._parser())
     assert set(E3_IDS) <= set(choices)
-    assert choices[-2:] == [PRIMARY_ID, COMPANION_ID]
+    # V6 E4's two identities follow E3's (test_ruleset_v6_research_mirrored_passes.py).
+    assert choices[-4:-2] == [PRIMARY_ID, COMPANION_ID]
 
 
 # ---------------------------------------------------------------------------

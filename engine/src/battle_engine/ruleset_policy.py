@@ -38,8 +38,10 @@ from battle_engine.rules import (
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
@@ -126,6 +128,18 @@ class RulesetPolicy:
     #: never adds to it. The tick-level window itself
     #: (``ProcessMatchController.disruption_duration``) is unchanged.
     disruption_slot_limit: int | None = None
+    #: The order in which the scheduler offers each pass of a tick to the
+    #: entrants. ``"forward"`` is the historical order every Ruleset keeps
+    #: unless it states otherwise: every pass walks the (rotated) entrant
+    #: sequence first mover first. ``"mirrored"`` (V6 E4, docs/research/v6/
+    #: V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md Sec J/K) walks it in
+    #: reverse in the second half of the passes -- with two entrants and four
+    #: passes the chunk owners run ``F L F L | L F L F`` instead of
+    #: ``F L F L F L F L``. The first mover, each entrant's quota and slot
+    #: numbering, and everything outside the scheduler are unchanged. Only a
+    #: ``"chunked"`` scheduler has more than one pass to mirror, so
+    #: ``"mirrored"`` is rejected for any other ``scheduler_mode``.
+    scheduler_pass_order: str = "forward"
 
     #: Every value :attr:`core_placement` may take. ``"zero"`` is every
     #: Ruleset whose omitted start addresses historically defaulted to the
@@ -162,6 +176,11 @@ class RulesetPolicy:
     #: ``actual_delta = sign(delta) * (abs(delta) * arena_size // 512)``.
     MOVEMENT_DISPLACEMENT_MODES: ClassVar[frozenset[str]] = frozenset(
         {"literal", "scale_from_512"}
+    )
+    #: Every value :attr:`scheduler_pass_order` may take. ``"forward"`` is the
+    #: historical pass order; ``"mirrored"`` is V6 E4's reversed second half.
+    SCHEDULER_PASS_ORDER_MODES: ClassVar[frozenset[str]] = frozenset(
+        {"forward", "mirrored"}
     )
 
     def __post_init__(self) -> None:
@@ -210,6 +229,23 @@ class RulesetPolicy:
             raise ValueError(
                 f"invalid disruption_slot_limit {self.disruption_slot_limit!r} for Ruleset "
                 f"{self.ruleset_id!r}; expected None or an integer >= 1"
+            )
+        # A non-string value is rejected here too, never coerced, and never
+        # left to fail as an unhashable set lookup.
+        if (
+            not isinstance(self.scheduler_pass_order, str)
+            or self.scheduler_pass_order not in self.SCHEDULER_PASS_ORDER_MODES
+        ):
+            raise ValueError(
+                f"unknown scheduler_pass_order {self.scheduler_pass_order!r} for Ruleset "
+                f"{self.ruleset_id!r}; expected one of "
+                f"{sorted(self.SCHEDULER_PASS_ORDER_MODES)!r}"
+            )
+        if self.scheduler_pass_order == "mirrored" and self.scheduler_mode != "chunked":
+            raise ValueError(
+                f"scheduler_pass_order 'mirrored' requires scheduler_mode 'chunked' for Ruleset "
+                f"{self.ruleset_id!r}, not {self.scheduler_mode!r}: a single-pass scheduler has "
+                "no second half to mirror"
             )
 
     def resolve_max_move_delta(self, arena_size: int) -> int:
@@ -301,6 +337,9 @@ class RulesetPolicy:
         """Run this Ruleset's entrant scheduler.
 
         Dispatches to :func:`battle_engine.scheduler.run_chunked_quota`.
+        :attr:`scheduler_pass_order` is read here and nowhere else: it becomes
+        the scheduler's ``mirror_second_half`` flag, which is ``False`` for
+        every ``"forward"`` Ruleset -- the historical call, unchanged.
         """
 
         chunk_size = quota if self.scheduler_mode == "sequential" else (self.scheduler_chunk_size or 1)
@@ -311,6 +350,7 @@ class RulesetPolicy:
             chunk_size=chunk_size,
             rotate_start=self.scheduler_rotate_start,
             tick=tick,
+            mirror_second_half=(self.scheduler_pass_order == "mirrored"),
         )
 
 
@@ -664,6 +704,60 @@ RULESET_V6_RESEARCH_DISRUPTION_SLOT1 = RulesetPolicy(
 )
 
 
+# V6 E4: the mirrored-pass-order research identities (see their docstring in
+# ``rules.py``, docs/research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md
+# Sec I-K and docs/research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md).
+# Each is an independent literal copy of its E3 parent's values -- never
+# ``dataclasses.replace(parent, ...)`` -- for the hidden-coupling reason
+# ``RULESET_V6_RESEARCH_SCALE`` gives above. Every field is spelled out, so
+# neither object's meaning depends on a future default change. The only
+# intended gameplay difference from each parent is
+# ``scheduler_pass_order="mirrored"``; that it is the *only* difference is a
+# verified fact (``engine/tests/test_ruleset_v6_research_mirrored_passes.py``),
+# not merely this comment's claim.
+#
+# Permanent obligation: artifacts record only the Ruleset ID and recover
+# its semantics -- pass order included -- through ``_RULESET_POLICIES``, so
+# once any E4 artifact exists these field values must never change, and
+# retiring either identity must keep it resolvable.
+#
+# Primary treatment; parent ``RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1``
+# (historical T-E3, K=2).
+RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seeded",
+    process_selection="round_robin",
+    movement_stride="fixed_64",
+    movement_displacement="literal",
+    capture_hold_ticks=2,
+    disruption_slot_limit=1,
+    scheduler_pass_order="mirrored",
+)
+
+# Companion treatment; parent ``RULESET_V6_RESEARCH_DISRUPTION_SLOT1``
+# (historical T-E3K1, K=1).
+RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seeded",
+    process_selection="round_robin",
+    movement_stride="fixed_64",
+    movement_displacement="literal",
+    capture_hold_ticks=1,
+    disruption_slot_limit=1,
+    scheduler_pass_order="mirrored",
+)
+
+
 # Which Ruleset identities execute on the Agent API v2 process runtime
 # (``battle_engine.process_runtime.ProcessMatchController``). A finite, explicit set for the
 # same reason ``_RULESET_POLICIES`` is a finite table -- and the one place
@@ -697,6 +791,10 @@ RULESET_V6_RESEARCH_DISRUPTION_SLOT1 = RulesetPolicy(
 # and ``BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID``: both execute on the
 # Agent API v2 process runtime, each differing from its parent only in its
 # disruption slot limit.
+#
+# V6 E4 added the two ``-mirrored-passes`` identities: both execute on the
+# Agent API v2 process runtime, each differing from its E3 parent only in its
+# scheduler pass order.
 PROCESS_RULESET_IDS: frozenset[str] = frozenset(
     {
         BYTEFRAY_RULESET_V4_ID,
@@ -706,6 +804,8 @@ PROCESS_RULESET_IDS: frozenset[str] = frozenset(
         BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
     }
 )
 
@@ -724,6 +824,8 @@ ACTIVE_RESEARCH_RULESET_IDS: frozenset[str] = frozenset(
         BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
     }
 )
 RETIRED_RESEARCH_RULESET_IDS: frozenset[str] = frozenset(
@@ -805,6 +907,12 @@ _RULESET_POLICIES: Mapping[str, RulesetPolicy] = {
         RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1
     ),
     RULESET_V6_RESEARCH_DISRUPTION_SLOT1.ruleset_id: RULESET_V6_RESEARCH_DISRUPTION_SLOT1,
+    RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES.ruleset_id: (
+        RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES
+    ),
+    RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES.ruleset_id: (
+        RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES
+    ),
 }
 
 
@@ -1059,8 +1167,10 @@ __all__ = [
     "BYTEFRAY_RULESET_V4_ALPHA2_ID",
     "BYTEFRAY_RULESET_V4_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID",
@@ -1072,7 +1182,9 @@ __all__ = [
     "RULESET_V4",
     "RULESET_V6_RESEARCH_CAPTURE_HOLD_K2",
     "RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1",
+    "RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES",
     "RULESET_V6_RESEARCH_DISRUPTION_SLOT1",
+    "RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES",
     "RULESET_V6_RESEARCH_SCALE",
     "RULESET_V6_RESEARCH_SCALE_MOVE",
     "RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL",

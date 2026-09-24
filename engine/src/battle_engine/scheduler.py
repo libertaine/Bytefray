@@ -59,6 +59,7 @@ def run_chunked_quota(
     chunk_size: int = 1,
     rotate_start: bool = False,
     tick: int = 1,
+    mirror_second_half: bool = False,
 ) -> None:
     """Give each live state in ``states`` up to ``quota`` turns in chunked round-robin order.
 
@@ -67,6 +68,13 @@ def run_chunked_quota(
     - If ``1 < chunk_size < quota``: each live entrant executes ``min(chunk_size, remaining)`` actions per pass.
     - If ``rotate_start`` is True: for each tick, the entrant sequence is cyclically rotated by
       ``(tick - 1) % len(states)`` so each entrant takes turns being the first mover in the tick.
+    - If ``mirror_second_half`` is True (V6 E4 mirrored pass order,
+      docs/research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md Sec J): with
+      ``P = ceil(quota / chunk_size)`` passes, each pass ``p`` with ``2 * p >= P`` walks the
+      (rotated) entrant sequence in reverse. The first mover, each entrant's own slot numbering
+      (``0 .. quota - 1``, one chunk per pass, in order) and the liveness checks are unchanged;
+      only which entrant goes first *within* the later passes changes. With a single pass it has
+      no effect. ``False`` -- every Ruleset unless it states otherwise -- is the historical order.
     """
 
     state_list = list(states)
@@ -86,7 +94,8 @@ def run_chunked_quota(
     for p in range(num_passes):
         start_slot = p * effective_chunk
         end_slot = min((p + 1) * effective_chunk, quota)
-        for state in state_order:
+        pass_order = state_order[::-1] if mirror_second_half and 2 * p >= num_passes else state_order
+        for state in pass_order:
             if not state.alive:
                 continue
             for slot in range(start_slot, end_slot):

@@ -71,6 +71,7 @@ from battle_engine.ruleset_policy import (
     ACTIVE_RESEARCH_RULESET_IDS,
     BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     HISTORICAL_READONLY_RULESET_IDS,
@@ -234,8 +235,14 @@ def test_capture_hold_ticks_defaults_to_one() -> None:
 
 def test_every_registered_policy_keeps_k1_except_e2() -> None:
     # V6 E3's primary treatment is E2 plus a disruption slot limit, so it
-    # inherits E2's K=2 (test_ruleset_v6_research_disruption_slot.py).
-    k2_ids = {E2_ID, BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID}
+    # inherits E2's K=2 (test_ruleset_v6_research_disruption_slot.py), and
+    # V6 E4's primary treatment inherits it from E3's
+    # (test_ruleset_v6_research_mirrored_passes.py).
+    k2_ids = {
+        E2_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+    }
     assert {ruleset_id: policy.capture_hold_ticks for ruleset_id, policy in _RULESET_POLICIES.items()} == {
         ruleset_id: (2 if ruleset_id in k2_ids else 1) for ruleset_id in _RULESET_POLICIES
     }
