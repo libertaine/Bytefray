@@ -129,3 +129,22 @@ def test_committed_freeze_v1_holds_against_the_live_tooling() -> None:
     tree = subprocess.run(["git", "rev-parse", f"{TOOLING_SOURCE_SHA}:engine/src"], cwd=REPO_ROOT,
                           capture_output=True, text=True, check=True).stdout.strip()
     assert tree == MATCH_GENERATION_TREE
+
+
+def test_committed_control_qualification_pins_the_frozen_populations() -> None:
+    from tools.research.v6.e3 import populations
+
+    record = freeze.load_freeze()
+    qualification = record["control_qualification"]
+    assert qualification["status"] == "PASS"
+    assert set(qualification["records"]) == set(run_e3.CONTROL_RECORDS)
+    frozen = populations.load_record(populations.POPULATIONS_PATH, freeze_id=FROZEN_ID,
+                                     expected_sha256=qualification["populations"]["sha256"])
+    primary = frozen["arms"]["primary"]
+    counts = {f: {k: len(v) for k, v in keys.items()} for f, keys in primary["populations"].items()}
+    # Review Sec J: the stalemate population reproduces 610 F1 + 64 F2; 64 F2 cells are hit-free.
+    assert (counts["F1"]["stalemate"], counts["F2"]["stalemate"], counts["F2"]["hit_free"]) == (610, 64, 64)
+    assert counts["F1"]["exposed"] == 2880 and counts["F4"]["exposed"] == 704
+    assert primary["baseline"]["D2_registered_units_reproduced"] is True
+    # The companion control (K = 1) has no recovery, so no stalemate.
+    assert all(len(keys["stalemate"]) == 0 for keys in frozen["arms"]["companion"]["populations"].values())
