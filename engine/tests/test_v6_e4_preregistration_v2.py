@@ -334,3 +334,91 @@ def test_the_execution_source_check_covers_the_interpretation_files(monkeypatch:
                                                  "tools/research/v6/e4/preregistration_v2.json": "0" * 64}
     with pytest.raises(analysis_freeze.AnalysisFreezeError, match="freeze v2 execution source check failed"):
         analysis_freeze_v2.verify_execution_source_v2(analysis_freeze_v2.build_freeze_record(identity))
+
+
+# ---------------------------------------------------------------------------
+# The committed freeze v2
+# ---------------------------------------------------------------------------
+
+FREEZE_V2_ID = "v6-e4-freeze-v2-68d262a0dbd1"
+V2_TOOLING_SOURCE_SHA = "516022950d660e17028e8d3f3864667b44257254"
+ENGINE_TREE = "940a27bcf8c62268eb15210cc30c28cae4d33e50"
+
+
+def test_the_committed_v2_freeze_holds(monkeypatch: pytest.MonkeyPatch) -> None:
+    record = analysis_freeze_v2.load_freeze_v2()
+    assert record["freeze_id"] == FREEZE_V2_ID
+    assert record["status"] == "frozen before any T-E4 or T-E4K1 matrix data exists"
+    identity = record["identity"]
+    assert (identity["tooling_source_sha"], identity["match_generation_tree"]) == (V2_TOOLING_SOURCE_SHA, ENGINE_TREE)
+    assert identity["base_freeze"]["freeze_id"] == V1_FREEZE_ID
+    assert identity["base_freeze"]["sha256"] == V1_FREEZE_RECORD_SHA256
+    assert identity["preregistration_v2_sha256"] == v2.PREREGISTRATION_V2_SHA256
+    assert record["control_qualification"]["from"] == V1_FREEZE_ID
+    # The interpretation files equal their content at the tooling commit (v1's own check isolated).
+    monkeypatch.setattr(analysis_freeze, "verify_execution_source", lambda record: None)
+    analysis_freeze_v2.verify_execution_source_v2(record)
+
+
+def test_only_commits_holding_the_record_count_as_generated_under_freeze_v2() -> None:
+    assert analysis_freeze_v2.held_at(V1_TOOLING_SOURCE_SHA) is False
+    assert analysis_freeze_v2.held_at(V2_TOOLING_SOURCE_SHA) is False
+    assert analysis_freeze_v2.held_at(_head()) is True
+
+
+def _run_root(tmp_path: Path, *, git_sha: str, git_dirty: bool = False, base: str = V1_FREEZE_ID) -> Path:
+    """A synthetic run root: treatment provenance for every field and a v1 analysis record
+    carrying the frozen global-null (control-vs-control) inputs."""
+    from tools.research.v6.e4 import run_e4
+
+    provenance = {"git_sha": git_sha, "git_dirty": git_dirty}
+    for condition_id in matrix.TREATMENT_CONDITIONS:
+        for field_id in matrix.FIELD_IDS:
+            path = run_e4.condition_root(tmp_path, condition_id, field_id) / "provenance.json"
+            path.parent.mkdir(parents=True)
+            path.write_text(json.dumps({**provenance, "e4_freeze_id": base}), encoding="utf-8")
+    frozen = json.loads(populations.POPULATIONS_PATH.read_text(encoding="utf-8"))
+    inputs = frozen["arms"]["primary"]["control_vs_control_hypotheses"]["interpretation_inputs"]
+    analysis = {"freeze_id": V1_FREEZE_ID, "matrix_id": matrix.matrix_id(), "e4_analysis_version": 1,
+                "preregistration_sha256": V1_PREREGISTRATION_SHA256, "provenance": provenance,
+                "result": {"interpretation_inputs": inputs,
+                           "interpretation": read_interpretation(inputs, PREREG_V2["v1"])}}
+    path = run_e4.freeze_root(tmp_path, V1_FREEZE_ID) / run_e4.ANALYSIS_RECORD_NAME
+    path.parent.mkdir(parents=True)
+    path.write_text(json.dumps(analysis, ensure_ascii=False), encoding="utf-8")
+    return tmp_path
+
+
+def test_interpret_reads_the_v1_analysis_under_freeze_v2(tmp_path: Path) -> None:
+    from tools.research.v6.e4 import run_e4
+
+    root = _run_root(tmp_path, git_sha=_head())
+    record = analysis_freeze_v2.interpret(run_root=root)
+    assert (record["freeze_id"], record["base_freeze_id"]) == (FREEZE_V2_ID, V1_FREEZE_ID)
+    assert record["reading"]["applies"] == ["H0"] and record["reading"]["v1_reading"]["applies"] == [OPENING, "H0"]
+    written = run_e4.freeze_root(root, FREEZE_V2_ID) / analysis_freeze_v2.INTERPRETATION_RECORD_NAME
+    assert json.loads(written.read_text(encoding="utf-8"))["reading"] == record["reading"]
+
+
+@pytest.mark.parametrize(("kwargs", "message"), [
+    ({"git_sha": V2_TOOLING_SOURCE_SHA}, "commit holding freeze v2"),
+    ({"git_sha": "HEAD", "git_dirty": True}, "clean tree"),
+    ({"git_sha": "HEAD", "base": FREEZE_V2_ID}, "ran under"),
+])
+def test_interpret_refuses_data_not_produced_under_freeze_v2(tmp_path: Path, kwargs: dict, message: str) -> None:
+    if kwargs["git_sha"] == "HEAD":
+        kwargs = {**kwargs, "git_sha": _head()}
+    with pytest.raises(analysis_freeze.AnalysisFreezeError, match=message):
+        analysis_freeze_v2.interpret(run_root=_run_root(tmp_path, **kwargs))
+
+
+def test_interpret_refuses_an_analysis_whose_v1_reading_does_not_recompute(tmp_path: Path) -> None:
+    from tools.research.v6.e4 import run_e4
+
+    root = _run_root(tmp_path, git_sha=_head())
+    path = run_e4.freeze_root(root, V1_FREEZE_ID) / run_e4.ANALYSIS_RECORD_NAME
+    analysis = json.loads(path.read_text(encoding="utf-8"))
+    analysis["result"]["interpretation"] = {"applies": ["H0"], "stop": None}
+    path.write_text(json.dumps(analysis, ensure_ascii=False), encoding="utf-8")
+    with pytest.raises(analysis_freeze.AnalysisFreezeError, match="does not recompute"):
+        analysis_freeze_v2.interpret(run_root=root)
