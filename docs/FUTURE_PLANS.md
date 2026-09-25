@@ -303,8 +303,8 @@ Current status across the repository:
   golden characterization (`engine/tests/test_v4_stable_ruleset_equivalence.py`).
   Historical artifacts remain fully readable and replayable.
 - **`bytefray-rules-6-research-scale`** — **Active Research Ruleset.**
-  Variable-arena baseline retained as an active research control for the upcoming
-  E2 (Multi-Tick Capture Hold) causal experiment.
+  Remains the retained variable-arena research control from the completed V6
+  scaling work.
 - **`bytefray-rules-6-research-capture-hold-k2`** — **Active Research Ruleset.**
   The E2 treatment: identical to `bytefray-rules-6-research-scale` except
   `capture_hold_ticks = 2`. Explicit selection only (`agents evaluate --ruleset`
