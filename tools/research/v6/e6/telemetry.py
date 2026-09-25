@@ -10,8 +10,9 @@ deterministic content, never ``wall_time_ms``:
 * **A cell summary**: each entrant's core base, tick-0 process anchors
   (both read from the cell's replay, since an entrant can be captured
   before its first callback) and declared processes;
-  first detection, and which entrant saw first; pre-detection MOVEs, probe
-  READs and off-core MOVEs; information events by tick; and D-4's inputs,
+  first detection (with its callback index), which entrant saw first, and
+  first applied MOVE; pre-detection MOVEs, probe READs and off-core MOVEs;
+  information events by tick; and D-4's inputs,
   every tick-1-2 WRITE to a cell of the opponent's core with whether its
   entrant had had an information event before it.
 
@@ -165,6 +166,8 @@ def summarize(rows: Sequence[Sequence[Any]], *, arena: int, core: Mapping[str, i
     opponent = {entrants[0]: entrants[1], entrants[1]: entrants[0]}
     column = _COLUMN
     first_detection: dict[str, list[int] | None] = {e: None for e in entrants}
+    first_detection_callback: dict[str, int | None] = {e: None for e in entrants}
+    first_move: dict[str, list[int] | None] = {e: None for e in entrants}
     first_information: dict[str, list[int] | None] = {e: None for e in entrants}
     informed = {e: False for e in entrants}
     pre_detection_moves = Counter[str]()
@@ -182,10 +185,13 @@ def summarize(rows: Sequence[Sequence[Any]], *, arena: int, core: Mapping[str, i
             informed[entrant] = True
             if first_detection[entrant] is None:
                 first_detection[entrant] = [tick, order]
+                first_detection_callback[entrant] = row[column["index"]]
             if first_information[entrant] is None:
                 first_information[entrant] = [tick, order]
         applied = status == "APPLIED"
         if kind == "move" and applied:
+            if first_move[entrant] is None:
+                first_move[entrant] = [tick, order]
             if first_detection[entrant] is None:
                 pre_detection_moves[entrant] += 1
             if _in_core(row[column["anchor"]], core[entrant], arena) and not _in_core(address, core[entrant], arena):
@@ -215,6 +221,8 @@ def summarize(rows: Sequence[Sequence[Any]], *, arena: int, core: Mapping[str, i
         "core_base": {e: core[e] for e in entrants},
         "declarations": {e: [list(item) for item in declarations.get(e, ())] for e in entrants},
         "first_detection": first_detection,
+        "first_detection_callback": first_detection_callback,
+        "first_move": first_move,
         "first_information": first_information,
         "saw_first": saw_first,
         "pre_detection_moves": {e: pre_detection_moves[e] for e in entrants},
