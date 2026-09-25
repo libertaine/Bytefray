@@ -412,7 +412,7 @@ Current status across the repository:
   [`docs/research/v6/V6_E4_ANALYSIS_FREEZE_V3.md`](research/v6/V6_E4_ANALYSIS_FREEZE_V3.md),
   [`docs/research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md`](research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md),
   [`docs/research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md`](research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md)).
-- **Future gameplay mechanics (E5 — Anchor/Core-0 Separation):** **Tooling frozen; controls qualified; treatment not run.**
+- **Future gameplay mechanics (E5 — Anchor/Core-0 Separation):** **Completed (research-only); retained as completed research evidence, not an active idea.**
   The single-variable question after E4, posed as a research question rather
   than a promised improvement: is anchor/core-0 co-location -- every process
   spawning on its core cell 0, so one WRITE both disrupts it and flips a core
@@ -429,9 +429,27 @@ Current status across the repository:
   `v6-e5-freeze-v1-5ba12be258c8` are frozen. Both controls (C-E5, C-E5K1)
   have been run and reproduce the preserved E4 C-E4 and C-E4K1 corpora cell
   for cell, and the tooling, the non-matrix manipulation gates and the
-  control populations are qualified on control data only. Neither treatment
-  has been run, and no gameplay conclusion exists
-  ([`docs/research/v6/V6_E5_EXPERIMENT_FREEZE.md`](research/v6/V6_E5_EXPERIMENT_FREEZE.md),
+  control populations are qualified on control data only. Both treatments
+  then ran under the freeze, and every hard-stop gate passed. Separation
+  removed the dual-purpose spawn-anchor/core-0 write. The directed
+  second-mover base privilege persisted in 13 of 17 sweep-backed units
+  (E5-H2 supported; E5-H1 neither), while all 15 anchor-only contests
+  neutralized. The registered interpretation is R-H2-PRIME: co-location is
+  not necessary for the privilege in a supermajority of explicit core
+  contests, with four named exceptions; combined with E4, this supports the
+  second response in the opening exchange as the remaining mechanism.
+  Separation also lost 190 of 320 F1 captures and raised tick-limit endings
+  from 1,024 to 1,214 (PF-2 and PF-3 raised), while changing only 64 of
+  1,344 outcomes. So `before_core` is not currently a candidate V6 gameplay
+  rule, and both Rulesets remain research-only. The anchor/core forensic
+  line, and with it the E2–E5 forensic capture/order/placement line, is
+  closed; anchor/core separation is kept here only as completed research
+  evidence. The next direction the research lead named is a cross-experiment
+  synthesis followed by a mechanic that makes the choice between uses of an
+  action strategic (compare "Replication / deployment" and "Agent lifecycle"
+  above); it is not yet registered
+  ([`docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_RESULTS.md`](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_RESULTS.md),
+  [`docs/research/v6/V6_E5_EXPERIMENT_FREEZE.md`](research/v6/V6_E5_EXPERIMENT_FREEZE.md),
   [`docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md`](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md),
   [`docs/research/v6/V6_E5_DESIGN_REVIEW_REVISION_1.md`](research/v6/V6_E5_DESIGN_REVIEW_REVISION_1.md),
   [`docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md`](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md)).
