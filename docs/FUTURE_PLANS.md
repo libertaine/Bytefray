@@ -412,7 +412,7 @@ Current status across the repository:
   [`docs/research/v6/V6_E4_ANALYSIS_FREEZE_V3.md`](research/v6/V6_E4_ANALYSIS_FREEZE_V3.md),
   [`docs/research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md`](research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md),
   [`docs/research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md`](research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md)).
-- **Future gameplay mechanics (E5 — Anchor/Core-0 Separation):** **Implemented; matrix not run.**
+- **Future gameplay mechanics (E5 — Anchor/Core-0 Separation):** **Tooling frozen; controls qualified; treatment not run.**
   The single-variable question after E4, posed as a research question rather
   than a promised improvement: is anchor/core-0 co-location -- every process
   spawning on its core cell 0, so one WRITE both disrupts it and flips a core
@@ -421,10 +421,18 @@ Current status across the repository:
   cell before the core, keeps the frozen fixtures unmodified, and scores each
   victim's core cell 0 by directed base parity. The core, the scheduler,
   capture, K, λ, scoring and the replay schema are unchanged, and movement is
-  unrestricted. The two research Rulesets are implemented and qualified; the
-  research tooling, pre-registration and freezes are not yet complete, no E5
-  matrix has been run, and no gameplay conclusion exists
-  ([`docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md`](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md),
+  unrestricted. The two research Rulesets are implemented and qualified. The
+  research tooling (an E5 analyzer reusing capture analyzer v2, E3's
+  action/parity analyzer and E4's cell metrics unchanged), the E5-D,
+  E5-H1–H5 and D9 pre-registration, the matrix
+  `v6-e5-matrix-v1-ef7fa327ea81` and the analysis freeze
+  `v6-e5-freeze-v1-5ba12be258c8` are frozen. Both controls (C-E5, C-E5K1)
+  have been run and reproduce the preserved E4 C-E4 and C-E4K1 corpora cell
+  for cell, and the tooling, the non-matrix manipulation gates and the
+  control populations are qualified on control data only. Neither treatment
+  has been run, and no gameplay conclusion exists
+  ([`docs/research/v6/V6_E5_EXPERIMENT_FREEZE.md`](research/v6/V6_E5_EXPERIMENT_FREEZE.md),
+  [`docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md`](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md),
   [`docs/research/v6/V6_E5_DESIGN_REVIEW_REVISION_1.md`](research/v6/V6_E5_DESIGN_REVIEW_REVISION_1.md),
   [`docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md`](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md)).
 
