@@ -735,11 +735,17 @@ class ProcessMatchController:
             for cell in core_cells:
                 self.vm._wr8(cell, 0xCE, owner=spec.agent_id)
 
-            # Reset processes
+            # Reset processes. A process with no declared position spawns
+            # where the Ruleset says (``RulesetPolicy.resolve_initial_anchor``):
+            # on core cell 0 historically, one cell before the core under V6
+            # E5's ``"before_core"``. A spawn rule only -- nothing here or
+            # elsewhere constrains where a process may move afterwards.
             for p in spec.processes:
                 p.reset()
                 if p.position is None:
-                    p.position = start
+                    p.position = self.ruleset_policy.resolve_initial_anchor(
+                        start, config.arena_size
+                    )
                 else:
                     unnormalized_position = p.position
                     p.position %= config.arena_size

@@ -60,9 +60,11 @@ from battle_engine.evaluation_service import EvaluationService
 from battle_engine.paths import get_data_root
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
@@ -193,6 +195,8 @@ def _parser() -> argparse.ArgumentParser:
             BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
             BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
             BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+            BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
+            BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
         ],
         default=None,
         help=(
@@ -250,7 +254,16 @@ def _parser() -> argparse.ArgumentParser:
             f"{BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID} respectively, except the "
             "scheduler reverses which entrant goes first in the second half of each "
             "tick's passes. Not selected automatically; must be named explicitly. See "
-            "docs/research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md."
+            "docs/research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md. "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID} and "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID} are the V6 E5 "
+            "anchor/core-0 separation research identities (explicit-only research): "
+            f"identical to {BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID} and "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID} respectively, except a process "
+            "with no declared position spawns one cell before its entrant's core instead of "
+            "on core cell 0 (a spawn rule only; movement is unrestricted). Not selected "
+            "automatically; must be named explicitly. See "
+            "docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md."
         ),
     )
     parser.add_argument(

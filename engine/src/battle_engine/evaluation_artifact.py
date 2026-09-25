@@ -76,9 +76,11 @@ from battle_engine.evaluation_contracts import (
     SubjectAggregate,
     is_ruleset_v2_methodology,
     is_ruleset_v4_methodology,
+    is_ruleset_v6_research_capture_hold_disruption_slot_anchor_before_core_methodology,
     is_ruleset_v6_research_capture_hold_disruption_slot_methodology,
     is_ruleset_v6_research_capture_hold_disruption_slot_mirrored_passes_methodology,
     is_ruleset_v6_research_capture_hold_methodology,
+    is_ruleset_v6_research_disruption_slot_anchor_before_core_methodology,
     is_ruleset_v6_research_disruption_slot_methodology,
     is_ruleset_v6_research_disruption_slot_mirrored_passes_methodology,
     is_ruleset_v6_research_scale_methodology,
@@ -969,6 +971,14 @@ def write_evaluation_state(
     resolved_is_v6_research_disruption_slot_mirrored_passes = (
         is_ruleset_v6_research_disruption_slot_mirrored_passes_methodology(resolved_rules_id)
     )
+    resolved_is_v6_research_capture_hold_disruption_slot_anchor_before_core = (
+        is_ruleset_v6_research_capture_hold_disruption_slot_anchor_before_core_methodology(
+            resolved_rules_id
+        )
+    )
+    resolved_is_v6_research_disruption_slot_anchor_before_core = (
+        is_ruleset_v6_research_disruption_slot_anchor_before_core_methodology(resolved_rules_id)
+    )
     resolved_group = request.group and resolved_is_v2
     write_json_atomic(
         path,
@@ -1005,6 +1015,12 @@ def write_evaluation_state(
                 is_v6_research_disruption_slot_mirrored_passes_methodology=(
                     resolved_is_v6_research_disruption_slot_mirrored_passes
                 ),
+                is_v6_research_capture_hold_disruption_slot_anchor_before_core_methodology=(
+                    resolved_is_v6_research_capture_hold_disruption_slot_anchor_before_core
+                ),
+                is_v6_research_disruption_slot_anchor_before_core_methodology=(
+                    resolved_is_v6_research_disruption_slot_anchor_before_core
+                ),
             ),
             "identity_version": resolved_identity_version(
                 resolved_is_v2,
@@ -1023,6 +1039,12 @@ def write_evaluation_state(
                 ),
                 is_v6_research_disruption_slot_mirrored_passes_methodology=(
                     resolved_is_v6_research_disruption_slot_mirrored_passes
+                ),
+                is_v6_research_capture_hold_disruption_slot_anchor_before_core_methodology=(
+                    resolved_is_v6_research_capture_hold_disruption_slot_anchor_before_core
+                ),
+                is_v6_research_disruption_slot_anchor_before_core_methodology=(
+                    resolved_is_v6_research_disruption_slot_anchor_before_core
                 ),
             ),
             "evaluation_id": evaluation_id,

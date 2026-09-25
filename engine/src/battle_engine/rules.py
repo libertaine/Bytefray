@@ -224,6 +224,34 @@ BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID = (
 )
 
 
+# V6 E5's anchor/core-0 separation research identities (see
+# docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md Sec F,
+# docs/research/v6/V6_E5_DESIGN_REVIEW_REVISION_1.md Sec R3 and
+# docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md). Each is a
+# distinct research identity, never an alias of its parent: its sole intended
+# gameplay difference from that parent is where a process with no declared
+# position spawns -- one cell before its entrant's core base
+# (``RulesetPolicy.initial_anchor_placement == "before_core"``, i.e.
+# ``(core_base - 1) % arena_size``) instead of on it -- so an enemy WRITE to
+# a never-moved process's anchor no longer also writes a core cell. It is a
+# spawn rule only: movement is unrestricted, and a process that later MOVEs
+# onto its own core is legal.
+#
+# The primary treatment's parent is the E3 primary identity (K=2); the
+# companion's parent is the E3 companion (K=1). Each ID appends
+# ``-anchor-before-core`` to its parent's, so it still names every gameplay
+# difference from V4. Deliberately not selectable from ``bytefray run``/
+# ``agents test``/tournament/Designer surfaces or
+# ``OMITTED_RULESET_CANDIDATES`` -- only ``agents evaluate`` (or the Python
+# API) can select either, and only by explicit ``--ruleset`` name.
+BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID = (
+    "bytefray-rules-6-research-capture-hold-k2-disruption-slot1-anchor-before-core"
+)
+BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID = (
+    "bytefray-rules-6-research-disruption-slot1-anchor-before-core"
+)
+
+
 # v0.10 Phase 4: a finite, explicit historical-alias table -- deliberately
 # not a generic "normalize any evaluation-rules-N-shaped string" function.
 # Each entry records a relationship actually established by git-history
@@ -288,9 +316,11 @@ __all__ = [
     "BYTEFRAY_RULESET_V4_ALPHA1_ID",
     "BYTEFRAY_RULESET_V4_ALPHA2_ID",
     "BYTEFRAY_RULESET_V4_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID",

@@ -37,9 +37,11 @@ from battle_engine.rules import (
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
@@ -140,6 +142,22 @@ class RulesetPolicy:
     #: ``"chunked"`` scheduler has more than one pass to mirror, so
     #: ``"mirrored"`` is rejected for any other ``scheduler_mode``.
     scheduler_pass_order: str = "forward"
+    #: Where a process whose entrant declares no position for it spawns.
+    #: ``"core_base"`` is the historical rule every Ruleset keeps unless it
+    #: states otherwise: every such process spawns on its entrant's core base,
+    #: core cell 0. ``"before_core"`` (V6 E5, docs/research/v6/
+    #: V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md Sec F and
+    #: V6_E5_DESIGN_REVIEW_REVISION_1.md Sec R3) spawns it one cell before the
+    #: core, at ``(core_base - 1) % arena_size``, which is never a cell of its
+    #: own core. This is a *spawn* rule only: it says nothing about where a
+    #: process may later be. Movement is unrestricted under both values, and a
+    #: process that MOVEs onto its own core afterwards is legal. The core
+    #: itself -- ``core_base``, its cells, their seeding and the recorded
+    #: ``pc`` -- is identical under both. The mode set is closed on purpose:
+    #: only this one offset keeps the V6 research fixtures' anchor-derived
+    #: enemy-core targeting behaviorally inert (review Sec F, P5), so a general
+    #: integer offset is deliberately not expressible.
+    initial_anchor_placement: str = "core_base"
 
     #: Every value :attr:`core_placement` may take. ``"zero"`` is every
     #: Ruleset whose omitted start addresses historically defaulted to the
@@ -181,6 +199,12 @@ class RulesetPolicy:
     #: historical pass order; ``"mirrored"`` is V6 E4's reversed second half.
     SCHEDULER_PASS_ORDER_MODES: ClassVar[frozenset[str]] = frozenset(
         {"forward", "mirrored"}
+    )
+    #: Every value :attr:`initial_anchor_placement` may take. ``"core_base"``
+    #: is the historical spawn on core cell 0; ``"before_core"`` is V6 E5's
+    #: spawn one cell before the core.
+    INITIAL_ANCHOR_PLACEMENT_MODES: ClassVar[frozenset[str]] = frozenset(
+        {"core_base", "before_core"}
     )
 
     def __post_init__(self) -> None:
@@ -247,6 +271,37 @@ class RulesetPolicy:
                 f"{self.ruleset_id!r}, not {self.scheduler_mode!r}: a single-pass scheduler has "
                 "no second half to mirror"
             )
+        # Same strict shape as ``scheduler_pass_order``: a non-string value is
+        # rejected, never coerced.
+        if (
+            not isinstance(self.initial_anchor_placement, str)
+            or self.initial_anchor_placement not in self.INITIAL_ANCHOR_PLACEMENT_MODES
+        ):
+            raise ValueError(
+                f"unknown initial_anchor_placement {self.initial_anchor_placement!r} for Ruleset "
+                f"{self.ruleset_id!r}; expected one of "
+                f"{sorted(self.INITIAL_ANCHOR_PLACEMENT_MODES)!r}"
+            )
+
+    def resolve_initial_anchor(self, core_base: int, arena_size: int) -> int:
+        """Return the spawn address of a process that declares no position.
+
+        ``"core_base"`` returns ``core_base`` itself -- the historical spawn,
+        byte for byte. ``"before_core"`` (V6 E5) returns
+        ``(core_base - 1) % arena_size``, the cell immediately before the
+        entrant's 8-cell core, which therefore never lies inside that core.
+        Only the default spawn reads this; a process given an explicit
+        position keeps it, and nothing here constrains later movement.
+        """
+
+        if self.initial_anchor_placement == "core_base":
+            return core_base
+        if self.initial_anchor_placement == "before_core":
+            return (core_base - 1) % arena_size
+        raise ValueError(
+            f"unknown initial_anchor_placement {self.initial_anchor_placement!r} for Ruleset "
+            f"{self.ruleset_id!r}"
+        )
 
     def resolve_max_move_delta(self, arena_size: int) -> int:
         """Return the maximum allowed displacement per MOVE action for this arena.
@@ -758,6 +813,66 @@ RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES = RulesetPolicy(
 )
 
 
+# V6 E5: the anchor/core-0 separation research identities (see their
+# docstring in ``rules.py``, docs/research/v6/
+# V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md Sec F, docs/research/v6/
+# V6_E5_DESIGN_REVIEW_REVISION_1.md Sec R3 and docs/research/v6/
+# V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md). Each is an independent
+# literal copy of its E3 parent's values -- never ``dataclasses.replace
+# (parent, ...)`` -- for the hidden-coupling reason ``RULESET_V6_RESEARCH_
+# SCALE`` gives above. Every field is spelled out, so neither object's meaning
+# depends on a future default change. The only intended gameplay difference
+# from each parent is ``initial_anchor_placement="before_core"``: a process
+# with no declared position spawns at ``(core_base - 1) % arena_size``
+# instead of on core cell 0. That it is the *only* difference is a verified
+# fact (``engine/tests/test_ruleset_v6_research_anchor_before_core.py``),
+# not merely this comment's claim. It is a spawn rule only; movement is
+# unrestricted.
+#
+# Permanent obligation: artifacts record only the Ruleset ID and recover its
+# semantics -- spawn placement included -- through ``_RULESET_POLICIES``, so
+# once any E5 artifact exists these field values must never change, and
+# retiring either identity must keep it resolvable.
+#
+# Primary treatment; parent ``RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1``
+# (historical T-E3 = C-E4, K=2).
+RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seeded",
+    process_selection="round_robin",
+    movement_stride="fixed_64",
+    movement_displacement="literal",
+    capture_hold_ticks=2,
+    disruption_slot_limit=1,
+    scheduler_pass_order="forward",
+    initial_anchor_placement="before_core",
+)
+
+# Companion treatment; parent ``RULESET_V6_RESEARCH_DISRUPTION_SLOT1``
+# (historical T-E3K1 = C-E4K1, K=1).
+RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seeded",
+    process_selection="round_robin",
+    movement_stride="fixed_64",
+    movement_displacement="literal",
+    capture_hold_ticks=1,
+    disruption_slot_limit=1,
+    scheduler_pass_order="forward",
+    initial_anchor_placement="before_core",
+)
+
+
 # Which Ruleset identities execute on the Agent API v2 process runtime
 # (``battle_engine.process_runtime.ProcessMatchController``). A finite, explicit set for the
 # same reason ``_RULESET_POLICIES`` is a finite table -- and the one place
@@ -795,6 +910,10 @@ RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES = RulesetPolicy(
 # V6 E4 added the two ``-mirrored-passes`` identities: both execute on the
 # Agent API v2 process runtime, each differing from its E3 parent only in its
 # scheduler pass order.
+#
+# V6 E5 added the two ``-anchor-before-core`` identities: both execute on the
+# Agent API v2 process runtime, each differing from its E3 parent only in
+# where a process with no declared position spawns.
 PROCESS_RULESET_IDS: frozenset[str] = frozenset(
     {
         BYTEFRAY_RULESET_V4_ID,
@@ -806,6 +925,8 @@ PROCESS_RULESET_IDS: frozenset[str] = frozenset(
         BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     }
 )
 
@@ -826,6 +947,8 @@ ACTIVE_RESEARCH_RULESET_IDS: frozenset[str] = frozenset(
         BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     }
 )
 RETIRED_RESEARCH_RULESET_IDS: frozenset[str] = frozenset(
@@ -912,6 +1035,12 @@ _RULESET_POLICIES: Mapping[str, RulesetPolicy] = {
     ),
     RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES.ruleset_id: (
         RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES
+    ),
+    RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE.ruleset_id: (
+        RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE
+    ),
+    RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE.ruleset_id: (
+        RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE
     ),
 }
 
@@ -1166,9 +1295,11 @@ __all__ = [
     "BYTEFRAY_RULESET_V4_ALPHA1_ID",
     "BYTEFRAY_RULESET_V4_ALPHA2_ID",
     "BYTEFRAY_RULESET_V4_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID",
@@ -1182,8 +1313,10 @@ __all__ = [
     "RULESET_V4",
     "RULESET_V6_RESEARCH_CAPTURE_HOLD_K2",
     "RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1",
+    "RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE",
     "RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES",
     "RULESET_V6_RESEARCH_DISRUPTION_SLOT1",
+    "RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE",
     "RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES",
     "RULESET_V6_RESEARCH_SCALE",
     "RULESET_V6_RESEARCH_SCALE_MOVE",

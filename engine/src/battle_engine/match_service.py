@@ -60,9 +60,11 @@ from battle_engine.result_model import (
 from battle_engine.results import WINNER_TIE_SENTINEL
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
@@ -443,6 +445,11 @@ _CORE_PLACEMENT_GUARDED_RULESET_IDS: frozenset[str] = frozenset(
         # placement and vulnerable-core semantics with their E3 parents.
         BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+        # V6 E5: both anchor/core-0 separation research Rulesets share seeded
+        # placement and vulnerable-core semantics with their E3 parents; only
+        # where a process with no declared position spawns differs.
+        BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     }
 )
 
@@ -477,6 +484,71 @@ def _validate_v2_core_placement(
     ]
     if overlapping_pairs:
         raise OverlappingCoreError(ruleset_policy.ruleset_id, overlapping_pairs)
+
+
+class DefaultSpawnInCoreError(ValueError):
+    """A Ruleset's off-core default spawn would land inside an entrant's core.
+
+    V6 E5 (docs/research/v6/V6_E5_DESIGN_REVIEW_REVISION_1.md Sec R3):
+    ``RulesetPolicy.initial_anchor_placement == "before_core"`` spawns every
+    process with no declared position at ``(core_base - 1) % arena_size``,
+    which is never a cell of its own entrant's core. It could still be a cell
+    of *another* entrant's core, exactly when that core ends immediately
+    before this entrant's (the cores are adjacent). That layout is rejected
+    before execution rather than run with a spawn that silently contradicts
+    the Ruleset's stated placement. A spawn-configuration check only: it says
+    nothing about where a process may move afterwards.
+    """
+
+    code = "ruleset_default_spawn_in_core"
+
+    def __init__(self, ruleset_id: str, offending: Iterable[tuple[str, int, str]]):
+        rows = tuple(offending)
+        described = ", ".join(
+            f"{spawner}'s spawn {address} lies in {owner}'s core" for spawner, address, owner in rows
+        )
+        message = (
+            f"Ruleset {ruleset_id!r} places default spawns off every core; {described} "
+            "at the configured starts."
+        )
+        super().__init__(message)
+        self.ruleset_id = ruleset_id
+        self.offending = rows
+        self.diagnostic = RuntimeDiagnostic(
+            code=self.code,
+            stage="configuration",
+            message=message,
+        )
+
+
+def _validate_default_spawn(
+    ruleset_policy: RulesetPolicy,
+    entrants: tuple[MatchEntrant, ...],
+    arena_size: int,
+) -> None:
+    """Fail closed before execution if an off-core default spawn lands in a core.
+
+    Returns immediately for ``initial_anchor_placement == "core_base"`` --
+    every historical Ruleset -- whose spawn *is* core cell 0 by definition,
+    so no existing identity's behavior changes. See
+    :class:`DefaultSpawnInCoreError`.
+    """
+
+    if ruleset_policy.initial_anchor_placement == "core_base":
+        return
+
+    cores = [
+        (entrant.agent_id, frozenset(core_addresses(entrant.start, arena_size)))
+        for entrant in entrants
+    ]
+    offending: list[tuple[str, int, str]] = []
+    for entrant in entrants:
+        spawn = ruleset_policy.resolve_initial_anchor(entrant.start % arena_size, arena_size)
+        offending.extend(
+            (entrant.agent_id, spawn, owner) for owner, cells in cores if spawn in cells
+        )
+    if offending:
+        raise DefaultSpawnInCoreError(ruleset_policy.ruleset_id, offending)
 
 
 def _resolve_locality_reach(request: MatchRequest) -> int | None:
@@ -1201,6 +1273,8 @@ class NativeMatchService:
         # ``replay_path`` -- for every caller, not only ones that went
         # through CLI/Designer default-placement resolution.
         _validate_v2_core_placement(ruleset_policy, request.entrants, request.config.arena_size)
+        # V6 E5: an off-core default spawn must actually be off every core.
+        _validate_default_spawn(ruleset_policy, request.entrants, request.config.arena_size)
 
         replay_path = request.replay_path.resolve()
         summary_path = replay_path.with_name("summary.json")
@@ -1239,6 +1313,7 @@ class NativeMatchService:
 
 
 __all__ = [
+    "DefaultSpawnInCoreError",
     "MatchEntrant",
     "MatchRequest",
     "NativeAgentResult",

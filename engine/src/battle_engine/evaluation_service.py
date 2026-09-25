@@ -69,9 +69,11 @@ from battle_engine.evaluation_contracts import (
     effective_conditions_for,
     is_ruleset_v2_methodology,
     is_ruleset_v4_methodology,
+    is_ruleset_v6_research_capture_hold_disruption_slot_anchor_before_core_methodology,
     is_ruleset_v6_research_capture_hold_disruption_slot_methodology,
     is_ruleset_v6_research_capture_hold_disruption_slot_mirrored_passes_methodology,
     is_ruleset_v6_research_capture_hold_methodology,
+    is_ruleset_v6_research_disruption_slot_anchor_before_core_methodology,
     is_ruleset_v6_research_disruption_slot_methodology,
     is_ruleset_v6_research_disruption_slot_mirrored_passes_methodology,
     is_ruleset_v6_research_scale_methodology,
@@ -100,9 +102,11 @@ from battle_engine.project_info import get_project_info
 from battle_engine.python_runtime import CORE_SIZE
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
@@ -111,7 +115,7 @@ from battle_engine.ruleset_policy import (
     resolve_ruleset_policy,
 )
 
-# V6 Phase 4B (task Sec 6), Phase 4C, Phase 4D, E2, E3, and E4: the finite, explicit set of Ruleset
+# V6 Phase 4B (task Sec 6), Phase 4C, Phase 4D, E2, E3, E4, and E5: the finite, explicit set of Ruleset
 # identities `agents evaluate` may create a *new* evaluation artifact under.
 # Mirrors `ruleset_policy._RULESET_POLICIES`'s own "finite table, never a naming
 # convention check" philosophy -- an experimental Ruleset becomes evaluable
@@ -130,6 +134,8 @@ _EVALUATION_ALLOWED_RULESET_IDS: frozenset[str] = frozenset(
         BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     }
 )
 
@@ -445,6 +451,14 @@ class EvaluationService:
         resolved_is_v6_research_disruption_slot_mirrored_passes = (
             is_ruleset_v6_research_disruption_slot_mirrored_passes_methodology(resolved_rules_id)
         )
+        resolved_is_v6_research_capture_hold_disruption_slot_anchor_before_core = (
+            is_ruleset_v6_research_capture_hold_disruption_slot_anchor_before_core_methodology(
+                resolved_rules_id
+            )
+        )
+        resolved_is_v6_research_disruption_slot_anchor_before_core = (
+            is_ruleset_v6_research_disruption_slot_anchor_before_core_methodology(resolved_rules_id)
+        )
         resolved_group = request.group and resolved_is_v2
         state_path = request.output_dir / "evaluation.json"
         prior = (
@@ -468,6 +482,12 @@ class EvaluationService:
                     ),
                     is_v6_research_disruption_slot_mirrored_passes_methodology=(
                         resolved_is_v6_research_disruption_slot_mirrored_passes
+                    ),
+                    is_v6_research_capture_hold_disruption_slot_anchor_before_core_methodology=(
+                        resolved_is_v6_research_capture_hold_disruption_slot_anchor_before_core
+                    ),
+                    is_v6_research_disruption_slot_anchor_before_core_methodology=(
+                        resolved_is_v6_research_disruption_slot_anchor_before_core
                     ),
                 ),
             )
@@ -938,8 +958,9 @@ class EvaluationService:
         # clamped to the nearest supported bound. V6 E2's capture-hold
         # Ruleset inherits this research methodology unchanged (design
         # review trap F-4: omitted here, E2 would accept any arena size),
-        # and so do V6 E3's two slot-limited disruption Rulesets and V6 E4's
-        # two mirrored-pass-order Rulesets.
+        # and so do V6 E3's two slot-limited disruption Rulesets, V6 E4's
+        # two mirrored-pass-order Rulesets and V6 E5's two anchor/core-0
+        # separation Rulesets.
         if (
             (
                 request.is_v6_research_scale_methodology
@@ -950,6 +971,8 @@ class EvaluationService:
                 or request.is_v6_research_disruption_slot_methodology
                 or request.is_v6_research_capture_hold_disruption_slot_mirrored_passes_methodology
                 or request.is_v6_research_disruption_slot_mirrored_passes_methodology
+                or request.is_v6_research_capture_hold_disruption_slot_anchor_before_core_methodology
+                or request.is_v6_research_disruption_slot_anchor_before_core_methodology
             )
             and request.arena_size is not None
             and not (RESEARCH_SCALE_MIN_ARENA_SIZE <= request.arena_size <= RESEARCH_SCALE_MAX_ARENA_SIZE)
@@ -1092,6 +1115,14 @@ class EvaluationService:
         resolved_is_v6_research_disruption_slot_mirrored_passes = (
             is_ruleset_v6_research_disruption_slot_mirrored_passes_methodology(resolved_rules_id)
         )
+        resolved_is_v6_research_capture_hold_disruption_slot_anchor_before_core = (
+            is_ruleset_v6_research_capture_hold_disruption_slot_anchor_before_core_methodology(
+                resolved_rules_id
+            )
+        )
+        resolved_is_v6_research_disruption_slot_anchor_before_core = (
+            is_ruleset_v6_research_disruption_slot_anchor_before_core_methodology(resolved_rules_id)
+        )
         resolved_group = request.group and resolved_is_v2
         identity_version = resolved_identity_version(
             resolved_is_v2,
@@ -1110,6 +1141,12 @@ class EvaluationService:
             ),
             is_v6_research_disruption_slot_mirrored_passes_methodology=(
                 resolved_is_v6_research_disruption_slot_mirrored_passes
+            ),
+            is_v6_research_capture_hold_disruption_slot_anchor_before_core_methodology=(
+                resolved_is_v6_research_capture_hold_disruption_slot_anchor_before_core
+            ),
+            is_v6_research_disruption_slot_anchor_before_core_methodology=(
+                resolved_is_v6_research_disruption_slot_anchor_before_core
             ),
         )
         layouts: list[dict[str, Any]] | None = None
@@ -1156,6 +1193,8 @@ class EvaluationService:
                 or resolved_is_v6_research_disruption_slot
                 or resolved_is_v6_research_capture_hold_disruption_slot_mirrored_passes
                 or resolved_is_v6_research_disruption_slot_mirrored_passes
+                or resolved_is_v6_research_capture_hold_disruption_slot_anchor_before_core
+                or resolved_is_v6_research_disruption_slot_anchor_before_core
             ):
                 # v4.0.0-rc1 Phase 1 (research report Sec H.1 item 7): the
                 # methodology's actual resolved *sample set* -- each seed's
