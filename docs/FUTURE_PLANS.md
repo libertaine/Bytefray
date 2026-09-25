@@ -338,6 +338,17 @@ Current status across the repository:
   --ruleset` or the Python API); never automatic and absent from `run`,
   `agents test`, tournament, and the Designer
   ([`docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md`](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md)).
+- **`bytefray-rules-6-research-sensing-r32`, `bytefray-rules-6-research-disruption-slot1-sensing-r32`** —
+  **Active Research Rulesets.** The E6 treatments: identical to
+  `bytefray-rules-6-research-scale` and
+  `bytefray-rules-6-research-disruption-slot1` respectively, except
+  `detection_radius = 32`. A process passively senses enemy anchors only
+  within min(declared reach, 32) cells, inclusive. READ and WRITE reach are
+  unchanged, and the radius is public on
+  `MatchContextV2.detection_radius`. Explicit selection only
+  (`agents evaluate --ruleset` or the Python API); never automatic and
+  absent from `run`, `agents test`, tournament, and the Designer
+  ([`docs/research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md`](research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md)).
 - **`bytefray-rules-6-research-scale-move`, `bytefray-rules-6-research-scale-move-proportional`** —
   **Retired Research Rulesets.** Closed research identities from the Phase 4
   movement line. Retained for historical characterization test verification and
@@ -453,6 +464,27 @@ Current status across the repository:
   [`docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md`](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md),
   [`docs/research/v6/V6_E5_DESIGN_REVIEW_REVISION_1.md`](research/v6/V6_E5_DESIGN_REVIEW_REVISION_1.md),
   [`docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md`](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md)).
+- **Future gameplay mechanics (E6 — Priced Sensing):** **Registered; implemented to Checkpoint A (research-only).**
+  The first Branch B experiment, and a research question rather than a
+  promised improvement: does limiting passive enemy-anchor visibility to
+  min(declared reach, 32) cells, with search priced through MOVE and READ
+  as the stealthy alternative, make the best allocation of actions
+  depend on the opponent? Or does it act only as a discovery tax, which
+  preserves outcomes and delays them? The registered readings run from
+  "priced sensing creates an opponent-dependent choice" to "a dominant
+  policy under both", and include "no registered row applies". The kill
+  criteria name a search race, greed dominance, stalling, a delayed
+  forced line and a seat artifact. Implemented through I-6: the two
+  research Rulesets, the public radius, the nine-member matched family,
+  bound callback-level traces, the analysis instrument and the seed
+  tooling. The structural matrix `v6-e6-matrix-v1-cd040eac42ef` and the
+  analysis freeze `v6-e6-freeze-v1-428033032ce2` are frozen. No seed has
+  been generated and no matrix cell has run; seed generation, the
+  controls and the treatment each need separate authorization
+  ([`docs/research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md`](research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md),
+  [`docs/research/v6/V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md`](research/v6/V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md),
+  [`docs/research/v6/V6_PRICED_SENSING_DESIGN_REVIEW.md`](research/v6/V6_PRICED_SENSING_DESIGN_REVIEW.md),
+  [`docs/research/v6/V6_BRANCH_B_ACTION_CHOICE_SCOPE_REVIEW.md`](research/v6/V6_BRANCH_B_ACTION_CHOICE_SCOPE_REVIEW.md)).
 
 ---
 
