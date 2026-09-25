@@ -446,6 +446,7 @@ class ProcessMatchController:
                         # already failed the match without importing agent
                         # code. Empty for every agent without a schema.
                         parameters=MappingProxyType(dict(entrant.parameters)),
+                        detection_radius=ruleset_policy.detection_radius,
                     )
                     instance = cast(AgentV2, loaded.instance)
                     reset_start = time.perf_counter()
@@ -525,6 +526,7 @@ class ProcessMatchController:
                         action_budget=config.instr_per_tick,
                         timeout=agent_call_timeout,
                         parameters=entrant.parameters,
+                        detection_radius=ruleset_policy.detection_radius,
                     )
                     if trace_writer is not None:
                         trace_writer.write_reset(ResetRecord(

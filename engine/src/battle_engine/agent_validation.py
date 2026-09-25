@@ -121,6 +121,8 @@ def build_validation_context(api_version: int = 2) -> MatchContextV2:
         arena_size=VALIDATION_ARENA_SIZE,
         tick_limit=1,
         rng=random.Random(seed),
+        # A dry run belongs to no Ruleset, so it has no sensing radius.
+        detection_radius=None,
     )
 
 

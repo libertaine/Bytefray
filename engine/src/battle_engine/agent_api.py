@@ -215,6 +215,17 @@ class MatchContextV2:
     parameters: Mapping[str, bool | int | float | str] = field(
         default_factory=lambda: MappingProxyType({})
     )
+    #: The Ruleset's passive sensing radius (V6 E6,
+    #: docs/research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md Sec 2 and
+    #: V6_PRICED_SENSING_DESIGN_REVIEW.md Sec M, decision 3: the radius is
+    #: public). ``None`` -- every Ruleset except the E6 research identities --
+    #: means ``visible_enemy_anchor_addresses`` covers each process's full
+    #: declared reach; an integer ``d`` means it covers only ``min(reach, d)``
+    #: cells. READ and WRITE reach are unaffected either way.
+    #:
+    #: Additive and last, with a default, exactly like ``parameters`` above:
+    #: NOT an Agent API version change.
+    detection_radius: int | None = None
 
 
 @dataclass(frozen=True)

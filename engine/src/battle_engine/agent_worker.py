@@ -221,6 +221,7 @@ class AgentWorkerHandle:
         timeout: float,
         locality_reach: int | None = None,
         parameters: Mapping[str, Any] | None = None,
+        detection_radius: int | None = None,
     ) -> WorkerCallResult:
         return self._call(
             {
@@ -242,6 +243,10 @@ class AgentWorkerHandle:
                 # construction, so they cross this JSON wire unchanged; read
                 # back through `.get(...)` for the same tolerance as above.
                 "parameters": dict(parameters or {}),
+                # V6 E6: additive, `None` for every Ruleset without a sensing
+                # radius, read back through `.get(...)` with the same
+                # tolerance as the two keys above.
+                "detection_radius": detection_radius,
             },
             timeout=timeout,
         )
@@ -448,6 +453,7 @@ def _handle_reset(state: _WorkerState, request: dict[str, Any], out: Any) -> Non
         tick_limit=request["tick_limit"],
         rng=random.Random(seed),
         parameters=MappingProxyType(dict(request.get("parameters") or {})),
+        detection_radius=request.get("detection_radius"),
     )
     try:
         state.loaded.instance.reset(context)

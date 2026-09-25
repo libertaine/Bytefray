@@ -120,6 +120,7 @@ Handed to `reset` once.
 | `tick_limit` | The tick the match stops at if nobody has been eliminated. |
 | `rng` | A `random.Random` seeded deterministically for you. |
 | `parameters` | Your resolved parameters — see [§M](#m-parameters-and-presets). Empty unless you declared some. |
+| `detection_radius` | `None` under every product Ruleset. Only the explicit-only V6 E6 research Rulesets set it (to `32`; see [V6_E6_PRICED_SENSING_PREREGISTRATION.md](research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md)). There, `visible_enemy_anchor_addresses` covers only `min(reach, detection_radius)` cells around each of your processes. `READ` and `WRITE` still reach your full declared reach. Additive, like `parameters`: not an API version change. |
 
 **Use `context.rng`, never `random.random()` or `time`.** The engine derives
 that generator from the match seed so the same match replays identically.
@@ -197,7 +198,7 @@ A gap between these is how you infer that you were disrupted; there is no
 
 | Field | Meaning |
 | --- | --- |
-| `visible_enemy_anchor_addresses` | Sorted, unique addresses of enemy process anchors currently within the reach of **any** eligible process of yours. |
+| `visible_enemy_anchor_addresses` | Sorted, unique addresses of enemy process anchors currently within the reach of **any** eligible process of yours (within `min(reach, detection_radius)` when `context.detection_radius` is set). |
 
 **Feedback from your last action**
 
