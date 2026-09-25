@@ -1,6 +1,60 @@
 {
   "control_qualification": {
-    "status": "PENDING"
+    "controls": {
+      "C-E5": {
+        "cells": 1792,
+        "generated_at": [
+          [
+            "a6d11167b1ae957ff382b35a7ebef947c234ebb8",
+            false,
+            "v6-e5-freeze-v1-5ba12be258c8"
+          ]
+        ]
+      },
+      "C-E5K1": {
+        "cells": 1792,
+        "generated_at": [
+          [
+            "a6d11167b1ae957ff382b35a7ebef947c234ebb8",
+            false,
+            "v6-e5-freeze-v1-5ba12be258c8"
+          ]
+        ]
+      }
+    },
+    "min_sweep_backed": {
+      "primary_arm": 17,
+      "required": 6,
+      "status": "PASS"
+    },
+    "note": "Control data only: no T-E5 or T-E5K1 match existed when this freeze was qualified.",
+    "populations": {
+      "path": "tools/research/v6/e5/control_populations.json",
+      "sha256": "1cf96a2e48b4c4bcc95d011b2289963a24fed92a555d5ad927de636b718e1737"
+    },
+    "records": {
+      "analyzer_qualification.json": {
+        "path": "runs/research_v6_e5/v6-e5-matrix-v1-ef7fa327ea81/freezes/v6-e5-freeze-v1-5ba12be258c8/analyzer_qualification.json",
+        "sha256": "dfefe5f3507a399d05e2e1feb03c4edad864484a5463d39074ebe4fc4f2ff1d8"
+      },
+      "d9_real_fixture_gate.json": {
+        "path": "runs/research_v6_e5/v6-e5-matrix-v1-ef7fa327ea81/freezes/v6-e5-freeze-v1-5ba12be258c8/d9_real_fixture_gate.json",
+        "sha256": "b091770c9510e33b0eaa0bb3f93728536292a2c736235fbcee63095e1bc437f1"
+      },
+      "observation_delta_gate.json": {
+        "path": "runs/research_v6_e5/v6-e5-matrix-v1-ef7fa327ea81/freezes/v6-e5-freeze-v1-5ba12be258c8/observation_delta_gate.json",
+        "sha256": "29049fbd905f23be27cb024b64f01bce481d33df705bf93dcb17196508fb09cf"
+      },
+      "p5_inertness_gate.json": {
+        "path": "runs/research_v6_e5/v6-e5-matrix-v1-ef7fa327ea81/freezes/v6-e5-freeze-v1-5ba12be258c8/p5_inertness_gate.json",
+        "sha256": "18f927a9b4f44a098e690cd174e2b7baa9f7cfc0a734d81e97b4240dfc1c569c"
+      },
+      "parent_reproduction.json": {
+        "path": "runs/research_v6_e5/v6-e5-matrix-v1-ef7fa327ea81/freezes/v6-e5-freeze-v1-5ba12be258c8/parent_reproduction.json",
+        "sha256": "ee68117e204892baf7e7278fe140245f9823f81e2c3fd00fd241d1522b920dca"
+      }
+    },
+    "status": "PASS"
   },
   "freeze_digest": "5ba12be258c80bd0876542b035bc66d183a9447d4c6c014528aff9f2ea516227",
   "freeze_id": "v6-e5-freeze-v1-5ba12be258c8",

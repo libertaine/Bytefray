@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 from tools.research.v6.e4 import analysis_freeze as e4_freeze
-from tools.research.v6.e5 import analysis_freeze, matrix, run_e5
+from tools.research.v6.e5 import analysis_freeze, matrix, populations, run_e5
 from tools.research.v6.e5.preregistration import preregistration_digest
 
 
@@ -129,3 +129,44 @@ def test_the_committed_freeze_holds() -> None:
     assert (identity["tooling_source_sha"], identity["match_generation_tree"]) == (TOOLING_SOURCE_SHA, ENGINE_TREE)
     assert analysis_freeze.git_text("rev-parse", "e0a1b02:engine/src") == ENGINE_TREE
     assert identity["matrix_id"] == "v6-e5-matrix-v1-ef7fa327ea81"
+
+
+# The commit both controls were generated at (clean tree), after the freeze commit.
+CONTROL_SOURCE_SHA = "a6d11167b1ae957ff382b35a7ebef947c234ebb8"
+POPULATIONS_SHA256 = "1cf96a2e48b4c4bcc95d011b2289963a24fed92a555d5ad927de636b718e1737"
+PRIMARY_SWEEP_BACKED = [
+    "F1|e2_disrupt_guard|e2_min_guard|A", "F1|e2_disrupt_guard|e2_sniper|A", "F1|e2_guarded_painter|e2_min_guard|A",
+    "F1|e2_guarded_painter|e2_sniper|A", "F1|e2_min_guard|e2_disrupt_guard|B", "F1|e2_min_guard|e2_guarded_painter|B",
+    "F1|e2_min_guard|e2_repair_guard|B", "F1|e2_min_guard|e2_sniper|A", "F1|e2_min_guard|e2_spread_defender|B",
+    "F1|e2_sniper|e2_disrupt_guard|B", "F1|e2_sniper|e2_guarded_painter|B", "F1|e2_sniper|e2_min_guard|B",
+    "F1|e2_sniper|e2_repair_guard|B", "F1|e2_sniper|e2_spread_defender|B", "F1|e2_spread_defender|e2_repair_guard|B",
+    "F1|e2_spread_sniper|e2_repair_guard|B", "F2|e2_min_guard|e2_min_guard_twin|AB",
+]
+MIXED = ["F1|e2_spread_defender|e2_min_guard|A", "F1|e2_spread_defender|e2_sniper|A"]
+
+
+def test_the_committed_control_qualification_pins_the_frozen_populations() -> None:
+    record = analysis_freeze.load_freeze()
+    qualification = record["control_qualification"]
+    assert qualification["status"] == "PASS"
+    assert set(qualification["records"]) == set(run_e5.CONTROL_RECORDS)
+    # Both controls: every field, generated after the freeze commit with a clean tree.
+    assert qualification["controls"] == {condition: {"generated_at": [[CONTROL_SOURCE_SHA, False, FREEZE_ID]],
+                                                     "cells": 1792} for condition in matrix.CONTROL_CONDITIONS}
+    assert analysis_freeze.git_text("rev-parse", f"{CONTROL_SOURCE_SHA}:engine/src") == ENGINE_TREE
+    assert qualification["populations"]["sha256"] == POPULATIONS_SHA256
+    frozen = populations.load_record(populations.POPULATIONS_PATH, freeze_id=FREEZE_ID,
+                                     expected_sha256=POPULATIONS_SHA256)
+    populations.require_ready(frozen)
+    primary, companion = frozen["arms"]["primary"], frozen["arms"]["companion"]
+    assert primary["counts"] == {"p_base": 34, "SWEEP-BACKED": 17, "ANCHOR-ONLY": 15, "MIXED-INFERENCE": 2}
+    assert companion["counts"] == {"p_base": 32, "SWEEP-BACKED": 15, "ANCHOR-ONLY": 15, "MIXED-INFERENCE": 2}
+    assert sorted(n for n, c in primary["contest_classes"].items() if c == "SWEEP-BACKED") == PRIMARY_SWEEP_BACKED
+    assert sorted(n for n, c in primary["contest_classes"].items() if c == "MIXED-INFERENCE") == MIXED
+    assert frozen["min_sweep_backed"] == {"required": 6, "primary_arm": 17, "status": "PASS"}
+    assert (frozen["p_par_e5"]["count"], frozen["p_par_e5"]["e4_p_par_units"]) == (28, 32)
+    # Control against itself: 100% identity classes, and the global null reads STOP.
+    assert primary["control_census"]["classes"]["STAYS"] == 34
+    assert frozen["control_vs_control_hypotheses"]["statuses"] == {
+        "E5-H1": "REFUTED", "E5-H2": "SUPPORTED", "E5-H3": "SUPPORTED", "E5-H4": "REFUTED", "E5-H5": "REFUTED"}
+    assert frozen["control_vs_control_hypotheses"]["interpretation"] == "STOP"
