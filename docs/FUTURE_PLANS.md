@@ -328,6 +328,16 @@ Current status across the repository:
   evaluate --ruleset` or the Python API); never automatic and absent from
   `run`, `agents test`, tournament, and the Designer
   ([`docs/research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md`](research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md)).
+- **`bytefray-rules-6-research-capture-hold-k2-disruption-slot1-anchor-before-core`, `bytefray-rules-6-research-disruption-slot1-anchor-before-core`** —
+  **Active Research Rulesets.** The E5 treatments: identical to
+  `bytefray-rules-6-research-capture-hold-k2-disruption-slot1` and
+  `bytefray-rules-6-research-disruption-slot1` respectively, except
+  `initial_anchor_placement = "before_core"` (a process with no declared
+  position spawns at `(core_base - 1) % arena_size`, one cell before its
+  core; a spawn rule only). Explicit selection only (`agents evaluate
+  --ruleset` or the Python API); never automatic and absent from `run`,
+  `agents test`, tournament, and the Designer
+  ([`docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md`](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md)).
 - **`bytefray-rules-6-research-scale-move`, `bytefray-rules-6-research-scale-move-proportional`** —
   **Retired Research Rulesets.** Closed research identities from the Phase 4
   movement line. Retained for historical characterization test verification and
@@ -402,6 +412,21 @@ Current status across the repository:
   [`docs/research/v6/V6_E4_ANALYSIS_FREEZE_V3.md`](research/v6/V6_E4_ANALYSIS_FREEZE_V3.md),
   [`docs/research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md`](research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md),
   [`docs/research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md`](research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md)).
+- **Future gameplay mechanics (E5 — Anchor/Core-0 Separation):** **Implemented; matrix not run.**
+  The single-variable question after E4, posed as a research question rather
+  than a promised improvement: is anchor/core-0 co-location -- every process
+  spawning on its core cell 0, so one WRITE both disrupts it and flips a core
+  cell -- necessary for the second mover's directed base privilege where the
+  base is also attacked explicitly? The corrected design spawns processes one
+  cell before the core, keeps the frozen fixtures unmodified, and scores each
+  victim's core cell 0 by directed base parity. The core, the scheduler,
+  capture, K, λ, scoring and the replay schema are unchanged, and movement is
+  unrestricted. The two research Rulesets are implemented and qualified; the
+  research tooling, pre-registration and freezes are not yet complete, no E5
+  matrix has been run, and no gameplay conclusion exists
+  ([`docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md`](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md),
+  [`docs/research/v6/V6_E5_DESIGN_REVIEW_REVISION_1.md`](research/v6/V6_E5_DESIGN_REVIEW_REVISION_1.md),
+  [`docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md`](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md)).
 
 ---
 
