@@ -44,9 +44,11 @@ from battle_engine.rules import (
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID,
 )
 from battle_engine.scheduler import StateT, run_chunked_quota
 
@@ -158,6 +160,21 @@ class RulesetPolicy:
     #: enemy-core targeting behaviorally inert (review Sec F, P5), so a general
     #: integer offset is deliberately not expressible.
     initial_anchor_placement: str = "core_base"
+    #: How far a friendly process passively senses enemy anchors. ``None`` is
+    #: the historical rule every Ruleset keeps unless it states otherwise: a
+    #: process senses every enemy anchor within its declared reach. An integer
+    #: ``d >= 1`` (V6 E6, docs/research/v6/V6_PRICED_SENSING_DESIGN_REVIEW.md
+    #: Sec C and V6_E6_PRICED_SENSING_PREREGISTRATION.md Sec 2) limits passive
+    #: visibility to circular distance ``<= min(reach, d)`` -- inclusive, so an
+    #: anchor at exactly that distance is visible. It changes passive
+    #: visibility only: when visibility is computed, which processes can
+    #: sense, entrant-wide sharing and the observation format are unchanged,
+    #: and so are action reach (a READ or WRITE still reaches the full
+    #: declared reach), MOVE, capture, disruption and scheduling. A match
+    #: additionally requires ``2 * d < arena_size``
+    #: (``process_runtime.ProcessMatchController``), since a radius of half
+    #: the ring would see all of it.
+    detection_radius: int | None = None
 
     #: Every value :attr:`core_placement` may take. ``"zero"`` is every
     #: Ruleset whose omitted start addresses historically defaulted to the
@@ -282,6 +299,18 @@ class RulesetPolicy:
                 f"{self.ruleset_id!r}; expected one of "
                 f"{sorted(self.INITIAL_ANCHOR_PLACEMENT_MODES)!r}"
             )
+        # Same strict shape as ``disruption_slot_limit``: ``None`` or an
+        # integer >= 1, never coerced -- ``True`` would otherwise pass as a
+        # radius of one cell, and ``32.0`` or ``"32"`` as thirty-two.
+        if self.detection_radius is not None and (
+            isinstance(self.detection_radius, bool)
+            or not isinstance(self.detection_radius, int)
+            or self.detection_radius < 1
+        ):
+            raise ValueError(
+                f"invalid detection_radius {self.detection_radius!r} for Ruleset "
+                f"{self.ruleset_id!r}; expected None or an integer >= 1"
+            )
 
     def resolve_initial_anchor(self, core_base: int, arena_size: int) -> int:
         """Return the spawn address of a process that declares no position.
@@ -302,6 +331,20 @@ class RulesetPolicy:
             f"unknown initial_anchor_placement {self.initial_anchor_placement!r} for Ruleset "
             f"{self.ruleset_id!r}"
         )
+
+    def resolve_sensing_radius(self, reach: int) -> int:
+        """Return the passive-sensing radius of a process with declared ``reach``.
+
+        ``None`` returns ``reach`` itself -- the historical rule, byte for
+        byte. An integer ``detection_radius`` (V6 E6) returns
+        ``min(reach, detection_radius)``. Only passive enemy-anchor
+        visibility reads this; READ and WRITE keep checking the declared
+        reach.
+        """
+
+        if self.detection_radius is None:
+            return reach
+        return min(reach, self.detection_radius)
 
     def resolve_max_move_delta(self, arena_size: int) -> int:
         """Return the maximum allowed displacement per MOVE action for this arena.
@@ -873,6 +916,66 @@ RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE = RulesetPolicy(
 )
 
 
+# V6 E6: the priced-sensing research identities (see their docstring in
+# ``rules.py``, docs/research/v6/V6_PRICED_SENSING_DESIGN_REVIEW.md Sec C,
+# docs/research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md Sec 2 and
+# docs/research/v6/V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md Sec 3). Each is
+# an independent literal copy of its parent's values -- never
+# ``dataclasses.replace(parent, ...)`` -- for the hidden-coupling reason
+# ``RULESET_V6_RESEARCH_SCALE`` gives above. Every field is spelled out,
+# including those the parent leaves at their defaults, so neither object's
+# meaning depends on a future default change. The only intended gameplay
+# difference from each parent is ``detection_radius=32``: a process passively
+# senses an enemy anchor only within ``min(reach, 32)`` cells. That it is the
+# *only* difference is a verified fact
+# (``engine/tests/test_ruleset_v6_research_sensing.py``), not merely this
+# comment's claim.
+#
+# Permanent obligation: artifacts record only the Ruleset ID and recover its
+# semantics -- the sensing radius included -- through ``_RULESET_POLICIES``,
+# so once any E6 artifact exists these field values must never change, and
+# retiring either identity must keep it resolvable.
+#
+# Primary treatment; parent ``RULESET_V6_RESEARCH_SCALE`` (C-E6).
+RULESET_V6_RESEARCH_SENSING_R32 = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seeded",
+    process_selection="round_robin",
+    movement_stride="fixed_64",
+    movement_displacement="literal",
+    capture_hold_ticks=1,
+    disruption_slot_limit=None,
+    scheduler_pass_order="forward",
+    initial_anchor_placement="core_base",
+    detection_radius=32,
+)
+
+# Companion treatment; parent ``RULESET_V6_RESEARCH_DISRUPTION_SLOT1``
+# (historical T-E3K1; C-E6L, K=1).
+RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32 = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seeded",
+    process_selection="round_robin",
+    movement_stride="fixed_64",
+    movement_displacement="literal",
+    capture_hold_ticks=1,
+    disruption_slot_limit=1,
+    scheduler_pass_order="forward",
+    initial_anchor_placement="core_base",
+    detection_radius=32,
+)
+
+
 # Which Ruleset identities execute on the Agent API v2 process runtime
 # (``battle_engine.process_runtime.ProcessMatchController``). A finite, explicit set for the
 # same reason ``_RULESET_POLICIES`` is a finite table -- and the one place
@@ -914,6 +1017,10 @@ RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE = RulesetPolicy(
 # V6 E5 added the two ``-anchor-before-core`` identities: both execute on the
 # Agent API v2 process runtime, each differing from its E3 parent only in
 # where a process with no declared position spawns.
+#
+# V6 E6 added the two ``-sensing-r32`` identities: both execute on the Agent
+# API v2 process runtime, each differing from its parent only in its passive
+# sensing radius.
 PROCESS_RULESET_IDS: frozenset[str] = frozenset(
     {
         BYTEFRAY_RULESET_V4_ID,
@@ -927,6 +1034,8 @@ PROCESS_RULESET_IDS: frozenset[str] = frozenset(
         BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID,
     }
 )
 
@@ -949,6 +1058,8 @@ ACTIVE_RESEARCH_RULESET_IDS: frozenset[str] = frozenset(
         BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID,
     }
 )
 RETIRED_RESEARCH_RULESET_IDS: frozenset[str] = frozenset(
@@ -1041,6 +1152,10 @@ _RULESET_POLICIES: Mapping[str, RulesetPolicy] = {
     ),
     RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE.ruleset_id: (
         RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE
+    ),
+    RULESET_V6_RESEARCH_SENSING_R32.ruleset_id: RULESET_V6_RESEARCH_SENSING_R32,
+    RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32.ruleset_id: (
+        RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32
     ),
 }
 
@@ -1302,9 +1417,11 @@ __all__ = [
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID",
     "HISTORICAL_READONLY_RULESET_IDS",
     "OMITTED_RULESET_CANDIDATES",
     "PROCESS_RULESET_IDS",
@@ -1318,9 +1435,11 @@ __all__ = [
     "RULESET_V6_RESEARCH_DISRUPTION_SLOT1",
     "RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE",
     "RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES",
+    "RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32",
     "RULESET_V6_RESEARCH_SCALE",
     "RULESET_V6_RESEARCH_SCALE_MOVE",
     "RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL",
+    "RULESET_V6_RESEARCH_SENSING_R32",
     "NoCompatibleRulesetError",
     "RulesetPolicy",
     "TerminationDecision",

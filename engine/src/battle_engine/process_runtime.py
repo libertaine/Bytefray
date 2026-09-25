@@ -223,6 +223,25 @@ class ProcessMatchController:
             )
         )
 
+    @staticmethod
+    def _detection_radius_problem(ruleset_policy: RulesetPolicy, arena_size: int) -> str | None:
+        """Why ``ruleset_policy``'s sensing radius cannot run at ``arena_size``, if it cannot.
+
+        V6 E6's match-level validation layer (``RulesetPolicy`` checks the
+        other: ``None`` or an integer >= 1). A radius ``d`` requires
+        ``2 * d < arena_size``: no two cells are farther apart than half the
+        ring, so a larger radius would sense every anchor on it. ``None``
+        imposes nothing.
+        """
+
+        radius = ruleset_policy.detection_radius
+        if radius is None or 2 * radius < arena_size:
+            return None
+        return (
+            f"Ruleset {ruleset_policy.ruleset_id!r} limits sensing to detection_radius {radius}, "
+            f"which requires arena_size > {2 * radius}; received {arena_size}."
+        )
+
     @classmethod
     def _validate_declarations(
         cls,
@@ -371,6 +390,17 @@ class ProcessMatchController:
                 code="match_configuration_invalid",
                 stage="configuration",
                 message="V4 matches require arena_size > 1 and a positive tick limit.",
+            )
+        # The same check ``__init__`` makes, here so an invalid match fails
+        # before any entrant's code is loaded or reset.
+        detection_radius_problem = cls._detection_radius_problem(
+            ruleset_policy, config.arena_size
+        )
+        if detection_radius_problem is not None:
+            raise cls._initialization_error(
+                code="match_configuration_invalid",
+                stage="configuration",
+                message=detection_radius_problem,
             )
 
         worker_handles: list[AgentWorkerHandle] = []
@@ -673,6 +703,11 @@ class ProcessMatchController:
 
         if config.instr_per_tick <= 0 or config.arena_size <= 1 or max_ticks <= 0:
             raise ValueError("process matches require positive arena, quota, and tick limit")
+        detection_radius_problem = self._detection_radius_problem(
+            self.ruleset_policy, config.arena_size
+        )
+        if detection_radius_problem is not None:
+            raise ValueError(detection_radius_problem)
 
         for spec in entrant_specs:
             if not spec.processes:
@@ -815,7 +850,11 @@ class ProcessMatchController:
         for enemy_position in enemy_positions:
             for observer in observers:
                 observer_position = observer.position
-                radius = observer.reach
+                radius = (
+                    None
+                    if observer.reach is None
+                    else self.ruleset_policy.resolve_sensing_radius(observer.reach)
+                )
                 if (
                     observer_position is not None
                     and radius is not None

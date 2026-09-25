@@ -83,9 +83,11 @@ from battle_engine.evaluation_contracts import (
     is_ruleset_v6_research_disruption_slot_anchor_before_core_methodology,
     is_ruleset_v6_research_disruption_slot_methodology,
     is_ruleset_v6_research_disruption_slot_mirrored_passes_methodology,
+    is_ruleset_v6_research_disruption_slot_sensing_r32_methodology,
     is_ruleset_v6_research_scale_methodology,
     is_ruleset_v6_research_scale_move_methodology,
     is_ruleset_v6_research_scale_move_proportional_methodology,
+    is_ruleset_v6_research_sensing_r32_methodology,
     physical_slots_for_orientation,
     resolved_identity_version,
     resolved_schema_version,
@@ -979,6 +981,10 @@ def write_evaluation_state(
     resolved_is_v6_research_disruption_slot_anchor_before_core = (
         is_ruleset_v6_research_disruption_slot_anchor_before_core_methodology(resolved_rules_id)
     )
+    resolved_is_v6_research_sensing_r32 = is_ruleset_v6_research_sensing_r32_methodology(resolved_rules_id)
+    resolved_is_v6_research_disruption_slot_sensing_r32 = (
+        is_ruleset_v6_research_disruption_slot_sensing_r32_methodology(resolved_rules_id)
+    )
     resolved_group = request.group and resolved_is_v2
     write_json_atomic(
         path,
@@ -1021,6 +1027,10 @@ def write_evaluation_state(
                 is_v6_research_disruption_slot_anchor_before_core_methodology=(
                     resolved_is_v6_research_disruption_slot_anchor_before_core
                 ),
+                is_v6_research_sensing_r32_methodology=resolved_is_v6_research_sensing_r32,
+                is_v6_research_disruption_slot_sensing_r32_methodology=(
+                    resolved_is_v6_research_disruption_slot_sensing_r32
+                ),
             ),
             "identity_version": resolved_identity_version(
                 resolved_is_v2,
@@ -1045,6 +1055,10 @@ def write_evaluation_state(
                 ),
                 is_v6_research_disruption_slot_anchor_before_core_methodology=(
                     resolved_is_v6_research_disruption_slot_anchor_before_core
+                ),
+                is_v6_research_sensing_r32_methodology=resolved_is_v6_research_sensing_r32,
+                is_v6_research_disruption_slot_sensing_r32_methodology=(
+                    resolved_is_v6_research_disruption_slot_sensing_r32
                 ),
             ),
             "evaluation_id": evaluation_id,

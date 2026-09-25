@@ -252,6 +252,35 @@ BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID = (
 )
 
 
+# V6 E6's priced-sensing research identities (see
+# docs/research/v6/V6_PRICED_SENSING_DESIGN_REVIEW.md Sec C,
+# docs/research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md Sec 2 and
+# docs/research/v6/V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md Sec 3). Each is
+# a distinct research identity, never an alias of its parent: its sole
+# intended gameplay difference from that parent is that a friendly process
+# passively senses an enemy anchor only within ``min(declared reach, 32)``
+# cells, inclusive (``RulesetPolicy.detection_radius == 32`` instead of
+# ``None``). READ and WRITE still reach the full declared reach, so finding
+# an unseen enemy costs actions: moving to sense it, or reading for it.
+#
+# The primary treatment's parent is ``bytefray-rules-6-research-scale``
+# (K=1, whole-tick disruption); the companion's parent is the E3 companion
+# ``bytefray-rules-6-research-disruption-slot1`` (K=1, slot-limited
+# disruption). The primary is named by topic per the
+# ``bytefray-rules-6-research-<topic>`` convention, like E2's, rather than
+# appending to ``-scale``; the companion appends ``-sensing-r32`` to its
+# parent's ID, so it still names every gameplay difference from V4. The
+# ``-r32`` suffix records the single varied value, so a possible second
+# radius would be a sibling rather than a rename. Deliberately not selectable
+# from ``bytefray run``/``agents test``/tournament/Designer surfaces or
+# ``OMITTED_RULESET_CANDIDATES`` -- only ``agents evaluate`` (or the Python
+# API) can select either, and only by explicit ``--ruleset`` name.
+BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID = "bytefray-rules-6-research-sensing-r32"
+BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID = (
+    "bytefray-rules-6-research-disruption-slot1-sensing-r32"
+)
+
+
 # v0.10 Phase 4: a finite, explicit historical-alias table -- deliberately
 # not a generic "normalize any evaluation-rules-N-shaped string" function.
 # Each entry records a relationship actually established by git-history
@@ -323,9 +352,11 @@ __all__ = [
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID",
     "RulesetConfidence",
     "RulesetProvenance",
     "normalize_ruleset_id",
