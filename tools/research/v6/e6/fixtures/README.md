@@ -26,15 +26,18 @@ They are not product starter agents. Nothing in the wheel, the Designer or `byte
 
 ## Details fixed at I-3 where plan §5.2 is silent
 
-Each of these was fixed before any E6 data existed, and each is pinned by a behavior test in `engine/tests/test_v6_e6_family.py`.
+Each of these was fixed before any E6 data existed, and each is pinned by a behavior test in `engine/tests/test_v6_e6_family.py`. Items 2, 3, 4 and 7 are as corrected by [amendment 1](../../../../../docs/research/v6/V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md) (C-2 and C-3), before any seed existed.
 
 1. **The last-known anchor.** When several enemy anchors are visible, the last-known anchor is the lowest address.
-2. **Verification order.** Probes go outward from the last-known anchor *a*: *a*, *a* − 8, *a* + 8, …, *a* − 64, *a* + 64 (17 READs).
-3. **An exhausted window.** If all 17 probes miss, the anchor is forgotten, so search resumes when nothing else is known. If the anchor is seen again, the window starts over.
-4. **Base finding.** A hit starts a downward scan that ends at the first miss, or after the eighth cell (seven below the first hit). The base is the lowest cell that hit.
-5. **A hit.** A hit is an applied READ returning `0xCE` whose owner is neither the entrant itself nor `None`. This is the same test as the information event.
+2. **Verification order.** Probes go outward from the cell one past the last-known anchor *a*: *a* + 1, *a* + 1 − 8, *a* + 1 + 8, …, *a* + 1 − 64, *a* + 1 + 64 (17 READs, covering [*a* − 63, *a* + 65]). A disruption of an anchor on core cell 0 therefore never erases the one sampled core cell.
+3. **An exhausted window.** If all 17 probes miss, or find no confirmable core, the anchor is forgotten, so search resumes when nothing else is known. If the anchor is seen again, the window starts over. A run that ends unconfirmed does not exhaust the window: the next probe follows.
+4. **Base finding.** A hit starts a run of contiguous enemy beacons. The run grows downward until a cell is not a beacon, then upward until a cell is not a beacon, and stops at eight cells.
+   - **Eight** beacons are the core, and the lowest is the base.
+   - **Seven** are the core only if the cell just below them is an enemy anchor address this entrant has written, and a READ shows its own applied write there. That anchor stands in for core cell 0 and is the base.
+   - **Anything else** leaves the core unconfirmed.
+5. **A hit.** A hit is an applied READ returning `0xCE` whose owner is neither the entrant itself nor `None`. This is the same test as the information event. A stand-in anchor is not a hit and is not an information event.
 6. **Once known, the core is never revised**, including a core adopted without verification.
-7. **The next core cell.** The attack's "next cell of the enemy core not yet written this tick" is the first cell, in base order, not yet written this tick.
+7. **The next core cell.** The attack's "next cell of the enemy core not yet written this tick" is the cell at a cyclic cursor over cells 0–7. The cursor is carried across ticks, advances past a cell only when that cell's WRITE is chosen, and skips cells already written this tick. A disruption still costs one of the eight offers; the cell it displaces rotates from tick to tick.
 8. **Values.** Repairs write `0xCE`. Every other write (disruption, core attack, paint) writes `0x01`.
 9. **Cycling.** The paint sequence covers all 504 non-core cells, then starts over. The READ search restarts at *m* = 0 after *m* = 48.
 10. **Result timing.** A process's pending READ result is read at that process's next callback, since observation feedback is per process.
@@ -44,6 +47,8 @@ Each of these was fixed before any E6 data existed, and each is pinned by a beha
 14. **Missing parameters.** Without parameters, which happens only in a validation dry run, a package behaves as GREED.
 15. **Reset draws.** The four reset draws are `(-1, 1)[rng.randrange(2)]`, `rng.randrange(2)`, `(-1, 1)[rng.randrange(2)]` and `rng.randint(8, 64)`, in that order, and nothing else is drawn.
 
-## Known consequence of approved decision P-6 (unverified adoption)
+## P-6 (unverified adoption), as refined by amendment 1 (C-1)
 
-Under a **control** Ruleset, an attacker whose first callback comes after an EVADER's first-callback MOVE sees one anchor. If that anchor is at least 64 cells from its own core, the attacker adopts it as the enemy core base, though it is 8–64 cells off the evader's real core, and never revises it. This follows directly from the approved rule, and it is the E2–E5 fixture convention. It is listed here so that the Checkpoint A review sees it before any seed exists. It never fires under a treatment, because at a first callback nothing farther than 32 cells can be visible.
+Unverified adoption happens only at the **tick-1 first callback of the entrant scheduled to move first**, before the opponent could have acted. Under every E6 Ruleset that is Seat A. There, one visible anchor at least 64 cells from the entrant's own core base is adopted as the enemy core base.
+
+As first approved, the rule applied at any entrant's first callback. Under a control, an attacker whose first callback came after an EVADER's first-callback MOVE adopted the moved anchor, 8–64 cells off the real core, and never revised it. The refinement keeps the parent's Seat A tick-1 forced line exactly and stays inert under a treatment. EVADER still evades immediately.

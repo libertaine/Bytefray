@@ -24,8 +24,21 @@ PR_PATH = Path(__file__).resolve().parents[2] / "docs" / "research" / "v6" / "V6
 
 def test_the_structural_identity_is_pinned_and_recomputes() -> None:
     assert matrix.structural_digest() == matrix.STRUCTURAL_DIGEST
-    assert matrix.matrix_id() == f"v6-e6-matrix-v1-{matrix.STRUCTURAL_DIGEST[:12]}" == "v6-e6-matrix-v1-cd040eac42ef"
+    assert matrix.matrix_id() == f"v6-e6-matrix-v2-{matrix.STRUCTURAL_DIGEST[:12]}" == "v6-e6-matrix-v2-7de29a4a6954"
     matrix.verify_frozen_matrix()
+
+
+def test_structural_matrix_v1_is_superseded_not_reused() -> None:
+    # Amendment 1 changed only the family policy: v2 differs from v1 in the
+    # package fingerprints (and its version), and in nothing else.
+    v1 = matrix.SUPERSEDED_STRUCTURAL_MATRIX
+    assert v1 == {"id": "v6-e6-matrix-v1-cd040eac42ef",
+                  "digest": "cd040eac42ef6554f3d6c0faf4a7fbe83dd963d416cfad8e7f9c4aa8630f13a6"}
+    assert v1["digest"] != matrix.STRUCTURAL_DIGEST and v1["id"] != matrix.matrix_id()
+    definition = matrix.structural_definition()
+    assert definition["matrix_version"] == 2
+    assert {record["agent_py_sha256"] for record in definition["package_fingerprints"].values()} == {
+        "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63"}
 
 
 def test_the_structure_names_no_seed_value() -> None:

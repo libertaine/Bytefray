@@ -2,7 +2,7 @@
 
 Defines the E6 matrix (``matrix.py``) and never executes it implicitly.
 Every command after ``plan`` needs the committed analysis freeze
-(``analysis_freeze.json``), and each later step needs the records of the
+(``analysis_freeze_v2.json``), and each later step needs the records of the
 steps before it (PR Sec 9, step 7, and Sec 11):
 
 1. ``plan``: a structural dry run. It counts every cell of every

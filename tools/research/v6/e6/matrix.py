@@ -9,12 +9,18 @@ a seed. The matrix has 32 seed *positions*; their values are generated only
 after this identity is frozen (PR Sec 9, step 1) and are bound to it by the
 execution identity (``seeds.execution_identity``).
 
-* **Structural matrix identity:** ``v6-e6-matrix-v1-<first 12 hex of
+* **Structural matrix identity:** ``v6-e6-matrix-v2-<first 12 hex of
   STRUCTURAL_DIGEST>``, where ``STRUCTURAL_DIGEST`` is the SHA-256 of
   ``structural_definition()`` in canonical JSON. It is pinned here and by
   the tests, so any edit is a deliberate, visible re-freeze, and none may
   happen once a seed exists.
 * **Execution matrix identity:** ``execution_identity(seed_commitment)``.
+
+Version 2 is the structure after amendment 1
+(docs/research/v6/V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md): the same
+conditions, fields, counts and members, with the corrected family policy, and
+so new package fingerprints. Version 1 (``SUPERSEDED_STRUCTURAL_MATRIX``) was
+superseded before any seed existed.
 """
 
 from __future__ import annotations
@@ -37,7 +43,7 @@ from battle_engine.ruleset_policy import (
 from tools.research.v6.e2 import matrix as e2_matrix
 from tools.research.v6.e6 import family, seeds
 
-E6_MATRIX_VERSION = 1
+E6_MATRIX_VERSION = 2
 ARENA_SIZE = 512
 MAX_TICKS = 1000
 SEED_COUNT = 32
@@ -110,7 +116,13 @@ FIELDS: tuple[Field, ...] = (F1, F2)
 #: The I-0 parent byte-identity freeze, committed before any engine change (D-3).
 PARENT_FREEZE = {"commit": "ddf0eda", "path": "engine/tests/test_v6_e6_parent_byte_identity.py", "matches": 84}
 
-STRUCTURAL_DIGEST = "cd040eac42ef6554f3d6c0faf4a7fbe83dd963d416cfad8e7f9c4aa8630f13a6"
+STRUCTURAL_DIGEST = "7de29a4a6954216ea215bf8cda3aa792fb62d69ea084bbe2bfd4b42fad6fbfc2"
+#: Structural matrix v1: frozen at Checkpoint A, superseded by amendment 1
+#: before any seed existed. Never executed.
+SUPERSEDED_STRUCTURAL_MATRIX = {
+    "id": "v6-e6-matrix-v1-cd040eac42ef",
+    "digest": "cd040eac42ef6554f3d6c0faf4a7fbe83dd963d416cfad8e7f9c4aa8630f13a6",
+}
 
 
 class MatrixDefinitionError(RuntimeError):

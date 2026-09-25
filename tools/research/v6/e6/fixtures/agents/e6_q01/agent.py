@@ -2,8 +2,12 @@
 
 A transcription of docs/research/v6/V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md
 Sec 5.2 (the design is docs/research/v6/V6_PRICED_SENSING_DESIGN_REVIEW.md
-Sec I). Every package's ``agent.py`` is this file, byte for byte; a package is
-nothing but its manifest's parameter defaults, delivered on
+Sec I), with the three corrections of
+docs/research/v6/V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md: unverified adoption
+by the first mover only, anchor + 1 verification with eight-cell
+confirmation, and a cyclic core cursor. Every package's ``agent.py`` is this
+file, byte for byte; a package is nothing but its manifest's parameter
+defaults, delivered on
 ``context.parameters``:
 
 * ``search``: ``none``, ``fast``, ``paced`` or ``read``;
@@ -35,10 +39,16 @@ MARK = 0x01  # the value of every other write: disruption, core attack, paint
 CORE_SIZE = 8
 MAX_STRIDE = 64  # the largest MOVE
 PROBE_STRIDE = 8  # one probe per core-sized window
-PROBE_SPAN = 64  # verification reads [a - 64, a + 64] around a last-known anchor
+PROBE_SPAN = 64  # verification reads a + 1 + 8k, k = -8..8: [a - 63, a + 65] around a last-known anchor
 MIN_CORE_SEPARATION = 64
 READ_ARC = 49  # read search: own_core_base + dir * (64 + 8m), m = 0..48
 EVADE_MIN, EVADE_MAX = 8, 64
+# Unverified adoption is allowed only before the opponent could have acted:
+# at the tick-1 first callback of the entrant scheduled to move first. Under
+# every E6 Ruleset (chunk 2, start rotated by (tick - 1) mod 2, seat order =
+# scheduler order), that is Seat A.
+FIRST_TICK = 1
+FIRST_MOVER_SEAT = "A"
 ADAPT_HOLD_TICKS = 8
 ADAPT_SWITCH_TICK = 16
 SENSOR_SHARE, STRIKER_SHARE = 0.25, 0.75
@@ -69,15 +79,21 @@ class Agent:
         self.callback_index = 0
         self.written: set[int] = set()
         self.first_callback = True
+        # Every address at which this entrant has written a visible enemy anchor.
+        self.anchor_writes: set[int] = set()
         # Core verification: a READ window around the last-known anchor, then
-        # a downward scan from the first hit.
+        # the contiguous run of enemy beacons through the first hit, scanned
+        # down and then up.
         self.window: list[int] = []
         self.window_center: int | None = None
-        self.scan_top: int | None = None
-        self.scan_last_hit: int | None = None
+        self.run_low: int | None = None
+        self.run_high: int | None = None
+        self.run_down = True
+        self.below_is_written_anchor = False
         # The READ each process is waiting to see the result of.
         self.pending: dict[str, tuple[str, int]] = {}
         # Cursors.
+        self.core_cursor = 0
         self.read_m = 0
         self.paint_k = 0
         self.guard_cursor = 0
@@ -160,17 +176,53 @@ class Agent:
         if self.enemy_core is not None:
             return
         if kind in ("verify", "probe"):
-            if hit:
-                self.scan_top = address
-                self.scan_last_hit = address
+            if hit and self.run_low is None:
+                self.run_low = self.run_high = address
+                self.run_down = True
         elif kind == "scan":
-            assert self.scan_top is not None and self.scan_last_hit is not None
-            if hit and (self.scan_top - address) % self.arena < CORE_SIZE - 1:
-                self.scan_last_hit = address
+            self._extend_run(obs, address, hit)
+
+    def _run_length(self) -> int:
+        assert self.run_low is not None and self.run_high is not None
+        return (self.run_high - self.run_low) % self.arena + 1
+
+    def _end_run(self, base: int | None) -> None:
+        self.enemy_core = base
+        self.run_low = None
+        self.run_high = None
+        self.below_is_written_anchor = False
+
+    def _extend_run(self, obs: ObservationV2, address: int, hit: bool) -> None:
+        """Grow the run of enemy beacons by one scanned cell; confirm the core, or give up on it.
+
+        Eight contiguous enemy beacons are the core, and the lowest is its
+        base. Seven are the core only when the cell just below them is an
+        enemy anchor this entrant has itself overwritten (so it cannot be
+        read): that anchor stands in for core cell 0. Anything else leaves
+        the core unconfirmed, and verification continues.
+        """
+
+        assert self.run_low is not None and self.run_high is not None
+        if hit:
+            if self.run_down:
+                self.run_low = address
             else:
-                self.enemy_core = address if hit else self.scan_last_hit
-                self.scan_top = None
-                self.scan_last_hit = None
+                self.run_high = address
+            if self._run_length() == CORE_SIZE:
+                self._end_run(self.run_low)
+            return
+        if self.run_down:
+            self.run_down = False
+            self.below_is_written_anchor = (
+                address in self.anchor_writes
+                and obs.previous_action_applied
+                and obs.previous_read_owner == self.me
+            )
+            return
+        if self._run_length() == CORE_SIZE - 1 and self.below_is_written_anchor:
+            self._end_run((self.run_low - 1) % self.arena)
+        else:
+            self._end_run(None)
 
     def _observe(self, obs: ObservationV2) -> None:
         visible = obs.visible_enemy_anchor_addresses
@@ -178,11 +230,14 @@ class Agent:
             self.last_known = (visible[0], obs.current_tick)
             self.info_event = True
             self.last_visible_tick = obs.current_tick
-        # Unverified adoption (the E2-E5 fixture convention): only at the
-        # entrant's first callback, only for a single visible address that
-        # cannot lie in its own core's exclusion zone.
+        # Unverified adoption (the E2-E5 fixture convention, narrowed at
+        # Checkpoint A): only at the first mover's tick-1 first callback,
+        # before any opponent action, and only for a single visible address
+        # that cannot lie in its own core's exclusion zone.
         if (
             self.first_callback
+            and obs.current_tick == FIRST_TICK
+            and self.me == FIRST_MOVER_SEAT
             and self.enemy_core is None
             and len(visible) == 1
             and self._distance(visible[0], obs.own_core_base) >= MIN_CORE_SEPARATION
@@ -194,7 +249,7 @@ class Agent:
             not obs.visible_enemy_anchor_addresses
             and self.last_known is None
             and self.enemy_core is None
-            and self.scan_top is None
+            and self.run_low is None
         )
 
     # -------------------------------------------------------------- actions
@@ -211,6 +266,10 @@ class Agent:
 
     def _move(self, delta: int) -> AgentAction:
         return AgentAction(ActionKindV2.MOVE, operand=delta)
+
+    def _disrupt(self, anchor: int) -> AgentAction:
+        self.anchor_writes.add(anchor % self.arena)
+        return self._write(anchor)
 
     def _unwritten_anchor(self, obs: ObservationV2) -> int | None:
         for address in obs.visible_enemy_anchor_addresses:
@@ -242,16 +301,20 @@ class Agent:
         return self._idle(obs)
 
     def _verification_read(self, obs: ObservationV2) -> AgentAction | None:
-        if self.scan_last_hit is not None:
-            return self._read(obs, "scan", self.scan_last_hit - 1)
+        if self.run_low is not None:
+            assert self.run_high is not None
+            return self._read(obs, "scan", self.run_low - 1 if self.run_down else self.run_high + 1)
         if self.last_known is None:
             return None
         center = self.last_known[0]
         if center != self.window_center:
+            # The stride-8 lattice through the cell one past the anchor, so a
+            # disruption of an anchor on core cell 0 never erases the one
+            # sampled core cell.
             self.window_center = center
-            self.window = [center]
+            self.window = [center + 1]
             for step in range(PROBE_STRIDE, PROBE_SPAN + 1, PROBE_STRIDE):
-                self.window += [center - step, center + step]
+                self.window += [center + 1 - step, center + 1 + step]
         if not self.window:
             # The window held no enemy core cell: forget the anchor.
             self.last_known = None
@@ -262,11 +325,15 @@ class Agent:
     def _attack(self, obs: ObservationV2, search: str) -> AgentAction:
         anchor = self._unwritten_anchor(obs)
         if anchor is not None:
-            return self._write(anchor)
+            return self._disrupt(anchor)
         if self.enemy_core is not None:
-            for i in range(CORE_SIZE):
-                cell = (self.enemy_core + i) % self.arena
+            # A cyclic cursor over the core, carried across ticks and advanced
+            # only past the cell written, skipping cells written this tick.
+            for step in range(CORE_SIZE):
+                index = (self.core_cursor + step) % CORE_SIZE
+                cell = (self.enemy_core + index) % self.arena
                 if cell not in self.written:
+                    self.core_cursor = (index + 1) % CORE_SIZE
                     return self._write(cell)
         else:
             verification = self._verification_read(obs)
@@ -279,7 +346,7 @@ class Agent:
     def _guard(self, obs: ObservationV2) -> AgentAction:
         anchor = self._unwritten_anchor(obs)
         if anchor is not None:
-            return self._write(anchor)
+            return self._disrupt(anchor)
         cell = obs.own_core_base + self.guard_cursor
         self.guard_cursor = (self.guard_cursor + 1) % CORE_SIZE
         return self._write(cell, CORE_BEACON)
@@ -289,7 +356,7 @@ class Agent:
             return self._search(obs, self.search)
         anchor = self._unwritten_anchor(obs)
         if anchor is not None:
-            return self._write(anchor)
+            return self._disrupt(anchor)
         return self._idle(obs)
 
     def _adapt(self, obs: ObservationV2) -> AgentAction:

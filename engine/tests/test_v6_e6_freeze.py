@@ -1,8 +1,12 @@
 """V6 E6: the committed analysis freeze record and the runner steps that need it.
 
-Implementation plan Sec 2 (I-6) and Sec 8-9; pre-registration Sec 9-11.
-The record must load against the live checkout, and name every E6 tooling
-file. Its seed block is PENDING, or exactly the four permitted facts. Every
+Implementation plan Sec 2 (I-6) and Sec 8-9; pre-registration Sec 9-11;
+amendment 1 (docs/research/v6/V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md).
+Freeze v2 is the operative record, and freeze v1's record is kept byte for
+byte as a superseded pre-exposure freeze. The v2 record must load against the
+live checkout, name every E6 tooling file, name the freeze it supersedes, and
+say what a trace re-execution is. Its seed block is PENDING, or exactly the
+four permitted facts. Every
 runner step that needs the record must refuse to run out of order. The I-7
 path is exercised only on a temporary copy, with ``seeds.generate``
 replaced by a fixed test list: no real seed is ever drawn here.
@@ -34,7 +38,7 @@ def test_the_record_loads_against_the_live_checkout() -> None:
     record = analysis_freeze.load_freeze()
     identity = record["identity"]
     assert record["freeze_id"] == analysis_freeze.freeze_id(identity)
-    assert record["freeze_id"].startswith("v6-e6-freeze-v1-")
+    assert record["freeze_id"].startswith("v6-e6-freeze-v2-")
     assert identity["structural_matrix_id"] == matrix.matrix_id()
     assert identity["structural_digest"] == matrix.STRUCTURAL_DIGEST
     assert identity["matches_total"] == 11_520
@@ -46,7 +50,43 @@ def test_the_record_names_every_e6_tooling_file() -> None:
     on_disk = {f"tools/research/v6/e6/{path.name}" for path in E6_DIR.glob("*.py")}
     assert on_disk <= listed
     assert {"tools/research/v6/e6/preregistration.json", "tools/research/v6/e6/family_fingerprints.json"} <= listed
-    assert "tools/research/v6/e6/analysis_freeze.json" not in listed  # the record is never its own input
+    # Neither record is ever an input: v2's names v1's only through its SHA-256.
+    assert not {"tools/research/v6/e6/analysis_freeze.json", "tools/research/v6/e6/analysis_freeze_v2.json"} & listed
+
+
+V1_FREEZE_COMMIT = "bd3a3ff"
+
+
+def test_freeze_v1_is_kept_byte_for_byte_and_superseded() -> None:
+    committed = subprocess.check_output(["git", "show", f"{V1_FREEZE_COMMIT}:{analysis_freeze.SUPERSEDED_RECORD}"],
+                                        cwd=REPO_ROOT).replace(b"\r\n", b"\n")
+    live = (REPO_ROOT / analysis_freeze.SUPERSEDED_RECORD).read_bytes().replace(b"\r\n", b"\n")
+    assert live == committed
+    v1 = json.loads(live)
+    assert v1["freeze_id"] == analysis_freeze.SUPERSEDED_FREEZE_ID == "v6-e6-freeze-v1-428033032ce2"
+    # It never received seeds or data.
+    assert v1["seed_commitment"] == PENDING and v1["control_qualification"] == PENDING
+    assert v1["identity"]["structural_matrix_id"] == matrix.SUPERSEDED_STRUCTURAL_MATRIX["id"]
+    # It no longer loads: the operative instrument is v2.
+    with pytest.raises(analysis_freeze.AnalysisFreezeError):
+        analysis_freeze.load_freeze(REPO_ROOT / analysis_freeze.SUPERSEDED_RECORD)
+    supersedes = _record()["identity"]["supersedes"]
+    assert supersedes == {"freeze_id": v1["freeze_id"], "record": analysis_freeze.SUPERSEDED_RECORD,
+                          "record_sha256": hashlib.sha256(committed).hexdigest(),
+                          "structural_matrix_id": "v6-e6-matrix-v1-cd040eac42ef",
+                          "reason": "docs/research/v6/V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md"}
+    assert (REPO_ROOT / supersedes["reason"]).is_file()
+
+
+def test_trace_reexecutions_are_reproductions_not_observations() -> None:
+    assert _record()["identity"]["trace_verification"] == {
+        "registered_matrix_cells": 11_520,
+        "trace_reproductions_at_most": 11_520,
+        "accepted_only_if_equal": ["replay_sha256", "match_id", "result_id"],
+        "on_difference": "stop",
+        "reproductions_are_observations": False,
+        "never_enter": ["payoff", "bootstrap", "outcome", "rate denominators"],
+    }
 
 
 def test_every_pinned_file_equals_its_content_at_the_tooling_commit() -> None:

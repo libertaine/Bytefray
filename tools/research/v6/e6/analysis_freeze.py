@@ -1,4 +1,4 @@
-"""The frozen E6 analysis identity (freeze v1).
+"""The frozen E6 analysis identity (freeze v2).
 
 Two identities are kept apart, the E2-E5 convention. The matrix identities
 (``matrix.py``: structural, and then execution once seeds exist) say which
@@ -14,10 +14,24 @@ instrument interprets them. It carries:
   analysis freeze v1's pin (which itself checks E4's, E3's and E2's);
 * the Git commit the tooling was qualified at, and the engine source tree
   that generates the matches;
-* the I-0 parent byte-identity freeze (D-3).
+* the I-0 parent byte-identity freeze (D-3);
+* the freeze it supersedes, and what a trace re-execution is (below).
 
-``analysis_freeze.json`` is the committed record; loading it fails closed
-unless its digest recomputes and every live input still equals the record.
+Freeze v2 follows amendment 1
+(docs/research/v6/V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md), which corrected
+the family policy before any seed existed. ``analysis_freeze_v2.json`` is the
+committed, operative record; loading it fails closed unless its digest
+recomputes and every live input still equals the record. Freeze v1's record,
+``analysis_freeze.json``, is kept byte for byte as a superseded pre-exposure
+freeze: it never received seeds or data, and it no longer loads.
+
+**Trace re-executions are reproductions, not observations.** The matrix has
+11,520 registered cells. Each completed cell is re-executed at most once with
+tracing on, and that trace is accepted only if the re-execution reproduces the
+evaluated cell (replay SHA-256, ``match_id`` and ``result_id``); any
+difference stops the experiment. A reproduction's telemetry describes the one
+registered cell it reproduces. It never enters a payoff, bootstrap, outcome or
+rate denominator as a cell of its own.
 Two blocks sit outside the identity digest and are filled only by later,
 separately authorized steps:
 
@@ -46,9 +60,13 @@ from tools.research.v6.e6.telemetry import TELEMETRY_VERSION
 from tools.research.v6.e6.traces import TRACE_INDEX_VERSION
 from tools.research.v6.experiment_harness import REPO_ROOT
 
-FREEZE_VERSION = 1
+FREEZE_VERSION = 2
 FREEZE_SCHEMA = "bytefray.v6.e6.analysis_freeze"
-FREEZE_RECORD_PATH = Path(__file__).with_name("analysis_freeze.json")
+FREEZE_RECORD_PATH = Path(__file__).with_name("analysis_freeze_v2.json")
+#: Freeze v1, superseded by amendment 1 before any seed existed; kept byte for byte.
+SUPERSEDED_RECORD = "tools/research/v6/e6/analysis_freeze.json"
+SUPERSEDED_FREEZE_ID = "v6-e6-freeze-v1-428033032ce2"
+AMENDMENT_PATH = "docs/research/v6/V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md"
 MATCH_GENERATION_PATH = "engine/src"
 
 # E2-E5 files E6 imports unchanged; each must equal E5 freeze v1's pin.
@@ -116,6 +134,29 @@ def check_reused_unchanged() -> None:
         raise AnalysisFreezeError(f"reused files differ from E5 freeze {record['freeze_id']}: {changed}")
 
 
+def superseded() -> dict[str, Any]:
+    """The freeze this one replaces: its id, its record's SHA-256, its matrix, and why."""
+    return {
+        "freeze_id": SUPERSEDED_FREEZE_ID,
+        "record": SUPERSEDED_RECORD,
+        "record_sha256": file_sha256(SUPERSEDED_RECORD),
+        "structural_matrix_id": matrix.SUPERSEDED_STRUCTURAL_MATRIX["id"],
+        "reason": AMENDMENT_PATH,
+    }
+
+
+def trace_verification() -> dict[str, Any]:
+    """What a bound trace re-execution is, in the frozen instrument."""
+    return {
+        "registered_matrix_cells": matrix.matches_total(),
+        "trace_reproductions_at_most": matrix.matches_total(),
+        "accepted_only_if_equal": ["replay_sha256", "match_id", "result_id"],
+        "on_difference": "stop",
+        "reproductions_are_observations": False,
+        "never_enter": ["payoff", "bootstrap", "outcome", "rate denominators"],
+    }
+
+
 def identity_inputs(*, tooling_source_sha: str, match_generation_tree: str) -> dict[str, Any]:
     return {
         "freeze_version": FREEZE_VERSION,
@@ -134,6 +175,8 @@ def identity_inputs(*, tooling_source_sha: str, match_generation_tree: str) -> d
         "match_generation_path": MATCH_GENERATION_PATH,
         "match_generation_tree": match_generation_tree,
         "parent_freeze": dict(sorted(matrix.PARENT_FREEZE.items())),
+        "supersedes": superseded(),
+        "trace_verification": trace_verification(),
     }
 
 
