@@ -250,9 +250,19 @@ def test_v3_differs_from_v2_only_by_the_precedence_and_the_combined_outcome() ->
 # ---------------------------------------------------------------------------
 
 
+def _frozen_engine_tree() -> str:
+    # The E4 interpretation identities pin freeze v1's match-generation tree.
+    # Read it from the frozen v1 record rather than from HEAD: a later
+    # experiment (V6 E5) legitimately changes engine/src, and E4's identity
+    # is about E4's engine, which the committed-freeze tests below still pin
+    # to the E4 implementation commit.
+    tree: str = analysis_freeze.load_freeze()["identity"]["match_generation_tree"]
+    return tree
+
+
 def _identity() -> dict:
     return analysis_freeze_v3.identity_inputs(
-        tooling_source_sha=_head(), match_generation_tree=analysis_freeze.git_text("rev-parse", "HEAD:engine/src"))
+        tooling_source_sha=_head(), match_generation_tree=_frozen_engine_tree())
 
 
 def _write(path: Path, identity: dict) -> Path:
