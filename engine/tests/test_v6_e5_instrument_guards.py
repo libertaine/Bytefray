@@ -35,7 +35,9 @@ def _cell(owned_second: int, second: int, owned_first: int, first: int) -> dict[
     value = Fraction(owned_second, second) - Fraction(owned_first, first)
     reading = {"status": DEFINED, "exact": f"{value.numerator}/{value.denominator}",
                "base_owned_by_first_mover": {"A": owned_first, "B": owned_second}}
-    return {"bp": {"A": reading, "B": reading}}
+    # Victim A moves first on A-first ticks; the tick counts let a pooled
+    # aggregation be computed (and be wrong) rather than fail on a missing key.
+    return {"bp": {"A": reading, "B": reading}, "both_alive_ticks_by_first_mover": {"A": first, "B": second}}
 
 
 def test_the_unit_value_is_the_median_of_per_seed_values_never_pooled_ticks() -> None:
