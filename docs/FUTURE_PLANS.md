@@ -464,7 +464,7 @@ Current status across the repository:
   [`docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md`](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md),
   [`docs/research/v6/V6_E5_DESIGN_REVIEW_REVISION_1.md`](research/v6/V6_E5_DESIGN_REVIEW_REVISION_1.md),
   [`docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md`](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md)).
-- **Future gameplay mechanics (E6 — Priced Sensing):** **Registered; implemented to Checkpoint A (research-only).**
+- **Future gameplay mechanics (E6 — Priced Sensing):** **Registered; implemented and re-frozen as v2 at Checkpoint A (research-only).**
   The first Branch B experiment, and a research question rather than a
   promised improvement: does limiting passive enemy-anchor visibility to
   min(declared reach, 32) cells, with search priced through MOVE and READ
@@ -477,11 +477,15 @@ Current status across the repository:
   forced line and a seat artifact. Implemented through I-6: the two
   research Rulesets, the public radius, the nine-member matched family,
   bound callback-level traces, the analysis instrument and the seed
-  tooling. The structural matrix `v6-e6-matrix-v1-cd040eac42ef` and the
-  analysis freeze `v6-e6-freeze-v1-428033032ce2` are frozen. No seed has
-  been generated and no matrix cell has run; seed generation, the
-  controls and the treatment each need separate authorization
+  tooling. Amendment 1 corrected three defects in the family's
+  implementation before any seed existed. The structural matrix
+  `v6-e6-matrix-v2-7de29a4a6954` and the analysis freeze
+  `v6-e6-freeze-v2-275057e27725` are frozen and supersede v1. No seed has
+  been generated and no matrix cell has run; the Checkpoint A review of
+  v2 comes next, and seed generation, the controls and the treatment
+  each need separate authorization
   ([`docs/research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md`](research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md),
+  [`docs/research/v6/V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md`](research/v6/V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md),
   [`docs/research/v6/V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md`](research/v6/V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md),
   [`docs/research/v6/V6_PRICED_SENSING_DESIGN_REVIEW.md`](research/v6/V6_PRICED_SENSING_DESIGN_REVIEW.md),
   [`docs/research/v6/V6_BRANCH_B_ACTION_CHOICE_SCOPE_REVIEW.md`](research/v6/V6_BRANCH_B_ACTION_CHOICE_SCOPE_REVIEW.md)).
