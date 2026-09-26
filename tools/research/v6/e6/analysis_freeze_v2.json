@@ -82,7 +82,10 @@
   },
   "schema": "bytefray.v6.e6.analysis_freeze",
   "seed_commitment": {
-    "status": "PENDING"
+    "execution_matrix_identity": "v6-e6-exec-v1-62b88ba3ddb4",
+    "generated_at_utc": "2026-09-26T03:01:25.337491Z",
+    "seed_commitment": "61e292f6f9dcd951ccc6d8eaf5dc77a41c04c6c4865246ca3b5e5bac5c0e1c83",
+    "tool_commit": "f4e4411d4a4340e8650ff894eb0558f03bd850a7"
   },
   "status": "frozen before any E6 seed or matrix cell exists"
 }
