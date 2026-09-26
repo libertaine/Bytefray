@@ -95,6 +95,191 @@ BYTEFRAY_RULESET_V4_ALPHA2_ID = "bytefray-rules-4-alpha2"
 BYTEFRAY_RULESET_V4_ID = "bytefray-rules-4"
 
 
+# V6 Phase 4B's explicit variable-arena research identity (see
+# docs/research/v6/V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md Sec 10.2 and
+# docs/research/v6/V6_PHASE4B_ARENA_SCALING_STUDY.md). A *separate* identity,
+# never a mutation or alias of ``BYTEFRAY_RULESET_V4_ID``: it exists to
+# permit the one evaluation-methodology variance stable v4 forbids -- an
+# arena size other than 512 cells -- as an explicit, identity-bearing
+# experimental parameter, while every other gameplay semantic (scheduler,
+# seeded placement, process selection, scoring, quota, reach, termination)
+# stays byte-for-byte identical to stable v4 (verified live, not merely
+# documented -- see ``engine/tests/test_ruleset_v6_research_scale.py``).
+#
+# Prefixed ``bytefray-rules-6-research-<topic>`` per the V6 research naming
+# convention: an experimental Ruleset must never reuse a stable ID, and a
+# mechanic ratified for release would receive its own new permanent identity
+# via a frozen promotion proof, exactly as ``bytefray-rules-4-alpha2`` ->
+# ``bytefray-rules-4`` already did. Deliberately not selectable from
+# ``bytefray run``/``agents test``/tournament CLI surfaces or
+# ``OMITTED_RULESET_CANDIDATES`` (``ruleset_policy.py``) -- only
+# ``agents evaluate`` can select it, and only by explicit ``--ruleset`` name.
+BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID = "bytefray-rules-6-research-scale"
+
+
+# V6 Phase 4C's movement-normalized variable-arena research identity (see
+# docs/research/v6/V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md Sec 10.2 and
+# docs/research/v6/V6_PHASE4C_MOVEMENT_NORMALIZATION_STUDY.md). A distinct
+# research identity, never an alias of stable v4 or raw research-scale: its
+# sole intended gameplay difference from ``bytefray-rules-6-research-scale``
+# is that maximum displacement per MOVE action scales proportionally with
+# arena size according to ``max_move_delta(A) = max(64, floor(A / 8))``.
+#
+# At A=512, max(64, 512 // 8) = 64, preserving behavioral equivalence to the
+# control arena. At larger arenas (1024, 4096, 16384, 65536), allowed movement
+# stride increases (128, 512, 2048, 8192 cells) to test whether mobility/search
+# latency explains the Phase 4B raw-scaling effects. Deliberately not
+# selectable from ``OMITTED_RULESET_CANDIDATES`` -- requires explicit
+# ``--ruleset`` selection.
+BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID = "bytefray-rules-6-research-scale-move"
+
+
+# V6 Phase 4D's proportional-movement variable-arena research identity (see
+# docs/research/v6/V6_PHASE4D_PROPORTIONAL_MOVEMENT_STUDY.md). A distinct
+# research identity, never an alias of stable v4, raw research-scale, or
+# scale-move: its sole intended gameplay difference from
+# ``bytefray-rules-6-research-scale`` is that accepted MOVE operands (still
+# bounded at max 64) are interpreted proportionally to arena scale from the
+# 512-cell reference arena:
+#     actual_delta = sign(op) * floor(abs(op) * arena_size / 512)
+#
+# At A=512, actual_delta == op, preserving behavioral equivalence to the
+# control arena. At larger arenas (1024, 4096, 16384, 65536), displacement
+# scales by 2x, 8x, 32x, 128x while holding benchmark agent source code frozen.
+# Deliberately not selectable from ``OMITTED_RULESET_CANDIDATES`` -- requires
+# explicit ``--ruleset`` selection.
+BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID = (
+    "bytefray-rules-6-research-scale-move-proportional"
+)
+
+
+# V6 E2's multi-tick capture-hold research identity (see
+# docs/research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md Sec C/F and
+# docs/research/v6/V6_E2_CAPTURE_HOLD_REGISTRATION.md). A distinct research
+# identity, never an alias of stable v4 or of raw research-scale: its sole
+# intended gameplay difference from ``bytefray-rules-6-research-scale`` (its
+# direct parent and the E2 structural control) is that an entrant is
+# core-captured only after its core has held zero self-owned cells at two
+# consecutive end-of-tick capture evaluations
+# (``RulesetPolicy.capture_hold_ticks == 2``) rather than at the first one.
+#
+# Topic ``capture-hold`` per the ``bytefray-rules-6-research-<topic>``
+# convention, deliberately without ``scale`` (the topic is not arena
+# scaling, although the parent policy is research-scale); the ``-k2`` suffix
+# records the single varied value so a possible K=3 arm would be a sibling
+# ``-k3`` rather than a rename. Deliberately not selectable from
+# ``bytefray run``/``agents test``/tournament/Designer surfaces or
+# ``OMITTED_RULESET_CANDIDATES`` -- only ``agents evaluate`` (or the Python
+# API) can select it, and only by explicit ``--ruleset`` name.
+BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID = (
+    "bytefray-rules-6-research-capture-hold-k2"
+)
+
+
+# V6 E3's slot-limited disruption research identities (see
+# docs/research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md). Each is a
+# distinct research identity, never an alias of its parent: its sole intended
+# gameplay difference from that parent is that a disruptive hit suppresses a
+# victim process only for its next offer to its own entrant, still inside
+# the existing one-tick disruption window, rather than for the whole rest of
+# the tick (``RulesetPolicy.disruption_slot_limit == 1`` instead of ``None``).
+#
+# The primary treatment's parent is the E2 capture-hold identity (K=2); the
+# companion's parent is ``bytefray-rules-6-research-scale`` (K=1), so the
+# companion measures the same duration change without the capture hold. The
+# ``-slot1`` suffix records the single varied value, so a possible second
+# arm would be a sibling (``-slot2``) rather than a rename. Deliberately not
+# selectable from ``bytefray run``/``agents test``/tournament/Designer
+# surfaces or ``OMITTED_RULESET_CANDIDATES`` -- only ``agents evaluate`` (or
+# the Python API) can select either, and only by explicit ``--ruleset`` name.
+BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID = (
+    "bytefray-rules-6-research-capture-hold-k2-disruption-slot1"
+)
+BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID = (
+    "bytefray-rules-6-research-disruption-slot1"
+)
+
+
+# V6 E4's mirrored-pass-order research identities (see
+# docs/research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md Sec I-K
+# and docs/research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md). Each is a
+# distinct research identity, never an alias of its parent: its sole intended
+# gameplay difference from that parent is that the scheduler walks the
+# entrant sequence in reverse in the second half of each tick's passes
+# (``RulesetPolicy.scheduler_pass_order == "mirrored"`` instead of
+# ``"forward"``), so with two entrants the chunk owners run ``F L F L | L F L F``.
+#
+# The primary treatment's parent is the E3 primary identity (K=2); the
+# companion's parent is the E3 companion (K=1). Each ID appends
+# ``-mirrored-passes`` to its parent's, so it still names every gameplay
+# difference from V4. Deliberately not selectable from ``bytefray run``/
+# ``agents test``/tournament/Designer surfaces or
+# ``OMITTED_RULESET_CANDIDATES`` -- only ``agents evaluate`` (or the Python
+# API) can select either, and only by explicit ``--ruleset`` name.
+BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID = (
+    "bytefray-rules-6-research-capture-hold-k2-disruption-slot1-mirrored-passes"
+)
+BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID = (
+    "bytefray-rules-6-research-disruption-slot1-mirrored-passes"
+)
+
+
+# V6 E5's anchor/core-0 separation research identities (see
+# docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md Sec F,
+# docs/research/v6/V6_E5_DESIGN_REVIEW_REVISION_1.md Sec R3 and
+# docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md). Each is a
+# distinct research identity, never an alias of its parent: its sole intended
+# gameplay difference from that parent is where a process with no declared
+# position spawns -- one cell before its entrant's core base
+# (``RulesetPolicy.initial_anchor_placement == "before_core"``, i.e.
+# ``(core_base - 1) % arena_size``) instead of on it -- so an enemy WRITE to
+# a never-moved process's anchor no longer also writes a core cell. It is a
+# spawn rule only: movement is unrestricted, and a process that later MOVEs
+# onto its own core is legal.
+#
+# The primary treatment's parent is the E3 primary identity (K=2); the
+# companion's parent is the E3 companion (K=1). Each ID appends
+# ``-anchor-before-core`` to its parent's, so it still names every gameplay
+# difference from V4. Deliberately not selectable from ``bytefray run``/
+# ``agents test``/tournament/Designer surfaces or
+# ``OMITTED_RULESET_CANDIDATES`` -- only ``agents evaluate`` (or the Python
+# API) can select either, and only by explicit ``--ruleset`` name.
+BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID = (
+    "bytefray-rules-6-research-capture-hold-k2-disruption-slot1-anchor-before-core"
+)
+BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID = (
+    "bytefray-rules-6-research-disruption-slot1-anchor-before-core"
+)
+
+
+# V6 E6's priced-sensing research identities (see
+# docs/research/v6/V6_PRICED_SENSING_DESIGN_REVIEW.md Sec C,
+# docs/research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md Sec 2 and
+# docs/research/v6/V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md Sec 3). Each is
+# a distinct research identity, never an alias of its parent: its sole
+# intended gameplay difference from that parent is that a friendly process
+# passively senses an enemy anchor only within ``min(declared reach, 32)``
+# cells, inclusive (``RulesetPolicy.detection_radius == 32`` instead of
+# ``None``). READ and WRITE still reach the full declared reach, so finding
+# an unseen enemy costs actions: moving to sense it, or reading for it.
+#
+# The primary treatment's parent is ``bytefray-rules-6-research-scale``
+# (K=1, whole-tick disruption); the companion's parent is the E3 companion
+# ``bytefray-rules-6-research-disruption-slot1`` (K=1, slot-limited
+# disruption). The primary is named by topic per the
+# ``bytefray-rules-6-research-<topic>`` convention, like E2's, rather than
+# appending to ``-scale``; the companion appends ``-sensing-r32`` to its
+# parent's ID, so it still names every gameplay difference from V4. The
+# ``-r32`` suffix records the single varied value, so a possible second
+# radius would be a sibling rather than a rename. Deliberately not selectable
+# from ``bytefray run``/``agents test``/tournament/Designer surfaces or
+# ``OMITTED_RULESET_CANDIDATES`` -- only ``agents evaluate`` (or the Python
+# API) can select either, and only by explicit ``--ruleset`` name.
+BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID = "bytefray-rules-6-research-sensing-r32"
+BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID = (
+    "bytefray-rules-6-research-disruption-slot1-sensing-r32"
+)
+
 
 # v0.10 Phase 4: a finite, explicit historical-alias table -- deliberately
 # not a generic "normalize any evaluation-rules-N-shaped string" function.
@@ -142,8 +327,8 @@ def normalize_ruleset_id(value: str) -> str:
 #                       recover one (e.g. a pre-v0.3 artifact, or a shape
 #                       that predates the proven-stable window).
 #   not_applicable  -- the artifact was never a candidate for this identity
-#                       at all (a Redcode/pMARS result never executes under
-#                       Bytefray Ruleset v1).
+#                       at all (a historical redcode94 result never executed
+#                       under Bytefray Ruleset v1).
 RulesetConfidence = Literal["recorded", "recovered", "unknown", "not_applicable"]
 
 
@@ -160,6 +345,18 @@ __all__ = [
     "BYTEFRAY_RULESET_V4_ALPHA1_ID",
     "BYTEFRAY_RULESET_V4_ALPHA2_ID",
     "BYTEFRAY_RULESET_V4_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID",
     "RulesetConfidence",
     "RulesetProvenance",
     "normalize_ruleset_id",

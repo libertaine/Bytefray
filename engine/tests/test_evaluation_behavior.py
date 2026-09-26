@@ -120,7 +120,7 @@ def _write_result_json(
         "reproducibility": {},
         "replay": None,
         "backend": None,
-        "ruleset_id": "bytefray-rules-1",
+        "ruleset_id": "bytefray-rules-4",
     }
     write_json_atomic(path, payload)
 

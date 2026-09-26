@@ -13,16 +13,16 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
-from battle_engine.agent_evaluation import (
-    ORIENTATION_CANDIDATE_FIRST,
-    ORIENTATION_OPPONENT_FIRST,
-    is_ruleset_v4_methodology,
-    physical_slots_for_orientation,
-    resolve_v4_seed_geometry,
-    seat_label,
-)
 from battle_engine.agent_revisions import agent_revisions_root, verify_revision
 from battle_engine.agent_test import OPPONENT_SLOT, TESTED_AGENT_SLOT
+from battle_engine.evaluation_contracts import (
+    ORIENTATION_CANDIDATE_FIRST,
+    ORIENTATION_OPPONENT_FIRST,
+    is_ruleset_v4_derived_methodology,
+    physical_slots_for_orientation,
+    seat_label,
+)
+from battle_engine.evaluation_planning import resolve_v4_seed_geometry
 from battle_engine.paths import contained_path, get_data_root
 from battle_engine.replay import ReplayHeader, iter_replay
 from battle_engine.result_model import ReplayIntegrityError, read_result, verify_replay_digest
@@ -232,7 +232,7 @@ def verify_cell(
 
     # H1 (Beta2 Phase 4.1): a group (multi-entrant, N>=3) cell's physical
     # entrant order is seat_label(0..N-1), not the fixed 2-entrant (A, B)
-    # pair -- mirrors agent_evaluation._resumed_cell_mismatch's identical
+    # pair -- mirrors evaluation_artifact.resumed_cell_mismatch's identical
     # generalization for the live resume path exactly (Sec Identity, Beta2
     # Phase 2). `cell.seat_agent_ids` (recorded seat assignment, RECORDED
     # for a real schema-6 cell) is the source of truth for N here, not
@@ -274,8 +274,9 @@ def verify_cell(
     # `physical_slots_for_orientation` (a fixed A/B pairing) must never be
     # consulted for one. Its subject's physical seat instead comes from the
     # cell's own recorded seat assignment, exactly mirroring
-    # `EvaluationCell.subject_seat`/`agent_evaluation._cell_from_envelope_
-    # group`'s identical live-run convention: the first (lowest-index) seat
+    # `EvaluationCell.subject_seat`/`evaluation_artifact._cell_from_
+    # envelope_group`'s identical live-run convention: the first
+    # (lowest-index) seat
     # `cell.subject_id` occupies (self-play, a duplicate agent id in the
     # roster, resolves to that same first occurrence there too -- Sec
     # Identity). There is no single well-defined "opponent slot" for N>=3,
@@ -464,15 +465,22 @@ def verify_summary(
     # id/effective_conditions -- never per cell, since both are constant
     # across one evaluation. `None` (rather than raising) for anything not
     # confidently a v4-seeded evaluation at a known arena size: a v1/v2/
-    # group evaluation, or a v4 one whose arena size could not be
-    # confidently recovered, simply gets no placement-reconstruction check
-    # (`verify_cell`'s existing checks are unaffected either way).
+    # group evaluation, or a v4/research-scale one whose arena size could
+    # not be confidently recovered, simply gets no placement-reconstruction
+    # check (`verify_cell`'s existing checks are unaffected either way).
+    #
+    # V6 Phase 4B: `is_ruleset_v4_derived_methodology` (rather than
+    # `is_ruleset_v4_methodology`) so a `bytefray-rules-6-research-scale`
+    # summary also gets geometry reconstruction -- it shares the identical
+    # seeded-placement recipe `resolve_v4_seed_geometry` below resolves
+    # (via the ruleset id's own registered `RulesetPolicy`), just not the
+    # 512-cell arena lock that predicate's narrower sibling implies.
     rules_id = (
         summary.rules_compatibility_id.value
         if summary.rules_compatibility_id.confidence == FieldConfidence.RECORDED
         else None
     )
-    is_v4_seeded = isinstance(rules_id, str) and is_ruleset_v4_methodology(rules_id)
+    is_v4_seeded = isinstance(rules_id, str) and is_ruleset_v4_derived_methodology(rules_id)
     v4_arena_size: int | None = None
     if is_v4_seeded and summary.effective_conditions.confidence == FieldConfidence.RECORDED:
         conditions_value = summary.effective_conditions.value

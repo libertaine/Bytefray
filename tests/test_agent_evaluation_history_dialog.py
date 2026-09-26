@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-NOP_ACTION = "AgentAction(ActionKind.NOP)"
+DEFAULT_ACTION = "AgentAction(ActionKindV2.MOVE, 1)"
 
 
 def _make_app():
@@ -33,22 +33,28 @@ def _make_app():
     return QApplication.instance() or QApplication([])
 
 
-def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> None:
+def _write_python_agent(root: Path, name: str, action: str = DEFAULT_ACTION) -> None:
     directory = root / "agents" / name
     if (directory / "agent.py").is_file():
         return  # idempotent: callers may write the same shared agent twice
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {
+                "kind": "python",
+                "api_version": 2,
+                "entrypoint": "agent.py:create_agent",
+                "version": "1.0",
+            }
         ),
         encoding="utf-8",
     )
     (directory / "agent.py").write_text(
         f"""
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
     def reset(self, context): pass
+    def declare_processes(self): return [ProcessDeclaration("p", 1, 1.0)]
     def act(self, observation): return {action}
 def create_agent(): return Agent()
 """,
@@ -164,10 +170,10 @@ def test_history_dialog_lists_and_renders_selected_evaluation(tmp_path):
         assert dialog.cellsList.count() > 0
         assert dialog.revisionButton.isEnabled()
         assert dialog.compareButton.isEnabled()
-        # v3.0 Phase 4: no experimental condition was overridden here, so
-        # the disclosure must stay silent -- same "unchanged at defaults"
-        # guarantee the CLI's own `evaluations show` already gives.
-        assert "arena size" not in text
+        # Stable v4's methodology pins 512 cells, which differs from the
+        # generic Config default and is therefore disclosed as recorded
+        # evidence even when the caller omitted --arena-size.
+        assert "arena size: 512 (non-default) (recorded)" in text
     finally:
         dialog.deleteLater()
 
@@ -181,13 +187,12 @@ def test_history_dialog_discloses_non_default_effective_conditions(tmp_path):
     _make_app()
     from app.views.evaluation_history import EvaluationHistoryDialog
 
-    _run_real_evaluation(tmp_path, output_name="eval-nondefault", arena_size=1024, instr_per_tick=4)
+    _run_real_evaluation(tmp_path, output_name="eval-nondefault", instr_per_tick=4)
 
     dialog = EvaluationHistoryDialog(tmp_path)
     try:
         dialog.list.setCurrentRow(0)
         text = dialog.detailText.toPlainText()
-        assert "arena size: 1024 (non-default)" in text
         assert "action budget/tick: 4 (non-default)" in text
     finally:
         dialog.deleteLater()

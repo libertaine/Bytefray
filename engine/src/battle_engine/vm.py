@@ -1,27 +1,31 @@
-"""Circular byte-addressed virtual machine extracted from the v0.1 core."""
+"""Circular byte-addressed shared arena extracted from the v0.1 core.
+
+V6 Phase 2B.12 retired VM/blob execution
+(docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md), removing
+this module's instruction-execution machinery (``load_code``, ``step``,
+and the ``battle_engine.instructions`` opcode dependency they were the
+module's only consumers of). ``VM`` itself is retained as the shared,
+Ruleset-agnostic arena/ownership primitive
+(``process_runtime.ProcessMatchController`` uses ``arena``, ``writer``,
+``ownership_counts``, ``_wr8``, and ``clear_tick_diffs`` directly) --
+nothing about the arena's addressing, ownership accounting, or tick-diff
+recording is VM-specific; only *how bytes got written* (a VM program's own
+opcode execution vs. an Agent API v2 process's declared actions) differed.
+"""
 
 from __future__ import annotations
 
-from battle_engine.agent_state import Agent
-from battle_engine.instructions import (
-    ADD,
-    ADDP,
-    HALT,
-    JMP,
-    JZ,
-    LOAD,
-    LOADI,
-    MOV,
-    MOVP,
-    NOP,
-    STORE,
-    STOREI,
-)
+# The historical "no-op" fill byte VM programs used to pad an empty arena.
+# Retained as a plain literal (rather than importing it from the now-removed
+# ``instructions`` module) purely so a freshly constructed arena's initial
+# content is unchanged from before -- no code reads this as an opcode any
+# longer.
+_ARENA_FILL_BYTE = 0
 
 
 class VM:
     def __init__(self, arena_size: int):
-        self.arena = bytearray([NOP] * arena_size)
+        self.arena = bytearray([_ARENA_FILL_BYTE] * arena_size)
         self.writer: list[str | None] = [None] * arena_size
         # Authoritative aggregate of ``writer``. Every ownership mutation,
         # including wrapped/overlapping initial loads and Python Agent API
@@ -71,78 +75,3 @@ class VM:
             self.tick_diffs[-1] = (a, length + 1, previous_owner, values)
         else:
             self.tick_diffs.append((i, 1, owner, [byte_value]))
-
-    def load_code(
-        self, start: int, code: bytes, owner: str | None
-    ) -> tuple[int, int]:
-        """Place initial agent bytecode, recorded as ordinary write diffs.
-
-        Routing through ``_wr8`` (rather than writing ``self.arena``
-        directly) means initial code placement appears in ``tick_diffs``
-        exactly like any other write, so a caller that publishes those
-        diffs as a tick-zero replay record can reconstruct starting arena
-        content without a separate snapshot mechanism.
-        """
-        m = len(self.arena)
-        s = start % m
-        for i, byte in enumerate(code):
-            self._wr8(s + i, byte, owner)
-        e = (s + max(1, len(code)) - 1) % m
-        return s, e
-
-    def step(self, agent: Agent) -> None:
-        if not agent.alive:
-            return
-        m = len(self.arena)
-        ip = agent.pc % m
-        op = self.arena[ip]
-        rd32 = self._rd32
-        registers = agent.regs
-        if op == NOP:
-            agent.pc = (ip + 1) % m
-        elif op == HALT:
-            agent.alive = False
-        elif op == MOV:
-            registers["A"] = rd32(ip + 1) & 0xFFFFFFFF
-            agent.pc = (ip + 5) % m
-        elif op == ADD:
-            registers["A"] = (
-                registers["A"] + (rd32(ip + 1) & 0xFFFFFFFF)
-            ) & 0xFFFFFFFF
-            registers["Z"] = 1 if registers["A"] == 0 else 0
-            agent.pc = (ip + 5) % m
-        elif op == LOAD:
-            addr = rd32(ip + 1) % m
-            registers["A"] = self.arena[addr]
-            registers["Z"] = 1 if registers["A"] == 0 else 0
-            agent.pc = (ip + 5) % m
-        elif op == STORE:
-            addr = rd32(ip + 1) % m
-            self._wr8(addr, registers["A"], owner=agent.agent_id)
-            agent.mem_writes += 1
-            agent.pc = (ip + 5) % m
-        elif op == JMP:
-            agent.pc = rd32(ip + 1) % m
-        elif op == JZ:
-            addr = rd32(ip + 1) % m
-            agent.pc = addr if registers.get("Z", 0) == 1 else (ip + 5) % m
-        elif op == MOVP:
-            registers["P"] = rd32(ip + 1) & 0xFFFFFFFF
-            agent.pc = (ip + 5) % m
-        elif op == ADDP:
-            registers["P"] = (
-                registers["P"] + (rd32(ip + 1) & 0xFFFFFFFF)
-            ) & 0xFFFFFFFF
-            agent.pc = (ip + 5) % m
-        elif op == LOADI:
-            addr = registers["P"] % m
-            registers["A"] = self.arena[addr]
-            registers["Z"] = 1 if registers["A"] == 0 else 0
-            agent.pc = (ip + 1) % m
-        elif op == STOREI:
-            addr = registers["P"] % m
-            self._wr8(addr, registers["A"], owner=agent.agent_id)
-            agent.mem_writes += 1
-            agent.pc = (ip + 1) % m
-        else:
-            agent.alive = False

@@ -13,9 +13,9 @@ from enum import Enum
 from pathlib import Path, PureWindowsPath
 from typing import Any
 
-from battle_engine.agent_evaluation import ComparisonEntry, EvaluationCell, SubjectAggregate
 from battle_engine.config import Config
 from battle_engine.evaluation_analysis import EvaluationAnalysis
+from battle_engine.evaluation_contracts import ComparisonEntry, EvaluationCell, SubjectAggregate
 from battle_engine.result_model import stable_id
 
 
@@ -163,7 +163,10 @@ def resolve_contained_path(base_dir: Path, relative: str | Path) -> Path:
         )
 
     base_resolved = Path(base_dir).resolve()
-    candidate = Path(base_dir) / Path(raw)
+    # Persisted artifacts are portable data. Older Windows writers recorded
+    # ``Path`` values with backslashes, which must remain readable when the
+    # same artifact is inspected on Linux/macOS.
+    candidate = Path(base_dir) / Path(raw.replace("\\", "/"))
     resolved = candidate.resolve()
     try:
         resolved.relative_to(base_resolved)
@@ -607,7 +610,7 @@ def evaluation_cells_from_raw(
 ) -> tuple[EvaluationCell, ...]:
     """Rebuild real ``EvaluationCell`` objects from parsed JSON.
 
-    Lets the adapters reuse ``agent_evaluation.aggregate_cells``/
+    Lets the adapters reuse ``evaluation_analysis.aggregate_cells``/
     ``compare_candidate_baseline`` unchanged instead of a second, drifting
     aggregation implementation (docs/specs/evaluation_history.md Sec 11's
     "derived fields must never override contradictory canonical cell

@@ -117,24 +117,26 @@ def derive_match_seed(seed: int, round_number: int, first: str, second: str) -> 
 
 
 def _entrant_identity(entrant: MatchEntrant) -> dict[str, Any]:
+    # V6 Phase 2B.12 retired VM/blob execution
+    # (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md): every
+    # tournament entrant is now a Python entrant, so the ``code_sha256``
+    # identity branch that used to fire for ``kind == "vm"`` is gone rather
+    # than left unreachable.
     identity: dict[str, Any] = {
         "agent_id": entrant.agent_id,
         "name": entrant.name,
         "kind": entrant.kind,
         "start": entrant.start,
     }
-    if entrant.kind == "vm":
-        identity["code_sha256"] = hashlib.sha256(entrant.code or b"").hexdigest()
-    else:
-        spec = entrant.python_spec
-        identity.update(
-            api_version=getattr(spec, "api_version", None),
-            agent_version=getattr(spec, "version", None),
-            entry_point=getattr(spec, "entry_point", None),
-        )
-        source = getattr(spec, "source_path", None)
-        if isinstance(source, Path) and source.is_file():
-            identity["source_sha256"] = hashlib.sha256(source.read_bytes()).hexdigest()
+    spec = entrant.python_spec
+    identity.update(
+        api_version=getattr(spec, "api_version", None),
+        agent_version=getattr(spec, "version", None),
+        entry_point=getattr(spec, "entry_point", None),
+    )
+    source = getattr(spec, "source_path", None)
+    if isinstance(source, Path) and source.is_file():
+        identity["source_sha256"] = hashlib.sha256(source.read_bytes()).hexdigest()
     return identity
 
 
@@ -181,11 +183,10 @@ def _resumed_result_mismatch(
             f"match's expected ID {expected_match_id!r}"
         )
     if envelope.replay is None:
-        # Every tournament division is native VM-only or Python-only (pMARS
-        # divisions are unsupported), and every native result carries a
-        # replay reference -- a "completed" native result with none is
-        # itself evidence of a corrupt or foreign artifact, not a match
-        # outcome missing a replay by design.
+        # Every current tournament entrant is Agent API v2 Python, and every
+        # native result carries a replay reference -- a "completed"
+        # native result with none is itself evidence of a corrupt or foreign
+        # artifact, not a match outcome missing a replay by design.
         return "result has no replay reference, but a native match result always has one"
     try:
         verify_replay_digest(envelope, replay_path)
@@ -370,10 +371,9 @@ class TournamentService:
                 "(it is the canonical result winner value for 'no single winner')."
             )
         kinds = {entrant.kind for entrant in request.entrants}
-        if len(kinds) != 1 or not kinds <= {"vm", "python"}:
+        if kinds != {"python"}:
             raise TournamentConfigurationError(
-                "Tournament divisions must be all VM or all Python; "
-                "mixed groups are unsupported."
+                "Tournament entrants must all be discovered Python agents."
             )
         return next(iter(kinds))
 
@@ -451,12 +451,10 @@ class TournamentService:
             return first, second
         starts = seeded_seat_starts(2, request.config.arena_size, seed)
         return (
-            MatchEntrant(
+            MatchEntrant.python(
                 first.agent_id,
                 first.name,
                 starts[0],
-                first.code,
-                first.kind,
                 first.python_spec,
                 # V5 Alpha 1 Post-Release Hardening H1 (FIND-01 sibling):
                 # re-placement must carry the entrant's already-resolved
@@ -467,12 +465,10 @@ class TournamentService:
                 # runs.
                 first.parameters,
             ),
-            MatchEntrant(
+            MatchEntrant.python(
                 second.agent_id,
                 second.name,
                 starts[1],
-                second.code,
-                second.kind,
                 second.python_spec,
                 second.parameters,
             ),

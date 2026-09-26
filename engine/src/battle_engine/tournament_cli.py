@@ -9,15 +9,10 @@ from pathlib import Path
 from battle_engine.agent_api import AgentValidationError
 from battle_engine.agent_parameters import resolve_entrant_parameters
 from battle_engine.agents import resolve_agent
-from battle_engine.builtins import SUPPORTED, build_agent
 from battle_engine.config import Config, Weights
 from battle_engine.match_service import MatchEntrant
 from battle_engine.paths import get_data_root
-from battle_engine.rules import BYTEFRAY_RULESET_ID
 from battle_engine.ruleset_policy import (
-    BYTEFRAY_RULESET_V2_ID,
-    BYTEFRAY_RULESET_V4_ALPHA1_ID,
-    BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
     resolve_omitted_ruleset_for_agents,
 )
@@ -41,7 +36,7 @@ def _parser() -> argparse.ArgumentParser:
         prog="bytefray tournament",
         description="Run or resume a homogeneous native round-robin tournament.",
     )
-    parser.add_argument("agents", nargs="+", help="two or more discovered or built-in agents")
+    parser.add_argument("agents", nargs="+", help="two or more discovered Python agents")
     parser.add_argument("--rounds", type=_positive, default=1)
     parser.add_argument("--seed", type=int, default=1337)
     parser.add_argument("--ticks", type=_positive, default=3000)
@@ -58,30 +53,15 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--territory-bucket", type=_positive, default=64)
     parser.add_argument(
         "--ruleset",
-        choices=[
-            BYTEFRAY_RULESET_ID,
-            BYTEFRAY_RULESET_V2_ID,
-            BYTEFRAY_RULESET_V4_ALPHA1_ID,
-            BYTEFRAY_RULESET_V4_ALPHA2_ID,
-            BYTEFRAY_RULESET_V4_ID,
-        ],
+        choices=[BYTEFRAY_RULESET_V4_ID],
         default=None,
         help=(
-            "gameplay Ruleset identity. If omitted, Agent API v1 Python-only "
-            f"rosters use {BYTEFRAY_RULESET_V2_ID}, Agent API v2 Python-only "
-            f"rosters use {BYTEFRAY_RULESET_V4_ID}, and VM/blob-only "
-            f"rosters use {BYTEFRAY_RULESET_ID}. Tournament rosters must be "
-            "homogeneous; mixed Python/VM rosters are rejected. "
-            f"{BYTEFRAY_RULESET_V2_ID}, {BYTEFRAY_RULESET_V4_ID}, and both v4 "
-            "alphas support Python entrants only; every v4 identity requires "
-            f"Agent API v2. {BYTEFRAY_RULESET_V4_ID} is the current, "
-            "permanent v4 gameplay contract and is what an omitted Ruleset "
-            "selects for an Agent API v2 roster; v4 alpha1/alpha2 remain "
-            f"selectable by name to reproduce historical prerelease matches. "
-            f"Under {BYTEFRAY_RULESET_V4_ID} (as under both v4 alphas) each "
+            f"gameplay Ruleset identity. {BYTEFRAY_RULESET_V4_ID} is the "
+            "only Ruleset Agent API v2 (process) rosters can run under, and "
+            "is selected automatically when this flag is omitted. Each "
             "scheduled pairing is placed from its own derived match seed "
-            "rather than from the roster-wide seat spacing. "
-            "Affects gameplay semantics and is recorded in each match's "
+            "rather than from the roster-wide seat spacing. Affects "
+            "gameplay semantics and is recorded in each match's "
             "result/replay artifacts."
         ),
     )
@@ -127,17 +107,8 @@ def _resolve_entrant(root: Path, name: str, start: int) -> MatchEntrant:
                 f"Agent {name!r} declares invalid parameters: {exc}"
             ) from exc
         return MatchEntrant.python(name, spec.display or name, start, spec, parameters)
-    if spec is not None and spec.blob is not None and spec.blob.is_file():
-        return MatchEntrant(name, spec.display or name, start, spec.blob.read_bytes())
-    if name in SUPPORTED:
-        return MatchEntrant(
-            name,
-            spec.display if spec is not None else name,
-            start,
-            build_agent(name, start),
-        )
     raise TournamentConfigurationError(
-        f"Agent {name!r} is not an executable Python agent, blob, or built-in."
+        f"Agent {name!r} is not a discovered Python agent."
     )
 
 

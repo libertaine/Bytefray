@@ -1,14 +1,19 @@
-"""``bytefray agents validate <agent-id>`` — Agent API v1 discover/load/dry-run.
+"""``bytefray agents validate <agent-id>`` — Agent API v2 discover/load/dry-run.
 
 Answers "can Bytefray discover, load, initialize, and successfully execute
-this agent's Agent API v1 contract?" without running a full match. Reuses
-the exact production discovery (:func:`battle_engine.agents.resolve_agent`),
-loading (:func:`battle_engine.agent_api.load_python_agent`), and action
-validation (:func:`battle_engine.python_runtime.validate_action`) a real
-Python-vs-Python match uses, plus four small diagnostic-construction
-helpers factored out of :mod:`battle_engine.python_runtime` so a validation
-failure and the equivalent real-match failure share one code path, not two
+this agent's Agent API v2 contract?" without running a full match. Reuses
+the exact production discovery (:func:`battle_engine.agents.resolve_agent`)
+and loading (:func:`battle_engine.agent_api.load_python_agent`) a real
+process match uses, plus small diagnostic-construction helpers factored out
+of :mod:`battle_engine.python_runtime` so a validation failure and the
+equivalent real-match failure share one code path, not two
 hand-synchronized copies. See ``docs/specs/agent_validation.md``.
+
+V6 Phase 2B.12 retired Agent API v1 execution
+(docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md): an Agent API
+v1 agent is rejected at Stage 2, before any of its code runs. Historical
+v1 data types remain in :mod:`battle_engine.agent_api` for compatibility,
+but validation has only the current API-v2 execution path.
 
 Passing validation means only that the agent was discoverable, loadable,
 reset successfully, accepted one deterministic observation, and returned
@@ -29,16 +34,12 @@ from pathlib import Path
 from typing import Any, cast
 
 from battle_engine.agent_api import (
-    ActionKind,
     ActionKindV2,
     AgentAction,
     AgentManifestError,
-    AgentV1,
     AgentV2,
     AgentValidationError,
-    MatchContext,
     MatchContextV2,
-    Observation,
     ObservationV2,
     ProcessDeclaration,
     load_python_agent,
@@ -66,7 +67,6 @@ from battle_engine.python_runtime import (
     diagnose_invalid_action,
     diagnose_load_failure,
     diagnose_reset_failure,
-    validate_action,
 )
 from battle_engine.supervised_runtime import diagnostic_for_worker_result
 
@@ -102,7 +102,7 @@ class AgentValidationFailedError(RuntimeError):
         self.diagnostic = diagnostic
 
 
-def build_validation_context(api_version: int) -> MatchContext | MatchContextV2:
+def build_validation_context(api_version: int = 2) -> MatchContextV2:
     """Build the one deterministic ``MatchContext`` used for a dry-run reset.
 
     Uses the exact production seed-derivation function
@@ -112,29 +112,24 @@ def build_validation_context(api_version: int) -> MatchContext | MatchContextV2:
     overstate what it actually does.
     """
 
+    if api_version != 2:
+        raise ValueError(f"Agent API v{api_version} validation is retired")
     seed = derive_agent_seed(VALIDATION_SEED, VALIDATION_SLOT, VALIDATION_AGENT_ID, api_version)
-    if api_version == 2:
-        return MatchContextV2(
-            agent_id=VALIDATION_AGENT_ID,
-            seed=seed,
-            arena_size=VALIDATION_ARENA_SIZE,
-            tick_limit=1,
-            rng=random.Random(seed),
-        )
-    return MatchContext(
+    return MatchContextV2(
         agent_id=VALIDATION_AGENT_ID,
         seed=seed,
         arena_size=VALIDATION_ARENA_SIZE,
         tick_limit=1,
-        action_budget=1,
         rng=random.Random(seed),
+        # A dry run belongs to no Ruleset, so it has no sensing radius.
+        detection_radius=None,
     )
 
 
 def build_validation_observation(
-    api_version: int = 1,
+    api_version: int = 2,
     declaration: ProcessDeclaration | None = None,
-) -> Observation | ObservationV2:
+) -> ObservationV2:
     """Build the one deterministic ``Observation`` used for the dry-run ``act()``.
 
     Field-for-field identical to a fresh entrant's genuine first
@@ -144,32 +139,23 @@ def build_validation_observation(
     field is ``PythonEntrantState``'s un-mutated dataclass default.
     """
 
-    if api_version == 2:
-        if declaration is None:
-            raise ValueError("Agent API v2 validation requires a process declaration")
-        return ObservationV2(
-            current_tick=1,
-            last_callback_tick=0,
-            previous_action_tick=0,
-            self_process_id=declaration.id,
-            self_anchor=0,
-            self_reach=declaration.reach,
-            own_core_base=0,
-            own_core_size=8,
-            visible_enemy_anchor_addresses=(),
-            previous_action_applied=False,
-            previous_read_value=None,
-            previous_read_owner=None,
-        )
-    return Observation(
-        tick=1,
-        agent_id=VALIDATION_AGENT_ID,
-        pc=0,
-        register_a=0,
-        register_p=0,
-        zero_flag=False,
-        last_read=None,
-        alive=True,
+    if api_version != 2:
+        raise ValueError(f"Agent API v{api_version} validation is retired")
+    if declaration is None:
+        raise ValueError("Agent API v2 validation requires a process declaration")
+    return ObservationV2(
+        current_tick=1,
+        last_callback_tick=0,
+        previous_action_tick=0,
+        self_process_id=declaration.id,
+        self_anchor=0,
+        self_reach=declaration.reach,
+        own_core_base=0,
+        own_core_size=8,
+        visible_enemy_anchor_addresses=(),
+        previous_action_applied=False,
+        previous_read_value=None,
+        previous_read_owner=None,
     )
 
 
@@ -259,6 +245,25 @@ def _validate_agent(
             )
         )
 
+    # V6 Phase 2B.12 retired Agent API v1 execution
+    # (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md): a dry
+    # run genuinely executes the agent's reset()/act(), so validating a v1
+    # agent would be running code no Ruleset can execute for real. Rejected
+    # here, at the same discovery stage as the kind check above, rather than
+    # failing deeper inside the load/reset/act stages.
+    if spec.api_version != 2:
+        raise AgentValidationFailedError(
+            RuntimeDiagnostic(
+                code="agent_api_version_unsupported",
+                stage="discovery",
+                message=(
+                    f"Agent {agent_id!r} declares Agent API v{spec.api_version}; "
+                    "validation currently supports Agent API v2 only."
+                ),
+                agent_id=agent_id,
+            )
+        )
+
     trace_writer = _open_validation_trace_writer(
         trace_path, api_version=spec.api_version, timeout=timeout
     )
@@ -320,72 +325,67 @@ def _validate_agent_unsupervised(
         ) from exc
 
     api_version = loaded.metadata.api_version
+    if api_version != 2:  # Defensive: the loader rejects this before import.
+        raise AgentValidationFailedError(
+            RuntimeDiagnostic(
+                code="agent_api_version_unsupported",
+                stage="load",
+                message=f"Agent API v{api_version} execution is retired.",
+                agent_id=VALIDATION_AGENT_ID,
+                slot=VALIDATION_SLOT,
+            )
+        )
 
     # Stage 4: deterministic reset.
     context = build_validation_context(api_version)
-    instance_v1: AgentV1 | None = None
-    instance_v2: AgentV2 | None = None
-    declarations: list[ProcessDeclaration] = []
-    if api_version == 2:
-        instance_v2 = cast(AgentV2, loaded.instance)
-    else:
-        instance_v1 = cast(AgentV1, loaded.instance)
+    instance = cast(AgentV2, loaded.instance)
     reset_start = time.perf_counter()
     try:
-        if instance_v2 is not None:
-            instance_v2.reset(cast(MatchContextV2, context))
-        else:
-            assert instance_v1 is not None
-            instance_v1.reset(cast(MatchContext, context))
+        instance.reset(context)
     except Exception as exc:
         # Exception, not BaseException: KeyboardInterrupt/SystemExit must
         # propagate rather than being reported as an ordinary validation
-        # failure, matching PythonEntrantController's identical narrowing.
+        # failure, matching the current process runtime's identical narrowing.
         diagnostic = diagnose_reset_failure(exc, agent_id=VALIDATION_AGENT_ID, slot=VALIDATION_SLOT)
         _trace_validation_reset(trace_writer, reset_start, diagnostic)
         raise AgentValidationFailedError(diagnostic) from exc
     _trace_validation_reset(trace_writer, reset_start, None)
 
-    if instance_v2 is not None:
-        try:
-            declared = instance_v2.declare_processes()
-        except Exception as exc:
-            raise AgentValidationFailedError(
-                RuntimeDiagnostic(
-                    code="agent_process_declaration_failed",
-                    stage="declaration",
-                    message=(
-                        f"Python agent {VALIDATION_AGENT_ID} process declaration "
-                        f"failed: {type(exc).__name__}: {exc}"
-                    ),
-                    agent_id=VALIDATION_AGENT_ID,
-                    slot=VALIDATION_SLOT,
-                    exception_type=type(exc).__name__,
-                )
-            ) from exc
-        try:
-            declarations = ProcessMatchController._validate_declarations(
-                declared,
+    try:
+        declared = instance.declare_processes()
+    except Exception as exc:
+        raise AgentValidationFailedError(
+            RuntimeDiagnostic(
+                code="agent_process_declaration_failed",
+                stage="declaration",
+                message=(
+                    f"Python agent {VALIDATION_AGENT_ID} process declaration "
+                    f"failed: {type(exc).__name__}: {exc}"
+                ),
                 agent_id=VALIDATION_AGENT_ID,
                 slot=VALIDATION_SLOT,
-                arena_size=VALIDATION_ARENA_SIZE,
+                exception_type=type(exc).__name__,
             )
-        except PythonEntrantInitializationError as exc:
-            raise AgentValidationFailedError(exc.diagnostic) from exc
+        ) from exc
+    try:
+        declarations = ProcessMatchController._validate_declarations(
+            declared,
+            agent_id=VALIDATION_AGENT_ID,
+            slot=VALIDATION_SLOT,
+            arena_size=VALIDATION_ARENA_SIZE,
+        )
+    except PythonEntrantInitializationError as exc:
+        raise AgentValidationFailedError(exc.diagnostic) from exc
 
     # Stage 5: one deterministic act(), validated by the real action
     # validator -- not a reimplementation.
     observation = build_validation_observation(
         api_version,
-        declarations[0] if declarations else None,
+        declarations[0],
     )
     act_start = time.perf_counter()
     try:
-        if instance_v2 is not None:
-            action = instance_v2.act(cast(ObservationV2, observation))
-        else:
-            assert instance_v1 is not None
-            action = instance_v1.act(cast(Observation, observation))
+        action = instance.act(observation)
     except Exception as exc:
         diagnostic = diagnose_action_exception(
             exc,
@@ -398,11 +398,7 @@ def _validate_agent_unsupervised(
         raise AgentValidationFailedError(diagnostic) from exc
 
     try:
-        validated_action = (
-            ProcessMatchController._validate_v2_action(action)
-            if api_version == 2
-            else validate_action(action)
-        )
+        validated_action = ProcessMatchController._validate_v2_action(action)
     except (InvalidPythonActionError, ValueError) as exc:
         invalid = (
             exc
@@ -433,7 +429,7 @@ def _validate_agent_unsupervised(
 
 def _trace_decision(
     trace_writer: TraceWriter | None,
-    observation: Observation | ObservationV2,
+    observation: ObservationV2,
     start: float,
     action: TraceAction | None,
     diagnostic: RuntimeDiagnostic | None,
@@ -442,30 +438,17 @@ def _trace_decision(
         return
     from battle_engine.agent_trace import DecisionRecord
 
-    if isinstance(observation, ObservationV2):
-        tick = observation.current_tick
-        trace_observation = TraceObservation(
-            tick=tick,
-            agent_id=VALIDATION_AGENT_ID,
-            pc=observation.self_anchor,
-            register_a=0,
-            register_p=0,
-            zero_flag=False,
-            last_read=observation.previous_read_value,
-            alive=True,
-        )
-    else:
-        tick = observation.tick
-        trace_observation = TraceObservation(
-            tick=tick,
-            agent_id=observation.agent_id,
-            pc=observation.pc,
-            register_a=observation.register_a,
-            register_p=observation.register_p,
-            zero_flag=observation.zero_flag,
-            last_read=observation.last_read,
-            alive=observation.alive,
-        )
+    tick = observation.current_tick
+    trace_observation = TraceObservation(
+        tick=tick,
+        agent_id=VALIDATION_AGENT_ID,
+        pc=observation.self_anchor,
+        register_a=0,
+        register_p=0,
+        zero_flag=False,
+        last_read=observation.previous_read_value,
+        alive=True,
+    )
     trace_writer.write_decision(
         DecisionRecord(
             tick=tick,
@@ -479,12 +462,8 @@ def _trace_decision(
     )
 
 
-def _observation_tick(observation: Observation | ObservationV2) -> int:
-    return (
-        observation.current_tick
-        if isinstance(observation, ObservationV2)
-        else observation.tick
-    )
+def _observation_tick(observation: ObservationV2) -> int:
+    return observation.current_tick
 
 
 def _validate_agent_supervised(
@@ -492,8 +471,8 @@ def _validate_agent_supervised(
 ) -> ValidationResult:
     """Stages 3-5 via one whole-dry-run-lifetime worker subprocess, with a timeout.
 
-    Mirrors :class:`battle_engine.supervised_runtime.SupervisedPythonEntrantController`
-    at one-call granularity -- see ``docs/specs/agent_lab.md`` §6/§10.
+    Uses the same worker protocol as the current process runtime at one-call
+    granularity -- see ``docs/specs/agent_lab.md`` §6/§10.
     """
 
     handle = AgentWorkerHandle(agent_id=VALIDATION_AGENT_ID, slot=VALIDATION_SLOT)
@@ -536,54 +515,62 @@ def _validate_agent_supervised(
             raise AgentValidationFailedError(diagnostic)
         _trace_validation_reset(trace_writer, reset_start, None)
 
-        declarations: list[ProcessDeclaration] = []
-        if api_version == 2:
-            declaration_result = handle.declare_processes(timeout=timeout)
-            if declaration_result.status is not WorkerCallStatus.OK:
-                diagnostic = diagnostic_for_worker_result(
-                    declaration_result,
+        if api_version != 2:
+            raise AgentValidationFailedError(
+                RuntimeDiagnostic(
+                    code="agent_api_version_unsupported",
+                    stage="load",
+                    message=f"Agent API v{api_version} execution is retired.",
                     agent_id=VALIDATION_AGENT_ID,
                     slot=VALIDATION_SLOT,
+                )
+            )
+        declaration_result = handle.declare_processes(timeout=timeout)
+        if declaration_result.status is not WorkerCallStatus.OK:
+            diagnostic = diagnostic_for_worker_result(
+                declaration_result,
+                agent_id=VALIDATION_AGENT_ID,
+                slot=VALIDATION_SLOT,
+                stage="declaration",
+                timeout=timeout,
+                exit_code=handle.exit_code,
+            )
+            raise AgentValidationFailedError(diagnostic)
+        assert declaration_result.payload is not None
+        declaration_payload = declaration_result.payload.get("declarations")
+        try:
+            declared = (
+                [ProcessDeclaration(**item) for item in declaration_payload]
+                if isinstance(declaration_payload, list)
+                else declaration_payload
+            )
+            declarations = ProcessMatchController._validate_declarations(
+                declared,
+                agent_id=VALIDATION_AGENT_ID,
+                slot=VALIDATION_SLOT,
+                arena_size=VALIDATION_ARENA_SIZE,
+            )
+        except (TypeError, PythonEntrantInitializationError) as exc:
+            diagnostic = (
+                exc.diagnostic
+                if isinstance(exc, PythonEntrantInitializationError)
+                else RuntimeDiagnostic(
+                    code="agent_process_declaration_invalid",
                     stage="declaration",
-                    timeout=timeout,
-                    exit_code=handle.exit_code,
-                )
-                raise AgentValidationFailedError(diagnostic)
-            assert declaration_result.payload is not None
-            declaration_payload = declaration_result.payload.get("declarations")
-            try:
-                declared = (
-                    [ProcessDeclaration(**item) for item in declaration_payload]
-                    if isinstance(declaration_payload, list)
-                    else declaration_payload
-                )
-                declarations = ProcessMatchController._validate_declarations(
-                    declared,
+                    message=(
+                        f"Python agent {VALIDATION_AGENT_ID} returned malformed "
+                        "process declarations."
+                    ),
                     agent_id=VALIDATION_AGENT_ID,
                     slot=VALIDATION_SLOT,
-                    arena_size=VALIDATION_ARENA_SIZE,
+                    exception_type=type(exc).__name__,
                 )
-            except (TypeError, PythonEntrantInitializationError) as exc:
-                diagnostic = (
-                    exc.diagnostic
-                    if isinstance(exc, PythonEntrantInitializationError)
-                    else RuntimeDiagnostic(
-                        code="agent_process_declaration_invalid",
-                        stage="declaration",
-                        message=(
-                            f"Python agent {VALIDATION_AGENT_ID} returned malformed "
-                            "process declarations."
-                        ),
-                        agent_id=VALIDATION_AGENT_ID,
-                        slot=VALIDATION_SLOT,
-                        exception_type=type(exc).__name__,
-                    )
-                )
-                raise AgentValidationFailedError(diagnostic) from exc
+            )
+            raise AgentValidationFailedError(diagnostic) from exc
 
         observation = build_validation_observation(
             api_version,
-            declarations[0] if declarations else None,
+            declarations[0],
         )
         act_start = time.perf_counter()
         act_result = handle.act(observation, action_slot=0, timeout=timeout)
@@ -619,19 +606,11 @@ def _validate_agent_supervised(
 
         try:
             validated_action = AgentAction(
-                kind=(
-                    ActionKindV2(action_payload["kind"])
-                    if api_version == 2
-                    else ActionKind(action_payload["kind"])
-                ),
+                kind=ActionKindV2(action_payload["kind"]),
                 operand=action_payload.get("operand"),
                 value=action_payload.get("value"),
             )
-            validated_action = (
-                ProcessMatchController._validate_v2_action(validated_action)
-                if api_version == 2
-                else validate_action(validated_action)
-            )
+            validated_action = ProcessMatchController._validate_v2_action(validated_action)
         except (KeyError, ValueError, InvalidPythonActionError) as exc:
             invalid = (
                 exc
@@ -668,7 +647,7 @@ def validate_agent(
     timeout: float | None = None,
     trace_path: Path | None = None,
 ) -> ValidationResult:
-    """Validate one Python agent's Agent API v1 contract with one dry-run tick.
+    """Validate one Python agent's Agent API v2 contract with one dry-run tick.
 
     ``timeout=None`` (the default) is unsupervised, in-process, and
     untimed -- byte-for-byte the v0.4.0 behavior every existing caller and
@@ -709,7 +688,7 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="bytefray agents validate",
         description=(
-            "Discover, load, reset, and dry-run one Agent API v1 Python agent. "
+            "Discover, load, reset, and dry-run one Agent API v2 Python agent. "
             "Passing validation proves the agent was discoverable, loadable, reset "
             "successfully, and returned one action the current runtime accepts for "
             "one deterministic tick -- it does not prove strategic correctness, "

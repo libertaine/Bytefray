@@ -4,9 +4,7 @@ import json
 
 import pytest
 from battle_client.session import ReplaySession, ReplaySessionError, ReplayState
-from battle_engine.builtins import build_agent
 from battle_engine.config import Config
-from battle_engine.core import HALT, NOP, enc
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
 from battle_engine.replay import (
     AgentState,
@@ -17,6 +15,7 @@ from battle_engine.replay import (
     ProcessState,
     ReplayFormatError,
     ReplayHeader,
+    RuntimeEvent,
     TickSnapshot,
     write_replay,
 )
@@ -24,38 +23,103 @@ from battle_engine.replay import (
 
 # ---------------------------------------------------------------------------
 # Real v3 replays via NativeMatchService
+#
+# V6 Phase 2B.12 (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md)
+# retired VM/blob execution: this section's real matches are now real
+# Agent API v2 (Ruleset 4) matches, not VM ones -- ``bytefray-rules-4``
+# fixes the entrant action quota at Q=8. Every hand-built fixture in the
+# rest of this file that labels a header ``runtime_kind="vm"`` is untouched:
+# that is testing that a *historical* VM replay remains readable, which is
+# unaffected by execution retirement (see "delete execution, not history").
 # ---------------------------------------------------------------------------
-def _config(arena_size=32, instr_per_tick=1, seed=1337):
+def _config(arena_size=32, instr_per_tick=8, seed=1337):
     return Config(arena_size=arena_size, instr_per_tick=instr_per_tick, seed=seed)
 
 
-def _run_vm_match(tmp_path):
+_PASSIVE_V2_SOURCE = """
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
+
+class Agent:
+    def reset(self, context):
+        self.arena_size = context.arena_size
+
+    def declare_processes(self):
+        return [ProcessDeclaration(id="main", reach=self.arena_size - 1, share=1.0)]
+
+    def act(self, observation):
+        return AgentAction(ActionKindV2.READ, observation.self_anchor)
+
+def create_agent():
+    return Agent()
+"""
+
+_FORFEITING_V2_SOURCE = """
+from battle_engine.agent_api import ProcessDeclaration
+
+class Agent:
+    def reset(self, context):
+        self.arena_size = context.arena_size
+
+    def declare_processes(self):
+        return [ProcessDeclaration(id="main", reach=self.arena_size - 1, share=1.0)]
+
+    def act(self, observation):
+        raise RuntimeError("boom")
+
+def create_agent():
+    return Agent()
+"""
+
+
+def _python_spec(root, name, source):
+    from battle_engine.agents import resolve_agent
+
+    directory = root / "agents" / name
+    directory.mkdir(parents=True)
+    (directory / "agent.yaml").write_text(
+        json.dumps(
+            {
+                "kind": "python",
+                "api_version": 2,
+                "entrypoint": "agent.py:create_agent",
+                "name": name,
+                "display": name.title(),
+                "version": "1.0",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (directory / "agent.py").write_text(source, encoding="utf-8")
+    return resolve_agent(root, name)
+
+
+def _run_python_match(tmp_path, *, max_ticks=3):
     entrants = (
-        MatchEntrant("A", "a", 0, build_agent("runner", 0)),
-        MatchEntrant("B", "b", 16, build_agent("runner", 16)),
+        MatchEntrant.python("A", "a", 0, _python_spec(tmp_path, "a", _PASSIVE_V2_SOURCE)),
+        MatchEntrant.python("B", "b", 16, _python_spec(tmp_path, "b", _PASSIVE_V2_SOURCE)),
     )
     replay_path = tmp_path / "replay.jsonl"
     result = NativeMatchService().run(
-        MatchRequest(_config(), entrants, max_ticks=3, replay_path=replay_path, verbose=False)
+        MatchRequest(_config(), entrants, max_ticks=max_ticks, replay_path=replay_path, verbose=False)
     )
     return result
 
 
-def test_load_real_vm_replay_exposes_header_and_runtime_kind(tmp_path):
-    result = _run_vm_match(tmp_path)
+def test_load_real_python_replay_exposes_header_and_runtime_kind(tmp_path):
+    result = _run_python_match(tmp_path)
     session = ReplaySession()
     session.load(result.replay_path)
 
     assert session.loaded
     assert session.header is not None
     assert session.header.match_id == result.match_id
-    assert session.runtime_kind == "vm"
+    assert session.runtime_kind == "python"
 
 
-def test_load_real_vm_replay_terminal_metadata_matches_result_json(tmp_path):
+def test_load_real_python_replay_terminal_metadata_matches_result_json(tmp_path):
     from battle_engine.result_model import read_result
 
-    result = _run_vm_match(tmp_path)
+    result = _run_python_match(tmp_path)
     session = ReplaySession()
     session.load(result.replay_path)
 
@@ -68,34 +132,41 @@ def test_load_real_vm_replay_terminal_metadata_matches_result_json(tmp_path):
     assert dict(final_state.score) == dict(envelope.score)
 
 
-def test_events_at_tick_returns_the_recorded_death(tmp_path):
+def test_events_at_tick_returns_the_recorded_forfeit(tmp_path):
+    """Mirrors the file's pre-Phase-2B.12 VM-HALT death case, updated for
+    Ruleset 4's actual termination event shape: a Python entrant that
+    raises out of ``act()`` forfeits, recorded as a ``RuntimeEvent``, not
+    the ``KillDeathEvent`` a VM-era last-agent-standing kill produced (that
+    event's own historical-reading coverage is unaffected -- see the many
+    hand-built ``KillDeathEvent`` fixtures elsewhere in this file).
+    """
     entrants = (
-        MatchEntrant("A", "halts", 0, enc(HALT)),
-        MatchEntrant("B", "waits", 16, enc(NOP)),
+        MatchEntrant.python("A", "a", 0, _python_spec(tmp_path, "a", _FORFEITING_V2_SOURCE)),
+        MatchEntrant.python("B", "b", 16, _python_spec(tmp_path, "b", _PASSIVE_V2_SOURCE)),
     )
     result = NativeMatchService().run(
-        MatchRequest(_config(arena_size=32), entrants, 2, tmp_path / "events.jsonl", False)
+        MatchRequest(_config(), entrants, 2, tmp_path / "events.jsonl", False)
     )
     session = ReplaySession()
     session.load(result.replay_path)
 
-    assert session.events_at_tick(1) == (KillDeathEvent("death", "A", None),)
+    assert session.events_at_tick(1) == (
+        RuntimeEvent("forfeit", "A", "agent_action_failed", "action", 1, 0),
+    )
 
 
 def test_memory_diffs_at_tick_returns_the_raw_per_write_records(tmp_path):
-    """Mirrors ``test_events_at_tick_returns_the_recorded_death`` for the
+    """Mirrors ``test_events_at_tick_returns_the_recorded_forfeit`` for the
     sibling raw-lookup method (Beta1 Phase 3) -- a non-mutating lookup of
     one tick's own ``MemoryDiff`` records, independent of the playback
     cursor and distinct from ``current_state.owners`` (which reflects only
     the *final* merged ownership across every tick up to the cursor).
+
+    Tick 0's diffs are each entrant's own spawn-anchor write, present for
+    every Ruleset-4 entrant regardless of what its agent code does -- no
+    explicit WRITE action is needed to exercise this.
     """
-    entrants = (
-        MatchEntrant("A", "runner", 0, build_agent("runner", 0)),
-        MatchEntrant("B", "writer", 16, build_agent("writer", 16)),
-    )
-    result = NativeMatchService().run(
-        MatchRequest(_config(arena_size=32), entrants, 3, tmp_path / "diffs.jsonl", False)
-    )
+    result = _run_python_match(tmp_path)
     session = ReplaySession()
     session.load(result.replay_path)
 
@@ -607,11 +678,10 @@ def test_seek_after_step_forward_reaches_the_correct_state(tmp_path):
     assert state.arena[4] == 0x14
 
 
-def test_seek_every_tick_of_a_real_vm_replay_succeeds(tmp_path):
+def test_seek_every_tick_of_a_real_python_replay_succeeds(tmp_path):
     # Empirically confirms canonical replays record every integer tick with
-    # no gaps (established by inspecting match.py's publish loop), rather
-    # than merely asserting it.
-    result = _run_vm_match(tmp_path)
+    # no gaps, rather than merely asserting it.
+    result = _run_python_match(tmp_path)
     session = ReplaySession()
     session.load(result.replay_path)
 
@@ -702,66 +772,14 @@ def test_sparse_ticks_seek_into_a_gap_raises_rather_than_fabricating_state(tmp_p
 
 
 # ---------------------------------------------------------------------------
-# Runtime-kind exposure: VM and Python
+# Runtime-kind exposure
+#
+# V6 Phase 2B.12 retired VM execution, so a real, freshly-produced replay is
+# always ``runtime_kind == "python"`` now -- a real VM-labeled replay can no
+# longer be produced, only read historically (the many hand-built
+# ``runtime_kind="vm"`` fixtures throughout this file cover that reading
+# path and are unaffected by this retirement).
 # ---------------------------------------------------------------------------
-NOP_SOURCE = """
-from battle_engine.agent_api import ActionKind, AgentAction
-
-class Agent:
-    def reset(self, context):
-        pass
-
-    def act(self, observation):
-        return AgentAction(ActionKind.NOP)
-
-def create_agent():
-    return Agent()
-"""
-
-
-def _python_spec(root, name, source):
-    from battle_engine.agents import resolve_agent
-
-    directory = root / "agents" / name
-    directory.mkdir(parents=True)
-    (directory / "agent.yaml").write_text(
-        json.dumps(
-            {
-                "kind": "python",
-                "api_version": 1,
-                "entrypoint": "agent.py:create_agent",
-                "name": name,
-                "display": name.title(),
-                "version": "1.0",
-            }
-        ),
-        encoding="utf-8",
-    )
-    (directory / "agent.py").write_text(source, encoding="utf-8")
-    return resolve_agent(root, name)
-
-
-def _run_python_match(tmp_path):
-    entrants = (
-        MatchEntrant.python("A", "a", 0, _python_spec(tmp_path, "a", NOP_SOURCE)),
-        MatchEntrant.python("B", "b", 4, _python_spec(tmp_path, "b", NOP_SOURCE)),
-    )
-    replay_path = tmp_path / "replay.jsonl"
-    result = NativeMatchService().run(
-        MatchRequest(_config(), entrants, max_ticks=3, replay_path=replay_path, verbose=False)
-    )
-    return result
-
-
-def test_runtime_kind_is_exposed_for_a_vm_replay(tmp_path):
-    result = _run_vm_match(tmp_path)
-    session = ReplaySession()
-    session.load(result.replay_path)
-
-    assert session.runtime_kind == "vm"
-    assert session.current_state.runtime_kind == "vm"
-
-
 def test_runtime_kind_is_exposed_for_a_python_replay(tmp_path):
     result = _run_python_match(tmp_path)
     session = ReplaySession()

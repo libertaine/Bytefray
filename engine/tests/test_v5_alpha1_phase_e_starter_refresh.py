@@ -429,7 +429,7 @@ def test_bytecode_in_the_resource_tree_is_never_installed(tmp_path: Path) -> Non
 
     assert result.errors == ()
     assert not any("__pycache__" in path.parts for path in result.installed)
-    assert not (data_root / "agents" / "runner" / "__pycache__").exists()
+    assert not (data_root / "agents" / "v5_region_attacker" / "__pycache__").exists()
 
 
 def test_refresh_summary_names_what_changed_and_what_was_kept(tmp_path: Path) -> None:

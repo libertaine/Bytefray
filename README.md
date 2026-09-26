@@ -127,7 +127,7 @@ bytefray replay --replay runs/demo/replay.jsonl --renderer pygame
 | **Agent API** | Agent API v2 (`reset`, `declare_processes`, `act`) |
 | **Action Vocabulary** | `READ` (absolute address), `WRITE` (absolute address), `MOVE` (relative delta `[-64, 64]`) |
 | **Elimination Condition** | Core capture: an entrant is eliminated when it owns 0 cells of its 8-cell core at tick end |
-| **Artifact Formats** | `battle2.result` (schema v2 native JSON; v1 historical/pMARS), `battle2.replay` (schema v4 JSONL) |
+| **Artifact Formats** | `battle2.result` (schema v2 native JSON; v1 historical, including retired Redcode/pMARS records), `battle2.replay` (schema v4 JSONL) |
 | **Execution Model** | Local trusted Python execution; worker subprocesses with per-call timeouts for hang containment |
 | **Tooling** | Headless CLI, interactive Pygame replay visualizer, PySide6 visual Agent Designer |
 
@@ -344,7 +344,7 @@ Bytefray does not enforce sandboxing or runtime restrictions to prevent nondeter
 Bytefray includes a modular tool suite separating headless simulation from presentation:
 
 ### 1. Command-Line Interface (`bytefray`)
-* `bytefray run`: Execute native matches or pMARS ICWS'94 benchmarks.
+* `bytefray run`: Execute native Bytefray matches.
 * `bytefray replay`: Play back recorded `.jsonl` replays via headless terminal or Pygame.
 * `bytefray tournament`: Run or resume headless round-robin tournaments across rosters.
 * `bytefray design`: Launch the PySide6 visual Agent Designer.
@@ -454,12 +454,12 @@ The current permanent stable ruleset is `bytefray-rules-4`. An omitted `--rulese
 
 ### Historical Rulesets
 Earlier gameplay contracts remain executable and explicitly selectable for compatible agents, including historical reproduction:
-* `bytefray-rules-4-alpha2`: Semantic predecessor of Ruleset v4, preserved as a research milestone.
-* `bytefray-rules-4-alpha1`: Initial v4 alpha with evenly spaced core placement and priority process selection.
 * `bytefray-rules-2`: Permanent single-actor Python gameplay; still the omitted-ruleset default for Agent API v1 agents.
 * `bytefray-rules-1`: Historical Python Agent API v1 and native VM/blob gameplay. Mixed Python/VM matches remain unsupported.
 
-pMARS Redcode uses a separate backend and does not execute under a Bytefray ruleset. Designer Simple offers permanent v2 and v4; Advanced, Development, and pairwise Evaluation also expose historical choices. Group evaluation requires Ruleset v2.
+`bytefray-rules-4-alpha1` (initial v4 alpha, evenly spaced core placement and priority process selection) and `bytefray-rules-4-alpha2` (semantic predecessor of Ruleset v4) were retired from executable registration by V6 Phase 2B.10 Scope B: neither can create a new match any longer. Historical results, replays, and evaluations recorded under either remain fully readable, indexable, and replayable — see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)'s "Retired from execution / still recognised" table. Exact re-execution of either remains available through the `v5.0.0` release.
+
+Historical Redcode/pMARS execution (retired in V6) never executed under a Bytefray ruleset. Designer Simple offers only permanent v2 and v4; Advanced, Development, and pairwise Evaluation offer v1/v2/v4 — none offers either retired v4 alpha any longer. Group evaluation requires Ruleset v2.
 
 ### Scope Discipline
 Mechanics such as fixed process rosters and circular core sizes are ruleset-specific gameplay specifications (`RulesetPolicy`), not immutable project-wide engine constraints.
@@ -547,5 +547,4 @@ Contributions and issues are welcome on [GitHub](https://github.com/libertaine/B
 
 Bytefray is open-source software licensed under the [MIT License](LICENSE).
 
-* **pMARS Interoperability**: pMARS is separate GPL-licensed software. Distributions bundling pMARS preserve licensing materials in [third_party_licenses/](third_party_licenses/). The pure Python wheel does not bundle pMARS executables.
 * **Support**: If Bytefray is useful for your work or research, you can support ongoing development via [PayPal](https://www.paypal.com/donate/?hosted_button_id=DRJD388WT8DAL). Contributions are entirely optional.

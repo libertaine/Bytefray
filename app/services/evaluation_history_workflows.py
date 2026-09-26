@@ -27,7 +27,6 @@ from typing import Literal
 from battle_engine.agent_evaluation import (
     ORIENTATION_MODE_CANDIDATE_FIRST_ONLY,
     is_ruleset_v2_methodology,
-    methodology_lines,
 )
 from battle_engine.agent_revisions import (
     agent_revision_fingerprint,
@@ -38,6 +37,10 @@ from battle_engine.agent_revisions import (
 )
 from battle_engine.evaluation_behavior import BehaviorAnalysis, analyze_behavior
 from battle_engine.evaluation_capture import CaptureAnalysis, analyze_capture
+
+# V6 Phase 3K: the shared methodology-disclosure text is owned by
+# ``evaluation_cli`` -- reached directly rather than through the CLI facade.
+from battle_engine.evaluation_cli import methodology_lines
 from battle_engine.evaluation_group_analysis import GroupAnalysis, analyze_group
 from battle_engine.evaluation_history import (
     AdaptedCell,

@@ -1,0 +1,177 @@
+{
+  "schema": "bytefray.v6.e3.analysis_freeze",
+  "status": "frozen before any T-E3 or T-E3K1 matrix data exists",
+  "freeze_id": "v6-e3-freeze-v1-506811e78ad8",
+  "freeze_digest": "506811e78ad8fe34ab320efb2428220e7e9cb6ee4b6af6bc6ab46093a52a1dbb",
+  "identity": {
+    "freeze_version": 1,
+    "matrix_id": "v6-e3-matrix-v1-634132ec3c15",
+    "matrix_digest": "634132ec3c15549b8032b7414c2a0f649ff2e3a754f592c5c2a71090b37215e8",
+    "matches_total": 19456,
+    "preregistration_sha256": "2b5f82b4411efca561726e0e63a70fcfe24e5804b2b86b7eef7b71696cafbdd0",
+    "action_parity_version": 1,
+    "action_parity_sha256": "86b1a557e3a31db157ba2bd8805ef3636f892f2c7e5f9468d0982961d4c4f211",
+    "analysis_version": 1,
+    "capture_analyzer_version": 2,
+    "capture_analyzer_sha256": "b818f53e32ba160fb55386cddccd555812def9dc7c54434923c7451fa2c18f86",
+    "capture_analyzer_e2_freeze_id": "v6-e2-freeze-v2-db6458596d82",
+    "tooling_sha256": {
+      "tools/research/v6/experiment_harness.py": "e137c02df84f1aa20d1097472bb3885820e4a27ddbd2849fa7b1be73980e0254",
+      "tools/research/v6/e2/capture_analyzer.py": "b818f53e32ba160fb55386cddccd555812def9dc7c54434923c7451fa2c18f86",
+      "tools/research/v6/e2/matrix.py": "bd8ca2a88f2945c5bf3d544ec5a59cf9293bd11b78e1548a2e443c787a131449",
+      "tools/research/v6/e2/requalification.py": "752072e3bb404e7c6f2beb37b3d355c137e9cae470e03e29d4b5e8b20d5963bd",
+      "tools/research/v6/e3/action_parity.py": "86b1a557e3a31db157ba2bd8805ef3636f892f2c7e5f9468d0982961d4c4f211",
+      "tools/research/v6/e3/analysis_freeze.py": "fa4152e537edc2729a303f9b3565cd7f67552b572becba7ac17f604dce530c70",
+      "tools/research/v6/e3/analyze_e3.py": "a8d0911939da5b9b9dcc554657168f6cb36800064043498ef8eaf49bd0610330",
+      "tools/research/v6/e3/d9_gate.py": "0c37b7e4d6a2c21c52cc9d6d7c0996ecad5f448bd0c4c7cfdefcccf9d8144aee",
+      "tools/research/v6/e3/entrants.py": "07ad9ee6cc5ed5709b8caf676da358925654d37466d777de091e44018ad5e72d",
+      "tools/research/v6/e3/gates.py": "0910fb541e9fd4a538d74a6abdcff8515ab4ddc3165ac960ce968c939d2cd9a9",
+      "tools/research/v6/e3/matrix.py": "bdbb33dcf9b4c399eeb42179af0b7f12118b2cb051aa93dd1156844772e737bb",
+      "tools/research/v6/e3/populations.py": "25ca85a94d91407d55ebc39a53bf5a5d430dcfa0867b1d855ba3be8b6ce2d01b",
+      "tools/research/v6/e3/preregistration.json": "2b5f82b4411efca561726e0e63a70fcfe24e5804b2b86b7eef7b71696cafbdd0",
+      "tools/research/v6/e3/preregistration.py": "866e6d6805b15099d933536ca91fd9f89989962b253216dc59619a93a46801d2",
+      "tools/research/v6/e3/run_e3.py": "3ccd51173cfbc58c1ac184f9f8a772aaca20b1a4ddbf90f356952d85e29138c5",
+      "tools/research/v6/e3/telemetry.py": "9f063f21fa2d522af15f6b5a9d7b336a015472922780cd6cb92aaca4f32cef21",
+      "tools/research/v6/e3/fixtures/agents/e3_jam_sniper/agent.py": "c09053ff32a70cdd602d778f50df4549bb7c0dde96ef2055b44740a90b60cb25",
+      "tools/research/v6/e3/fixtures/agents/e3_jam_sniper/agent.yaml": "47faba076fa40f4b7648e939b409165e97751b1a2bf0b7152bf2b56276ec7810",
+      "tools/research/v6/e3/fixtures/agents/e3_jam_sniper_twin/agent.py": "c09053ff32a70cdd602d778f50df4549bb7c0dde96ef2055b44740a90b60cb25",
+      "tools/research/v6/e3/fixtures/agents/e3_jam_sniper_twin/agent.yaml": "251da379b12845d47b46917cbfcdeabdf2343da2f2e58db46d9fefd21b1fbc52"
+    },
+    "tooling_source_sha": "d1f69b98c6721e08d7d3eba6bc7989c9de07a4dd",
+    "match_generation_path": "engine/src",
+    "match_generation_tree": "67b73c9ae7d40209ef68e9512a58c5adfef0ac2f"
+  },
+  "control_qualification": {
+    "status": "PASS",
+    "note": "Control data only: no T-E3 or T-E3K1 match existed when this freeze was qualified.",
+    "records": {
+      "parent_reproduction.json": {
+        "path": "runs/research_v6_e3/v6-e3-matrix-v1-634132ec3c15/freezes/v6-e3-freeze-v1-506811e78ad8/parent_reproduction.json",
+        "sha256": "84307e8fdefdb280428f73d065c5a49ebb557aeb1e0d7b5be3409faeeb56816b"
+      },
+      "analyzer_qualification.json": {
+        "path": "runs/research_v6_e3/v6-e3-matrix-v1-634132ec3c15/freezes/v6-e3-freeze-v1-506811e78ad8/analyzer_qualification.json",
+        "sha256": "3dbb3abe4f7a6d96c800ffb6a932c3ee90a9272cc9c57e58dbe3fbc25cdb357e"
+      },
+      "d9_real_fixture_gate.json": {
+        "path": "runs/research_v6_e3/v6-e3-matrix-v1-634132ec3c15/freezes/v6-e3-freeze-v1-506811e78ad8/d9_real_fixture_gate.json",
+        "sha256": "f7e8fa2a8ee86ca2ec54d5fd4ff479042d4b898ac7d908bac712fc9b04125cf5"
+      }
+    },
+    "populations": {
+      "path": "tools/research/v6/e3/control_populations.json",
+      "sha256": "878754a2c961062f822ecae2bd55c143a8e84ace4b5c3a8125cbb9e44ff2cb95"
+    },
+    "controls": {
+      "C-E2": {
+        "generated_at": [
+          [
+            "b8ac343c66b7827a3b5c40971c072eae49aa737f",
+            false,
+            "v6-e3-freeze-v1-506811e78ad8"
+          ]
+        ],
+        "cells": 4864
+      },
+      "C-RS": {
+        "generated_at": [
+          [
+            "b8ac343c66b7827a3b5c40971c072eae49aa737f",
+            false,
+            "v6-e3-freeze-v1-506811e78ad8"
+          ]
+        ],
+        "cells": 4864
+      }
+    },
+    "parent_reproduction_cells": {
+      "C-E2": {
+        "F1": 2880,
+        "F2": 640
+      },
+      "C-RS": {
+        "F1": 2880,
+        "F2": 640
+      }
+    },
+    "fresh_control_cells": {
+      "C-E2": {
+        "F2-P": 640,
+        "F4": 704
+      },
+      "C-RS": {
+        "F2-P": 640,
+        "F4": 704
+      }
+    },
+    "analyzer_totals": {
+      "analyzed": 19968,
+      "analyzer_failures": 0,
+      "capture_attribution_mismatches": 0,
+      "capture_engine_disagreements": 0,
+      "cpu_statistics_mismatches": 0,
+      "ownership_reconstruction_disagreements": 0,
+      "repeatability_differences": 0
+    },
+    "d9_primary_scenarios": 132,
+    "d9_primary_guard_completions": 0,
+    "population_counts": {
+      "companion": {
+        "F1": {
+          "cells": 2880,
+          "exposed": 2880,
+          "hit_free": 0,
+          "stalemate": 0
+        },
+        "F2": {
+          "cells": 640,
+          "exposed": 576,
+          "hit_free": 64,
+          "stalemate": 0
+        },
+        "F2-P": {
+          "cells": 640,
+          "exposed": 576,
+          "hit_free": 64,
+          "stalemate": 0
+        },
+        "F4": {
+          "cells": 704,
+          "exposed": 704,
+          "hit_free": 0,
+          "stalemate": 0
+        }
+      },
+      "primary": {
+        "F1": {
+          "cells": 2880,
+          "exposed": 2880,
+          "hit_free": 0,
+          "stalemate": 610
+        },
+        "F2": {
+          "cells": 640,
+          "exposed": 576,
+          "hit_free": 64,
+          "stalemate": 64
+        },
+        "F2-P": {
+          "cells": 640,
+          "exposed": 576,
+          "hit_free": 64,
+          "stalemate": 64
+        },
+        "F4": {
+          "cells": 704,
+          "exposed": 704,
+          "hit_free": 0,
+          "stalemate": 64
+        }
+      }
+    },
+    "qualified_at": {
+      "git_sha": "b8ac343c66b7827a3b5c40971c072eae49aa737f",
+      "timestamp_utc": "2026-09-24T02:32:42.085754Z"
+    }
+  }
+}

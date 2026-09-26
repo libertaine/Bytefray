@@ -23,8 +23,8 @@ from battle_engine.agent_evaluation import (
 from battle_engine.evaluation_behavior import analyze_behavior, cell_ref_from_evaluation_cell
 from battle_engine.result_model import read_result
 
-WRITE_ACTION = "AgentAction(ActionKind.WRITE, 0, 1)"
-NOP_ACTION = "AgentAction(ActionKind.NOP)"
+WRITE_ACTION = "AgentAction(ActionKindV2.WRITE, 0, 1)"
+NOP_ACTION = "AgentAction(ActionKindV2.READ, 0)"
 
 
 def _write_agent(root: Path, name: str, action: str) -> None:
@@ -32,14 +32,15 @@ def _write_agent(root: Path, name: str, action: str) -> None:
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
     (directory / "agent.py").write_text(
         f"""
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
+    def declare_processes(self): return [ProcessDeclaration("main", 1, 1.0)]
     def reset(self, context): pass
     def act(self, observation): return {action}
 def create_agent(): return Agent()
@@ -201,7 +202,7 @@ def test_live_cli_behavior_block_present_without_baseline(tmp_path: Path, capsys
             "--ticks", "20",
             "--single-orientation",
             "--output", str(tmp_path / "eval-out"),
-            "--ruleset", "bytefray-rules-1",
+            "--ruleset", "bytefray-rules-4",
         ]
     )
     out = capsys.readouterr().out

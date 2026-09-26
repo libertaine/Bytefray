@@ -11,7 +11,7 @@ from battle_engine.evaluation_analysis import PairedEvidence
 from battle_engine.evaluation_history.cli import _paired_evidence_line
 from battle_engine.evaluation_history.cli import main as evaluations_main
 
-NOP_ACTION = "AgentAction(ActionKind.NOP)"
+NOP_ACTION = "AgentAction(ActionKindV2.READ, 0)"
 
 
 def test_paired_evidence_line_discloses_all_inconclusive_case():
@@ -37,14 +37,15 @@ def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> None
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
     (directory / "agent.py").write_text(
         f"""
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
+    def declare_processes(self): return [ProcessDeclaration("main", 1, 1.0)]
     def reset(self, context): pass
     def act(self, observation): return {action}
 def create_agent(): return Agent()

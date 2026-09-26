@@ -1,0 +1,7 @@
+name: e3_jam_sniper
+display: E3 Jam Sniper
+description: Research-only V6 E3 fixture (design review Sec L, Sec O-4) - global-reach diagnostic stressor that alternates enemy-anchor hits and enemy-core writes within each tick (D6). Not a product starter agent.
+kind: python
+api_version: 2
+entrypoint: agent.py:create_agent
+version: "1.0.0"

@@ -28,7 +28,7 @@ from battle_engine.agent_trace import (
 from battle_engine.agents import resolve_agent
 from battle_engine.config import Config, Weights
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
-from battle_engine.ruleset_policy import RULESET_V4_ALPHA1
+from battle_engine.ruleset_policy import RULESET_V4
 from battle_engine.spectator_derivation import (
     PairBindingError,
     PairConsistencyError,
@@ -192,7 +192,7 @@ def _run_match(
         max_ticks=max_ticks,
         replay_path=replay_path,
         trace_path=trace_path,
-        ruleset_id=RULESET_V4_ALPHA1.ruleset_id,
+        ruleset_id=RULESET_V4.ruleset_id,
     )
     result = NativeMatchService().run(request)
     return replay_path, trace_path, result
@@ -304,7 +304,7 @@ def test_a_known_running_process_emits_decision_records_with_real_content(
     assert binding is not None
     assert binding.replay_sha256 == hashlib.sha256(replay_path.read_bytes()).hexdigest()
     assert binding.entrant_identities == ("A", "B")
-    assert binding.ruleset_id == RULESET_V4_ALPHA1.ruleset_id
+    assert binding.ruleset_id == RULESET_V4.ruleset_id
 
 
 def test_applied_read_records_the_owner_and_value_the_engine_returned(
@@ -379,7 +379,7 @@ def test_verify_pair_accepts_a_matching_replay_and_trace(tmp_path: Path) -> None
     binding = verify_pair(replay_path, trace_path)
     assert binding.replay_sha256 == hashlib.sha256(replay_path.read_bytes()).hexdigest()
     assert binding.entrant_identities == ("A", "B")
-    assert binding.ruleset_id == RULESET_V4_ALPHA1.ruleset_id
+    assert binding.ruleset_id == RULESET_V4.ruleset_id
     assert binding.match_id.startswith("match_")
 
 
@@ -728,7 +728,7 @@ def test_eliminated_process_anchor_is_not_a_later_disruption_target(
         max_ticks=4,
         replay_path=run / "replay.jsonl",
         trace_path=run / "trace.jsonl",
-        ruleset_id=RULESET_V4_ALPHA1.ruleset_id,
+        ruleset_id=RULESET_V4.ruleset_id,
     )
     NativeMatchService().run(request)
 
@@ -976,7 +976,7 @@ def test_derivation_holds_for_more_than_two_entrants(tmp_path: Path) -> None:
         max_ticks=12,
         replay_path=run / "replay.jsonl",
         trace_path=run / "trace.jsonl",
-        ruleset_id=RULESET_V4_ALPHA1.ruleset_id,
+        ruleset_id=RULESET_V4.ruleset_id,
     )
     NativeMatchService().run(request)
 

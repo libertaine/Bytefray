@@ -77,7 +77,7 @@ foreach ($Artifact in $Artifacts) {
 # Verify no Python bytecode/cache reached any distributable tree.
 #
 # This build runs from the live repository checkout, and the engine imports
-# agent modules out of battle_engine/data at runtime, so CPython writes
+# agent modules out of battle_engine/data at runtime, so CPython can write
 # __pycache__ directories next to shipped product data as a normal
 # consequence of running the product. The specs used to hand those
 # directories to PyInstaller as (directory, destination) tuples, which it
@@ -185,9 +185,8 @@ try {
 # previously-shipped defects of one class: the unified executable spec listed
 # its bundled resource directories by literal name, so each time the product
 # gained a scaffold template the spec was left behind and the frozen build
-# silently shipped without it -- first battle_engine/data/agent_template
-# itself, then agent_template_annotated, then both Agent API v2 template
-# directories, whose absence failed `agents create --api-version 2` with
+# silently shipped without it. The retained Agent API v2 template pair must
+# both remain available; absence fails `agents create --api-version 2` with
 # "Agent template resource directory not found" (exit 2) in the distributed
 # application while source checkouts and installed wheels both worked. The
 # specs now derive that list from battle_engine.agent_scaffold's own
@@ -201,10 +200,8 @@ try {
 # historical default -- covering only the default is precisely why three
 # separate template omissions reached shipped executables.
 $SmokeVariants = @(
-  @{ Id = 'smoke_agent';              CreateArgs = @();                                                     Validate = $false }
-  @{ Id = 'smoke_agent_annotated';    CreateArgs = @('--template', 'annotated');                            Validate = $false }
-  @{ Id = 'smoke_agent_v2';           CreateArgs = @('--api-version', '2');                                 Validate = $true  }
-  @{ Id = 'smoke_agent_v2_annotated'; CreateArgs = @('--api-version', '2', '--template', 'annotated');      Validate = $true  }
+  @{ Id = 'smoke_agent_v2';           CreateArgs = @('--api-version', '2');                            Validate = $true }
+  @{ Id = 'smoke_agent_v2_annotated'; CreateArgs = @('--api-version', '2', '--template', 'annotated'); Validate = $true }
 )
 $SmokeRoot = Join-Path ([IO.Path]::GetTempPath()) ("bytefray-agents-create-smoke-" + [Guid]::NewGuid().ToString("N"))
 $PreviousBytefrayRoot = $env:BYTEFRAY_ROOT

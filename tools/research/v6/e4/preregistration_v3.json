@@ -1,0 +1,86 @@
+{
+  "schema": "bytefray.v6.e4.preregistration_amendment",
+  "schema_version": 3,
+  "id": "O-INTERPRETATION-3",
+  "title": "H2 precedence / combined H2+H3 interpretation",
+  "status": "registered before any T-E4 or T-E4K1 matrix data exists",
+  "date": "2026-09-24",
+  "authority": "The project owner's decision, taken while the experiment was still blind to treatment (no T-E4 or T-E4K1 matrix cell had run), on the observation recorded with pre-registration v2 that \"¬H1 ∧ H3\" can still apply beside \"H2\". The issue, the four rules and the reported statement are the owner's text verbatim; only emphasis and code formatting are removed, and the rules are numbered in the owner's order.",
+  "amends": {
+    "preregistration_v2": {
+      "path": "tools/research/v6/e4/preregistration_v2.json",
+      "schema_version": 2,
+      "sha256": "d69680c400e6670ea1f5d1304e2c2930792aaa1e3279eaf17027b428595ccd9f"
+    },
+    "preregistration": {
+      "path": "tools/research/v6/e4/preregistration.json",
+      "schema_version": 1,
+      "sha256": "56307844e1c01a52b46b3fc1d100a34706e13d6a645614d6d2bcea94757b9973"
+    },
+    "analysis_freeze": {
+      "path": "tools/research/v6/e4/analysis_freeze_v2.json",
+      "freeze_id": "v6-e4-freeze-v2-68d262a0dbd1"
+    },
+    "operationalization": "O-INTERPRETATION-2"
+  },
+  "preservation": "Pre-registrations v1 and v2 and analysis freezes v1 and v2 are preserved permanently, byte for byte. Nothing in them is edited. Pre-registration v3 is pre-registration v2 together with this amendment.",
+  "finding": {
+    "record": "docs/research/v6/V6_E4_ANALYSIS_FREEZE_V2.md, The reading (O-INTERPRETATION-2), Observation",
+    "evidence": "The registered definitions only; no data.",
+    "text": "When \"¬H1 ∧ H3\" and \"H2\" apply together, the v1 and v2 readings report both rows, and their conclusions point to different next steps."
+  },
+  "issue": "The issue is not that H2 ∧ ¬H1 ∧ H3 is ambiguous. It actually gives useful discrimination. The problem is that the old ¬H1 ∧ H3 interpretation says, in effect, the in-tick order line closes and the residual is the opening-pass effect. That statement is too broad if H2 is simultaneously supported, because H2 says the multi-pass privilege does follow the final pre-sample position. We shouldn't allow both conclusions to stand side by side.",
+  "rules": [
+    {
+      "rule": 1,
+      "text": "If H2 is SUPPORTED, the H2 interpretation takes precedence over the standalone ¬H1 ∧ H3 interpretation."
+    },
+    {
+      "rule": 2,
+      "text": "If H2 and H3 are both SUPPORTED, report: “The treatment identifies two contest-class-specific signatures. In MULTI-PASS matchups, the privilege follows the final pre-sample chunk, supporting an evaluation-adjacency/final-position mechanism. In OPENING-ONLY matchups, last-side persistence remains, consistent with an opening-pass mechanism. H3 does not override H2 and does not close the in-tick order line globally. Evaluation structure is the registered next question for the MULTI-PASS effect; anchor/core-0 co-location remains a separate follow-up for the OPENING-ONLY residual.”"
+    },
+    {
+      "rule": 3,
+      "text": "Do not additionally emit the old standalone ¬H1 ∧ H3 conclusion."
+    },
+    {
+      "rule": 4,
+      "text": "No hypotheses, thresholds, populations, metrics, matrix, treatment semantics, or analyzer measurements change."
+    }
+  ],
+  "reading": {
+    "id": "O-INTERPRETATION-3",
+    "kind": "amendment",
+    "text": "O-INTERPRETATION-2 (and through it O-INTERPRETATION) is applied first, unchanged, and its result is reported as the v2 reading. O-INTERPRETATION-3 then acts on that reading, reading statuses as O-INTERPRETATION does. Precedence (rules 1 and 3): when E4-H2 is SUPPORTED and the row \"¬H1 ∧ H3\" is still in the reading, that row is withheld and \"H2\" stands. Combined outcome (rule 2): when E4-H2 and E4-H3 are both SUPPORTED, the combined outcome \"H2 ∧ H3\" is reported immediately after \"H2\". The \"H2\" row is kept, because it is the H2 interpretation that takes precedence and the combined statement restates and extends it; the amendment removes only the standalone \"¬H1 ∧ H3\" conclusion. Whenever E4-H2 is SUPPORTED the \"H2\" row applies, so the combined outcome always follows it. Everything else in the v2 reading is unchanged: O-INTERPRETATION-2's rules 1 and 3 and its H3 note, every other row, the pathology row (H5, H6, H8) and a D9′ STOP. After O-INTERPRETATION-3 the standalone \"¬H1 ∧ H3\" conclusion is never reported: with E4-H0 SUPPORTED, O-INTERPRETATION-2 rule 1 withholds it; with E4-H0 REFUTED and no other main row, O-INTERPRETATION-2 rule 3 replaces it; and the only other main row that can apply beside it, since it requires E4-H1 REFUTED, is \"H2\", where it is withheld here. The label \"H2 ∧ H3\" names a reading outcome, not a new hypothesis or criterion.",
+    "amended_row": "¬H1 ∧ H3",
+    "precedence": {
+      "requires": {
+        "E4-H2": "SUPPORTED"
+      },
+      "row": "H2"
+    },
+    "combined": {
+      "requires": {
+        "E4-H2": "SUPPORTED",
+        "E4-H3": "SUPPORTED"
+      },
+      "after": "H2",
+      "outcome": {
+        "result": "H2 ∧ H3",
+        "conclusion": "The treatment identifies two contest-class-specific signatures. In MULTI-PASS matchups, the privilege follows the final pre-sample chunk, supporting an evaluation-adjacency/final-position mechanism. In OPENING-ONLY matchups, last-side persistence remains, consistent with an opening-pass mechanism. H3 does not override H2 and does not close the in-tick order line globally. Evaluation structure is the registered next question for the MULTI-PASS effect; anchor/core-0 co-location remains a separate follow-up for the OPENING-ONLY residual."
+      }
+    }
+  },
+  "unchanged": [
+    "E4-H0 to E4-H8 and D9′: statements, supported-if and refuted-if clauses, machine criteria, thresholds and probe priors",
+    "the interpretation table: every row, rule and conclusion",
+    "the populations (P-PAR, P-STALE) and the frozen control populations",
+    "the Sec M metrics, the FMA bands and the transition classes",
+    "the contest classes",
+    "the matrix, its identity and every cell",
+    "the treatments, their Rulesets and their semantics",
+    "the analyzer and every measurement it makes",
+    "the evidence rules, the hard stops and every other operationalization",
+    "O-INTERPRETATION and O-INTERPRETATION-2, which still compute the v1 and v2 readings that O-INTERPRETATION-3 is applied to"
+  ]
+}

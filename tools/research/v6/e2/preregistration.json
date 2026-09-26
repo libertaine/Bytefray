@@ -1,0 +1,256 @@
+{
+  "schema": "bytefray.v6.e2.preregistration",
+  "schema_version": 1,
+  "status": "frozen before any T-E2 matrix data exists",
+  "authority": "docs/research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md Sec H (hypotheses), Sec I.3 (metrics), Sec I.5 (interpretation rules)",
+  "rule": "Statements, evidence criteria and thresholds are copied verbatim from the design review and must not be re-tuned against E2 outcomes. Probe priors are predictions to be falsified, never thresholds (Sec I.5 rule 4).",
+  "definitions": {
+    "sdi": "For an ordered pair and seed: 1 if the Seat-A entrant wins in both orientations, or the Seat-B entrant wins in both; otherwise 0. The pair's SDI is the mean over its distinct trajectories.",
+    "mirror_seat_bias": "Seat-A win rate minus Seat-B win rate in a mirror cell.",
+    "recovery_rate": "Recoveries divided by onsets.",
+    "phase_lock": "The share of an entrant's zero-core ticks that fall on the opponent's first-mover ticks.",
+    "effective_sample_size": "Distinct trajectories per ordered pair, deduplicated on (winner, ticks, reason, final scores). Bootstraps resample distinct trajectories, not seeds."
+  },
+  "hypotheses": [
+    {
+      "id": "H0",
+      "name": "Delay only",
+      "statement": "E2 turns a tick-1 forced kill into a tick-2 forced kill with no new interaction.",
+      "supporting_evidence": "V4 decisive cells keep their winner in ≥ 90% of cases, with decision tick +1; SDI and mirror seat bias unchanged; recovery rate ≈ 0 for every defender.",
+      "refuting_evidence": "Any defender that survives the sniper in the orientation it lost under V4.",
+      "probe_prior": "Holds for the probe mirror, the sniper mirror and the pure repair guard. Fails for disrupt-first defenders.",
+      "thresholds": {"winner_kept_share_min": 0.9, "decision_tick_delta": 1},
+      "operationalizations": ["O-TOL", "O-H0-KEEP", "O-SNIPER", "O-DEFENDER"],
+      "metrics": ["h0.winner_kept_one_tick_later_rate", "h0.winner_kept_rate", "h0.sdi_changed_pairings", "h0.mirror_bias_changed", "h0.defender_recovery_rates", "h0.defender_survives_sniper_in_v4_lost_orientation"]
+    },
+    {
+      "id": "H1",
+      "name": "Defense becomes viable",
+      "statement": "A defender can reclaim ≥ 1 cell and reset progress.",
+      "supporting_evidence": "Recovery rate > 0 followed by survival; a V4-lost orientation becomes a tie or win.",
+      "refuting_evidence": "Recovery rate ≈ 0 against the sniper for every defender.",
+      "probe_prior": "Supported, but survival yields draws, not wins.",
+      "thresholds": {},
+      "operationalizations": ["O-TOL", "O-SNIPER", "O-DEFENDER", "O-H1-SURVIVAL"],
+      "metrics": ["h1.recovery_then_survival_matches", "h1.v4_lost_orientation_now_tie_or_win", "h1.defender_recovery_rate_vs_sniper"]
+    },
+    {
+      "id": "H2",
+      "name": "Genuine tradeoff",
+      "statement": "Defense prevents death but costs offense or territory, producing opponent-dependent results.",
+      "supporting_evidence": "Seat-conditioned residuals significantly nonzero, tested against distinct-trajectory counts; at least one pair where defending loses on score to a non-attacker while that non-attacker loses to the attacker.",
+      "refuting_evidence": "Residuals within noise after seat conditioning; a single transitive order explains every seat-conditioned table.",
+      "probe_prior": "Weakly suggested: Sniper > Greedy Painter > Spread Defender ≈ Sniper (tie edge).",
+      "thresholds": {},
+      "operationalizations": ["O-H2-SIGNIFICANCE", "O-H2-TRIPLE", "O-ROLES"],
+      "metrics": ["h2.significant_residuals_seat_a", "h2.significant_residuals_seat_b", "h2.robust_cycles_seat_a", "h2.robust_cycles_seat_b", "h2.tradeoff_triples"]
+    },
+    {
+      "id": "H3a",
+      "name": "Perpetual repair stalemate",
+      "statement": "Matches end at the tick limit with continual recovery.",
+      "supporting_evidence": "Tick-limit share rises versus control; ≥ 1 recovery per 2 ticks in those matches.",
+      "refuting_evidence": "—",
+      "probe_prior": "Present: ties 62 → 102 of 324.",
+      "thresholds": {"recoveries_per_tick_min": 0.5},
+      "operationalizations": ["O-H3A"],
+      "metrics": ["h3a.tick_limit_fraction_treatment", "h3a.tick_limit_fraction_control", "h3a.tick_limit_matches_with_recovery_density"]
+    },
+    {
+      "id": "H3b",
+      "name": "Phase-locked alternation",
+      "statement": "Zero-core ticks lock to scheduler parity.",
+      "supporting_evidence": "Phase-lock ≥ 0.95 in stalemated matches.",
+      "refuting_evidence": "Phase-lock near 0.5.",
+      "probe_prior": "Present: 150/150 zero ticks on attacker-first ticks.",
+      "thresholds": {"phase_lock_min": 0.95, "near_half_tolerance": 0.05},
+      "operationalizations": ["O-TOL", "O-H3B"],
+      "metrics": ["h3b.phase_lock_by_entrant_in_stalemates"]
+    },
+    {
+      "id": "H3c",
+      "name": "New deterministic seat inversion",
+      "statement": "E2 creates or flips seat determination.",
+      "supporting_evidence": "A mirror or pair with SDI ≥ 0.9 under E2 where V4 SDI < 0.9, or where the favoured seat flips.",
+      "refuting_evidence": "—",
+      "probe_prior": "Present: Guarded Painter mirror, V4 A 27 / B 5 → E2 B 32/32.",
+      "thresholds": {"sdi_seat_determined": 0.9},
+      "operationalizations": ["O-SDI-UNIT", "O-H3C"],
+      "metrics": ["h3c.new_seat_determination", "h3c.favoured_seat_flips"]
+    },
+    {
+      "id": "H3d",
+      "name": "Dominant always-defend",
+      "statement": "One defender never loses in either seat, mostly by drawing.",
+      "supporting_evidence": "0 losses and tie rate ≥ 50% across all opponents and seats.",
+      "refuting_evidence": "—",
+      "probe_prior": "Candidate: e2_spread_defender was never beaten by the probe's attackers, but loses to painters on score.",
+      "thresholds": {"losses_max": 0, "tie_rate_min": 0.5},
+      "operationalizations": ["O-DEFENDER", "O-H3D"],
+      "metrics": ["h3d.unbeaten_mostly_drawing_defenders"]
+    },
+    {
+      "id": "H3e",
+      "name": "Location-count arms race",
+      "statement": "Outcomes are decided by the number of process locations.",
+      "supporting_evidence": "Multi-location agents beat every stacked agent regardless of other behavior.",
+      "refuting_evidence": "—",
+      "probe_prior": "Present against stacked defenders.",
+      "thresholds": {},
+      "operationalizations": ["O-H3E"],
+      "metrics": ["h3e.multi_location_vs_stacked"]
+    },
+    {
+      "id": "H3f",
+      "name": "Zero-core winners",
+      "statement": "Decisive wins by an entrant at zero core.",
+      "supporting_evidence": "Share of decisive wins with the winner capture-threatened.",
+      "refuting_evidence": "—",
+      "probe_prior": "Present: probe mirror.",
+      "thresholds": {},
+      "operationalizations": ["O-H3F"],
+      "metrics": ["h3f.zero_core_decisive_win_share"]
+    },
+    {
+      "id": "H3g",
+      "name": "Capture never resolves",
+      "statement": "Many onsets, no completions.",
+      "supporting_evidence": "Matches with ≥ 10 onsets and 0 completions.",
+      "refuting_evidence": "—",
+      "probe_prior": "Same as H3a.",
+      "thresholds": {"onsets_min": 10, "completions_max": 0},
+      "operationalizations": ["O-H3G"],
+      "metrics": ["h3g.onset_without_completion_matches"]
+    }
+  ],
+  "interpretation_rules": [
+    "No single threshold crossing (cycle, residual or win rate) counts as evidence on its own.",
+    "A structural claim needs support in the Seat-A table and the Seat-B table, consistency between F1 and F2, and n_distinct ≥ 8 for any rate claim. Deterministic pairs are reported as characterizations, not rates.",
+    "A mismatch between C-RS and C-V4 halts the analysis.",
+    "The [PROBE] priors in this report are predictions to be falsified. They must never be used as thresholds."
+  ],
+  "negative_result_rule": "Suppose H0 or H3a–d explain the E2 matrix and H2 is unsupported after seat conditioning. Then E2 is recorded as a clean negative result: K = 2 alone does not create strategic interaction under otherwise-V4 rules. The E2 line closes and no mechanic is added inside E2. Any follow-up is a separately registered single-variable study (§L.3 lists candidates, but does not recommend one).",
+  "agent_roles": {
+    "note": "Behavioural roles read directly off each fixture's Sec G.2 description; used to scope the criteria below.",
+    "the_sniper": "e2_sniper",
+    "defenders": ["e2_repair_guard", "e2_disrupt_guard", "e2_min_guard", "e2_guarded_painter", "e2_spread_defender"],
+    "core_attackers": ["v4_probe", "e2_sniper", "e2_min_guard", "e2_counter", "e2_spread_sniper", "e2_spread_defender"],
+    "non_attackers": ["e2_repair_guard", "e2_disrupt_guard", "e2_greedy_painter", "e2_guarded_painter"],
+    "multi_location": ["e2_spread_sniper", "e2_spread_defender"],
+    "stacked": ["v4_probe", "e2_sniper", "e2_repair_guard", "e2_disrupt_guard", "e2_min_guard", "e2_greedy_painter", "e2_guarded_painter", "e2_counter"]
+  },
+  "operationalizations": [
+    {
+      "id": "O-TOL",
+      "kind": "tolerance required (not measurable as written)",
+      "applies_to": ["H0", "H1", "H3b"],
+      "text": "The review gives no number for '≈ 0' (H0, H1), 'unchanged' (H0) or 'near 0.5' (H3b). Smallest correction: reuse the only tolerance the review registers, the ±0.05 fragile-edge margin of Sec I.3. '≈ 0' means ≤ 0.05; 'unchanged' means an absolute change ≤ 0.05 for that pairing or mirror; 'near 0.5' means within 0.5 ± 0.05.",
+      "tolerance": 0.05
+    },
+    {
+      "id": "O-SDI-UNIT",
+      "kind": "clarification",
+      "applies_to": ["H3c", "sdi"],
+      "text": "SDI's indicator is defined per seed over both orientations, so its 'distinct trajectory' is the pair of the two orientations' trajectory keys for that seed. Seeds missing an orientation are excluded and counted. A seed-weighted SDI is reported alongside as descriptive only."
+    },
+    {
+      "id": "O-TRAJECTORY",
+      "kind": "clarification",
+      "applies_to": ["effective_sample_size"],
+      "text": "Trajectory identity uses the review's fields (winner, ticks, termination reason, final scores) in seat terms together with who held each seat, plus final territory, per-entrant termination reasons and non-outcome status. Seeds, start addresses, ids and hashes are excluded. Merging can only under-count behaviour, so n_distinct is conservative."
+    },
+    {
+      "id": "O-H0-KEEP",
+      "kind": "clarification",
+      "applies_to": ["H0"],
+      "text": "'V4 decisive cells keep their winner in ≥ 90% of cases, with decision tick +1' is evaluated on F1 cells matched cell by cell (pair, seed, orientation) between C-V4 and T-E2. A V4 decisive cell has a winner before the tick limit. The criterion is met when the share of those cells whose T-E2 outcome has the same winning entrant, before the tick limit, exactly one tick later, is ≥ 0.90. The winner-only share is reported alongside."
+    },
+    {
+      "id": "O-SNIPER",
+      "kind": "clarification",
+      "applies_to": ["H0", "H1"],
+      "text": "'The sniper' is e2_sniper (Sec G.2 archetype 1, Global Sniper). v4_probe results are reported alongside and never counted."
+    },
+    {
+      "id": "O-DEFENDER",
+      "kind": "clarification",
+      "applies_to": ["H0", "H1", "H3d"],
+      "text": "'Defender' means a fixture whose Sec G.2 behaviour includes repairing its own core: agent_roles.defenders."
+    },
+    {
+      "id": "O-H1-SURVIVAL",
+      "kind": "clarification",
+      "applies_to": ["H1"],
+      "text": "'Recovery rate > 0 followed by survival' is evaluated per T-E2 match: the defender has at least one recovery and is not core-captured by the end of the match."
+    },
+    {
+      "id": "O-H2-SIGNIFICANCE",
+      "kind": "procedure required (not measurable as written)",
+      "applies_to": ["H2"],
+      "text": "'Significantly nonzero, tested against distinct-trajectory counts': a seat-conditioned F1 residual counts only if its pairing has n_distinct ≥ 8 in that table (Sec I.5 rule 2) and the 95% percentile interval of the residual over 1000 bootstrap resamples of distinct trajectories (stratified by pairing, seed 42) excludes 0. Residuals of pairings below 8 distinct trajectories are reported as characterizations and never count. 'Residuals within noise' is the absence of any counting residual in a table; 'a single transitive order explains every seat-conditioned table' means both F1 seat tables have no counting residual and no robust (non-fragile) directed 3-cycle.",
+      "bootstrap_resamples": 1000,
+      "bootstrap_seed": 42,
+      "interval": 0.95
+    },
+    {
+      "id": "O-H2-TRIPLE",
+      "kind": "clarification (adds the statement's own 'defense prevents death' clause)",
+      "applies_to": ["H2"],
+      "text": "'A pair where defending loses on score to a non-attacker while that non-attacker loses to the attacker' is a triple (D, N, S) with D in agent_roles.defenders, N in agent_roles.non_attackers and S in agent_roles.core_attackers such that, in F1 under T-E2 and in each seat separately: N wins a majority of its matches against D and those wins are at the tick limit (on score); S wins a majority of its matches against N; and D wins or ties a majority of its matches against S (defence prevents death)."
+    },
+    {
+      "id": "O-ROLES",
+      "kind": "clarification",
+      "applies_to": ["H2", "H3e"],
+      "text": "Roles are fixed by agent_roles, read off the Sec G.2 behaviour of each fixture before any result exists."
+    },
+    {
+      "id": "O-H3A",
+      "kind": "clarification",
+      "applies_to": ["H3a"],
+      "text": "'Tick-limit share rises versus control' compares the F1 tick-limit fraction under T-E2 with C-RS, the direct structural parent (C-V4 is identical by the control gate). '≥ 1 recovery per 2 ticks in those matches' is evaluated literally per T-E2 tick-limit match as the larger per-entrant recoveries / ticks_run ≥ 0.5, reported as the share of tick-limit matches that meet it. A density measured from the first onset is reported as descriptive only."
+    },
+    {
+      "id": "O-H3B",
+      "kind": "clarification",
+      "applies_to": ["H3b"],
+      "text": "'Stalemated matches' are T-E2 matches that end at the tick limit with at least one recovery by some entrant. Phase-lock is evaluated per entrant with at least one zero-core evaluation in those matches. First-mover parity comes from the Ruleset's chunked scheduler with start rotation: Seat A moves first on odd ticks, Seat B on even ticks."
+    },
+    {
+      "id": "O-H3C",
+      "kind": "clarification",
+      "applies_to": ["H3c"],
+      "text": "Compared pairing by pairing in F1 and mirror by mirror in F2 between C-V4 and T-E2. The favoured seat is the seat with the larger share of seat-determined distinct seed trajectories; a flip is favoured seat A under one condition and B under the other, with SDI > 0 under both."
+    },
+    {
+      "id": "O-H3D",
+      "kind": "clarification",
+      "applies_to": ["H3d"],
+      "text": "Per defender, over all its F1 matches in both seats under T-E2: 0 losses and a tie rate ≥ 0.5 (match-weighted, with n_distinct reported)."
+    },
+    {
+      "id": "O-H3E",
+      "kind": "clarification",
+      "applies_to": ["H3e"],
+      "text": "Multi-location agents are agent_roles.multi_location, confirmed from replays (at least two distinct anchor addresses at some tick boundary). 'Beat every stacked agent' means: for every multi-location agent M and every stacked agent S in F1 under T-E2, M's win rate exceeds 0.5 with M in Seat A and with M in Seat B."
+    },
+    {
+      "id": "O-H3F",
+      "kind": "clarification",
+      "applies_to": ["H3f"],
+      "text": "'Capture-threatened' means the winner owns 0 of its core cells at the final capture evaluation (derived from the replay). Decisive wins are wins before the tick limit (HD-6). The share is reported per condition and field."
+    },
+    {
+      "id": "O-H3G",
+      "kind": "clarification",
+      "applies_to": ["H3g"],
+      "text": "Per T-E2 match: some entrant has ≥ 10 onsets and the match contains no completion. Reported as a count and a share with n_distinct."
+    },
+    {
+      "id": "O-INFERENCE",
+      "kind": "clarification",
+      "applies_to": ["information limits"],
+      "text": "Inferring fixtures adopt, at the first callback in which every visible enemy anchor is at one address, that address as the enemy core base. The capture analyzer audits this against the replay: inferred / ambiguous / not inferred, and whether every base the agent could have adopted is the true enemy core base."
+    }
+  ]
+}

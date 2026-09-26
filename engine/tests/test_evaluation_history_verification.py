@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import shutil
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 from battle_engine.agent_evaluation import (
-    BYTEFRAY_RULESET_V2_ID,
     EvaluationRequest,
     EvaluationService,
 )
@@ -16,7 +18,7 @@ from battle_engine.evaluation_history import adapt_any
 from battle_engine.evaluation_history.models import ArtifactPathEscapeError, resolve_contained_path
 from battle_engine.evaluation_history.verification import verify_cell, verify_summary
 
-NOP_ACTION = "AgentAction(ActionKind.NOP)"
+NOP_ACTION = "AgentAction(ActionKindV2.READ, observation.self_anchor)"
 
 
 def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> None:
@@ -24,15 +26,17 @@ def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> None
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
     (directory / "agent.py").write_text(
         f"""
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
-    def reset(self, context): pass
+    def reset(self, context): self.arena_size = context.arena_size
+    def declare_processes(self):
+        return [ProcessDeclaration(id="main", reach=self.arena_size - 1, share=1.0)]
     def act(self, observation): return {action}
 def create_agent(): return Agent()
 """,
@@ -40,7 +44,7 @@ def create_agent(): return Agent()
     )
 
 
-def _run_v2(tmp_path: Path, **overrides) -> Path:
+def _run_v4(tmp_path: Path, **overrides) -> Path:
     _write_python_agent(tmp_path, "candidate")
     _write_python_agent(tmp_path, "opponent")
     defaults = {
@@ -65,8 +69,8 @@ def _run_v2(tmp_path: Path, **overrides) -> Path:
 # ---------------------------------------------------------------------------
 
 
-def test_verify_summary_passes_for_an_untampered_v2_artifact(tmp_path: Path):
-    state_path = _run_v2(tmp_path)
+def test_verify_summary_passes_for_an_untampered_v4_artifact(tmp_path: Path):
+    state_path = _run_v4(tmp_path)
     summary = adapt_any(state_path)
     verified_summary, verification = verify_summary(summary)
     assert verification.eligible_count == 1
@@ -77,14 +81,14 @@ def test_verify_summary_passes_for_an_untampered_v2_artifact(tmp_path: Path):
 
 
 def test_ordinary_adaptation_never_sets_verified(tmp_path: Path):
-    state_path = _run_v2(tmp_path)
+    state_path = _run_v4(tmp_path)
     summary = adapt_any(state_path)
     assert summary.cells[0].verified is None
     assert summary.cells[0].verify_error is None
 
 
 def test_verify_detects_missing_nested_result(tmp_path: Path):
-    state_path = _run_v2(tmp_path)
+    state_path = _run_v4(tmp_path)
     summary = adapt_any(state_path)
     result_path = summary.location.directory / summary.cells[0].artifact_dir / "result.json"
     result_path.unlink()
@@ -95,7 +99,7 @@ def test_verify_detects_missing_nested_result(tmp_path: Path):
 
 
 def test_verify_detects_replay_digest_tamper(tmp_path: Path):
-    state_path = _run_v2(tmp_path)
+    state_path = _run_v4(tmp_path)
     summary = adapt_any(state_path)
     replay_path = summary.location.directory / summary.cells[0].artifact_dir / "replay.jsonl"
     with replay_path.open("a", encoding="utf-8") as handle:
@@ -107,7 +111,7 @@ def test_verify_detects_replay_digest_tamper(tmp_path: Path):
 
 
 def test_verify_detects_wrong_seed(tmp_path: Path):
-    state_path = _run_v2(tmp_path)
+    state_path = _run_v4(tmp_path)
     summary = adapt_any(state_path)
     result_path = summary.location.directory / summary.cells[0].artifact_dir / "result.json"
     data = json.loads(result_path.read_text(encoding="utf-8"))
@@ -120,7 +124,7 @@ def test_verify_detects_wrong_seed(tmp_path: Path):
 
 
 def test_verify_detects_wrong_match_id(tmp_path: Path):
-    state_path = _run_v2(tmp_path)
+    state_path = _run_v4(tmp_path)
     data = json.loads(state_path.read_text(encoding="utf-8"))
     data["cells"][0]["match_id"] = "evaluation-match_deadbeefdeadbeefdeadbeef"
     state_path.write_text(json.dumps(data), encoding="utf-8")
@@ -132,7 +136,7 @@ def test_verify_detects_wrong_match_id(tmp_path: Path):
 
 
 def test_verify_detects_wrong_entrant_order(tmp_path: Path):
-    state_path = _run_v2(tmp_path)
+    state_path = _run_v4(tmp_path)
     summary = adapt_any(state_path)
     result_path = summary.location.directory / summary.cells[0].artifact_dir / "result.json"
     data = json.loads(result_path.read_text(encoding="utf-8"))
@@ -145,7 +149,7 @@ def test_verify_detects_wrong_entrant_order(tmp_path: Path):
 
 
 def test_verify_detects_wrong_entrant_identity(tmp_path: Path):
-    state_path = _run_v2(tmp_path)
+    state_path = _run_v4(tmp_path)
     summary = adapt_any(state_path)
     result_path = summary.location.directory / summary.cells[0].artifact_dir / "result.json"
     data = json.loads(result_path.read_text(encoding="utf-8"))
@@ -163,7 +167,7 @@ def test_verify_detects_candidate_source_sha256_tamper(tmp_path: Path):
     """H1: previously only the opponent's identity was cross-checked here --
     a tampered *candidate* entrant identity went entirely uncaught."""
 
-    state_path = _run_v2(tmp_path)
+    state_path = _run_v4(tmp_path)
     summary = adapt_any(state_path)
     result_path = summary.location.directory / summary.cells[0].artifact_dir / "result.json"
     data = json.loads(result_path.read_text(encoding="utf-8"))
@@ -182,7 +186,7 @@ def test_verify_detects_result_id_tamper(tmp_path: Path):
     """H1: a substituted result_id that leaves match_id/outcome untouched
     must still be caught -- previously result_id was never checked at all."""
 
-    state_path = _run_v2(tmp_path)
+    state_path = _run_v4(tmp_path)
     summary = adapt_any(state_path)
     result_path = summary.location.directory / summary.cells[0].artifact_dir / "result.json"
     data = json.loads(result_path.read_text(encoding="utf-8"))
@@ -201,7 +205,7 @@ def test_verify_detects_result_replay_header_disagreement(tmp_path: Path):
     disagree with an otherwise-correct (and correctly-digested) replay
     must still be caught."""
 
-    state_path = _run_v2(tmp_path)
+    state_path = _run_v4(tmp_path)
     summary = adapt_any(state_path)
     cell_dir = summary.location.directory / summary.cells[0].artifact_dir
     result_path = cell_dir / "result.json"
@@ -218,8 +222,6 @@ def test_verify_detects_result_replay_header_disagreement(tmp_path: Path):
     # header-tampered) bytes, so this test isolates header/envelope
     # disagreement from a plain digest mismatch (already covered by
     # test_verify_detects_replay_digest_tamper).
-    import hashlib
-
     data = json.loads(result_path.read_text(encoding="utf-8"))
     data["replay"]["sha256"] = hashlib.sha256(replay_path.read_bytes()).hexdigest()
     result_path.write_text(json.dumps(data), encoding="utf-8")
@@ -230,7 +232,7 @@ def test_verify_detects_result_replay_header_disagreement(tmp_path: Path):
 
 
 def test_verify_ineligible_cells_are_skipped_not_counted(tmp_path: Path):
-    state_path = _run_v2(tmp_path)
+    state_path = _run_v4(tmp_path)
     data = json.loads(state_path.read_text(encoding="utf-8"))
     data["cells"][0]["status"] = "failed"
     data["cells"][0]["outcome"] = None
@@ -244,127 +246,12 @@ def test_verify_ineligible_cells_are_skipped_not_counted(tmp_path: Path):
     assert verification.all_eligible_verified is False
 
 
-# ---------------------------------------------------------------------------
-# H1 (Beta2 Phase 4.1): group (multi-entrant, N>=3) deep verification.
-#
-# Before this fix, `verify_cell` hardcoded `entrant_order == ("A", "B")`
-# and pairwise orientation logic -- a real group evaluation's cells (any
-# entrant_order of length != 2) were rejected outright regardless of
-# whether they were actually valid, producing `eligible_count=18,
-# verified_count=0` for a real 3-entrant group evaluation. See
-# verification.py's own H1 comments for the generalized model.
-# ---------------------------------------------------------------------------
-
-
-def _write_nop_agent(root: Path, name: str) -> None:
-    _write_python_agent(root, name)
-
-
-def _run_group_v2(tmp_path: Path, *, opponent_ids=("opp_a", "opp_b"), **overrides) -> Path:
-    _write_nop_agent(tmp_path, "candidate")
-    for opponent_id in dict.fromkeys(opponent_ids):
-        _write_nop_agent(tmp_path, opponent_id)
-    defaults = {
-        "candidate_id": "candidate",
-        "opponent_ids": opponent_ids,
-        "seeds": (1,),
-        "output_dir": tmp_path / "eval-out",
-        "ticks": 15,
-        "data_root": tmp_path,
-        "both_orientations": False,
-        "ruleset_id": BYTEFRAY_RULESET_V2_ID,
-        "group": True,
-    }
-    defaults.update(overrides)
-    result = EvaluationService().run(EvaluationRequest(**defaults))
-    return result.state_path
-
-
-def test_verify_summary_passes_for_a_healthy_group_artifact(tmp_path: Path):
-    """3-entrant roster (candidate, opp_a, opp_b): 3 layouts x 3! seat
-    assignments x 1 seed = 18 cells -- the independent review's exact
-    reproduction shape (`eligible_count=18, verified_count=0` pre-fix)."""
-
-    state_path = _run_group_v2(tmp_path)
-    summary = adapt_any(state_path)
-    assert summary.group.value is True
-
-    _, verification = verify_summary(summary)
-    assert verification.eligible_count == 18
-    assert verification.verified_count == 18
-    assert verification.all_eligible_verified is True
-
-
-def test_verify_group_candidate_in_non_a_seat_verifies_correctly(tmp_path: Path):
-    """A cell where the candidate occupies seat B or C (not the always-A
-    pairwise assumption) must still verify -- proves subject-seat
-    resolution comes from the cell's own recorded seat assignment, not a
-    fixed slot."""
-
-    state_path = _run_group_v2(tmp_path)
-    summary = adapt_any(state_path)
-    non_a_cells = [
-        cell
-        for cell in summary.cells
-        if cell.is_scored and cell.seat_agent_ids.value and cell.seat_agent_ids.value[0] != "candidate"
-    ]
-    assert non_a_cells, "fixture must include at least one non-A-seat candidate cell"
-
-    _, verification = verify_summary(summary)
-    verified_ids = {outcome.schedule_id for outcome in verification.outcomes if outcome.verified}
-    for cell in non_a_cells:
-        assert cell.schedule_id in verified_ids
-
-
-def test_verify_detects_corrupt_group_entrant_order(tmp_path: Path):
-    state_path = _run_group_v2(tmp_path)
-    summary = adapt_any(state_path)
-    cell = next(c for c in summary.cells if c.is_scored)
-    result_path = summary.location.directory / cell.artifact_dir / "result.json"
-    data = json.loads(result_path.read_text(encoding="utf-8"))
-    data["entrants"] = list(reversed(data["entrants"]))
-    result_path.write_text(json.dumps(data), encoding="utf-8")
-
-    _, verification = verify_summary(summary)
-    failure = next(o for o in verification.outcomes if o.schedule_id == cell.schedule_id)
-    assert failure.verified is False
-    assert "entrant order" in (failure.error or "")
-
-
-def test_verify_detects_corrupt_group_match_identity_fails_closed(tmp_path: Path):
-    state_path = _run_group_v2(tmp_path)
-    data = json.loads(state_path.read_text(encoding="utf-8"))
-    scored_cell = next(c for c in data["cells"] if c.get("status") == "completed")
-    scored_cell["match_id"] = "evaluation-match_deadbeefdeadbeefdeadbeef"
-    state_path.write_text(json.dumps(data), encoding="utf-8")
-    summary = adapt_any(state_path)
-
-    _, verification = verify_summary(summary)
-    assert verification.verified_count < verification.eligible_count
-    failure = next(o for o in verification.outcomes if o.schedule_id == scored_cell["schedule_id"])
-    assert "match_id" in (failure.error or "")
-
-
-def test_verify_detects_corrupt_group_result_replay_digest_fails_closed(tmp_path: Path):
-    state_path = _run_group_v2(tmp_path)
-    summary = adapt_any(state_path)
-    cell = next(c for c in summary.cells if c.is_scored)
-    replay_path = summary.location.directory / cell.artifact_dir / "replay.jsonl"
-    with replay_path.open("a", encoding="utf-8") as handle:
-        handle.write("\n")
-
-    _, verification = verify_summary(summary)
-    failure = next(o for o in verification.outcomes if o.schedule_id == cell.schedule_id)
-    assert failure.verified is False
-    assert "replay verification failed" in (failure.error or "")
-
-
 def test_existing_pairwise_deep_verification_still_uses_pairwise_entrant_order(tmp_path: Path):
-    """A pairwise (non-group) v2 artifact must still verify through the
+    """A pairwise (non-group) v4 artifact must still verify through the
     unchanged (A, B) path -- generalization must never leak into or alter
     ordinary pairwise verification."""
 
-    state_path = _run_v2(tmp_path)
+    state_path = _run_v4(tmp_path)
     summary = adapt_any(state_path)
     assert summary.cells[0].seat_agent_ids.value in ((), None)
     _, verification = verify_summary(summary)
@@ -372,20 +259,89 @@ def test_existing_pairwise_deep_verification_still_uses_pairwise_entrant_order(t
     assert verification.verified_count == 1
 
 
-def test_verify_summary_passes_for_a_healthy_n4_group_artifact(tmp_path: Path):
-    """Cheap N=4 coverage: 3 layouts x 4! seat assignments x 1 seed = 72
-    cells -- proves the generalized verification model is not merely
-    N=3-shaped."""
+# ---------------------------------------------------------------------------
+# Frozen historical group artifact.
+#
+# V6 Phase 2B.12 retired creation of Ruleset-2 group evaluations, so these
+# checks use one byte-identical schema-6 cell copied from the real Beta3
+# qualification corpus. They exercise the retained reader/verifier without
+# reviving retired execution or fabricating a Ruleset-4/legacy hybrid.
+# ---------------------------------------------------------------------------
 
-    state_path = _run_group_v2(tmp_path, opponent_ids=("opp_a", "opp_b", "opp_c"))
-    summary = adapt_any(state_path)
+
+_GROUP_FIXTURE = (
+    Path(__file__).parent / "fixtures" / "v6_scope_c_group_evaluation"
+)
+_GROUP_CELL_DIR = "0009-group-core_seeker-claimer-hunter-seed1-spread-shifted"
+
+
+def _copy_group_fixture(tmp_path: Path):
+    destination = tmp_path / "historical-group"
+    shutil.copytree(_GROUP_FIXTURE, destination)
+    summary = adapt_any(destination / "evaluation.json")
+    cell = next(
+        item
+        for item in summary.cells
+        if item.artifact_dir.replace("\\", "/").endswith(_GROUP_CELL_DIR)
+    )
+    return destination, summary, cell
+
+
+def test_frozen_schema6_group_cell_is_readable_and_deep_verifiable(tmp_path: Path):
+    root, summary, cell = _copy_group_fixture(tmp_path)
+
     assert summary.group.value is True
+    assert tuple(cell.seat_agent_ids.value) == ("core_seeker", "claimer", "hunter")
+    assert cell.seat_agent_ids.value[0] != summary.candidate_id
+    outcome = verify_cell(cell, root, summary.candidate_identity)
+    assert outcome.eligible is True
+    assert outcome.verified is True
 
-    _, verification = verify_summary(summary)
-    assert verification.eligible_count == 72
-    assert verification.verified_count == 72
-    assert verification.all_eligible_verified is True
 
+def test_frozen_schema6_group_replay_digest_hashes_exact_repository_bytes():
+    """Fixture digests cover committed bytes, not host-native text output."""
+    cell_dir = _GROUP_FIXTURE / "matches" / _GROUP_CELL_DIR
+    replay_bytes = (cell_dir / "replay.jsonl").read_bytes()
+    result = json.loads((cell_dir / "result.json").read_text(encoding="utf-8"))
+
+    recorded_digest = result["replay"]["sha256"]
+    assert b"\r\n" not in replay_bytes
+    assert hashlib.sha256(replay_bytes).hexdigest() == recorded_digest
+    assert hashlib.sha256(replay_bytes.replace(b"\n", b"\r\n")).hexdigest() != recorded_digest
+
+
+def test_frozen_schema6_group_cell_rejects_corrupt_entrant_order(tmp_path: Path):
+    root, summary, cell = _copy_group_fixture(tmp_path)
+    result_path = root / "matches" / _GROUP_CELL_DIR / "result.json"
+    data = json.loads(result_path.read_text(encoding="utf-8"))
+    data["entrants"] = list(reversed(data["entrants"]))
+    result_path.write_text(json.dumps(data), encoding="utf-8")
+
+    outcome = verify_cell(cell, root, summary.candidate_identity)
+    assert outcome.verified is False
+    assert "entrant order" in (outcome.error or "")
+
+
+def test_frozen_schema6_group_cell_rejects_wrong_recorded_match_id(tmp_path: Path):
+    root, summary, cell = _copy_group_fixture(tmp_path)
+    outcome = verify_cell(
+        replace(cell, match_id="match_deadbeefdeadbeefdeadbeef"),
+        root,
+        summary.candidate_identity,
+    )
+    assert outcome.verified is False
+    assert "match_id" in (outcome.error or "")
+
+
+def test_frozen_schema6_group_cell_rejects_replay_digest_tamper(tmp_path: Path):
+    root, summary, cell = _copy_group_fixture(tmp_path)
+    replay_path = root / "matches" / _GROUP_CELL_DIR / "replay.jsonl"
+    with replay_path.open("a", encoding="utf-8") as handle:
+        handle.write("\n")
+
+    outcome = verify_cell(cell, root, summary.candidate_identity)
+    assert outcome.verified is False
+    assert "replay verification failed" in (outcome.error or "")
 
 # ---------------------------------------------------------------------------
 # M4: artifact path containment
@@ -438,7 +394,7 @@ def test_resolve_contained_path_rejects_symlink_escape(tmp_path: Path):
 
 
 def test_verify_cell_reports_path_escape_as_failure(tmp_path: Path):
-    state_path = _run_v2(tmp_path)
+    state_path = _run_v4(tmp_path)
     summary = adapt_any(state_path)
     cell = summary.cells[0]
     from dataclasses import replace
@@ -464,7 +420,7 @@ def _tamper_replay_filename(result_path: Path, filename: str) -> None:
 
 
 def test_verify_cell_rejects_dotdot_replay_filename(tmp_path: Path):
-    state_path = _run_v2(tmp_path)
+    state_path = _run_v4(tmp_path)
     summary = adapt_any(state_path)
     result_path = summary.location.directory / summary.cells[0].artifact_dir / "result.json"
     outside = tmp_path / "outside.jsonl"
@@ -478,7 +434,7 @@ def test_verify_cell_rejects_dotdot_replay_filename(tmp_path: Path):
 
 
 def test_verify_cell_rejects_absolute_windows_replay_filename(tmp_path: Path):
-    state_path = _run_v2(tmp_path)
+    state_path = _run_v4(tmp_path)
     summary = adapt_any(state_path)
     result_path = summary.location.directory / summary.cells[0].artifact_dir / "result.json"
 
@@ -490,7 +446,7 @@ def test_verify_cell_rejects_absolute_windows_replay_filename(tmp_path: Path):
 
 
 def test_verify_cell_rejects_alternate_drive_replay_filename(tmp_path: Path):
-    state_path = _run_v2(tmp_path)
+    state_path = _run_v4(tmp_path)
     summary = adapt_any(state_path)
     result_path = summary.location.directory / summary.cells[0].artifact_dir / "result.json"
 
@@ -505,7 +461,7 @@ def test_verify_cell_rejects_alternate_drive_replay_filename(tmp_path: Path):
 def test_verify_cell_rejects_other_windows_drive_replay_filenames(
     tmp_path: Path, filename: str
 ):
-    state_path = _run_v2(tmp_path)
+    state_path = _run_v4(tmp_path)
     summary = adapt_any(state_path)
     result_path = summary.location.directory / summary.cells[0].artifact_dir / "result.json"
 
@@ -518,7 +474,7 @@ def test_verify_cell_rejects_other_windows_drive_replay_filenames(
 
 @pytest.mark.skipif(os.name == "nt", reason="symlink creation requires elevated privileges on Windows")
 def test_verify_cell_rejects_symlink_escape_replay_filename(tmp_path: Path):
-    state_path = _run_v2(tmp_path)
+    state_path = _run_v4(tmp_path)
     summary = adapt_any(state_path)
     cell_dir = summary.location.directory / summary.cells[0].artifact_dir
     result_path = cell_dir / "result.json"
@@ -544,7 +500,7 @@ def test_verify_cell_still_works_after_the_whole_evaluation_directory_is_moved(t
 
     original_root = tmp_path / "original"
     original_root.mkdir()
-    state_path = _run_v2(original_root)
+    state_path = _run_v4(original_root)
     moved_root = tmp_path / "moved" / "elsewhere"
     moved_root.parent.mkdir(parents=True)
     shutil.move(str(state_path.parent), str(moved_root))

@@ -23,6 +23,9 @@ class ExampleAgent:
     def reset(self, context):
         self.context = context
 
+    def declare_processes(self):
+        return []
+
     def act(self, observation):
         return None
 
@@ -41,7 +44,7 @@ def _write_agent(
     directory = root / "agents" / folder
     directory.mkdir(parents=True)
     values = {
-        "api_version": 1,
+        "api_version": 2,
         "kind": "python",
         "entrypoint": "agent.py:create_agent",
         "name": folder,
@@ -64,7 +67,7 @@ def test_valid_python_agent_is_discovered_loaded_and_fresh(tmp_path):
     second = load_python_agent(spec)
 
     assert spec.kind == "python"
-    assert spec.api_version == 1
+    assert spec.api_version == 2
     assert spec.version == "1.0.0"
     assert spec.source_path == directory / "agent.py"
     assert spec.entry_point == "agent.py:create_agent"
@@ -92,13 +95,13 @@ def test_loading_an_agent_does_not_write_a_bytecode_cache(tmp_path):
 
 
 def test_unsupported_api_version_has_typed_diagnostic(tmp_path):
-    _write_agent(tmp_path, manifest={"api_version": 3})
+    _write_agent(tmp_path, manifest={"api_version": 1})
 
     with pytest.raises(UnsupportedAgentAPIVersionError) as caught:
         load_python_agent(resolve_agent(tmp_path, "example"))
 
     assert caught.value.code == "agent_api_version_unsupported"
-    assert "supports versions 1 and 2" in str(caught.value)
+    assert "supports version 2" in str(caught.value)
 
 
 @pytest.mark.parametrize(
@@ -185,11 +188,17 @@ def test_invalid_factory_result_is_rejected(tmp_path):
         load_python_agent(resolve_agent(tmp_path, "example"))
 
     assert caught.value.code == "agent_contract_invalid"
-    assert "reset, act" in str(caught.value)
+    assert "reset, declare_processes, act" in str(caught.value)
 
 
 def test_api_v2_requires_declare_processes(tmp_path):
-    _write_agent(tmp_path, manifest={"api_version": 2})
+    _write_agent(
+        tmp_path,
+        source=VALID_SOURCE.replace(
+            "    def declare_processes(self):\n        return []\n\n",
+            "",
+        ),
+    )
 
     with pytest.raises(AgentContractError) as caught:
         load_python_agent(resolve_agent(tmp_path, "example"))
@@ -201,13 +210,7 @@ def test_api_v2_requires_declare_processes(tmp_path):
 def test_api_v2_complete_lifecycle_loads(tmp_path):
     _write_agent(
         tmp_path,
-        manifest={"api_version": 2},
-        source=VALID_SOURCE.replace(
-            "    def act(self, observation):",
-            "    def declare_processes(self):\n"
-            "        return []\n\n"
-            "    def act(self, observation):",
-        ),
+        source=VALID_SOURCE,
     )
 
     loaded = load_python_agent(resolve_agent(tmp_path, "example"))
@@ -224,6 +227,9 @@ def test_noncallable_lifecycle_attribute_is_rejected(tmp_path, attribute):
         source=f"""
 class InvalidAgent:
     {attribute} = None
+
+    def declare_processes(self):
+        return []
 
     def {other}(self, value):
         return None
@@ -254,7 +260,7 @@ def test_same_source_filename_in_two_agents_does_not_collide(tmp_path):
     assert type(first.instance).__module__ != type(second.instance).__module__
 
 
-def test_existing_builtin_blob_and_legacy_python_discovery_remain_compatible(tmp_path):
+def test_retired_runtime_metadata_remains_discoverable_but_python_load_is_rejected(tmp_path):
     builtin = tmp_path / "agents" / "runner"
     builtin.mkdir(parents=True)
     (builtin / "agent.yaml").write_text('{"name":"runner","defaults":{}}')

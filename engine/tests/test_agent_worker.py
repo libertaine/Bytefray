@@ -8,28 +8,34 @@ import time
 from pathlib import Path
 
 from _hang_safety import hang_safety_timeout
-from battle_engine.agent_api import Observation
+from battle_engine.agent_api import ObservationV2
 from battle_engine.agent_worker import AgentWorkerHandle, WorkerCallResult, WorkerCallStatus
 from battle_engine.agents import resolve_agent
 
 PASSIVE_SOURCE = """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 
 class Agent:
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
     def reset(self, context):
         self.seed = context.seed
 
     def act(self, observation):
-        return AgentAction(ActionKind.WRITE, observation.pc, 42)
+        return AgentAction(ActionKindV2.WRITE, observation.self_anchor, 42)
 
 def create_agent():
     return Agent()
 """
 
 ACT_HANGS_SOURCE = """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 
 class Agent:
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
     def reset(self, context):
         pass
 
@@ -43,6 +49,9 @@ def create_agent():
 
 RESET_HANGS_SOURCE = """
 class Agent:
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
     def reset(self, context):
         while True:
             pass
@@ -56,8 +65,12 @@ def create_agent():
 
 ACT_EXITS_SOURCE = """
 import os
+from battle_engine.agent_api import ProcessDeclaration
 
 class Agent:
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
     def reset(self, context):
         pass
 
@@ -70,6 +83,9 @@ def create_agent():
 
 FACTORY_RAISES_SOURCE = """
 class Agent:
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
     def reset(self, context):
         pass
     def act(self, observation):
@@ -81,6 +97,9 @@ def create_agent():
 
 INVALID_ACTION_SOURCE = """
 class Agent:
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
     def reset(self, context):
         pass
 
@@ -92,9 +111,12 @@ def create_agent():
 """
 
 READS_STDIN_SOURCE = """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 
 class Agent:
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
     def reset(self, context):
         pass
 
@@ -110,7 +132,7 @@ class Agent:
             saw_eof = False
         except EOFError:
             saw_eof = True
-        return AgentAction(ActionKind.WRITE, observation.pc, 1 if saw_eof else 0)
+        return AgentAction(ActionKindV2.WRITE, observation.self_anchor, 1 if saw_eof else 0)
 
 def create_agent():
     return Agent()
@@ -124,7 +146,7 @@ def _spec(root: Path, name: str, source: str):
         json.dumps(
             {
                 "kind": "python",
-                "api_version": 1,
+                "api_version": 2,
                 "entrypoint": "agent.py:create_agent",
                 "name": name,
                 "version": "1.0",
@@ -136,10 +158,20 @@ def _spec(root: Path, name: str, source: str):
     return resolve_agent(root, name)
 
 
-def _observation(tick: int = 1) -> Observation:
-    return Observation(
-        tick=tick, agent_id="A", pc=0, register_a=0, register_p=0,
-        zero_flag=False, last_read=None, alive=True,
+def _observation(tick: int = 1) -> ObservationV2:
+    return ObservationV2(
+        current_tick=tick,
+        last_callback_tick=0,
+        previous_action_tick=0,
+        self_process_id="main",
+        self_anchor=0,
+        self_reach=1,
+        own_core_base=0,
+        own_core_size=8,
+        visible_enemy_anchor_addresses=(),
+        previous_action_applied=True,
+        previous_read_value=None,
+        previous_read_owner=None,
     )
 
 
@@ -152,10 +184,10 @@ def test_load_reset_act_round_trip(tmp_path: Path) -> None:
             load_result = handle.load(spec, timeout=10.0)
             assert load_result.status is WorkerCallStatus.OK
             assert load_result.payload is not None
-            assert load_result.payload["metadata"]["api_version"] == 1
+            assert load_result.payload["metadata"]["api_version"] == 2
 
             reset_result = handle.reset(
-                match_seed=1337, api_version=1, arena_size=4096, tick_limit=10,
+                match_seed=1337, api_version=2, arena_size=4096, tick_limit=10,
                 action_budget=8, timeout=10.0,
             )
             assert reset_result.status is WorkerCallStatus.OK
@@ -168,6 +200,30 @@ def test_load_reset_act_round_trip(tmp_path: Path) -> None:
             handle.close()
 
     assert handle.exit_code == 0
+
+
+def test_worker_reset_rejects_retired_api_version(tmp_path: Path) -> None:
+    spec = _spec(tmp_path, "current_agent", PASSIVE_SOURCE)
+    handle = AgentWorkerHandle(agent_id="A", slot=0)
+    with hang_safety_timeout(30):
+        try:
+            handle.start()
+            assert handle.load(spec, timeout=10.0).status is WorkerCallStatus.OK
+            reset_result = handle.reset(
+                match_seed=1337,
+                api_version=1,
+                arena_size=4096,
+                tick_limit=10,
+                action_budget=8,
+                timeout=10.0,
+            )
+            assert reset_result.status is WorkerCallStatus.FAILED
+            assert reset_result.payload is not None
+            diagnostic = reset_result.payload["diagnostic"]
+            assert diagnostic["code"] == "agent_api_version_unsupported"
+            assert diagnostic["stage"] == "reset"
+        finally:
+            handle.close()
 
 
 def test_agent_calling_input_does_not_desync_the_protocol(tmp_path: Path) -> None:
@@ -187,7 +243,7 @@ def test_agent_calling_input_does_not_desync_the_protocol(tmp_path: Path) -> Non
             handle.start()
             assert handle.load(spec, timeout=10.0).status is WorkerCallStatus.OK
             assert handle.reset(
-                match_seed=1, api_version=1, arena_size=4096, tick_limit=2, action_budget=1, timeout=10.0
+                match_seed=1, api_version=2, arena_size=4096, tick_limit=2, action_budget=1, timeout=10.0
             ).status is WorkerCallStatus.OK
 
             first = handle.act(_observation(1), action_slot=0, timeout=10.0)
@@ -233,7 +289,7 @@ def test_invalid_returned_action_is_forwarded_as_none(tmp_path: Path) -> None:
             handle.start()
             assert handle.load(spec, timeout=10.0).status is WorkerCallStatus.OK
             assert handle.reset(
-                match_seed=1, api_version=1, arena_size=4096, tick_limit=1, action_budget=1, timeout=10.0
+                match_seed=1, api_version=2, arena_size=4096, tick_limit=1, action_budget=1, timeout=10.0
             ).status is WorkerCallStatus.OK
 
             act_result = handle.act(_observation(), action_slot=0, timeout=10.0)
@@ -252,7 +308,7 @@ def test_act_timeout_is_reported_and_worker_is_killable(tmp_path: Path) -> None:
             handle.start()
             assert handle.load(spec, timeout=10.0).status is WorkerCallStatus.OK
             assert handle.reset(
-                match_seed=1, api_version=1, arena_size=4096, tick_limit=1, action_budget=1, timeout=10.0
+                match_seed=1, api_version=2, arena_size=4096, tick_limit=1, action_budget=1, timeout=10.0
             ).status is WorkerCallStatus.OK
 
             act_result = handle.act(_observation(), action_slot=0, timeout=1.0)
@@ -278,7 +334,7 @@ def test_reset_timeout_is_reported(tmp_path: Path) -> None:
             handle.start()
             assert handle.load(spec, timeout=10.0).status is WorkerCallStatus.OK
             reset_result = handle.reset(
-                match_seed=1, api_version=1, arena_size=4096, tick_limit=1, action_budget=1, timeout=1.0
+                match_seed=1, api_version=2, arena_size=4096, tick_limit=1, action_budget=1, timeout=1.0
             )
             assert reset_result.status is WorkerCallStatus.TIMEOUT
             handle.kill()
@@ -294,7 +350,7 @@ def test_worker_exit_during_act_is_reported_as_exited(tmp_path: Path) -> None:
             handle.start()
             assert handle.load(spec, timeout=10.0).status is WorkerCallStatus.OK
             assert handle.reset(
-                match_seed=1, api_version=1, arena_size=4096, tick_limit=1, action_budget=1, timeout=10.0
+                match_seed=1, api_version=2, arena_size=4096, tick_limit=1, action_budget=1, timeout=10.0
             ).status is WorkerCallStatus.OK
 
             act_result = handle.act(_observation(), action_slot=0, timeout=10.0)
@@ -351,7 +407,7 @@ def test_close_recovers_a_hung_worker_without_an_explicit_kill(tmp_path: Path) -
         handle.start()
         assert handle.load(spec, timeout=10.0).status is WorkerCallStatus.OK
         assert handle.reset(
-            match_seed=1, api_version=1, arena_size=4096, tick_limit=1, action_budget=1, timeout=10.0
+            match_seed=1, api_version=2, arena_size=4096, tick_limit=1, action_budget=1, timeout=10.0
         ).status is WorkerCallStatus.OK
 
         act_result = handle.act(_observation(), action_slot=0, timeout=1.0)
@@ -432,7 +488,7 @@ def test_worker_does_not_survive_a_hard_kill_of_its_own_parent(tmp_path: Path) -
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
@@ -453,7 +509,7 @@ print(handle._proc.pid, flush=True)
 handle.load(spec, timeout=10.0)
 threading.Thread(
     target=lambda: handle.reset(
-        match_seed=1, api_version=1, arena_size=4096, tick_limit=1, action_budget=1, timeout=60.0
+        match_seed=1, api_version=2, arena_size=4096, tick_limit=1, action_budget=1, timeout=60.0
     ),
     daemon=True,
 ).start()

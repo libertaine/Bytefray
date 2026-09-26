@@ -56,7 +56,7 @@ def test_legacy_spatial_event_is_normalized():
 @pytest.mark.parametrize(
     "record",
     [
-        ReplayHeader(MatchConfiguration(128, 4, 42), {"A": "writer"}),
+        ReplayHeader(MatchConfiguration(128, 4, 42), {"A": "v4_scout"}),
         TickSnapshot(
             7,
             agents=(AgentState("A", 12, region=(0, 20)),),

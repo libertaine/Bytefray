@@ -1,0 +1,484 @@
+{
+  "schema": "bytefray.v6.e5.preregistration",
+  "version": 1,
+  "experiment": "V6 E5 -- anchor/core-0 separation",
+  "authority": [
+    "docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md (SHA-256 63d79246c4cf3e3787c10e3862cbc8fb8fefbe51517f65aa23dea066a46ac17d)",
+    "docs/research/v6/V6_E5_DESIGN_REVIEW_REVISION_1.md (SHA-256 35b9022f242207c5bd8514b5c066c1c1a86a1e8dfca7dfc0f63a438dd2451998)",
+    "docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md"
+  ],
+  "treatment": {
+    "field": "RulesetPolicy.initial_anchor_placement",
+    "control_value": "core_base",
+    "treatment_value": "before_core",
+    "meaning": "A process with no declared position spawns at (core_base - 1) % arena_size instead of on core cell 0. A spawn rule only: movement is unrestricted.",
+    "primary": "bytefray-rules-6-research-capture-hold-k2-disruption-slot1-anchor-before-core (parent bytefray-rules-6-research-capture-hold-k2-disruption-slot1, K=2)",
+    "companion": "bytefray-rules-6-research-disruption-slot1-anchor-before-core (parent bytefray-rules-6-research-disruption-slot1, K=1)"
+  },
+  "decisions": [
+    {
+      "id": "R1-1",
+      "decision": "d = -1 only: \"before_core\" is exactly (core_base - 1) % arena_size; no general integer offset is expressible."
+    },
+    {
+      "id": "R1-2",
+      "decision": "The analyzed field excludes v4_probe and e3_jam_sniper (the offset is not inert for them) and e2_greedy_painter and e2_counter (no directed base contest)."
+    },
+    {
+      "id": "R1-3",
+      "decision": "BP is the primary instrument, with the aggregation and bands of O-BP; FMA is continuity only."
+    },
+    {
+      "id": "R1-4",
+      "decision": "The K=1 companion is kept; it feeds E5-H5 and companion readings only, never a primary verdict."
+    },
+    {
+      "id": "R1-5",
+      "decision": "The offset-aware fixture copies are test-only gate instruments for P5; they never enter the matrix, the populations, the analysis or any reported result."
+    },
+    {
+      "id": "O-1",
+      "decision": "ACCEPTED: one inferential unit per twin mirror, whose per-seed value is the mean of its two victims' BP before the seed median; both directed victim values are retained descriptively."
+    },
+    {
+      "id": "O-2",
+      "decision": "ACCEPTED: WEAKENED counts in E5-H1's numerator (E4 continuity); the NEUTRALIZED/FLIPPED/WEAKENED split is reported."
+    },
+    {
+      "id": "O-3",
+      "decision": "ACCEPTED: P-BASE selects control BP >= 1/3, the band edge."
+    },
+    {
+      "id": "O-4",
+      "decision": "MODIFIED: at least 6 SWEEP-BACKED P-BASE units in the primary arm are required; with fewer, halt before treatment and reassess the design."
+    },
+    {
+      "id": "O-5",
+      "decision": "ACCEPTED: MIXED-INFERENCE units are frozen, reported and excluded from E5-H1 and E5-H2."
+    }
+  ],
+  "operationalizations": [
+    {
+      "id": "O-BP",
+      "text": "For victim seat v of one cell (one match), o_v(t) = 1 iff v owns its own core cell 0 (the cell at its recorded pc, never its anchor) after tick t's writes. P_A, P_B are the both-alive ticks (every entrant alive in the tick-t snapshot; E4 cell_metrics's rule) whose first mover is Seat A, Seat B. The cell is DEFINED iff |P_A| >= 10 and |P_B| >= 10 (E4 MIN_TICKS_PER_PARITY); otherwise DECIDED_EARLY. BP_A = mean(o_A over P_B) - mean(o_A over P_A); BP_B = mean(o_B over P_A) - mean(o_B over P_B). Exact fractions. Ticks are never pooled across cells."
+    },
+    {
+      "id": "O-BP-UNIT",
+      "text": "A round-robin ordered matchup (field, Seat-A agent, Seat-B agent; each orientation its own matchup, E4 O-UNIT) has two directed units, victim Seat A and victim Seat B. A twin mirror is one unit on its candidate-first cells (E4 convention) whose cell value is (BP_A + BP_B) / 2; the two directed victim medians are reported descriptively."
+    },
+    {
+      "id": "O-UNIT-STATUS",
+      "text": "A unit is DECIDED-EARLY iff it has no DEFINED cell or 2 x (DEFINED cells) < (cells) (E4 fma_summary's rule); otherwise DEFINED with BP_unit = statistics.median of the DEFINED cell values (exact; the mean of the two middle values for an even count)."
+    },
+    {
+      "id": "O-BP-BAND",
+      "text": "second-strong BP >= 2/3; second-moderate 1/3 <= BP < 2/3; neutral -1/3 < BP < 1/3; first-moderate -2/3 < BP <= -1/3; first-strong BP <= -2/3. Each edge is closed away from neutral (E4 fma_band's convention). Equal thirds of the half-range [0, 1] of a difference of two proportions, fixed before any E5 data existed. A unit within 1/50 of an edge in either arm is flagged; its class stands as computed."
+    },
+    {
+      "id": "O-TRANSITION-E5",
+      "text": "In this precedence, which partitions every directed unit: 1 DECIDED-EARLY (control or treatment unit DECIDED-EARLY); 2 FIRST-SIDE-CONTROL (control side first); 3 UNCHANGED-NEUTRAL (control neutral, treatment neutral); 4 NEW (control neutral, treatment non-neutral); with control side second: 5 NEUTRALIZED (treatment neutral); 6 FLIPPED (treatment side first); 7 STAYS (treatment band = control band); 8 WEAKENED (treatment side second, lower strength); 9 STRENGTHENED (treatment side second, higher strength). Strength: strong 2, moderate 1, neutral 0."
+    },
+    {
+      "id": "O-CONTEST-E5",
+      "text": "The attacker of a directed unit is the other seat. Sweep role = E4 SOURCE_ROLES.writes_enemy_non_base (sniper, min guard, spread sniper, spread defender: true; disrupt guard, guarded painter, repair guard: false; a twin has its primary's role). SWEEP-BACKED iff the attacker has the sweep role and its capture-analyzer v2 CoreInference for the victim has status 'inferred' with correct = true in every control cell of the unit. ANCHOR-ONLY iff the attacker has no sweep role, or its CoreInference is absent or 'not_inferred' in every control cell. MIXED-INFERENCE otherwise (any 'ambiguous' status, a mixture, or an incorrect inference). A twin mirror is SWEEP-BACKED (ANCHOR-ONLY) iff both directions are; MIXED-INFERENCE otherwise. Assigned from control data before treatment, per arm."
+    },
+    {
+      "id": "O-P-BASE",
+      "text": "Per arm, the directed units whose control unit is DEFINED with side second (BP_C >= 1/3), with their frozen contest class."
+    },
+    {
+      "id": "O-P-PAR-E5",
+      "text": "E4's frozen primary-arm P-PAR (tools/research/v6/e4/control_populations.json, SHA-256 pinned by E4 analysis freeze v1) restricted to the units whose agents are both in the E5 field."
+    },
+    {
+      "id": "O-MIN-SB",
+      "text": "The primary arm's P-BASE must contain at least 6 SWEEP-BACKED units. With fewer, the experiment halts before any treatment runs and the design is reassessed."
+    },
+    {
+      "id": "O-STATUS-E5",
+      "text": "A hypothesis with census value x (an exact fraction) is SUPPORTED iff x >= supported_min, REFUTED iff x <= refuted_max, NEITHER otherwise, NOT_EVALUABLE with no units. Comparisons are inclusive. NEITHER never stands for REFUTED."
+    },
+    {
+      "id": "O-CENSUS-E5",
+      "text": "N = the number of SWEEP-BACKED P-BASE units of the primary arm, DECIDED-EARLY units included. E5-H1 value = (NEUTRALIZED + WEAKENED + FLIPPED) / N; E5-H2 value = (STAYS + STRENGTHENED) / N. DECIDED-EARLY units are in N and in neither numerator. Every P-BASE unit is side-second in control by construction, so no other class can occur; one that does is an analyzer defect (fail closed)."
+    },
+    {
+      "id": "O-OUTCOME-CHANGE",
+      "text": "Outcome class (E3 analyze_e3.outcome_class) differs between the paired control and treatment cell (same field, agents, seed and orientation). Share = changed / all F1 cells of the arm."
+    },
+    {
+      "id": "O-PATHOLOGY",
+      "text": "Over the primary arm's F1 cells. PF-1: share of control non-capture cells that become captures >= flag_min. PF-2: treatment tick-limit share minus control tick-limit share >= flag_min. PF-3: share of control capture cells that become non-captures >= flag_min. PF-4: treatment share minus control share of cells with no hostile core contact (both directions' coverage_mean = 0) >= flag_min. PF-5: any F1 pairing or mirror whose treatment SDom >= seat_sdom_min where the control's was below it, or whose treatment |GSB| > seat_abs_gsb_max where the control's was within it (E4 O-SEAT-METRICS). Each is recorded whatever else holds."
+    },
+    {
+      "id": "O-EVIDENCE",
+      "text": "The unit is the directed unit; n_distinct counts distinct (control trajectory_key, treatment trajectory_key) pairs over its seeds (harness.trajectory_key). n_distinct = 1 is a deterministic characterization; rate claims need n_distinct >= 8. Census values are counts of unit characterizations, not rates."
+    }
+  ],
+  "metrics": {
+    "primary": "BP (O-BP, O-BP-UNIT, O-UNIT-STATUS, O-BP-BAND)",
+    "continuity": "E4 FMA and FMA bands (E4 cell metrics v1, unchanged)",
+    "operationalizations": [
+      "O-BP",
+      "O-BP-UNIT",
+      "O-UNIT-STATUS",
+      "O-BP-BAND",
+      "O-TRANSITION-E5",
+      "O-EVIDENCE"
+    ]
+  },
+  "populations": {
+    "operationalizations": [
+      "O-CONTEST-E5",
+      "O-P-BASE",
+      "O-P-PAR-E5",
+      "O-MIN-SB"
+    ]
+  },
+  "hypotheses": [
+    {
+      "id": "E5-D",
+      "statement": "Decoupling manipulation gate (Revision 1 Sec R2). A hard stop; it reads no gameplay outcome.",
+      "clauses": [
+        {
+          "id": "D-1",
+          "kind": "Ruleset invariant",
+          "condition": "Every T-E5 and T-E5K1 cell: every tick-0 process anchor is (pc - 1) mod 512 for its entrant, and no tick-0 anchor lies in any entrant's core."
+        },
+        {
+          "id": "D-2",
+          "kind": "Ruleset invariant",
+          "condition": "Every T cell: 0 hostile writes to an address that is both the tick-0 anchor of a victim process that has not moved at any earlier tick boundary and a cell of that victim's core."
+        },
+        {
+          "id": "D-3",
+          "kind": "E5-corpus characterization",
+          "condition": "Every T cell: 0 hostile writes to a cell of a live victim's core that is also the anchor of a process of that victim at the tick's start or end boundary."
+        },
+        {
+          "id": "D-4",
+          "kind": "E5-corpus characterization",
+          "condition": "Every T cell: no process's anchor lies in its own entrant's core at any tick boundary."
+        },
+        {
+          "id": "D-5",
+          "kind": "manipulation, per contest",
+          "condition": "Every ANCHOR-ONLY P-BASE unit: in control (checked before treatment) every DEFINED cell has >= 1 D-2-type write by the attacker to the victim's cell 0; in treatment, 0 such writes."
+        },
+        {
+          "id": "D-6",
+          "kind": "instrument sensitivity",
+          "condition": "C-E5 and C-E5K1 (checked before treatment): the D-3 count is > 0 in every cell with >= 1 hostile write to an unmoved enemy process's anchor."
+        }
+      ],
+      "operationalizations": [],
+      "criterion": {
+        "kind": "gate",
+        "on_failure": "STOP"
+      }
+    },
+    {
+      "id": "E5-H1",
+      "statement": "Co-location carries the directed base privilege: removing the dual-purpose anchor/core write weakens or removes the SWEEP-BACKED base privilege.",
+      "population": "primary-arm SWEEP-BACKED P-BASE units",
+      "operationalizations": [
+        "O-CENSUS-E5",
+        "O-STATUS-E5",
+        "O-TRANSITION-E5"
+      ],
+      "criterion": {
+        "supported_min": "2/3",
+        "refuted_max": "1/10",
+        "numerator": [
+          "NEUTRALIZED",
+          "WEAKENED",
+          "FLIPPED"
+        ]
+      }
+    },
+    {
+      "id": "E5-H2",
+      "statement": "Co-location is not necessary for the directed base privilege: the SWEEP-BACKED base privilege survives decoupling.",
+      "population": "primary-arm SWEEP-BACKED P-BASE units",
+      "operationalizations": [
+        "O-CENSUS-E5",
+        "O-STATUS-E5",
+        "O-TRANSITION-E5"
+      ],
+      "criterion": {
+        "supported_min": "2/3",
+        "refuted_max": "1/10",
+        "numerator": [
+          "STAYS",
+          "STRENGTHENED"
+        ]
+      }
+    },
+    {
+      "id": "E5-H3",
+      "statement": "Residual-population null (E4 continuity only): the E4 residual population is unchanged in FMA band.",
+      "population": "P-PAR-E5",
+      "operationalizations": [
+        "O-P-PAR-E5"
+      ],
+      "criterion": {
+        "supported_min": "9/10",
+        "rule": "SUPPORTED iff (E4 STAYS + UNCHANGED-NEUTRAL) / |P-PAR-E5| >= 9/10, REFUTED otherwise",
+        "reading": "Continuity only: its refutation measures how much of the E4 residual was anchor-only contact; it is never a mechanism reading."
+      }
+    },
+    {
+      "id": "E5-H4",
+      "statement": "Outcome propagation (K=2): separation changes match outcomes.",
+      "population": "primary-arm F1 cells",
+      "operationalizations": [
+        "O-OUTCOME-CHANGE",
+        "O-STATUS-E5"
+      ],
+      "criterion": {
+        "supported_min": "1/10",
+        "refuted_max": "1/50"
+      }
+    },
+    {
+      "id": "E5-H5",
+      "statement": "Hold x separation: the capture hold changes how much separation changes outcomes.",
+      "population": "primary- and companion-arm F1 cells",
+      "operationalizations": [
+        "O-OUTCOME-CHANGE",
+        "O-STATUS-E5"
+      ],
+      "criterion": {
+        "supported_min": "1/10",
+        "refuted_max": "1/50",
+        "value": "|companion change share - primary change share|"
+      }
+    },
+    {
+      "id": "PATHOLOGY",
+      "statement": "Pathology flags PF-1 .. PF-5, recorded whatever else holds.",
+      "population": "primary-arm F1 cells",
+      "operationalizations": [
+        "O-PATHOLOGY"
+      ],
+      "criterion": {
+        "flag_min": "1/10",
+        "seat_abs_gsb_max": "1/10",
+        "seat_sdom_min": "9/10"
+      }
+    },
+    {
+      "id": "D9",
+      "statement": "G.5 immunity (theorem; a hard stop): 0 capture completions against the repair and disrupt guards (and twins) under T-E5.",
+      "operationalizations": [],
+      "criterion": {
+        "kind": "gate",
+        "on_failure": "STOP"
+      }
+    }
+  ],
+  "thresholds_rationale": "2/3 (supermajority), 1/10 (practical floor), 1/10 (flag) and 1/50 (essentially none) are E4's structural constants, reused unchanged for comparability. The BP band edges are equal thirds of the half-range, and the P-BASE selection edge is the band edge (as E4's P-PAR used its own band edge). The minimum of 6 SWEEP-BACKED units is the research lead's decision (O-4). No threshold was derived from probe, corpus or treatment values; the design review's probe values are priors to be falsified.",
+  "interpretation": {
+    "rule": "A row applies iff E5-D has the row's status and the pair (E5-H1, E5-H2) is one of the row's listed combinations. Every (E5-D, E5-H1, E5-H2) combination is listed in exactly one row or as impossible; an impossible combination fails closed as an invariant violation and is never resolved by precedence. A negated hypothesis is never written: NEITHER and REFUTED are listed separately.",
+    "rows": [
+      {
+        "id": "STOP",
+        "e5_d": "FAIL",
+        "reading": "STOP. No gameplay reading: the treatment or the classification is defective.",
+        "combinations": [
+          [
+            "SUPPORTED",
+            "REFUTED"
+          ],
+          [
+            "SUPPORTED",
+            "NEITHER"
+          ],
+          [
+            "REFUTED",
+            "SUPPORTED"
+          ],
+          [
+            "REFUTED",
+            "REFUTED"
+          ],
+          [
+            "REFUTED",
+            "NEITHER"
+          ],
+          [
+            "NEITHER",
+            "SUPPORTED"
+          ],
+          [
+            "NEITHER",
+            "REFUTED"
+          ],
+          [
+            "NEITHER",
+            "NEITHER"
+          ]
+        ]
+      },
+      {
+        "id": "R-H2",
+        "e5_d": "PASS",
+        "reading": "Co-location is not necessary for the directed base privilege. Removing the dual-purpose anchor/core write leaves the SB privilege intact. Combined with E4's finding that the OPENING-ONLY privilege survives mirrored later-pass order, this supports the second response in the opening exchange as the remaining mechanism. The anchor/core forensic line closes.",
+        "combinations": [
+          [
+            "REFUTED",
+            "SUPPORTED"
+          ]
+        ]
+      },
+      {
+        "id": "R-H2-PRIME",
+        "e5_d": "PASS",
+        "reading": "Co-location is not necessary for the directed base privilege in a supermajority of SB contests. Removing the dual-purpose anchor/core write leaves the SB privilege intact in those contests; the SB units that weakened, neutralized or flipped are named as registered exceptions. Combined with E4's finding that the OPENING-ONLY privilege survives mirrored later-pass order, this supports the second response in the opening exchange as the remaining mechanism. The anchor/core forensic line closes.",
+        "combinations": [
+          [
+            "NEITHER",
+            "SUPPORTED"
+          ]
+        ]
+      },
+      {
+        "id": "R-H1",
+        "e5_d": "PASS",
+        "reading": "Removing the dual-purpose anchor/core write weakens or removes the SB base privilege: co-location is load-bearing for it (the NEUTRALIZED/FLIPPED versus WEAKENED split is reported). Separation is a candidate rule change; E5-H4, E5-H5 and the pathology flags describe its costs.",
+        "combinations": [
+          [
+            "SUPPORTED",
+            "REFUTED"
+          ]
+        ]
+      },
+      {
+        "id": "R-H1-PRIME",
+        "e5_d": "PASS",
+        "reading": "Removing the dual-purpose anchor/core write weakens or removes the SB base privilege in a supermajority of SB contests: co-location is load-bearing for it there; the SB units that stayed or strengthened are named as registered exceptions. Separation is a candidate rule change; E5-H4, E5-H5 and the pathology flags describe its costs.",
+        "combinations": [
+          [
+            "SUPPORTED",
+            "NEITHER"
+          ]
+        ]
+      },
+      {
+        "id": "NONE",
+        "e5_d": "PASS",
+        "reading": "No registered interpretation row applies. That is itself the registered outcome; the census and the pathology flags are reported.",
+        "combinations": [
+          [
+            "NEITHER",
+            "NEITHER"
+          ],
+          [
+            "NEITHER",
+            "REFUTED"
+          ],
+          [
+            "REFUTED",
+            "NEITHER"
+          ],
+          [
+            "REFUTED",
+            "REFUTED"
+          ]
+        ]
+      }
+    ],
+    "impossible": [
+      {
+        "e5_d": "*",
+        "combinations": [
+          [
+            "SUPPORTED",
+            "SUPPORTED"
+          ]
+        ],
+        "reason": "E5-H1 and E5-H2 have disjoint numerators over one census, so their values sum to at most 1 and cannot both reach 2/3."
+      },
+      {
+        "e5_d": "*",
+        "combinations": [
+          [
+            "SUPPORTED",
+            "NOT_EVALUABLE"
+          ],
+          [
+            "REFUTED",
+            "NOT_EVALUABLE"
+          ],
+          [
+            "NEITHER",
+            "NOT_EVALUABLE"
+          ],
+          [
+            "NOT_EVALUABLE",
+            "SUPPORTED"
+          ],
+          [
+            "NOT_EVALUABLE",
+            "REFUTED"
+          ],
+          [
+            "NOT_EVALUABLE",
+            "NEITHER"
+          ],
+          [
+            "NOT_EVALUABLE",
+            "NOT_EVALUABLE"
+          ]
+        ],
+        "reason": "N is frozen at >= 6 before treatment (O-MIN-SB), so the census cannot be empty."
+      }
+    ],
+    "recorded": [
+      {
+        "id": "E5-H3",
+        "reading": "Continuity only: recorded with its value; never a mechanism reading."
+      },
+      {
+        "id": "E5-H4",
+        "reading": "Recorded with direction (captures lost or gained)."
+      },
+      {
+        "id": "E5-H5",
+        "reading": "A companion reading: recorded; never replaces a primary verdict."
+      },
+      {
+        "id": "PF-1..PF-5",
+        "reading": "Recorded as pathologies whatever else holds."
+      },
+      {
+        "id": "D9",
+        "reading": "A violation is a hard stop at the treatment gates, never a result."
+      }
+    ]
+  },
+  "evidence_rules": [
+    "The unit is the directed unit; a twin mirror is one unit. n_distinct as O-EVIDENCE; rate claims need n_distinct >= 8.",
+    "Census criteria are counts of unit characterizations, not rates.",
+    "DECIDED-EARLY and NOT_SCOREABLE are counted, never dropped.",
+    "Every census criterion is also computed control against itself before treatment, where it must be 100% identity classes (DECIDED-EARLY, FIRST-SIDE-CONTROL, UNCHANGED-NEUTRAL, STAYS).",
+    "The companion arm never replaces a primary verdict; it feeds E5-H5 and companion readings only.",
+    "MIXED-INFERENCE units are reported and excluded from E5-H1 and E5-H2.",
+    "No threshold, population, metric, classification or row is changed after any treatment data exists."
+  ],
+  "hard_stops": [
+    "A frozen golden fails (V4, E2, E3-parent, E4-parent or E5-parent byte identity).",
+    "A control fails to reproduce its preserved C-E4 / C-E4K1 cell byte for byte.",
+    "Fixture fingerprint drift, or a request override that is not None.",
+    "The one-field difference fails.",
+    "E5-D fails on any clause.",
+    "A capture completion against a repair or disrupt guard under T-E5 (D9).",
+    "A capture-analyzer, E4-metric or E5-metric disagreement; an analyzer failure.",
+    "The twin-mirror relabel identity fails.",
+    "The source manifest changes, or the tree is dirty, during execution.",
+    "The control-against-control census is not 100% identity classes.",
+    "Fewer than 6 SWEEP-BACKED P-BASE units in the primary arm (O-MIN-SB): halt before treatment.",
+    "The P5 inertness gate or the observation-delta gate fails, or its negative control does not fail.",
+    "An analyzer defect after treatment exposure: stop interpretation; a repair gets a new freeze identity, never the matrix identity."
+  ]
+}

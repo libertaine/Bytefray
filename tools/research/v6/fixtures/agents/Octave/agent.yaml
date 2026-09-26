@@ -1,0 +1,116 @@
+name: octave
+display: Octave
+description: >-
+  Agent API v2 entrant organised around a single proved eight-cell capture.
+  Resolves an opponent core exactly from READ ownership evidence, then bursts
+  the whole window in one tick with disruption-first ordering. Processes are
+  anchors, not roles: one shared world model and one per-tick priority
+  cascade drive whichever process gets the next slot.
+kind: python
+api_version: 2
+entrypoint: agent.py:create_agent
+version: "1.0.0"
+
+parameters:
+  process_reach:
+    type: integer
+    default: 0
+    minimum: 0
+    maximum: 65535
+    description: >-
+      Reach declared for every process, clamped to [1, arena_size - 1] at
+      reset. 0 means arena_size // 2, which is the greatest circular distance
+      between two cells and therefore makes every address reachable, so Octave
+      never spends an action on travel. A literal default cannot express that:
+      it would be silently short on any arena larger than the one it was
+      written for. Reach is uncapped and free under Ruleset v4; set an explicit
+      value to hold Octave to the same locality cost as an ordinary agent.
+  process_count:
+    type: integer
+    default: 4
+    minimum: 1
+    maximum: 8
+    description: >-
+      How many processes to declare, at equal shares. Processes buy distinct
+      anchors, not throughput -- the Q=8 budget is per entrant. More of them
+      means more separate enemy writes are needed to suppress the whole
+      roster, at the cost of a coarser per-process action allocation.
+  guard_actions:
+    type: integer
+    default: 2
+    minimum: 0
+    maximum: 8
+    description: >-
+      Actions per tick reserved at the end of the tick to rewrite our own
+      core. Elimination needs all eight cells foreign at once, so a late
+      refresh is worth a life. 0 commits everything to offence.
+  sighting_window:
+    type: integer
+    default: 2
+    minimum: 0
+    maximum: 50
+    description: >-
+      How many ticks a sighting is still treated as a bearing on the
+      opponent's core base. Every process starts co-located at its entrant's
+      own core base, so only the earliest sightings carry that meaning; later
+      ones say where a worker stands, which is not where a core is. 0 ignores
+      sightings entirely and sweeps from our own core outward.
+  disperse_span:
+    type: integer
+    default: 48
+    minimum: 0
+    maximum: 512
+    description: >-
+      How far apart to spread process anchors from our own core base. 0
+      disables dispersal and leaves the roster co-located, where a single
+      enemy write can suppress all of it for a tick.
+  burst_on_last_mover_only:
+    type: boolean
+    default: true
+    description: >-
+      Hold the eight-cell burst for a tick this entrant takes the final chunk
+      of. Writes in the final chunk are the only ones a defender has no
+      remaining action to answer, so a burst launched on any other tick is one
+      it is still entitled to undo. Costs about one tick of delay; set false
+      to burst on the first tick the window is known.
+  burst_retries:
+    type: integer
+    default: 2
+    minimum: 1
+    maximum: 8
+    description: >-
+      How many completed bursts a window may survive before it is struck off
+      and the search resumes. With two entrants, still being called on the
+      tick after a full burst is proof the opponent was not eliminated by it.
+      1 abandons a window at the first failure; high values keep hammering a
+      window that has already been disproved.
+  claim_territory:
+    type: boolean
+    default: true
+    description: >-
+      Spend genuinely spare actions claiming fresh ground. Territory decides
+      the score fallback when neither entrant is eliminated by the tick limit.
+
+presets:
+  standard:
+    description: The declared defaults.
+    values:
+      process_reach: 2048
+      process_count: 4
+      guard_actions: 2
+      disperse_span: 48
+      claim_territory: true
+  local:
+    description: >-
+      Locality-respecting build: reach comparable to an ordinary v4 agent, so
+      Octave has to close with its target like everyone else.
+    values:
+      process_reach: 48
+      process_count: 3
+      guard_actions: 2
+      disperse_span: 32
+  reckless:
+    description: Everything into the burst; no reserved core refresh.
+    values:
+      guard_actions: 0
+      claim_territory: false

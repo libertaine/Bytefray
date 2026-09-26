@@ -1,0 +1,27 @@
+name: e6_q12
+display: E6 family package e6_q12
+description: Research-only V6 E6 matched-family package (implementation plan Sec 5). Not a product starter agent.
+kind: python
+api_version: 2
+entrypoint: agent.py:create_agent
+version: "1.0.0"
+parameters:
+  search:
+    type: choice
+    choices: [none, fast, paced, read]
+    default: read
+  posture:
+    type: choice
+    choices: [attack, guard, paint]
+    default: attack
+  evade:
+    type: boolean
+    default: false
+  processes:
+    type: integer
+    minimum: 1
+    maximum: 2
+    default: 1
+  adaptive:
+    type: boolean
+    default: false

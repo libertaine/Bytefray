@@ -1,42 +1,259 @@
 # Bytefray Roadmap
 
-This document preserves Bytefray's shipped milestone roadmap from v0.10
-through v4 and records the boundary into the V5 era. It is historical context,
-not a schedule of V5 commitments. See [README.md](../README.md) for the current
-product generation, [CHANGELOG.md](../CHANGELOG.md) for what shipped release by
-release, and [`docs/research/v5/`](research/v5/) for current V5 research and
-development records. Long-range ideas remain catalogued separately in
-[FUTURE_PLANS.md](FUTURE_PLANS.md).
+This document records Bytefray's execution sequence, active engineering focus,
+and milestone status. It establishes what has already shipped, what is currently
+under active development in the V6 program, what is immediately upcoming, and
+what remains longer-term research.
+
+See [README.md](../README.md) for the user-facing product overview,
+[CHANGELOG.md](../CHANGELOG.md) for release-by-release change notes,
+[ARCHITECTURE.md](../ARCHITECTURE.md) for the structural component map,
+and [FUTURE_PLANS.md](FUTURE_PLANS.md) for catalogued future ideas and research questions.
+
+## Execution Status Overview
+
+| Boundary | Version / Identity | Status | Description |
+|---|---|---|---|
+| **Current Stable Release** | `5.0.0` | **Released** (2026-09-15) | Shipped stable product line atop `bytefray-rules-4` and Agent API v2. |
+| **Active Development Line** | `V6` (`v6-research`) | **In Progress** | Repository diet, architecture modernization, and runtime retirement program. |
+| **Active Ruleset Control** | `bytefray-rules-4` | **Stable Control** | Sole executable v4 ruleset; production gameplay baseline. |
+| **Current Phase** | E6 — Priced Sensing | **In Progress** | Registered, implemented through phase I-6, and re-frozen as v2 after [amendment 1](research/v6/V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md), which made three pre-freeze corrections to the family's implementation. It now awaits the Checkpoint A review of v2. The research question: **does limiting passive enemy-anchor visibility to min(declared reach, 32) cells make the best allocation of actions depend on the opponent, or does it act only as a discovery tax?** It is a question, not a promised result. Structural matrix `v6-e6-matrix-v2-7de29a4a6954` and analysis freeze `v6-e6-freeze-v2-275057e27725` are frozen. v1 was superseded before any seed existed. No seed has been generated and no matrix cell has run. Seed generation, the controls and the treatment each need separate authorization. The E2–E5 line closed with its [synthesis](research/v6/V6_E2_E5_CROSS_EXPERIMENT_SYNTHESIS.md). See [registration](research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md) and [implementation plan](research/v6/V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md). |
+| **Immediate Next Phase** | E2 — Multi-Tick Capture Hold | **Completed** | The full frozen matrix (15,360 matches) ran and was analyzed under analysis freeze `v6-e2-freeze-v2-db6458596d82`. Result: K = 2 breaks the canonical forced line but mainly converts it into one-tick delay, scheduler-phase-locked recovery stalemates, zero-core wins and one new mirror seat inversion; it does not by itself create sufficient strategic opponent-dependence. Disposition: useful but insufficient, research-only. See [results](research/v6/V6_E2_CAPTURE_HOLD_RESULTS.md). |
+| **Next Research Phase** | E3 — Slot-Limited Disruption | **Completed** | The full frozen matrix (19,456 matches) ran and was analyzed under analysis freeze `v6-e3-freeze-v1-506811e78ad8`. Registered verdicts: D2, D3, D6 and D9 supported; D0, D4, D5 and D7 refuted; D1 and D8 neither (median two-sided parity dependence 0.714). **No pre-registered interpretation row applies.** Descriptively, slot-limited disruption removes whole-tick first-mover exclusivity and most seat determination but leaves a moderate, last-mover-leaning order dependence: a successful causal intervention, not a complete gameplay solution; research-only. See [results](research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_RESULTS.md) and [experiment freeze](research/v6/V6_E3_EXPERIMENT_FREEZE.md). |
+| **Following Research Phase** | E4 — Mirrored Pass Order | **Completed** | The full frozen matrix (15,232 matches) ran. It was measured under analysis freeze `v6-e4-freeze-v1-101a941f5e30` and interpreted under `v6-e4-freeze-v3-80f21d822542`, whose two interpretation-only amendments were registered blind, before any treatment data existed. Registered verdicts: H1, H3 and H4 supported; H0, H5, H6 and H8 refuted; H2 and H7 neither (2 of 18 multi-pass matchups, one pairing in both orientations, follow the final chunk, one matchup above the frozen ≤ 1/10 refutation threshold); D9′ holds. **No pre-registered interpretation row applies.** Descriptively, mirrored pass order largely neutralized multi-pass response-order concentration while leaving opening-pass anchor/core-0 contests largely unchanged: a strong two-mechanism pattern, not a registered conclusion; research-only. See [results](research/v6/V6_E4_MIRRORED_PASS_ORDER_RESULTS.md), [experiment freeze](research/v6/V6_E4_EXPERIMENT_FREEZE.md), [analysis freeze v2](research/v6/V6_E4_ANALYSIS_FREEZE_V2.md), [analysis freeze v3](research/v6/V6_E4_ANALYSIS_FREEZE_V3.md). |
+| **Research Phase After E4** | E5 — Anchor/Core-0 Separation | **Completed** | The full frozen matrix (7,168 matches) ran and was analyzed under analysis freeze `v6-e5-freeze-v1-5ba12be258c8`, and every hard-stop gate passed, including the E5-D decoupling gate and D9. Separation removed the dual-purpose spawn-anchor/core-0 write. The directed second-mover base privilege persisted in 13 of 17 sweep-backed units (E5-H2 supported; E5-H1 neither, 4/17), while all 15 anchor-only contests neutralized. **Registered interpretation: `R-H2-PRIME`.** Co-location is not necessary for the privilege in a supermajority of explicit core contests, with four named exceptions; combined with E4, this supports the second response in the opening exchange as the remaining mechanism. Separation also substantially reduced capture resolution: 190 of 320 F1 captures were lost and none gained, tick-limit endings rose from 1,024 to 1,214 (PF-2 and PF-3 raised), and only 64 of 1,344 outcomes changed. So `before_core` is not currently a candidate V6 gameplay rule; research-only. The anchor/core forensic line, and with it the E2–E5 forensic capture/order/placement line, is closed. See [results](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_RESULTS.md) and [experiment freeze](research/v6/V6_E5_EXPERIMENT_FREEZE.md). |
 
 ## Terminology
 
-Status words below are used consistently and are not interchangeable:
+Status words below are used consistently throughout this document:
 
-- **Planned** — scoped for a specific upcoming release.
-- **Candidate** — has real merit and a plausible design, but no assigned
-  release; likely to happen if usage or evidence justifies it.
-- **Exploratory** — a design direction being thought through; not yet
-  validated against evidence, and the shape described could change
-  substantially or not happen at all.
-- **Research** — requires investigation (data, prototypes, or both) before
-  anyone could responsibly commit to a design.
-- **Unscheduled** — real, retained, not actively planned.
+- **Shipped / Completed** — implemented, qualified, and released in a tagged release or merged milestone.
+- **Active / In Progress** — currently underway on the active development line.
+- **Planned** — explicitly scoped for the immediate or next sequential phase.
+- **Candidate** — concrete, plausible design with demonstrable merit, but no assigned release; prioritised when usage or evidence justifies it.
+- **Exploratory** — a design direction being thought through; not yet validated against empirical evidence, and the shape described could change substantially.
+- **Research** — requires hypothesis-driven investigation (data, prototypes, or both) before anyone could responsibly commit to a design.
+- **Retired** — removed from active execution registration while preserving historical-artifact compatibility.
 
-These labels explain the retained milestone text below. They are not current
-V5 promises and do not imply when — or whether — an idea ships.
+---
 
-## Current V5 boundary
+## Current V6 Program — Repository Diet & Architecture Makeover
 
-**Bytefray 5 is the current stable generation, and `5.0.0` is the current
-release.** V5 builds on the stable `bytefray-rules-4` gameplay foundation;
-the supported V4 Ruleset and Alpha1/Alpha2 design contracts remain current
-supporting documentation.
+**Status: Active development.** Bytefray 5.0.0 is the current stable release.
+Active development is on the `v6-research` branch lineage, pursuing the V6
+program theme:
 
-V5 development is deliberately evidence-led and research-driven rather than
-committed to a feature-by-feature release schedule. The V5 research record is
-under [`docs/research/v5/`](research/v5/). The v0.10 through v4 sections below
-are retained as milestone history, and the broader archive boundary is
-documented in [`docs/archive/README.md`](archive/README.md).
+> **“Bytefray goes on a diet and a makeover.”**
+
+Unlike prior versions that introduced major gameplay mechanics (V2 Vulnerable
+Core, V4 Spatial Multi-Process), V6 is primarily a **repository, architecture,
+and runtime modernization program**. Its guiding operational rule is:
+
+> **Delete before refactoring; refactor before redesigning; measure before
+> changing gameplay.**
+
+### V6 Objectives and Program Principles
+
+1. **Retire obsolete execution paths:** Migrate the runtime toward a streamlined
+   architecture with **one active agent contract (Agent API v2)** and **one
+   active baseline ruleset (`bytefray-rules-4`)**, retiring historical execution
+   runtimes (VM/bytecode execution, Agent API v1 execution) that are no longer
+   needed for ongoing agent development.
+2. **Preserve complete historical readability:** Every retired identity and
+   format (Ruleset 1, Ruleset 2, retired research alphas, Redcode results, VM
+   replays) remains 100% readable, indexable, and replayable in Replay History
+   and the Replay Viewer. Only creating *new* matches under retired identities is
+   removed.
+3. **Retire obsolete tooling and external dependencies:** Remove legacy build
+   scripts and historical execution runtimes (Redcode/pMARS) that add maintenance
+   burden without serving the core Bytefray Python agent platform.
+4. **Repository diet and context efficiency:** Archive closed research, delete
+   stale tests and abandoned CI triggers, and untangle oversized modules to
+   reduce repository weight and LLM/developer context overhead.
+5. **Protect stable gameplay controls with frozen characterizations:** Before
+   retiring any prerelease or research ruleset, prove that retained controls
+   faithfully reproduce historical behavior using frozen-golden characterization
+   tests rather than live multi-ruleset comparisons.
+6. **Postpone speculative gameplay changes:** Speculative combat or simulation
+   ideas are deferred until cleanup, debt reduction, and architectural modularity
+   justify them.
+
+### Completed V6 Milestones
+
+* **Phase 0 — Baseline Charter:** Frozen baseline at `v5.0.0` on `v6-research`,
+  verifying 3,687 canonical tests passing, toolchain versions (Python 3.10–3.14),
+  and recording the initial research questions
+  ([`docs/research/v6/V6_PHASE0_BASELINE.md`](research/v6/V6_PHASE0_BASELINE.md)).
+* **Phase 1 — Repository Diet Audit:** Comprehensive, evidence-grounded audit
+  across 13 areas (ruleset identities, documentation, dead code, tests, examples,
+  assets, packaging), establishing verified LOC and file baselines
+  ([`docs/research/v6/V6_PHASE1_REPOSITORY_DIET_AUDIT.md`](research/v6/V6_PHASE1_REPOSITORY_DIET_AUDIT.md)).
+* **Phase 2A — Organization and Quick Cleanups:**
+  * **Phase 2A.1:** Relocated closed V4 (31 files) and V5 (48 files) research
+    into `docs/archive/v4/` and `docs/archive/v5/`.
+  * **Phase 2A.2 & 2A.3:** Removed dead exploratory test
+    (`test_v4_stage6_observation.py`) and purged stale CI push triggers on
+    abandoned branch names.
+* **Phase 2B — Cleanup and Retirement Program:**
+  * **Phase 2B.1 — Starter-Agent Runtime Integrity:** Hardened starter-agent
+    bootstrap logic to verify file contents rather than directory presence
+    ([`docs/research/v6/V6_PHASE2B1_STARTER_RUNTIME_INTEGRITY.md`](research/v6/V6_PHASE2B1_STARTER_RUNTIME_INTEGRITY.md)).
+  * **Phase 2B.2 & 2B.3 — Tournament Pipeline Disposition & Removal:** Retired
+    and removed the bit-rotted root-level `tournament/` build harness, which was
+    superseded by the supported CLI/GUI tournament engine
+    ([`docs/research/v6/V6_PHASE2B2_TOURNAMENT_DISPOSITION.md`](research/v6/V6_PHASE2B2_TOURNAMENT_DISPOSITION.md),
+    [`docs/research/v6/V6_PHASE2B3_TOURNAMENT_REMOVAL.md`](research/v6/V6_PHASE2B3_TOURNAMENT_REMOVAL.md)).
+  * **Phase 2B.4 — `warriors/` Disposition Research:** Audited the unreferenced
+    root `warriors/` Redcode corpus
+    ([`docs/research/v6/V6_PHASE2B4_WARRIORS_DISPOSITION.md`](research/v6/V6_PHASE2B4_WARRIORS_DISPOSITION.md)).
+  * **Phase 2B.5 & 2B.6 — Redcode and pMARS Retirement:** Retired Redcode
+    warrior execution and external pMARS invocation from CLI options, runtime
+    dispatch, and installer packaging; historical `redcode94` results remain
+    readable in Replay History
+    ([`docs/research/v6/V6_PHASE2B5_REDCODE_PMARS_RETIREMENT_AUDIT.md`](research/v6/V6_PHASE2B5_REDCODE_PMARS_RETIREMENT_AUDIT.md),
+    [`docs/research/v6/V6_PHASE2B6_REDCODE_PMARS_RETIREMENT.md`](research/v6/V6_PHASE2B6_REDCODE_PMARS_RETIREMENT.md)).
+  * **Phase 2B.7 & 2B.8 — Legacy Ruleset Retirement Audit:** Analyzed the 8
+    registered ruleset identities and partitioned their retirement into three
+    scopes: Scope A (closed research), Scope B (V4 alphas), Scope C (API v1 / VM)
+    ([`docs/research/v6/V6_PHASE2B7_RULESET3_ALPHA1_DISPOSITION.md`](research/v6/V6_PHASE2B7_RULESET3_ALPHA1_DISPOSITION.md),
+    [`docs/research/v6/V6_PHASE2B8_LEGACY_RULESET_RETIREMENT_AUDIT.md`](research/v6/V6_PHASE2B8_LEGACY_RULESET_RETIREMENT_AUDIT.md)).
+  * **Phase 2B.9 — Scope A Ruleset Retirement:** Retired closed research
+    identities `bytefray-rules-2-alpha1`, `bytefray-rules-2-alpha11`, and
+    `bytefray-rules-3-alpha1` from executable registration. Preserved Ruleset 2
+    promotion equivalence as a golden characterization; historical artifacts
+    remain fully readable
+    ([`docs/research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md`](research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md)).
+  * **Phase 2B.10 — Scope B V4 Alpha Retirement:** Retired prerelease identities
+    `bytefray-rules-4-alpha1` and `bytefray-rules-4-alpha2` from executable
+    registration. Preserved stable Ruleset 4 equivalence as a frozen golden
+    characterization (`test_v4_stable_ruleset_equivalence.py`). `bytefray-rules-4`
+    remains the sole executable V4 control
+    ([`docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md`](research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md)).
+  * **Phase 2B.11 — Agent API v1 / VM Runtime Retirement Audit:** Completed
+    comprehensive research audit for Scope C. Proved that narrowing the
+    executable registry to `bytefray-rules-4` leaves all historical artifact
+    readers, decoders, and replay viewers intact. Identified four mandatory
+    blockers (CLI default agents, scaffold API default, preset ruleset list,
+    omitted-ruleset resolution) and outlined the phased retirement strategy
+    ([`docs/research/v6/V6_PHASE2B11_API_V1_VM_RETIREMENT_AUDIT.md`](research/v6/V6_PHASE2B11_API_V1_VM_RETIREMENT_AUDIT.md)).
+  * **Phase 2B.12 — Scope C Implementation:** Retired `bytefray-rules-1` and
+    `bytefray-rules-2` from executable registration along with VM/blob and
+    Agent API v1 execution, leaving `bytefray-rules-4` as the sole executable
+    gameplay control. Closed by **Phase 2 Final Qualification**, which
+    remediated a historical-fixture integrity defect found during initial
+    qualification and reached a **QUALIFIED** verdict on the remediated tree
+    ([`docs/research/v6/V6_PHASE2_FINAL_QUALIFICATION.md`](research/v6/V6_PHASE2_FINAL_QUALIFICATION.md)).
+* **Phase 3 — Architecture & Context-Locality Review (3A-3L): Complete.**
+  Decomposed the 5,258-line `agent_evaluation.py` monolith (identified as the
+  primary context-locality hotspot by Phase 2's own handoff) into eight
+  single-responsibility modules — `evaluation_contracts`,
+  `evaluation_analysis`, `evaluation_identity`, `evaluation_planning`,
+  `evaluation_cell_execution`, `evaluation_worker`, `evaluation_artifact`,
+  `evaluation_service`, and `evaluation_cli` — behind a permanent, 263-line
+  compatibility facade, verified behavior-preserving at every step by
+  differential testing against the pre-extraction implementation. Two known
+  behavioral defects (scheduler-override identity collision; preflight/run
+  double freeze) remain open, tracked as strict `xfail` guards, not fixed by
+  this program. `ARCHITECTURE.md` was synchronized with the resulting
+  architecture as part of the same review
+  ([`docs/research/v6/V6_PHASE3_ARCHITECTURE_CONTEXT_LOCALITY_REVIEW.md`](research/v6/V6_PHASE3_ARCHITECTURE_CONTEXT_LOCALITY_REVIEW.md)).
+
+* **Phase 4A — Gameplay Research Methodology Design: Complete.**
+  Established the scientific framework, benchmark controls (`V6-Bench-8`),
+  metrics hierarchy, operational stagnation criteria, and staged experimental
+  roadmap for investigating spatial scaling and non-transitive counterplay
+  ([`docs/research/v6/V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md`](research/v6/V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md)).
+* **Phase 4B — Raw Arena-Scaling Study: Complete.** Registered
+  `bytefray-rules-6-research-scale`, an explicit variable-arena research
+  Ruleset live-verified behaviorally identical to `bytefray-rules-4` at 512
+  cells (448/448 matches byte-identical, full V6-Bench-8 field, all seeds,
+  both orientations), then ran the full 2,240-match raw-scaling sweep
+  (512 → 65,536 cells, all other gameplay mechanics unchanged). Findings:
+  the aggregate competitive hierarchy is scale-robust (Spearman ρ ≥ 0.95
+  against the 512-cell baseline throughout), but individual matchups can
+  invert completely, territorial-expansion archetypes collapse under
+  arena-size-normalized scoring, and uncapped global reach remains close to
+  scale-immune. No runtime gameplay code changed after the sweep began
+  ([`docs/research/v6/V6_PHASE4B_ARENA_SCALING_STUDY.md`](research/v6/V6_PHASE4B_ARENA_SCALING_STUDY.md)).
+* **Phase 4C — Movement Normalization Study: Complete.** Registered
+  `bytefray-rules-6-research-scale-move`, an explicit movement-normalized research
+  Ruleset that dynamically scales allowed displacement bound
+  $\text{max\_move\_delta}(A) = \max(64, \lfloor A/8 \rfloor)$ while holding every
+  other gameplay mechanic and evaluation parameter fixed. Live-verified behaviorally
+  identical to the Phase 4B control at 512 cells (448/448 matches byte-identical,
+  0 mismatches). Ran the full 2,240-match sweep across the five standard arenas
+  (512 → 65,536 cells) over the frozen `V6-Bench-8` benchmark field with 0 source
+  drift. Key finding: ruleset-level movement stride normalization provides
+  environmental headroom, but is completely inert for legacy agents authored with
+  internal clamping to 64 cells or reach $\le 1$; observed gameplay deltas across
+  all 2,240 matches were exactly 0.0, establishing that spatial scalability cannot
+  be solved by passive environmental headroom alone without agent adaptation or
+  multiplicative scaling
+  ([`docs/research/v6/V6_PHASE4C_MOVEMENT_NORMALIZATION_STUDY.md`](research/v6/V6_PHASE4C_MOVEMENT_NORMALIZATION_STUDY.md)).
+* **Phase 4D — Proportional Movement Semantics Study: Complete.** Registered
+  `bytefray-rules-6-research-scale-move-proportional`, an explicit research
+  Ruleset interpreting MOVE operands proportionally to arena scale ($\text{actual\_delta} = \text{sgn}(op) \lfloor |op| \times A / 512 \rfloor$) while holding all agent code, scoring, reach, placement, action budget, and tick horizon ($T=1000$) completely frozen. Live-verified behaviorally identical to Phase 4B control at 512 cells (448/448 matches byte-identical, 0 mismatches). Ran the full 2,240-match sweep across the five standard arenas (512 → 65,536 cells) over the frozen `V6-Bench-8` field with 0 source drift. Key findings: proportional movement displacement does not restore scale-invariance; instead, it induces discrete sublattice tunneling (49.6% never-contact rate at $A=65536$), causes timeouts to surge to 66.7% (+27.7%), triggers catastrophic overshoot dyspraxia in precision combat agents (Scout Striker collapses by -38.4%), and artificially elevates area-claim agents (Claimer surges by +21.4% to #2 rank)
+  ([`docs/research/v6/V6_PHASE4D_PROPORTIONAL_MOVEMENT_STUDY.md`](research/v6/V6_PHASE4D_PROPORTIONAL_MOVEMENT_STUDY.md)).
+
+* **Phase 4E — Territory Scoring Invariance Characterization: Complete.** Proved that territory scoring in Bytefray is discrete-integer bucket division ($\lfloor \text{cells} / 64 \rfloor$) and is inherently independent of arena size, refuting prior hypotheses of scoring percentage dilution ([`docs/research/v6/V6_PHASE4E_TERRITORY_SCORING_STUDY.md`](research/v6/V6_PHASE4E_TERRITORY_SCORING_STUDY.md)).
+* **Phase 4 Line Closure & V6 Research-Integrity Remediation: Completed.** Two independent reviews confirmed stable V4 contains a deterministic tick-1 Seat-A forced core capture under competent global-reach play, which was the actual unacknowledged driver of global probe lethality. The arena-scaling and movement research line is closed. All benchmark fixtures are now tracked, non-testing tests repaired, provenance recorded, evaluation alignment reporting and partial scheduler overrides fixed, and misleading metrics ($\sigma^2_{\text{opp}}$) retired.
+
+### Current and Immediate Next Phase
+
+With the research harness remediated and reproducible, active gameplay research pivots directly to:
+
+- **E2 — Multi-Tick Capture Hold (Completed):** A controlled single-variable experiment on the tick-1 Seat-A forced capture. The research Ruleset `bytefray-rules-6-research-capture-hold-k2` differs from its `bytefray-rules-6-research-scale` control only in `capture_hold_ticks = 2`: an entrant is core-captured only after its core has owned zero cells at two consecutive end-of-tick evaluations. The question is open: does delaying fatal capture by one qualifying tick create meaningful opponent-dependent response, or does it merely turn the original forced line into delay, scheduler-locked draws, or another seat pathology? The design review's exploratory probe already points to a mixed result, and a clean negative result is an acceptable outcome ([design review](research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md), [registration](research/v6/V6_E2_CAPTURE_HOLD_REGISTRATION.md)). The Ruleset is implemented and qualified. The research fixtures and mirror twins, the replay-derived capture analyzer, and the harness remediation HD-1 to HD-7 are in place, and the matrix, hypotheses and C-V4/C-RS control gate are frozen ([experiment freeze](research/v6/V6_E2_EXPERIMENT_FREEZE.md)). Matrix execution was halted before the treatment condition: both controls ran and the full C-V4/C-RS control gate passed, but the frozen capture analyzer cannot process replays whose seeded core wraps the arena boundary, so the matrix halted before T-E2 ([execution halt](research/v6/V6_E2_MATRIX_EXECUTION_HALT.md)). The analyzer was then repaired, requalified on the preserved control corpus alone (all 10,240 control replays clean, gate reconfirmed), and the analysis re-frozen as `v6-e2-freeze-v2-db6458596d82` under the unchanged matrix id ([analysis freeze v2](research/v6/V6_E2_ANALYSIS_FREEZE_V2.md)). T-E2 then ran under that freeze, and the full matrix was analyzed with the frozen tooling ([results](research/v6/V6_E2_CAPTURE_HOLD_RESULTS.md)). K = 2 breaks the single-location sniper's forced win over disrupt-first defenders (H1 supported). But every outcome change is one of three kinds: a one-tick delay; a recovery stalemate phase-locked to the scheduler's first-mover rotation; or the guarded painter's reversal of its losses to single-location attackers, won at zero core. Pairing-level seat determination is unchanged, and the guarded-painter mirror becomes Seat-B-determined. The only opponent dependence created is a deterministic draw-mediated pattern (H2 partially supported). E2 is recorded as useful but insufficient and remains research-only; no mechanic is added inside E2, and the next single-variable question is registered separately.
+- **E3 — Slot-Limited Disruption (Completed):** The next single-variable question. Under whole-tick disruption, one write to an entrant's anchor makes its processes there unable to act or sense for the rest of the tick, and E2 showed each tick then going to whoever moves first. E3 changes only how long a disruptive hit suppresses its victim: `RulesetPolicy.disruption_slot_limit = 1` suppresses the hit processes for their entrant's next action offer only, still within the tick. Trigger and scope are unchanged. The primary treatment, `bytefray-rules-6-research-capture-hold-k2-disruption-slot1`, differs from E2 only in that field; the companion, `bytefray-rules-6-research-disruption-slot1`, differs from `bytefray-rules-6-research-scale` only in that field. The question is whether bounding disruption this way removes whole-tick denial and the first-mover-takes-all tick without adding a mechanic. Both Rulesets are implemented and qualified, research-only, with a pre-change byte-identity freeze of their parents. The E3 research tooling is built and qualified: the `e3_jam_sniper` diagnostic fixture and its twin, and an action/parity analyzer that reuses capture analyzer v2 unchanged. The D0–D9 pre-registration, the matrix `v6-e3-matrix-v1-634132ec3c15` (F1, F2, F2-P, F4; 19,456 matches across four conditions) and the analysis freeze `v6-e3-freeze-v1-506811e78ad8` are frozen. The C-E2 and C-RS controls have been run: they reproduce the preserved E2 parent corpora byte for byte in every F1 and F2 cell, and the analyzer, the D9 real-fixture gate and the control populations are qualified on control data only. Both treatments then ran under that freeze and passed every hard-stop gate, including 0 captures of the repair and disrupt guards under T-E3 (D9). Registered verdicts: D2, D3, D6 and D9 supported; D0, D4, D5 and D7 refuted; D1 and D8 neither (median two-sided parity dependence 0.714). **No pre-registered interpretation row applies.** Descriptively, slot-limited disruption removes whole-tick first-mover exclusivity and most seat determination but leaves a moderate, last-mover-leaning order dependence: a successful causal intervention, not a complete gameplay solution; research-only. The next question is whether the residual order dependence comes from the scheduler's last-action position or from end-of-tick evaluation; it will be registered separately ([results](research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_RESULTS.md), [experiment freeze](research/v6/V6_E3_EXPERIMENT_FREEZE.md), [registration](research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_REGISTRATION.md)). The [design review](research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_DESIGN_REVIEW.md), E3's semantic authority, was preserved verbatim after the implementation commits, because it had not been available to the implementing session. The implementation was then reconciled against it, with no conflicts.
+- **E4 — Mirrored Pass Order (Completed):** E3 left open whether its residual order dependence comes from the scheduler's last-action position or from end-of-tick evaluation. The E4 design review found the two cannot be separated: within the equal-quota, rotation-preserving scheduler family, changing the in-tick order is the same as moving the tick boundary, and every evaluation-timing change is a new capture-strictness rule. It reframes the residual as a question of which entrant responds last in each pass, and where in the pass structure a contest sits. E4 changes only that: `RulesetPolicy.scheduler_pass_order = "mirrored"` reverses the entrant order in the second half of each tick's passes, so the chunk owners run `F L F L | L F L F` instead of `F L F L F L F L`. Quota, chunk size, rotation, capture, K, λ, scoring and the replay schema are unchanged. The primary treatment, `bytefray-rules-6-research-capture-hold-k2-disruption-slot1-mirrored-passes`, differs from E3's primary only in that field; the companion, `bytefray-rules-6-research-disruption-slot1-mirrored-passes`, differs from E3's companion only in that field. The research question is: **does balancing pass-level response order neutralize the multi-pass residual while leaving opening-pass anchor contests unchanged?** It is not a promised improvement, and a null result is reachable. Both Rulesets are implemented and qualified, research-only, with a byte-identity freeze of both parents committed before any scheduler change. The E4 research tooling is built and qualified: an analyzer that adds the first-mover core advantage (FMA), the final-chunk-owner share (FPS), matchup-level transition classes and seat metrics while reusing capture analyzer v2 and E3's action/parity analyzer unchanged, and an a-priori contest-class table derived from source roles. The E4-H0–H8 and D9′ pre-registration, the matrix `v6-e4-matrix-v1-fc29d575dd25` (F1, F2, F2-P, F4; 15,232 matches across four conditions) and the analysis freeze `v6-e4-freeze-v1-101a941f5e30` are frozen. The C-E4 and C-E4K1 controls have been run: they reproduce the preserved E3 T-E3 and T-E3K1 corpora byte for byte in all 7,616 cells, their control-against-control census is 100% unchanged, and the analyzer, the G.4′ manipulation gate, the D9′ real-fixture gate and the control populations are qualified on control data only. Pre-treatment finding P-1 was then closed, still blind to treatment, by an interpretation-only amendment: pre-registration v2 lets "H0" take precedence over "¬H1 ∧ H3" and stops H3 alone from being read as a causal mechanism, under analysis freeze `v6-e4-freeze-v2-68d262a0dbd1`, which pins freeze v1 unchanged. A second blind amendment, pre-registration v3 under analysis freeze `v6-e4-freeze-v3-80f21d822542`, gives "H2" precedence over the standalone "¬H1 ∧ H3" interpretation and reports a combined statement when H2 and H3 are both supported. Both treatments then ran from a clean commit holding freeze v3 and passed every hard-stop gate, including 0 captures of the repair and disrupt guards under T-E4 (D9′). Registered verdicts: H1, H3 and H4 supported; H0, H5, H6 and H8 refuted; H2 and H7 neither (2 of 18 multi-pass matchups, one pairing in both orientations, follow the final chunk, one matchup above the frozen ≤ 1/10 refutation threshold); D9′ holds. **No pre-registered interpretation row applies**, under all three interpretation layers. Descriptively, E4 produced a strong two-mechanism pattern: mirrored pass order largely neutralized multi-pass response-order concentration while leaving opening-pass anchor/core-0 contests largely unchanged. Those counts are census counts of mostly deterministic matchup characterizations, not rates. E4 is research-only. The next question, whether separating process anchor location from core cell 0 removes the opening-pass response privilege, will be registered separately ([results](research/v6/V6_E4_MIRRORED_PASS_ORDER_RESULTS.md), [experiment freeze](research/v6/V6_E4_EXPERIMENT_FREEZE.md), [analysis freeze v2](research/v6/V6_E4_ANALYSIS_FREEZE_V2.md), [analysis freeze v3](research/v6/V6_E4_ANALYSIS_FREEZE_V3.md), [design review](research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md), [registration](research/v6/V6_E4_MIRRORED_PASS_ORDER_REGISTRATION.md)). The review's descriptive E3 erratum (the guarded-painter mirror went 19/13 by seed, not 20/12) and its mirror-methodology clarification are recorded as a dated addendum to the [E3 results](research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_RESULTS.md); no E3 verdict changes.
+- **E5 — Anchor/Core-0 Separation (Completed):** E4 left the opening-pass contests' second-mover privilege in place under mirrored later-pass order. Every Agent API v2 process spawns on its entrant's core cell 0, so one WRITE to a never-moved enemy anchor both disrupts the process and flips a core cell. The E5 design review (verdict REDESIGN) found that moving the anchor by an arbitrary offset also changes where the frozen research fixtures think the enemy core is. The corrected design (Revision 1) uses exactly `(core_base - 1) % arena_size`, the one offset at which that anchor-derived targeting is behaviorally inert, on a seven-fixture field, and scores each victim's core cell 0 by directed base parity (BP). E5 changes only that: `RulesetPolicy.initial_anchor_placement = "before_core"`. The core, its seeding and recorded `pc`, the scheduler, capture, K, λ, scoring and the replay schema are unchanged, and movement is unrestricted. The research question is: **is anchor/core-0 co-location necessary for the second mover's directed base privilege, where the base is also attacked explicitly?** It is not a promised improvement, and every registered reading, including "no row applies", is reachable. Both Rulesets are implemented and qualified, research-only, with a byte-identity freeze of both parents committed before any placement change. The research tooling (an E5 analyzer reusing capture analyzer v2, E3's action/parity analyzer and E4's cell metrics unchanged), the pre-registration, matrix `v6-e5-matrix-v1-ef7fa327ea81` and analysis freeze `v6-e5-freeze-v1-5ba12be258c8` are frozen. Both controls have been run and reproduce the preserved E4 control corpora cell for cell, and the tooling, the non-matrix manipulation gates and the control populations are qualified on control data only. Both treatments then ran from a clean commit holding the freeze and passed every hard-stop gate, including the E5-D decoupling gate and 0 captures of the repair and disrupt guards under T-E5 (D9). Registered verdicts: E5-H2 supported (13 of 17 sweep-backed units keep their base privilege); E5-H1 neither (4 of 17 neutralized); E5-H3 refuted (continuity only); E5-H4 and E5-H5 neither; pathology flags PF-2 (stasis) and PF-3 (new immunity) raised. **Registered interpretation: `R-H2-PRIME`.** Co-location is not necessary for the directed base privilege in a supermajority of sweep-backed contests, and four named exceptions remain (the min guard and the spread defender against the repair guard; the min guard and the sniper against the spread defender). Combined with E4, this supports the second response in the opening exchange as the remaining mechanism, and the anchor/core forensic line closes. Descriptively, all 15 anchor-only contests neutralized, and the K = 1 companion reproduced the census with the same four exceptions. Separation also changed how matches end far more than who wins: 190 of 320 F1 captures were lost and none gained, tick-limit endings rose from 1,024 to 1,214, and only 64 of 1,344 cells changed outcome, each a win becoming a tie. The SB counts are census counts of mostly deterministic unit characterizations, not rates. On these results, principally PF-2 and PF-3, the research lead does not recommend `before_core` for promotion into the V6 gameplay Ruleset. Both Rulesets remain research-only, and the E2–E5 forensic capture/order/placement line is closed. The research lead's stated next step is a cross-experiment synthesis of E2–E5, followed by a pivot to a mechanic that makes the choice between uses of an action (attack, defense, investment) strategic; neither is registered yet ([results](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_RESULTS.md), [experiment freeze](research/v6/V6_E5_EXPERIMENT_FREEZE.md), [design review](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md), [Revision 1](research/v6/V6_E5_DESIGN_REVIEW_REVISION_1.md), [registration](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md)).
+- **E6 — Priced Sensing (In Progress, at Checkpoint A, v2):** The E2–E5 synthesis closed the forensic line and pointed to a mechanic that makes the choice between uses of an action strategic. The Branch B scope review selected priced sensing, and the design review traced every information path, including a zero-action seed-inference bypass, closed by the seed-set blindness protocol. E6 changes one field: `RulesetPolicy.detection_radius = 32`. A process passively senses enemy anchors only within min(declared reach, 32) cells. READ and WRITE reach, capture, disruption, scheduling and the replay schema are unchanged. The research question is: **does priced sensing make the best allocation of actions depend on the opponent (a best-response map that is not constant, and less information sometimes winning), or does it act only as a discovery tax?** Every registered reading, including "no row applies", is reachable. Implemented through I-6:
+  - two research Rulesets (`bytefray-rules-6-research-sensing-r32` on the research-scale control, and a λ = 1 companion on `bytefray-rules-6-research-disruption-slot1`), with a parent byte-identity freeze committed before any engine change;
+  - the public `MatchContextV2.detection_radius`;
+  - a nine-member matched family, with one policy source and opaque package IDs;
+  - callback-level traces bound to every evaluated cell;
+  - the analysis instrument, with D-1's independent visibility re-derivation;
+  - the seed tooling;
+  - [amendment 1](research/v6/V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md), three corrections made before any seed existed. The corrections were found by engine-level behavior tests of the family against scripted opponents:
+    - unverified core adoption only by the tick-1 first mover;
+    - verification that the attacker's own disruption can no longer defeat;
+    - a cyclic core cursor;
+  - structural matrix `v6-e6-matrix-v2-7de29a4a6954` and analysis freeze `v6-e6-freeze-v2-275057e27725`, which supersede v1 (`v6-e6-matrix-v1-cd040eac42ef`, `v6-e6-freeze-v1-428033032ce2`).
+
+  No seed, matrix cell or outcome exists. Next is the research lead's Checkpoint A review of v2. After it, seed generation, the controls and the treatment each need separate authorization ([scope review](research/v6/V6_BRANCH_B_ACTION_CHOICE_SCOPE_REVIEW.md), [design review](research/v6/V6_PRICED_SENSING_DESIGN_REVIEW.md), [pre-registration](research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md), [implementation plan](research/v6/V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md)).
+
+### Near-Term Planned Work (V6 Program Follow-Ups)
+
+* **Repository diet and modularity:** the `agent_evaluation.py` oversized-module
+  concern Phase 1 identified is resolved by Phase 3 (above). The Phase 2
+  handoff separately named `match_service.py`, the process-runtime modules,
+  and `ruleset_policy.py` as further locality candidates; Phase 3 did not
+  address them, and whether they warrant a future, separately authorized
+  locality pass is undecided.
+* **Documentation synchronization:** `ARCHITECTURE.md` is aligned with the
+  post-v4/v5 architecture and the Phase 3 evaluation decomposition. Spectator/
+  Fight Night and Replay History are documented in "Runtime components"
+  above.
+
+### Later Research Candidates (Post-Cleanup)
+
+Speculative gameplay ideas remain catalogued in [`docs/FUTURE_PLANS.md`](FUTURE_PLANS.md)
+and are deliberately **postponed** until cleanup and architecture stabilization
+are complete:
+* Single-entrant multi-process coordination beyond fixed rosters.
+* Mid-match process replication and deployment economics.
+* Agent lifecycle mechanics (mutation, evolution, and resource costs).
+* Observable execution telemetry / intent semantics for defense.
+* Partial observability / fog-of-war.
+* Accessible domain-specific language (DSL) targeting Agent API v2.
+
+---
+
+## Shipped Milestone History (v0.10 through v5.0)
+
+The sections below preserve Bytefray's shipped milestone roadmap from v0.10
+through v5.0.0. They serve as historical provenance and architectural context,
+not as upcoming commitments.
+
 
 ## v0.10.0 — Platform Stabilization / v1.0 Readiness
 
@@ -941,8 +1158,8 @@ report.
 
 ## v3.0 — Product Development
 
-**Status: PUBLISHED.** `v3.0.0` is the current stable release, merged to
-`main`. Bytefray
+**Status: PUBLISHED.** `v3.0.0` was tagged and merged to
+`main` as a stable release. Bytefray
 v3.0 is a **product** release
 cycle, not a gameplay-semantic one: it proceeds on `bytefray-rules-2`
 unchanged and focuses on presentation, agent creation, strategy analysis,
@@ -1172,7 +1389,7 @@ replay-only.
 **Status: published prerelease; superseded by v4.0.0-rc2 below.** The first
 v4.0 release candidate, published September 4, 2026 — see
 [CHANGELOG.md](../CHANGELOG.md#400-rc1---2026-09-03) and the RC-path
-qualification reports under [docs/research/v4/](research/v4/). Promotes
+qualification reports under [docs/archive/v4/](archive/v4/). Promotes
 `bytefray-rules-4` to the permanent, stable v4 gameplay Ruleset (proven
 equivalent to `bytefray-rules-4-alpha2` by a release-blocking
 replay-equivalence corpus, not merely declared); an omitted `--ruleset` for
@@ -1190,7 +1407,7 @@ selectable.
 **Status: published prerelease; superseded by v4.0.0 final below.** The second
 v4.0 release candidate — see
 [CHANGELOG.md](../CHANGELOG.md#400-rc2---2026-09-07) and the RC-path
-qualification reports under [docs/research/v4/](research/v4/). Adds a
+qualification reports under [docs/archive/v4/](archive/v4/). Adds a
 self-contained Linux binary distribution built and qualified on an official
 Ubuntu 24.04 baseline (byte-for-byte verified, unrebuilt, on Ubuntu 26.04;
 measured maximum requirement `GLIBC_2.38`), migrates the replay/GUI
@@ -1201,8 +1418,7 @@ RC1 — `bytefray-rules-4` remains unchanged.
 
 ## v4.0.0 — Spatial Multi-Process Platform & Spectator Intelligence
 
-**Status: published September 8, 2026; superseded as the current development
-generation by V5.** `v4.0.0` promotes the
+**Status: shipped September 8, 2026.** `v4.0.0` promotes the
 qualified `v4.0.0-rc2` post-UX candidate to the stable 4.0 line with no
 engine, schema, or evaluation-methodology change since RC2 — a version/
 documentation-only release. `bytefray-rules-4` becomes v4.0's permanent
@@ -1216,21 +1432,60 @@ Windows AMD64 installer, portable ZIP, self-contained Linux archive (Ubuntu
 Agent API v1, Ruleset v1/v2 compatibility, and pMARS external interoperability
 are all preserved.
 
-See [V4_RC2_POST_UX_WINDOWS_QUALIFICATION.md](research/v4/V4_RC2_POST_UX_WINDOWS_QUALIFICATION.md)
-and [V4_RC2_POST_UX_LINUX_PACKAGED_QUALIFICATION.md](research/v4/V4_RC2_POST_UX_LINUX_PACKAGED_QUALIFICATION.md)
+See [V4_RC2_POST_UX_WINDOWS_QUALIFICATION.md](archive/v4/V4_RC2_POST_UX_WINDOWS_QUALIFICATION.md)
+and [V4_RC2_POST_UX_LINUX_PACKAGED_QUALIFICATION.md](archive/v4/V4_RC2_POST_UX_LINUX_PACKAGED_QUALIFICATION.md)
 for the candidate qualification records. `v4.0.0-alpha1` through `-alpha4`,
 `v4.0.0-rc1`, and `v4.0.0-rc2` remain published, immutable prereleases; none
 was moved, retagged, or rewritten by this promotion.
 
-## Long-range material retained from the post-v1.0 roadmap
+## v5.0.0 — Agent Authoring, Replay History & Desktop Experience
 
-The following paragraph is retained as historical planning context, not as a
-current V5 commitment. Substantial work was intentionally kept out of the
-required v1.0 scope:
-accessible agent-authoring (a small, deterministic DSL compiling to the
-Agent API), richer evaluation and statistical analysis, evaluation
-performance/scaling, and deeper simulation/combat research (arena-size
-effects, multipronged/multi-process entrants, replication, and any future
-ruleset that would require its own compatibility identity separate from
-1.0's). None of it is lost — see [FUTURE_PLANS.md](FUTURE_PLANS.md) for
-the organized, maturity-labeled catalogue.
+**Status: published September 15, 2026.** `v5.0.0` promotes the qualified
+`5.0.0-rc1` candidate to the stable 5.0 release line with no gameplay, Agent API,
+or wire-schema change since RC1. Bytefray 5.0 finalizes the agent-authoring,
+parameterization, and desktop experience atop the immutable `bytefray-rules-4`
+gameplay core and Agent API v2:
+
+* **Global Replay History Subsystem:** Global Replay History browser
+  (`History → Replay History…` in Agent Designer) powered by a lightweight
+  SQLite discovery index (`battle_engine.replay_history`), providing automatic
+  discovery of recorded match and evaluation replays, result indexing, real-time
+  search/filtering, and direct Replay Viewer launch.
+* **Complete Tournament UX Workflow:** End-to-end Configure → Run Tournament →
+  See Results → Browse Matches → View Replay loop in Agent Designer, with atomic
+  `tournament.json` checkpoints, full standings display, and per-match result
+  and replay inspection.
+* **Unified Result-Backed Replay Integrity Preflight:** Comprehensive validation
+  applied consistently across Simple/Advanced matches, Development Test, Tournament
+  History, and Evaluation drill-downs before launching the viewer.
+* **Agent Authoring & Parameterization:** Multi-process agent parameterization,
+  reusable starter agents (`v5_dual_team`), parameter validation in Designer,
+  and exact normalized rational conversion for process share declarations
+  (resolving floating-point share validation discrepancies).
+* **Cross-Platform Quality & Polish:** Canonical replay newline normalization
+  across Windows and Linux, verified native Linux Wayland display support,
+  desktop accessibility baseline, and streamlined menu/command organization.
+
+See [`docs/archive/v5/`](archive/v5/) for the complete V5 development, research,
+and qualification archive, including
+[`V5_0_0_PUBLICATION.md`](archive/v5/V5_0_0_PUBLICATION.md) and
+[`V5_FINAL_ARTIFACT_REBUILD_AND_CROSS_PLATFORM_REQUALIFICATION.md`](archive/v5/V5_FINAL_ARTIFACT_REBUILD_AND_CROSS_PLATFORM_REQUALIFICATION.md).
+
+## Historical planning note retained from earlier roadmaps
+
+The paragraph below is retained as historical context from the early 1.0 era,
+not as a current V6 commitment:
+
+> Substantial work was intentionally kept out of the required v1.0 scope:
+> accessible agent-authoring (a small, deterministic DSL compiling to the
+> Agent API), richer evaluation and statistical analysis, evaluation
+> performance/scaling, and deeper simulation/combat research (arena-size
+> effects, multipronged/multi-process entrants, replication, and any future
+> ruleset that would require its own compatibility identity separate from
+> 1.0's).
+
+Much of this early roadmap has since been realized across v1.x through v5.0
+(e.g., parallel evaluation, evaluation presets, behavioral profiling, Ruleset 2
+vulnerable core, Ruleset 4 multi-process platform, spectator replay pipeline,
+and Replay History). For currently open candidates and long-range research
+questions, see [FUTURE_PLANS.md](FUTURE_PLANS.md).

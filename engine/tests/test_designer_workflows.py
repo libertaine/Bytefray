@@ -15,6 +15,7 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ID,
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
+    BYTEFRAY_RULESET_V4_ID,
 )
 
 from app.services.agent_catalog import AgentRow
@@ -43,8 +44,8 @@ def test_designer_adapter_import_does_not_require_qt():
 def test_agent_runtime_label_reflects_python_vs_vm():
     assert agent_runtime_label(_row("claimer", "python")) == "Python"
     # Unset/unknown kind maps to VM, per agent_kind()'s existing semantics.
-    assert agent_runtime_label(_row("runner", "builtin")) == "VM"
-    assert agent_runtime_label(AgentRow("runner", "/agents/runner", None, {})) == "VM"
+    assert agent_runtime_label(_row("v5_region_attacker", "builtin")) == "VM"
+    assert agent_runtime_label(AgentRow("v5_region_attacker", "/agents/runner", None, {})) == "VM"
 
 
 def test_decorate_agent_display_appends_runtime_suffix_without_altering_identity():
@@ -69,17 +70,29 @@ def test_new_match_run_directory_is_unique_and_isolated(tmp_path):
     assert first_replay != second_replay
 
 
-@pytest.mark.parametrize(
-    "ruleset_id", [BYTEFRAY_RULESET_V4_ALPHA1_ID, BYTEFRAY_RULESET_V4_ALPHA2_ID]
-)
-def test_designer_trace_path_is_requested_for_v4_rulesets(tmp_path, ruleset_id):
+def test_designer_trace_path_is_requested_for_the_stable_v4_ruleset(tmp_path):
     replay_path = tmp_path / "runs" / "_designer" / "run-1" / "replay.jsonl"
-    trace_path = designer_trace_path(replay_path, ruleset_id)
+    trace_path = designer_trace_path(replay_path, BYTEFRAY_RULESET_V4_ID)
     assert trace_path == replay_path.parent / "trace.jsonl"
     assert trace_path.name == "trace.jsonl"
 
 
-@pytest.mark.parametrize("ruleset_id", [BYTEFRAY_RULESET_ID, BYTEFRAY_RULESET_V2_ID])
+@pytest.mark.parametrize(
+    "ruleset_id",
+    [
+        BYTEFRAY_RULESET_ID,
+        BYTEFRAY_RULESET_V2_ID,
+        # V6 Phase 2B.10 Scope B: bytefray-rules-4-alpha1/-alpha2 were
+        # removed from DESIGNER_AUTO_TRACE_RULESET_IDS alongside their
+        # executable registration, so this call now returns None for both
+        # -- unreachable in practice, since a new Designer match can no
+        # longer be launched under either id at all (resolve_ruleset_policy
+        # rejects it first), but the function's own behavior for the
+        # identity is still worth pinning explicitly.
+        BYTEFRAY_RULESET_V4_ALPHA1_ID,
+        BYTEFRAY_RULESET_V4_ALPHA2_ID,
+    ],
+)
 def test_designer_trace_path_is_none_for_historical_rulesets(tmp_path, ruleset_id):
     replay_path = tmp_path / "runs" / "_designer" / "run-1" / "replay.jsonl"
     assert designer_trace_path(replay_path, ruleset_id) is None
@@ -89,8 +102,8 @@ def test_designer_trace_path_cannot_collide_across_independent_runs(tmp_path):
     first_replay = new_match_run_directory(tmp_path) / "replay.jsonl"
     second_replay = new_match_run_directory(tmp_path) / "replay.jsonl"
 
-    first_trace = designer_trace_path(first_replay, BYTEFRAY_RULESET_V4_ALPHA1_ID)
-    second_trace = designer_trace_path(second_replay, BYTEFRAY_RULESET_V4_ALPHA2_ID)
+    first_trace = designer_trace_path(first_replay, BYTEFRAY_RULESET_V4_ID)
+    second_trace = designer_trace_path(second_replay, BYTEFRAY_RULESET_V4_ID)
 
     assert first_trace != second_trace
     assert first_trace.parent == first_replay.parent
@@ -113,7 +126,7 @@ def test_designer_v4_match_produces_full_spectator_artifact_set(tmp_path, monkey
 
     run_directory = new_match_run_directory(tmp_path)
     result_path, replay_path = match_artifact_paths(run_directory / "replay.jsonl")
-    trace_path = designer_trace_path(replay_path, BYTEFRAY_RULESET_V4_ALPHA2_ID)
+    trace_path = designer_trace_path(replay_path, BYTEFRAY_RULESET_V4_ID)
     assert trace_path is not None
 
     arguments = build_designer_match_arguments(
@@ -121,7 +134,7 @@ def test_designer_v4_match_produces_full_spectator_artifact_set(tmp_path, monkey
         arena=64,
         a_type="v4_claimer",
         b_type="v4_scout",
-        ruleset_id=BYTEFRAY_RULESET_V4_ALPHA2_ID,
+        ruleset_id=BYTEFRAY_RULESET_V4_ID,
     )
     arguments.extend(("--replay", str(replay_path)))
     arguments.extend(("--trace", str(trace_path)))
@@ -162,7 +175,7 @@ def test_designer_three_agent_match_runs_real_and_presents_all_entrants(tmp_path
         arena=128,
         a_type="v4_claimer",
         b_type="v4_scout",
-        ruleset_id=BYTEFRAY_RULESET_V4_ALPHA2_ID,
+        ruleset_id=BYTEFRAY_RULESET_V4_ID,
         c_type="v4_quorum",
     )
     arguments.extend(("--replay", str(replay_path)))

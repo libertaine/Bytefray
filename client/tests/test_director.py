@@ -28,7 +28,7 @@ from battle_engine.replay import (
     TickSnapshot,
     write_replay,
 )
-from battle_engine.ruleset_policy import RULESET_V4_ALPHA1
+from battle_engine.ruleset_policy import RULESET_V4
 from battle_engine.spectator_derivation import analyze_pair
 from battle_engine.spectator_director import (
     DirectorDecision,
@@ -316,7 +316,7 @@ def _tiny_derivation(tmp_path: Path):
         max_ticks=5,
         replay_path=replay_path,
         trace_path=trace_path,
-        ruleset_id=RULESET_V4_ALPHA1.ruleset_id,
+        ruleset_id=RULESET_V4.ruleset_id,
     )
     NativeMatchService().run(request)
     return analyze_pair(replay_path, trace_path)

@@ -15,8 +15,6 @@ SCRIPT_TARGETS = {
 }
 ADDITIONAL_RUNTIME_FILES = {
     "app/assets/branding/bytefray-icon.png",
-    "battle_engine/data/agent_template_annotated/agent.py",
-    "battle_engine/data/agent_template_annotated/agent.yaml",
     "battle_engine/data/agent_template_v2/agent.py",
     "battle_engine/data/agent_template_v2/agent.yaml",
     "battle_engine/data/agent_template_v2_annotated/agent.py",
@@ -54,7 +52,6 @@ def test_validator_accepts_the_release_critical_wheel_contract(tmp_path: Path) -
 @pytest.mark.parametrize(
     "missing",
     [
-        "battle_engine/data/agent_template_annotated/agent.py",
         "battle_engine/data/agent_template_v2/agent.yaml",
         "battle_engine/data/agent_template_v2_annotated/agent.py",
         "battle_engine/data/starter_agents/v5_dual_team/agent.py",
@@ -64,6 +61,29 @@ def test_validator_accepts_the_release_critical_wheel_contract(tmp_path: Path) -
 def test_validator_rejects_a_missing_runtime_resource(tmp_path: Path, missing: str) -> None:
     with pytest.raises(ValueError, match="missing expected files"):
         validate_wheel(_wheel(tmp_path, omit=missing))
+
+
+@pytest.mark.parametrize(
+    "retired",
+    [
+        "battle_engine/instructions.py",
+        "battle_engine/data/agent_template/agent.py",
+        "battle_engine/data/benchmarks/v2_baseline.json",
+        "battle_engine/data/reference_agents/core_seeker/agent.py",
+        "battle_engine/data/v3_closeout_agents/turtle_core_refresher/agent.py",
+        "battle_engine/data/v3_phase7_agents/core_tracker_offset/agent.py",
+        "battle_engine/data/starter_agents/claimer/agent.py",
+    ],
+)
+def test_validator_rejects_retired_execution_resources(
+    tmp_path: Path, retired: str
+) -> None:
+    wheel = _wheel(tmp_path)
+    with zipfile.ZipFile(wheel, "a") as archive:
+        archive.writestr(retired, b"")
+
+    with pytest.raises(ValueError, match="retired execution resources"):
+        validate_wheel(wheel)
 
 
 def test_validator_rejects_a_misdirected_console_script(tmp_path: Path) -> None:

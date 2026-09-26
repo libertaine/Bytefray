@@ -30,7 +30,7 @@ agents. Keeping an identity readable and preserving its interpretation is
 distinct from offering it for new matches; historical execution is also
 retained for agent compatibility, tests, and reproducibility. The complete
 inventory and proposed future presentation are in the
-[Phase 4 audit](research/v5/V5_ALPHA1_MAINTENANCE_PHASE4_RELEASE_SURFACE_AUDIT.md).
+[Phase 4 audit](archive/v5/V5_ALPHA1_MAINTENANCE_PHASE4_RELEASE_SURFACE_AUDIT.md).
 
 ## Stable-candidate contracts for 1.x
 
@@ -44,9 +44,10 @@ is above, and the version-specific sections below define retained contracts.
   `AgentAction` contract and its frozen deterministic RNG derivation,
   described in [AGENT_API_V1.md](AGENT_API_V1.md).
 - **Result and replay current schemas** — `battle2.result` v2 for native
-  results (with v1 retained for historical artifacts and pMARS) and
-  `battle2.replay` v3/v4, described in [RESULT_SCHEMA.md](RESULT_SCHEMA.md)
-  and [REPLAY_SCHEMA.md](REPLAY_SCHEMA.md).
+  results (with v1 retained for historical artifacts, including retired
+  Redcode/pMARS records) and `battle2.replay` v3/v4, described in
+  [RESULT_SCHEMA.md](RESULT_SCHEMA.md) and
+  [REPLAY_SCHEMA.md](REPLAY_SCHEMA.md).
 - **Evaluation current schema/history behavior** — `bytefray.evaluation`
   v4/identity v4 and the `evaluations list/show/compare` history behavior
   described in `docs/specs/evaluation_history.md`.
@@ -300,13 +301,13 @@ defined in `battle_engine.rules` alongside its two alpha siblings and
 resolved through the same fail-closed `resolve_ruleset_policy` seam as every
 other identity. See [RULES_V4.md](RULES_V4.md) for the full Ruleset v4
 gameplay contract and
-[docs/research/v4/V4_RC1_PHASE2_STABLE_CONTRACT_PROMOTION.md](research/v4/V4_RC1_PHASE2_STABLE_CONTRACT_PROMOTION.md)
+[docs/archive/v4/V4_RC1_PHASE2_STABLE_CONTRACT_PROMOTION.md](archive/v4/V4_RC1_PHASE2_STABLE_CONTRACT_PROMOTION.md)
 for the promotion evidence.
 
 - **Status: permanent, stable semantic identity** as of `v4.0.0-rc1` Phase 2,
   promoted unchanged from the pre-RC research program's evidence-backed
   result (no further gameplay alpha found necessary; see
-  [V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md](research/v4/V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md)).
+  [V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md](archive/v4/V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md)).
   Like Ruleset v1/v2's contracts, it is not expected to change without new
   evidence and a deliberate, separately-versioned decision to revise it.
 - **Gameplay-identical to `bytefray-rules-4-alpha2`, field for field.** Its
@@ -502,12 +503,12 @@ identity-bearing.
 
 `agents evaluate --ruleset bytefray-rules-4-alpha2` now runs a fourth,
 additive evaluation methodology rather than being rejected outright.
-Implements docs/research/v4/V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md's
+Implements docs/archive/v4/V4_PRE_RC_GAMEPLAY_EVALUATION_RESEARCH.md's
 accepted Sec H specification, on the maintainer-accepted evidence that
 alpha2's whole gameplay change *is* seed-derived placement, so evaluating
 it under the historical fixed-placement methodology would produce an
 artifact labelled alpha2 that actually ran alpha1's fixed opposed
-placement — see docs/research/v4/V4_RC1_PHASE1_EVALUATION_METHODOLOGY.md
+placement — see docs/archive/v4/V4_RC1_PHASE1_EVALUATION_METHODOLOGY.md
 for the full implementation report.
 
 - **Placement.** No new placement algorithm. Evaluation stops imposing
@@ -647,20 +648,20 @@ gameplay Ruleset produced one native match:
   independently for v4 process state (see
   [RESULT_SCHEMA.md](RESULT_SCHEMA.md)/[REPLAY_SCHEMA.md](REPLAY_SCHEMA.md)
   for the reader-tolerance evidence).
-- A `redcode94`/pMARS result never *claims* Bytefray Ruleset v1 — but
+- A `redcode94`/pMARS result never *claimed* Bytefray Ruleset v1 — but
   "absent" and "explicit `null`" are two different, precisely distinguished
   facts here, not interchangeable phrasing (see
   [RESULT_SCHEMA.md](RESULT_SCHEMA.md)'s "Ruleset identity" for the full
-  detail): the current writer (`ResultEnvelope.as_dict()`, used by both the
-  native and pMARS paths) always emits the `ruleset_id` key, so a current
-  `redcode94` result has `"ruleset_id": null` — key **present**, value
-  `null` — never `"bytefray-rules-1"`. Only a `result.json` written
+  detail): the writer (`ResultEnvelope.as_dict()`, used historically by both
+  the native and pMARS paths) always emits the `ruleset_id` key, so a
+  historical `redcode94` result has `"ruleset_id": null` — key **present**,
+  value `null` — never `"bytefray-rules-1"`. Only a `result.json` written
   *before this field existed at all* (any pre-Phase-4 artifact, native or
   pMARS) has the key genuinely, structurally **absent**. Both decode to
   `ResultEnvelope.ruleset_id is None` at the Python level, and
   `resolve_result_ruleset` treats them identically via `mode`, which is
   what actually carries the "not applicable" fact — not whether the JSON
-  key itself was present. pMARS produces no canonical replay at all, so
+  key itself was present. pMARS produced no canonical replay at all, so
   this absent-vs-null question does not arise for `battle2.replay`.
 - `battle_engine.result_model.resolve_result_ruleset`/`battle_engine.
   replay.resolve_replay_ruleset` attribute a confidence-qualified answer
@@ -760,10 +761,43 @@ regardless of how mature adjacent functionality is:
   hard timeout.
 - **Replication / corruptible Python-core designs** — research-stage
   ideas tracked in [FUTURE_PLANS.md](FUTURE_PLANS.md), not implemented.
-- **Redcode/pMARS authoring, evaluation, and gameplay parity with the
-  native engine** — pMARS interoperability continues, but does not use
-  a Bytefray Ruleset, Agent API, or the canonical replay schema; see
-  [RULES.md](RULES.md)'s "Redcode/pMARS — not Ruleset v1".
+- **Redcode/pMARS execution** — retired entirely in V6 (releases up to and
+  including v5.0.0 supported it); it never used a Bytefray Ruleset, Agent
+  API, or the canonical replay schema, and historical `redcode94` results
+  remain readable; see [RULES.md](RULES.md)'s "Redcode/pMARS — not Ruleset
+  v1 (historical)".
+- **`bytefray-rules-2-alpha1` / `-alpha11` / `bytefray-rules-3-alpha1`
+  execution** — retired from executable registration by V6 Phase 2B.9
+  (releases up to and including v5.0.0 supported all three); none was ever
+  selectable from any CLI, Agent Designer, or evaluation-preset surface.
+  Historical results/replays/evaluations recorded under these identities
+  remain readable, indexable, and correctly labeled — only creating *new*
+  matches under them is removed. See the table below and
+  [`docs/research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md`](research/v6/V6_PHASE2B9_SCOPE_A_RULESET_RETIREMENT.md).
+- **`bytefray-rules-4-alpha1` / `bytefray-rules-4-alpha2` execution** —
+  retired from executable registration by V6 Phase 2B.10 Scope B (releases
+  up to and including v5.0.0 supported both, and both were selectable from
+  every CLI, Agent Designer, and evaluation surface). Historical
+  results/replays/evaluations recorded under either identity remain
+  readable, indexable, and correctly labeled — including per-entrant
+  core-integrity/capture display for `bytefray-rules-4-alpha1`, which had
+  vulnerable-core semantics (`bytefray-rules-4-alpha2` never did). Only
+  creating *new* matches under either is removed. See the table below and
+  [`docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md`](research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md).
+
+### Retired from execution / still recognised (V6 Phase 2B.9, 2B.10 Scope B)
+
+| Identity | New execution | Historical recognition |
+| --- | --- | --- |
+| `bytefray-rules-2-alpha1` | Rejected (`UnknownRulesetError`) | Full — result/replay attribution, Replay History indexing/labeling, core-status display |
+| `bytefray-rules-2-alpha11` | Rejected (`UnknownRulesetError`) | Full — same, plus the promotion-equivalence proof into `bytefray-rules-2` is preserved as a frozen-golden characterization |
+| `bytefray-rules-3-alpha1` | Rejected (`UnknownRulesetError`) | Full — same |
+| `bytefray-rules-4-alpha1` | Rejected (`UnknownRulesetError`) | Full — same, including per-entrant core-integrity/capture-tick display |
+| `bytefray-rules-4-alpha2` | Rejected (`UnknownRulesetError`) | Full — result/replay attribution, Replay History indexing/labeling (never had core-status display; not a vulnerable-core identity), plus the promotion-equivalence proof into `bytefray-rules-4` is preserved as a frozen-golden characterization |
+
+Exact re-execution of any of the five remains available through the
+`v5.0.0` release (tag, wheel, Windows installer), whose ruleset registry is
+behaviorally identical to the one this table describes.
 - **Arena translation/placement robustness in evaluation** — decided in
   v0.10 Phase 3: the standard 1.0 `agents evaluate` methodology uses a
   single, fixed arena alignment for every cell (`arena_alignment_mode:
@@ -776,7 +810,7 @@ regardless of how mature adjacent functionality is:
   today via `MatchEntrant.start` but `agents evaluate` is Python-only and
   has no VM path to attach it to. See `docs/ROADMAP.md` and
   `docs/RULES.md`.
-- **Future rulesets beyond the registered v1/v2/v4-alpha1 identities** —
+- **Future rulesets beyond the registered v1/v2/v4 identities** —
   additional mechanics require another distinct Ruleset identity, tracked in
   [FUTURE_PLANS.md](FUTURE_PLANS.md), and is explicitly not part of
   Ruleset v1.

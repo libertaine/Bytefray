@@ -37,8 +37,8 @@ from dataclasses import dataclass
 from statistics import median
 from typing import Any
 
-from battle_engine.agent_evaluation import BASELINE, CANDIDATE, physical_slots_for_orientation
 from battle_engine.evaluation_behavior import CellRef
+from battle_engine.evaluation_contracts import BASELINE, CANDIDATE, physical_slots_for_orientation
 from battle_engine.result_model import read_result
 
 CORE_CAPTURED_TERMINATION_REASON = "core_captured"

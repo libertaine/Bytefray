@@ -1,20 +1,15 @@
-"""Shared Ruleset-v1 sequential-quota entrant scheduler.
+"""Ruleset scheduler primitives retained by the stable v4 process runtime.
 
-The VM (``match.MatchRunner``), unsupervised Python
-(``python_runtime.PythonEntrantController``), and supervised Python
-(``supervised_runtime.SupervisedPythonEntrantController``) execution paths
-each drive their entrants/execution-states through the identical shape:
-give each live state, in order, up to a fixed per-tick quota of sequential
-execution opportunities, stopping early -- for that state only -- the
-moment it dies. This module is the one shared implementation of that
-shape, replacing three separately maintained copies of it.
+The sequential helper preserves the original scheduler contract for direct
+characterization, while stable Ruleset v4 dispatches through the chunked
+quota helper. Both operate on generic live execution states and callbacks;
+retired VM and Agent API v1 controllers are not runtime consumers.
 
 It answers only: which execution state receives the next execution
 opportunity, in what order, how many opportunities per tick, and when to
 stop offering more because the state died. It has no opinion on what an
 "execution opportunity" does -- that is entirely up to each runtime's
-``execute_slot`` callback (a VM instruction step, a Python ``act()`` call,
-a supervised worker round-trip). It does not know about scoring,
+``execute_slot`` callback (currently an Agent API v2 process action). It does not know about scoring,
 statistics, replay, termination, or which runtime it is scheduling.
 """
 
@@ -64,6 +59,7 @@ def run_chunked_quota(
     chunk_size: int = 1,
     rotate_start: bool = False,
     tick: int = 1,
+    mirror_second_half: bool = False,
 ) -> None:
     """Give each live state in ``states`` up to ``quota`` turns in chunked round-robin order.
 
@@ -72,6 +68,13 @@ def run_chunked_quota(
     - If ``1 < chunk_size < quota``: each live entrant executes ``min(chunk_size, remaining)`` actions per pass.
     - If ``rotate_start`` is True: for each tick, the entrant sequence is cyclically rotated by
       ``(tick - 1) % len(states)`` so each entrant takes turns being the first mover in the tick.
+    - If ``mirror_second_half`` is True (V6 E4 mirrored pass order,
+      docs/research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md Sec J): with
+      ``P = ceil(quota / chunk_size)`` passes, each pass ``p`` with ``2 * p >= P`` walks the
+      (rotated) entrant sequence in reverse. The first mover, each entrant's own slot numbering
+      (``0 .. quota - 1``, one chunk per pass, in order) and the liveness checks are unchanged;
+      only which entrant goes first *within* the later passes changes. With a single pass it has
+      no effect. ``False`` -- every Ruleset unless it states otherwise -- is the historical order.
     """
 
     state_list = list(states)
@@ -91,7 +94,8 @@ def run_chunked_quota(
     for p in range(num_passes):
         start_slot = p * effective_chunk
         end_slot = min((p + 1) * effective_chunk, quota)
-        for state in state_order:
+        pass_order = state_order[::-1] if mirror_second_half and 2 * p >= num_passes else state_order
+        for state in pass_order:
             if not state.alive:
                 continue
             for slot in range(start_slot, end_slot):
@@ -115,4 +119,3 @@ def run_interleaved_quota(
 
 
 __all__ = ["run_chunked_quota", "run_interleaved_quota", "run_sequential_quota"]
-

@@ -10,7 +10,6 @@ from app.services.ruleset_options import (
     DEFAULT_DESIGNER_RULESET_ID,
     DESIGNER_RULESET_OPTIONS,
     RULESET_DESCRIPTION,
-    VM_RULESET_EXPLANATION,
     DesignerRulesetOption,
     best_designer_ruleset_for_agents,
     ruleset_supports_agent_metadata,
@@ -19,11 +18,14 @@ from app.services.ruleset_options import (
 # Shown next to a Ruleset selector when the current entrant selection has no
 # compatible Ruleset at all. Deliberately states the cause (the selection,
 # not the tool) and what to do, and is paired with disabled execution rather
-# than a silent incompatible fallback.
+# than a silent incompatible fallback. V6 Phase 2B.12 retired Agent API v1
+# and VM/blob execution, so the only remaining incompatibility is one of
+# those two agent kinds being selected -- there is no longer a second
+# Ruleset that could instead run them.
 NO_COMPATIBLE_RULESET_EXPLANATION = (
-    "No available Ruleset supports this combination of agents. Agent API v1 "
-    "and v2 agents cannot compete in the same match; select agents that share "
-    "one Agent API version."
+    "No available Ruleset supports this combination of agents. Only Agent "
+    "API v2 (process) Python agents are executable; select agents that "
+    "satisfy that."
 )
 
 
@@ -100,16 +102,8 @@ def sync_ruleset_choices_for_metadata(
             combo.setCurrentIndex(replacement)
 
     if explanation is not None:
-        kinds = {
-            item.get("kind")
-            for item in selected
-            if isinstance(item, dict)
-        }
         if replacement_id is None:
             explanation.setText(NO_COMPATIBLE_RULESET_EXPLANATION)
-            explanation.setVisible(True)
-        elif kinds & {"vm", "builtin", "blob"}:
-            explanation.setText(VM_RULESET_EXPLANATION)
             explanation.setVisible(True)
         else:
             explanation.setText("")

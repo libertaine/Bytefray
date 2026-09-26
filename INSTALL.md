@@ -14,8 +14,7 @@ v0.3; use `bytefray-replay-viewer` (or
 the corresponding portable
 application trees is named `bytefray-<version>-windows.zip`. Extract the
 entire ZIP for portable use; do not copy only the top-level executables
-because their adjacent DLLs, Qt plugins, resources, and pMARS files are
-required.
+because their adjacent DLLs, Qt plugins, and resources are required.
 
 The installer sets `BYTEFRAY_ROOT` to `%ProgramData%\Bytefray` and does not
 modify `PATH`.
@@ -48,7 +47,7 @@ from the [current release](https://github.com/libertaine/Bytefray/releases)
 (see the "Windows" section of [README.md](README.md#windows) for the exact
 current filename and download link) and extract the entire archive; do not
 copy only the top-level executables, since their adjacent DLLs, Qt plugins,
-resources, and pMARS files are required.
+and resources are required.
 
 Each of the four extracted applications (`bytefray`, `bytefray-cli`,
 `bytefray-agent-designer`, `bytefray-replay-viewer`) is self-contained and, with
