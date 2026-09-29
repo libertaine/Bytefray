@@ -1,0 +1,79 @@
+{
+  "d6": {
+    "content": {
+      "checks": {
+        "canonical": true,
+        "cell_seeds_on_list": true,
+        "commitment": true,
+        "execution_identity": true
+      },
+      "clause": "D-6",
+      "off_list_seeds": [],
+      "status": "PASS"
+    },
+    "path": "runs/research_v6_e6/v6-e6-matrix-v2-7de29a4a6954/records/d6.json",
+    "sha256": "e771802e256ac88c42ce18f95f0522d20c58f2881a58c1021f69620d806f9ac1"
+  },
+  "e6_analysis": {
+    "equals_pre_reveal_manifest": true,
+    "path": "runs/research_v6_e6/v6-e6-matrix-v2-7de29a4a6954/records/e6_analysis.json",
+    "sha256": "eb5c49ef34deb5e18ef51a445f72440e71af11f60d16a8b79520b6a1b017bb51"
+  },
+  "execution_matrix_identity": "v6-e6-exec-v1-62b88ba3ddb4",
+  "freeze_id": "v6-e6-freeze-v2-275057e27725",
+  "interpretation": {
+    "content": {
+      "E6-D": {
+        "clauses": {
+          "D-1": true,
+          "D-2": true,
+          "D-3": true,
+          "D-4": true,
+          "D-5": true,
+          "D-6": true,
+          "D-7": true
+        },
+        "status": "PASS"
+      },
+      "primary": {
+        "disposition": "REJECT as a gameplay candidate",
+        "qualifier": "and spending less on information beats spending more against at least one opponent: an information/action tradeoff, not a discovery tax",
+        "reading": "Under the parent, one fixed policy is a best response to every opponent. Under priced sensing, none is: priced sensing creates an opponent-dependent choice of how to allocate actions.",
+        "row": "R-CREATES"
+      },
+      "recorded_alongside": {
+        "E6-H3": "REFUTED",
+        "companion": {
+          "differences": [
+            "KC-5: fires (primary) vs does not fire (companion)"
+          ],
+          "reading": "differs"
+        },
+        "pathology": {
+          "PF-1": false,
+          "PF-2": false,
+          "PF-3": false,
+          "PF-4": true
+        }
+      }
+    },
+    "path": "runs/research_v6_e6/v6-e6-matrix-v2-7de29a4a6954/records/e6_interpretation.json",
+    "sha256": "0b1c21bd35748e053375aa23163fe92e00b5bcbee1eafa355ccc62a64b16a32f"
+  },
+  "pre_reveal_boundary": {
+    "commit": "69724fdddd091bb27deeff923f67679801a0d5a7",
+    "manifest": "tools/research/v6/e6/pre_reveal_manifest.json",
+    "pushed_before_reveal": true
+  },
+  "revealed_list": {
+    "bytes": 533,
+    "path": "tools/research/v6/e6/seeds_revealed.txt",
+    "reveal_commit": "0951fa393c57f73120733cd7249200d2b0ee3f71",
+    "seeds": 32,
+    "sha256": "61e292f6f9dcd951ccc6d8eaf5dc77a41c04c6c4865246ca3b5e5bac5c0e1c83"
+  },
+  "schema": "bytefray.v6.e6.final_record",
+  "seed_commitment": "61e292f6f9dcd951ccc6d8eaf5dc77a41c04c6c4865246ca3b5e5bac5c0e1c83",
+  "status": "E6 finalized: seed list revealed, D-6 PASS, E6-D PASS, registered interpretation and disposition issued by the frozen interpreter (run_e6 reveal, run_e6 interpret).",
+  "structural_matrix_id": "v6-e6-matrix-v2-7de29a4a6954"
+}
