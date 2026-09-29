@@ -8,6 +8,8 @@
 - **What exists:** no seed has been generated, no matrix cell has run, and no family member has played under a treatment Ruleset. The first v1 freeze (`bd3a3ff`) was superseded before exposure. §5 keeps its history, which is not rewritten.
 - **What remains:** the research lead's review of the v2 family and freeze. Seed generation (I-7), the controls (Q) and the treatment (T) each still need separate authorization.
 
+> **Later status (2026-09-29).** This record describes E6 at Checkpoint A, and its wording above is kept as written. E6 has since been executed and finalized; see §6 and the [results](V6_E6_PRICED_SENSING_RESULTS.md).
+
 **Branch:** `v6-research`
 **Date:** 2026-09-25
 **Governing records:**
@@ -190,3 +192,16 @@ No seed, no matrix cell, no family match under a treatment, no outcome of any ki
 2. **Q:** the controls, one worker per field, then `qualify`.
 3. **Checkpoint B.**
 4. **T:** the treatment, the treatment gates, the frozen analysis, then the reveal and D-6, and only then the interpretation and the results record.
+
+## 6. Addendum (2026-09-29): What Followed
+
+§5 is kept as written. Each step it lists was later authorized and carried out, in order:
+
+| Step | Record |
+|---|---|
+| I-7 | Seed commitment `61e292f6…5e1c83` and execution identity `v6-e6-exec-v1-62b88ba3ddb4`, committed at `0d8b638` before any cell |
+| Q and Checkpoint B | Both controls, qualified; recorded in the freeze record at `6949557` |
+| T | Both treatments, the treatment gates and the frozen analysis with the seeds hidden; pre-reveal manifest `69724fd`, re-verified and pushed before the reveal |
+| Reveal, D-6, interpretation | `tools/research/v6/e6/seeds_revealed.txt` (`0951fa3`); D-6 PASS; E6-D PASS; `tools/research/v6/e6/final_record.json` (`5100ec0`) |
+
+**Registered interpretation: `R-CREATES`**, qualified by E6-H2 SUPPORTED. **Registered disposition: REJECT as a gameplay candidate** (KC-5). See the [results](V6_E6_PRICED_SENSING_RESULTS.md).

@@ -464,7 +464,7 @@ Current status across the repository:
   [`docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md`](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_DESIGN_REVIEW.md),
   [`docs/research/v6/V6_E5_DESIGN_REVIEW_REVISION_1.md`](research/v6/V6_E5_DESIGN_REVIEW_REVISION_1.md),
   [`docs/research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md`](research/v6/V6_E5_ANCHOR_CORE_SEPARATION_REGISTRATION.md)).
-- **Future gameplay mechanics (E6 — Priced Sensing):** **Registered; implemented and re-frozen as v2 at Checkpoint A (research-only).**
+- **Future gameplay mechanics (E6 — Priced Sensing):** **Completed (research-only): registered interpretation R-CREATES, disposition REJECT as a gameplay candidate.**
   The first Branch B experiment, and a research question rather than a
   promised improvement: does limiting passive enemy-anchor visibility to
   min(declared reach, 32) cells, with search priced through MOVE and READ
@@ -480,11 +480,24 @@ Current status across the repository:
   tooling. Amendment 1 corrected three defects in the family's
   implementation before any seed existed. The structural matrix
   `v6-e6-matrix-v2-7de29a4a6954` and the analysis freeze
-  `v6-e6-freeze-v2-275057e27725` are frozen and supersede v1. No seed has
-  been generated and no matrix cell has run; the Checkpoint A review of
-  v2 comes next, and seed generation, the controls and the treatment
-  each need separate authorization
-  ([`docs/research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md`](research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md),
+  `v6-e6-freeze-v2-275057e27725` are frozen and supersede v1. The full
+  matrix (11,520 matches) then ran; the frozen analysis ran with the seeds
+  hidden; and after the reveal every E6-D clause passed, D-6 included.
+  E6-H1T is supported (no fixed best response to every opponent under
+  priced sensing), E6-H1C refuted (SPLIT is universal under the parent),
+  E6-H2 supported (less information wins against at least one opponent),
+  E6-H0 neither and E6-H3 refuted. The registered interpretation is
+  R-CREATES, qualified by E6-H2: an opponent-dependent choice of action
+  allocation and an information/action tradeoff, not a discovery tax. But
+  a new seat artifact (PF-4, in the PACED–ADAPT pairing) fires KC-5, so
+  the registered disposition is REJECT as a gameplay candidate:
+  strategically successful, product-unsuitable in its current form. The
+  λ = 1 companion reproduces the strategic findings without the seat
+  artifact, so the next design problem the research lead named is the
+  interaction between priced sensing and whole-tick disruption; it is not
+  yet registered. Both E6 Rulesets remain research-only
+  ([`docs/research/v6/V6_E6_PRICED_SENSING_RESULTS.md`](research/v6/V6_E6_PRICED_SENSING_RESULTS.md),
+  [`docs/research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md`](research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md),
   [`docs/research/v6/V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md`](research/v6/V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md),
   [`docs/research/v6/V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md`](research/v6/V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md),
   [`docs/research/v6/V6_PRICED_SENSING_DESIGN_REVIEW.md`](research/v6/V6_PRICED_SENSING_DESIGN_REVIEW.md),
