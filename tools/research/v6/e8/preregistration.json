@@ -1,0 +1,776 @@
+{
+  "schema": "bytefray.v6.e8.preregistration",
+  "version": 1,
+  "experiment": "V6 E8 active spatial sensing",
+  "authority": {
+    "document": "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md",
+    "revision": 2,
+    "registration_commit": "090d11e",
+    "document_sha256": "0c6d0b741a4584ac10bc5f2aa3837bbc83213b8a608352d86949bdf809737286",
+    "digest_rule": "SHA-256 of the document's bytes, with CRLF normalized to LF",
+    "governs": "revision 2",
+    "history": [
+      {"revision": 1, "commit": "28925fd", "document_sha256": "6d50dae648dbdb0def2bcb94644e0705b4d62d4e818f7288190df4f8fac4efbb", "standing": "historical provenance"}
+    ],
+    "note": "The markdown is the authoritative wording. This file transcribes revision 2 for the frozen instrument, without reinterpretation. Every value under a key named \"text\" is registered wording, copied verbatim with only markdown emphasis removed."
+  },
+  "references": {
+    "E8-DR": "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_DESIGN_REVIEW.md",
+    "E8-MF": "docs/research/v6/V6_E8_MECHANIC_FAMILY_DESIGN_REVIEW.md",
+    "SYN6": "docs/research/v6/V6_E2_E6_CROSS_EXPERIMENT_SYNTHESIS.md",
+    "PR6": "docs/research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md",
+    "PA": "docs/research/v6/V6_E6_POST_HOC_FACTORIAL_AUDIT.md",
+    "E6-R": "docs/research/v6/V6_E6_PRICED_SENSING_RESULTS.md",
+    "A1 (in §3.2)": {"document": "docs/research/v6/V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md", "corrections": ["C-1", "C-2", "C-3"], "distinct_from": "A1 containment (§13), E8-DR's research-containment option"},
+    "the E6 implementation plan": "docs/research/v6/V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md"
+  },
+  "transcription_notes": [
+    {"id": "TN-1", "where": "§9 (DR §E.2) and Appendix A.1 (DR §G.1)", "note": "The abbreviation DR is not in the markdown's list of abbreviated records. The sections it cites match docs/research/v6/V6_PRICED_SENSING_DESIGN_REVIEW.md: its §E.2 is seed inference as the one zero-action bypass, and its §G.1 gives the 1537/385 sweep. This is recorded, not resolved into the registered wording. No registered decision depends on it."},
+    {"id": "TN-2", "where": "Appendix A.2", "note": "\"At most 16 stride-8 READs\" is transcribed as registered. Under E6's verification-window order (anchor + 1 first, then anchor + 1 - 8k and anchor + 1 + 8k for k = 1 to 8), the worst case over m in [8, 64] with either sign is 17 READs, because the first READ lies in neither span. Appendix A.2 is not an input to any registered decision."}
+  ],
+  "research_question": {
+    "text": "Can an explicit spatial-sensing action, competing directly for the per-tick action opportunity, create repeated opponent-dependent acquisition choices without collapsing into a universally dominant search strategy?",
+    "source": "E8-MF §N",
+    "registered_form": {"conjunction": ["H8-SUB", "H8-REPEAT", "H8-CHANNEL"], "separate_conclusion": "H8-ADAPT"},
+    "requirement_c": {"text": "Requirement C is a separate registered conclusion"},
+    "manipulation": {"field": "sensing_mode", "text": "Every registered reading claims only what that substitution did, under that parent and this family"},
+    "scope_sentence": {
+      "text": "If H8-REPEAT succeeds under the whole-tick parent, E8 demonstrates repeated adaptation in an ecology where disruption makes reacquisition valuable. It does not establish that active sensing creates repeated adaptation independently of disruption economics.",
+      "source": "E8-DR §H.2",
+      "carried_verbatim_into": ["every H8-REPEAT reading", "the YES core answer"]
+    },
+    "e6_standing": {"text": "Parenthood confers no candidate status on E6"}
+  },
+  "boundaries": {
+    "B-1": {"text": "Whole-tick disruption is the primary parent", "where": ["§2"]},
+    "B-2": {"text": "λ = 1 is the companion only: a status comparison, never a verdict", "where": ["§2", "§6.6"]},
+    "B-3": {"text": "No T8+", "where": ["§2"]},
+    "B-4": {"text": "No purpose-built relocator", "where": ["§3.1"]},
+    "B-5": {"text": "The H8-REPEAT census is fixed from frozen behavior, before outcomes", "where": ["§3.5"]},
+    "B-6": {"text": "Requirement C is scoped to that census if it collapses to one defender stratum", "where": ["§3.5", "§7.3"]},
+    "B-7": {"text": "The acting callback's `decision_v2` record is authoritative for the sensing result", "where": ["§10"]},
+    "B-8": {"text": "The window of ±27 and its traversal semantics are frozen together", "where": ["§2.4", "§2.5"]},
+    "B-9": {"text": "A1 research containment, with incompatible pairings rejected before the match", "where": ["§13"]},
+    "B-10": {"text": "A3 is required before any product promotion", "where": ["§13"]},
+    "B-11": {"text": "The seat criterion is designed afresh on principle, not copied from E6", "where": ["§6.2"]},
+    "B-12": {"text": "The product-level closure of seed inference remains a promotion prerequisite", "where": ["§9", "§13"]}
+  },
+  "decisions": {
+    "R-1": {"decision": "Experiment identity", "value": "E8", "tooling": "tools/research/v6/e8/"},
+    "R-2": {"decision": "Window half-width w", "value": 27, "frozen_with": "R-3"},
+    "R-3": {"decision": "Coverage and traversal semantics", "value": "As in §2.4–§2.5"},
+    "R-4": {"decision": "Tolerance ε", "value": "1/16", "source": "PR6 O-3"},
+    "R-5": {"decision": "Bootstrap", "resamples": 1000, "stability": "9/10", "rng": "random.Random(42)", "source": "PR6 O-4"},
+    "R-6": {"decision": "Forced-line tick bound", "value": 3, "comparison": "<="},
+    "R-7": {"decision": "Seeds per cell", "value": 32},
+    "R-8": {
+      "decision": "ADAPT8's run of consecutive confirming verification observations before it stops verifying",
+      "value": 2,
+      "counted_in": "consecutive verification observations",
+      "rationale": {"text": "one verification observation establishes the anchor's current location, and a second, later one confirms that it persists."},
+      "unobserved": {"text": "A tick with no verification is unobserved and ignored."},
+      "withdrawn_rationale": {"text": "Revision 1's rationale, that two consecutive ticks form one complete scheduler-phase cycle covering both seat orders, is withdrawn."}
+    },
+    "R-9": {"decision": "The family seat-shift status", "value": "No magnitude threshold", "rule": "sign, plus the 9/10 stability convention", "magnitude_floor": null},
+    "R-10": {"decision": "The members", "value": 11, "evading_attacker": false},
+    "R-11": {"decision": "Evasion magnitude", "m_min": 8, "m_max": 64, "distribution": "uniform on the integers", "sign": "seeded"},
+    "R-12": {"decision": "The trace field names", "value": "As in §10, including `ResetRecord.sensing_window`"}
+  },
+  "treatment": {
+    "field": "RulesetPolicy.sensing_mode",
+    "values": ["passive", "active"],
+    "default": "passive",
+    "passive": {"text": "It reproduces every existing Ruleset byte for byte, including both E6 treatment Rulesets."},
+    "active": {"visible_enemy_anchor_addresses": "empty at every callback", "sense_available": true, "half_width": 27},
+    "detection_radius": {"text": "`detection_radius` keeps its value in each Ruleset. Under `\"active\"` it is inert, because passive visibility is off."}
+  },
+  "conditions": [
+    {"id": "C8", "ruleset_id": "bytefray-rules-6-research-sensing-r32", "provisional": false, "parent": null, "arm": "primary", "role": "control", "sensing_mode": "passive", "disruption": "whole-tick", "ruleset_is": "T-E6's Ruleset, unchanged"},
+    {"id": "T8", "ruleset_id": "bytefray-rules-6-research-sensing-active-w27", "provisional": true, "parent": "C8", "arm": "primary", "role": "treatment", "sensing_mode": "active", "disruption": "whole-tick"},
+    {"id": "C8L", "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32", "provisional": false, "parent": null, "arm": "companion", "role": "control", "sensing_mode": "passive", "disruption": "lambda = 1", "ruleset_is": "T-E6L's Ruleset, unchanged"},
+    {"id": "T8L", "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-active-w27", "provisional": true, "parent": "C8L", "arm": "companion", "role": "treatment", "sensing_mode": "active", "disruption": "lambda = 1"}
+  ],
+  "arms": {"primary": ["C8", "T8"], "companion": ["C8L", "T8L"], "companion_is": "a status comparison, never a verdict"},
+  "no_t8_plus": true,
+  "provisional_ruleset_ids": {"text": "The provisional Ruleset identifiers are fixed at implementation, and recorded in the freeze record before any seed exists."},
+  "fixed_across_conditions": {
+    "arena_size": 512, "tick_limit": 1000, "quota_Q": 8, "chunk": 2, "rotation": true, "capture_hold_ticks_K": 1,
+    "placement": "seeded", "spawn": "core_base", "pass_order": "forward"
+  },
+  "sense_action": {
+    "invariant": "Ruleset invariant",
+    "kind": "ActionKindV2.SENSE",
+    "wire_value": "sense",
+    "operand": "one integer, the target t",
+    "carries_value": false,
+    "normalization": "t mod 512",
+    "reach": {"text": "Applied if and only if the circular distance from t to the acting process's anchor is ≤ that process's declared reach.", "rejected_status": "REJECTED_OUT_OF_REACH", "previous_action_applied_when_rejected": false},
+    "result": {"text": "The ascending tuple of distinct positions p of the processes of every other live entrant, such that the circular distance from p to t is ≤ 27. Positions are taken at the instant the action executes. Co-located anchors appear once."},
+    "circular_distance": {"text": "d(x, y) = min(r, 512 − r), with r = |x − y| mod 512. The comparison is inclusive, so the window is 55 cells."},
+    "price": {"text": "One offer, charged in the quota exactly as a READ"},
+    "effect_on_match_state": {"text": "None: no memory write, no position change, no disruption, no territory"},
+    "exposure": {"text": "None. The sensed entrant learns nothing (E8-DR §B.4, X0)."},
+    "delivery": {"text": "At the acting process's next callback, `ObservationV2.previous_sense_anchors` holds the tuple. It is `None` if that process's previous action was not an applied SENSE. After a SENSE, `previous_read_value` and `previous_read_owner` are `None`."},
+    "under_passive": {"text": "SENSE is not accepted. In the matrix it cannot occur, because the pre-match compatibility gate of §13 refuses every pairing in which it could."},
+    "suppression": {"text": "No new rule. A suppressed process gets no callback, so it cannot sense (E8-DR §B.3)."}
+  },
+  "coverage": {"half_width": 27, "cells": 55, "text": "A window centered on c covers exactly the 55 cells x with d(x, c) ≤ 27."},
+  "traversal": {
+    "discovery": {
+      "center_offset": 91, "step": 55, "k_first": 0, "k_last": 6, "windows": 7,
+      "centers": {"text": "While no enemy anchor is known, the member's successive sensing actions are centered on c_k = (`own_core_base` + σ · (91 + 55k)) mod 512, for k = 0, 1, …, 6."},
+      "sigma": {"text": "σ ∈ {+1, −1} is drawn once per match from the member's seeded stream, as E6's search direction was."},
+      "arc": {"from_offset": 64, "to_offset": 448, "cells": 385, "text": "The seven windows tile the 385-cell arc [own + 64, own + 448] exactly."},
+      "stop": {"text": "The traversal stops at the first result containing an enemy anchor."},
+      "restart": {"text": "If all seven are empty, the traversal restarts at k = 0. That can happen only if every enemy anchor has left the arc."}
+    },
+    "reacquisition": {
+      "applies_to": ["repeat", "adaptive"],
+      "center_offsets": {"first": 0, "second": "+τ·46", "third": "−τ·46"},
+      "offset_magnitude": 46,
+      "centers": {"text": "Given the address a of a known enemy anchor, the successive windows are centered on a, then a + τ · 46, then a − τ · 46. Under `\"passive\"` the member MOVEs toward the same centers (§3.2)."},
+      "tau": {"text": "τ ∈ {+1, −1} is drawn per traversal from the member's seeded stream."},
+      "stop": {"text": "The traversal stops at the first result containing an enemy anchor. The missing a is then replaced under the matching rule below"},
+      "exhausted": {"text": "If all three are empty, the anchor becomes unknown. The member then continues with its no-anchor behavior (§3.2)."}
+    },
+    "verification": {"text": "Verification is a sensing action centered on a. It is the re-acquisition traversal's first window."},
+    "knowledge_rules": {
+      "labels": "KU-1 to KU-9 are this transcription's labels, in the markdown's order.",
+      "purpose": {"text": "These rules distinguish \"not observed, because the member did not look there\" from \"looked there, and it is gone\""},
+      "rules": [
+        {"id": "KU-1", "text": "A SENSE result updates knowledge only within the circular window actually sensed: the 55 cells within 27 of its target (§2.4)."},
+        {"id": "KU-2", "text": "Every address the result returns becomes known."},
+        {"id": "KU-3", "text": "A previously known address inside that window which is absent from the returned result becomes missing."},
+        {"id": "KU-4", "text": "A known address outside that window is unchanged."},
+        {"id": "KU-5", "text": "Under `\"passive\"`, the tracked set at each callback is the visible set of the entrant's previous callback. A tracked address absent from the current visible set becomes missing."},
+        {"id": "KU-6", "text": "If more than one missing address requires re-acquisition, they are serviced in ascending numeric-address order."},
+        {"id": "KU-7", "text": "A missing address is replaced by the returned address at minimum circular distance from it, the lower numeric address on a tie. Under `\"passive\"`, the returned addresses are the visible set."},
+        {"id": "KU-8", "text": "When verification needs a single anchor and several are known, it is centered on the lowest numeric address."},
+        {"id": "KU-9", "text": "Wherever \"lowest\" orders a set of addresses, the order is ascending numeric address."}
+      ]
+    }
+  },
+  "population": {
+    "order": ["RUSH8", "REACQ8", "PACED8", "STEALTH8", "LURK8", "SPLIT8", "GUARD8", "EVADE8", "GREED8", "ADAPT8", "STRESS8"],
+    "members": {
+      "RUSH8": {"acquire": "spatial-fast", "reacquire": "once", "posture": "attack", "evade": "off", "processes": 1, "role": "The high-acquisition baseline"},
+      "REACQ8": {"acquire": "spatial-fast", "reacquire": "repeat", "posture": "attack", "evade": "off", "processes": 1, "role": "The H8-REPEAT twin: it differs from RUSH8 only in `reacquire`"},
+      "PACED8": {"acquire": "spatial-paced", "reacquire": "once", "posture": "attack", "evade": "off", "processes": 1, "role": "A lower-acquisition twin: it differs only in `acquire`"},
+      "STEALTH8": {"acquire": "ownership", "reacquire": "once", "posture": "attack", "evade": "off", "processes": 1, "role": "The channel contrast: READ only"},
+      "LURK8": {"acquire": "none", "reacquire": null, "posture": "attack", "evade": "off", "processes": 1, "role": "The no-acquisition twin: it differs only in `acquire`"},
+      "SPLIT8": {"acquire": "spatial-fast", "acquire_process": "sensor", "reacquire": "once", "posture": "attack", "evade": "off", "processes": 2, "shares": {"sensor": "1/4", "striker": "3/4"}, "role": "Division of labor"},
+      "GUARD8": {"acquire": "spatial-fast", "reacquire": "once", "posture": "guard", "evade": "off", "processes": 1, "role": "The stationary defender"},
+      "EVADE8": {"acquire": "spatial-fast", "reacquire": "once", "posture": "guard", "evade": "on-hit", "processes": 1, "role": "The naturally evading defender. It differs from GUARD8 only in `evade`."},
+      "GREED8": {"acquire": "none", "reacquire": null, "posture": "paint", "evade": "off", "processes": 1, "role": "Greed"},
+      "ADAPT8": {"acquire": "spatial-fast", "reacquire": "adaptive", "posture": "attack", "evade": "off", "processes": 1, "role": "Requirement C (secondary to the main rows; §5.3)"},
+      "STRESS8": {"acquire": "none", "reacquire": null, "posture": "guard", "evade": "off", "processes": 1, "stress": true, "role": "The tick- and callback-keyed stress member (E8-I4). It is separate from ADAPT8 (E8-DR O-9)."}
+    },
+    "sets": {
+      "pi_f": ["RUSH8", "REACQ8", "PACED8", "STEALTH8", "LURK8", "SPLIT8", "GUARD8", "EVADE8", "GREED8", "STRESS8"],
+      "pi": ["RUSH8", "REACQ8", "PACED8", "STEALTH8", "LURK8", "SPLIT8", "GUARD8", "EVADE8", "GREED8", "ADAPT8", "STRESS8"],
+      "a8": ["RUSH8", "REACQ8", "PACED8", "STEALTH8", "LURK8"],
+      "phase_sensitive": ["PACED8", "EVADE8", "ADAPT8", "STRESS8"]
+    },
+    "pi_f_rule": {"text": "Π_F, the candidate best responses, is every member except ADAPT8, as in PR6 §3.1."},
+    "a8_rule": {
+      "why": {"text": "They are the comparable single-process policies whose relevant strategic difference is how and when they acquire information: posture, processes and evasion are fixed across them."},
+      "restriction": {"text": "It is methodological: defenders cannot become a universal best response for reasons unrelated to the acquisition-channel question."},
+      "opponents": {"text": "Its opponents are the complete eleven-member field Π."},
+      "frozen": {"text": "The set is frozen with the family, and never changed after outcomes exist."}
+    },
+    "no_purpose_built_relocator": true,
+    "phase_sensitive_rule": {"text": "These must stay in the family and be reported as a stratum (§6.3). They are never excluded (E8-I4):"}
+  },
+  "member_semantics": {
+    "offer_order": {
+      "rule": "an offer goes to the first applicable step",
+      "attack": ["disrupt a known enemy anchor not yet written this tick", "write the enemy core by the cyclic cursor", "a verification READ", "acquisition", "paint"],
+      "guard": ["disrupt a known enemy anchor not yet written this tick", "acquisition", "repair its own core by the cyclic guard cursor"],
+      "paint": ["paint"]
+    },
+    "acquisition_eligible": {
+      "text": "An offer is acquisition-eligible when the acquisition step is reached and no enemy anchor is known (discovery).",
+      "reacquisition": {"text": "Re-acquisition does not wait for the acquisition step: it takes precedence over the posture steps (below)"}
+    },
+    "known_set": {
+      "scope": {"text": "It is family-policy knowledge, not engine visibility:"},
+      "passive": {"text": "Under `\"passive\"`, the known set is the current visible-anchor set (`visible_enemy_anchor_addresses`). An address that leaves the visible set is no longer known."},
+      "active": {"text": "Under `\"active\"`, it is the remembered result of SENSE, under §2.5's knowledge-update rules. An address becomes known when an applied SENSE returns it, at delivery (§2.3), and remains remembered until a later applied SENSE replaces that knowledge. A refused SENSE changes nothing."},
+      "policy_only": {"text": "The substitution exists only inside the E8 policy. For E8 family-policy decisions that E6 based on the visible-anchor set, the policy uses the mode-specific known-anchor set. The actual observation field remains actual visibility: under `\"active\"`, `visible_enemy_anchor_addresses` stays empty at every callback (D8-2)."},
+      "last_known_anchor": {"text": "E8 sets the policy's `last_known_anchor` from the mode-specific known set in the same circumstances in which E6 set it from visibility. In the E6 family source, it is set to the lowest address at each callback whose set is nonempty, kept when the set empties, and cleared when the verification READ window is exhausted without an enemy core cell."},
+      "passive_once": {"text": "A passive `once` member may disrupt currently visible anchors, but never disrupts or moves toward a stale last-known address that has left the visible set."}
+    },
+    "channel_difference": {
+      "passive": {"text": "Under `\"passive\"`, losing current visibility can cause acquisition behavior to resume, because discovery applies whenever the known set, which is the visible set, is empty."},
+      "c8_consequence": {"text": "In C8 and C8L, GUARD8 and EVADE8, whose guard order puts acquisition before repair, therefore resume sweeping whenever they lose sight of the opponent, EVADE8 included after its own evasions."},
+      "active": {"text": "Under `\"active\"`, remembered SENSE information persists under the knowledge-update rules, so a `once` policy does not automatically re-acquire merely because there is no current passive visibility."},
+      "standing": {"text": "This is a genuine channel difference, not an implementation artifact. It is stated beside the readings (§7.4)."}
+    },
+    "reacquisition_precedence": {
+      "applies_to": ["repeat", "adaptive"],
+      "labels": "RP-1 to RP-7 are this transcription's labels, in the markdown's order.",
+      "rules": [
+        {"id": "RP-1", "text": "Once a re-acquisition search is in progress, its next acquisition action takes precedence over the posture steps until the search terminates: the next SENSE under `\"active\"`, or the next MOVE under `\"passive\"` (§2.5)."},
+        {"id": "RP-2", "text": "While re-acquisition is in progress, the first offer of a later tick continues that search rather than restarting verification of the stale address."},
+        {"id": "RP-3", "text": "When it starts. A search starts when a known address (under `\"passive\"`, a tracked one) becomes missing and the result that showed it missing gives no replacement under the matching rule (§2.5)."},
+        {"id": "RP-4", "text": "Termination. A search ends when the missing anchor is replaced under the registered matching rule, or when the registered search sequence is exhausted, after which the anchor is unknown (§2.5). Under `\"passive\"`, the search's result at each of its callbacks is that callback's visible set, and the sequence is exhausted when the visible set on reaching the last center shows no enemy anchor."},
+        {"id": "RP-5", "text": "The precedence is over posture actions only. It does not override a separately registered member-level step, such as a pending evasion or damage-response action; those keep their registered priority. No member that re-acquires in the frozen family has such a step."},
+        {"id": "RP-6", "text": "With precedence, re-acquisition consumes offers that could otherwise have attacked, defended or repaired."},
+        {"id": "RP-7", "text": "A consequence, recorded rather than hidden. Under C8 and C8L, REACQ8 and ADAPT8 can chase a passive anchor that leaves visibility. O-REACQ reports every re-acquisition by cause."}
+      ]
+    },
+    "callback_index": {
+      "base": 1, "reset_on": "a change of current_tick", "counts": "every callback of the entrant, across all its processes",
+      "text": "is the 1-based count of that entrant's callbacks within the current tick, reset when `current_tick` changes. An entrant's first callback of a tick has index 1, and the count includes the callbacks of all its processes. This is the frozen E6 family's convention."
+    },
+    "e6_semantics": {
+      "text": "The posture, verification and core-cursor semantics are E6's, as corrected by A1 (the E6 implementation plan §5.2, and A1 C-1 to C-3). Only the acquisition, re-acquisition, evasion, adaptive and stress semantics below are new. The implementation plan must transcribe all of them without change.",
+      "new": ["acquisition", "re-acquisition", "evasion", "adaptive", "stress"],
+      "tests": {"text": "Engine-level behavior tests against scripted non-family opponents verify them before the freeze (A1 §2; SYN6 §H, item 4)."}
+    },
+    "parameters": {
+      "acquire=spatial-fast": {"passive": {"text": "E6's fast MOVE sweep (MOVE 64 · σ on every acquisition-eligible offer)"}, "active": {"text": "The next discovery-traversal SENSE on every acquisition-eligible offer (§2.5)"}},
+      "acquire=spatial-paced": {"passive": {"text": "E6's paced sweep: acquisition only on odd callback indexes, paint otherwise"}, "active": {"text": "The same pacing, with SENSE"}},
+      "acquire=ownership": {"passive": {"text": "E6's READ stride search"}, "active": {"same_as_passive": true}},
+      "acquire=none": {"passive": {"text": "No acquisition"}, "active": {"same_as_passive": true}},
+      "reacquire=once": {
+        "passive": {"text": "Never re-acquires. It disrupts only known anchors, which under `\"passive\"` are the currently visible ones, never a stale last-known address"},
+        "active": {"text": "Never re-acquires. It disrupts its known anchors, the addresses its SENSE results returned."}
+      },
+      "reacquire=repeat": {
+        "passive": {"text": "When a tracked enemy anchor becomes missing (§2.5), it MOVEs toward the re-acquisition centers of §2.5, in order, at most 64 per MOVE, with precedence over the posture steps"},
+        "active": {"text": "At its first offer of each tick after first discovery, before the posture steps, it verifies (a SENSE centered on a), unless a re-acquisition search is in progress. A result showing a missing, with no replacement, starts the search, which continues on its next offers with precedence over the posture steps"},
+        "move_max": 64
+      },
+      "reacquire=adaptive": {
+        "k": 2,
+        "passive": {"text": [
+          "As `repeat`, until k = 2 consecutive verification observations confirm the enemy anchor at a with no observed relocation; then as `once` for the rest of the match",
+          "A tick in which ADAPT8 receives no applicable verification callback is unobserved: it neither advances nor resets the count.",
+          "A first callback at which a search is in progress, or no anchor is known, is not an applicable verification callback.",
+          "An observed relocation, meaning a found missing at a verification or at any other callback, resets the count to 0.",
+          "Here a verification observation is the visible set at its first offer of the tick, which confirms the lowest tracked address if it contains it."
+        ]},
+        "active": {"text": "The same, but a verification observation is the result of its first-offer verification SENSE"}
+      },
+      "evade=on-hit": {
+        "m_min": 8, "m_max": 64,
+        "passive": {"text": [
+          "At its first callback of a tick, it infers a hit if either (i) `current_tick` > `last_callback_tick` + 1, meaning a whole tick passed with no callback, or (ii) it received fewer than 8 callbacks in the most recent tick in which it received any.",
+          "On an inferred hit, that callback is a MOVE of σ_e · m, with m on [8, 64] and σ_e drawn from its seeded stream, fresh for each evasion",
+          "It repeats on every inferred hit."
+        ]},
+        "active": {"same_as_passive": true}
+      },
+      "stress": {
+        "at_callback_index": 1, "check_cell": "(t − 1) mod 8", "repair_value": "the normal core beacon value",
+        "passive": {"text": [
+          "At callback index 1 of each tick, before anything else, it READs own-core cell (t − 1) mod 8 (E6 ADAPT's P-4 schedule).",
+          "If that cell's owner is not itself, its next action repairs that cell with the normal core beacon value, identical to the guard posture's repair write",
+          "The value is semantic, since READ-based inference depends on it. Otherwise it follows the guard posture."
+        ]},
+        "active": {"same_as_passive": true}
+      },
+      "condition_detection": {"passive": {"text": "`MatchContextV2.sensing_window` is `None`, so the member never returns SENSE"}, "active": {"sensing_window": 27}}
+    },
+    "no_sense_when_none": {"text": "No member returns SENSE when `sensing_window` is `None`. This is a correctness requirement, because an invalid v2 action makes the entrant forfeit (`process_runtime.py:1189–1212`).", "checked_by": ["D8-9", "CQ8-1"]},
+    "adapt8_freeze_tests": {
+      "kind": "engine-level behavior tests, run before the freeze",
+      "cases": [
+        {"text": "ADAPT8 in Seat A and in Seat B;"},
+        {"text": "against a scripted static opponent and a scripted responsive evader;"},
+        {"text": "under both parents;"},
+        {"text": "with hits placed at every chunk position of both seat orders, so that every suppression pattern PA §8 characterizes is exercised;"},
+        {"text": "with ticks in which ADAPT8 itself receives no callback"}
+      ],
+      "asserts": {"text": "the count of consecutive confirming verification observations; that an unobserved tick neither advances nor resets it; the reset on observed relocation; and the switch at the second consecutive confirmation"},
+      "never_an_outcome": true
+    }
+  },
+  "packages": {
+    "per_member": ["primary", "twin"],
+    "identifiers": "opaque",
+    "source": "one byte-identical policy source, with parameters supplied through `MatchContextV2.parameters`",
+    "runtime_identity": "seat label only",
+    "static_class": {"text": "Each package is statically classified for the containment gate of §13 as SENSE, gated by context: it returns SENSE only when `sensing_window` is not `None`."}
+  },
+  "fields": {
+    "F1": {"pairs": "every ordered pair of distinct members", "ordered_pairs": 110, "seeds": 32, "cells_per_condition": 3520},
+    "F2": {"pairs": "every twin mirror, in both orientations", "mirrors": 11, "orientations": 2, "seeds": 32, "cells_per_condition": 704},
+    "cells_per_condition": 4224,
+    "conditions": 4,
+    "cells_total": 16896,
+    "seeds": {"text": "The same ordered seed list is used for every cell and every condition, so cells pair exactly across all four."}
+  },
+  "census": {
+    "computed": {"text": "At the family freeze, from the frozen parameters and source, before any seed exists. A static, tested procedure computes it, and it is committed in the freeze record. No outcome of any kind enters it."},
+    "units": "opponents Y ∈ Π",
+    "contrast": {"repeat": "REACQ8", "once": "RUSH8"},
+    "criteria": [
+      {"id": "E-1", "criterion": {"text": "Y can relocate after being located or disrupted"}, "decided_by": {"parameter": "evade", "equals": "on-hit"}},
+      {"id": "E-2", "criterion": {"text": "That relocation stales the anchor information that is of use"}, "decided_by": {"arithmetic": {"text": "Every evasion moves the anchor by m ≥ 8 ≥ 1."}, "evasion_min": 8, "holds_if": "evasion_min >= 1"}},
+      {"id": "E-3", "criterion": {"text": "The opponent has an economic reason to re-acquire"}, "decided_by": {"disrupting_attackers": ["REACQ8", "RUSH8"], "their_posture": "attack", "hit_cost_min_offers_primary": 6, "reacquisition_worst_case_sense": 3, "holds_if": "hit_cost_min_offers_primary > reacquisition_worst_case_sense"}}
+    ],
+    "economics": {
+      "defined_under": {"text": "The census is defined under the primary parent's economics only."},
+      "companion": {"hit_cost_offers": 1, "reacquisition_expectation": "225/114", "text": "Under λ = 1 a hit costs 1 offer, which is less than the re-acquisition expectation of 225/114, so E-3 fails there by construction."},
+      "companion_uses": {"text": "The companion evaluates the same census"}
+    },
+    "revision_2_rederivation": {
+      "text": [
+        "E-1 is decided by its registered rule, `evade` = on-hit. Revision 2 changes no member parameter, and EVADE8 alone has it.",
+        "Under `\"active\"` no other member's anchor moves at all: acquisition, verification and re-acquisition are SENSE actions there, and only an evasion is a MOVE.",
+        "E-2 is arithmetic, and unchanged.",
+        "E-3 now describes what REACQ8 actually does.",
+        "The frozen census is still the tested static procedure's output at the family freeze (above). This re-derivation is its prediction."
+      ]
+    },
+    "predicted": ["EVADE8"],
+    "predicted_standing": "a prior, until the static procedure computes the census at the family freeze",
+    "scope_rule": {"text": "Requirement C is scoped to the EVADE8 stratum. H8-REPEAT and H8-ADAPT are read as claims about re-acquisition against a naturally evading defender, not about the whole family."},
+    "if_empty": {"text": "If the frozen census is empty, H8-REPEAT and H8-ADAPT are NOT EVALUABLE, and the pre-seed halt of §12 applies."}
+  },
+  "operationalizations": {
+    "exact_arithmetic": {"text": "All arithmetic is exact (`Fraction`), and every comparison is closed exactly as written."},
+    "O-VALUE": {"win": "1", "tie": "1/2", "loss": "0", "reused": "PR6 §4"},
+    "O-PAYOFF": {"per_seed": "p_s(i, j)", "u": "u(i, j) over 32 seeds", "self": "1/2", "reused": "PR6 §4"},
+    "O-EPS": {"epsilon": "1/16", "reused": "PR6 §4"},
+    "O-BR": {"best_response": "BR_ε(j) ⊆ Π_F", "candidates": "pi_f", "opponents": "pi", "universality": "in BR_ε(j) for every j ∈ Π", "P_none": "no member of Π_F is universal", "reused": "PR6 §4"},
+    "O-BOOT": {
+      "resamples": 1000, "draws": 32, "rng": "random.Random(42)", "rng_seed": 42, "with_replacement": true,
+      "draw_form": "tuple(rng.randrange(32) for _ in range(32))",
+      "convention": "E6 payoff.resample_positions",
+      "joint": true,
+      "stability_min": "9/10",
+      "stability_count_min": 900,
+      "text": [
+        "applied jointly to every cell and every condition",
+        "Joint means that one resampled seed multiset is used to recompute the control and the treatment metrics alike, and any cross-condition predicate is evaluated within that draw.",
+        "stab(P) ≥ 9/10 means that P holds in at least 900 of the 1,000 registered resamples.",
+        "Wherever a paired or control–treatment quantity is computed, the same resampled seed-position multiset recomputes both sides, within the draw."
+      ]
+    },
+    "O-CLASS": {"source": "E3's `outcome_class`, and \"decided by capture\"", "reused": "PR6 §4"},
+    "O-EARLY": {"forced_line_tick_max": 3, "text": "a forced-line capture is a capture of d at a tick ≤ 3"},
+    "O-SEAT": {"source": "E4's `pairing_seat_metrics` and `mirror_seat_metrics` (SDI, GSB, SDom, SCD), with mirrors per seed", "reused": "PR6 §4"},
+    "O-CONTACT": {"text": "hostile core contact, from replay memory diffs."},
+    "O-EVIDENCE": {"text": "n_distinct beside every figure; every unit included; rates with fixed denominators.", "rate_min_n_distinct": 8},
+    "O-NEUTRAL": {"sdom_lt": "9/10", "abs_gsb_le": "1/10", "text": "A unit is seat-neutral if and only if SDom < 9/10 and |GSB| ≤ 1/10."},
+    "O-ACQ": {"descriptive_only": true, "covers": [
+      {"text": "each entrant's first-discovery tick, meaning its first SENSE result or visible set containing an enemy anchor;"},
+      {"text": "the number of SENSE actions before and after first discovery;"},
+      {"text": "READ probes;"},
+      {"text": "per-pairing counts of cells with no discovery by either entrant."}
+    ]},
+    "O-REACQ": {"descriptive_only": true,
+      "event": {"text": "A re-acquisition event is a SENSE result, or passive re-sighting, that shows an enemy anchor at an address other than the missing one it replaces (§2.5)"},
+      "causes": {
+        "evasion": {"text": "evasion, if that enemy anchor moved since it was last known, according to the replay's tick-boundary snapshots and the traces;"},
+        "own_movement": {"text": "own movement, if the member's own anchor moved and the enemy's did not."}
+      }
+    },
+    "O-VERIF": {"member": "ADAPT8", "text": "V(j) is the median, over the 32 seeds, of ADAPT8's mean per-match verification count against j across the two orientations."}
+  },
+  "gates": {
+    "E8-D": {
+      "reads_no_gameplay_outcome": true,
+      "kinds": ["Ruleset invariant", "Family characterization", "Family characterization, checked statically", "Protocol"],
+      "clauses": [
+        {"id": "D8-1", "name": "Sensing exactness", "kind": "Ruleset invariant", "evaluated_on": "T8 and T8L, all cells", "half_width": 27},
+        {"id": "D8-2", "name": "No free sensing", "kind": "Ruleset invariant", "evaluated_on": "T8 and T8L, all cells"},
+        {"id": "D8-3", "name": "No-information identity", "kind": "Family characterization", "evaluated_on": "T8 and T8L",
+          "members": ["LURK8", "GREED8"],
+          "opponents": ["RUSH8", "REACQ8", "PACED8", "STEALTH8", "SPLIT8", "GUARD8", "EVADE8", "ADAPT8", "STRESS8"],
+          "orientations": 2, "seeds": 32, "matched_pairs_per_condition": 576,
+          "compared_action": ["kind", "operand", "value"],
+          "compared_observation": ["visible_enemy_anchor_addresses", "previous_sense_anchors", "previous_read_value", "previous_read_owner"],
+          "excluded": ["package IDs", "wall_time_ms", "diagnostics"],
+          "opponent_rule": {"text": "The opponent ranges over the nine members of Π other than LURK8 and GREED8"},
+          "twin_rule": {"text": "Twin identity is not assumed here; it is tested on its own terms (§3.3, D8-11)."}
+        },
+        {"id": "D8-4", "name": "Action charging", "kind": "Ruleset invariant", "evaluated_on": "T8 and T8L, all cells", "quota": 8},
+        {"id": "D8-5", "name": "No match-state change", "kind": "Ruleset invariant", "evaluated_on": "T8 and T8L, all cells"},
+        {"id": "D8-6", "name": "Parent identity", "kind": "Ruleset invariant", "evaluated_on": "The parent freeze; C8 and C8L provenance"},
+        {"id": "D8-7", "name": "Initial invisibility", "kind": "Ruleset invariant", "evaluated_on": "C8 and C8L, all cells", "distance_gt": 32},
+        {"id": "D8-8", "name": "No early blind strike", "kind": "Family characterization", "evaluated_on": "All four conditions", "ticks": [1, 2]},
+        {"id": "D8-9", "name": "Discipline and containment", "kind": "Family characterization, checked statically", "evaluated_on": "All packages, at freeze", "forbidden_calls": ["open", "exec", "eval", "compile", "__import__"], "sense_guard": "sensing_window is not None"},
+        {"id": "D8-10", "name": "Seed commitment", "kind": "Protocol", "evaluated_on": "After the frozen analysis, before interpretation"},
+        {"id": "D8-11", "name": "Mirror relabeling", "kind": "Ruleset invariant", "evaluated_on": "All F2 cells"},
+        {"id": "D8-12", "name": "Trace completeness", "kind": "Protocol", "evaluated_on": "All four conditions"},
+        {"id": "D8-13", "name": "Delivery consistency", "kind": "Ruleset invariant", "evaluated_on": "T8 and T8L"},
+        {"id": "D8-14", "name": "No invalid action", "kind": "Protocol", "evaluated_on": "All four conditions"},
+        {"id": "D8-15", "name": "Window fidelity", "kind": "Ruleset invariant", "evaluated_on": "All four conditions", "active_window": 27, "passive_window": null}
+      ],
+      "pass_rule": "E8-D = PASS if and only if every clause passes",
+      "final_after": "D8-10",
+      "no_reading_before": "the seed reveal"
+    },
+    "CQ8": {
+      "before": "any treatment cell exists",
+      "checks": [
+        {"id": "CQ8-1", "name": "Containment on controls"},
+        {"id": "CQ8-2", "name": "Twin identity until the first trigger", "pairs": [["RUSH8", "REACQ8"], ["GUARD8", "EVADE8"]]},
+        {"id": "CQ8-3", "name": "The census is committed"},
+        {"id": "CQ8-4", "name": "Control-against-control", "expects": {"H8-SUB_equals_H8-PAR": true, "H8-TAX": "SUPPORTED", "A": "1", "B": "1", "PF8-1_to_PF8-4_raised": false, "flagged_units": 0, "H8-SEAT": "REFUTED", "delta_g_point": "0", "delta_g_every_resample": "0", "row": "the interpretation row the equality implies"}},
+        {"id": "CQ8-5", "name": "The seat strata are committed"}
+      ],
+      "on_failure": {"text": "If any CQ8 check fails, halt before any treatment."}
+    }
+  },
+  "hypotheses": {
+    "status_vocabulary": ["SUPPORTED", "REFUTED", "NEITHER"],
+    "extra_status": {"H8-REPEAT": ["NOT EVALUABLE"], "H8-ADAPT": ["NOT EVALUABLE", "NOT INTERPRETABLE"]},
+    "otherwise": {"text": "Anything else is NEITHER."},
+    "evaluation": {"text": "Every predicate below is evaluated at the point estimate, and its stability is taken under O-BOOT."},
+    "H8-SUB": {"condition": "T8", "statement": {"text": "The best response under T8 is not constant"}, "supported": {"text": "P_none on T8, and stab(P_none) ≥ 9/10"}, "refuted": {"text": "not P_none, and stab(not P_none) ≥ 9/10"}, "bootstrap": true},
+    "H8-PAR": {"condition": "C8", "statement": {"text": "The best response under C8 is not constant"}, "supported": {"text": "The same, computed on C8"}, "refuted": {"text": "The same, on C8"}, "bootstrap": true},
+    "H8-CHANNEL": {"condition": "T8", "statement": {"text": "No acquisition policy is universal among single-process attackers under T8"}, "supported": {"text": "Q_none: no i ∈ A8 lies in BR^A_ε(j) for every j ∈ Π; and stab(Q_none) ≥ 9/10"}, "refuted": {"text": "not Q_none, and stab(not Q_none) ≥ 9/10"}, "bootstrap": true},
+    "H8-LESS": {"condition": "T8", "statement": {"text": "Lower acquisition can win under T8"}, "supported": {"text": "P_win over L8, and stab(P_win) ≥ 9/10"}, "refuted": {"text": "P_never over L8, and stab(P_never) ≥ 9/10"}, "bootstrap": true},
+    "H8-REPEAT": {"condition": "T8", "statement": {"text": "Re-acquisition pays against the census under T8"}, "supported": {"text": "Some Y ∈ 𝒞 has Δ^R_Y ≥ ε, and stab(∃Y ∈ 𝒞: Δ^R_Y ≥ ε) ≥ 9/10"}, "refuted": {"text": "Every Y ∈ 𝒞 has Δ^R_Y ≤ 0, and stab(∀Y ∈ 𝒞: Δ^R_Y ≤ 0) ≥ 9/10"}, "bootstrap": true, "not_evaluable": {"text": "H8-REPEAT is NOT EVALUABLE if and only if 𝒞 is empty."}},
+    "H8-ADAPT": {"condition": "T8", "statement": {"text": "Adaptation pays under T8"}, "supported": {"text": "U(ADAPT8) ≥ max(U(RUSH8), U(REACQ8)), and the stability of that ≥ 9/10"}, "refuted": {"text": "U(ADAPT8) ≤ max(U(RUSH8), U(REACQ8)) − ε, and the stability of that ≥ 9/10"}, "bootstrap": true, "not_evaluable": {"text": "H8-ADAPT is NOT EVALUABLE if and only if 𝒞 is empty. If 𝒞 is not empty but its preconditions fail, it is NOT INTERPRETABLE (§7.3)."}},
+    "H8-FL": {"condition": "T8", "statement": {"text": "A delayed forced line defeats every defender under T8"}, "supported": {"text": "Some attacker a has min over d of FL(a, d) ≥ 9/10"}, "refuted": {"text": "Every attacker has min over d of FL(a, d) ≤ 1/10"}, "bootstrap": false},
+    "H8-TAX": {"conditions": ["C8", "T8"], "statement": {"text": "Delay only: the substitution merely delays"}, "supported": {"text": "A ≥ 9/10 and B ≥ 9/10"}, "refuted": {"text": "A ≤ 2/3"}, "bootstrap": false},
+    "H8-SEAT": {"conditions": ["C8", "T8"], "statement": {"text": "The substitution worsens seat bias across the whole family"}, "supported": {"text": "ΔG > 0, and stab(ΔG > 0) ≥ 9/10"}, "refuted": {"text": "ΔG ≤ 0, and stab(ΔG ≤ 0) ≥ 9/10"}, "bootstrap": true, "joint": true},
+    "evidence_roles": {"primary": ["H8-SUB", "H8-PAR"], "qualifying": ["H8-CHANNEL", "H8-LESS", "H8-TAX"], "repeated_choice": "H8-REPEAT", "requirement_c": "H8-ADAPT"}
+  },
+  "definitions": {
+    "BR^A_ε(j)": {"text": "BR^A_ε(j) = { i ∈ A8 : u(i, j) ≥ max over k ∈ A8 of u(k, j) − ε }.", "candidates": "a8", "opponents": "pi"},
+    "L8": {"pairs": [["LURK8", "RUSH8"], ["PACED8", "RUSH8"]], "delta": "Δ_j(lo, hi) = u(lo, j) − u(hi, j)", "P_win": "some Δ_j ≥ ε, as in PR6 §4.6", "P_never": "every Δ_j ≤ 0, as in PR6 §4.6", "opponents": "pi"},
+    "Δ^R_Y": {"text": "Δ^R_Y = u(REACQ8, Y) − u(RUSH8, Y), for Y ∈ 𝒞, the census of §3.5."},
+    "U(i)": {"text": "U(i) = the mean, over j ∈ Π, of u(i, j): the score against the mixed field."},
+    "FL(a, d)": {
+      "text": "FL(a, d) is the share of the 64 F1 matches of a against d that are forced-line captures of d.",
+      "matches": 64,
+      "attackers": ["RUSH8", "REACQ8", "PACED8", "STEALTH8", "LURK8", "SPLIT8"],
+      "defenders": ["GUARD8", "EVADE8", "STRESS8"]
+    },
+    "H8-TAX A and B": {
+      "source": "PR6 §5.3's E6-H0 definitions, over the paired F1 cells of C8 and T8",
+      "A": {"text": "A is the share whose outcome class is unchanged;"},
+      "B": {"text": "B is taken over exactly the cells counted by A: the share whose final tick under T8 is ≥ the final tick under C8."},
+      "empty": {"text": "There is no empty-denominator convention. If A = 0, H8-TAX is REFUTED through A ≤ 2/3."}
+    }
+  },
+  "thresholds": {
+    "stability": "9/10", "resamples": 1000, "stability_count": 900,
+    "epsilon": "1/16",
+    "fl_supported_min": "9/10", "fl_refuted_max": "1/10",
+    "tax_keep_min": "9/10", "tax_refute_max": "2/3",
+    "pathology_min": "1/10",
+    "forced_line_tick_max": 3,
+    "neutral_sdom_lt": "9/10", "neutral_abs_gsb_le": "1/10",
+    "adapt_k": 2,
+    "rate_min_n_distinct": 8,
+    "seat_magnitude_floor": null,
+    "new_threshold": {"text": "No new threshold is introduced. The family seat status uses sign and the 9/10 convention only"}
+  },
+  "pathology": {
+    "computed_on": "F1 of the primary arm",
+    "recorded": "whatever else holds",
+    "flags": {
+      "PF8-1": {"name": "Stalling", "text": "The tick-limit share under T8, minus the share under C8, is ≥ 1/10"},
+      "PF8-2": {"name": "Loss of contact", "text": "The share of matches with no hostile core contact (O-CONTACT) under T8, minus that under C8, is ≥ 1/10"},
+      "PF8-3": {"name": "New immunity", "text": "Some member of Π_F is never core-captured in any of its F1 matches under T8, although it is captured in at least one under C8"},
+      "PF8-4": {"name": "Stable seat destabilization", "raised_by": "§6.2 (i)"},
+      "PF8-5": {"name": "Family seat worsening", "raised_by": "H8-SEAT is SUPPORTED (§6.2 (ii))"}
+    }
+  },
+  "seat_criterion": {
+    "units": {"f1_pairings": 55, "f2_mirrors": 11, "total": 66, "text": "66 units: the 55 F1 pairings, meaning unordered member pairs whose two orientations are E4's pairing unit, and the 11 F2 mirrors."},
+    "unit_layer": {
+      "flag": "PF8-4",
+      "text": "A new unit-level seat artifact exists only when a unit is neutral in its matched control, non-neutral in treatment under the existing SDom/|GSB| bounds, and the neutral→non-neutral transition occurs in at least 900 of the 1,000 registered joint seed resamples (stability ≥ 9/10).",
+      "computation": [
+        {"text": "Neutrality is O-NEUTRAL, at the point estimate in both conditions."},
+        {"text": "For each of O-BOOT's 1,000 draws, the same resampled seed multiset recomputes the unit's C8 and T8 metrics, and the transition is evaluated within that draw."},
+        {"text": "The unit's stability is the number of draws in which the transition occurs, divided by 1,000."}
+      ],
+      "raised": {"text": "If and only if at least one unit meets that condition."}
+    },
+    "family_layer": {
+      "hypothesis": "H8-SEAT",
+      "quantity": {"text": "ΔG = the mean, over all 66 units, of (|GSB_T8(u)| − |GSB_C8(u)|)."},
+      "supported": {"text": "if and only if ΔG > 0 at the point estimate, and stab(ΔG > 0) ≥ 9/10."},
+      "refuted": {"text": "REFUTED if and only if ΔG ≤ 0 at the point estimate, and stab(ΔG ≤ 0) ≥ 9/10."},
+      "neither": "otherwise",
+      "magnitude_floor": null
+    },
+    "reported": {
+      "quantiles": {"rule": "sorted(xs)[int(q * (n - 1) + 0.5)]", "n": 1000, "q": ["0.025", "0.5", "0.975"], "indices": [25, 500, 974]},
+      "strata": {"committed_by": "CQ8-5", "names": ["C8-neutral", "C8-non-neutral"], "descriptive_only": true}
+    },
+    "both_layers_can_kill": {"text": "Both layers can kill (KC8-5): a stable unit artifact (PF8-4), or a stable family-wide worsening (H8-SEAT SUPPORTED, which raises PF8-5)."}
+  },
+  "registered_reporting": {
+    "phase_sensitive_stratum": {"members": ["PACED8", "EVADE8", "ADAPT8", "STRESS8"], "text": "Every seat quantity in §6.2 is also reported separately for units containing a phase-sensitive member (PACED8, EVADE8, ADAPT8, STRESS8) and for units not containing one."},
+    "decisive_tick_parity": {"text": "Each unit's decisive outcomes are split by the parity of the decisive tick."},
+    "mechanism_tables": {
+      "for": ["every flagged unit", "every unit in 𝒞"],
+      "report": ["callbacks per tick and per seat", "hits received and inferred", "evasions", "SENSE actions, before and after first discovery", "re-acquisition events by cause (O-REACQ)"],
+      "standing": {"text": "These are required before any seat flag is read causally. They never change a flag."}
+    },
+    "payoff_tables": {"text": "Reported in full for both arms: u(i, j) with its n_distinct, every BR_ε and BR^A_ε set, the universal members, every Δ_j over L8, every Δ^R_Y, and U(i), each with its stability."},
+    "descriptive_telemetry": {
+      "never_inputs": true,
+      "items": [
+        {"text": "O-ACQ, including per-pairing no-discovery counts. Detection is kept distinct from hostile core contact (SYN6 §F.3)."},
+        {"text": "O-REACQ, by cause."},
+        {"text": "O-VERIF."},
+        {"text": "E4's cell metrics, FMA and FPS, for every F1 cell of all four conditions."},
+        {"text": "Δ^R_j for every j ∉ 𝒞, as the expected cost of verification against opponents that do not relocate."}
+      ]
+    }
+  },
+  "companion": {
+    "computed": {"text": "Every quantity in §5–§6 is computed on C8L → T8L with identical code."},
+    "census": "the primary's",
+    "agrees_when_same_status": ["H8-SUB", "H8-CHANNEL", "H8-LESS", "H8-REPEAT", "H8-FL", "every kill criterion"],
+    "reading": {"agrees": "agrees", "otherwise": "the list of what differs"},
+    "expectation": {"text": "H8-REPEAT's status differs from the primary's, and is not SUPPORTED."},
+    "never": {"text": "The companion never replaces a primary verdict, never triggers a kill, and cannot answer an interaction"}
+  },
+  "interpretation": {
+    "arm": "primary",
+    "rule": {"text": "A row applies if and only if E8-D has the row's status and the pair (H8-SUB, H8-PAR) is among the row's listed combinations."},
+    "coverage": {"text": "The rows cover every combination exactly once, and none is impossible. A negated hypothesis is never written: NEITHER and REFUTED are listed separately."},
+    "fail_closed": {"text": "A triple that maps to none, or to two, fails closed as an invariant violation."},
+    "rows": [
+      {"id": "STOP", "e8_d": "FAIL", "combinations": "all nine", "reading": {"text": "STOP. No gameplay reading: the treatment, the family or the protocol is defective."}},
+      {"id": "R8-PRESERVES", "e8_d": "PASS", "combinations": [["SUPPORTED", "SUPPORTED"]], "reading": {"text": "Under the whole-tick parent, no fixed policy is a best response to every opponent, whether spatial information is acquired incidentally through movement (C8) or bought with an explicit sensing action (T8). For this family, the channel substitution preserves an opponent-dependent choice."}},
+      {"id": "R8-CREATES", "e8_d": "PASS", "combinations": [["SUPPORTED", "REFUTED"]], "reading": {"text": "Under movement-acquired sensing (C8) one fixed policy is a best response to every opponent. Under the explicit sensing action (T8) none is. For this family, the substitution creates an opponent-dependent choice."}},
+      {"id": "R8-REMOVES", "e8_d": "PASS", "combinations": [["REFUTED", "SUPPORTED"]], "reading": {"text": "The substitution removes an opponent-dependent choice present under movement-acquired sensing."}},
+      {"id": "R8-NO-CHOICE", "e8_d": "PASS", "combinations": [["REFUTED", "REFUTED"]], "reading": {"text": "A fixed policy is a best response to every opponent under both channels."}, "qualified_by": "H8-TAX"},
+      {"id": "R8-T-ONLY", "e8_d": "PASS", "combinations": [["SUPPORTED", "NEITHER"]], "reading": {"text": "No fixed policy is a best response to every opponent under T8. Under C8 the evidence is indeterminate."}},
+      {"id": "R8-T-DOMINANT", "e8_d": "PASS", "combinations": [["REFUTED", "NEITHER"]], "reading": {"text": "A fixed policy is a best response to every opponent under T8. Under C8 the evidence is indeterminate."}},
+      {"id": "NONE", "e8_d": "PASS", "combinations": [["NEITHER", "SUPPORTED"], ["NEITHER", "REFUTED"], ["NEITHER", "NEITHER"]], "reading": {"text": "\"No registered interpretation row applies\" is itself the registered outcome."}}
+    ],
+    "no_choice_tax_qualifier": {
+      "row": "R8-NO-CHOICE",
+      "by": "H8-TAX",
+      "role": {"text": "It distinguishes delay-only from restructuring, without changing the row's reading"},
+      "SUPPORTED": {"text": "the substitution acts only as a delay: outcomes are preserved and delayed"},
+      "REFUTED": {"text": "a dominant policy under both channels, with outcomes restructured"},
+      "NEITHER": {"text": "a dominant policy under both channels; delay-only is neither established nor excluded"}
+    },
+    "qualifiers": {
+      "apply_to": "every PASS row",
+      "H8-CHANNEL": {
+        "SUPPORTED": {"text": "and no single acquisition policy is universal among the single-process attackers"},
+        "REFUTED": {"text": "but one acquisition policy is universal among the single-process attackers"},
+        "REFUTED_naming": {"text": "naming every universal member of A8 and giving KC8-6's label"},
+        "NEITHER": {"text": "the acquisition-policy structure is indeterminate"}
+      },
+      "H8-LESS": {
+        "SUPPORTED": {"text": "and spending less on acquisition beats spending more against at least one opponent"},
+        "REFUTED": {"text": "but the registered lower-acquisition contrasts never win"},
+        "NEITHER": {"text": "whether less acquisition can win is indeterminate"}
+      }
+    },
+    "repeat_readings": {
+      "carries_scope_sentence": true,
+      "scoped_to": "𝒞",
+      "SUPPORTED": {"text": "Against the census {𝒞}, re-acquiring a relocated anchor beats not re-acquiring: spatial information is valuable more than once in this whole-tick ecology."},
+      "REFUTED": {"text": "Against the census, re-acquisition never pays."},
+      "NEITHER": {"text": "Whether re-acquisition pays against the census is indeterminate."},
+      "NOT EVALUABLE": {"text": "The frozen census is empty, so there is no repeated-choice claim."}
+    },
+    "adapt": {
+      "source": "E8-MF §N, ruling 4",
+      "preconditions": {"H8-SUB": "SUPPORTED", "H8-REPEAT": "SUPPORTED", "allocation_variation_check": true},
+      "check": {"text": "min over Y ∈ 𝒞 of V(Y) > max over j ∈ S of V(j)", "comparison": ">"},
+      "static_set_S": {"text": "S is the set of opponents in Π_F \\ 𝒞 whose anchors do not move after being located, by frozen semantics under `\"active\"`: every member with `evade` = off.", "from": "pi_f", "excluding": "the census", "rule": {"parameter": "evade", "equals": "off"}},
+      "readings": {
+        "SUPPORTED": {"text": "Within the {𝒞} stratum, an agent that observes whether a located anchor moves, and adapts its re-acquisition, does at least as well as either fixed allocation against the mixed field."},
+        "REFUTED": {"text": "Within the {𝒞} stratum, the adaptive allocation does worse than the better fixed allocation."},
+        "NEITHER": {"text": "Within the {𝒞} stratum, whether adaptation pays is indeterminate."},
+        "NOT INTERPRETABLE": {"text": "NOT INTERPRETABLE."},
+        "NOT EVALUABLE": {"text": "NOT EVALUABLE"}
+      },
+      "not_interpretable_note": {"text": "There was no demonstrated repeated choice to adapt to. It is never read as a refutation of adaptation."},
+      "fail_closed": {"text": "A status recorded for H8-ADAPT while the table says it is not interpretable is an invariant violation, not a reading."},
+      "mapping_tests": {"text": "Mapping tests cover every combination of (H8-SUB, H8-REPEAT, check, H8-ADAPT)."}
+    },
+    "core_answer": {
+      "components": ["H8-SUB", "H8-CHANNEL", "H8-REPEAT"],
+      "applied_in_order": true,
+      "order": [
+        {"outcome": "NOT EVALUABLE", "definition": {"text": "A registered gate or census condition makes the question unevaluable. Either E8-D FAILs, or no component is REFUTED and H8-REPEAT is NOT EVALUABLE because 𝒞 is empty."}},
+        {"outcome": "NO", "definition": {"text": "E8-D PASSes, and at least one required component is REFUTED"}},
+        {"outcome": "YES", "definition": {"text": "All three required components are SUPPORTED. The reading carries §1's scope sentence."}},
+        {"outcome": "INDETERMINATE", "definition": {"text": "Otherwise: no required component is REFUTED, but at least one is NEITHER"}}
+      ],
+      "mapping_test": {"text": "a mapping test covers every (E8-D, H8-SUB, H8-CHANNEL, H8-REPEAT) combination."},
+      "requirement_c": {"text": "YES does not by itself establish requirement C. C additionally requires H8-ADAPT to be interpretable and SUPPORTED (§7.3)."}
+    },
+    "channel_difference": {"text": "The registered channel difference (§3.2) is stated beside every reading"},
+    "recorded_alongside": {"items": ["H8-FL", "H8-TAX", "PF8-1", "PF8-2", "PF8-3", "PF8-4", "PF8-5", "the §6.3 strata", "the companion reading"], "text": "H8-FL, H8-TAX (except as R8-NO-CHOICE's qualifier), PF8-1 to PF8-5, the §6.3 strata, and the companion reading."}
+  },
+  "kill_criteria": {
+    "arm": "primary",
+    "KC8-1": {"name": "Constant best response", "fires": {"text": "H8-SUB is REFUTED"},
+      "label": {"over": "the universal members of Π_F at the point estimate", "rules": [
+        {"label": "search race", "if": "every universal member has acquire != none"},
+        {"label": "greed dominance", "if": "GREED8 is universal"},
+        {"label": "other dominance", "if": "otherwise", "names_members": true}
+      ], "text": "Search race if every universal member has `acquire` ≠ none; greed dominance if GREED8 is universal; otherwise other dominance, naming the members"}},
+    "KC8-2": {"name": "Greed dominance", "fires": {"text": "GREED8 is universal at the point estimate, and stab(GREED8 universal) ≥ 9/10"}, "label": {"text": "A special case, reported even when other members are universal too"}},
+    "KC8-3": {"name": "Stalling or loss of contact", "fires": {"text": "PF8-1 or PF8-2 is raised"}, "label": null},
+    "KC8-4": {"name": "Delayed forced line", "fires": {"text": "H8-FL is SUPPORTED"}, "label": null},
+    "KC8-5": {"name": "Seat", "fires": {"text": "PF8-4 is raised (a stable unit artifact), or H8-SEAT is SUPPORTED (a stable family-wide worsening, PF8-5)"}, "label": {"text": "Which layer, ΔG's magnitude, and every flagged unit with its §6.3 stratum and mechanism table"}},
+    "KC8-6": {"name": "Acquisition dominance", "fires": {"text": "H8-CHANNEL is REFUTED"},
+      "label": {"over": "the universal members of A8 at the point estimate", "at_least_one": true, "rules": [
+        {"label": "channel race", "if": "every universal member has acquire != none"},
+        {"label": "information dominated", "if": "LURK8 is the sole universal member"},
+        {"label": "mixed dominance", "if": "otherwise", "names_members": true}
+      ], "text": "The label is channel race if every one has `acquire` ≠ none; information dominated if LURK8 is the sole one; otherwise mixed dominance, naming every one"}}
+  },
+  "disposition": {
+    "exhaustive": true,
+    "order": [
+      {"outcome": "VOID", "if": "E8-D fails"},
+      {"outcome": "REJECT as a gameplay candidate", "if": "any KC8 fires"},
+      {"outcome": "CANDIDATE, for a further design phase", "if": {"row_in": ["R8-PRESERVES", "R8-CREATES"], "H8-LESS": "SUPPORTED", "core_answer": "YES"}},
+      {"outcome": "NOT ESTABLISHED", "if": "otherwise"}
+    ],
+    "notes": [
+      {"text": "CANDIDATE does not establish requirement C."},
+      {"text": "CANDIDATE never means promotion. Promotion additionally requires A3 (§13) and a product-level closure of seed reconstruction"},
+      {"text": "PF8-3 is recorded, not a kill."},
+      {"text": "A REJECT, a NOT ESTABLISHED or a NOT EVALUABLE is a successful result of the method."}
+    ]
+  },
+  "seed_protocol": {
+    "adopted": "PR6 §9, unchanged in every step, with E8's names",
+    "family_first": {"text": "The complete family, primary and twin packages, is implemented, tested (including A1-style engine-level behavior tests), fingerprinted and committed first."},
+    "structural_identity": "v6-e8-matrix-v1-<12 hex>",
+    "committed_with_structure": ["the census (§3.5)", "the seat strata inputs"],
+    "count": 32,
+    "generator": "secrets.randbelow(2**53)",
+    "generated": "exactly once, by committed tooling",
+    "encoding": {"text": "Decimal ASCII, one per line, LF endings with a trailing LF, in UTF-8. The commitment is the SHA-256 of those bytes."},
+    "execution_identity": {"form": "v6-e8-exec-v1-<12 hex of SHA-256(structural digest hex, LF, commitment hex, LF)>"},
+    "committed_before_first_cell": ["the seed commitment", "the execution identity"],
+    "blindness": {"text": "Every output before the reveal passes a value-based seed filter"},
+    "order": ["treatment execution", "the treatment gates", "the frozen analysis", "the seed reveal and D8-10", "E8-D's final status", "the interpretation and disposition", "the results record"],
+    "d8_10_failure": "VOID",
+    "push_each_boundary": true,
+    "no_seed_while_writing": {"text": "No seed is generated while this pre-registration is written."}
+  },
+  "traces": {
+    "schema": "bytefray.agent_trace",
+    "schema_version": 2,
+    "required_for": "every cell of all four conditions",
+    "only_source": {"text": "The analysis reads sensing facts only from the fields named here. No other telemetry is equivalent."},
+    "fields": [
+      {"surface": "ObservationV2", "field": "previous_sense_anchors", "type": "tuple[int, ...] | None, ascending"},
+      {"surface": "TraceObservationV2", "field": "previous_sense_anchors", "type": "a JSON list of integers, or null"},
+      {"surface": "TraceResultV2", "field": "sensed_anchors", "type": "tuple[int, ...] | None, as a JSON list of integers ascending, or null"},
+      {"surface": "TraceActionV2", "field": "kind", "type": "\"sense\" for the sensing action"},
+      {"surface": "MatchContextV2", "field": "sensing_window", "type": "int | None: 27 under active, None under passive"},
+      {"surface": "ResetRecord", "field": "sensing_window", "type": "a JSON integer or null, recorded at each entrant's reset()"}
+    ],
+    "additive_optional": true,
+    "authoritative": {"text": "For each sensing action, the acting callback's `decision_v2` record is authoritative for both the action and its returned result."},
+    "facts": {
+      "taken": {"action.kind": "sense"},
+      "applied": {"applied_result.status": "APPLIED", "applied_result.normalized_address": "t mod 512"},
+      "refused": {"applied_result.status": "REJECTED_OUT_OF_REACH", "applied_result.sensed_anchors": null},
+      "returned": {"text": "`applied_result.sensed_anchors`, the complete ascending tuple. An empty list means sensed and found nothing."}
+    },
+    "consistency_gate": "D8-13",
+    "delivery_tests": [
+      {"text": "sense, then the next offer in the same chunk;"},
+      {"text": "sense, then the next tick;"},
+      {"text": "sense, then suppressed for the remainder of the tick, then a later callback. The later record must reflect the authoritative result."},
+      {"text": "the genuinely terminal cases: sense as the process's last callback before its entrant is eliminated, and before the match ends at the tick limit."}
+    ],
+    "delivery_tests_assert": {"text": "They assert delivery semantics only, never an outcome."},
+    "binding": {"text": "The trace belongs to the cell if and only if `BindingRecord.replay_sha256` equals the cell's replay digest (D8-12)."}
+  },
+  "evidence_rules": [
+    {"id": 1, "text": "Every frozen unit is counted, and none is dropped. n_distinct is reported beside every figure. A rate needs n_distinct ≥ 8; below that, a value is a characterization."},
+    {"id": 2, "text": "Payoffs weight every seed equally (O-PAYOFF). Tick metrics are computed per match, and the unit value is the median over seeds. No ticks are pooled across matches."},
+    {"id": 3, "text": "O-BOOT resamples seeds jointly across every cell and every condition. Every stability in §5–§6 uses the same 1000 resamples."},
+    {"id": 4, "text": "Control-against-control (CQ8-4) runs before any treatment exists."},
+    {"id": 5, "text": "The strata and the census are committed before exposure: the census before any seed (CQ8-3), and the seat strata before any treatment (CQ8-5)."},
+    {"id": 6, "text": "The companion never replaces a primary verdict (§6.6). ADAPT8 is never a condition of §7.1's rows or of a kill; it enters only H8-ADAPT and §7.3."},
+    {"id": 7, "text": "Nothing changes after any matrix cell exists: no threshold, set, operationalization, row, rule, census or stratum."},
+    {"id": 8, "text": "Before the reveal, every printed or saved output passes the value-based seed filter (§9, step 6)."}
+  ],
+  "hard_stops": {
+    "before_seeds": [
+      {"text": "engine-level family behavior tests fail, including ADAPT8's freeze tests (§3.2) and the delivery tests (§10);"},
+      {"text": "D8-9 (static discipline and containment) fails;"},
+      {"text": "the census is empty;"},
+      {"text": "the family's fingerprints are not committed."}
+    ],
+    "before_treatment": [
+      {"text": "a parent golden fails (D8-6);"},
+      {"text": "a fixture fingerprint drifts, or a request override is not `None`;"},
+      {"text": "CQ8-1 to CQ8-5 fail;"},
+      {"text": "the seed commitment or the execution identity is missing before the first cell;"},
+      {"text": "the source manifest changes, or the tree is dirty, during execution."}
+    ],
+    "during_and_after_treatment": [
+      {"text": "E8-D fails on D8-1, D8-2, D8-3, D8-4, D8-5, D8-11, D8-12, D8-13, D8-14 or D8-15;", "clauses": ["D8-1", "D8-2", "D8-3", "D8-4", "D8-5", "D8-11", "D8-12", "D8-13", "D8-14", "D8-15"]},
+      {"text": "an analyzer or telemetry disagreement: the re-derivation and the authoritative record disagree beyond D8-1's own check, or an analyzer fails;"},
+      {"text": "any `REJECTED_INVALID` forfeit, which is a containment breach;"},
+      {"text": "a recurring `evaluation.json` `PermissionError`: quarantine, relaunch and byte-check once, then stop;"},
+      {"text": "at reveal, D8-10 fails. The disposition is then VOID."}
+    ]
+  },
+  "containment": {
+    "option": "A1",
+    "requirements": [
+      {"requirement": {"text": "Only E8's research Rulesets, T8 and T8L, accept SENSE"}, "verified_by": "A Ruleset-policy test. S-5 of E8-DR is a qualification test."},
+      {"requirement": {"text": "E8 packages are statically identified as requiring SENSE, gated by context"}, "verified_by": "D8-9"},
+      {"requirement": {"text": "The E8 harness rejects an incompatible package and Ruleset pairing before a match starts"}, "verified_by": "A pre-match gate",
+        "gate": {"context-gated SENSE": ["C8", "T8", "C8L", "T8L"], "ungated SENSE": ["T8", "T8L"], "otherwise": "refused before execution"}},
+      {"requirement": {"text": "Existing product and stable Rulesets remain unchanged"}, "verified_by": "Parent and stable goldens (D8-6)"},
+      {"requirement": {"text": "Ordinary v2 agents remain valid"}, "verified_by": "The existing Agent API test suite is unchanged and passes"},
+      {"requirement": {"text": "The action stays off normal product-facing surfaces"}, "verified_by": "It is not documented as a product feature, and no product Ruleset, starter agent or Designer path offers it. It is recorded in AGENT_API_V2.md only as a research-only extension."}
+    ],
+    "promotion_prerequisites": [
+      {"text": "A3 is required: capabilities are declared, and incompatibility is rejected before execution."},
+      {"text": "A2, a new generation, is used only if implementation reveals an actually incompatible contract."},
+      {"text": "The product-level closure of seed reconstruction"}
+    ]
+  },
+  "differences_from_design_review": [
+    {"id": 1, "text": "H8-CHANNEL's candidates are A8, the frozen acquisition-policy candidate set."},
+    {"id": 2, "text": "H8-TAX is added."},
+    {"id": 3, "text": "The census is defined under the primary parent's economics (E-3)."},
+    {"id": 4, "text": "EVADE8's hit inference is made exact, as callback counting (§3.2)."},
+    {"id": 5, "text": "ADAPT8's switch rule is new. k = 2 is the minimum repeated confirmation, counted in consecutive verification observations [R-8]."},
+    {"id": 6, "text": "D8-3, LURK8 ≡ GREED8 under T8, is a new negative control for information leakage, with its equality defined exactly."},
+    {"id": 7, "text": "The seat criterion is redesigned in two layers [R-9]"},
+    {"id": 8, "text": "The members are eleven, with no evading attacker [R-10]."},
+    {"id": 9, "text": "Re-acquisition precedence [Revision 2]."},
+    {"id": 10, "text": "A channel difference is registered [Revision 2] (§3.2)."}
+  ],
+  "non_claims": [
+    {"text": "No result. No E8 data of any kind exists."},
+    {"text": "No prediction presented as a result."},
+    {"text": "No product claim. Every disposition is a research disposition. CANDIDATE is not promotion."},
+    {"text": "No claim beyond what E8 manipulates."},
+    {"text": "No generalization of requirement C beyond the census stratum."},
+    {"text": "No status for E6. Its REJECT stands, and parenthood confers nothing."}
+  ],
+  "arithmetic": {
+    "A.1": {"windows": 7, "window_cells": 55, "arc_cells": 385, "expectation": "4", "worst_case": 7, "e6_sweep_expectation": "1537/385", "e6_sweep_worst_case": 7,
+      "text": "Their union is [own + 64, own + 448], which is the 385-cell arc exactly (448 ≡ −64 mod 512)."},
+    "A.2": {"read_stride": 8, "spans": [["anchor − 64", "anchor − 1"], ["anchor + 8", "anchor + 71"]], "reads_at_most": 16, "note": "TN-2",
+      "text": "At most 16 stride-8 READs hit one of them (E8-DR Appendix A.2)."},
+    "A.3": {"positions": 114, "window_new_coverage": [40, 37, 37], "worst_case": 3, "expectation": "225/114",
+      "hit_cost_offers": {"whole-tick": [6, 8], "lambda = 1": [1]},
+      "text": "The windows are centered on a, then a ± 46, and cover 40, then 37, then 37 of them."},
+    "A.4": {"k": 2,
+      "derivation": {"text": "k = 2 is the minimum repeated confirmation. One verification observation establishes the anchor's current location, and a second, later one confirms that it persists."},
+      "scope": {"text": "The worked example assumes that the scripted validation evader does not itself attack or disrupt ADAPT8."},
+      "validates": [
+        {"text": "Against a responsive evader, the run of consecutive confirming verifications never exceeds 1, so k = 2 never stops verifying."},
+        {"text": "Against a static opponent that does not disrupt ADAPT8, it stops at its second consecutive confirming verification."}
+      ],
+      "standing": {"text": "This is a validation of the independently derived value."}}
+  }
+}
