@@ -11,8 +11,9 @@ or matrix work exists:
 * ``decision.py``: the registered decision logic (statuses, stability, rows,
   readings, the core answer, kills, disposition, the census and the seat
   layers), reading every registered value from the frozen transcription;
-* ``preregistration_freeze.py`` and ``preregistration_freeze.json``: the
-  pre-registration freeze identity.
+* ``preregistration_freeze.py`` and ``preregistration_freeze_v2.json``: the
+  pre-registration freeze identity, v2. ``preregistration_freeze.json`` is
+  freeze v1, kept byte for byte as superseded before any exposure.
 
 Research-only. Nothing here runs a match.
 """

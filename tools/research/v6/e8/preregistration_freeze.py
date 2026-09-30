@@ -1,9 +1,9 @@
-"""The E8 pre-registration freeze identity (phase I8-0).
+"""The E8 pre-registration freeze identity (phase I8-0), freeze v2.
 
 It pins, at the tooling commit, the artifacts that together form E8's
 registration before any engine, agent, family, seed or matrix work exists:
 
-* the markdown pre-registration, revision 2 (the authoritative wording);
+* the markdown pre-registration, revision 3 (the authoritative wording);
 * its transcription, ``preregistration.json``;
 * the loader and the registered decision logic;
 * their transcription, totality and invariant tests;
@@ -12,7 +12,14 @@ registration before any engine, agent, family, seed or matrix work exists:
 It also pins what these fix without data: the 1,000 registered O-BOOT draws
 (by digest) and the predicted census.
 
-The identity is ``v6-e8-prereg-v1-<first 12 hex of the record digest>``, where
+**Freeze v2 supersedes v1 before any exposure.** Freeze v1,
+``v6-e8-prereg-v1-116c9ed83400``, pinned revision 2. Revision 3 corrected when
+initial acquisition ends, so v1's pinned files changed and it no longer
+loads. Its record, ``preregistration_freeze.json``, is kept byte for byte as
+historical evidence (the E6 freeze convention); v2's record names it and pins
+its digest.
+
+The identity is ``v6-e8-prereg-v2-<first 12 hex of the record digest>``, where
 the digest is the SHA-256 of the canonical JSON of the record's body (sorted
 keys, compact separators, UTF-8). File digests normalize CRLF to LF.
 
@@ -34,9 +41,18 @@ from typing import Any
 
 from tools.research.v6.e8 import decision, preregistration
 
-FREEZE_PATH = Path(__file__).with_name("preregistration_freeze.json")
+FREEZE_PATH = Path(__file__).with_name("preregistration_freeze_v2.json")
 SCHEMA = "bytefray.v6.e8.preregistration_freeze"
-IDENTITY_PREFIX = "v6-e8-prereg-v1-"
+VERSION = 2
+IDENTITY_PREFIX = "v6-e8-prereg-v2-"
+SUPERSEDED: Mapping[str, str] = {
+    "identity": "v6-e8-prereg-v1-116c9ed83400",
+    "digest": "116c9ed834009132f42463a0cc1bc210e9c8c132b687bdb3ec081a2365ddeac8",
+    "record": "tools/research/v6/e8/preregistration_freeze.json",
+    "record_sha256": "c0895fe81dea8ca87f03647478f9a751aef844bc5ebbc32e5be46a90df901430",
+    "pinned": "pre-registration revision 2, at tooling commit eda8be5",
+    "reason": "pre-registration revision 3 corrected when initial acquisition ends, before any exposure",
+}
 ROOT = preregistration.REPOSITORY_ROOT
 
 PINNED_FILES: tuple[str, ...] = (
@@ -94,6 +110,7 @@ def body(tooling_commit: str) -> dict[str, Any]:
         "registered_draws": {"resamples": decision.RESAMPLES, "draws_per_resample": decision.SEED_COUNT,
                              "rng": registration["operationalizations"]["O-BOOT"]["rng"], "sha256": draws_digest()},
         "census_prediction": list(decision.census()),
+        "supersedes": dict(SUPERSEDED),
         "later_identities": {
             "structural_matrix": "v6-e8-matrix-v1-<12 hex>, at I8-4",
             "analysis": "v6-e8-analysis-v1-<12 hex>, at I8-5",
@@ -106,15 +123,18 @@ def body(tooling_commit: str) -> dict[str, Any]:
 def record(tooling_commit: str) -> dict[str, Any]:
     content = body(tooling_commit)
     digest = record_digest(content)
-    return {"schema": SCHEMA, "version": 1, "identity": identity(digest), "digest": digest, "body": content}
+    return {"schema": SCHEMA, "version": VERSION, "identity": identity(digest), "digest": digest, "body": content}
 
 
 def load_freeze(path: Path = FREEZE_PATH) -> Mapping[str, Any]:
     """The frozen record, deeply immutable; fails closed on any drift."""
     stored = preregistration.parse(path.read_text(encoding="utf-8"))
     problems: list[str] = []
-    if stored.get("schema") != SCHEMA or stored.get("version") != 1:
-        problems.append("not an E8 pre-registration freeze record, version 1")
+    if stored.get("schema") != SCHEMA or stored.get("version") != VERSION:
+        problems.append(f"not an E8 pre-registration freeze record, version {VERSION}")
+    superseded = ROOT / SUPERSEDED["record"]
+    if not superseded.exists() or preregistration.file_digest(superseded) != SUPERSEDED["record_sha256"]:
+        problems.append(f"the superseded v1 record {SUPERSEDED['record']} is not kept byte for byte")
     digest = record_digest(stored["body"])
     if digest != stored["digest"]:
         problems.append(f"the record's body digest {digest} is not the stored {stored['digest']}")
