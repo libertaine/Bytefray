@@ -1,6 +1,6 @@
 # Bytefray V6 E8 — Active Spatial Sensing: Pre-Registration
 
-**Status: APPROVED FOR FREEZE by the research lead on 2026-09-30**, after revision 1 and two precision edits made at the freeze review: the bootstrap wording, and delivery after suppression. **Revision 2**, which corrects and disambiguates the registered semantics before any transcription or code, **Revision 3**, a narrow correction of when initial acquisition ends, and **Revision 4**, a narrow registration of when the E8 trace fields are present, were approved by the research lead on the same day. **Revision 4 governs; revisions 1 (`28925fd`), 2 (`090d11e`) and 3 (`00fb420`) are historical provenance** (below).
+**Status: APPROVED FOR FREEZE by the research lead on 2026-09-30**, after revision 1 and two precision edits made at the freeze review: the bootstrap wording, and delivery after suppression. **Revision 2**, which corrects and disambiguates the registered semantics before any transcription or code, **Revision 3**, a narrow correction of when initial acquisition ends, **Revision 4**, a narrow registration of when the E8 trace fields are present, and **Revision 5**, which makes its SENSE status mapping explicit, were approved by the research lead on the same day. **Revision 5 governs; revisions 1 (`28925fd`), 2 (`090d11e`), 3 (`00fb420`) and 4 (`ae37cf9`) are historical provenance** (below).
 - **Its standing.** This markdown is the authoritative registered wording.
 - **What comes next.** The E6-style transcription and freeze phase, still before any seed or matrix cell:
   - the machine-readable pre-registration;
@@ -44,13 +44,19 @@
 - **DR is defined** in the governing records.
 - **Appendix A.2 is corrected** to 17 READs under E6's verification order.
 
-**Revision 4 (2026-09-30)**, approved by the research lead after the parent goldens were pinned (phase I8-1) and before any engine code. **It is narrow: it registers when each E8 trace field is present** (§10). No hypothesis, threshold, set, condition, cell count, member semantics or registered outcome criterion changes. **This revision governs.**
+**Revision 4 (2026-09-30)**, approved by the research lead after the parent goldens were pinned (phase I8-1) and before any engine code. **It is narrow: it registers when each E8 trace field is present** (§10). No hypothesis, threshold, set, condition, cell count, member semantics or registered outcome criterion changes. It is itself superseded by revision 5.
 - **Its history.** Revision 3 was registered at `00fb420` with SHA-256 `a822bd15d9be8f968facb2f7b9c7e228d0e59b65ce34b790ae2a9e3538583a5a`, and is preserved there as historical provenance, as are revisions 1 and 2. This revision was drafted on `v6-research` at `2cfd4e8`. **Its own digest is recorded in the machine-readable pre-registration and its freeze record.**
 - **Why it was needed.** The I8-1 parent goldens pin C8 and C8L traces in which no E8 field appears, and D8-15 said that every C8 and C8L `ResetRecord.sensing_window` is `null`. An absent field and a field present as `null` are different serialized states, so both could not hold.
 - **Absent and `null` are distinct** (§10). Under the controls, the E8 fields are omitted, never serialized as `null`, so the parent goldens stand unchanged. Under T8 and T8L, each field is present exactly where its semantics apply. An empty SENSE result is an explicit empty list, and a refused SENSE is an explicit `null`.
 - **The gates check presence both ways, on every cell, and fail closed** (§5.1). D8-1, D8-13 and D8-15 check it, and for presence D8-1 and D8-13 are also evaluated on the controls. D8-3's equality compares it. No rule reads an absent field as `null` except where §10 says so.
 - **Serialization compatibility is registered** (§10).
 - **It changes no member semantics**, so no input of §3.5's census changes.
+
+**Revision 5 (2026-09-30)**, approved by the research lead before Revision 4 was published and before any engine code. **It makes one point of Revision 4 explicit: the status mapping of a SENSE record** (§10). No hypothesis, threshold, set, condition, cell count, member semantics or registered outcome criterion changes. **This revision governs.**
+- **Its history.** Revision 4 was registered at `ae37cf9` with SHA-256 `8a9971a0630f85291e41034a07940cdf915e97cde4c87fb133dcb6bca8ae63fa`, and is preserved there as historical provenance, as are revisions 1 to 3. This revision was drafted on `v6-research` at `4b3a212`. **Its own digest is recorded in the machine-readable pre-registration and its freeze record.**
+- **Why it was needed.** Revision 4 said that a SENSE record's `sensed_anchors` is `null` "if it was not applied". The trace's status vocabulary also includes `EXCEPTION`, so that phrase let a `null` stand for an integrity failure as well as an ordinary refusal.
+- **Each status is mapped explicitly** (§10). `null` means only that there is no applied sensing result, and the status says why. Only `REJECTED_OUT_OF_REACH` is an ordinary refused SENSE.
+- **D8-14 covers every status other than `APPLIED` and `REJECTED_OUT_OF_REACH`** (§5.1, §12). Revision 4's D8-14 named only `REJECTED_INVALID`, so `EXCEPTION` is now a hard stop too.
 
 **Branch:** `v6-research` at `ae6c7f7` ("docs(v6): add the E8 active spatial sensing design review"), pushed.
 **Date:** 2026-09-30
@@ -87,7 +93,7 @@
 
 ## 0. Registration Decisions
 
-**The research lead's first review (2026-09-30)** approved R-1 to R-8 and R-10 to R-12, R-8 with the structural derivation below, and rejected R-9's 1/20, which is revised below. **The freeze review (2026-09-30) approved revision 1, with the two precision edits noted in the status line.** Revision 2 replaces R-8's rationale, keeping its value, and changes no other decision in this table. Revisions 3 and 4 change none. Markers **[R-n]** in the text refer to this table.
+**The research lead's first review (2026-09-30)** approved R-1 to R-8 and R-10 to R-12, R-8 with the structural derivation below, and rejected R-9's 1/20, which is revised below. **The freeze review (2026-09-30) approved revision 1, with the two precision edits noted in the status line.** Revision 2 replaces R-8's rationale, keeping its value, and changes no other decision in this table. Revisions 3 to 5 change none. Markers **[R-n]** in the text refer to this table.
 
 | # | Decision | Drafted value | Rationale |
 |---|---|---|---|
@@ -424,7 +430,7 @@ All arithmetic is exact (`Fraction`), and every comparison is closed exactly as 
 | **D8-11** Mirror relabeling | Ruleset invariant | Every twin mirror's two orientations have byte-identical replay tick records (PR6 D-7) | All F2 cells |
 | **D8-12** Trace completeness | Protocol | Every cell has a `bytefray.agent_trace` schema-2 trace. Every callback has a `decision_v2` record, and the trace's `BindingRecord.replay_sha256` equals the cell's replay digest. | All four conditions |
 | **D8-13** Delivery consistency | Ruleset invariant | For every authoritative SENSE record, **if its process ever receives another callback**, its next `decision_v2` record's `previous_sense_anchors` must equal the authoritative tuple. That holds **even when the next callback comes on a later tick, after suppression.** **Suppression alone never excuses it:** under whole-tick disruption a process may miss the rest of its tick and be called again later. **No later reflection is required only if there is genuinely no later callback** before the entrant is eliminated or the match ends. In that case **the authoritative record still stands.** **Presence** [Revision 4]: the field is present on exactly the callbacks with a delivery obligation (§10). Absent where one exists, it is a D8-13 failure, and present where none exists, it is one too. Absence is read as no prior result only where no delivery obligation exists. It is a consistency gate only (§10). | T8 and T8L; for presence, all four conditions [Revision 4] |
-| **D8-14** No invalid action | Protocol | No cell records an `agent_action_invalid` forfeit (`REJECTED_INVALID`). One would be a containment breach. | All four conditions |
+| **D8-14** No invalid action or exception | Protocol | **Every `decision_v2` record's `applied_result.status` is `APPLIED` or `REJECTED_OUT_OF_REACH`** [Revision 5]. So no cell records an `agent_action_invalid` forfeit (`REJECTED_INVALID`), which would be a containment breach, or an `EXCEPTION`, which would be an integrity failure. Any other status, or a record without one, fails D8-14 too. | All four conditions |
 | **D8-15** Window fidelity | Ruleset invariant | **Configuration.** Every T8 and T8L `ResetRecord` carries `sensing_window` = **27**, and one that omits it fails. Every C8 and C8L `ResetRecord` omits `sensing_window`, and D8-15 reads that absence as null; one that carries it, even as `null`, fails [Revision 4]. **D8-15 is not the sole proof of the window used.** The reset record establishes the configured window. D8-1's independent re-derivation, which uses exactly that recorded value and must reproduce every returned tuple, demonstrates the behavior. **Both must hold.** | All four conditions |
 
 **E8-D = PASS** if and only if every clause passes. **Its status is final only after D8-10.** No registered interpretation or disposition is issued before the seed reveal (§9, step 7).
@@ -748,8 +754,19 @@ These are evaluated on the primary arm.
 | Field | Present, with its value | Absent |
 |---|---|---|
 | `ResetRecord.sensing_window` | Under `"active"` (T8, T8L): **27** | Under `"passive"` (C8, C8L). D8-15 reads the absence as null. |
-| `applied_result.sensed_anchors` | On every record whose action is SENSE: the ascending list if it was applied, empty if nothing was found, and `null` if it was not applied | On every other record. Its absence means that the record is not a SENSE record, never that a SENSE found nothing. |
+| `applied_result.sensed_anchors` | On every record whose action is SENSE, as its status maps it (below) [Revision 5]: the ascending list if `APPLIED`, empty if nothing was found, and otherwise `null` | On every other record. Its absence means that the record is not a SENSE record, never that a SENSE found nothing. |
 | `observation.previous_sense_anchors` | On the callback with a delivery obligation: equal to the prior SENSE record's `sensed_anchors`, whether a list, an empty list or `null` | On every other callback, including every callback before the process first senses |
+
+**The status mapping of a SENSE record** [Revision 5]. **`null` means only that there is no applied sensing result. The status says why**, so a `null` never erases the difference between an ordinary refusal and an integrity failure.
+
+| `applied_result.status` | `sensed_anchors` | What the record is |
+|---|---|---|
+| `APPLIED` | The ascending list, possibly empty | An applied SENSE (D8-1) |
+| `REJECTED_OUT_OF_REACH` | `null` | **The only ordinary refused SENSE** |
+| `REJECTED_INVALID` | `null` | A containment breach: D8-14 fires |
+| Any other status, `EXCEPTION` included | `null` | An integrity failure: D8-14 fires. It is never read as a refused SENSE because its value is `null`. |
+
+In the existing engine, a forfeit record (`REJECTED_INVALID` or `EXCEPTION`) carries no action, because an action is recorded only once it is accepted (`process_runtime.py:1159–1262`). Such a record is then not a SENSE record and carries no `sensed_anchors`, and D8-14 fires on its status all the same. A forfeit ends its entrant, so no delivery follows it.
 
 **Serialization compatibility** [Revision 4]. The research lead's rule, verbatim: Additive E8 trace fields must not change canonical serialized bytes for pre-E8/control records when their semantics are inapplicable. D8-6's parent goldens check it on the parent freeze.
 
@@ -808,7 +825,7 @@ These are evaluated on the primary arm.
 **During and after treatment:**
 - E8-D fails on D8-1, D8-2, D8-3, D8-4, D8-5, D8-11, D8-12, D8-13, D8-14 or D8-15;
 - an analyzer or telemetry disagreement: the re-derivation and the authoritative record disagree beyond D8-1's own check, or an analyzer fails;
-- **any `REJECTED_INVALID` forfeit**, which is a containment breach;
+- **any `REJECTED_INVALID` forfeit**, which is a containment breach, **or `EXCEPTION`**, which is an integrity failure, or any other status D8-14 refuses [Revision 5];
 - a recurring `evaluation.json` `PermissionError`: quarantine, relaunch and byte-check once, then stop;
 - **at reveal, D8-10 fails.** The disposition is then **VOID**.
 
@@ -853,6 +870,7 @@ Each is recorded, and none changes a research-lead ruling.
 11. **SPLIT8's initial acquisition ends once the enemy core is confirmed** [Revision 3] (§3.2). Under the controls, its sensor no longer resumes a generic sweep after confirmation. E6's SPLIT did not resume one either.
 12. **Appendix A.2's count is corrected** [Revision 3]: 17 READs under E6's verification order, not E8-DR Appendix A.2's 16.
 13. **When each E8 trace field is present is registered** [Revision 4] (§10). An absent field and a field present as `null` are distinct, the controls omit the fields, and the gates check presence both ways (§5.1).
+14. **A SENSE record's status mapping is explicit, and D8-14 covers every status other than `APPLIED` and `REJECTED_OUT_OF_REACH`** [Revision 5] (§10, §5.1).
 
 ---
 
