@@ -2,13 +2,13 @@
 
 **Status: DRAFT for the research lead's review**, at the stop before any engine or agent code.
 - **What it does.** It maps every item of the registered pre-registration to an implementation obligation or a test obligation, and orders the work into phases and stops.
-- **What exists at this commit.** Only phase I8-0: the machine-readable pre-registration, the registered decision logic, their tests, and the pre-registration freeze. No Ruleset field, action, agent, package, seed, match or probe exists.
+- **What exists at this commit.** Phase I8-0: the machine-readable pre-registration, the registered decision logic, their tests, and the pre-registration freeze. Phase I8-1: the parent byte-identity goldens, run from existing packages at fixed infrastructure seeds. No E8 Ruleset field, action, agent, package, experiment seed, matrix cell or probe exists.
 - **What it may not do.** It never changes a registered item. Where the registered text leaves an implementation detail open, this plan names a **plan decision** (P8-n, §9) for review. Where transcription or mapping found something the research lead should decide, it is listed in §10.
 
-**Branch:** `v6-research` at `00fb420` (pre-registration revision 3).
+**Branch:** `v6-research` at `ae37cf9` (pre-registration revision 4).
 **Date:** 2026-09-30
 **Governing records:**
-- [`V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md`](V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md) (**PR8**), **revision 3**, registered at `00fb420`, SHA-256 `a822bd15d9be8f968facb2f7b9c7e228d0e59b65ce34b790ae2a9e3538583a5a`. Revisions 1 (`28925fd`) and 2 (`090d11e`) are historical provenance.
+- [`V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md`](V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md) (**PR8**), **revision 4**, registered at `ae37cf9`, SHA-256 `8a9971a0630f85291e41034a07940cdf915e97cde4c87fb133dcb6bca8ae63fa`. Revisions 1 (`28925fd`), 2 (`090d11e`) and 3 (`00fb420`) are historical provenance.
 - [`V6_E8_ACTIVE_SPATIAL_SENSING_DESIGN_REVIEW.md`](V6_E8_ACTIVE_SPATIAL_SENSING_DESIGN_REVIEW.md) (**E8-DR**), including its §F.3 ruling on the Agent API (A1 containment).
 - [`V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md`](V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md) (**E6-IP**) §5.2 and [`V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md`](V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md) (**E6-A1**), whose posture, verification and core-cursor semantics PR8 §3.2 reuses.
 - AGENTS.md: architecture boundaries, testing and compatibility requirements.
@@ -35,8 +35,8 @@
 
 | Phase | Content | Ends with |
 |---|---|---|
-| **I8-0** (this commit set) | The machine-readable pre-registration; the loader and its equivalence checks; the registered decision logic; totality and invariant tests; this plan; the pre-registration freeze `v6-e8-prereg-v2-<12 hex>`, which supersedes v1 before any exposure | **Stop for review** before any engine or agent code |
-| **I8-1** | **Parent byte-identity goldens** for C8 and C8L, committed before any engine file changes (D8-6) | The goldens commit |
+| **I8-0** (this commit set) | The machine-readable pre-registration; the loader and its equivalence checks; the registered decision logic; totality and invariant tests; this plan; the pre-registration freeze, now `v6-e8-prereg-v3-<12 hex>` for Revision 4, which supersedes v1 and v2 before any exposure | **Stop for review** before any engine or agent code |
+| **I8-1** | **Parent byte-identity goldens** for C8 and C8L, committed before any engine file changes (D8-6) | The goldens commit: `3f3f709` and `2cfd4e8`. Done. |
 | **I8-2** | The engine surface of §4: `RulesetPolicy.sensing_mode`, SENSE, the observation, context and trace fields, the two provisional Rulesets, and A1 containment. Engine tests, including the delivery tests of PR8 §10. | Focused tests pass; parent goldens unchanged. **Stop.** |
 | **I8-3** | The family of §5: one policy source, 22 packages, behavior tests (ADAPT8's freeze tests included), the D8-9 static gate, fingerprints | **Stop.** |
 | **I8-4** | The static census (§3.5) from the frozen packages; the structural matrix identity `v6-e8-matrix-v1-<12 hex>`, committed with the census and the seat strata inputs (PR8 §9, step 1) | The family freeze. **Stop.** |
@@ -51,19 +51,20 @@
 
 | Artifact | Role |
 |---|---|
-| `tools/research/v6/e8/preregistration.json` | The transcription of PR8 revision 3. Every value under a key named `text` is registered wording, verbatim with only emphasis removed. It pins the markdown's SHA-256 and registration commit, and records revisions 1 and 2 as history. |
+| `tools/research/v6/e8/preregistration.json` | The transcription of PR8 revision 4. Every value under a key named `text` is registered wording, verbatim with only emphasis removed. It pins the markdown's SHA-256 and registration commit, and records revisions 1 to 3 as history. |
 | `tools/research/v6/e8/preregistration.py` | The loader. It fails closed unless the JSON digest is the pinned one, the markdown digest is the registered revision's, the JSON is internally consistent, and the JSON equals the markdown. The loaded registration is deeply immutable. |
 | `tools/research/v6/e8/decision.py` | The registered decision logic. It reads every registered value from the loaded registration and supplies only the predicates, in the registered orders. |
 | `engine/tests/test_v6_e8_preregistration.py` | The transcription tests |
 | `engine/tests/test_v6_e8_decision.py` | The totality and invariant tests |
-| `tools/research/v6/e8/preregistration_freeze.py` and `preregistration_freeze_v2.json` | The operative freeze record and its identity: every artifact above and this plan, pinned by SHA-256 at the tooling commit |
+| `tools/research/v6/e8/preregistration_freeze.py` and `preregistration_freeze_v3.json` | The operative freeze record and its identity: every artifact above and this plan, pinned by SHA-256 at the tooling commit |
+| `tools/research/v6/e8/preregistration_freeze_v2.json` | Freeze v2, `v6-e8-prereg-v2-e478f519c070`, kept byte for byte as superseded before any exposure. It pinned revision 3 and no longer loads. |
 | `tools/research/v6/e8/preregistration_freeze.json` | Freeze v1, `v6-e8-prereg-v1-116c9ed83400`, kept byte for byte as superseded before any exposure. It pinned revision 2 and no longer loads. |
 
 **The research lead's seven required showings**, and the tests that make each:
 
 | Required | Tests |
 |---|---|
-| **The JSON matches the markdown** | `test_the_transcription_is_internally_consistent_and_equals_the_markdown`; `test_every_registered_text_is_verbatim_in_the_markdown` (all 357 registered texts); 30 markdown-drift and 18 internal-drift cases, each of which must be reported; a disagreeing but self-consistent file must fail to load |
+| **The JSON matches the markdown** | `test_the_transcription_is_internally_consistent_and_equals_the_markdown`; `test_every_registered_text_is_verbatim_in_the_markdown` (all 386 registered texts); 36 markdown-drift and 28 internal-drift cases, each of which must be reported; a disagreeing but self-consistent file must fail to load |
 | **The interpretation rows cover every combination exactly once** | `test_every_triple_maps_to_exactly_one_row` (all 18 triples); an overlapping or a missing row fails closed; the JSON's own coverage check (`internal_problems`) |
 | **The four-outcome logic is exhaustive and ordered** | `test_the_core_answer_is_exhaustive_and_ordered` (all 72 combinations): each outcome's definition is evaluated independently, at least one always holds, and the answer is the first in the registered order; `test_the_order_decides_the_overlaps`; a reordered implementation fails closed |
 | **The KC8 mappings are deterministic** | Every one of the 1,023 non-empty universal subsets of Π_F gets exactly one KC8-1 label, and every one of the 31 of A8 exactly one KC8-6 label, each equal to an independent reading of the registered rule and unchanged under every input order. An empty or out-of-set universal set fails closed. |
@@ -137,9 +138,9 @@ Every registered item appears once. **Done** means the item is implemented and t
 
 | PR8 item | Obligation | Where | Verified by | Phase |
 |---|---|---|---|---|
-| D8-1 sensing exactness | An independent re-derivation of every applied SENSE's tuple | `rederive.py` | Scripted scenarios; a planted mutation must fail | I8-5 |
+| D8-1 sensing exactness | An independent re-derivation of every applied SENSE's tuple; `sensed_anchors` on every SENSE record and no other, on all four conditions [Revision 4] | `rederive.py`, `gates.py` | Scripted scenarios; a planted mutation, a dropped field and a stray field must each fail | I8-5 |
 | D8-2 no free sensing | A trace scan | `gates.py` | A planted leak must fail | I8-5 |
-| D8-3 no-information identity | Record equality over `decision.d8_3_matched_pairs()`: 576 per T-condition | `gates.py` | A planted divergence must fail | Done (pairs); I8-5 (gate) |
+| D8-3 no-information identity | Record equality over `decision.d8_3_matched_pairs()`: 576 per T-condition. A field is equal only if both records omit it or both carry the same value [Revision 4]. | `gates.py` | A planted divergence, and an absent field against a `null` one, must fail | Done (pairs); I8-5 (gate) |
 | D8-4 charging, D8-5 no state change | Trace and replay scans | `gates.py` | Planted violations must fail | I8-5 |
 | D8-6 parent identity | Goldens before any engine change | `engine/tests/test_v6_e8_parent_byte_identity.py` | Goldens | I8-1 |
 | D8-7 initial invisibility | Tick-0 distances | `gates.py` | Seeded-layout unit test | I8-5 |
@@ -148,9 +149,9 @@ Every registered item appears once. **Done** means the item is implemented and t
 | D8-10 seed commitment | Reveal-time verification | `seeds.py` | Seed tests | I8-6 |
 | D8-11 mirror relabeling | E4's relabel gate, reused | `gates.py` | Reused tests | I8-5 |
 | D8-12 trace completeness | Per-cell trace and binding checks | `traces.py` | Missing or mis-bound traces must fail | I8-5 |
-| D8-13 delivery consistency | The next-record reflection check, over later ticks | `gates.py` | The delivery tests' traces; a planted mismatch must fail | I8-2, I8-5 |
+| D8-13 delivery consistency | The next-record reflection check, over later ticks; `previous_sense_anchors` on exactly the callbacks with a delivery obligation, on all four conditions [Revision 4] | `gates.py` | The delivery tests' traces; a planted mismatch, a dropped reflection and a stray field must each fail | I8-2, I8-5 |
 | D8-14 no invalid action | A forfeit scan | `gates.py` | A planted forfeit must fail | I8-5 |
-| D8-15 window fidelity | `ResetRecord.sensing_window` per condition, with D8-1 | `gates.py` | Planted wrong windows must fail | I8-5 |
+| D8-15 window fidelity | `ResetRecord.sensing_window` per condition, with D8-1: 27, explicitly, under T8 and T8L; absent under C8 and C8L, and read as null [Revision 4] | `gates.py` | Planted wrong windows, a missing treatment window and an explicit control `null` must each fail | I8-5 |
 | E8-D = PASS iff every clause passes; final after D8-10 | The gate aggregator; the runner's order | `gates.py`, `run_e8.py` | Order tests (§8) | I8-5 |
 | CQ8-1 to CQ8-5 | Control qualification; CQ8-4 by `decision.control_against_control` | `gates.py`, `run_e8.py` | Planted failures; CQ8-4's own test | Done (CQ8-4 rule); Q8 |
 | H8-SUB, H8-PAR, H8-CHANNEL | `decision.complement_status` over P_none and Q_none | `decision.py`; predicates in `analyze_e8.py` | Exhaustive status tests | Done (rule); I8-5 |
@@ -191,6 +192,8 @@ Every registered item appears once. **Done** means the item is implemented and t
 | §9 steps 1 to 8 | E6's seed tooling, with E8's names; the runner's unlock chain and order | `seeds.py`, `matrix.py`, `run_e8.py` | E6's seed and order tests, ported | I8-4 to T8 |
 | §10 trace fields and roles | §4.3 | `agent_api.py`, `agent_trace.py`, `process_runtime.py` | Engine tests | I8-2 |
 | §10 delivery tests | Engine-level, scripted non-family agents, both parents | `engine/tests/test_v6_e8_sensing_semantics.py` | The five registered cases | I8-2 |
+| §10 presence of each E8 trace field [Revision 4] | Each field is serialized exactly where §10 places it present; a refused SENSE is an explicit `null` in both fields | `agent_trace.py`, `process_runtime.py` | §4.6's presence tests | I8-2 |
+| §10 serialization compatibility [Revision 4] | Additive E8 trace fields never change a pre-E8 or control record's bytes | `agent_trace.py` | The parent goldens, unchanged (D8-6) | I8-2 |
 | §11 rules 1 to 8 | The analyzer and the runner | `analyze_e8.py`, `run_e8.py` | Unit and order tests | I8-5 |
 | §12 hard stops | The unlock chain | `run_e8.py` | Runner tests | I8-5 |
 | §13 A1 containment | §4.5 | engine and harness | Containment tests | I8-2 |
@@ -221,16 +224,16 @@ Each row below is PR8 §2.3's, implemented exactly:
 
 ### 4.3 Observation, context and trace fields
 
-All are additive, optional and defaulted. The trace schema version stays 2, whose readers ignore unknown keys (`agent_trace.py`).
+All are additive, optional and defaulted. The trace schema version stays 2, whose readers ignore unknown keys (`agent_trace.py`). **The three trace fields have an absent state distinct from `null`** (PR8 §10, Revision 4). Today every trace record is serialized with `dataclasses.asdict`, which writes each `None` as `null`, so these fields need their own representation of absence [P8-12].
 
 | Surface | Field | Default |
 |---|---|---|
 | `ObservationV2` | `previous_sense_anchors: tuple[int, ...] \| None` | `None` |
 | `MatchContextV2` | `sensing_window: int \| None` | `None`; 27 under `"active"` |
-| `TraceObservationV2` | `previous_sense_anchors` | `null` |
-| `TraceResultV2` | `sensed_anchors` | `null`; the tuple for an applied SENSE; `null` if refused |
+| `TraceObservationV2` | `previous_sense_anchors` | Absent. At the callback with a delivery obligation, the prior SENSE record's `sensed_anchors`. |
+| `TraceResultV2` | `sensed_anchors` | Absent. On a SENSE record, the tuple if applied (an empty list if nothing was found), and `null` if not applied. |
 | `TraceActionV2` | `kind` = `"sense"` | — |
-| `ResetRecord` | `sensing_window` | the match's value, recorded at each entrant's `reset()` |
+| `ResetRecord` | `sensing_window` | Absent under `"passive"`. Under `"active"`, 27, recorded at each entrant's `reset()`. |
 
 The worker boundary carries the new action kind by value and the new observation field by name, as it carries READ's and `detection_radius` today.
 
@@ -262,6 +265,12 @@ Every test uses scripted, non-family agents and asserts semantics, never an outc
   4. sense as the process's last callback before its entrant is eliminated;
   5. sense as the process's last callback before the match ends at the tick limit.
 - **Context and trace fields**, their defaults, and their JSON forms.
+- **Presence** (PR8 §10, Revision 4), under both parents and both treatments:
+  - under C8 and C8L, no E8 key in any trace record;
+  - under T8 and T8L, `sensing_window` = 27 on every reset record;
+  - `sensed_anchors` on every SENSE record, as an explicit empty list when nothing was found and `null` when refused, and on no other record;
+  - `previous_sense_anchors` on exactly the next callback after a SENSE, after suppression and after a refusal included;
+  - absent again on a later callback that has no delivery obligation.
 - **A1:** SENSE refused under every Ruleset except T8 and T8L; the pre-match gate's three classes; the existing Agent API suite unchanged.
 - **The one-field difference** between each treatment and its parent.
 - **The parent goldens** unchanged (D8-6).
@@ -456,10 +465,16 @@ These are implementation details that PR8 leaves open. **None changes a register
 | **P8-9** | Substituting {𝒞} in a reading | The census members, in registered order, inside braces | The registered text writes {𝒞}. |
 | **P8-10** | Package IDs | `e8_q01` to `e8_q22`, assigned at I8-3 | E6's convention |
 | **P8-11** | Trace storage | Decided at I8-5, from a measured size estimate, before any seed | D8-12 fixes that every cell has a trace. Only the storage form is open. |
+| **P8-12** | How a trace field is absent | A sentinel default distinct from `None`, dropped when the record is serialized, so that an absent field writes no key and a `None` writes `null`. Readers read a missing key as absent. | PR8 §10 distinguishes the two states (Revision 4), and the I8-1 goldens pin the control bytes. |
+| **P8-13** | Trace line endings | Decided at I8-5, with the trace digest rule | The engine writes traces in text mode, so they have CRLF line endings on Windows, while replays are LF. The I8-1 goldens normalize line endings. The research lead ruled that this does not block I8-2. |
 
 ---
 
 ## 10. Items for the Research Lead
+
+**Resolved by Revision 4** (the research lead, 2026-09-30):
+- **The presence of the E8 trace fields.** The I8-1 goldens pin control traces without them, while D8-15 said every control `ResetRecord.sensing_window` is `null`. PR8 §10 now registers when each field is present, with the research lead's three rulings: a refused SENSE is an explicit `null`; a delivery obligation falls on exactly one callback; and presence is checked both ways, on every cell.
+- **Left for I8-5, not blocking I8-2:** trace line endings (P8-13). **Accepted as is:** no I8-1 golden exercises `REJECTED_OUT_OF_REACH`, since I8-1's purpose was parent preservation.
 
 **Resolved by Revision 3** (the research lead, 2026-09-30):
 - **TN-1.** DR is now defined in PR8's governing records as [`V6_PRICED_SENSING_DESIGN_REVIEW.md`](V6_PRICED_SENSING_DESIGN_REVIEW.md).
