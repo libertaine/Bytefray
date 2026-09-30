@@ -1,7 +1,7 @@
 """Loader for the frozen E8 pre-registration transcription (``preregistration.json``).
 
-docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md, revision 2
-(registered at ``090d11e``), is the authoritative wording. The JSON transcribes
+docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md, revision 3
+(registered at ``00fb420``), is the authoritative wording. The JSON transcribes
 it without reinterpretation. Loading fails closed unless all of these hold:
 
 * the JSON's digest is ``PREREGISTRATION_SHA256``, so the transcription is the
@@ -32,7 +32,7 @@ from types import MappingProxyType
 from typing import Any
 
 PREREGISTRATION_PATH = Path(__file__).with_name("preregistration.json")
-PREREGISTRATION_SHA256 = "0b3fe15952b307989e7623683476837690cdb3883017382c66f8890c2b0989a3"
+PREREGISTRATION_SHA256 = "71bc9363721bb8ebc934a52223721fc9bfaeb7ae3c3626f65bfb2cb2187ed6af"
 REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
 SCHEMA = "bytefray.v6.e8.preregistration"
 
@@ -165,6 +165,25 @@ def discovery_arc(data: Mapping[str, Any]) -> tuple[frozenset[int], list[int]]:
     return frozenset(covered), sizes
 
 
+def verification_window_worst_case(data: Mapping[str, Any]) -> tuple[int, list[int]]:
+    """Appendix A.2, recomputed: the most READs E6's verification window takes to hit a moved anchor's core.
+
+    Also returns the displacements of the core above the anchor for which that worst case occurs.
+    """
+    a2 = data["arithmetic"]["A.2"]
+    order = a2["window_order"]
+    first, stride, k_max = int(order["first_offset"]), int(order["stride"]), int(order["k_max"])
+    reads = [first] + [first + sign * stride * k for k in range(1, k_max + 1) for sign in (-1, 1)]
+    low, high = int(data["decisions"]["R-11"]["m_min"]), int(data["decisions"]["R-11"]["m_max"])
+    needed: dict[int, int] = {}
+    for m in range(low, high + 1):
+        for base in (-m, m):  # the anchor moved up by m (core below it) or down by m (core above it)
+            cells = set(range(base, base + int(a2["core_cells"])))
+            needed[base] = next(index + 1 for index, read in enumerate(reads) if read in cells)
+    worst = max(needed.values())
+    return worst, sorted(base for base, count in needed.items() if count == worst and base > 0)
+
+
 def reacquisition_coverage(data: Mapping[str, Any]) -> tuple[int, list[int]]:
     """Appendix A.3, recomputed: the post-evasion positions, and each window's new coverage."""
     w = int(data["decisions"]["R-2"]["value"])
@@ -208,7 +227,7 @@ def internal_problems(data: Mapping[str, Any]) -> list[str]:
 
     expect("schema", data.get("schema"), SCHEMA)
     authority = data["authority"]
-    expect("revision", authority["revision"], 2)
+    expect("revision", authority["revision"], 3)
     expect("document", authority["document"], "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md")
     expect("document digest form", bool(re.fullmatch(r"[0-9a-f]{64}", authority["document_sha256"])), True)
 
@@ -307,6 +326,10 @@ def internal_problems(data: Mapping[str, Any]) -> list[str]:
            Fraction(arithmetic["A.1"]["expectation"]))
     expect("A.1 worst case", len(sizes), arithmetic["A.1"]["worst_case"])
     positions, coverage = reacquisition_coverage(data)
+    worst, above = verification_window_worst_case(data)
+    expect("A.2 worst case", worst, arithmetic["A.2"]["reads_at_most"])
+    expect("A.2 worst-case displacements", [above[0], above[-1]] if above else [],
+           list(arithmetic["A.2"]["worst_case_core_above_anchor"]))
     expect("A.3 positions", positions, arithmetic["A.3"]["positions"])
     expect("A.3 coverage", coverage, list(arithmetic["A.3"]["window_new_coverage"]))
     expect("A.3 worst case", len([c for c in coverage if c]), arithmetic["A.3"]["worst_case"])
@@ -368,8 +391,10 @@ _PAIR = re.compile(r"\((\w+), (\w+)\)")
 
 
 def _braced(markdown: str, anchor: str) -> list[str]:
-    """The comma-separated names in the first {...} after ``anchor``."""
-    start = markdown.index(anchor)
+    """The comma-separated names in the first {...} after ``anchor`` (a missing anchor is reported)."""
+    start = markdown.find(anchor)
+    if start < 0:
+        return [f"<missing anchor {anchor!r}>"]
     open_brace = markdown.index("{", start)
     return [name.strip() for name in markdown[open_brace + 1:markdown.index("}", open_brace)].split(",")]
 
@@ -461,7 +486,7 @@ def markdown_problems(data: Mapping[str, Any], markdown: str) -> list[str]:
            [list(pair) for pair in data["definitions"]["L8"]["pairs"]])
     expect("phase-sensitive", "(PACED8, EVADE8, ADAPT8, STRESS8)" in source, True)
     expect("phase-sensitive list", ["PACED8", "EVADE8", "ADAPT8", "STRESS8"], list(sets["phase_sensitive"]))
-    expect("predicted census", _braced(markdown, "re-derived from §3.1's table under Revision 2:"),
+    expect("predicted census", _braced(markdown, "re-derived from §3.1's table under Revisions 2 and 3:"),
            list(data["census"]["predicted"]))
     expect("companion agreement list",
            "when H8-SUB, H8-CHANNEL, H8-LESS, H8-REPEAT, H8-FL and every kill criterion (§8)" in source, True)
@@ -574,6 +599,11 @@ def markdown_problems(data: Mapping[str, Any], markdown: str) -> list[str]:
     expect("SENSE properties", len(rows), 11)
     expect("SENSE normalization", {r[0]: r[1] for r in rows}.get("Normalization"),
            data["sense_action"]["normalization"])
+
+    for name, reference in data["references"].items():
+        document = reference["document"] if isinstance(reference, Mapping) else reference
+        if f"[`{Path(document).name}`]" not in markdown:
+            problems.append(f"reference {name} ({document}) is not a governing record of the markdown")
     return problems
 
 

@@ -1,6 +1,6 @@
 """V6 E8: totality and invariants of the registered decision logic.
 
-Pre-registration revision 2, §4 to §8. Every registered mapping is total and
+Pre-registration revision 3, §4 to §8. Every registered mapping is total and
 fails closed: the interpretation rows cover every (E8-D, H8-SUB, H8-PAR)
 triple exactly once; the four-outcome core answer is exhaustive and applied
 in its registered order; the H8-ADAPT table covers every combination; the

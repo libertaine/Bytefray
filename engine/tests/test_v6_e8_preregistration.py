@@ -1,6 +1,6 @@
 """V6 E8: the machine-readable pre-registration equals the registered markdown.
 
-docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md, revision 2,
+docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md, revision 3,
 is the authoritative wording. ``tools/research/v6/e8/preregistration.json``
 transcribes it. These tests show that the transcription is pinned, that it
 records the registered revision's digest, that every registered text in it is
@@ -49,22 +49,27 @@ def test_the_transcription_loads_and_is_pinned() -> None:
     assert preregistration.preregistration_digest() == preregistration.PREREGISTRATION_SHA256
     assert data["schema"] == "bytefray.v6.e8.preregistration"
     assert data["authority"]["document"] == "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md"
-    assert data["authority"]["revision"] == 2 and data["authority"]["governs"] == "revision 2"
+    assert data["authority"]["revision"] == 3 and data["authority"]["governs"] == "revision 3"
 
 
-def test_it_records_the_registered_revision_and_keeps_revision_1_as_history() -> None:
+def test_it_records_the_registered_revision_and_keeps_revisions_1_and_2_as_history() -> None:
     authority = _data()["authority"]
-    assert authority["registration_commit"] == "090d11e"
+    assert authority["registration_commit"] == "00fb420"
     assert preregistration.file_digest(MARKDOWN) == authority["document_sha256"]
     committed = subprocess.run(["git", "show", f"{authority['registration_commit']}:{authority['document']}"],
                                cwd=ROOT, capture_output=True, check=True).stdout
     assert _lf_digest(committed) == authority["document_sha256"]
-    assert authority["history"] == [{"revision": 1, "commit": "28925fd",
-                                     "document_sha256": "6d50dae648dbdb0def2bcb94644e0705b4d62d4e818f7288190df4f8fac4efbb",
-                                     "standing": "historical provenance"}]
-    revision_1 = subprocess.run(["git", "show", f"28925fd:{authority['document']}"],
-                                cwd=ROOT, capture_output=True, check=True).stdout
-    assert _lf_digest(revision_1) == authority["history"][0]["document_sha256"]
+    assert authority["history"] == [
+        {"revision": 1, "commit": "28925fd",
+         "document_sha256": "6d50dae648dbdb0def2bcb94644e0705b4d62d4e818f7288190df4f8fac4efbb",
+         "standing": "historical provenance"},
+        {"revision": 2, "commit": "090d11e",
+         "document_sha256": "0c6d0b741a4584ac10bc5f2aa3837bbc83213b8a608352d86949bdf809737286",
+         "standing": "historical provenance"}]
+    for entry in authority["history"]:
+        earlier = subprocess.run(["git", "show", f"{entry['commit']}:{authority['document']}"],
+                                 cwd=ROOT, capture_output=True, check=True).stdout
+        assert _lf_digest(earlier) == entry["document_sha256"]
 
 
 def test_the_transcription_is_internally_consistent_and_equals_the_markdown() -> None:
@@ -120,6 +125,12 @@ def _set(data: dict[str, Any], path: tuple[Any, ...], value: Any) -> None:
     (("member_semantics", "reacquisition_precedence", "rules", 1, "text"), "The first offer restarts verification."),
     (("seat_criterion", "reported", "quantiles", "rule"), "sorted(xs)[int(q * n)]"),
     (("operationalizations", "O-BOOT", "draw_form"), "tuple(rng.randrange(32) for _ in range(31))"),
+    (("member_semantics", "initial_acquisition", "rule", "text", 0),
+     "Initial acquisition ends once an enemy anchor is known."),
+    (("member_semantics", "acquisition_eligible", "text"),
+     "An offer is acquisition-eligible when the acquisition step is reached and no enemy anchor is known (discovery)."),
+    (("arithmetic", "A.2", "text"), "At most 16 stride-8 READs hit one of them (E8-DR Appendix A.2)."),
+    (("references", "DR"), "docs/research/v6/V6_PRICED_SENSING_REVIEW.md"),
 ])
 def test_drift_from_the_markdown_is_reported(path: tuple[Any, ...], value: Any) -> None:
     data = copy.deepcopy(_data())
@@ -140,6 +151,8 @@ def test_drift_from_the_markdown_is_reported(path: tuple[Any, ...], value: Any) 
     (("seat_criterion", "reported", "quantiles", "indices"), [25, 499, 974]),
     (("arithmetic", "A.3", "expectation"), "2"),
     (("arithmetic", "A.1", "expectation"), "7/2"),
+    (("arithmetic", "A.2", "reads_at_most"), 16),
+    (("arithmetic", "A.2", "worst_case_core_above_anchor"), [57, 64]),
     (("gates", "E8-D", "clauses", 2, "matched_pairs_per_condition"), 640),
     (("gates", "E8-D", "clauses", 2, "opponents"),
      ["RUSH8", "REACQ8", "PACED8", "STEALTH8", "SPLIT8", "GUARD8", "EVADE8", "ADAPT8", "STRESS8", "GREED8"]),
@@ -229,8 +242,26 @@ def test_the_revision_2_corrections_are_transcribed() -> None:
     assert [rule["label"] for rule in kc86] == ["channel race", "information dominated", "mixed dominance"]
 
 
-def test_transcription_note_tn_2_is_true() -> None:
-    # TN-2: under E6's verification-window order the worst case is 17 READs, not A.2's 16.
+def test_the_revision_3_corrections_are_transcribed() -> None:
+    semantics = _data()["member_semantics"]
+    assert semantics["acquisition_eligible"]["requires"] == [
+        "the acquisition step is reached", "no enemy anchor is known", "the entrant has not confirmed the enemy core"]
+    rule = semantics["initial_acquisition"]["rule"]["text"]
+    assert rule[0] == ("Initial acquisition ends once the enemy core is confirmed. Loss of current passive visibility "
+                       "alone does not restart initial acquisition.")
+    assert rule[1].startswith("Re-acquisition is a separate state.") and rule[2].startswith("SPLIT8: its sensor")
+    assert semantics["initial_acquisition"]["supports_reacquisition"] == ["repeat", "adaptive"]
+    assert "before the enemy core is confirmed" in semantics["channel_difference"]["passive"]["text"]
+    members = _data()["population"]["members"]
+    assert members["SPLIT8"]["reacquire"] == "once"
+    assert [m for m, v in members.items() if v["reacquire"] in ("repeat", "adaptive")] == ["REACQ8", "ADAPT8"]
+    # The re-derived census is recomputed from the corrected registration, not copied from a freeze.
+    assert preregistration.static_census(_data()) == ("EVADE8",) == tuple(_data()["census"]["predicted"])
+    assert len(_data()["census"]["revision_3_rederivation"]["text"]) == 5
+
+
+def test_appendix_a2_is_17_reads_under_e6s_verification_order() -> None:
+    # Revision 3: E6's verification window, anchor + 1 first, needs 17 READs in the worst case, not 16.
     def order(center: int) -> list[int]:
         window = [center + 1]
         for step in range(8, 65, 8):
@@ -244,8 +275,10 @@ def test_transcription_note_tn_2_is_true() -> None:
             cells = set(range(base, base + 8))
             worst = max(worst, next(i + 1 for i, x in enumerate(order(0)) if x in cells))
     assert worst == 17
-    assert [note["id"] for note in _data()["transcription_notes"]] == ["TN-1", "TN-2"]
-    assert _data()["arithmetic"]["A.2"]["reads_at_most"] == 16
+    assert _data()["arithmetic"]["A.2"]["reads_at_most"] == 17
+    assert preregistration.verification_window_worst_case(_data()) == (17, list(range(58, 65)))
+    assert "transcription_notes" not in _data()
+    assert _data()["references"]["DR"] == "docs/research/v6/V6_PRICED_SENSING_DESIGN_REVIEW.md"
 
 
 # ---------------------------------------------------------------------------
