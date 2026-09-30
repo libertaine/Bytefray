@@ -1,9 +1,9 @@
-"""The E8 pre-registration freeze identity (phase I8-0), freeze v2.
+"""The E8 pre-registration freeze identity (phase I8-0), freeze v3.
 
 It pins, at the tooling commit, the artifacts that together form E8's
 registration before any engine, agent, family, seed or matrix work exists:
 
-* the markdown pre-registration, revision 3 (the authoritative wording);
+* the markdown pre-registration, revision 4 (the authoritative wording);
 * its transcription, ``preregistration.json``;
 * the loader and the registered decision logic;
 * their transcription, totality and invariant tests;
@@ -12,14 +12,17 @@ registration before any engine, agent, family, seed or matrix work exists:
 It also pins what these fix without data: the 1,000 registered O-BOOT draws
 (by digest) and the predicted census.
 
-**Freeze v2 supersedes v1 before any exposure.** Freeze v1,
+**Freeze v3 supersedes v2 and v1 before any exposure.** Freeze v1,
 ``v6-e8-prereg-v1-116c9ed83400``, pinned revision 2. Revision 3 corrected when
-initial acquisition ends, so v1's pinned files changed and it no longer
-loads. Its record, ``preregistration_freeze.json``, is kept byte for byte as
-historical evidence (the E6 freeze convention); v2's record names it and pins
-its digest.
+initial acquisition ends, and freeze v2, ``v6-e8-prereg-v2-e478f519c070``,
+pinned it. Revision 4, after the I8-1 parent goldens, registered when each E8
+trace field is present. Each change altered the earlier freeze's pinned files,
+so neither earlier freeze loads. Their records, ``preregistration_freeze.json``
+and ``preregistration_freeze_v2.json``, are kept byte for byte as historical
+evidence (the E6 freeze convention); v3's record names both and pins their
+digests.
 
-The identity is ``v6-e8-prereg-v2-<first 12 hex of the record digest>``, where
+The identity is ``v6-e8-prereg-v3-<first 12 hex of the record digest>``, where
 the digest is the SHA-256 of the canonical JSON of the record's body (sorted
 keys, compact separators, UTF-8). File digests normalize CRLF to LF.
 
@@ -41,18 +44,28 @@ from typing import Any
 
 from tools.research.v6.e8 import decision, preregistration
 
-FREEZE_PATH = Path(__file__).with_name("preregistration_freeze_v2.json")
+FREEZE_PATH = Path(__file__).with_name("preregistration_freeze_v3.json")
 SCHEMA = "bytefray.v6.e8.preregistration_freeze"
-VERSION = 2
-IDENTITY_PREFIX = "v6-e8-prereg-v2-"
-SUPERSEDED: Mapping[str, str] = {
-    "identity": "v6-e8-prereg-v1-116c9ed83400",
-    "digest": "116c9ed834009132f42463a0cc1bc210e9c8c132b687bdb3ec081a2365ddeac8",
-    "record": "tools/research/v6/e8/preregistration_freeze.json",
-    "record_sha256": "c0895fe81dea8ca87f03647478f9a751aef844bc5ebbc32e5be46a90df901430",
-    "pinned": "pre-registration revision 2, at tooling commit eda8be5",
-    "reason": "pre-registration revision 3 corrected when initial acquisition ends, before any exposure",
-}
+VERSION = 3
+IDENTITY_PREFIX = "v6-e8-prereg-v3-"
+SUPERSEDED: tuple[Mapping[str, str], ...] = (
+    {
+        "identity": "v6-e8-prereg-v2-e478f519c070",
+        "digest": "e478f519c070e54fb664b442a675d89cb5b035426b299cad8777a114781182dd",
+        "record": "tools/research/v6/e8/preregistration_freeze_v2.json",
+        "record_sha256": "693ff786196b8e3be85f62477f04cb0638bbc381e83780772d6daff0915e86cc",
+        "pinned": "pre-registration revision 3, at tooling commit 8b03ed3",
+        "reason": "pre-registration revision 4 registered when each E8 trace field is present, before any exposure",
+    },
+    {
+        "identity": "v6-e8-prereg-v1-116c9ed83400",
+        "digest": "116c9ed834009132f42463a0cc1bc210e9c8c132b687bdb3ec081a2365ddeac8",
+        "record": "tools/research/v6/e8/preregistration_freeze.json",
+        "record_sha256": "c0895fe81dea8ca87f03647478f9a751aef844bc5ebbc32e5be46a90df901430",
+        "pinned": "pre-registration revision 2, at tooling commit eda8be5",
+        "reason": "pre-registration revision 3 corrected when initial acquisition ends, before any exposure",
+    },
+)
 ROOT = preregistration.REPOSITORY_ROOT
 
 PINNED_FILES: tuple[str, ...] = (
@@ -110,7 +123,7 @@ def body(tooling_commit: str) -> dict[str, Any]:
         "registered_draws": {"resamples": decision.RESAMPLES, "draws_per_resample": decision.SEED_COUNT,
                              "rng": registration["operationalizations"]["O-BOOT"]["rng"], "sha256": draws_digest()},
         "census_prediction": list(decision.census()),
-        "supersedes": dict(SUPERSEDED),
+        "supersedes": [dict(entry) for entry in SUPERSEDED],
         "later_identities": {
             "structural_matrix": "v6-e8-matrix-v1-<12 hex>, at I8-4",
             "analysis": "v6-e8-analysis-v1-<12 hex>, at I8-5",
@@ -132,9 +145,10 @@ def load_freeze(path: Path = FREEZE_PATH) -> Mapping[str, Any]:
     problems: list[str] = []
     if stored.get("schema") != SCHEMA or stored.get("version") != VERSION:
         problems.append(f"not an E8 pre-registration freeze record, version {VERSION}")
-    superseded = ROOT / SUPERSEDED["record"]
-    if not superseded.exists() or preregistration.file_digest(superseded) != SUPERSEDED["record_sha256"]:
-        problems.append(f"the superseded v1 record {SUPERSEDED['record']} is not kept byte for byte")
+    for entry in SUPERSEDED:
+        superseded = ROOT / entry["record"]
+        if not superseded.exists() or preregistration.file_digest(superseded) != entry["record_sha256"]:
+            problems.append(f"the superseded record {entry['record']} ({entry['identity']}) is not kept byte for byte")
     digest = record_digest(stored["body"])
     if digest != stored["digest"]:
         problems.append(f"the record's body digest {digest} is not the stored {stored['digest']}")
