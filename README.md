@@ -11,6 +11,108 @@ You write the agents: they maneuver, inspect, and rewrite memory while defending
 [![Python 3.10–3.14](https://img.shields.io/badge/Python-3.10%E2%80%933.14-blue)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+## Version 6 Research Branch
+
+> **This branch is not a preview of the Version 6 Alpha 1 feature set.**
+
+`v6-research` is Bytefray's active design and experimentation branch. It records the questions being investigated, the mechanisms being tested, what has been ruled out, and what evidence is shaping the eventual Version 6 design.
+
+Some experiments on this branch are deliberately temporary. Research rulesets, test agents, instrumentation, and experimental mechanics may never appear in a public V6 release.
+
+The purpose of this branch is to answer questions before those decisions are made.
+
+Bytefray 5.0.0 remains the current stable release.
+
+### What V6 research is trying to solve
+
+Version 6 began with a cleanup and architecture program — internally described as:
+
+> **Bytefray goes on a diet and a makeover.**
+
+The repository was simplified, obsolete execution paths were retired, historical compatibility was preserved, and major evaluation code was broken into smaller, more maintainable components.
+
+With that foundation in place, the research shifted toward a harder gameplay question:
+
+**How can Bytefray create meaningful opponent-dependent decisions rather than letting one broadly optimal strategy dominate most matchups?**
+
+The research is deliberately empirical. Instead of adding several mechanics at once and deciding whether the result "feels better," V6 isolates individual variables, runs controlled match matrices, and records what actually changes.
+
+### What has been learned so far
+
+| Research direction | What it told us |
+|---|---|
+| **Much larger arenas** | Simply making the arena larger does not automatically create deeper strategy. The existing competitive structure remains surprisingly persistent, while some agents fail in new ways. |
+| **Movement scaling** | Giving agents proportionally larger movement does not cleanly solve large-arena play and can introduce new artifacts. |
+| **Multi-tick capture** | Delaying capture removes one immediate forced line, but mostly converts it into delay, stalemate, or scheduler-dependent behavior. |
+| **Slot-limited disruption** | Restricting disruption to the victim's next action significantly reduces whole-tick first-mover dominance, but does not eliminate order dependence. |
+| **Mirrored pass ordering** | Balancing later action order removes much of the multi-pass ordering effect while exposing a separate opening-exchange effect. |
+| **Anchor/core separation** | Separating process spawn position from the core proved that their original co-location was not the main cause of the remaining advantage. |
+| **Priced sensing** | Limiting free information produced the first strong evidence that the best strategy can genuinely depend on the opponent and that obtaining information can compete with taking immediate action. |
+
+### The most interesting recent result
+
+The E6 **Priced Sensing** experiment asked what happens if an agent cannot automatically see opponents across its entire effective range.
+
+Instead, agents have to decide how much effort to spend finding an opponent versus acting immediately.
+
+Under the original control, one policy could remain a best response across the opponent field.
+
+Under priced sensing, that disappeared: different opponents rewarded different allocations of search, information, movement, and attack effort.
+
+The registered interpretation was:
+
+**`R-CREATES` — priced sensing created an opponent-dependent choice of how to allocate actions.**
+
+The experiment also showed that gathering **less** information could outperform gathering more information in some matchups.
+
+That is important because it demonstrates the kind of strategic tradeoff V6 has been looking for.
+
+It is **not**, however, a candidate for direct promotion.
+
+The primary experiment also created a new seat artifact, so its registered disposition was to reject that exact mechanic as a gameplay candidate. A companion experiment using a different disruption model reproduced the strategic result without the same artifact.
+
+That leaves a more focused research question: the interaction between information scarcity and disruption semantics.
+
+### What this branch represents
+
+The contents of `v6-research` should be read as evidence, not as a V6 feature list.
+
+A mechanic appearing here may be:
+
+- a control condition,
+- an experimental treatment,
+- an intentionally exaggerated probe,
+- research instrumentation,
+- a failed candidate that taught us something useful,
+- or an idea that eventually contributes to a different mechanic.
+
+The eventual Version 6 Alpha 1 will be a separate design boundary created from the conclusions of this work.
+
+Research code should therefore not be interpreted as "coming in V6."
+
+### Current direction
+
+The research is increasingly pointing away from simply changing arena dimensions or scheduler constants and toward systems where agents must make meaningful tradeoffs.
+
+Areas being investigated include:
+
+- limited or priced information,
+- action economy,
+- opponent-dependent strategy,
+- disruption and response timing,
+- partial observability,
+- deployment and spatial commitment,
+- match variability,
+- and ways to prevent a single deterministic strategy ladder from dominating the game.
+
+These are research directions, not announced V6 features.
+
+For the detailed experimental record, see:
+
+- [`docs/ROADMAP.md`](docs/ROADMAP.md)
+- [`docs/FUTURE_PLANS.md`](docs/FUTURE_PLANS.md)
+- [`docs/research/v6/`](docs/research/v6/)
+
 <p align="center">
   <img src="docs/screenshots/v5-replay-showcase.gif" alt="Animated Bytefray replay showing two Python agents competing in the arena and a core capture" width="900">
 </p>
