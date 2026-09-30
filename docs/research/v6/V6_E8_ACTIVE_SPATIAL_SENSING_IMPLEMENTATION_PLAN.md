@@ -5,10 +5,10 @@
 - **What exists at this commit.** Only phase I8-0: the machine-readable pre-registration, the registered decision logic, their tests, and the pre-registration freeze. No Ruleset field, action, agent, package, seed, match or probe exists.
 - **What it may not do.** It never changes a registered item. Where the registered text leaves an implementation detail open, this plan names a **plan decision** (P8-n, §9) for review. Where transcription or mapping found something the research lead should decide, it is listed in §10.
 
-**Branch:** `v6-research` at `090d11e` (pre-registration revision 2), pushed.
+**Branch:** `v6-research` at `00fb420` (pre-registration revision 3).
 **Date:** 2026-09-30
 **Governing records:**
-- [`V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md`](V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md) (**PR8**), **revision 2**, registered at `090d11e`, SHA-256 `0c6d0b741a4584ac10bc5f2aa3837bbc83213b8a608352d86949bdf809737286`. Revision 1 (`28925fd`) is historical provenance.
+- [`V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md`](V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md) (**PR8**), **revision 3**, registered at `00fb420`, SHA-256 `a822bd15d9be8f968facb2f7b9c7e228d0e59b65ce34b790ae2a9e3538583a5a`. Revisions 1 (`28925fd`) and 2 (`090d11e`) are historical provenance.
 - [`V6_E8_ACTIVE_SPATIAL_SENSING_DESIGN_REVIEW.md`](V6_E8_ACTIVE_SPATIAL_SENSING_DESIGN_REVIEW.md) (**E8-DR**), including its §F.3 ruling on the Agent API (A1 containment).
 - [`V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md`](V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md) (**E6-IP**) §5.2 and [`V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md`](V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md) (**E6-A1**), whose posture, verification and core-cursor semantics PR8 §3.2 reuses.
 - AGENTS.md: architecture boundaries, testing and compatibility requirements.
@@ -35,7 +35,7 @@
 
 | Phase | Content | Ends with |
 |---|---|---|
-| **I8-0** (this commit set) | The machine-readable pre-registration; the loader and its equivalence checks; the registered decision logic; totality and invariant tests; this plan; the pre-registration freeze `v6-e8-prereg-v1-<12 hex>` | **Stop for review** before any engine or agent code |
+| **I8-0** (this commit set) | The machine-readable pre-registration; the loader and its equivalence checks; the registered decision logic; totality and invariant tests; this plan; the pre-registration freeze `v6-e8-prereg-v2-<12 hex>`, which supersedes v1 before any exposure | **Stop for review** before any engine or agent code |
 | **I8-1** | **Parent byte-identity goldens** for C8 and C8L, committed before any engine file changes (D8-6) | The goldens commit |
 | **I8-2** | The engine surface of §4: `RulesetPolicy.sensing_mode`, SENSE, the observation, context and trace fields, the two provisional Rulesets, and A1 containment. Engine tests, including the delivery tests of PR8 §10. | Focused tests pass; parent goldens unchanged. **Stop.** |
 | **I8-3** | The family of §5: one policy source, 22 packages, behavior tests (ADAPT8's freeze tests included), the D8-9 static gate, fingerprints | **Stop.** |
@@ -51,18 +51,19 @@
 
 | Artifact | Role |
 |---|---|
-| `tools/research/v6/e8/preregistration.json` | The transcription of PR8 revision 2. Every value under a key named `text` is registered wording, verbatim with only emphasis removed. It pins the markdown's SHA-256 and registration commit, and records revision 1 as history. |
+| `tools/research/v6/e8/preregistration.json` | The transcription of PR8 revision 3. Every value under a key named `text` is registered wording, verbatim with only emphasis removed. It pins the markdown's SHA-256 and registration commit, and records revisions 1 and 2 as history. |
 | `tools/research/v6/e8/preregistration.py` | The loader. It fails closed unless the JSON digest is the pinned one, the markdown digest is the registered revision's, the JSON is internally consistent, and the JSON equals the markdown. The loaded registration is deeply immutable. |
 | `tools/research/v6/e8/decision.py` | The registered decision logic. It reads every registered value from the loaded registration and supplies only the predicates, in the registered orders. |
 | `engine/tests/test_v6_e8_preregistration.py` | The transcription tests |
 | `engine/tests/test_v6_e8_decision.py` | The totality and invariant tests |
-| `tools/research/v6/e8/preregistration_freeze.{py,json}` | The freeze record and its identity: every artifact above and this plan, pinned by SHA-256 at the tooling commit |
+| `tools/research/v6/e8/preregistration_freeze.py` and `preregistration_freeze_v2.json` | The operative freeze record and its identity: every artifact above and this plan, pinned by SHA-256 at the tooling commit |
+| `tools/research/v6/e8/preregistration_freeze.json` | Freeze v1, `v6-e8-prereg-v1-116c9ed83400`, kept byte for byte as superseded before any exposure. It pinned revision 2 and no longer loads. |
 
 **The research lead's seven required showings**, and the tests that make each:
 
 | Required | Tests |
 |---|---|
-| **The JSON matches the markdown** | `test_the_transcription_is_internally_consistent_and_equals_the_markdown`; `test_every_registered_text_is_verbatim_in_the_markdown` (all 338 registered texts); 26 markdown-drift and 16 internal-drift cases, each of which must be reported; a disagreeing but self-consistent file must fail to load |
+| **The JSON matches the markdown** | `test_the_transcription_is_internally_consistent_and_equals_the_markdown`; `test_every_registered_text_is_verbatim_in_the_markdown` (all 357 registered texts); 30 markdown-drift and 18 internal-drift cases, each of which must be reported; a disagreeing but self-consistent file must fail to load |
 | **The interpretation rows cover every combination exactly once** | `test_every_triple_maps_to_exactly_one_row` (all 18 triples); an overlapping or a missing row fails closed; the JSON's own coverage check (`internal_problems`) |
 | **The four-outcome logic is exhaustive and ordered** | `test_the_core_answer_is_exhaustive_and_ordered` (all 72 combinations): each outcome's definition is evaluated independently, at least one always holds, and the answer is the first in the registered order; `test_the_order_decides_the_overlaps`; a reordered implementation fails closed |
 | **The KC8 mappings are deterministic** | Every one of the 1,023 non-empty universal subsets of Π_F gets exactly one KC8-1 label, and every one of the 31 of A8 exactly one KC8-6 label, each equal to an independent reading of the registered rule and unchanged under every input order. An empty or out-of-set universal set fails closed. |
@@ -113,6 +114,7 @@ Every registered item appears once. **Done** means the item is implemented and t
 | §3.1 the eleven members and their parameters | Manifests with those parameters | `tools/research/v6/e8/fixtures/agents/` | Parameter-table test against the JSON | I8-3 |
 | §3.1 Π_F, Π, A8; phase-sensitive members | Sets read from the registration | `decision.py` | Set tests | Done |
 | §3.1 no purpose-built relocator | No member beyond the eleven | — | Package-count test | I8-3 |
+| §3.2 initial acquisition ends once the enemy core is confirmed, and re-acquisition is a separate state [Revision 3] | Discovery also requires an unconfirmed enemy core (§5.3) | policy source | §5.6's initial-acquisition tests | I8-3 |
 | §3.2 the order of an offer; acquisition-eligibility; known sets; the channel difference; re-acquisition precedence; the callback index; E6's semantics as corrected by E6-A1; every parameter row | The policy specification of §5 | policy source | §5.6 | I8-3 |
 | §3.2 no SENSE when `sensing_window` is `None` | A context guard on every SENSE path | policy source | D8-9 statically; CQ8-1 dynamically | I8-3, Q8 |
 | §3.2 ADAPT8's freeze tests | Engine-level tests in every registered case | `engine/tests/` | §5.6 | I8-3 |
@@ -193,7 +195,7 @@ Every registered item appears once. **Done** means the item is implemented and t
 | §12 hard stops | The unlock chain | `run_e8.py` | Runner tests | I8-5 |
 | §13 A1 containment | §4.5 | engine and harness | Containment tests | I8-2 |
 | §13 promotion prerequisites | None implemented: research only | — | — | — |
-| §14, §15, Appendix A | Records. A.1 and A.3 are recomputed by the loader. A.2 is transcribed with TN-2 (§10). | JSON | Loader | Done |
+| §14, §15, Appendix A | Records. A.1, A.2 (17 READs, Revision 3) and A.3 are recomputed by the loader. | JSON | Loader | Done |
 
 ---
 
@@ -315,7 +317,7 @@ One agent instance serves all of an entrant's processes, so knowledge is entrant
       - **guard:** disrupt a known enemy anchor not yet written this tick; acquisition, if eligible; repair its own core with the core beacon at the cyclic guard cursor.
       - **paint:** paint.
       - **SPLIT8:** the sensor takes acquisition if eligible, else disrupts a known anchor, else paints. The striker takes the attack posture with no acquisition.
-   - **Acquisition** is eligible when the step is reached and no enemy anchor is known (discovery):
+   - **Acquisition** is eligible when the step is reached, no enemy anchor is known, and the entrant has not confirmed the enemy core (discovery) [Revision 3]. Initial acquisition therefore ends at core confirmation, and loss of passive visibility alone does not restart it. Re-acquisition is the separate state of step 4.2:
      - `spatial-fast`: under `"passive"`, MOVE 64 · σ; under `"active"`, a SENSE at *c_k*. *k* advances with each discovery SENSE and restarts at 0 after seven empty results.
      - `spatial-paced`: the same, but only on odd callback indexes; paint on even ones.
      - `ownership`: E6's READ stride search.
@@ -337,8 +339,10 @@ One agent instance serves all of an entrant's processes, so knowledge is entrant
 
 These follow from PR8 as written. **None is a choice made here.** Each is listed for the research lead in §10.
 
-- **K-1, SPLIT8's sensor under C8 and C8L.** PR8's acquisition rule, eligible when no enemy anchor is known, replaces E6's search condition, which also required that no anchor be remembered and the core be unknown (E6-IP §5.2). The sensor takes acquisition first, so it resumes sweeping whenever the entrant's visible set is empty, even after the entrant knows the enemy core. (The engine's visible set is entrant-wide: the union over the entrant's unsuppressed processes, in ascending order.) E6's SPLIT stopped searching once an anchor was remembered.
-  - Attack-posture members are unaffected. In their order, acquisition is reached only when the core is unknown and no verification READ is due, which is E6's condition.
+- **K-1, SPLIT8's sensor under C8 and C8L: corrected by Revision 3.** Under revision 2, the sensor resumed sweeping whenever the entrant's visible set was empty, even after the entrant knew the enemy core. E6's SPLIT did not. Revision 3 ends initial acquisition at core confirmation. SPLIT8's `reacquire` is `once`, so after confirmation its sensor never moves again.
+  - **What remains, as registered.** Before confirmation, initial acquisition has not ended, so the sensor still sweeps whenever the visible set is empty (PR8 §3.2). E6's sensor also paused while an anchor was remembered, that is, between first sighting and confirmation (E6-IP §5.2). The two differ only in that window.
+  - Attack-posture members are unaffected. In their order, acquisition is reached only when the core is unknown and no verification READ is due. Guard-posture members confirm no enemy core, so K-4 stands.
+  - The engine's visible set is entrant-wide: the union over the entrant's unsuppressed processes, in ascending order.
 - **K-2, passive replacement.** Under `"passive"`, a tracked anchor that disappears while any enemy anchor is visible is replaced by the nearest visible one (KU-7), so no search starts. REACQ8 and ADAPT8 search under C8 only when nothing is visible.
 - **K-3, unverified adoption.** E6-A1 C-1's rule, evaluated on the known set, never fires under `"active"`: no SENSE result has been delivered at a first callback. Every T8 attacker confirms the core by READ.
 - **K-4, the registered channel difference**, restated: under `"passive"`, GUARD8 and EVADE8 resume sweeping when they lose sight of the opponent.
@@ -349,6 +353,12 @@ These are engine-level tests against scripted, non-family opponents, asserting a
 - **E6 parity:** E6's family behavior tests (E6-A1 §2), ported, for the posture, verification, core-cursor and adoption semantics under `"passive"`.
 - **Discovery:** the centers *c_k* for both σ, the stop, the restart after seven empty results, and PACED8's odd-index pacing.
 - **Knowledge:** one test per rule, KU-1 to KU-9, with scripted anchors inside and outside windows.
+- **Initial acquisition** (Revision 3), under `"passive"`:
+  - SPLIT8's sensor sweeps while the enemy core is unconfirmed and nothing is visible;
+  - it never moves again once its entrant confirms the core, including after the visible set empties;
+  - its striker never moves;
+  - GUARD8 and EVADE8 still resume sweeping when they lose sight (K-4);
+  - attack-posture actions are unchanged.
 - **Precedence:** RP-1 to RP-7. That covers:
   - verification, then the second and third windows, before any posture step;
   - continuation across a suppressed tick (RP-2);
@@ -451,16 +461,14 @@ These are implementation details that PR8 leaves open. **None changes a register
 
 ## 10. Items for the Research Lead
 
-**From the transcription** (JSON `transcription_notes`). Both are non-operative: no registered decision depends on either. Each is recorded, not resolved.
-- **TN-1, an unresolved abbreviation.** "DR", in §9 (DR §E.2) and Appendix A.1 (DR §G.1), is not in the markdown's list of abbreviated records. Its cited sections match [`V6_PRICED_SENSING_DESIGN_REVIEW.md`](V6_PRICED_SENSING_DESIGN_REVIEW.md): §E.2 is seed inference as the one zero-action bypass, and §G.1 gives the 1537/385 sweep.
-- **TN-2, Appendix A.2's count.** It says "at most 16 stride-8 READs", which holds for a READ schedule chosen over the two spans. **Under E6's verification-window order, which the family uses, the worst case is 17.** The window's first READ, at anchor + 1, lies in neither span. The case is a core 58 to 64 cells above the moved anchor. A test (`test_transcription_note_tn_2_is_true`) recomputes the 17.
+**Resolved by Revision 3** (the research lead, 2026-09-30):
+- **TN-1.** DR is now defined in PR8's governing records as [`V6_PRICED_SENSING_DESIGN_REVIEW.md`](V6_PRICED_SENSING_DESIGN_REVIEW.md).
+- **TN-2.** Appendix A.2 now says 17 READs under E6's verification order. The loader recomputes the 17 and its worst-case displacements, 58 to 64 cells.
+- **K-1.** Initial acquisition ends once the enemy core is confirmed (§5.5).
 
-Either can be corrected by a dated erratum in a later revision, or left as recorded. Neither blocks I8-1.
-
-**From mapping the member semantics** (§5.5). Each follows from PR8 as written, and the plan implements it as written:
-- **K-1:** under the controls, SPLIT8's sensor resumes sweeping whenever the entrant sees no enemy anchor, even once the enemy core is known. E6's SPLIT stopped. **This one departs from E6's control-side behavior**, so it is flagged for explicit confirmation.
+**Left as registered** (the research lead, 2026-09-30). Each follows from PR8 as written, and the plan implements it as written:
 - **K-2:** under `"passive"`, a vanished anchor is replaced by any visible one, so REACQ8 and ADAPT8 search only when nothing is visible.
 - **K-3:** unverified adoption never fires under `"active"`.
 - **K-4:** the registered channel difference: GUARD8 and EVADE8 resume sweeping under the controls.
 
-**If K-1 or K-2 is not what the research lead intends,** the correction belongs in the pre-registration, as a narrow blind revision before any family code (I8-3). It does not belong in this plan.
+**One point to note, not a new question.** In the window between first sighting and core confirmation, SPLIT8's sensor still resumes sweeping when the visible set empties. E6's did not (K-1). Revision 3's rule sets that behavior, and the plan implements it as written.
