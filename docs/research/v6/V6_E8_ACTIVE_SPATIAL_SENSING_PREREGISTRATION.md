@@ -1,6 +1,6 @@
 # Bytefray V6 E8 — Active Spatial Sensing: Pre-Registration
 
-**Status: APPROVED FOR FREEZE by the research lead on 2026-09-30**, after revision 1 and two precision edits made at the freeze review: the bootstrap wording, and delivery after suppression. **Revision 2**, which corrects and disambiguates the registered semantics before any transcription or code, and **Revision 3**, a narrow correction of when initial acquisition ends, were approved by the research lead on the same day. **Revision 3 governs; revisions 1 (`28925fd`) and 2 (`090d11e`) are historical provenance** (below).
+**Status: APPROVED FOR FREEZE by the research lead on 2026-09-30**, after revision 1 and two precision edits made at the freeze review: the bootstrap wording, and delivery after suppression. **Revision 2**, which corrects and disambiguates the registered semantics before any transcription or code, **Revision 3**, a narrow correction of when initial acquisition ends, and **Revision 4**, a narrow registration of when the E8 trace fields are present, were approved by the research lead on the same day. **Revision 4 governs; revisions 1 (`28925fd`), 2 (`090d11e`) and 3 (`00fb420`) are historical provenance** (below).
 - **Its standing.** This markdown is the authoritative registered wording.
 - **What comes next.** The E6-style transcription and freeze phase, still before any seed or matrix cell:
   - the machine-readable pre-registration;
@@ -37,12 +37,20 @@
 - **Three conventions that were cited by reference are now stated in full:** the callback index (§3.2), the quantile rule (§6.2), and O-BOOT's draws and their joint application (§4).
 - **The records cited by abbreviation are resolved** in the governing records below.
 
-**Revision 3 (2026-09-30)**, approved by the research lead before any engine or agent code. **It is narrow.** No hypothesis, threshold, set, condition, cell count or registered outcome criterion changes. **This revision governs.**
+**Revision 3 (2026-09-30)**, approved by the research lead before any engine or agent code. **It is narrow.** No hypothesis, threshold, set, condition, cell count or registered outcome criterion changes. It is itself superseded by revision 4.
 - **Its history.** Revision 2 was registered at `090d11e` with SHA-256 `0c6d0b741a4584ac10bc5f2aa3837bbc83213b8a608352d86949bdf809737286`, and is preserved there as historical provenance, as is revision 1. This revision was drafted on `v6-research` at `7974e2a`. **Its own digest is recorded in the machine-readable pre-registration and its freeze record.**
 - **Initial acquisition ends once the enemy core is confirmed** (§3.2), in the research lead's words. Under revision 2, SPLIT8's sensor resumed sweeping under the controls whenever the visible set emptied, even after its entrant knew the enemy core, which departed from E6. Re-acquisition stays a separate state, with revision 2's precedence. The guard-posture channel difference is unchanged.
 - **The census is re-derived** under these semantics (§3.5).
 - **DR is defined** in the governing records.
 - **Appendix A.2 is corrected** to 17 READs under E6's verification order.
+
+**Revision 4 (2026-09-30)**, approved by the research lead after the parent goldens were pinned (phase I8-1) and before any engine code. **It is narrow: it registers when each E8 trace field is present** (§10). No hypothesis, threshold, set, condition, cell count, member semantics or registered outcome criterion changes. **This revision governs.**
+- **Its history.** Revision 3 was registered at `00fb420` with SHA-256 `a822bd15d9be8f968facb2f7b9c7e228d0e59b65ce34b790ae2a9e3538583a5a`, and is preserved there as historical provenance, as are revisions 1 and 2. This revision was drafted on `v6-research` at `2cfd4e8`. **Its own digest is recorded in the machine-readable pre-registration and its freeze record.**
+- **Why it was needed.** The I8-1 parent goldens pin C8 and C8L traces in which no E8 field appears, and D8-15 said that every C8 and C8L `ResetRecord.sensing_window` is `null`. An absent field and a field present as `null` are different serialized states, so both could not hold.
+- **Absent and `null` are distinct** (§10). Under the controls, the E8 fields are omitted, never serialized as `null`, so the parent goldens stand unchanged. Under T8 and T8L, each field is present exactly where its semantics apply. An empty SENSE result is an explicit empty list, and a refused SENSE is an explicit `null`.
+- **The gates check presence both ways, on every cell, and fail closed** (§5.1). D8-1, D8-13 and D8-15 check it, and for presence D8-1 and D8-13 are also evaluated on the controls. D8-3's equality compares it. No rule reads an absent field as `null` except where §10 says so.
+- **Serialization compatibility is registered** (§10).
+- **It changes no member semantics**, so no input of §3.5's census changes.
 
 **Branch:** `v6-research` at `ae6c7f7` ("docs(v6): add the E8 active spatial sensing design review"), pushed.
 **Date:** 2026-09-30
@@ -79,7 +87,7 @@
 
 ## 0. Registration Decisions
 
-**The research lead's first review (2026-09-30)** approved R-1 to R-8 and R-10 to R-12, R-8 with the structural derivation below, and rejected R-9's 1/20, which is revised below. **The freeze review (2026-09-30) approved revision 1, with the two precision edits noted in the status line.** Revision 2 replaces R-8's rationale, keeping its value, and changes no other decision in this table. Revision 3 changes none. Markers **[R-n]** in the text refer to this table.
+**The research lead's first review (2026-09-30)** approved R-1 to R-8 and R-10 to R-12, R-8 with the structural derivation below, and rejected R-9's 1/20, which is revised below. **The freeze review (2026-09-30) approved revision 1, with the two precision edits noted in the status line.** Revision 2 replaces R-8's rationale, keeping its value, and changes no other decision in this table. Revisions 3 and 4 change none. Markers **[R-n]** in the text refer to this table.
 
 | # | Decision | Drafted value | Rationale |
 |---|---|---|---|
@@ -403,9 +411,9 @@ All arithmetic is exact (`Fraction`), and every comparison is closed exactly as 
 
 | Clause | Kind | Condition | Evaluated on |
 |---|---|---|---|
-| **D8-1** Sensing exactness | Ruleset invariant | **Every applied SENSE's authoritative tuple** (§10) equals the set of live enemy anchor positions within ≤ 27 of *t* at execution. That set is **re-derived independently** from the trace's ordered action stream: tick-0 anchors, the normalized results of every MOVE, and disruption hits under the condition's λ. | T8 and T8L, all cells |
+| **D8-1** Sensing exactness | Ruleset invariant | **Every applied SENSE's authoritative tuple** (§10) equals the set of live enemy anchor positions within ≤ 27 of *t* at execution. That set is **re-derived independently** from the trace's ordered action stream: tick-0 anchors, the normalized results of every MOVE, and disruption hits under the condition's λ. **Presence** [Revision 4]: every SENSE record carries `applied_result.sensed_anchors`, and no other record does (§10). An applied SENSE record that omits it fails D8-1: its absence is never read as an empty result. | T8 and T8L, all cells; for presence, all four conditions [Revision 4] |
 | **D8-2** No free sensing | Ruleset invariant | `visible_enemy_anchor_addresses` is empty at every traced callback | T8 and T8L, all cells |
-| **D8-3** No-information identity | Family characterization | **A negative control for information leakage.** Take every matched pair of T8 cells, and every matched pair of T8L cells: the same opponent, seed, orientation and seat, one cell with LURK8 and one with GREED8. **The opponent ranges over the nine members of Π other than LURK8 and GREED8** [Revision 2], which gives 9 × 2 orientations × 32 seeds = 576 matched pairs in each condition. Excluding those two keeps every comparison literally against the same opponent, so **the gate never depends on twin equivalence.** Twin identity is not assumed here; it is tested on its own terms (§3.3, D8-11). The entrant's ordered `decision_v2` records must be equal, record for record, in `action` (`kind`, `operand`, `value`) and in the observation's **information fields** (`visible_enemy_anchor_addresses`, `previous_sense_anchors`, `previous_read_value`, `previous_read_owner`). **Excluded:** package identity and metadata (package IDs, `wall_time_ms`, diagnostics). **Why equality is expected.** Both packages share one policy source and draw from the same seat- and slot-keyed stream in the same fixed order (PR6 §3.2), so their RNG state is identical by construction. With no information, both fall to the same paint routine. **So a divergence detects information reaching one of them, not an incidental artifact difference.** | T8 and T8L |
+| **D8-3** No-information identity | Family characterization | **A negative control for information leakage.** Take every matched pair of T8 cells, and every matched pair of T8L cells: the same opponent, seed, orientation and seat, one cell with LURK8 and one with GREED8. **The opponent ranges over the nine members of Π other than LURK8 and GREED8** [Revision 2], which gives 9 × 2 orientations × 32 seeds = 576 matched pairs in each condition. Excluding those two keeps every comparison literally against the same opponent, so **the gate never depends on twin equivalence.** Twin identity is not assumed here; it is tested on its own terms (§3.3, D8-11). The entrant's ordered `decision_v2` records must be equal, record for record, in `action` (`kind`, `operand`, `value`) and in the observation's **information fields** (`visible_enemy_anchor_addresses`, `previous_sense_anchors`, `previous_read_value`, `previous_read_owner`). **A field is equal only if both records omit it, or both carry the same value** [Revision 4]. **Excluded:** package identity and metadata (package IDs, `wall_time_ms`, diagnostics). **Why equality is expected.** Both packages share one policy source and draw from the same seat- and slot-keyed stream in the same fixed order (PR6 §3.2), so their RNG state is identical by construction. With no information, both fall to the same paint routine. **So a divergence detects information reaching one of them, not an incidental artifact difference.** | T8 and T8L |
 | **D8-4** Action charging | Ruleset invariant | Every SENSE record occupies exactly one offer. In every tick, each entrant's traced callbacks, SENSE records included, number at most its per-tick quota of 8, and no SENSE is followed by an extra, uncharged offer. | T8 and T8L, all cells |
 | **D8-5** No match-state change | Ruleset invariant | For every tick and entrant, the replay's memory writes equal the traced applied WRITEs. No write, position change or disruption is attributable to a SENSE. | T8 and T8L, all cells |
 | **D8-6** Parent identity | Ruleset invariant | With `sensing_mode = "passive"`, the parent byte-identity goldens reproduce byte for byte. C8 and C8L run T-E6's and T-E6L's Rulesets unchanged. | The parent freeze; C8 and C8L provenance |
@@ -415,9 +423,9 @@ All arithmetic is exact (`Fraction`), and every comparison is closed exactly as 
 | **D8-10** Seed commitment | Protocol | PR6 D-6, unchanged in form: at reveal, the list's SHA-256 equals the commitment, the execution matrix identity recomputes, and every cell's seed is on the list (§9) | After the frozen analysis, **before** interpretation |
 | **D8-11** Mirror relabeling | Ruleset invariant | Every twin mirror's two orientations have byte-identical replay tick records (PR6 D-7) | All F2 cells |
 | **D8-12** Trace completeness | Protocol | Every cell has a `bytefray.agent_trace` schema-2 trace. Every callback has a `decision_v2` record, and the trace's `BindingRecord.replay_sha256` equals the cell's replay digest. | All four conditions |
-| **D8-13** Delivery consistency | Ruleset invariant | For every authoritative SENSE record, **if its process ever receives another callback**, its next `decision_v2` record's `previous_sense_anchors` must equal the authoritative tuple. That holds **even when the next callback comes on a later tick, after suppression.** **Suppression alone never excuses it:** under whole-tick disruption a process may miss the rest of its tick and be called again later. **No later reflection is required only if there is genuinely no later callback** before the entrant is eliminated or the match ends. In that case **the authoritative record still stands.** It is a consistency gate only (§10). | T8 and T8L |
+| **D8-13** Delivery consistency | Ruleset invariant | For every authoritative SENSE record, **if its process ever receives another callback**, its next `decision_v2` record's `previous_sense_anchors` must equal the authoritative tuple. That holds **even when the next callback comes on a later tick, after suppression.** **Suppression alone never excuses it:** under whole-tick disruption a process may miss the rest of its tick and be called again later. **No later reflection is required only if there is genuinely no later callback** before the entrant is eliminated or the match ends. In that case **the authoritative record still stands.** **Presence** [Revision 4]: the field is present on exactly the callbacks with a delivery obligation (§10). Absent where one exists, it is a D8-13 failure, and present where none exists, it is one too. Absence is read as no prior result only where no delivery obligation exists. It is a consistency gate only (§10). | T8 and T8L; for presence, all four conditions [Revision 4] |
 | **D8-14** No invalid action | Protocol | No cell records an `agent_action_invalid` forfeit (`REJECTED_INVALID`). One would be a containment breach. | All four conditions |
-| **D8-15** Window fidelity | Ruleset invariant | **Configuration.** Every T8 and T8L `ResetRecord.sensing_window` is **27**, and every C8 and C8L one is `null`. **D8-15 is not the sole proof of the window used.** The reset record establishes the configured window. D8-1's independent re-derivation, which uses exactly that recorded value and must reproduce every returned tuple, demonstrates the behavior. **Both must hold.** | All four conditions |
+| **D8-15** Window fidelity | Ruleset invariant | **Configuration.** Every T8 and T8L `ResetRecord` carries `sensing_window` = **27**, and one that omits it fails. Every C8 and C8L `ResetRecord` omits `sensing_window`, and D8-15 reads that absence as null; one that carries it, even as `null`, fails [Revision 4]. **D8-15 is not the sole proof of the window used.** The reset record establishes the configured window. D8-1's independent re-derivation, which uses exactly that recorded value and must reproduce every returned tuple, demonstrates the behavior. **Both must hold.** | All four conditions |
 
 **E8-D = PASS** if and only if every clause passes. **Its status is final only after D8-10.** No registered interpretation or disposition is issued before the seed reveal (§9, step 7).
 
@@ -706,16 +714,44 @@ These are evaluated on the primary arm.
 
 **Traces:** `bytefray.agent_trace`, schema version **2** (`TRACE_SCHEMA_VERSION_V2`), are required for **every cell of all four conditions** (D8-12). **The analysis reads sensing facts only from the fields named here. No other telemetry is equivalent.**
 
-**The fields frozen here.** They are all additive and optional. The trace policy says readers ignore unknown keys, so they need no trace schema-version change (`agent_trace.py:18–31`).
+**The fields frozen here.** They are all additive and optional. The trace policy says readers ignore unknown keys, so they need no trace schema-version change (`agent_trace.py:18–31`). **When each is present is registered below** [Revision 4].
 
 | Surface | Field | Type, and its JSON form |
 |---|---|---|
 | `ObservationV2` | `previous_sense_anchors` | `tuple[int, ...] \| None`, ascending |
-| `TraceObservationV2` | `previous_sense_anchors` | A mirror of the above: a JSON list of integers, or `null` |
-| `TraceResultV2` | `sensed_anchors` | `tuple[int, ...] \| None`, as a JSON list of integers ascending, or `null` |
+| `TraceObservationV2` | `previous_sense_anchors` | A mirror of the above: a JSON list of integers, or `null`. It is present only where a delivery is due (below) [Revision 4]. |
+| `TraceResultV2` | `sensed_anchors` | `tuple[int, ...] \| None`, as a JSON list of integers ascending, or `null`. It is present only on SENSE records (below) [Revision 4]. |
 | `TraceActionV2` | `kind` | `"sense"` for the sensing action |
 | `MatchContextV2` | `sensing_window` | `int \| None`: **the registered half-width actually in effect for the match**, 27 under `"active"`, `None` under `"passive"` |
-| `ResetRecord` | `sensing_window` | The same value, recorded at each entrant's `reset()`. It is **match configuration**: it records the window in effect (D8-15). The window's *behavior* is demonstrated by D8-1's re-derivation. It is a JSON integer or `null`. |
+| `ResetRecord` | `sensing_window` | The same value, recorded at each entrant's `reset()`. It is **match configuration**: it records the window in effect (D8-15). The window's *behavior* is demonstrated by D8-1's re-derivation. It is a JSON integer, present under `"active"` and absent under `"passive"` (below) [Revision 4]. |
+
+**Presence** [Revision 4]. **An absent field and a field present as `null` are different serialized states.** Each E8 field is present exactly where its semantics apply, and absent everywhere else. The research lead's rule, verbatim:
+
+> C8 / C8L controls: E8-only optional trace fields are omitted when not applicable, not serialized as `null`.
+> - `ResetRecord.sensing_window` is absent.
+> - `sensed_anchors` is absent because no SENSE action exists.
+> - `previous_sense_anchors` is absent because no SENSE result exists to deliver.
+>
+> D8-15: for the control-side semantic check only, absence of `sensing_window` means the registered value is None/null. For T8/T8L, absence is not acceptable: the reset record must explicitly contain `sensing_window = 27`.
+>
+> `sensed_anchors`: on an applied SENSE decision, the field is mandatory even when the result is empty. Empty result must be represented explicitly as the registered empty collection; omission means “this record was not a SENSE result,” not “SENSE returned nothing.”
+>
+> `previous_sense_anchors`: on the first later callback that has a delivery obligation from a prior SENSE, the field is mandatory and must equal that authoritative result—even when the result was empty. If no SENSE has ever produced a result for that process, the field is omitted.
+>
+> D8-13: therefore treats absence as null/no-prior-result only when no delivery obligation exists. Once a SENSE result exists and a later callback occurs, absence is a gate failure.
+
+**The research lead's rulings** (2026-09-30), on three points the rule leaves open:
+- **A refused SENSE is an explicit `null`** in both fields: its own record's `sensed_anchors`, and the next callback's `previous_sense_anchors`. This keeps the refused row of the authoritative-record table (below) and D8-13's reflection of a refusal, so a dropped delivery after a refusal is still caught.
+- **A delivery obligation falls on exactly one callback:** the same process's next callback after a SENSE record, applied or refused, even on a later tick after suppression. Every other callback omits `previous_sense_anchors`, including a callback after an earlier SENSE whose result was already delivered.
+- **Presence is checked both ways, on every cell, and fails closed.** A field absent where it must be present, or present where it must be absent, fails the gate that reads it: D8-15 for `sensing_window`, D8-1 for `sensed_anchors` and D8-13 for `previous_sense_anchors` (§5.1).
+
+| Field | Present, with its value | Absent |
+|---|---|---|
+| `ResetRecord.sensing_window` | Under `"active"` (T8, T8L): **27** | Under `"passive"` (C8, C8L). D8-15 reads the absence as null. |
+| `applied_result.sensed_anchors` | On every record whose action is SENSE: the ascending list if it was applied, empty if nothing was found, and `null` if it was not applied | On every other record. Its absence means that the record is not a SENSE record, never that a SENSE found nothing. |
+| `observation.previous_sense_anchors` | On the callback with a delivery obligation: equal to the prior SENSE record's `sensed_anchors`, whether a list, an empty list or `null` | On every other callback, including every callback before the process first senses |
+
+**Serialization compatibility** [Revision 4]. The research lead's rule, verbatim: Additive E8 trace fields must not change canonical serialized bytes for pre-E8/control records when their semantics are inapplicable. D8-6's parent goldens check it on the parent freeze.
 
 **The authoritative record** [B-7]. For each sensing action, **the acting callback's `decision_v2` record is authoritative for both the action and its returned result.** Its `applied_result.sensed_anchors` **is** the result. `previous_sense_anchors` is only the later reflection of that result, in the observation state of the same process's next callback, if there is one.
 
@@ -727,7 +763,7 @@ These are evaluated on the primary arm.
 | What it returned | `applied_result.sensed_anchors`, the complete ascending tuple. An empty list means sensed and found nothing. |
 
 - **Correctness never depends on a later record.** A later callback may come only after suppression, or never, if the entrant is eliminated or the match ends.
-- **The consistency gate** (D8-13). *If* the same (`agent_id`, `process_id`) **ever** has another `decision_v2` record, even on a later tick after suppression, the next such record's `observation.previous_sense_anchors` must equal the authoritative `sensed_anchors`: the tuple if applied, `null` if refused. A mismatch is a D8-13 failure. **Only a genuinely absent later record**, because the entrant was eliminated or the match ended first, **requires no reflection.**
+- **The consistency gate** (D8-13). *If* the same (`agent_id`, `process_id`) **ever** has another `decision_v2` record, even on a later tick after suppression, the next such record's `observation.previous_sense_anchors` must equal the authoritative `sensed_anchors`: the tuple if applied, `null` if refused. A mismatch is a D8-13 failure, and so is an absent field [Revision 4]. **Only a genuinely absent later record**, because the entrant was eliminated or the match ended first, **requires no reflection.**
 - **The delivery tests, before the freeze.** Engine-level tests with scripted, non-family agents, under both parents, must cover:
   - sense, then the next offer in the same chunk;
   - sense, then the next tick;
@@ -816,6 +852,7 @@ Each is recorded, and none changes a research-lead ruling.
 10. **A channel difference is registered** [Revision 2] (§3.2). Under `"passive"`, losing visibility can resume acquisition. Under `"active"`, remembered SENSE knowledge persists.
 11. **SPLIT8's initial acquisition ends once the enemy core is confirmed** [Revision 3] (§3.2). Under the controls, its sensor no longer resumes a generic sweep after confirmation. E6's SPLIT did not resume one either.
 12. **Appendix A.2's count is corrected** [Revision 3]: 17 READs under E6's verification order, not E8-DR Appendix A.2's 16.
+13. **When each E8 trace field is present is registered** [Revision 4] (§10). An absent field and a field present as `null` are distinct, the controls omit the fields, and the gates check presence both ways (§5.1).
 
 ---
 
