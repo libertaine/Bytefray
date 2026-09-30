@@ -1,12 +1,12 @@
-"""V6 E8: the pre-registration freeze identity (phase I8-0), freeze v2.
+"""V6 E8: the pre-registration freeze identity (phase I8-0), freeze v3.
 
 The record pins, at the tooling commit, the markdown pre-registration
-(revision 3), its transcription, the loader, the decision logic, their tests
+(revision 4), its transcription, the loader, the decision logic, their tests
 and the implementation plan. It also pins the registered O-BOOT draws and the
 predicted census. It recomputes from the live checkout, every pinned file
 equals its content at the tooling commit, any drift fails closed, and no seed
-exists. Freeze v1, which pinned revision 2, is kept byte for byte as
-superseded before any exposure, and no longer loads.
+exists. Freezes v2 and v1, which pinned revisions 3 and 2, are kept byte for
+byte as superseded before any exposure, and neither loads.
 """
 
 from __future__ import annotations
@@ -22,8 +22,10 @@ import pytest
 from tools.research.v6.e8 import decision, preregistration, preregistration_freeze
 
 ROOT = Path(__file__).resolve().parents[2]
-IDENTITY = "v6-e8-prereg-v2-e478f519c070"
-V1_IDENTITY = "v6-e8-prereg-v1-116c9ed83400"
+IDENTITY = "v6-e8-prereg-v3-4058c890e992"
+# Each superseded freeze: its identity, its record, and the commit that wrote the record.
+SUPERSEDED = (("v6-e8-prereg-v2-e478f519c070", "tools/research/v6/e8/preregistration_freeze_v2.json", "63ecff6"),
+              ("v6-e8-prereg-v1-116c9ed83400", "tools/research/v6/e8/preregistration_freeze.json", "7974e2a"))
 
 
 def _stored() -> dict:
@@ -37,12 +39,12 @@ def test_the_freeze_loads_and_its_identity_is_pinned() -> None:
     assert preregistration_freeze.record_digest(_stored()["body"]) == frozen["digest"]
 
 
-def test_it_pins_revision_2_and_the_transcription() -> None:
+def test_it_pins_revision_4_and_the_transcription() -> None:
     body = _stored()["body"]
-    assert body["preregistration"]["revision"] == 3
-    assert body["preregistration"]["registration_commit"] == "00fb420"
-    assert body["preregistration"]["sha256"] == "a822bd15d9be8f968facb2f7b9c7e228d0e59b65ce34b790ae2a9e3538583a5a"
-    assert [entry["commit"] for entry in body["preregistration"]["historical"]] == ["28925fd", "090d11e"]
+    assert body["preregistration"]["revision"] == 4
+    assert body["preregistration"]["registration_commit"] == "ae37cf9"
+    assert body["preregistration"]["sha256"] == "8a9971a0630f85291e41034a07940cdf915e97cde4c87fb133dcb6bca8ae63fa"
+    assert [entry["commit"] for entry in body["preregistration"]["historical"]] == ["28925fd", "090d11e", "00fb420"]
     assert body["transcription"]["sha256"] == preregistration.PREREGISTRATION_SHA256
     assert body["files"]["tools/research/v6/e8/preregistration.json"] == preregistration.PREREGISTRATION_SHA256
     assert set(body["files"]) == set(preregistration_freeze.PINNED_FILES)
@@ -79,7 +81,7 @@ def test_a_tampered_record_fails_to_load(tmp_path: Path) -> None:
     with pytest.raises(preregistration_freeze.FreezeError, match="digest"):
         preregistration_freeze.load_freeze(path)
     changed = copy.deepcopy(stored)
-    changed["identity"] = "v6-e8-prereg-v1-000000000000"
+    changed["identity"] = "v6-e8-prereg-v2-000000000000"
     path.write_text(json.dumps(changed), encoding="utf-8")
     with pytest.raises(preregistration_freeze.FreezeError, match="identity"):
         preregistration_freeze.load_freeze(path)
@@ -103,24 +105,34 @@ def test_the_loaded_freeze_is_immutable() -> None:
     assert isinstance(frozen["body"]["census_prediction"], tuple)
 
 
-def test_v1_is_kept_byte_for_byte_superseded_and_no_longer_loads() -> None:
+def test_the_superseded_freezes_are_named_in_order() -> None:
     body = _stored()["body"]
-    assert body["supersedes"]["identity"] == V1_IDENTITY
-    v1 = ROOT / body["supersedes"]["record"]
-    assert preregistration.file_digest(v1) == body["supersedes"]["record_sha256"]
-    committed = subprocess.run(["git", "show", f"7974e2a:{body['supersedes']['record']}"], cwd=ROOT,
+    assert [(entry["identity"], entry["record"]) for entry in body["supersedes"]] == [
+        (identity, record) for identity, record, _ in SUPERSEDED]
+    assert body["supersedes"] == [dict(entry) for entry in preregistration_freeze.SUPERSEDED]
+
+
+@pytest.mark.parametrize(("superseded_identity", "record", "written_at"), SUPERSEDED)
+def test_each_superseded_freeze_is_kept_byte_for_byte_and_no_longer_loads(
+        superseded_identity: str, record: str, written_at: str) -> None:
+    entry = next(e for e in _stored()["body"]["supersedes"] if e["identity"] == superseded_identity)
+    kept = ROOT / record
+    assert preregistration.file_digest(kept) == entry["record_sha256"]
+    committed = subprocess.run(["git", "show", f"{written_at}:{record}"], cwd=ROOT,
                                capture_output=True, check=True).stdout
-    assert preregistration.file_digest(v1) == hashlib.sha256(committed).hexdigest()
-    assert json.loads(v1.read_text(encoding="utf-8"))["identity"] == V1_IDENTITY
+    assert preregistration.file_digest(kept) == hashlib.sha256(committed).hexdigest()
+    stored = json.loads(kept.read_text(encoding="utf-8"))
+    assert stored["identity"] == superseded_identity and stored["digest"] == entry["digest"]
     with pytest.raises(preregistration_freeze.FreezeError):
-        preregistration_freeze.load_freeze(v1)
+        preregistration_freeze.load_freeze(kept)
 
 
-def test_a_missing_or_altered_v1_record_fails_to_load(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("record", [record for _, record, _ in SUPERSEDED])
+def test_a_missing_or_altered_superseded_record_fails_to_load(record: str, monkeypatch: pytest.MonkeyPatch) -> None:
     real = preregistration.file_digest
 
     def drifted(path: Path) -> str:
-        return "0" * 64 if path.name == "preregistration_freeze.json" else real(path)
+        return "0" * 64 if path.name == Path(record).name else real(path)
 
     monkeypatch.setattr(preregistration, "file_digest", drifted)
     with pytest.raises(preregistration_freeze.FreezeError, match="superseded"):
