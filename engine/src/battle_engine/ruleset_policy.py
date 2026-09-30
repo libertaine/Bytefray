@@ -44,13 +44,23 @@ from battle_engine.rules import (
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID,
 )
 from battle_engine.scheduler import StateT, run_chunked_quota
+
+#: The half-width of the SENSE window under ``sensing_mode == "active"`` (V6 E8,
+#: docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md Sec 2.1 and
+#: R-2): a SENSE at target ``t`` reports every live enemy anchor ``p`` with
+#: circular distance ``d(p, t) <= 27``, inclusive, a 55-cell window. A Ruleset
+#: constant, not a policy field: the pre-registration freezes it with its
+#: traversal semantics (B-8), so no Ruleset may vary it.
+ACTIVE_SENSING_HALF_WIDTH = 27
 
 
 class TerminationReason(str, Enum):
@@ -175,6 +185,18 @@ class RulesetPolicy:
     #: (``process_runtime.ProcessMatchController``), since a radius of half
     #: the ring would see all of it.
     detection_radius: int | None = None
+    #: How an entrant learns where enemy anchors are. ``"passive"`` is the
+    #: historical rule every Ruleset keeps unless it states otherwise: each
+    #: callback's ``visible_enemy_anchor_addresses`` reports what the
+    #: entrant's eligible processes sense within their radius, and the SENSE
+    #: action does not exist -- returning it is an invalid action. ``"active"``
+    #: (V6 E8, docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md
+    #: Sec 2.1 and 2.3) turns passive visibility off, so the visible set is
+    #: empty at every callback and ``detection_radius`` is inert, and makes
+    #: the research-only SENSE action available, with the half-width
+    #: :data:`ACTIVE_SENSING_HALF_WIDTH`. Additive and last, with a default,
+    #: so every existing Ruleset is ``"passive"`` and reproduces byte for byte.
+    sensing_mode: str = "passive"
 
     #: Every value :attr:`core_placement` may take. ``"zero"`` is every
     #: Ruleset whose omitted start addresses historically defaulted to the
@@ -223,6 +245,9 @@ class RulesetPolicy:
     INITIAL_ANCHOR_PLACEMENT_MODES: ClassVar[frozenset[str]] = frozenset(
         {"core_base", "before_core"}
     )
+    #: Every value :attr:`sensing_mode` may take. ``"passive"`` is the
+    #: historical visible set; ``"active"`` is V6 E8's SENSE action instead.
+    SENSING_MODES: ClassVar[frozenset[str]] = frozenset({"passive", "active"})
 
     def __post_init__(self) -> None:
         if self.core_placement not in self.CORE_PLACEMENT_MODES:
@@ -311,6 +336,24 @@ class RulesetPolicy:
                 f"invalid detection_radius {self.detection_radius!r} for Ruleset "
                 f"{self.ruleset_id!r}; expected None or an integer >= 1"
             )
+        # Same strict shape as ``scheduler_pass_order``: a non-string value is
+        # rejected, never coerced.
+        if not isinstance(self.sensing_mode, str) or self.sensing_mode not in self.SENSING_MODES:
+            raise ValueError(
+                f"unknown sensing_mode {self.sensing_mode!r} for Ruleset "
+                f"{self.ruleset_id!r}; expected one of {sorted(self.SENSING_MODES)!r}"
+            )
+
+    @property
+    def sensing_window(self) -> int | None:
+        """The SENSE half-width in effect: :data:`ACTIVE_SENSING_HALF_WIDTH` under ``"active"``, else ``None``.
+
+        What ``MatchContextV2.sensing_window`` carries, and what an active
+        match's trace records at each ``reset()`` (PR8 Sec 10). ``None`` means
+        SENSE is not available under this Ruleset.
+        """
+
+        return ACTIVE_SENSING_HALF_WIDTH if self.sensing_mode == "active" else None
 
     def resolve_initial_anchor(self, core_base: int, arena_size: int) -> int:
         """Return the spawn address of a process that declares no position.
@@ -976,6 +1019,65 @@ RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32 = RulesetPolicy(
 )
 
 
+# V6 E8: the active-spatial-sensing research identities (see their docstring in
+# ``rules.py`` and docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md
+# Sec 2). Each is an independent literal copy of its parent's values -- never
+# ``dataclasses.replace(parent, ...)`` -- for the hidden-coupling reason
+# ``RULESET_V6_RESEARCH_SCALE`` gives above. Every field is spelled out, so
+# neither object's meaning depends on a future default change. The only
+# intended gameplay difference from each parent is ``sensing_mode="active"``.
+# ``detection_radius`` keeps the parent's 32 and is inert, because passive
+# visibility is off (PR8 Sec 2.1). That it is the *only* difference is a
+# verified fact (``engine/tests/test_ruleset_v6_research_sensing_active.py``),
+# not merely this comment's claim.
+#
+# Permanent obligation: artifacts record only the Ruleset ID and recover its
+# semantics through ``_RULESET_POLICIES``, so once any E8 artifact exists these
+# field values must never change, and retiring either identity must keep it
+# resolvable.
+#
+# Primary treatment T8; parent ``RULESET_V6_RESEARCH_SENSING_R32`` (C8).
+RULESET_V6_RESEARCH_SENSING_ACTIVE_W27 = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seeded",
+    process_selection="round_robin",
+    movement_stride="fixed_64",
+    movement_displacement="literal",
+    capture_hold_ticks=1,
+    disruption_slot_limit=None,
+    scheduler_pass_order="forward",
+    initial_anchor_placement="core_base",
+    detection_radius=32,
+    sensing_mode="active",
+)
+
+# Companion treatment T8L; parent ``RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32``
+# (C8L, K=1).
+RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27 = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seeded",
+    process_selection="round_robin",
+    movement_stride="fixed_64",
+    movement_displacement="literal",
+    capture_hold_ticks=1,
+    disruption_slot_limit=1,
+    scheduler_pass_order="forward",
+    initial_anchor_placement="core_base",
+    detection_radius=32,
+    sensing_mode="active",
+)
+
+
 # Which Ruleset identities execute on the Agent API v2 process runtime
 # (``battle_engine.process_runtime.ProcessMatchController``). A finite, explicit set for the
 # same reason ``_RULESET_POLICIES`` is a finite table -- and the one place
@@ -1021,6 +1123,10 @@ RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32 = RulesetPolicy(
 # V6 E6 added the two ``-sensing-r32`` identities: both execute on the Agent
 # API v2 process runtime, each differing from its parent only in its passive
 # sensing radius.
+#
+# V6 E8 added the two ``-sensing-active-w27`` identities: both execute on the
+# Agent API v2 process runtime, each differing from its E6 parent only in its
+# sensing mode.
 PROCESS_RULESET_IDS: frozenset[str] = frozenset(
     {
         BYTEFRAY_RULESET_V4_ID,
@@ -1036,6 +1142,8 @@ PROCESS_RULESET_IDS: frozenset[str] = frozenset(
         BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID,
     }
 )
 
@@ -1060,6 +1168,8 @@ ACTIVE_RESEARCH_RULESET_IDS: frozenset[str] = frozenset(
         BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID,
     }
 )
 RETIRED_RESEARCH_RULESET_IDS: frozenset[str] = frozenset(
@@ -1156,6 +1266,10 @@ _RULESET_POLICIES: Mapping[str, RulesetPolicy] = {
     RULESET_V6_RESEARCH_SENSING_R32.ruleset_id: RULESET_V6_RESEARCH_SENSING_R32,
     RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32.ruleset_id: (
         RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32
+    ),
+    RULESET_V6_RESEARCH_SENSING_ACTIVE_W27.ruleset_id: RULESET_V6_RESEARCH_SENSING_ACTIVE_W27,
+    RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27.ruleset_id: (
+        RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27
     ),
 }
 
@@ -1403,6 +1517,7 @@ def resolve_omitted_ruleset_id(
 
 __all__ = [
     "ACTIVE_RESEARCH_RULESET_IDS",
+    "ACTIVE_SENSING_HALF_WIDTH",
     "BYTEFRAY_RULESET_V2_ALPHA1_ID",
     "BYTEFRAY_RULESET_V2_ALPHA11_ID",
     "BYTEFRAY_RULESET_V2_ID",
@@ -1417,10 +1532,12 @@ __all__ = [
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID",
     "HISTORICAL_READONLY_RULESET_IDS",
     "OMITTED_RULESET_CANDIDATES",
@@ -1435,10 +1552,12 @@ __all__ = [
     "RULESET_V6_RESEARCH_DISRUPTION_SLOT1",
     "RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE",
     "RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES",
+    "RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27",
     "RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32",
     "RULESET_V6_RESEARCH_SCALE",
     "RULESET_V6_RESEARCH_SCALE_MOVE",
     "RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL",
+    "RULESET_V6_RESEARCH_SENSING_ACTIVE_W27",
     "RULESET_V6_RESEARCH_SENSING_R32",
     "NoCompatibleRulesetError",
     "RulesetPolicy",

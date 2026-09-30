@@ -536,8 +536,9 @@ def test_e5_is_absent_from_every_designer_ruleset_option() -> None:
 def test_e5_is_explicitly_selectable_from_agents_evaluate() -> None:
     choices = _ruleset_choices(evaluation_cli._parser())
     assert set(E5_IDS) <= set(choices)
-    # V6 E6's two identities follow E5's (test_ruleset_v6_research_sensing.py).
-    assert choices[-4:-2] == [PRIMARY_ID, COMPANION_ID]
+    # V6 E6's two identities follow E5's (test_ruleset_v6_research_sensing.py),
+    # and V6 E8's two follow E6's (test_ruleset_v6_research_sensing_active.py).
+    assert choices[-6:-4] == [PRIMARY_ID, COMPANION_ID]
 
 
 # ---------------------------------------------------------------------------

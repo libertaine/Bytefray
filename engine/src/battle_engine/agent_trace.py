@@ -39,6 +39,15 @@ identifiers -- see ``AGENTS.md``'s "Compatibility requirements"):
   :class:`TraceFormatError`, not a value silently skipped -- see
   :class:`TraceWriter`'s docstring for the parallel decision on malformed
   *trailing* lines specifically.
+- **An absent field is not a ``null`` field** (V6 E8,
+  docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md Sec 10,
+  Revisions 4 and 5). Three fields -- ``ResetRecord.sensing_window``,
+  ``TraceResultV2.sensed_anchors`` and ``TraceObservationV2.previous_sense_anchors``
+  -- default to :data:`ABSENT`, and the writer omits a field that holds it,
+  so a record whose sensing semantics are inapplicable serializes exactly as
+  it did before these fields existed. ``None`` is written as ``null`` and
+  means something else: a SENSE refused as out of reach, or its reflection.
+  The reader restores a missing key as :data:`ABSENT`, never as ``None``.
 """
 
 from __future__ import annotations
@@ -47,12 +56,43 @@ import json
 import sys
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass
+from enum import Enum
 from pathlib import Path
-from typing import Any, TextIO
+from typing import Any, Final, TextIO
 
 TRACE_SCHEMA = "bytefray.agent_trace"
 TRACE_SCHEMA_VERSION = 1
 TRACE_SCHEMA_VERSION_V2 = 2
+
+
+class Absent(Enum):
+    """The type of :data:`ABSENT`: a trace field that is not in the record at all.
+
+    Deliberately a plain :class:`~enum.Enum`, not a ``str`` one: if a record
+    holding it ever reached ``json.dumps`` without passing through the writer,
+    serialization would fail loudly instead of writing a plausible value. An
+    enum member is also its own deep copy, so it survives ``asdict``.
+    """
+
+    ABSENT = "absent"
+
+    def __repr__(self) -> str:
+        return "ABSENT"
+
+
+#: The default of every omission-aware trace field (V6 E8): the field is not
+#: serialized at all. Distinct from ``None``, which serializes as ``null``.
+ABSENT: Final = Absent.ABSENT
+
+
+def _without_absent(value: Any) -> Any:
+    """``value`` with every mapping entry that holds :data:`ABSENT` removed, recursively."""
+
+    if isinstance(value, dict):
+        return {key: _without_absent(item) for key, item in value.items() if item is not ABSENT}
+    if isinstance(value, list):
+        return [_without_absent(item) for item in value]
+    return value
 
 
 class TraceFormatError(ValueError):
@@ -117,6 +157,10 @@ class ResetRecord:
     wall_time_ms: float
     diagnostic: TraceDiagnostic | None = None
     record_type: str = "reset"
+    #: V6 E8: the SENSE half-width in effect for the match, recorded at each
+    #: entrant's ``reset()`` -- ``27`` under an active Ruleset. :data:`ABSENT`,
+    #: and so not serialized, under every other Ruleset (PR8 Sec 10).
+    sensing_window: int | None | Absent = ABSENT
 
 
 @dataclass(frozen=True)
@@ -156,6 +200,14 @@ class TraceObservationV2:
     previous_action_applied: bool
     previous_read_value: int | None
     previous_read_owner: str | None
+    #: V6 E8: present only on the callback that owes a SENSE's reflection --
+    #: the same process's next callback after a SENSE record -- where it
+    #: equals that record's ``sensed_anchors``: the tuple (possibly empty), or
+    #: ``None`` after an out-of-reach refusal. :data:`ABSENT` on every other
+    #: callback (PR8 Sec 10). Unlike ``ObservationV2.previous_sense_anchors``,
+    #: which is ``None`` both after a refusal and when no SENSE preceded it,
+    #: presence here records that a delivery was due.
+    previous_sense_anchors: tuple[int, ...] | None | Absent = ABSENT
 
 
 @dataclass(frozen=True)
@@ -175,6 +227,12 @@ class TraceResultV2:
     normalized_address: int | None = None
     read_value: int | None = None
     read_owner: str | None = None
+    #: V6 E8: present only on a SENSE record -- the ascending tuple of enemy
+    #: anchors an applied SENSE returned (possibly empty), or ``None`` when it
+    #: was refused as out of reach. :data:`ABSENT` on every other record, so
+    #: omission means "not a SENSE record", never "SENSE found nothing"
+    #: (PR8 Sec 10, Revisions 4 and 5).
+    sensed_anchors: tuple[int, ...] | None | Absent = ABSENT
 
 
 @dataclass(frozen=True)
@@ -279,7 +337,7 @@ class TraceWriter:
         if self._failed:
             return
         try:
-            self._fh.write(json.dumps(payload, sort_keys=True))
+            self._fh.write(json.dumps(_without_absent(payload), sort_keys=True))
             self._fh.write("\n")
             self._fh.flush()
         except OSError:
@@ -373,11 +431,38 @@ def _parse_header(payload: Mapping[str, Any], path: Path, line_no: int) -> Trace
     return header
 
 
+def _optional_window(payload: Mapping[str, Any], key: str, path: Path, line_no: int) -> int | None | Absent:
+    """An omission-aware integer field: :data:`ABSENT` if missing, else an integer or ``None``."""
+
+    if key not in payload:
+        return ABSENT
+    value = payload[key]
+    if value is not None and (isinstance(value, bool) or not isinstance(value, int)):
+        raise TraceFormatError(f"{path}:{line_no}: {key!r} must be an integer or null")
+    return value
+
+
+def _optional_anchors(
+    payload: Mapping[str, Any], key: str, path: Path, line_no: int
+) -> tuple[int, ...] | None | Absent:
+    """An omission-aware anchor list: :data:`ABSENT` if missing, else a tuple of integers or ``None``."""
+
+    if key not in payload:
+        return ABSENT
+    value = payload[key]
+    if value is None:
+        return None
+    if not isinstance(value, list) or any(isinstance(item, bool) or not isinstance(item, int) for item in value):
+        raise TraceFormatError(f"{path}:{line_no}: {key!r} must be a list of integers or null")
+    return tuple(value)
+
+
 def _parse_reset(payload: Mapping[str, Any], path: Path, line_no: int) -> ResetRecord:
     return ResetRecord(
         agent_id=_required(payload, "agent_id", path, line_no),
         wall_time_ms=_required(payload, "wall_time_ms", path, line_no),
         diagnostic=_parse_diagnostic(payload.get("diagnostic"), path, line_no),
+        sensing_window=_optional_window(payload, "sensing_window", path, line_no),
     )
 
 
@@ -495,6 +580,7 @@ def _parse_observation_v2(payload: Any, path: Path, line_no: int) -> TraceObserv
         previous_action_applied=_required(payload, "previous_action_applied", path, line_no),
         previous_read_value=payload.get("previous_read_value"),
         previous_read_owner=payload.get("previous_read_owner"),
+        previous_sense_anchors=_optional_anchors(payload, "previous_sense_anchors", path, line_no),
     )
 
 def _parse_action_v2(payload: Any, path: Path, line_no: int) -> TraceActionV2 | None:
@@ -518,6 +604,7 @@ def _parse_result_v2(payload: Any, path: Path, line_no: int) -> TraceResultV2 | 
         normalized_address=payload.get("normalized_address"),
         read_value=payload.get("read_value"),
         read_owner=payload.get("read_owner"),
+        sensed_anchors=_optional_anchors(payload, "sensed_anchors", path, line_no),
     )
 
 def _parse_declaration(payload: Mapping[str, Any], path: Path, line_no: int) -> DeclarationRecord:
@@ -670,9 +757,11 @@ def first_divergence(a: TraceDocument, b: TraceDocument) -> Divergence | None:
 
 
 __all__ = [
+    "ABSENT",
     "TRACE_SCHEMA",
     "TRACE_SCHEMA_VERSION",
     "TRACE_SCHEMA_VERSION_V2",
+    "Absent",
     "BindingRecord",
     "DecisionRecord",
     "DecisionRecordV2",

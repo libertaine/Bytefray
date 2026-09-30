@@ -67,10 +67,12 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID,
 )
 
@@ -201,6 +203,8 @@ def _parser() -> argparse.ArgumentParser:
             BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
             BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID,
             BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID,
+            BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID,
+            BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID,
         ],
         default=None,
         help=(
@@ -275,7 +279,16 @@ def _parser() -> argparse.ArgumentParser:
             f"{BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID} respectively, except a process "
             "passively senses enemy anchors only within min(its reach, 32) cells (READ and "
             "WRITE reach is unchanged). Not selected automatically; must be named explicitly. "
-            "See docs/research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md."
+            "See docs/research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md. "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID} and "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID} are the V6 E8 "
+            "active-sensing research identities (explicit-only research): identical to "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID} and "
+            f"{BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID} respectively, except "
+            "passive enemy-anchor visibility is off and the research-only SENSE action reports "
+            "enemy anchors within 27 cells of its target instead. Not selected automatically; "
+            "must be named explicitly. See "
+            "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md."
         ),
     )
     parser.add_argument(

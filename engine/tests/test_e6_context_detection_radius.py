@@ -32,13 +32,20 @@ from battle_engine.process_runtime import ProcessMatchController
 from battle_engine.replay import TickSnapshot, iter_replay
 from battle_engine.ruleset_policy import (
     _RULESET_POLICIES,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID,
     RulesetPolicy,
     resolve_ruleset_policy,
 )
 
 E6_IDS = (BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID, BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID)
+# V6 E8's two identities keep their E6 parent's radius, inert there because
+# passive visibility is off; the context still carries it
+# (test_ruleset_v6_research_sensing_active.py).
+RADIUS_32_IDS = (*E6_IDS, BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID,
+                 BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID)
 WORKER_TIMEOUT = 30.0
 
 REPORTER_SOURCE = """\
@@ -99,7 +106,10 @@ def _delivered(root: Path, policy: RulesetPolicy, *, worker: bool) -> list[str]:
 
 def test_the_field_is_additive_last_and_defaults_to_none() -> None:
     names = [field.name for field in fields(MatchContextV2)]
-    assert names == ["agent_id", "seed", "arena_size", "tick_limit", "rng", "parameters", "detection_radius"]
+    # V6 E8's ``sensing_window`` follows it, additive and last in turn
+    # (test_v6_e8_sensing_context.py).
+    assert names == ["agent_id", "seed", "arena_size", "tick_limit", "rng", "parameters", "detection_radius",
+                     "sensing_window"]
     # Keyword construction without it -- every agent and tool written before
     # E6 -- is unaffected.
     context = MatchContextV2(agent_id="A", seed=1, arena_size=512, tick_limit=10, rng=random.Random(1))
@@ -124,8 +134,8 @@ def test_a_validation_dry_run_has_no_radius() -> None:
 @pytest.mark.parametrize("ruleset_id", sorted(_RULESET_POLICIES))
 def test_every_registered_ruleset_delivers_its_own_radius(tmp_path: Path, ruleset_id: str, worker: bool) -> None:
     policy = resolve_ruleset_policy(ruleset_id)
-    expected = "r32" if ruleset_id in E6_IDS else "rNone"
-    assert policy.detection_radius == (32 if ruleset_id in E6_IDS else None)
+    expected = "r32" if ruleset_id in RADIUS_32_IDS else "rNone"
+    assert policy.detection_radius == (32 if ruleset_id in RADIUS_32_IDS else None)
     assert _delivered(tmp_path, policy, worker=worker) == [expected, expected]
 
 

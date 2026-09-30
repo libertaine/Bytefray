@@ -109,8 +109,10 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID,
     HISTORICAL_READONLY_RULESET_IDS,
     OMITTED_RULESET_CANDIDATES,
@@ -305,8 +307,13 @@ def test_resolve_sensing_radius_is_reach_under_none_and_min_reach_d_otherwise(re
 
 
 def test_every_registered_policy_keeps_unlimited_sensing_except_e6() -> None:
+    # V6 E8's two identities are E6's with active sensing: each keeps its E6
+    # parent's radius, inert there because passive visibility is off
+    # (test_ruleset_v6_research_sensing_active.py).
+    radius_32 = {*E6_IDS, BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID,
+                 BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID}
     assert {ruleset_id: policy.detection_radius for ruleset_id, policy in _RULESET_POLICIES.items()} == {
-        ruleset_id: (32 if ruleset_id in E6_IDS else None) for ruleset_id in _RULESET_POLICIES
+        ruleset_id: (32 if ruleset_id in radius_32 else None) for ruleset_id in _RULESET_POLICIES
     }
 
 
@@ -542,7 +549,8 @@ def test_e6_is_absent_from_every_designer_ruleset_option() -> None:
 def test_e6_is_explicitly_selectable_from_agents_evaluate() -> None:
     choices = _ruleset_choices(evaluation_cli._parser())
     assert set(E6_IDS) <= set(choices)
-    assert choices[-2:] == [PRIMARY_ID, COMPANION_ID]
+    # V6 E8's two identities follow E6's (test_ruleset_v6_research_sensing_active.py).
+    assert choices[-4:-2] == [PRIMARY_ID, COMPANION_ID]
 
 
 # ---------------------------------------------------------------------------

@@ -27,10 +27,12 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID,
 )
 
@@ -257,6 +259,15 @@ EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE 
 EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_SENSING_R32 = "ruleset_v6_research_sensing_r32_seeded_placements"
 EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32 = (
     "ruleset_v6_research_disruption_slot1_sensing_r32_seeded_placements"
+)
+# V6 E8 (docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md): the
+# two active-sensing research Rulesets' own labels, for the same reason --
+# neither artifact may pass for its E6 parent's from the mode label alone.
+EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_SENSING_ACTIVE_W27 = (
+    "ruleset_v6_research_sensing_active_w27_seeded_placements"
+)
+EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27 = (
+    "ruleset_v6_research_disruption_slot1_sensing_active_w27_seeded_placements"
 )
 
 # V6 Phase 4B (task Sec 7): the Phase 4A research methodology's own
@@ -634,6 +645,34 @@ def is_ruleset_v6_research_disruption_slot_sensing_r32_methodology(
     return rules_compatibility_id == BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID
 
 
+def is_ruleset_v6_research_sensing_active_w27_methodology(rules_compatibility_id: str) -> bool:
+    """Whether a resolved rules-compatibility id is the V6 E8 primary treatment.
+
+    True only for ``BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID``
+    (``bytefray-rules-6-research-sensing-active-w27``, docs/research/v6/
+    V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md). Deliberately not a
+    widening of the E6 primary treatment's predicate, which stays true only for
+    that parent identity itself.
+    """
+
+    return rules_compatibility_id == BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID
+
+
+def is_ruleset_v6_research_disruption_slot_sensing_active_w27_methodology(
+    rules_compatibility_id: str,
+) -> bool:
+    """Whether a resolved rules-compatibility id is the V6 E8 companion treatment.
+
+    True only for ``BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID``
+    (``bytefray-rules-6-research-disruption-slot1-sensing-active-w27``, docs/
+    research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md). Deliberately
+    not a widening of the E6 companion's predicate, which stays true only for
+    that parent identity itself.
+    """
+
+    return rules_compatibility_id == BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID
+
+
 def is_ruleset_v4_derived_methodology(rules_compatibility_id: str) -> bool:
     """Whether a resolved rules-compatibility id uses v4's seeded evaluation machinery.
 
@@ -645,8 +684,10 @@ def is_ruleset_v4_derived_methodology(rules_compatibility_id: str) -> bool:
     `BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID` and
     `BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID` (V6 E3), and their
     ``_MIRRORED_PASSES`` (V6 E4) and ``_ANCHOR_BEFORE_CORE`` (V6 E5) successors,
-    and V6 E6's ``BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID`` and
-    ``BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID``:
+    V6 E6's ``BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID`` and
+    ``BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID``, and V6 E8's
+    ``BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID`` and
+    ``BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID``:
     all share one identical recipe -- seed-derived seat geometry
     (`resolve_v4_seed_geometry`), `IDENTITY_VERSION_V4`/`SCHEMA_VERSION_V4`
     (7) -- because the research Rulesets declare the same
@@ -688,6 +729,8 @@ def is_ruleset_v4_derived_methodology(rules_compatibility_id: str) -> bool:
         )
         or is_ruleset_v6_research_sensing_r32_methodology(rules_compatibility_id)
         or is_ruleset_v6_research_disruption_slot_sensing_r32_methodology(rules_compatibility_id)
+        or is_ruleset_v6_research_sensing_active_w27_methodology(rules_compatibility_id)
+        or is_ruleset_v6_research_disruption_slot_sensing_active_w27_methodology(rules_compatibility_id)
     )
 
 
@@ -695,8 +738,8 @@ def is_ruleset_v4_derived_methodology(rules_compatibility_id: str) -> bool:
 # three resolvers below (unlike the older flags, which callers pass
 # positionally), so a call site can never set it by position by accident --
 # the positional-boolean omission trap the E2 design review Sec E.2 names.
-# V6 E3's two flags follow the same keyword-only rule, and so do V6 E4's, V6 E5's
-# and V6 E6's two.
+# V6 E3's two flags follow the same keyword-only rule, and so do V6 E4's, V6 E5's,
+# V6 E6's and V6 E8's two.
 def resolved_arena_alignment_mode(
     is_v2_methodology: bool,
     group: bool = False,
@@ -714,11 +757,17 @@ def resolved_arena_alignment_mode(
     is_v6_research_disruption_slot_anchor_before_core_methodology: bool = False,
     is_v6_research_sensing_r32_methodology: bool = False,
     is_v6_research_disruption_slot_sensing_r32_methodology: bool = False,
+    is_v6_research_sensing_active_w27_methodology: bool = False,
+    is_v6_research_disruption_slot_sensing_active_w27_methodology: bool = False,
 ) -> str:
     if is_v6_research_sensing_r32_methodology:
         return EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_SENSING_R32
     if is_v6_research_disruption_slot_sensing_r32_methodology:
         return EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32
+    if is_v6_research_sensing_active_w27_methodology:
+        return EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_SENSING_ACTIVE_W27
+    if is_v6_research_disruption_slot_sensing_active_w27_methodology:
+        return EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27
     if is_v6_research_capture_hold_disruption_slot_anchor_before_core_methodology:
         return EVALUATION_ARENA_ALIGNMENT_MODE_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE
     if is_v6_research_disruption_slot_anchor_before_core_methodology:
@@ -789,6 +838,10 @@ def arena_alignment_mode_for_ruleset(rules_compatibility_id: str, group: bool = 
         is_v6_research_disruption_slot_sensing_r32_methodology=(
             is_ruleset_v6_research_disruption_slot_sensing_r32_methodology(rules_compatibility_id)
         ),
+        is_v6_research_sensing_active_w27_methodology=is_ruleset_v6_research_sensing_active_w27_methodology(rules_compatibility_id),
+        is_v6_research_disruption_slot_sensing_active_w27_methodology=(
+            is_ruleset_v6_research_disruption_slot_sensing_active_w27_methodology(rules_compatibility_id)
+        ),
     )
 
 
@@ -810,6 +863,8 @@ def resolved_identity_version(
     is_v6_research_disruption_slot_anchor_before_core_methodology: bool = False,
     is_v6_research_sensing_r32_methodology: bool = False,
     is_v6_research_disruption_slot_sensing_r32_methodology: bool = False,
+    is_v6_research_sensing_active_w27_methodology: bool = False,
+    is_v6_research_disruption_slot_sensing_active_w27_methodology: bool = False,
 ) -> int:
     if (
         is_v4_methodology
@@ -825,6 +880,8 @@ def resolved_identity_version(
         or is_v6_research_disruption_slot_anchor_before_core_methodology
         or is_v6_research_sensing_r32_methodology
         or is_v6_research_disruption_slot_sensing_r32_methodology
+        or is_v6_research_sensing_active_w27_methodology
+        or is_v6_research_disruption_slot_sensing_active_w27_methodology
     ):
         return IDENTITY_VERSION_V4
     if is_v2_methodology and group:
@@ -849,6 +906,8 @@ def resolved_schema_version(
     is_v6_research_disruption_slot_anchor_before_core_methodology: bool = False,
     is_v6_research_sensing_r32_methodology: bool = False,
     is_v6_research_disruption_slot_sensing_r32_methodology: bool = False,
+    is_v6_research_sensing_active_w27_methodology: bool = False,
+    is_v6_research_disruption_slot_sensing_active_w27_methodology: bool = False,
 ) -> int:
     if (
         is_v4_methodology
@@ -864,6 +923,8 @@ def resolved_schema_version(
         or is_v6_research_disruption_slot_anchor_before_core_methodology
         or is_v6_research_sensing_r32_methodology
         or is_v6_research_disruption_slot_sensing_r32_methodology
+        or is_v6_research_sensing_active_w27_methodology
+        or is_v6_research_disruption_slot_sensing_active_w27_methodology
     ):
         return SCHEMA_VERSION_V4
     if is_v2_methodology and group:
@@ -1203,8 +1264,9 @@ class EvaluationRequest:
         ``Config().arena_size`` (4096) instead (design review trap F-4).
         V6 E3's two slot-limited disruption Rulesets inherit it the same way,
         and so do V6 E4's two mirrored-pass-order Rulesets (E4 design review
-        Sec K, trap F-4), V6 E5's two anchor/core-0 separation Rulesets and
-        V6 E6's two priced-sensing Rulesets.
+        Sec K, trap F-4), V6 E5's two anchor/core-0 separation Rulesets,
+        V6 E6's two priced-sensing Rulesets and V6 E8's two active-sensing
+        Rulesets.
         """
 
         if self.arena_size is not None:
@@ -1223,6 +1285,8 @@ class EvaluationRequest:
             or self.is_v6_research_disruption_slot_anchor_before_core_methodology
             or self.is_v6_research_sensing_r32_methodology
             or self.is_v6_research_disruption_slot_sensing_r32_methodology
+            or self.is_v6_research_sensing_active_w27_methodology
+            or self.is_v6_research_disruption_slot_sensing_active_w27_methodology
         ):
             return STANDARD_V4_ARENA_SIZE
         return Config().arena_size
@@ -1349,6 +1413,20 @@ class EvaluationRequest:
         """Whether this request's resolved Ruleset is the V6 E6 companion treatment identity."""
 
         return is_ruleset_v6_research_disruption_slot_sensing_r32_methodology(
+            self.resolved_rules_compatibility_id
+        )
+
+    @property
+    def is_v6_research_sensing_active_w27_methodology(self) -> bool:
+        """Whether this request's resolved Ruleset is the V6 E8 primary treatment identity."""
+
+        return is_ruleset_v6_research_sensing_active_w27_methodology(self.resolved_rules_compatibility_id)
+
+    @property
+    def is_v6_research_disruption_slot_sensing_active_w27_methodology(self) -> bool:
+        """Whether this request's resolved Ruleset is the V6 E8 companion treatment identity."""
+
+        return is_ruleset_v6_research_disruption_slot_sensing_active_w27_methodology(
             self.resolved_rules_compatibility_id
         )
 

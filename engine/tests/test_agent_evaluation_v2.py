@@ -240,8 +240,9 @@ def test_evaluate_cli_exposes_the_product_ruleset_choices_excluding_retired_v4_a
     (and, since V6 E2, the explicit-only capture-hold research identity,
     since V6 E3, the two explicit-only slot-limited disruption identities,
     since V6 E4, the two explicit-only mirrored-pass-order identities,
-    since V6 E5, the two explicit-only anchor/core-0 separation identities, and
-    since V6 E6, the two explicit-only priced-sensing identities). V6
+    since V6 E5, the two explicit-only anchor/core-0 separation identities,
+    since V6 E6, the two explicit-only priced-sensing identities, and
+    since V6 E8, the two explicit-only active-sensing identities). V6
     Phase 2B.12 Scope C retired bytefray-rules-1 and bytefray-rules-2 from
     new execution alongside the retired prerelease alphas."""
 
@@ -251,7 +252,7 @@ def test_evaluate_cli_exposes_the_product_ruleset_choices_excluding_retired_v4_a
         evaluate_main(["--help"])
     out = capsys.readouterr().out
     assert (
-        "--ruleset {bytefray-rules-4,bytefray-rules-6-research-scale,bytefray-rules-6-research-scale-move,bytefray-rules-6-research-scale-move-proportional,bytefray-rules-6-research-capture-hold-k2,bytefray-rules-6-research-capture-hold-k2-disruption-slot1,bytefray-rules-6-research-disruption-slot1,bytefray-rules-6-research-capture-hold-k2-disruption-slot1-mirrored-passes,bytefray-rules-6-research-disruption-slot1-mirrored-passes,bytefray-rules-6-research-capture-hold-k2-disruption-slot1-anchor-before-core,bytefray-rules-6-research-disruption-slot1-anchor-before-core,bytefray-rules-6-research-sensing-r32,bytefray-rules-6-research-disruption-slot1-sensing-r32}"
+        "--ruleset {bytefray-rules-4,bytefray-rules-6-research-scale,bytefray-rules-6-research-scale-move,bytefray-rules-6-research-scale-move-proportional,bytefray-rules-6-research-capture-hold-k2,bytefray-rules-6-research-capture-hold-k2-disruption-slot1,bytefray-rules-6-research-disruption-slot1,bytefray-rules-6-research-capture-hold-k2-disruption-slot1-mirrored-passes,bytefray-rules-6-research-disruption-slot1-mirrored-passes,bytefray-rules-6-research-capture-hold-k2-disruption-slot1-anchor-before-core,bytefray-rules-6-research-disruption-slot1-anchor-before-core,bytefray-rules-6-research-sensing-r32,bytefray-rules-6-research-disruption-slot1-sensing-r32,bytefray-rules-6-research-sensing-active-w27,bytefray-rules-6-research-disruption-slot1-sensing-active-w27}"
         in out
     )
     assert "{bytefray-rules-1" not in out

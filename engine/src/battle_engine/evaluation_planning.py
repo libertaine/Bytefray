@@ -54,10 +54,12 @@ from battle_engine.evaluation_contracts import (
     is_ruleset_v6_research_disruption_slot_anchor_before_core_methodology,
     is_ruleset_v6_research_disruption_slot_methodology,
     is_ruleset_v6_research_disruption_slot_mirrored_passes_methodology,
+    is_ruleset_v6_research_disruption_slot_sensing_active_w27_methodology,
     is_ruleset_v6_research_disruption_slot_sensing_r32_methodology,
     is_ruleset_v6_research_scale_methodology,
     is_ruleset_v6_research_scale_move_methodology,
     is_ruleset_v6_research_scale_move_proportional_methodology,
+    is_ruleset_v6_research_sensing_active_w27_methodology,
     is_ruleset_v6_research_sensing_r32_methodology,
     resolved_identity_version,
 )
@@ -370,6 +372,10 @@ def build_matrix(
     resolved_is_v6_research_disruption_slot_sensing_r32 = (
         is_ruleset_v6_research_disruption_slot_sensing_r32_methodology(resolved_rules_id)
     )
+    resolved_is_v6_research_sensing_active_w27 = is_ruleset_v6_research_sensing_active_w27_methodology(resolved_rules_id)
+    resolved_is_v6_research_disruption_slot_sensing_active_w27 = (
+        is_ruleset_v6_research_disruption_slot_sensing_active_w27_methodology(resolved_rules_id)
+    )
 
     # v2.0.0-beta2 Phase 2: multi-entrant ("group") matrix generation is a
     # structurally different generation strategy (seed x layout x seat
@@ -408,6 +414,10 @@ def build_matrix(
         is_v6_research_sensing_r32_methodology=resolved_is_v6_research_sensing_r32,
         is_v6_research_disruption_slot_sensing_r32_methodology=(
             resolved_is_v6_research_disruption_slot_sensing_r32
+        ),
+        is_v6_research_sensing_active_w27_methodology=resolved_is_v6_research_sensing_active_w27,
+        is_v6_research_disruption_slot_sensing_active_w27_methodology=(
+            resolved_is_v6_research_disruption_slot_sensing_active_w27
         ),
     )
 
@@ -458,8 +468,10 @@ def build_matrix(
                     or resolved_is_v6_research_disruption_slot_anchor_before_core
                     or resolved_is_v6_research_sensing_r32
                     or resolved_is_v6_research_disruption_slot_sensing_r32
+                    or resolved_is_v6_research_sensing_active_w27
+                    or resolved_is_v6_research_disruption_slot_sensing_active_w27
                 ):
-                    # V6 Phase 4B/4C/4D and E2-E6: the research Rulesets share this exact
+                    # V6 Phase 4B/4C/4D, E2-E6 and E8: the research Rulesets share this exact
                     # branch -- `resolve_v4_seed_geometry` resolves seeded
                     # placement through `resolved_rules_id`'s own registered
                     # `RulesetPolicy.core_placement`, so it already produces
@@ -510,6 +522,8 @@ def build_matrix(
                                 or resolved_is_v6_research_disruption_slot_anchor_before_core
                                 or resolved_is_v6_research_sensing_r32
                                 or resolved_is_v6_research_disruption_slot_sensing_r32
+                                or resolved_is_v6_research_sensing_active_w27
+                                or resolved_is_v6_research_disruption_slot_sensing_active_w27
                             )
                             and orientation == ORIENTATION_OPPONENT_FIRST
                         ):
@@ -595,6 +609,8 @@ def build_matrix(
                                 or resolved_is_v6_research_disruption_slot_anchor_before_core
                                 or resolved_is_v6_research_sensing_r32
                                 or resolved_is_v6_research_disruption_slot_sensing_r32
+                                or resolved_is_v6_research_sensing_active_w27
+                                or resolved_is_v6_research_disruption_slot_sensing_active_w27
                             ),
                         )
                         condition_fingerprint = None
