@@ -1,6 +1,6 @@
 # Bytefray V6 E8 — Active Spatial Sensing: Pre-Registration
 
-**Status: APPROVED FOR FREEZE by the research lead on 2026-09-30**, after revision 1 and two precision edits made at the freeze review: the bootstrap wording, and delivery after suppression.
+**Status: APPROVED FOR FREEZE by the research lead on 2026-09-30**, after revision 1 and two precision edits made at the freeze review: the bootstrap wording, and delivery after suppression. **Revision 2**, which corrects and disambiguates the registered semantics before any transcription or code, was approved by the research lead on the same day. **It governs; revision 1, at `28925fd`, is historical provenance** (below).
 - **Its standing.** This markdown is the authoritative registered wording.
 - **What comes next.** The E6-style transcription and freeze phase, still before any seed or matrix cell:
   - the machine-readable pre-registration;
@@ -14,10 +14,28 @@
 **Revision 1 (2026-09-30)**, after the research lead's first review:
 - **R-9's 1/20 is deleted.** The seat criterion is redesigned as two layers that use sign and stability only (§6.2).
 - **H8-CHANNEL's five members** are defined as a frozen acquisition-policy candidate set, with the full eleven-member field as opponents (§3.1).
-- **ADAPT8's k = 2 is derived structurally,** as one complete scheduler-phase cycle. Appendix A.4 becomes a validation.
+- **ADAPT8's k = 2 is derived structurally,** as one complete scheduler-phase cycle. Appendix A.4 becomes a validation. *(That rationale is withdrawn in Revision 2; see R-8.)*
 - **D8-3's equality is defined exactly.**
 - **Trace roles are exact.** `sensed_anchors` is authoritative, `previous_sense_anchors` only reflects it, and the registered window is recorded per match (§10, D8-15).
 - **The research answer's four outcomes are defined explicitly**, and requirement C is kept separate (§7.4).
+
+**Revision 2 (2026-09-30)**, approved by the research lead before any transcription or code. **It corrects the registered member semantics, and disambiguates them and the analyzer's labels.** These are substantive corrections, not transcription clarifications, so **this revision governs.** No hypothesis, threshold, set, condition or cell count changes. R-8's value stands, and its rationale is replaced.
+- **Its history.** Revision 1 was registered at `28925fd` with SHA-256 `6d50dae648dbdb0def2bcb94644e0705b4d62d4e818f7288190df4f8fac4efbb`, and is preserved there as historical provenance. This revision was drafted on `v6-research` at `eb60a11`. **Its own digest is recorded in the machine-readable pre-registration and its freeze record**, because a document cannot contain its own digest.
+- **Re-acquisition precedence** (§3.2). A re-acquisition search in progress takes precedence over the posture steps until it terminates. Under revision 1's order of an offer, the search could not pass its first window (§14, item 9).
+- **ADAPT8's count** is of consecutive verification observations, and a tick with no verification is unobserved. k = 2 is re-derived as the minimum repeated confirmation, and revision 1's scheduler-cycle rationale is withdrawn [R-8].
+- **Knowledge is exact** (§2.5, §3.2):
+  - the known set is defined for each mode, inside the family policy only;
+  - the last-known anchor is set from it as E6 set it from visibility;
+  - knowledge updates, missing addresses and matching follow registered rules;
+  - the `once` row is aligned, and **a channel difference is registered**.
+- **STRESS8's repair** writes the core beacon (§3.2).
+- **Appendix A.4** is scoped to a scripted evader that does not disrupt ADAPT8.
+- **The census is re-derived** under these semantics (§3.5).
+- **KC8-6's label is total** over any number of universal A8 members (§8). §7.2's H8-CHANNEL qualifier names them the same way.
+- **R8-NO-CHOICE's H8-TAX qualifier texts are registered** (§7.1).
+- **D8-3's matched pairs exclude LURK8 and GREED8 as opponents**, which leaves nine literal same-opponent comparisons (§5.1).
+- **Three conventions that were cited by reference are now stated in full:** the callback index (§3.2), the quantile rule (§6.2), and O-BOOT's draws and their joint application (§4).
+- **The records cited by abbreviation are resolved** in the governing records below.
 
 **Branch:** `v6-research` at `ae6c7f7` ("docs(v6): add the E8 active spatial sensing design review"), pushed.
 **Date:** 2026-09-30
@@ -26,6 +44,11 @@
 - [`V6_E8_MECHANIC_FAMILY_DESIGN_REVIEW.md`](V6_E8_MECHANIC_FAMILY_DESIGN_REVIEW.md) (**E8-MF**), §N;
 - [`V6_E2_E6_CROSS_EXPERIMENT_SYNTHESIS.md`](V6_E2_E6_CROSS_EXPERIMENT_SYNTHESIS.md) (**SYN6**): invariants E8-I1 to E8-I5, and §H's lessons;
 - [`V6_E6_PRICED_SENSING_PREREGISTRATION.md`](V6_E6_PRICED_SENSING_PREREGISTRATION.md) (**PR6**), whose operationalizations, blindness protocol and evidence rules are reused where stated.
+- **Records cited by abbreviation** [Revision 2]:
+  - **PA** is [`V6_E6_POST_HOC_FACTORIAL_AUDIT.md`](V6_E6_POST_HOC_FACTORIAL_AUDIT.md), the E6 post-hoc factorial audit;
+  - **E6-R** is [`V6_E6_PRICED_SENSING_RESULTS.md`](V6_E6_PRICED_SENSING_RESULTS.md), the E6 results record;
+  - **A1, in §3.2**, is [`V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md`](V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md), E6's first amendment, with its corrections C-1 to C-3. **It is distinct from A1 containment** (§13), E8-DR's research-containment option;
+  - **the E6 implementation plan** is [`V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md`](V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md).
 
 **The boundaries carried forward unchanged** (the research lead, 2026-09-30):
 
@@ -48,7 +71,7 @@
 
 ## 0. Registration Decisions
 
-**The research lead's first review (2026-09-30)** approved R-1 to R-8 and R-10 to R-12, R-8 with the structural derivation below, and rejected R-9's 1/20, which is revised below. **The freeze review (2026-09-30) approved this revision, with the two precision edits noted in the status line.** Markers **[R-n]** in the text refer to this table.
+**The research lead's first review (2026-09-30)** approved R-1 to R-8 and R-10 to R-12, R-8 with the structural derivation below, and rejected R-9's 1/20, which is revised below. **The freeze review (2026-09-30) approved revision 1, with the two precision edits noted in the status line.** Revision 2 replaces R-8's rationale, keeping its value, and changes no other decision in this table. Markers **[R-n]** in the text refer to this table.
 
 | # | Decision | Drafted value | Rationale |
 |---|---|---|---|
@@ -59,7 +82,7 @@
 | **R-5** | Bootstrap | **1000** resamples, with a stability bar of **9/10**, from `random.Random(42)` | PR6 O-4, reused unchanged |
 | **R-6** | Forced-line tick bound | **≤ 3** | PR6 O-5, reused. Discovery still completes within tick 1 at worst (7 ≤ 8), exactly as under E6's sweep (E8-DR §C.5). |
 | **R-7** | Seeds per cell | **32** | As in E2–E6 |
-| **R-8** | ADAPT8's run of quiet ticks before it stops verifying | **k = 2** | **Derived structurally: two consecutive quiet ticks are one complete scheduler-phase cycle with no observed anchor relocation.** The rotation alternates which seat moves first (Seat A on odd ticks, Seat B on even), so two consecutive ticks cover both seat orders exactly once. Appendix A.4 **validates** this value against a responsive evader; that validation is not its derivation. Freeze tests cover both seat roles and all suppression patterns (§3.2). |
+| **R-8** | ADAPT8's run of consecutive confirming verification observations before it stops verifying [Revision 2] | **k = 2** | **The minimum repeated confirmation** [Revision 2]: one verification observation establishes the anchor's current location, and a second, later one confirms that it persists. **A tick with no verification is unobserved and ignored.** Revision 1's rationale, that two consecutive ticks form one complete scheduler-phase cycle covering both seat orders, **is withdrawn.** Under whole-tick disruption a re-hit process acts only on ticks of its own seat's parity for stretches of a match (PA §8), so two successful verifications can fall on the same parity. Appendix A.4 **validates** the value against a scripted responsive evader; that validation is not its derivation. Freeze tests cover both seat roles and all suppression patterns (§3.2). |
 | **R-9** | The family seat-shift status | **No magnitude threshold.** Sign, plus the 9/10 stability convention (§6.2). The magnitude is reported. | A cutoff such as 1/20 would be a new effect-size boundary with no causal or design reason. **Revised at the research lead's direction (2026-09-30).** |
 | **R-10** | The members | **Eleven.** No evading attacker is added. | An evading attacker would widen the H8-REPEAT census beyond one defender archetype, but adding a member to widen a census risks engineering it. The predicted census is therefore one archetype, and C is scoped accordingly (§3.5). The alternative, a twelfth member (RUSH8 with evasion on), is for the research lead. |
 | **R-11** | Evasion magnitude | *m* uniform on the integers **[8, 64]**, with a seeded sign | PR6 §12, item 8 (E6 plan decision P-2), reused |
@@ -149,11 +172,21 @@ These are the orders in which the family's acquiring members spend sensing actio
   - The seven windows tile the 385-cell arc [own + 64, own + 448] exactly.
   - The traversal **stops at the first result containing an enemy anchor**.
   - If all seven are empty, the traversal restarts at *k* = 0. That can happen only if every enemy anchor has left the arc.
-- **The re-acquisition traversal** (members with `reacquire` of `repeat` or `adaptive`). Given the last known address *a* of an enemy anchor, the successive windows are centered on *a*, then *a* + τ · 46, then *a* − τ · 46.
+- **The re-acquisition traversal** (members with `reacquire` of `repeat` or `adaptive`). Given the address *a* of a known enemy anchor, the successive windows are centered on *a*, then *a* + τ · 46, then *a* − τ · 46. Under `"passive"` the member MOVEs toward the same centers (§3.2). [Revision 2: revision 1 said "the last known address", a phrase now reserved for E6's last-known anchor, §3.2.]
   - τ ∈ {+1, −1} is drawn per traversal from the member's seeded stream.
-  - The traversal stops at the first result containing an enemy anchor, and that address becomes the new *a*.
+  - The traversal stops at the first result containing an enemy anchor. **The missing *a* is then replaced under the matching rule below** [Revision 2].
   - **If all three are empty, the anchor becomes unknown.** The member then continues with its no-anchor behavior (§3.2).
 - **Verification** is a sensing action centered on *a*. It is the re-acquisition traversal's first window.
+- **Knowledge updates and matching** [Revision 2]. These rules distinguish "not observed, because the member did not look there" from "looked there, and it is gone":
+  - **A SENSE result updates knowledge only within the circular window actually sensed:** the 55 cells within 27 of its target (§2.4).
+  - **Every address the result returns becomes known.**
+  - **A previously known address inside that window which is absent from the returned result becomes missing.**
+  - **A known address outside that window is unchanged.**
+  - **Under `"passive"`, the tracked set at each callback is the visible set of the entrant's previous callback.** A tracked address absent from the current visible set becomes missing.
+  - **If more than one missing address requires re-acquisition, they are serviced in ascending numeric-address order.**
+  - **A missing address is replaced by the returned address at minimum circular distance from it, the lower numeric address on a tie.** Under `"passive"`, the returned addresses are the visible set.
+  - **When verification needs a single anchor and several are known, it is centered on the lowest numeric address.**
+  - Wherever "lowest" orders a set of addresses, the order is ascending numeric address. These rules are registered so that behavior stays deterministic, even where the frozen family may never exercise them under T8 or T8L.
 
 ---
 
@@ -199,7 +232,27 @@ These are the orders in which the family's acquiring members spend sensing actio
 - **guard:** disrupt a known enemy anchor not yet written this tick; then **acquisition**; then repair its own core by the cyclic guard cursor.
 - **paint:** paint.
 
-An offer is **acquisition-eligible** when the acquisition step is reached and either no enemy anchor is known (discovery), or the member's `reacquire` rule calls for a sensing step (re-acquisition).
+An offer is **acquisition-eligible** when the acquisition step is reached and no enemy anchor is known (discovery). **Re-acquisition does not wait for the acquisition step:** it takes precedence over the posture steps (below) [Revision 2].
+
+**Known enemy anchors** [Revision 2]. "A known enemy anchor", here and in §2.5, is an address in the member's entrant-wide **known set**. **It is family-policy knowledge, not engine visibility:**
+- **Under `"passive"`, the known set is the current visible-anchor set** (`visible_enemy_anchor_addresses`). An address that leaves the visible set is no longer known.
+- **Under `"active"`, it is the remembered result of SENSE, under §2.5's knowledge-update rules.** An address becomes known when an applied SENSE returns it, at delivery (§2.3), and remains remembered until a later applied SENSE replaces that knowledge. A refused SENSE changes nothing.
+- **The substitution exists only inside the E8 policy.** For E8 family-policy decisions that E6 based on the visible-anchor set, the policy uses the mode-specific known-anchor set. **The actual observation field remains actual visibility:** under `"active"`, `visible_enemy_anchor_addresses` stays empty at every callback (D8-2).
+- **The last-known anchor stays separate.** E6 keeps current visibility and a remembered last-known anchor apart, and centers its verification READs on the remembered one. E8 does not collapse the two. **E8 sets the policy's `last_known_anchor` from the mode-specific known set in the same circumstances in which E6 set it from visibility.** In the E6 family source, it is set to the lowest address at each callback whose set is nonempty, kept when the set empties, and cleared when the verification READ window is exhausted without an enemy core cell.
+- **A passive `once` member may disrupt currently visible anchors, but never disrupts or moves toward a stale last-known address** that has left the visible set.
+
+**A registered channel difference** [Revision 2]. **Under `"passive"`, losing current visibility can cause acquisition behavior to resume**, because discovery applies whenever the known set, which is the visible set, is empty. In C8 and C8L, GUARD8 and EVADE8, whose guard order puts acquisition before repair, therefore resume sweeping whenever they lose sight of the opponent, EVADE8 included after its own evasions. **Under `"active"`, remembered SENSE information persists under the knowledge-update rules, so a `once` policy does not automatically re-acquire merely because there is no current passive visibility.** This is a genuine channel difference, not an implementation artifact. It is stated beside the readings (§7.4).
+
+**Re-acquisition precedence** [Revision 2], for members with `reacquire` of `repeat` or `adaptive`:
+- **Once a re-acquisition search is in progress, its next acquisition action takes precedence over the posture steps until the search terminates:** the next SENSE under `"active"`, or the next MOVE under `"passive"` (§2.5).
+- **While re-acquisition is in progress, the first offer of a later tick continues that search** rather than restarting verification of the stale address.
+- **When it starts.** A search starts when a known address (under `"passive"`, a tracked one) becomes missing and the result that showed it missing gives no replacement under the matching rule (§2.5).
+- **Termination.** A search ends when the missing anchor is replaced under the registered matching rule, or when the registered search sequence is exhausted, after which the anchor is unknown (§2.5). Under `"passive"`, the search's result at each of its callbacks is that callback's visible set, and the sequence is exhausted when the visible set on reaching the last center shows no enemy anchor.
+- **The precedence is over posture actions only.** It does not override a separately registered member-level step, such as a pending evasion or damage-response action; those keep their registered priority. No member that re-acquires in the frozen family has such a step.
+- **Why.** Under revision 1's order, the core write or the verification READ took every offer of a member that had found the enemy, so the search could not pass its first window, contrary to E-3 and Appendix A.3. **With precedence, re-acquisition consumes offers that could otherwise have attacked, defended or repaired.**
+- **A consequence, recorded rather than hidden.** Under C8 and C8L, REACQ8 and ADAPT8 can chase a passive anchor that leaves visibility. O-REACQ reports every re-acquisition by cause.
+
+**The callback index** [Revision 2] is the **1-based count of that entrant's callbacks within the current tick, reset when `current_tick` changes.** An entrant's first callback of a tick has index 1, and the count includes the callbacks of all its processes. This is the frozen E6 family's convention.
 
 The posture, verification and core-cursor semantics are **E6's, as corrected by A1** (the E6 implementation plan §5.2, and A1 C-1 to C-3). Only the acquisition, re-acquisition, evasion, adaptive and stress semantics below are new. The implementation plan must transcribe all of them without change. Engine-level behavior tests against scripted non-family opponents verify them before the freeze (A1 §2; SYN6 §H, item 4).
 
@@ -209,11 +262,11 @@ The posture, verification and core-cursor semantics are **E6's, as corrected by 
 | `acquire` = spatial-paced | E6's paced sweep: acquisition only on odd callback indexes, paint otherwise | The same pacing, with SENSE |
 | `acquire` = ownership | E6's READ stride search | The same |
 | `acquire` = none | No acquisition | The same |
-| `reacquire` = once | Never re-acquires. It disrupts the last known address. | The same |
-| `reacquire` = repeat | When a previously visible enemy anchor is absent from the visible set, it MOVEs toward the re-acquisition centers of §2.5, in order, at most 64 per MOVE | **At its first offer of each tick after first discovery, before the posture steps, it verifies** (a SENSE centered on *a*). An empty result continues the re-acquisition traversal on its next acquisition-eligible offers. |
-| `reacquire` = adaptive (ADAPT8) | As `repeat`, until the enemy anchor is confirmed at *a* on **k = 2 consecutive** ticks; then as `once` for the rest of the match [R-8]. A confirmation that finds movement resets the count. Here confirmation is the visible set at its first offer of the tick. | The same, but confirmation is the first-offer verification SENSE |
+| `reacquire` = once | Never re-acquires. It disrupts only known anchors, which under `"passive"` are the currently visible ones, **never a stale last-known address** [Revision 2]. | Never re-acquires. It disrupts its known anchors, the addresses its SENSE results returned. |
+| `reacquire` = repeat | When a tracked enemy anchor becomes missing (§2.5), it MOVEs toward the re-acquisition centers of §2.5, in order, at most 64 per MOVE, **with precedence over the posture steps** [Revision 2] | **At its first offer of each tick after first discovery, before the posture steps, it verifies** (a SENSE centered on *a*), **unless a re-acquisition search is in progress.** A result showing *a* missing, with no replacement, starts the search, which continues on its next offers **with precedence over the posture steps** [Revision 2]. |
+| `reacquire` = adaptive (ADAPT8) | As `repeat`, until **k = 2 consecutive verification observations** confirm the enemy anchor at *a* with no observed relocation; then as `once` for the rest of the match [R-8, Revision 2]. **A tick in which ADAPT8 receives no applicable verification callback is unobserved: it neither advances nor resets the count.** A first callback at which a search is in progress, or no anchor is known, is not an applicable verification callback. An observed relocation, meaning *a* found missing at a verification or at any other callback, resets the count to 0. Here a verification observation is the visible set at its first offer of the tick, which confirms the lowest tracked address if it contains it. | The same, but a verification observation is the result of its first-offer verification SENSE |
 | `evade` = on-hit (EVADE8) | **At its first callback of a tick, it infers a hit** if either (i) `current_tick` > `last_callback_tick` + 1, meaning a whole tick passed with no callback, or (ii) it received fewer than 8 callbacks in the most recent tick in which it received any. On an inferred hit, that callback is a MOVE of σ_e · *m*, with *m* on [8, 64] and σ_e drawn from its seeded stream, fresh for each evasion [R-11]. **It repeats on every inferred hit.** | The same |
-| `stress` (STRESS8) | At callback index 1 of each tick, before anything else, it READs own-core cell (*t* − 1) mod 8 (E6 ADAPT's P-4 schedule). If that cell's owner is not itself, its next action writes that cell. Otherwise it follows the guard posture. | The same |
+| `stress` (STRESS8) | At callback index 1 of each tick, before anything else, it READs own-core cell (*t* − 1) mod 8 (E6 ADAPT's P-4 schedule). If that cell's owner is not itself, **its next action repairs that cell with the normal core beacon value, identical to the guard posture's repair write** [Revision 2]. The value is semantic, since READ-based inference depends on it. Otherwise it follows the guard posture. | The same |
 | **Condition detection** | `MatchContextV2.sensing_window` is `None`, so the member never returns SENSE | `sensing_window` = 27 |
 
 **No member returns SENSE when `sensing_window` is `None`.** This is **a correctness requirement**, because an invalid v2 action makes the entrant forfeit (`process_runtime.py:1189–1212`). It is checked statically and dynamically (§5.1, D8-9; §5.2, CQ8-1).
@@ -223,8 +276,9 @@ The posture, verification and core-cursor semantics are **E6's, as corrected by 
   - ADAPT8 **in Seat A and in Seat B**;
   - against a scripted **static** opponent and a scripted **responsive evader**;
   - **under both parents**;
-  - with hits placed at **every chunk position of both seat orders**, so that every suppression pattern PA §8 characterizes is exercised.
-- **What they assert:** the quiet-tick count, the reset on observed relocation, and the switch after one complete cycle. **Never an outcome.**
+  - with hits placed at **every chunk position of both seat orders**, so that every suppression pattern PA §8 characterizes is exercised;
+  - **with ticks in which ADAPT8 itself receives no callback** [Revision 2].
+- **What they assert:** the count of consecutive confirming verification observations; **that an unobserved tick neither advances nor resets it**; the reset on observed relocation; and the switch at the second consecutive confirmation [Revision 2]. **Never an outcome.**
 
 ### 3.3 Packages and identities
 
@@ -262,7 +316,13 @@ These are as PR6 §3.2:
 - Under λ = 1 a hit costs 1 offer, which is less than the re-acquisition expectation of 225/114, so E-3 fails there by construction.
 - **The companion evaluates the same census**, as a status comparison (§6.6).
 
-**The predicted census, from §3.1's table: {EVADE8}. That is one defender archetype.** By the research lead's rule [B-6]:
+**Re-derived under Revision 2's semantics** (the research lead, 2026-09-30), rather than carried forward from revision 1. Re-acquisition precedence changes what the policies actually do, so each criterion is re-checked:
+- **E-1** is decided by its registered rule, `evade` = on-hit. Revision 2 changes no member parameter, and EVADE8 alone has it. Under `"active"` no other member's anchor moves at all: acquisition, verification and re-acquisition are SENSE actions there, and only an evasion is a MOVE.
+- **E-2** is arithmetic, and unchanged.
+- **E-3 now describes what REACQ8 actually does.** With precedence, its re-acquisition takes at most 3 SENSE actions (Appendix A.3), and is no longer starved by core writes. The comparison with a hit's cost of at least 6 offers therefore applies to the policy's actual behavior.
+- **The frozen census is still the tested static procedure's output at the family freeze** (above). This re-derivation is its prediction.
+
+**The predicted census, re-derived from §3.1's table under Revision 2: {EVADE8}. That is one defender archetype.** By the research lead's rule [B-6]:
 
 > **Requirement C is scoped to the EVADE8 stratum. H8-REPEAT and H8-ADAPT are read as claims about re-acquisition against a naturally evading defender, not about the whole family.**
 
@@ -282,6 +342,7 @@ All arithmetic is exact (`Fraction`), and every comparison is closed exactly as 
 - **O-BOOT:** 1000 resamples of the ordered seed list, 32 draws with replacement from `random.Random(42)`, **applied jointly to every cell and every condition** [R-5].
   - **Joint** means that **one resampled seed multiset is used to recompute the control and the treatment metrics alike**, and any cross-condition predicate is evaluated **within that draw**.
   - **stab(P) ≥ 9/10** means that P holds in **at least 900 of the 1,000 registered resamples**.
+  - **The draws** [Revision 2] are E6's `payoff.resample_positions` convention exactly: `rng = random.Random(42)`, and each of the 1,000 resamples is `tuple(rng.randrange(32) for _ in range(32))`, a tuple of positions in the ordered seed list, drawn in sequence from that one generator. **Wherever a paired or control–treatment quantity is computed, the same resampled seed-position multiset recomputes both sides, within the draw.**
 - **O-CLASS:** E3's `outcome_class`, and "decided by capture".
 - **O-EARLY:** a forced-line capture is a capture of *d* at a tick ≤ 3 [R-6].
 - **O-SEAT:** E4's `pairing_seat_metrics` and `mirror_seat_metrics` (SDI, GSB, SDom, SCD), with mirrors per seed.
@@ -295,7 +356,7 @@ All arithmetic is exact (`Fraction`), and every comparison is closed exactly as 
   - the number of SENSE actions before and after first discovery;
   - READ probes;
   - per-pairing counts of cells with no discovery by either entrant.
-- **O-REACQ** (descriptive only). A **re-acquisition event** is a SENSE result, or passive re-sighting, that shows an enemy anchor at an address other than the member's last known one. It is classified by cause:
+- **O-REACQ** (descriptive only). A **re-acquisition event** is a SENSE result, or passive re-sighting, that shows an enemy anchor at an address other than the missing one it replaces (§2.5) [Revision 2]. It is classified by cause:
   - **evasion**, if that enemy anchor moved since it was last known, according to the replay's tick-boundary snapshots and the traces;
   - **own movement**, if the member's own anchor moved and the enemy's did not.
 - **O-VERIF** (for ADAPT8). **V(*j*)** is the median, over the 32 seeds, of ADAPT8's mean per-match verification count against *j* across the two orientations.
@@ -312,7 +373,7 @@ All arithmetic is exact (`Fraction`), and every comparison is closed exactly as 
 |---|---|---|---|
 | **D8-1** Sensing exactness | Ruleset invariant | **Every applied SENSE's authoritative tuple** (§10) equals the set of live enemy anchor positions within ≤ 27 of *t* at execution. That set is **re-derived independently** from the trace's ordered action stream: tick-0 anchors, the normalized results of every MOVE, and disruption hits under the condition's λ. | T8 and T8L, all cells |
 | **D8-2** No free sensing | Ruleset invariant | `visible_enemy_anchor_addresses` is empty at every traced callback | T8 and T8L, all cells |
-| **D8-3** No-information identity | Family characterization | **A negative control for information leakage.** Take every matched pair of T8 cells, and every matched pair of T8L cells: the same opponent, seed, orientation and seat, one cell with LURK8 and one with GREED8. The entrant's ordered `decision_v2` records must be equal, record for record, in `action` (`kind`, `operand`, `value`) and in the observation's **information fields** (`visible_enemy_anchor_addresses`, `previous_sense_anchors`, `previous_read_value`, `previous_read_owner`). **Excluded:** package identity and metadata (package IDs, `wall_time_ms`, diagnostics). **Why equality is expected.** Both packages share one policy source and draw from the same seat- and slot-keyed stream in the same fixed order (PR6 §3.2), so their RNG state is identical by construction. With no information, both fall to the same paint routine. **So a divergence detects information reaching one of them, not an incidental artifact difference.** | T8 and T8L |
+| **D8-3** No-information identity | Family characterization | **A negative control for information leakage.** Take every matched pair of T8 cells, and every matched pair of T8L cells: the same opponent, seed, orientation and seat, one cell with LURK8 and one with GREED8. **The opponent ranges over the nine members of Π other than LURK8 and GREED8** [Revision 2], which gives 9 × 2 orientations × 32 seeds = 576 matched pairs in each condition. Excluding those two keeps every comparison literally against the same opponent, so **the gate never depends on twin equivalence.** Twin identity is not assumed here; it is tested on its own terms (§3.3, D8-11). The entrant's ordered `decision_v2` records must be equal, record for record, in `action` (`kind`, `operand`, `value`) and in the observation's **information fields** (`visible_enemy_anchor_addresses`, `previous_sense_anchors`, `previous_read_value`, `previous_read_owner`). **Excluded:** package identity and metadata (package IDs, `wall_time_ms`, diagnostics). **Why equality is expected.** Both packages share one policy source and draw from the same seat- and slot-keyed stream in the same fixed order (PR6 §3.2), so their RNG state is identical by construction. With no information, both fall to the same paint routine. **So a divergence detects information reaching one of them, not an incidental artifact difference.** | T8 and T8L |
 | **D8-4** Action charging | Ruleset invariant | Every SENSE record occupies exactly one offer. In every tick, each entrant's traced callbacks, SENSE records included, number at most its per-tick quota of 8, and no SENSE is followed by an extra, uncharged offer. | T8 and T8L, all cells |
 | **D8-5** No match-state change | Ruleset invariant | For every tick and entrant, the replay's memory writes equal the traced applied WRITEs. No write, position change or disruption is attributable to a SENSE. | T8 and T8L, all cells |
 | **D8-6** Parent identity | Ruleset invariant | With `sensing_mode = "passive"`, the parent byte-identity goldens reproduce byte for byte. C8 and C8L run T-E6's and T-E6L's Rulesets unchanged. | The parent freeze; C8 and C8L provenance |
@@ -333,7 +394,7 @@ All arithmetic is exact (`Fraction`), and every comparison is closed exactly as 
 | # | Check | Condition |
 |---|---|---|
 | **CQ8-1** | Containment on controls | **Zero SENSE records** in every C8 and C8L trace, and D8-14 holds on the controls |
-| **CQ8-2** | Twin identity until the first trigger | In every matched C8 and C8L cell, RUSH8 and REACQ8 produce identical action streams **up to REACQ8's first re-acquisition trigger**: the first callback at which a previously visible enemy anchor is absent from its visible set. GUARD8 and EVADE8 are identical up to EVADE8's first inferred hit. |
+| **CQ8-2** | Twin identity until the first trigger | In every matched C8 and C8L cell, RUSH8 and REACQ8 produce identical action streams **up to REACQ8's first re-acquisition trigger**: the first callback at which a previously visible enemy anchor is absent from its visible set, that is, at which a tracked address becomes missing (§2.5). GUARD8 and EVADE8 are identical up to EVADE8's first inferred hit. |
 | **CQ8-3** | The census is committed | The H8-REPEAT census (§3.5) is in the freeze record, committed **before any seed exists** |
 | **CQ8-4** | Control-against-control | With C8 in the treatment slot, the frozen analyzer must read: H8-SUB's status equal to H8-PAR's; H8-TAX SUPPORTED (A = B = 1); PF8-1 to PF8-4 not raised, with no unit flagged; **H8-SEAT REFUTED**, since ΔG = 0 at the point estimate and in every resample; and the interpretation row the equality implies |
 | **CQ8-5** | The seat strata are committed | The reporting strata of §6.2 (C8-neutral and C8-non-neutral, by O-NEUTRAL at the C8 point estimate) are computed on control data and committed **before any treatment cell exists** |
@@ -383,7 +444,7 @@ Each is SUPPORTED, REFUTED, NEITHER or, where stated, NOT EVALUABLE. The conditi
 **Threshold rationale.**
 - 9/10, 2/3 and 1/10 are PR6's, reused.
 - ε and the tick bound are PR6's, reused.
-- k = 2 comes from the rotation period [R-8].
+- k = 2 is the minimum repeated confirmation [R-8, Revision 2].
 - **No new threshold is introduced.** The family seat status uses sign and the 9/10 convention only [R-9].
 - **None was derived from any E8 data, and none exists.**
 
@@ -429,7 +490,7 @@ These are computed on F1 of the primary arm, and **recorded whatever else holds*
 - **REFUTED** if and only if ΔG ≤ 0 at the point estimate, and stab(ΔG ≤ 0) ≥ 9/10.
 - **NEITHER** otherwise.
 - **Reported beside it:**
-  - ΔG's magnitude, with its resampled 2.5%, 50% and 97.5% points, taken by nearest rank at indices 25, 500 and 974;
+  - ΔG's magnitude, with its resampled 2.5%, 50% and 97.5% points. **Each is `sorted(xs)[int(q * (n - 1) + 0.5)]`** over the *n* = 1,000 resampled values [Revision 2], which gives **indices 25, 500 and 974** for *q* = 0.025, 0.5 and 0.975;
   - ΔG over the committed C8-neutral and C8-non-neutral strata (CQ8-5). **These are descriptive only.** They expose floor effects (PA §5.1, stratum (ii)) and never change the status.
 
 **Both layers can kill** (KC8-5): a stable unit artifact (PF8-4), or a stable family-wide worsening (H8-SEAT SUPPORTED, which raises PF8-5).
@@ -483,17 +544,25 @@ These are never inputs to a hypothesis:
 | **R8-PRESERVES** | PASS | (SUPPORTED, SUPPORTED) | **Under the whole-tick parent, no fixed policy is a best response to every opponent, whether spatial information is acquired incidentally through movement (C8) or bought with an explicit sensing action (T8). For this family, the channel substitution preserves an opponent-dependent choice.** |
 | **R8-CREATES** | PASS | (SUPPORTED, REFUTED) | **Under movement-acquired sensing (C8) one fixed policy is a best response to every opponent. Under the explicit sensing action (T8) none is. For this family, the substitution creates an opponent-dependent choice.** |
 | **R8-REMOVES** | PASS | (REFUTED, SUPPORTED) | **The substitution removes an opponent-dependent choice present under movement-acquired sensing.** |
-| **R8-NO-CHOICE** | PASS | (REFUTED, REFUTED) | **A fixed policy is a best response to every opponent under both channels.** Qualified by H8-TAX, as E6's R-NO-CHOICE was by E6-H0. |
+| **R8-NO-CHOICE** | PASS | (REFUTED, REFUTED) | **A fixed policy is a best response to every opponent under both channels.** Qualified by H8-TAX, as E6's R-NO-CHOICE was by E6-H0, with the registered texts below. |
 | **R8-T-ONLY** | PASS | (SUPPORTED, NEITHER) | **No fixed policy is a best response to every opponent under T8. Under C8 the evidence is indeterminate.** |
 | **R8-T-DOMINANT** | PASS | (REFUTED, NEITHER) | **A fixed policy is a best response to every opponent under T8. Under C8 the evidence is indeterminate.** |
 | **NONE** | PASS | (NEITHER, SUPPORTED), (NEITHER, REFUTED), (NEITHER, NEITHER) | **"No registered interpretation row applies" is itself the registered outcome.** |
+
+**R8-NO-CHOICE's H8-TAX qualifier** [Revision 2]. It distinguishes delay-only from restructuring, without changing the row's reading:
+
+| H8-TAX | Qualifier |
+|---|---|
+| SUPPORTED | "the substitution acts only as a delay: outcomes are preserved and delayed" |
+| REFUTED | "a dominant policy under both channels, with outcomes restructured" |
+| NEITHER | "a dominant policy under both channels; delay-only is neither established nor excluded" |
 
 ### 7.2 Qualifiers, on every PASS row
 
 | Hypothesis | Status | Qualifier |
 |---|---|---|
 | H8-CHANNEL | SUPPORTED | "and no single acquisition policy is universal among the single-process attackers" |
-| | REFUTED | "but one acquisition policy is universal among the single-process attackers", naming it and labelling it as in KC8-6 |
+| | REFUTED | "but one acquisition policy is universal among the single-process attackers", naming every universal member of A8 and giving KC8-6's label [Revision 2] |
 | | NEITHER | "the acquisition-policy structure is indeterminate" |
 | H8-LESS | SUPPORTED | "and spending less on acquisition beats spending more against at least one opponent" |
 | | REFUTED | "but the registered lower-acquisition contrasts never win" |
@@ -544,6 +613,7 @@ These are never inputs to a hypothesis:
   - Otherwise, one refuted component falsifies the conjunction, whether or not the others can be evaluated.
 - **Every combination maps to exactly one outcome.** The four are mutually exclusive in this order, and a mapping test covers every (E8-D, H8-SUB, H8-CHANNEL, H8-REPEAT) combination.
 - **YES does not by itself establish requirement C.** C additionally requires H8-ADAPT to be interpretable and SUPPORTED (§7.3). A repeated opportunity to re-acquire is not an adaptive policy that recognizes state and changes behavior. The mechanic result and the adaptive fixture's performance are **separate registered conclusions**.
+- **The registered channel difference** (§3.2) is stated beside every reading [Revision 2]. Under `"passive"`, losing visibility can resume acquisition. Under `"active"`, remembered SENSE knowledge persists, so a `once` member does not re-acquire for lack of visibility.
 
 **Recorded alongside every row, but never inputs to it:** H8-FL, H8-TAX (except as R8-NO-CHOICE's qualifier), PF8-1 to PF8-5, the §6.3 strata, and the companion reading.
 
@@ -560,7 +630,7 @@ These are evaluated on the primary arm.
 | **KC8-3** Stalling or loss of contact | PF8-1 or PF8-2 is raised | — |
 | **KC8-4** Delayed forced line | H8-FL is SUPPORTED | — |
 | **KC8-5** Seat | PF8-4 is raised (a stable unit artifact), or H8-SEAT is SUPPORTED (a stable family-wide worsening, PF8-5) | Which layer, ΔG's magnitude, and every flagged unit with its §6.3 stratum and mechanism table |
-| **KC8-6** Acquisition dominance | H8-CHANNEL is REFUTED | **Channel race** if the universal attacker acquires; **information dominated** if it is LURK8 |
+| **KC8-6** Acquisition dominance | H8-CHANNEL is REFUTED | Over **the universal members of A8** at the point estimate: each *i* ∈ A8 in BR^A_ε(*j*) for every *j* ∈ Π. There is at least one, since H8-CHANNEL is REFUTED. The label is **channel race** if every one has `acquire` ≠ none; **information dominated** if LURK8 is the sole one; otherwise **mixed dominance**, naming every one [Revision 2] |
 
 **The disposition is exhaustive:**
 - **VOID** if E8-D fails.
@@ -706,10 +776,12 @@ Each is recorded, and none changes a research-lead ruling.
 2. **H8-TAX is added.** It is E6-H0's delay-only null, which qualifies R8-NO-CHOICE, for comparability with PR6 §7.
 3. **The census is defined under the primary parent's economics** (E-3). The companion evaluates the same census as a status comparison (§3.5, §6.6).
 4. **EVADE8's hit inference is made exact**, as callback counting (§3.2). This makes EVADE8 phase-sensitive by construction (E8-DR §C.4).
-5. **ADAPT8's switch rule is new, and k = 2 is derived structurally** as one complete scheduler-phase cycle [R-8]. Appendix A.4 validates it, and freeze tests cover both seat roles and all suppression patterns. STRESS8 has no evasion, so it is not in the census.
+5. **ADAPT8's switch rule is new.** k = 2 is the minimum repeated confirmation, counted in consecutive verification observations [R-8]. Revision 2 withdrew revision 1's scheduler-cycle rationale. Appendix A.4 validates the value against a scripted evader, and freeze tests cover both seat roles and all suppression patterns. STRESS8 has no evasion, so it is not in the census.
 6. **D8-3, LURK8 ≡ GREED8 under T8**, is a new negative control for information leakage, with its equality defined exactly. **D8-13 and D8-14** implement the trace and containment rulings. **D8-15** checks the configured window, and D8-1's re-derivation demonstrates its behavior. The delivery tests of §10 correct E8-DR §J's P-9: suppression alone does not mean there is no later callback.
 7. **The seat criterion is redesigned in two layers** [R-9]: a unit artifact with the existing bounds plus 9/10 stability, and a family-level status, H8-SEAT, set by sign and 9/10 stability. **No magnitude floor is introduced. R-9's earlier 1/20 was rejected.**
 8. **The members are eleven, with no evading attacker** [R-10]. So the census is predicted to be {EVADE8}, and C is scoped to that stratum.
+9. **Re-acquisition precedence** [Revision 2]. E8-DR §C.4's find → hit → evade → re-find loop, E-3 and Appendix A.3 all assume that the re-acquisition search runs. Under revision 1's order of an offer it could not pass its first window. It now takes precedence over the posture steps (§3.2). **Under C8 and C8L, REACQ8 and ADAPT8 can therefore chase a passive anchor that leaves visibility.**
+10. **A channel difference is registered** [Revision 2] (§3.2). Under `"passive"`, losing visibility can resume acquisition. Under `"active"`, remembered SENSE knowledge persists.
 
 ---
 
@@ -746,16 +818,18 @@ With *m* on [8, 64] and an unknown sign, the core cells lie in [anchor − 64, a
 
 ### A.4 Validating k = 2
 
-**The derivation is structural** [R-8]. Two consecutive quiet ticks are one complete scheduler-phase cycle. **This appendix checks that the derived value behaves correctly. It is not the reason the value was chosen.**
+**The derivation** [R-8, Revision 2]: k = 2 is the minimum repeated confirmation. One verification observation establishes the anchor's current location, and a second, later one confirms that it persists. **This appendix checks that the value behaves correctly. It is not the reason the value was chosen.**
 
-**The worst case under whole-tick disruption** (PA §8):
-1. Suppose EVADE8 is hit after its first chunk, in its own first-mover tick *t*. It loses the rest of *t*.
-2. In tick *t* + 1 the attacker moves first. ADAPT8's first-offer verification then sees the anchor **unmoved**, and its second offer re-hits EVADE8, which therefore gets no callback in *t* + 1.
-3. EVADE8's next callback is offer 0 of tick *t* + 2, its own first-mover tick, where it infers the hit and evades.
-4. ADAPT8 moves second in *t* + 2. Its first-offer verification comes after that evasion, and sees **movement**.
+**Its scope** [Revision 2]. **The worked example assumes that the scripted validation evader does not itself attack or disrupt ADAPT8.** It validates the timing rule for that scenario, and **is not a trace of EVADE8's complete matchup behavior.** EVADE8's guard posture disrupts a known anchor (§3.2), so in the matrix ADAPT8 can receive no callback in some ticks, which are then unobserved.
+
+**The worst case under whole-tick disruption** (PA §8), in the steady state of the loop, for such an evader:
+1. Suppose the evader is hit after its first chunk, in its own first-mover tick *t*. It loses the rest of *t*. **In the steady state it evaded at offer 0 of *t***, so ADAPT8's first-offer verification in *t* has just seen **movement**, and the count is 0.
+2. In tick *t* + 1 ADAPT8 moves first. Its first-offer verification sees the anchor **unmoved**, so the count is 1, and its second offer re-hits the evader, which therefore gets no callback in *t* + 1.
+3. The evader's next callback is offer 0 of tick *t* + 2, its own first-mover tick, where it infers the hit and evades.
+4. ADAPT8 moves second in *t* + 2. Its first-offer verification comes after that evasion and sees **movement**, which resets the count to 0.
 
 **What this validates:**
-- **Against a responsive evader,** the run of unmoved confirmations never exceeds 1, so the derived k = 2 never stops verifying.
-- **Against a static opponent,** it stops after one complete cycle.
+- **Against a responsive evader,** the run of consecutive confirming verifications never exceeds 1, so k = 2 never stops verifying.
+- **Against a static opponent that does not disrupt ADAPT8,** it stops at its second consecutive confirming verification.
 
 **This is a validation of the independently derived value.** It is also exercised by the freeze tests of §3.2, in both seat roles and every suppression pattern.
