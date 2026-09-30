@@ -1,4 +1,4 @@
-"""E8 registered decision logic (pre-registration §4 to §8, revision 4).
+"""E8 registered decision logic (pre-registration §4 to §8, revision 5).
 
 docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md governs. Every
 registered value used here (vocabularies, member sets, thresholds, rows,

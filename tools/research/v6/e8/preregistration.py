@@ -1,7 +1,7 @@
 """Loader for the frozen E8 pre-registration transcription (``preregistration.json``).
 
-docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md, revision 4
-(registered at ``ae37cf9``), is the authoritative wording. The JSON transcribes
+docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md, revision 5
+(registered at ``59190b7``), is the authoritative wording. The JSON transcribes
 it without reinterpretation. Loading fails closed unless all of these hold:
 
 * the JSON's digest is ``PREREGISTRATION_SHA256``, so the transcription is the
@@ -32,7 +32,7 @@ from types import MappingProxyType
 from typing import Any
 
 PREREGISTRATION_PATH = Path(__file__).with_name("preregistration.json")
-PREREGISTRATION_SHA256 = "db698fb154e68fb6f8eda18aabe48942ef361198fbf293476cf4383dc48d4f0b"
+PREREGISTRATION_SHA256 = "6d4ffb4b43bfadebdad9aea1481a52c5ea119ed9c05aae21337931d2c84c7a5b"
 REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
 SCHEMA = "bytefray.v6.e8.preregistration"
 
@@ -227,7 +227,7 @@ def internal_problems(data: Mapping[str, Any]) -> list[str]:
 
     expect("schema", data.get("schema"), SCHEMA)
     authority = data["authority"]
-    expect("revision", authority["revision"], 4)
+    expect("revision", authority["revision"], 5)
     expect("document", authority["document"], "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md")
     expect("document digest form", bool(re.fullmatch(r"[0-9a-f]{64}", authority["document_sha256"])), True)
 
@@ -340,6 +340,22 @@ def internal_problems(data: Mapping[str, Any]) -> list[str]:
     expect("delivery obligation", presence["delivery_obligation"]["callbacks_per_sense"], 1)
     expect("presence checked", dict(presence["checked"]), {"both_ways": True, "every_cell": True, "fails_closed": True})
     expect("compatibility gate", presence["compatibility"]["checked_by"], "D8-6")
+
+    # Revision 5: a SENSE record's status mapping, and D8-14's coverage of every other status.
+    mapping = data["traces"]["status_mapping"]["rows"]
+    facts = data["traces"]["facts"]
+    expect("status mapping", [row["status"] for row in mapping],
+           ["APPLIED", "REJECTED_OUT_OF_REACH", "REJECTED_INVALID", "any other"])
+    expect("the catch-all includes EXCEPTION", "EXCEPTION" in mapping[-1].get("includes", []), True)
+    expect("applied status", mapping[0]["status"], facts["applied"]["applied_result.status"])
+    expect("the only ordinary refusal", [row["status"] for row in mapping if row["ordinary_refusal"]],
+           [facts["refused"]["applied_result.status"]])
+    expect("null unless applied", [row["sensed_anchors"] is None for row in mapping], [False, True, True, True])
+    expect("a refusal's null", mapping[1]["sensed_anchors"], presence["refused"]["sensed_anchors"])
+    expect("D8-14 allowed statuses", list(by_id["D8-14"]["allowed_statuses"]),
+           [row["status"] for row in mapping if not row["d8_14_fires"]])
+    expect("D8-14 fires on every other status", [row["d8_14_fires"] for row in mapping], [False, False, True, True])
+    expect("D8-14 missing status", by_id["D8-14"]["missing_status_fails"], True)
 
     arc, sizes = discovery_arc(data)
     discovery = data["traversal"]["discovery"]
@@ -622,6 +638,10 @@ def markdown_problems(data: Mapping[str, Any], markdown: str) -> list[str]:
     expect("presence table", [(r[0].strip("`"), r[1], r[2]) for r in rows],
            [(row["field"], plain(row["present"]["text"]), plain(row["absent"]["text"]))
             for row in data["traces"]["presence"]["table"]])
+
+    rows = _table(found, ("`applied_result.status`", "`sensed_anchors`", "What the record is"), problems)
+    expect("status mapping table", rows,
+           [tuple(plain(cell) for cell in row["row"]["text"]) for row in data["traces"]["status_mapping"]["rows"]])
 
     rows = _table(found, ("Requirement", "Verified by"), problems)
     expect("containment", [r[0] for r in rows], [c["requirement"]["text"] for c in data["containment"]["requirements"]])

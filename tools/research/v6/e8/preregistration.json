@@ -4,17 +4,18 @@
   "experiment": "V6 E8 active spatial sensing",
   "authority": {
     "document": "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md",
-    "revision": 4,
-    "registration_commit": "ae37cf9",
-    "document_sha256": "8a9971a0630f85291e41034a07940cdf915e97cde4c87fb133dcb6bca8ae63fa",
+    "revision": 5,
+    "registration_commit": "59190b7",
+    "document_sha256": "1bf7c664cd91897a327429b5c6de4b18a82794d2085477676bbda2b1ce77f0f9",
     "digest_rule": "SHA-256 of the document's bytes, with CRLF normalized to LF",
-    "governs": "revision 4",
+    "governs": "revision 5",
     "history": [
       {"revision": 1, "commit": "28925fd", "document_sha256": "6d50dae648dbdb0def2bcb94644e0705b4d62d4e818f7288190df4f8fac4efbb", "standing": "historical provenance"},
       {"revision": 2, "commit": "090d11e", "document_sha256": "0c6d0b741a4584ac10bc5f2aa3837bbc83213b8a608352d86949bdf809737286", "standing": "historical provenance"},
-      {"revision": 3, "commit": "00fb420", "document_sha256": "a822bd15d9be8f968facb2f7b9c7e228d0e59b65ce34b790ae2a9e3538583a5a", "standing": "historical provenance"}
+      {"revision": 3, "commit": "00fb420", "document_sha256": "a822bd15d9be8f968facb2f7b9c7e228d0e59b65ce34b790ae2a9e3538583a5a", "standing": "historical provenance"},
+      {"revision": 4, "commit": "ae37cf9", "document_sha256": "8a9971a0630f85291e41034a07940cdf915e97cde4c87fb133dcb6bca8ae63fa", "standing": "historical provenance"}
     ],
-    "note": "The markdown is the authoritative wording. This file transcribes revision 4 for the frozen instrument, without reinterpretation. Every value under a key named \"text\" is registered wording, copied verbatim with only markdown emphasis removed."
+    "note": "The markdown is the authoritative wording. This file transcribes revision 5 for the frozen instrument, without reinterpretation. Every value under a key named \"text\" is registered wording, copied verbatim with only markdown emphasis removed."
   },
   "references": {
     "E8-DR": "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_DESIGN_REVIEW.md",
@@ -428,7 +429,9 @@
         {"id": "D8-12", "name": "Trace completeness", "kind": "Protocol", "evaluated_on": "All four conditions"},
         {"id": "D8-13", "name": "Delivery consistency", "kind": "Ruleset invariant", "evaluated_on": "T8 and T8L; for presence, all four conditions [Revision 4]",
           "presence": {"revision": 4, "text": ["the field is present on exactly the callbacks with a delivery obligation (§10).", "Absent where one exists, it is a D8-13 failure, and present where none exists, it is one too.", "Absence is read as no prior result only where no delivery obligation exists."]}},
-        {"id": "D8-14", "name": "No invalid action", "kind": "Protocol", "evaluated_on": "All four conditions"},
+        {"id": "D8-14", "name": "No invalid action or exception", "kind": "Protocol", "evaluated_on": "All four conditions",
+          "allowed_statuses": ["APPLIED", "REJECTED_OUT_OF_REACH"], "missing_status_fails": true,
+          "condition": {"revision": 5, "text": ["Every `decision_v2` record's `applied_result.status` is `APPLIED` or `REJECTED_OUT_OF_REACH`", "So no cell records an `agent_action_invalid` forfeit (`REJECTED_INVALID`), which would be a containment breach, or an `EXCEPTION`, which would be an integrity failure.", "Any other status, or a record without one, fails D8-14 too."]}},
         {"id": "D8-15", "name": "Window fidelity", "kind": "Ruleset invariant", "evaluated_on": "All four conditions", "active_window": 27, "passive_window": null,
           "active_presence": "required", "passive_presence": "absent, read as null",
           "configuration": {"revision": 4, "text": ["Every T8 and T8L `ResetRecord` carries `sensing_window` = 27, and one that omits it fails.", "Every C8 and C8L `ResetRecord` omits `sensing_window`, and D8-15 reads that absence as null; one that carries it, even as `null`, fails [Revision 4]."]}}
@@ -726,7 +729,7 @@
       "checked": {"both_ways": true, "every_cell": true, "fails_closed": true},
       "table": [
         {"field": "ResetRecord.sensing_window", "gate": "D8-15", "present_under": ["T8", "T8L"], "value": 27, "absent_under": ["C8", "C8L"], "absence_read_as": null, "present": {"text": "Under `\"active\"` (T8, T8L): 27"}, "absent": {"text": "Under `\"passive\"` (C8, C8L). D8-15 reads the absence as null."}},
-        {"field": "applied_result.sensed_anchors", "gate": "D8-1", "present_on": "every record whose action is SENSE", "value": {"applied": "the ascending list, empty if nothing was found", "not applied": null}, "present": {"text": "On every record whose action is SENSE: the ascending list if it was applied, empty if nothing was found, and `null` if it was not applied"}, "absent": {"text": "On every other record. Its absence means that the record is not a SENSE record, never that a SENSE found nothing."}},
+        {"field": "applied_result.sensed_anchors", "gate": "D8-1", "present_on": "every record whose action is SENSE", "value": "by the status mapping (Revision 5)", "present": {"text": "On every record whose action is SENSE, as its status maps it (below) [Revision 5]: the ascending list if `APPLIED`, empty if nothing was found, and otherwise `null`"}, "absent": {"text": "On every other record. Its absence means that the record is not a SENSE record, never that a SENSE found nothing."}},
         {"field": "observation.previous_sense_anchors", "gate": "D8-13", "present_on": "the callback with a delivery obligation", "value": "the prior SENSE record's sensed_anchors", "present": {"text": "On the callback with a delivery obligation: equal to the prior SENSE record's `sensed_anchors`, whether a list, an empty list or `null`"}, "absent": {"text": "On every other callback, including every callback before the process first senses"}}
       ],
       "compatibility": {"text": "Additive E8 trace fields must not change canonical serialized bytes for pre-E8/control records when their semantics are inapplicable.", "checked_by": "D8-6", "check": {"text": "D8-6's parent goldens check it on the parent freeze."}}
@@ -737,6 +740,17 @@
       "applied": {"applied_result.status": "APPLIED", "applied_result.normalized_address": "t mod 512"},
       "refused": {"applied_result.status": "REJECTED_OUT_OF_REACH", "applied_result.sensed_anchors": null},
       "returned": {"text": "`applied_result.sensed_anchors`, the complete ascending tuple. An empty list means sensed and found nothing."}
+    },
+    "status_mapping": {
+      "revision": 5,
+      "principle": {"text": "`null` means only that there is no applied sensing result. The status says why, so a `null` never erases the difference between an ordinary refusal and an integrity failure."},
+      "rows": [
+        {"status": "APPLIED", "sensed_anchors": "the ascending list, possibly empty", "ordinary_refusal": false, "d8_14_fires": false, "row": {"text": ["`APPLIED`", "The ascending list, possibly empty", "An applied SENSE (D8-1)"]}},
+        {"status": "REJECTED_OUT_OF_REACH", "sensed_anchors": null, "ordinary_refusal": true, "d8_14_fires": false, "row": {"text": ["`REJECTED_OUT_OF_REACH`", "`null`", "The only ordinary refused SENSE"]}},
+        {"status": "REJECTED_INVALID", "sensed_anchors": null, "ordinary_refusal": false, "d8_14_fires": true, "row": {"text": ["`REJECTED_INVALID`", "`null`", "A containment breach: D8-14 fires"]}},
+        {"status": "any other", "includes": ["EXCEPTION"], "sensed_anchors": null, "ordinary_refusal": false, "d8_14_fires": true, "row": {"text": ["Any other status, `EXCEPTION` included", "`null`", "An integrity failure: D8-14 fires. It is never read as a refused SENSE because its value is `null`."]}}
+      ],
+      "forfeit_records": {"text": ["In the existing engine, a forfeit record (`REJECTED_INVALID` or `EXCEPTION`) carries no action, because an action is recorded only once it is accepted (`process_runtime.py:1159–1262`).", "Such a record is then not a SENSE record and carries no `sensed_anchors`, and D8-14 fires on its status all the same.", "A forfeit ends its entrant, so no delivery follows it."]}
     },
     "consistency_gate": "D8-13",
     "delivery_tests": [
@@ -775,7 +789,7 @@
     "during_and_after_treatment": [
       {"text": "E8-D fails on D8-1, D8-2, D8-3, D8-4, D8-5, D8-11, D8-12, D8-13, D8-14 or D8-15;", "clauses": ["D8-1", "D8-2", "D8-3", "D8-4", "D8-5", "D8-11", "D8-12", "D8-13", "D8-14", "D8-15"]},
       {"text": "an analyzer or telemetry disagreement: the re-derivation and the authoritative record disagree beyond D8-1's own check, or an analyzer fails;"},
-      {"text": "any `REJECTED_INVALID` forfeit, which is a containment breach;"},
+      {"text": "any `REJECTED_INVALID` forfeit, which is a containment breach, or `EXCEPTION`, which is an integrity failure, or any other status D8-14 refuses [Revision 5];"},
       {"text": "a recurring `evaluation.json` `PermissionError`: quarantine, relaunch and byte-check once, then stop;"},
       {"text": "at reveal, D8-10 fails. The disposition is then VOID."}
     ]
@@ -810,7 +824,8 @@
     {"id": 10, "text": "A channel difference is registered [Revision 2] (§3.2)."},
     {"id": 11, "text": "SPLIT8's initial acquisition ends once the enemy core is confirmed [Revision 3] (§3.2)."},
     {"id": 12, "text": "Appendix A.2's count is corrected [Revision 3]: 17 READs under E6's verification order, not E8-DR Appendix A.2's 16."},
-    {"id": 13, "text": "When each E8 trace field is present is registered [Revision 4] (§10)."}
+    {"id": 13, "text": "When each E8 trace field is present is registered [Revision 4] (§10)."},
+    {"id": 14, "text": "A SENSE record's status mapping is explicit, and D8-14 covers every status other than `APPLIED` and `REJECTED_OUT_OF_REACH` [Revision 5] (§10, §5.1)."}
   ],
   "non_claims": [
     {"text": "No result. No E8 data of any kind exists."},

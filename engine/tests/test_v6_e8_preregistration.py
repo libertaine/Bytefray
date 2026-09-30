@@ -1,6 +1,6 @@
 """V6 E8: the machine-readable pre-registration equals the registered markdown.
 
-docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md, revision 4,
+docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md, revision 5,
 is the authoritative wording. ``tools/research/v6/e8/preregistration.json``
 transcribes it. These tests show that the transcription is pinned, that it
 records the registered revision's digest, that every registered text in it is
@@ -49,12 +49,12 @@ def test_the_transcription_loads_and_is_pinned() -> None:
     assert preregistration.preregistration_digest() == preregistration.PREREGISTRATION_SHA256
     assert data["schema"] == "bytefray.v6.e8.preregistration"
     assert data["authority"]["document"] == "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md"
-    assert data["authority"]["revision"] == 4 and data["authority"]["governs"] == "revision 4"
+    assert data["authority"]["revision"] == 5 and data["authority"]["governs"] == "revision 5"
 
 
-def test_it_records_the_registered_revision_and_keeps_revisions_1_to_3_as_history() -> None:
+def test_it_records_the_registered_revision_and_keeps_revisions_1_to_4_as_history() -> None:
     authority = _data()["authority"]
-    assert authority["registration_commit"] == "ae37cf9"
+    assert authority["registration_commit"] == "59190b7"
     assert preregistration.file_digest(MARKDOWN) == authority["document_sha256"]
     committed = subprocess.run(["git", "show", f"{authority['registration_commit']}:{authority['document']}"],
                                cwd=ROOT, capture_output=True, check=True).stdout
@@ -68,6 +68,9 @@ def test_it_records_the_registered_revision_and_keeps_revisions_1_to_3_as_histor
          "standing": "historical provenance"},
         {"revision": 3, "commit": "00fb420",
          "document_sha256": "a822bd15d9be8f968facb2f7b9c7e228d0e59b65ce34b790ae2a9e3538583a5a",
+         "standing": "historical provenance"},
+        {"revision": 4, "commit": "ae37cf9",
+         "document_sha256": "8a9971a0630f85291e41034a07940cdf915e97cde4c87fb133dcb6bca8ae63fa",
          "standing": "historical provenance"}]
     for entry in authority["history"]:
         earlier = subprocess.run(["git", "show", f"{entry['commit']}:{authority['document']}"],
@@ -143,6 +146,13 @@ def _set(data: dict[str, Any], path: tuple[Any, ...], value: Any) -> None:
     (("gates", "E8-D", "clauses", 14, "configuration", "text", 1),
      "Every C8 and C8L `ResetRecord.sensing_window` is `null`."),
     (("gates", "E8-D", "clauses", 2, "equality", "text"), "An absent field equals a null one"),
+    (("traces", "status_mapping", "rows", 3, "row", "text", 2), "A refused SENSE"),
+    (("traces", "status_mapping", "rows", 2, "row", "text", 1), "An empty list"),
+    (("gates", "E8-D", "clauses", 13, "name"), "No invalid action"),
+    (("gates", "E8-D", "clauses", 13, "condition", "text", 0),
+     "No cell records an `agent_action_invalid` forfeit (`REJECTED_INVALID`)"),
+    (("traces", "presence", "table", 1, "present", "text"),
+     "On every record whose action is SENSE: the ascending list if it was applied, and `null` if it was not applied"),
 ])
 def test_drift_from_the_markdown_is_reported(path: tuple[Any, ...], value: Any) -> None:
     data = copy.deepcopy(_data())
@@ -181,6 +191,12 @@ def test_drift_from_the_markdown_is_reported(path: tuple[Any, ...], value: Any) 
     (("traces", "facts", "refused", "applied_result.sensed_anchors"), []),
     (("gates", "E8-D", "clauses", 0, "evaluated_on"), "T8 and T8L, all cells"),
     (("gates", "E8-D", "clauses", 14, "passive_presence"), "null"),
+    (("gates", "E8-D", "clauses", 13, "allowed_statuses"), ["APPLIED", "REJECTED_OUT_OF_REACH", "EXCEPTION"]),
+    (("gates", "E8-D", "clauses", 13, "missing_status_fails"), False),
+    (("traces", "status_mapping", "rows", 3, "d8_14_fires"), False),
+    (("traces", "status_mapping", "rows", 3, "ordinary_refusal"), True),
+    (("traces", "status_mapping", "rows", 3, "includes"), []),
+    (("traces", "status_mapping", "rows", 2, "sensed_anchors"), []),
 ])
 def test_internal_drift_is_reported(path: tuple[Any, ...], value: Any) -> None:
     data = copy.deepcopy(_data())
@@ -328,7 +344,26 @@ def test_the_revision_4_presence_rules_are_transcribed() -> None:
     assert clauses["D8-3"]["equality"]["text"] == "A field is equal only if both records omit it, or both carry the same value"
     # No rule reads absence as null except the control-side window.
     assert [row["field"] for row in presence["table"] if "absence_read_as" in row] == ["ResetRecord.sensing_window"]
-    assert data["differences_from_design_review"][-1]["id"] == 13
+    assert data["differences_from_design_review"][12]["id"] == 13
+
+
+def test_the_revision_5_status_mapping_is_transcribed() -> None:
+    data = _data()
+    mapping = data["traces"]["status_mapping"]
+    assert mapping["principle"]["text"].startswith("`null` means only that there is no applied sensing result.")
+    rows = {row["status"]: row for row in mapping["rows"]}
+    assert list(rows) == ["APPLIED", "REJECTED_OUT_OF_REACH", "REJECTED_INVALID", "any other"]
+    # null says only that no applied result exists; the status says why, and only an out-of-reach refusal is ordinary.
+    assert [s for s, row in rows.items() if row["sensed_anchors"] is None] == [
+        "REJECTED_OUT_OF_REACH", "REJECTED_INVALID", "any other"]
+    assert [s for s, row in rows.items() if row["ordinary_refusal"]] == ["REJECTED_OUT_OF_REACH"]
+    assert [s for s, row in rows.items() if row["d8_14_fires"]] == ["REJECTED_INVALID", "any other"]
+    assert rows["any other"]["includes"] == ["EXCEPTION"]
+    d814 = next(c for c in data["gates"]["E8-D"]["clauses"] if c["id"] == "D8-14")
+    assert d814["name"] == "No invalid action or exception"
+    assert d814["allowed_statuses"] == ["APPLIED", "REJECTED_OUT_OF_REACH"] and d814["missing_status_fails"] is True
+    assert "`EXCEPTION`, which is an integrity failure" in data["hard_stops"]["during_and_after_treatment"][2]["text"]
+    assert data["differences_from_design_review"][-1]["id"] == 14
 
 
 # ---------------------------------------------------------------------------

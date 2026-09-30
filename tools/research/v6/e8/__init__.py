@@ -4,7 +4,7 @@ This package holds, so far, the machine-readable pre-registration, the
 registered decision logic and the parent goldens, all made before any engine,
 agent, family, experiment seed or matrix work exists:
 
-* ``preregistration.json``: the transcription of revision 4 of the
+* ``preregistration.json``: the transcription of revision 5 of the
   markdown pre-registration, which remains the authoritative wording;
 * ``preregistration.py``: its loader, which fails closed unless the JSON is
   the frozen one, the markdown is the registered revision, and the two agree;
