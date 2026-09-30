@@ -619,3 +619,14 @@ Supplementary records: `checkpoint_b_supplementary.json` `4a5c3b94…98b7a`, `tr
 - `tools/research/v6/e6/final_record.json`: `d6.json` and `e6_interpretation.json` verbatim, with their SHA-256 (`5100ec0`).
 
 The frozen analysis is deterministic. Re-running `treatment-gates` and `analyze` over the preserved corpus reproduces the recorded files byte for byte (§G).
+
+## Addendum, 2026-09-29: post-hoc factorial audit (pointer)
+
+This addendum is a pointer only. The report above is left exactly as written, and no E6 registered finding, status, pathology flag, kill criterion, interpretation row or disposition changes. E6-D PASS, `R-CREATES` qualified by E6-H2 SUPPORTED, and `REJECT as a gameplay candidate` (KC-5) stand as registered.
+
+§H and §J named the interaction between priced sensing and whole-tick disruption as the next design problem. The [E7 design review](V6_E7_SENSING_DISRUPTION_INTERACTION_DESIGN_REVIEW.md) took it up. A post-hoc descriptive audit of E6's own frozen cells then answered it: [`V6_E6_POST_HOC_FACTORIAL_AUDIT.md`](V6_E6_POST_HOC_FACTORIAL_AUDIT.md). The research lead accepted the audit on 2026-09-29:
+
+- **The reading.** KC-5's trigger was a real unit-level interaction among priced sensing, whole-tick lockout and ADAPT's absolute-tick damage-check schedule. It was not evidence of a stable family-level sensing × disruption interaction.
+- **The closure.** The question is closed with no new experiment. No E7 registration, matrix, seed or gameplay match exists. The next registered gameplay experiment, if V6 needs one, is E8.
+
+The audit explains the pathology; it does not rescue the candidate. §H's "a clue, not a causal proof" and this report's "no causal claim" remain accurate statements of what E6 itself established.
