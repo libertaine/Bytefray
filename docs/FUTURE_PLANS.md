@@ -493,10 +493,13 @@ Current status across the repository:
   the registered disposition is REJECT as a gameplay candidate:
   strategically successful, product-unsuitable in its current form. The
   λ = 1 companion reproduces the strategic findings without the seat
-  artifact, so the next design problem the research lead named is the
-  interaction between priced sensing and whole-tick disruption; it is not
-  yet registered. Both E6 Rulesets remain research-only
-  ([`docs/research/v6/V6_E6_PRICED_SENSING_RESULTS.md`](research/v6/V6_E6_PRICED_SENSING_RESULTS.md),
+  artifact. **Closed finding:** whether priced sensing and whole-tick
+  disruption interact to create that artifact was answered by a
+  post-hoc audit of the frozen corpus. KC-5 was a unit-level
+  interaction, not a stable family-level effect, and the question is
+  closed with no E7 experiment. Both E6 Rulesets remain research-only
+  ([`docs/research/v6/V6_E6_POST_HOC_FACTORIAL_AUDIT.md`](research/v6/V6_E6_POST_HOC_FACTORIAL_AUDIT.md),
+  [`docs/research/v6/V6_E6_PRICED_SENSING_RESULTS.md`](research/v6/V6_E6_PRICED_SENSING_RESULTS.md),
   [`docs/research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md`](research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md),
   [`docs/research/v6/V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md`](research/v6/V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md),
   [`docs/research/v6/V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md`](research/v6/V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md),

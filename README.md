@@ -71,7 +71,7 @@ It is **not**, however, a candidate for direct promotion.
 
 The primary experiment also created a new seat artifact, so its registered disposition was to reject that exact mechanic as a gameplay candidate. A companion experiment using a different disruption model reproduced the strategic result without the same artifact.
 
-That leaves a more focused research question: the interaction between information scarcity and disruption semantics.
+The follow-up question—whether priced sensing interacts with disruption semantics to create the E6 seat artifact—was examined in a post-hoc factorial audit of the frozen E6 corpus. The audit found that the registered KC-5 event was a unit-level interaction involving priced sensing, whole-tick lockout, and ADAPT's absolute-tick behavior, but not a stable family-level sensing × disruption effect. That line is therefore closed with no E7 experiment. E8 is the next available experiment number for any new V6 gameplay study.
 
 ### What this branch represents
 
