@@ -717,3 +717,9 @@ An evasion costs one MOVE, which is one offer.
 - `engine/src/battle_engine/ruleset_policy.py:162, 177, 305–361`
 - `engine/src/battle_engine/replay.py:92–111, 359`
 - `tools/research/v6/e6/fixtures/agents/e6_q01/agent.py` (`_search`, `_verification_read`, `_adapt`, `_choose`)
+
+---
+
+## Erratum, 2026-09-30: suppression and later callbacks (pointer)
+
+§F.2's delivery row and §J's P-9 list suppression among the cases with no next callback. **That overstates it.** Under whole-tick disruption, a suppressed process may miss the rest of its tick and still receive a later callback. **The pre-registration at `28925fd` governs the delivery semantics** (its §10 and D8-13). This review is otherwise left as written.
