@@ -1,9 +1,9 @@
-"""The E8 pre-registration freeze identity (phase I8-0), freeze v3.
+"""The E8 pre-registration freeze identity (phase I8-0), freeze v4.
 
 It pins, at the tooling commit, the artifacts that together form E8's
 registration before any engine, agent, family, seed or matrix work exists:
 
-* the markdown pre-registration, revision 4 (the authoritative wording);
+* the markdown pre-registration, revision 5 (the authoritative wording);
 * its transcription, ``preregistration.json``;
 * the loader and the registered decision logic;
 * their transcription, totality and invariant tests;
@@ -12,17 +12,20 @@ registration before any engine, agent, family, seed or matrix work exists:
 It also pins what these fix without data: the 1,000 registered O-BOOT draws
 (by digest) and the predicted census.
 
-**Freeze v3 supersedes v2 and v1 before any exposure.** Freeze v1,
+**Freeze v4 supersedes v3, v2 and v1 before any exposure.** Freeze v1,
 ``v6-e8-prereg-v1-116c9ed83400``, pinned revision 2. Revision 3 corrected when
 initial acquisition ends, and freeze v2, ``v6-e8-prereg-v2-e478f519c070``,
 pinned it. Revision 4, after the I8-1 parent goldens, registered when each E8
-trace field is present. Each change altered the earlier freeze's pinned files,
-so neither earlier freeze loads. Their records, ``preregistration_freeze.json``
-and ``preregistration_freeze_v2.json``, are kept byte for byte as historical
-evidence (the E6 freeze convention); v3's record names both and pins their
-digests.
+trace field is present, and freeze v3, ``v6-e8-prereg-v3-4058c890e992``,
+pinned it. Revision 5 made a SENSE record's status mapping explicit, before
+Revision 4 was published. Each change altered the earlier freeze's pinned
+files, so no earlier freeze loads. Their records,
+``preregistration_freeze.json``, ``preregistration_freeze_v2.json`` and
+``preregistration_freeze_v3.json``, are kept byte for byte as historical
+evidence (the E6 freeze convention); v4's record names all three and pins
+their digests.
 
-The identity is ``v6-e8-prereg-v3-<first 12 hex of the record digest>``, where
+The identity is ``v6-e8-prereg-v4-<first 12 hex of the record digest>``, where
 the digest is the SHA-256 of the canonical JSON of the record's body (sorted
 keys, compact separators, UTF-8). File digests normalize CRLF to LF.
 
@@ -44,11 +47,19 @@ from typing import Any
 
 from tools.research.v6.e8 import decision, preregistration
 
-FREEZE_PATH = Path(__file__).with_name("preregistration_freeze_v3.json")
+FREEZE_PATH = Path(__file__).with_name("preregistration_freeze_v4.json")
 SCHEMA = "bytefray.v6.e8.preregistration_freeze"
-VERSION = 3
-IDENTITY_PREFIX = "v6-e8-prereg-v3-"
+VERSION = 4
+IDENTITY_PREFIX = "v6-e8-prereg-v4-"
 SUPERSEDED: tuple[Mapping[str, str], ...] = (
+    {
+        "identity": "v6-e8-prereg-v3-4058c890e992",
+        "digest": "4058c890e992071f8eec32f2dc0b593c5211e5f7f39dedb4b00ac2e649d51fdc",
+        "record": "tools/research/v6/e8/preregistration_freeze_v3.json",
+        "record_sha256": "c1afc1eb2edb274dd78bc92b59a8a3c5eeabda25913123508673e7e1efb97296",
+        "pinned": "pre-registration revision 4, at tooling commit 72ee492",
+        "reason": "pre-registration revision 5 made a SENSE record's status mapping explicit, before any exposure",
+    },
     {
         "identity": "v6-e8-prereg-v2-e478f519c070",
         "digest": "e478f519c070e54fb664b442a675d89cb5b035426b299cad8777a114781182dd",
