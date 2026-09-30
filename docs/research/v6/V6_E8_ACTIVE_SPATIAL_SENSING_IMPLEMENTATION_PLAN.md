@@ -5,10 +5,10 @@
 - **What exists at this commit.** Phase I8-0: the machine-readable pre-registration, the registered decision logic, their tests, and the pre-registration freeze. Phase I8-1: the parent byte-identity goldens, run from existing packages at fixed infrastructure seeds. No E8 Ruleset field, action, agent, package, experiment seed, matrix cell or probe exists.
 - **What it may not do.** It never changes a registered item. Where the registered text leaves an implementation detail open, this plan names a **plan decision** (P8-n, §9) for review. Where transcription or mapping found something the research lead should decide, it is listed in §10.
 
-**Branch:** `v6-research` at `ae37cf9` (pre-registration revision 4).
+**Branch:** `v6-research` at `59190b7` (pre-registration revision 5).
 **Date:** 2026-09-30
 **Governing records:**
-- [`V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md`](V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md) (**PR8**), **revision 4**, registered at `ae37cf9`, SHA-256 `8a9971a0630f85291e41034a07940cdf915e97cde4c87fb133dcb6bca8ae63fa`. Revisions 1 (`28925fd`), 2 (`090d11e`) and 3 (`00fb420`) are historical provenance.
+- [`V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md`](V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md) (**PR8**), **revision 5**, registered at `59190b7`, SHA-256 `1bf7c664cd91897a327429b5c6de4b18a82794d2085477676bbda2b1ce77f0f9`. Revisions 1 (`28925fd`), 2 (`090d11e`), 3 (`00fb420`) and 4 (`ae37cf9`) are historical provenance.
 - [`V6_E8_ACTIVE_SPATIAL_SENSING_DESIGN_REVIEW.md`](V6_E8_ACTIVE_SPATIAL_SENSING_DESIGN_REVIEW.md) (**E8-DR**), including its §F.3 ruling on the Agent API (A1 containment).
 - [`V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md`](V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md) (**E6-IP**) §5.2 and [`V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md`](V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md) (**E6-A1**), whose posture, verification and core-cursor semantics PR8 §3.2 reuses.
 - AGENTS.md: architecture boundaries, testing and compatibility requirements.
@@ -35,7 +35,7 @@
 
 | Phase | Content | Ends with |
 |---|---|---|
-| **I8-0** (this commit set) | The machine-readable pre-registration; the loader and its equivalence checks; the registered decision logic; totality and invariant tests; this plan; the pre-registration freeze, now `v6-e8-prereg-v3-<12 hex>` for Revision 4, which supersedes v1 and v2 before any exposure | **Stop for review** before any engine or agent code |
+| **I8-0** (this commit set) | The machine-readable pre-registration; the loader and its equivalence checks; the registered decision logic; totality and invariant tests; this plan; the pre-registration freeze, now `v6-e8-prereg-v4-<12 hex>` for Revision 5, which supersedes v1 to v3 before any exposure | **Stop for review** before any engine or agent code |
 | **I8-1** | **Parent byte-identity goldens** for C8 and C8L, committed before any engine file changes (D8-6) | The goldens commit: `3f3f709` and `2cfd4e8`. Done. |
 | **I8-2** | The engine surface of §4: `RulesetPolicy.sensing_mode`, SENSE, the observation, context and trace fields, the two provisional Rulesets, and A1 containment. Engine tests, including the delivery tests of PR8 §10. | Focused tests pass; parent goldens unchanged. **Stop.** |
 | **I8-3** | The family of §5: one policy source, 22 packages, behavior tests (ADAPT8's freeze tests included), the D8-9 static gate, fingerprints | **Stop.** |
@@ -51,12 +51,13 @@
 
 | Artifact | Role |
 |---|---|
-| `tools/research/v6/e8/preregistration.json` | The transcription of PR8 revision 4. Every value under a key named `text` is registered wording, verbatim with only emphasis removed. It pins the markdown's SHA-256 and registration commit, and records revisions 1 to 3 as history. |
+| `tools/research/v6/e8/preregistration.json` | The transcription of PR8 revision 5. Every value under a key named `text` is registered wording, verbatim with only emphasis removed. It pins the markdown's SHA-256 and registration commit, and records revisions 1 to 4 as history. |
 | `tools/research/v6/e8/preregistration.py` | The loader. It fails closed unless the JSON digest is the pinned one, the markdown digest is the registered revision's, the JSON is internally consistent, and the JSON equals the markdown. The loaded registration is deeply immutable. |
 | `tools/research/v6/e8/decision.py` | The registered decision logic. It reads every registered value from the loaded registration and supplies only the predicates, in the registered orders. |
 | `engine/tests/test_v6_e8_preregistration.py` | The transcription tests |
 | `engine/tests/test_v6_e8_decision.py` | The totality and invariant tests |
-| `tools/research/v6/e8/preregistration_freeze.py` and `preregistration_freeze_v3.json` | The operative freeze record and its identity: every artifact above and this plan, pinned by SHA-256 at the tooling commit |
+| `tools/research/v6/e8/preregistration_freeze.py` and `preregistration_freeze_v4.json` | The operative freeze record and its identity: every artifact above and this plan, pinned by SHA-256 at the tooling commit |
+| `tools/research/v6/e8/preregistration_freeze_v3.json` | Freeze v3, `v6-e8-prereg-v3-4058c890e992`, kept byte for byte as superseded before any exposure. It pinned revision 4 and no longer loads. |
 | `tools/research/v6/e8/preregistration_freeze_v2.json` | Freeze v2, `v6-e8-prereg-v2-e478f519c070`, kept byte for byte as superseded before any exposure. It pinned revision 3 and no longer loads. |
 | `tools/research/v6/e8/preregistration_freeze.json` | Freeze v1, `v6-e8-prereg-v1-116c9ed83400`, kept byte for byte as superseded before any exposure. It pinned revision 2 and no longer loads. |
 
@@ -64,7 +65,7 @@
 
 | Required | Tests |
 |---|---|
-| **The JSON matches the markdown** | `test_the_transcription_is_internally_consistent_and_equals_the_markdown`; `test_every_registered_text_is_verbatim_in_the_markdown` (all 386 registered texts); 36 markdown-drift and 28 internal-drift cases, each of which must be reported; a disagreeing but self-consistent file must fail to load |
+| **The JSON matches the markdown** | `test_the_transcription_is_internally_consistent_and_equals_the_markdown`; `test_every_registered_text_is_verbatim_in_the_markdown` (all 406 registered texts); 41 markdown-drift and 34 internal-drift cases, each of which must be reported; a disagreeing but self-consistent file must fail to load |
 | **The interpretation rows cover every combination exactly once** | `test_every_triple_maps_to_exactly_one_row` (all 18 triples); an overlapping or a missing row fails closed; the JSON's own coverage check (`internal_problems`) |
 | **The four-outcome logic is exhaustive and ordered** | `test_the_core_answer_is_exhaustive_and_ordered` (all 72 combinations): each outcome's definition is evaluated independently, at least one always holds, and the answer is the first in the registered order; `test_the_order_decides_the_overlaps`; a reordered implementation fails closed |
 | **The KC8 mappings are deterministic** | Every one of the 1,023 non-empty universal subsets of Π_F gets exactly one KC8-1 label, and every one of the 31 of A8 exactly one KC8-6 label, each equal to an independent reading of the registered rule and unchanged under every input order. An empty or out-of-set universal set fails closed. |
@@ -150,7 +151,7 @@ Every registered item appears once. **Done** means the item is implemented and t
 | D8-11 mirror relabeling | E4's relabel gate, reused | `gates.py` | Reused tests | I8-5 |
 | D8-12 trace completeness | Per-cell trace and binding checks | `traces.py` | Missing or mis-bound traces must fail | I8-5 |
 | D8-13 delivery consistency | The next-record reflection check, over later ticks; `previous_sense_anchors` on exactly the callbacks with a delivery obligation, on all four conditions [Revision 4] | `gates.py` | The delivery tests' traces; a planted mismatch, a dropped reflection and a stray field must each fail | I8-2, I8-5 |
-| D8-14 no invalid action | A forfeit scan | `gates.py` | A planted forfeit must fail | I8-5 |
+| D8-14 no invalid action or exception | A status scan: every `decision_v2` status is `APPLIED` or `REJECTED_OUT_OF_REACH` [Revision 5] | `gates.py` | A planted `REJECTED_INVALID`, `EXCEPTION`, unknown status and missing status must each fail | I8-5 |
 | D8-15 window fidelity | `ResetRecord.sensing_window` per condition, with D8-1: 27, explicitly, under T8 and T8L; absent under C8 and C8L, and read as null [Revision 4] | `gates.py` | Planted wrong windows, a missing treatment window and an explicit control `null` must each fail | I8-5 |
 | E8-D = PASS iff every clause passes; final after D8-10 | The gate aggregator; the runner's order | `gates.py`, `run_e8.py` | Order tests (§8) | I8-5 |
 | CQ8-1 to CQ8-5 | Control qualification; CQ8-4 by `decision.control_against_control` | `gates.py`, `run_e8.py` | Planted failures; CQ8-4's own test | Done (CQ8-4 rule); Q8 |
@@ -214,7 +215,7 @@ Every registered item appears once. **Done** means the item is implemented and t
 
 Each row below is PR8 §2.3's, implemented exactly:
 - **Form.** `ActionKindV2.SENSE`, wire value `"sense"`, one integer operand, no `value`.
-- **Acceptance.** Accepted only when the match's Ruleset has `sensing_mode = "active"`. Under `"passive"` it is an invalid v2 action, which forfeits as every invalid action does. **In the matrix it cannot occur**, because the pre-match gate (§4.5) refuses every pairing in which it could.
+- **Acceptance.** Accepted only when the match's Ruleset has `sensing_mode = "active"`. Under `"passive"` it is an invalid v2 action, which forfeits as every invalid action does. It is rejected where every invalid v2 action is, before an action is recorded, so its forfeit record carries no action [P8-14]. **In the matrix it cannot occur**, because the pre-match gate (§4.5) refuses every pairing in which it could.
 - **Normalization and reach.** *t* mod 512. Applied if and only if *d*(*t*, the acting process's anchor) is at most that process's declared reach. Otherwise the status is `REJECTED_OUT_OF_REACH`, with `previous_action_applied` false, as for READ.
 - **Result.** At the instant it executes: the ascending tuple of distinct positions *p* of the processes of every other live entrant with *d*(*p*, *t*) ≤ 27. Co-located anchors appear once.
 - **Price.** One offer, charged in the quota exactly as a READ.
@@ -231,7 +232,7 @@ All are additive, optional and defaulted. The trace schema version stays 2, whos
 | `ObservationV2` | `previous_sense_anchors: tuple[int, ...] \| None` | `None` |
 | `MatchContextV2` | `sensing_window: int \| None` | `None`; 27 under `"active"` |
 | `TraceObservationV2` | `previous_sense_anchors` | Absent. At the callback with a delivery obligation, the prior SENSE record's `sensed_anchors`. |
-| `TraceResultV2` | `sensed_anchors` | Absent. On a SENSE record, the tuple if applied (an empty list if nothing was found), and `null` if not applied. |
+| `TraceResultV2` | `sensed_anchors` | Absent. On a SENSE record, by PR8 §10's status mapping: the tuple if `APPLIED` (an empty list if nothing was found), and otherwise `null`. |
 | `TraceActionV2` | `kind` = `"sense"` | — |
 | `ResetRecord` | `sensing_window` | Absent under `"passive"`. Under `"active"`, 27, recorded at each entrant's `reset()`. |
 
@@ -271,6 +272,7 @@ Every test uses scripted, non-family agents and asserts semantics, never an outc
   - `sensed_anchors` on every SENSE record, as an explicit empty list when nothing was found and `null` when refused, and on no other record;
   - `previous_sense_anchors` on exactly the next callback after a SENSE, after suppression and after a refusal included;
   - absent again on a later callback that has no delivery obligation.
+- **The status mapping** (PR8 §10, Revision 5): an out-of-reach SENSE records `REJECTED_OUT_OF_REACH` with `sensed_anchors` = `null`, and a SENSE under `"passive"` forfeits with `REJECTED_INVALID` and no recorded action.
 - **A1:** SENSE refused under every Ruleset except T8 and T8L; the pre-match gate's three classes; the existing Agent API suite unchanged.
 - **The one-field difference** between each treatment and its parent.
 - **The parent goldens** unchanged (D8-6).
@@ -467,10 +469,14 @@ These are implementation details that PR8 leaves open. **None changes a register
 | **P8-11** | Trace storage | Decided at I8-5, from a measured size estimate, before any seed | D8-12 fixes that every cell has a trace. Only the storage form is open. |
 | **P8-12** | How a trace field is absent | A sentinel default distinct from `None`, dropped when the record is serialized, so that an absent field writes no key and a `None` writes `null`. Readers read a missing key as absent. | PR8 §10 distinguishes the two states (Revision 4), and the I8-1 goldens pin the control bytes. |
 | **P8-13** | Trace line endings | Decided at I8-5, with the trace digest rule | The engine writes traces in text mode, so they have CRLF line endings on Windows, while replays are LF. The I8-1 goldens normalize line endings. The research lead ruled that this does not block I8-2. |
+| **P8-14** | Where an invalid SENSE is rejected | In `_validate_v2_action`, with every other invalid v2 action, before an action is recorded | The engine records an action only once it is accepted (`process_runtime.py:1159–1262`), so every forfeit record carries no action. PR8 §10's status mapping holds either way, and D8-14 fires on the status. |
 
 ---
 
 ## 10. Items for the Research Lead
+
+**Resolved by Revision 5** (the research lead, 2026-09-30):
+- **A SENSE record's status mapping.** Revision 4's "`null` if it was not applied" also covered `EXCEPTION`. PR8 §10 now maps each status explicitly, and only `REJECTED_OUT_OF_REACH` is an ordinary refusal. D8-14 covers every status other than `APPLIED` and `REJECTED_OUT_OF_REACH`, so `EXCEPTION` is a hard stop too.
 
 **Resolved by Revision 4** (the research lead, 2026-09-30):
 - **The presence of the E8 trace fields.** The I8-1 goldens pin control traces without them, while D8-15 said every control `ResetRecord.sensing_window` is `null`. PR8 §10 now registers when each field is present, with the research lead's three rulings: a refused SENSE is an explicit `null`; a delivery obligation falls on exactly one callback; and presence is checked both ways, on every cell.
