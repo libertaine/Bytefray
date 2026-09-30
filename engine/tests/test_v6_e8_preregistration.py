@@ -1,6 +1,6 @@
 """V6 E8: the machine-readable pre-registration equals the registered markdown.
 
-docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md, revision 3,
+docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md, revision 4,
 is the authoritative wording. ``tools/research/v6/e8/preregistration.json``
 transcribes it. These tests show that the transcription is pinned, that it
 records the registered revision's digest, that every registered text in it is
@@ -49,12 +49,12 @@ def test_the_transcription_loads_and_is_pinned() -> None:
     assert preregistration.preregistration_digest() == preregistration.PREREGISTRATION_SHA256
     assert data["schema"] == "bytefray.v6.e8.preregistration"
     assert data["authority"]["document"] == "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md"
-    assert data["authority"]["revision"] == 3 and data["authority"]["governs"] == "revision 3"
+    assert data["authority"]["revision"] == 4 and data["authority"]["governs"] == "revision 4"
 
 
-def test_it_records_the_registered_revision_and_keeps_revisions_1_and_2_as_history() -> None:
+def test_it_records_the_registered_revision_and_keeps_revisions_1_to_3_as_history() -> None:
     authority = _data()["authority"]
-    assert authority["registration_commit"] == "00fb420"
+    assert authority["registration_commit"] == "ae37cf9"
     assert preregistration.file_digest(MARKDOWN) == authority["document_sha256"]
     committed = subprocess.run(["git", "show", f"{authority['registration_commit']}:{authority['document']}"],
                                cwd=ROOT, capture_output=True, check=True).stdout
@@ -65,6 +65,9 @@ def test_it_records_the_registered_revision_and_keeps_revisions_1_and_2_as_histo
          "standing": "historical provenance"},
         {"revision": 2, "commit": "090d11e",
          "document_sha256": "0c6d0b741a4584ac10bc5f2aa3837bbc83213b8a608352d86949bdf809737286",
+         "standing": "historical provenance"},
+        {"revision": 3, "commit": "00fb420",
+         "document_sha256": "a822bd15d9be8f968facb2f7b9c7e228d0e59b65ce34b790ae2a9e3538583a5a",
          "standing": "historical provenance"}]
     for entry in authority["history"]:
         earlier = subprocess.run(["git", "show", f"{entry['commit']}:{authority['document']}"],
@@ -131,6 +134,15 @@ def _set(data: dict[str, Any], path: tuple[Any, ...], value: Any) -> None:
      "An offer is acquisition-eligible when the acquisition step is reached and no enemy anchor is known (discovery)."),
     (("arithmetic", "A.2", "text"), "At most 16 stride-8 READs hit one of them (E8-DR Appendix A.2)."),
     (("references", "DR"), "docs/research/v6/V6_PRICED_SENSING_REVIEW.md"),
+    (("traces", "presence", "rule", "text", 5),
+     "`sensed_anchors`: on an applied SENSE decision, the field is optional when the result is empty."),
+    (("traces", "presence", "table", 0, "absent", "text"), "Under `\"passive\"` (C8, C8L). It is `null`."),
+    (("traces", "presence", "compatibility", "text"),
+     "Additive E8 trace fields may serialize null for pre-E8/control records."),
+    (("gates", "E8-D", "clauses", 12, "evaluated_on"), "T8 and T8L"),
+    (("gates", "E8-D", "clauses", 14, "configuration", "text", 1),
+     "Every C8 and C8L `ResetRecord.sensing_window` is `null`."),
+    (("gates", "E8-D", "clauses", 2, "equality", "text"), "An absent field equals a null one"),
 ])
 def test_drift_from_the_markdown_is_reported(path: tuple[Any, ...], value: Any) -> None:
     data = copy.deepcopy(_data())
@@ -159,6 +171,16 @@ def test_drift_from_the_markdown_is_reported(path: tuple[Any, ...], value: Any) 
     (("population", "sets", "pi_f"),
      ["RUSH8", "REACQ8", "PACED8", "STEALTH8", "LURK8", "SPLIT8", "GUARD8", "EVADE8", "GREED8", "ADAPT8", "STRESS8"]),
     (("disposition", "order", 2, "outcome"), "CANDIDATE"),
+    (("traces", "presence", "refused", "sensed_anchors"), []),
+    (("traces", "presence", "delivery_obligation", "callbacks_per_sense"), 2),
+    (("traces", "presence", "table", 1, "gate"), "D8-13"),
+    (("traces", "presence", "table", 0, "absent_under"), ["C8"]),
+    (("traces", "presence", "table", 0, "absence_read_as"), 27),
+    (("traces", "presence", "checked", "both_ways"), False),
+    (("traces", "presence", "compatibility", "checked_by"), "D8-15"),
+    (("traces", "facts", "refused", "applied_result.sensed_anchors"), []),
+    (("gates", "E8-D", "clauses", 0, "evaluated_on"), "T8 and T8L, all cells"),
+    (("gates", "E8-D", "clauses", 14, "passive_presence"), "null"),
 ])
 def test_internal_drift_is_reported(path: tuple[Any, ...], value: Any) -> None:
     data = copy.deepcopy(_data())
@@ -279,6 +301,34 @@ def test_appendix_a2_is_17_reads_under_e6s_verification_order() -> None:
     assert preregistration.verification_window_worst_case(_data()) == (17, list(range(58, 65)))
     assert "transcription_notes" not in _data()
     assert _data()["references"]["DR"] == "docs/research/v6/V6_PRICED_SENSING_DESIGN_REVIEW.md"
+
+
+def test_the_revision_4_presence_rules_are_transcribed() -> None:
+    data = _data()
+    presence = data["traces"]["presence"]
+    assert presence["rule"]["text"][0] == ("C8 / C8L controls: E8-only optional trace fields are omitted when not "
+                                           "applicable, not serialized as `null`.")
+    assert len(presence["rule"]["text"]) == 8 and presence["rule"]["text"][7].startswith("D8-13: therefore treats")
+    assert presence["compatibility"]["text"] == (
+        "Additive E8 trace fields must not change canonical serialized bytes for pre-E8/control records when their "
+        "semantics are inapplicable.")
+    # The research lead's three rulings: a refusal is an explicit null, one obligated callback, checked both ways.
+    assert presence["refused"] == {"sensed_anchors": None, "previous_sense_anchors": None}
+    assert presence["delivery_obligation"]["callbacks_per_sense"] == 1
+    assert presence["checked"] == {"both_ways": True, "every_cell": True, "fails_closed": True}
+    assert [(row["field"], row["gate"]) for row in presence["table"]] == [
+        ("ResetRecord.sensing_window", "D8-15"), ("applied_result.sensed_anchors", "D8-1"),
+        ("observation.previous_sense_anchors", "D8-13")]
+    clauses = {clause["id"]: clause for clause in data["gates"]["E8-D"]["clauses"]}
+    assert clauses["D8-1"]["evaluated_on"].endswith("; for presence, all four conditions [Revision 4]")
+    assert clauses["D8-13"]["evaluated_on"].endswith("; for presence, all four conditions [Revision 4]")
+    assert clauses["D8-15"]["evaluated_on"] == "All four conditions"
+    assert (clauses["D8-15"]["active_presence"], clauses["D8-15"]["passive_presence"]) == (
+        "required", "absent, read as null")
+    assert clauses["D8-3"]["equality"]["text"] == "A field is equal only if both records omit it, or both carry the same value"
+    # No rule reads absence as null except the control-side window.
+    assert [row["field"] for row in presence["table"] if "absence_read_as" in row] == ["ResetRecord.sensing_window"]
+    assert data["differences_from_design_review"][-1]["id"] == 13
 
 
 # ---------------------------------------------------------------------------

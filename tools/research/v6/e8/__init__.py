@@ -4,7 +4,7 @@ This package holds, so far, only the machine-readable pre-registration and
 the registered decision logic, frozen before any engine, agent, family, seed
 or matrix work exists:
 
-* ``preregistration.json``: the transcription of revision 3 of the
+* ``preregistration.json``: the transcription of revision 4 of the
   markdown pre-registration, which remains the authoritative wording;
 * ``preregistration.py``: its loader, which fails closed unless the JSON is
   the frozen one, the markdown is the registered revision, and the two agree;

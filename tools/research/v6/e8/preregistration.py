@@ -1,7 +1,7 @@
 """Loader for the frozen E8 pre-registration transcription (``preregistration.json``).
 
-docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md, revision 3
-(registered at ``00fb420``), is the authoritative wording. The JSON transcribes
+docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md, revision 4
+(registered at ``ae37cf9``), is the authoritative wording. The JSON transcribes
 it without reinterpretation. Loading fails closed unless all of these hold:
 
 * the JSON's digest is ``PREREGISTRATION_SHA256``, so the transcription is the
@@ -32,7 +32,7 @@ from types import MappingProxyType
 from typing import Any
 
 PREREGISTRATION_PATH = Path(__file__).with_name("preregistration.json")
-PREREGISTRATION_SHA256 = "71bc9363721bb8ebc934a52223721fc9bfaeb7ae3c3626f65bfb2cb2187ed6af"
+PREREGISTRATION_SHA256 = "db698fb154e68fb6f8eda18aabe48942ef361198fbf293476cf4383dc48d4f0b"
 REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
 SCHEMA = "bytefray.v6.e8.preregistration"
 
@@ -227,7 +227,7 @@ def internal_problems(data: Mapping[str, Any]) -> list[str]:
 
     expect("schema", data.get("schema"), SCHEMA)
     authority = data["authority"]
-    expect("revision", authority["revision"], 3)
+    expect("revision", authority["revision"], 4)
     expect("document", authority["document"], "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md")
     expect("document digest form", bool(re.fullmatch(r"[0-9a-f]{64}", authority["document_sha256"])), True)
 
@@ -314,6 +314,32 @@ def internal_problems(data: Mapping[str, Any]) -> list[str]:
                          ["sensing_window"])):
         expect(name, value, w)
     expect("window cells", data["coverage"]["cells"], 2 * w + 1)
+
+    # Revision 4: each E8 trace field's presence, the gate that checks it both ways, and on which conditions.
+    presence = data["traces"]["presence"]
+    by_id = {clause["id"]: clause for clause in clauses}
+    traced = {f["field"] for f in data["traces"]["fields"] if f["surface"] in ("TraceObservationV2", "TraceResultV2", "ResetRecord")}
+    expect("presence fields", {row["field"].split(".")[-1] for row in presence["table"]}, traced)
+    expect("presence gates", [row["gate"] for row in presence["table"]], ["D8-15", "D8-1", "D8-13"])
+    for row in presence["table"]:
+        expect(f"{row['gate']} checks presence on every cell",
+               str(by_id.get(row["gate"], {}).get("evaluated_on", "")).lower().split("; for presence, ")[-1]
+               .removesuffix(" [revision 4]"), "all four conditions")
+    window = presence["table"][0]
+    expect("presence window", (window["value"], window["absence_read_as"]),
+           (w, by_id["D8-15"]["passive_window"]))
+    expect("presence conditions", (window["present_under"], window["absent_under"]),
+           ([c["id"] for c in data["conditions"] if c["sensing_mode"] == "active"],
+            [c["id"] for c in data["conditions"] if c["sensing_mode"] == "passive"]))
+    expect("D8-15 presence", (by_id["D8-15"]["active_presence"], by_id["D8-15"]["passive_presence"]),
+           ("required", "absent, read as null"))
+    expect("a refused SENSE is an explicit null", dict(presence["refused"]),
+           {"sensed_anchors": None, "previous_sense_anchors": None})
+    expect("refused fact", data["traces"]["facts"]["refused"]["applied_result.sensed_anchors"],
+           presence["refused"]["sensed_anchors"])
+    expect("delivery obligation", presence["delivery_obligation"]["callbacks_per_sense"], 1)
+    expect("presence checked", dict(presence["checked"]), {"both_ways": True, "every_cell": True, "fails_closed": True})
+    expect("compatibility gate", presence["compatibility"]["checked_by"], "D8-6")
 
     arc, sizes = discovery_arc(data)
     discovery = data["traversal"]["discovery"]
@@ -591,6 +617,11 @@ def markdown_problems(data: Mapping[str, Any], markdown: str) -> list[str]:
     rows = _table(found, ("Surface", "Field", "Type, and its JSON form"), problems)
     expect("trace fields", [(r[0].strip("`"), r[1].strip("`")) for r in rows],
            [(f["surface"], f["field"]) for f in data["traces"]["fields"]])
+
+    rows = _table(found, ("Field", "Present, with its value", "Absent"), problems)
+    expect("presence table", [(r[0].strip("`"), r[1], r[2]) for r in rows],
+           [(row["field"], plain(row["present"]["text"]), plain(row["absent"]["text"]))
+            for row in data["traces"]["presence"]["table"]])
 
     rows = _table(found, ("Requirement", "Verified by"), problems)
     expect("containment", [r[0] for r in rows], [c["requirement"]["text"] for c in data["containment"]["requirements"]])

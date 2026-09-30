@@ -4,16 +4,17 @@
   "experiment": "V6 E8 active spatial sensing",
   "authority": {
     "document": "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md",
-    "revision": 3,
-    "registration_commit": "00fb420",
-    "document_sha256": "a822bd15d9be8f968facb2f7b9c7e228d0e59b65ce34b790ae2a9e3538583a5a",
+    "revision": 4,
+    "registration_commit": "ae37cf9",
+    "document_sha256": "8a9971a0630f85291e41034a07940cdf915e97cde4c87fb133dcb6bca8ae63fa",
     "digest_rule": "SHA-256 of the document's bytes, with CRLF normalized to LF",
-    "governs": "revision 3",
+    "governs": "revision 4",
     "history": [
       {"revision": 1, "commit": "28925fd", "document_sha256": "6d50dae648dbdb0def2bcb94644e0705b4d62d4e818f7288190df4f8fac4efbb", "standing": "historical provenance"},
-      {"revision": 2, "commit": "090d11e", "document_sha256": "0c6d0b741a4584ac10bc5f2aa3837bbc83213b8a608352d86949bdf809737286", "standing": "historical provenance"}
+      {"revision": 2, "commit": "090d11e", "document_sha256": "0c6d0b741a4584ac10bc5f2aa3837bbc83213b8a608352d86949bdf809737286", "standing": "historical provenance"},
+      {"revision": 3, "commit": "00fb420", "document_sha256": "a822bd15d9be8f968facb2f7b9c7e228d0e59b65ce34b790ae2a9e3538583a5a", "standing": "historical provenance"}
     ],
-    "note": "The markdown is the authoritative wording. This file transcribes revision 3 for the frozen instrument, without reinterpretation. Every value under a key named \"text\" is registered wording, copied verbatim with only markdown emphasis removed."
+    "note": "The markdown is the authoritative wording. This file transcribes revision 4 for the frozen instrument, without reinterpretation. Every value under a key named \"text\" is registered wording, copied verbatim with only markdown emphasis removed."
   },
   "references": {
     "E8-DR": "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_DESIGN_REVIEW.md",
@@ -402,7 +403,8 @@
       "reads_no_gameplay_outcome": true,
       "kinds": ["Ruleset invariant", "Family characterization", "Family characterization, checked statically", "Protocol"],
       "clauses": [
-        {"id": "D8-1", "name": "Sensing exactness", "kind": "Ruleset invariant", "evaluated_on": "T8 and T8L, all cells", "half_width": 27},
+        {"id": "D8-1", "name": "Sensing exactness", "kind": "Ruleset invariant", "evaluated_on": "T8 and T8L, all cells; for presence, all four conditions [Revision 4]", "half_width": 27,
+          "presence": {"revision": 4, "text": "every SENSE record carries `applied_result.sensed_anchors`, and no other record does (§10). An applied SENSE record that omits it fails D8-1: its absence is never read as an empty result."}},
         {"id": "D8-2", "name": "No free sensing", "kind": "Ruleset invariant", "evaluated_on": "T8 and T8L, all cells"},
         {"id": "D8-3", "name": "No-information identity", "kind": "Family characterization", "evaluated_on": "T8 and T8L",
           "members": ["LURK8", "GREED8"],
@@ -410,6 +412,7 @@
           "orientations": 2, "seeds": 32, "matched_pairs_per_condition": 576,
           "compared_action": ["kind", "operand", "value"],
           "compared_observation": ["visible_enemy_anchor_addresses", "previous_sense_anchors", "previous_read_value", "previous_read_owner"],
+          "equality": {"revision": 4, "text": "A field is equal only if both records omit it, or both carry the same value"},
           "excluded": ["package IDs", "wall_time_ms", "diagnostics"],
           "opponent_rule": {"text": "The opponent ranges over the nine members of Π other than LURK8 and GREED8"},
           "twin_rule": {"text": "Twin identity is not assumed here; it is tested on its own terms (§3.3, D8-11)."}
@@ -423,9 +426,12 @@
         {"id": "D8-10", "name": "Seed commitment", "kind": "Protocol", "evaluated_on": "After the frozen analysis, before interpretation"},
         {"id": "D8-11", "name": "Mirror relabeling", "kind": "Ruleset invariant", "evaluated_on": "All F2 cells"},
         {"id": "D8-12", "name": "Trace completeness", "kind": "Protocol", "evaluated_on": "All four conditions"},
-        {"id": "D8-13", "name": "Delivery consistency", "kind": "Ruleset invariant", "evaluated_on": "T8 and T8L"},
+        {"id": "D8-13", "name": "Delivery consistency", "kind": "Ruleset invariant", "evaluated_on": "T8 and T8L; for presence, all four conditions [Revision 4]",
+          "presence": {"revision": 4, "text": ["the field is present on exactly the callbacks with a delivery obligation (§10).", "Absent where one exists, it is a D8-13 failure, and present where none exists, it is one too.", "Absence is read as no prior result only where no delivery obligation exists."]}},
         {"id": "D8-14", "name": "No invalid action", "kind": "Protocol", "evaluated_on": "All four conditions"},
-        {"id": "D8-15", "name": "Window fidelity", "kind": "Ruleset invariant", "evaluated_on": "All four conditions", "active_window": 27, "passive_window": null}
+        {"id": "D8-15", "name": "Window fidelity", "kind": "Ruleset invariant", "evaluated_on": "All four conditions", "active_window": 27, "passive_window": null,
+          "active_presence": "required", "passive_presence": "absent, read as null",
+          "configuration": {"revision": 4, "text": ["Every T8 and T8L `ResetRecord` carries `sensing_window` = 27, and one that omits it fails.", "Every C8 and C8L `ResetRecord` omits `sensing_window`, and D8-15 reads that absence as null; one that carries it, even as `null`, fails [Revision 4]."]}}
       ],
       "pass_rule": "E8-D = PASS if and only if every clause passes",
       "final_after": "D8-10",
@@ -689,13 +695,42 @@
     "only_source": {"text": "The analysis reads sensing facts only from the fields named here. No other telemetry is equivalent."},
     "fields": [
       {"surface": "ObservationV2", "field": "previous_sense_anchors", "type": "tuple[int, ...] | None, ascending"},
-      {"surface": "TraceObservationV2", "field": "previous_sense_anchors", "type": "a JSON list of integers, or null"},
-      {"surface": "TraceResultV2", "field": "sensed_anchors", "type": "tuple[int, ...] | None, as a JSON list of integers ascending, or null"},
+      {"surface": "TraceObservationV2", "field": "previous_sense_anchors", "type": "a JSON list of integers, or null; present only where a delivery is due"},
+      {"surface": "TraceResultV2", "field": "sensed_anchors", "type": "tuple[int, ...] | None, as a JSON list of integers ascending, or null; present only on SENSE records"},
       {"surface": "TraceActionV2", "field": "kind", "type": "\"sense\" for the sensing action"},
       {"surface": "MatchContextV2", "field": "sensing_window", "type": "int | None: 27 under active, None under passive"},
-      {"surface": "ResetRecord", "field": "sensing_window", "type": "a JSON integer or null, recorded at each entrant's reset()"}
+      {"surface": "ResetRecord", "field": "sensing_window", "type": "a JSON integer, recorded at each entrant's reset(); present under active, absent under passive"}
     ],
     "additive_optional": true,
+    "presence": {
+      "revision": 4,
+      "distinct": {"text": "An absent field and a field present as `null` are different serialized states."},
+      "principle": {"text": "Each E8 field is present exactly where its semantics apply, and absent everywhere else."},
+      "rule": {"text": [
+        "C8 / C8L controls: E8-only optional trace fields are omitted when not applicable, not serialized as `null`.",
+        "`ResetRecord.sensing_window` is absent.",
+        "`sensed_anchors` is absent because no SENSE action exists.",
+        "`previous_sense_anchors` is absent because no SENSE result exists to deliver.",
+        "D8-15: for the control-side semantic check only, absence of `sensing_window` means the registered value is None/null. For T8/T8L, absence is not acceptable: the reset record must explicitly contain `sensing_window = 27`.",
+        "`sensed_anchors`: on an applied SENSE decision, the field is mandatory even when the result is empty. Empty result must be represented explicitly as the registered empty collection; omission means “this record was not a SENSE result,” not “SENSE returned nothing.”",
+        "`previous_sense_anchors`: on the first later callback that has a delivery obligation from a prior SENSE, the field is mandatory and must equal that authoritative result—even when the result was empty. If no SENSE has ever produced a result for that process, the field is omitted.",
+        "D8-13: therefore treats absence as null/no-prior-result only when no delivery obligation exists. Once a SENSE result exists and a later callback occurs, absence is a gate failure."
+      ]},
+      "rulings": {"text": [
+        "A refused SENSE is an explicit `null` in both fields: its own record's `sensed_anchors`, and the next callback's `previous_sense_anchors`. This keeps the refused row of the authoritative-record table (below) and D8-13's reflection of a refusal, so a dropped delivery after a refusal is still caught.",
+        "A delivery obligation falls on exactly one callback: the same process's next callback after a SENSE record, applied or refused, even on a later tick after suppression. Every other callback omits `previous_sense_anchors`, including a callback after an earlier SENSE whose result was already delivered.",
+        "Presence is checked both ways, on every cell, and fails closed. A field absent where it must be present, or present where it must be absent, fails the gate that reads it: D8-15 for `sensing_window`, D8-1 for `sensed_anchors` and D8-13 for `previous_sense_anchors` (§5.1)."
+      ]},
+      "refused": {"sensed_anchors": null, "previous_sense_anchors": null},
+      "delivery_obligation": {"callbacks_per_sense": 1, "falls_on": "the same process's next callback after a SENSE record, applied or refused, even on a later tick after suppression"},
+      "checked": {"both_ways": true, "every_cell": true, "fails_closed": true},
+      "table": [
+        {"field": "ResetRecord.sensing_window", "gate": "D8-15", "present_under": ["T8", "T8L"], "value": 27, "absent_under": ["C8", "C8L"], "absence_read_as": null, "present": {"text": "Under `\"active\"` (T8, T8L): 27"}, "absent": {"text": "Under `\"passive\"` (C8, C8L). D8-15 reads the absence as null."}},
+        {"field": "applied_result.sensed_anchors", "gate": "D8-1", "present_on": "every record whose action is SENSE", "value": {"applied": "the ascending list, empty if nothing was found", "not applied": null}, "present": {"text": "On every record whose action is SENSE: the ascending list if it was applied, empty if nothing was found, and `null` if it was not applied"}, "absent": {"text": "On every other record. Its absence means that the record is not a SENSE record, never that a SENSE found nothing."}},
+        {"field": "observation.previous_sense_anchors", "gate": "D8-13", "present_on": "the callback with a delivery obligation", "value": "the prior SENSE record's sensed_anchors", "present": {"text": "On the callback with a delivery obligation: equal to the prior SENSE record's `sensed_anchors`, whether a list, an empty list or `null`"}, "absent": {"text": "On every other callback, including every callback before the process first senses"}}
+      ],
+      "compatibility": {"text": "Additive E8 trace fields must not change canonical serialized bytes for pre-E8/control records when their semantics are inapplicable.", "checked_by": "D8-6", "check": {"text": "D8-6's parent goldens check it on the parent freeze."}}
+    },
     "authoritative": {"text": "For each sensing action, the acting callback's `decision_v2` record is authoritative for both the action and its returned result."},
     "facts": {
       "taken": {"action.kind": "sense"},
@@ -774,7 +809,8 @@
     {"id": 9, "text": "Re-acquisition precedence [Revision 2]."},
     {"id": 10, "text": "A channel difference is registered [Revision 2] (§3.2)."},
     {"id": 11, "text": "SPLIT8's initial acquisition ends once the enemy core is confirmed [Revision 3] (§3.2)."},
-    {"id": 12, "text": "Appendix A.2's count is corrected [Revision 3]: 17 READs under E6's verification order, not E8-DR Appendix A.2's 16."}
+    {"id": 12, "text": "Appendix A.2's count is corrected [Revision 3]: 17 READs under E6's verification order, not E8-DR Appendix A.2's 16."},
+    {"id": 13, "text": "When each E8 trace field is present is registered [Revision 4] (§10)."}
   ],
   "non_claims": [
     {"text": "No result. No E8 data of any kind exists."},
