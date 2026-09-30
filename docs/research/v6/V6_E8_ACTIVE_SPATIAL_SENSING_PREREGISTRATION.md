@@ -1,6 +1,6 @@
 # Bytefray V6 E8 — Active Spatial Sensing: Pre-Registration
 
-**Status: APPROVED FOR FREEZE by the research lead on 2026-09-30**, after revision 1 and two precision edits made at the freeze review: the bootstrap wording, and delivery after suppression. **Revision 2**, which corrects and disambiguates the registered semantics before any transcription or code, was approved by the research lead on the same day. **It governs; revision 1, at `28925fd`, is historical provenance** (below).
+**Status: APPROVED FOR FREEZE by the research lead on 2026-09-30**, after revision 1 and two precision edits made at the freeze review: the bootstrap wording, and delivery after suppression. **Revision 2**, which corrects and disambiguates the registered semantics before any transcription or code, and **Revision 3**, a narrow correction of when initial acquisition ends, were approved by the research lead on the same day. **Revision 3 governs; revisions 1 (`28925fd`) and 2 (`090d11e`) are historical provenance** (below).
 - **Its standing.** This markdown is the authoritative registered wording.
 - **What comes next.** The E6-style transcription and freeze phase, still before any seed or matrix cell:
   - the machine-readable pre-registration;
@@ -19,7 +19,7 @@
 - **Trace roles are exact.** `sensed_anchors` is authoritative, `previous_sense_anchors` only reflects it, and the registered window is recorded per match (§10, D8-15).
 - **The research answer's four outcomes are defined explicitly**, and requirement C is kept separate (§7.4).
 
-**Revision 2 (2026-09-30)**, approved by the research lead before any transcription or code. **It corrects the registered member semantics, and disambiguates them and the analyzer's labels.** These are substantive corrections, not transcription clarifications, so **this revision governs.** No hypothesis, threshold, set, condition or cell count changes. R-8's value stands, and its rationale is replaced.
+**Revision 2 (2026-09-30)**, approved by the research lead before any transcription or code. **It corrects the registered member semantics, and disambiguates them and the analyzer's labels.** These are substantive corrections, not transcription clarifications, so revision 2 superseded revision 1. It is itself superseded by revision 3. No hypothesis, threshold, set, condition or cell count changes. R-8's value stands, and its rationale is replaced.
 - **Its history.** Revision 1 was registered at `28925fd` with SHA-256 `6d50dae648dbdb0def2bcb94644e0705b4d62d4e818f7288190df4f8fac4efbb`, and is preserved there as historical provenance. This revision was drafted on `v6-research` at `eb60a11`. **Its own digest is recorded in the machine-readable pre-registration and its freeze record**, because a document cannot contain its own digest.
 - **Re-acquisition precedence** (§3.2). A re-acquisition search in progress takes precedence over the posture steps until it terminates. Under revision 1's order of an offer, the search could not pass its first window (§14, item 9).
 - **ADAPT8's count** is of consecutive verification observations, and a tick with no verification is unobserved. k = 2 is re-derived as the minimum repeated confirmation, and revision 1's scheduler-cycle rationale is withdrawn [R-8].
@@ -37,6 +37,13 @@
 - **Three conventions that were cited by reference are now stated in full:** the callback index (§3.2), the quantile rule (§6.2), and O-BOOT's draws and their joint application (§4).
 - **The records cited by abbreviation are resolved** in the governing records below.
 
+**Revision 3 (2026-09-30)**, approved by the research lead before any engine or agent code. **It is narrow.** No hypothesis, threshold, set, condition, cell count or registered outcome criterion changes. **This revision governs.**
+- **Its history.** Revision 2 was registered at `090d11e` with SHA-256 `0c6d0b741a4584ac10bc5f2aa3837bbc83213b8a608352d86949bdf809737286`, and is preserved there as historical provenance, as is revision 1. This revision was drafted on `v6-research` at `7974e2a`. **Its own digest is recorded in the machine-readable pre-registration and its freeze record.**
+- **Initial acquisition ends once the enemy core is confirmed** (§3.2), in the research lead's words. Under revision 2, SPLIT8's sensor resumed sweeping under the controls whenever the visible set emptied, even after its entrant knew the enemy core, which departed from E6. Re-acquisition stays a separate state, with revision 2's precedence. The guard-posture channel difference is unchanged.
+- **The census is re-derived** under these semantics (§3.5).
+- **DR is defined** in the governing records.
+- **Appendix A.2 is corrected** to 17 READs under E6's verification order.
+
 **Branch:** `v6-research` at `ae6c7f7` ("docs(v6): add the E8 active spatial sensing design review"), pushed.
 **Date:** 2026-09-30
 **Governing records:**
@@ -48,7 +55,8 @@
   - **PA** is [`V6_E6_POST_HOC_FACTORIAL_AUDIT.md`](V6_E6_POST_HOC_FACTORIAL_AUDIT.md), the E6 post-hoc factorial audit;
   - **E6-R** is [`V6_E6_PRICED_SENSING_RESULTS.md`](V6_E6_PRICED_SENSING_RESULTS.md), the E6 results record;
   - **A1, in §3.2**, is [`V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md`](V6_E6_AMENDMENT_1_FAMILY_CORRECTIONS.md), E6's first amendment, with its corrections C-1 to C-3. **It is distinct from A1 containment** (§13), E8-DR's research-containment option;
-  - **the E6 implementation plan** is [`V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md`](V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md).
+  - **the E6 implementation plan** is [`V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md`](V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md);
+  - **DR** is [`V6_PRICED_SENSING_DESIGN_REVIEW.md`](V6_PRICED_SENSING_DESIGN_REVIEW.md), the E6 priced-sensing design review, cited in §9 and Appendix A.1 [Revision 3].
 
 **The boundaries carried forward unchanged** (the research lead, 2026-09-30):
 
@@ -71,7 +79,7 @@
 
 ## 0. Registration Decisions
 
-**The research lead's first review (2026-09-30)** approved R-1 to R-8 and R-10 to R-12, R-8 with the structural derivation below, and rejected R-9's 1/20, which is revised below. **The freeze review (2026-09-30) approved revision 1, with the two precision edits noted in the status line.** Revision 2 replaces R-8's rationale, keeping its value, and changes no other decision in this table. Markers **[R-n]** in the text refer to this table.
+**The research lead's first review (2026-09-30)** approved R-1 to R-8 and R-10 to R-12, R-8 with the structural derivation below, and rejected R-9's 1/20, which is revised below. **The freeze review (2026-09-30) approved revision 1, with the two precision edits noted in the status line.** Revision 2 replaces R-8's rationale, keeping its value, and changes no other decision in this table. Revision 3 changes none. Markers **[R-n]** in the text refer to this table.
 
 | # | Decision | Drafted value | Rationale |
 |---|---|---|---|
@@ -232,7 +240,25 @@ These are the orders in which the family's acquiring members spend sensing actio
 - **guard:** disrupt a known enemy anchor not yet written this tick; then **acquisition**; then repair its own core by the cyclic guard cursor.
 - **paint:** paint.
 
-An offer is **acquisition-eligible** when the acquisition step is reached and no enemy anchor is known (discovery). **Re-acquisition does not wait for the acquisition step:** it takes precedence over the posture steps (below) [Revision 2].
+An offer is **acquisition-eligible** when the acquisition step is reached, no enemy anchor is known, and the entrant has not confirmed the enemy core (discovery) [Revision 3]. **Re-acquisition does not wait for the acquisition step:** it takes precedence over the posture steps (below) [Revision 2].
+
+**Initial acquisition and re-acquisition** [Revision 3]. The research lead's rule, verbatim:
+
+> **Initial acquisition ends once the enemy core is confirmed. Loss of current passive visibility alone does not restart initial acquisition.**
+>
+> **Re-acquisition is a separate state.** If a previously tracked anchor becomes missing under the registered knowledge rules, a member that supports re-acquisition begins the registered re-acquisition search. Once started, that search retains the precedence established in Revision 2 and continues until replacement or exhaustion.
+>
+> **SPLIT8:** its sensor performs the initial passive sweep until acquisition/core confirmation. After that it does not resume generic sweeping merely because the visible set is empty. It moves again only when a registered missing-anchor event starts re-acquisition. The striker remains non-moving.
+
+How it applies:
+- **The eligibility rule above carries it.** Discovery requires that the entrant has not confirmed the enemy core, by E6's confirmation as corrected by A1 C-2, or by A1 C-1's unverified adoption.
+- **Before the enemy core is confirmed, initial acquisition has not ended.** Discovery then applies whenever no enemy anchor is known.
+- **The members that support re-acquisition** are those with `reacquire` of `repeat` or `adaptive`. Their search starts as RP-3 below registers.
+- **SPLIT8's `reacquire` is `once`** (§3.1), so no missing-anchor event starts a search for it. Once its entrant confirms the enemy core, its sensor does not move again.
+- **No other member's behavior changes.**
+  - In the attack posture, acquisition follows the core write in the order of an offer. With 8 offers a tick and 8 core cells, a core write is always available once the core is confirmed, so acquisition is never reached then.
+  - The guard-posture members confirm no enemy core. They make no verification READ, and A1 C-1's adoption cannot fire at their first callback: under `"passive"` nothing is visible then (D8-7), and under `"active"` nothing is yet known. **So the registered channel difference below stands for GUARD8 and EVADE8.**
+  - Under `"active"`, remembered knowledge already ended SPLIT8's discovery.
 
 **Known enemy anchors** [Revision 2]. "A known enemy anchor", here and in §2.5, is an address in the member's entrant-wide **known set**. **It is family-policy knowledge, not engine visibility:**
 - **Under `"passive"`, the known set is the current visible-anchor set** (`visible_enemy_anchor_addresses`). An address that leaves the visible set is no longer known.
@@ -241,7 +267,7 @@ An offer is **acquisition-eligible** when the acquisition step is reached and no
 - **The last-known anchor stays separate.** E6 keeps current visibility and a remembered last-known anchor apart, and centers its verification READs on the remembered one. E8 does not collapse the two. **E8 sets the policy's `last_known_anchor` from the mode-specific known set in the same circumstances in which E6 set it from visibility.** In the E6 family source, it is set to the lowest address at each callback whose set is nonempty, kept when the set empties, and cleared when the verification READ window is exhausted without an enemy core cell.
 - **A passive `once` member may disrupt currently visible anchors, but never disrupts or moves toward a stale last-known address** that has left the visible set.
 
-**A registered channel difference** [Revision 2]. **Under `"passive"`, losing current visibility can cause acquisition behavior to resume**, because discovery applies whenever the known set, which is the visible set, is empty. In C8 and C8L, GUARD8 and EVADE8, whose guard order puts acquisition before repair, therefore resume sweeping whenever they lose sight of the opponent, EVADE8 included after its own evasions. **Under `"active"`, remembered SENSE information persists under the knowledge-update rules, so a `once` policy does not automatically re-acquire merely because there is no current passive visibility.** This is a genuine channel difference, not an implementation artifact. It is stated beside the readings (§7.4).
+**A registered channel difference** [Revision 2]. **Under `"passive"`, losing current visibility can cause acquisition behavior to resume**, because, before the enemy core is confirmed, discovery applies whenever the known set, which is the visible set, is empty [Revision 3]. In C8 and C8L, GUARD8 and EVADE8, whose guard order puts acquisition before repair, therefore resume sweeping whenever they lose sight of the opponent, EVADE8 included after its own evasions. **Under `"active"`, remembered SENSE information persists under the knowledge-update rules, so a `once` policy does not automatically re-acquire merely because there is no current passive visibility.** This is a genuine channel difference, not an implementation artifact. It is stated beside the readings (§7.4).
 
 **Re-acquisition precedence** [Revision 2], for members with `reacquire` of `repeat` or `adaptive`:
 - **Once a re-acquisition search is in progress, its next acquisition action takes precedence over the posture steps until the search terminates:** the next SENSE under `"active"`, or the next MOVE under `"passive"` (§2.5).
@@ -322,7 +348,13 @@ These are as PR6 §3.2:
 - **E-3 now describes what REACQ8 actually does.** With precedence, its re-acquisition takes at most 3 SENSE actions (Appendix A.3), and is no longer starved by core writes. The comparison with a hit's cost of at least 6 offers therefore applies to the policy's actual behavior.
 - **The frozen census is still the tested static procedure's output at the family freeze** (above). This re-derivation is its prediction.
 
-**The predicted census, re-derived from §3.1's table under Revision 2: {EVADE8}. That is one defender archetype.** By the research lead's rule [B-6]:
+**Re-derived again under Revision 3** (the research lead, 2026-09-30), not carried forward from revision 2's freeze. Revision 3 changes only when initial acquisition ends:
+- **E-1** is still decided by `evade` = on-hit, which Revision 3 does not change: EVADE8 alone has it. Revision 3 removes movement (SPLIT8's sensor stops sweeping under `"passive"` once its entrant confirms the enemy core) and adds none.
+- **E-2** is arithmetic, and unchanged.
+- **E-3** is unchanged. REACQ8 and RUSH8 are attack-posture members, whose behavior Revision 3 does not change (§3.2), so REACQ8's re-acquisition still takes at most 3 SENSE actions.
+- **The frozen census is still the tested static procedure's output at the family freeze.** This re-derivation is its prediction.
+
+**The predicted census, re-derived from §3.1's table under Revisions 2 and 3: {EVADE8}. That is one defender archetype.** By the research lead's rule [B-6]:
 
 > **Requirement C is scoped to the EVADE8 stratum. H8-REPEAT and H8-ADAPT are read as claims about re-acquisition against a naturally evading defender, not about the whole family.**
 
@@ -782,6 +814,8 @@ Each is recorded, and none changes a research-lead ruling.
 8. **The members are eleven, with no evading attacker** [R-10]. So the census is predicted to be {EVADE8}, and C is scoped to that stratum.
 9. **Re-acquisition precedence** [Revision 2]. E8-DR §C.4's find → hit → evade → re-find loop, E-3 and Appendix A.3 all assume that the re-acquisition search runs. Under revision 1's order of an offer it could not pass its first window. It now takes precedence over the posture steps (§3.2). **Under C8 and C8L, REACQ8 and ADAPT8 can therefore chase a passive anchor that leaves visibility.**
 10. **A channel difference is registered** [Revision 2] (§3.2). Under `"passive"`, losing visibility can resume acquisition. Under `"active"`, remembered SENSE knowledge persists.
+11. **SPLIT8's initial acquisition ends once the enemy core is confirmed** [Revision 3] (§3.2). Under the controls, its sensor no longer resumes a generic sweep after confirmation. E6's SPLIT did not resume one either.
+12. **Appendix A.2's count is corrected** [Revision 3]: 17 READs under E6's verification order, not E8-DR Appendix A.2's 16.
 
 ---
 
@@ -806,7 +840,10 @@ The windows *c_k* = own + σ(91 + 55*k*), for *k* = 0 … 6, cover [own + 64 + 5
 
 ### A.2 Finding a core whose anchor left it
 
-With *m* on [8, 64] and an unknown sign, the core cells lie in [anchor − 64, anchor − 1] or in [anchor + 8, anchor + 71]. At most **16** stride-8 READs hit one of them (E8-DR Appendix A.2).
+With *m* on [8, 64] and an unknown sign, the core cells lie in [anchor − 64, anchor − 1] or in [anchor + 8, anchor + 71]. **Under E6's verification order, at most 17 READs hit one of them** [Revision 3].
+- **The order** (A1 C-2): anchor + 1 first, then anchor + 1 − 8*k* and anchor + 1 + 8*k*, for *k* = 1 to 8.
+- **Why 17.** The first READ, at anchor + 1, lies in neither span. The worst case, a core 58 to 64 cells above the moved anchor, is found by the 17th READ, at anchor + 65.
+- **The correction.** Revision 2 said 16, after E8-DR Appendix A.2, which counts a READ schedule chosen over the two spans.
 
 ### A.3 Re-acquisition
 
