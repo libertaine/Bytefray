@@ -1,0 +1,139 @@
+{
+  "control_qualification": {
+    "status": "PENDING"
+  },
+  "freeze_digest": "52e09e5fb422e7f90f912b4ceccf40b137286d2915e5e2a14ec76eb89288b106",
+  "freeze_id": "v6-e8-analysis-v1-52e09e5fb422",
+  "identity": {
+    "conventions": {
+      "D8-5_write_log": "the replay's per-tick diffs expanded to byte writes equal the traced applied WRITEs, in order",
+      "D8-8_information": "a visible set, a delivered SENSE tuple or a delivered READ result showing an opponent-owned core cell counts from the row whose observation delivers it",
+      "O-VERIF_median": "the exact median over the seeds (statistics.median over Fractions, E4 and E5's convention)",
+      "P8-11": "every cell's trace is kept, gzip-compressed; no retention subset (D8-12)",
+      "P8-13": "traces are stored with CRLF normalized to LF; trace_sha256 is over the LF bytes; the raw form is recorded",
+      "engine_source": "family_freeze.verify_engine_source before any cell runs, and again after a field",
+      "pre_match_gate": "compatibility.require_compatible on every planned pairing and orientation of a field before anything is written, on the copied packages before the field runs, and immediately before every traced re-execution",
+      "seat_resampling": "E6 post-hoc audit seat.pairing_metrics and seat.mirror_metrics per resample, checked against E4's seat metrics at the point estimate",
+      "seed_filter": "every output before the reveal is redacted by seed value (seed_protocol.SeedGuard)",
+      "trace_capture": "a bound re-execution of every completed cell through agent_test.test_agent with trace=True, accepted only if the replay bytes, match_id and result_id reproduce the evaluated cell and the trace's BindingRecord names that replay (E6's approved route)"
+    },
+    "engine_source": {
+      "files": 116,
+      "path": "engine/src",
+      "sha256": "9323307c4131105a30c94cad16845468937571657b6d354827a26cfbfcff2676"
+    },
+    "family_freeze": {
+      "identity": "v6-e8-family-v1-981fc8b12beb",
+      "record_sha256": "4ec253d4b84469cdb90b91d68b2236310ecd0bb8e0f5c8f63a19e709cc3afbeb"
+    },
+    "freeze_version": 1,
+    "matches_total": 16896,
+    "parent_freeze": {
+      "cases": 72,
+      "commits": [
+        "3f3f709",
+        "2cfd4e8"
+      ],
+      "conditions": [
+        "C8",
+        "C8L"
+      ],
+      "phase": "I8-1",
+      "record": "tools/research/v6/e8/parent_goldens.json",
+      "record_sha256": "2a323f2c643793cc92767a14b42517514de326e61e09c73056ceafed18e201fd",
+      "test": "engine/tests/test_v6_e8_parent_byte_identity.py"
+    },
+    "preregistration_freeze": {
+      "identity": "v6-e8-prereg-v4-0166cdc0b37a",
+      "record_sha256": "bf4a409a782f1d3ae08dc4b26b710b37fb8d3e14c6fb76a6904adb9519de31ea"
+    },
+    "qualification_sha256": {
+      "engine/tests/_e8_family_engine_harness.py": "7659f7f2d4f3fc77db3b57f333b6962c28955e7625936620c517042f1bf94389",
+      "engine/tests/_e8_family_harness.py": "7c09ad8dda600d8a6dce8d1333962e47d19d0940712e6d984f5cf6b430bf28f9",
+      "engine/tests/_e8_scripted_matrix.py": "c0aa4950176985aae51fa3c15111fbaf8f13160beea2d5cbfe286c4ce6a41543",
+      "engine/tests/_e8_sensing_harness.py": "7a8efa866ca1eb45a3aa4821e89a238db02908cd01cf5e268dfdd06185c3c05a",
+      "engine/tests/test_ruleset_v6_research_sensing_active.py": "752ae036f5ce20fd851a2bbd47a6747a2ac3864cbd22e821cf195d51cd1f25df",
+      "engine/tests/test_v6_e8_adapt8_freeze.py": "096eecb88e8650dd2dc17e38c7a60ea6fe690cf618dafc416507b04e839fec1b",
+      "engine/tests/test_v6_e8_analysis.py": "65a27ab9bd6593847dfac456c9e4c0972f88c7766a17e024d643af5aabc9b5b3",
+      "engine/tests/test_v6_e8_decision.py": "4988b227552652cacc3b18b0188295efc520ac4b548debb8ad0d5964750c38ca",
+      "engine/tests/test_v6_e8_family.py": "f33c0ec7f07e6fd888ecd2186372bde6b2fcc0a15ebc7f4722a9a3df1339f00b",
+      "engine/tests/test_v6_e8_family_engine.py": "52d11c505e0abdb60f44eb84122008356925c3be009b7ce5852aa7af15c41bac",
+      "engine/tests/test_v6_e8_family_fixed_details.py": "81785b7677918065e9077c1ff4bffd70cc0daf885e042f221534a6cdc81b9a1c",
+      "engine/tests/test_v6_e8_family_freeze.py": "2945bc2049773c39d43a8a516ef3df6a35f547fbbb97f5da7dc5f928b03e96b2",
+      "engine/tests/test_v6_e8_family_policy.py": "fbe56ca938907ddc4a1d1105288ec5ef987e9adfef37115095b1fe3320a790ce",
+      "engine/tests/test_v6_e8_gates.py": "69f89ea0b23d589d7799f4da9e2a37904a9bbeeb2666648a41f1f575b5888580",
+      "engine/tests/test_v6_e8_matrix.py": "970bdc2f1d030aeb39439be26be997e012188fbc161bfb5ef270692a8b647ee3",
+      "engine/tests/test_v6_e8_parent_byte_identity.py": "60f561191ad4fdfb6c26f528e51739df6e75a1243ebea289d62c7cf48ce69f3d",
+      "engine/tests/test_v6_e8_preregistration.py": "8728ae63ddb95b32ba40efbb1dd176e3f2fd43c8f78a38609399a5cdf97ed6c6",
+      "engine/tests/test_v6_e8_preregistration_freeze.py": "a274ffd41ff744d05ef7908ca5c1d2015d65dc378f569bbafb48b75774b6dad1",
+      "engine/tests/test_v6_e8_runner.py": "e8609e4f32850e91aa928050ca89536733f6a7f29aeab877312319efbe41df73",
+      "engine/tests/test_v6_e8_seed_protocol.py": "16b2f03c2e90ea7911bca7e5924b6bbd3344cea09757dea838f04d1be5a56405",
+      "engine/tests/test_v6_e8_sensing_context.py": "dd01f105c17eb257b382b5c80be694a62012414af83269a1870ae68662a7500d",
+      "engine/tests/test_v6_e8_sensing_semantics.py": "1eb8a89156bb74b5618b3e647acea3bcb4b5bac355c686365de466ba072ebfcb",
+      "engine/tests/test_v6_e8_traces.py": "951a0a7b35bbe032ebcc3fef19b1ed95b60a310e2b8e8d81821b125320711b0a"
+    },
+    "reused_sha256": {
+      "tools/research/v6/e2/matrix.py": "bd8ca2a88f2945c5bf3d544ec5a59cf9293bd11b78e1548a2e443c787a131449",
+      "tools/research/v6/e3/action_parity.py": "86b1a557e3a31db157ba2bd8805ef3636f892f2c7e5f9468d0982961d4c4f211",
+      "tools/research/v6/e3/analyze_e3.py": "a8d0911939da5b9b9dcc554657168f6cb36800064043498ef8eaf49bd0610330",
+      "tools/research/v6/e3/gates.py": "0910fb541e9fd4a538d74a6abdcff8515ab4ddc3165ac960ce968c939d2cd9a9",
+      "tools/research/v6/e4/analyze_e4.py": "c891abe0a879f62b0265f5f38f46bd0a1214a860994f06977f05ca3bfaeb2ab1",
+      "tools/research/v6/e4/cell_metrics.py": "cbfe64242113badca6c797dcc2897dea89c88dfdb0040e7a6105f21e03e43e0b",
+      "tools/research/v6/e4/gates.py": "0ea1a03f696530467ee8a3a576712433b433c92ac362799fc168a58dca7fc969",
+      "tools/research/v6/e6/analyze_e6.py": "f9c3473649f7bf2fd18827f24a9af775f47f44d7b6c083acf27536a9e8ef906f",
+      "tools/research/v6/e6/describe.py": "c76b659d6133a897a1e4653a76456820a0feb7e246d58b0da63c928ad6be42ec",
+      "tools/research/v6/e6/discipline.py": "ac15881282d3f177aef7473fa6204385dd451cc791c9f7adaa275ead3f304985",
+      "tools/research/v6/e6/family.py": "ae584af5b052f1d8cd7dbd0be0c7ef7f0d0a924ffb54a138e5cacd323ecbbbd3",
+      "tools/research/v6/e6/interpretation.py": "a8ce142e0857a54f8dea1ca67f38868991c097e92b739c07df145526bfb73d34",
+      "tools/research/v6/e6/payoff.py": "6c482a673d9d796928e85bf80b410fd98faf8c8d1d413170d7e8617a9f191c3c",
+      "tools/research/v6/e6/rederive.py": "c6e6706d219678e43ff3d2c2db4f611854c670d5acba71cdb6d52aa3673ce4df",
+      "tools/research/v6/e6/telemetry.py": "2c6768e644e442d7731ff8abfc028894a7bfcd136be235fdbed30f86f6dbac5c",
+      "tools/research/v6/e6/traces.py": "9c2d75ac3c04b85057302383155052ccb3d75e0dc1d3342840ec597f72811f19",
+      "tools/research/v6/e6_audit/seat.py": "a6c03e7cce00f1a63c4415d5fd4ef0255677fd387e912a20ef4fc297a009ffbe",
+      "tools/research/v6/experiment_harness.py": "e137c02df84f1aa20d1097472bb3885820e4a27ddbd2849fa7b1be73980e0254"
+    },
+    "structural_digest": "e0d322b597da298686c7a392a7ae495a96ea6a5428b5fb47f15138fa3af26fc7",
+    "structural_matrix_id": "v6-e8-matrix-v1-e0d322b597da",
+    "tooling_sha256": {
+      "tools/research/v6/e8/__init__.py": "eb8812ab4f1846cdc6fb79fe01f5f99eda76201c1491b3035faf96b8ae20b7d4",
+      "tools/research/v6/e8/analysis_freeze.py": "b0a9c04b60135fcb414bb8d73d094d58b9df334fcccae8fe45edbe3ec817297f",
+      "tools/research/v6/e8/analyze_e8.py": "dffb5a4eb9768aef35a15c2986a1984849acf96d940099ba6a0f5fa7da719d79",
+      "tools/research/v6/e8/compatibility.py": "12d7c60cc76e0be435c0a139c93af804a6d269e2175e40d923cb66c80018868d",
+      "tools/research/v6/e8/decision.py": "32cf39962e01478b426bbc027bcd4c2a9efb429a33763ceab8a6af3770206bc0",
+      "tools/research/v6/e8/discipline.py": "56b23cfce3d95c89098caea38f865f57e0c33f2540e72f7b4e5a6a4f3e7dbbdc",
+      "tools/research/v6/e8/family.py": "5ea79eba26b5e27781cfddd692c95c199334817801a5c1bf68068c4952f2c156",
+      "tools/research/v6/e8/family_fingerprints.json": "26690d14cafd8a345520578aa2f4eb54f29579459ff1472a740fdbbfc5927595",
+      "tools/research/v6/e8/family_freeze.json": "4ec253d4b84469cdb90b91d68b2236310ecd0bb8e0f5c8f63a19e709cc3afbeb",
+      "tools/research/v6/e8/family_freeze.py": "7f23ef55825f5318395352c4250238c3fd34c83f170060f035fd89d1721d2210",
+      "tools/research/v6/e8/gates.py": "ef2b7de32a11605c3b9d02b0ade0d1fa11d71cf402c9f2fd6adda98dea99d601",
+      "tools/research/v6/e8/matrix.py": "02ab656e6b68e370cf04a912e313e247098878c7a0e14f5dea09d149a2f43c25",
+      "tools/research/v6/e8/parent_goldens.json": "2a323f2c643793cc92767a14b42517514de326e61e09c73056ceafed18e201fd",
+      "tools/research/v6/e8/parent_goldens.py": "b508025640a4e33d72bd819b5edf185fb10fcd922a8cc52becfc3a81ce1ba89a",
+      "tools/research/v6/e8/payoff.py": "da4bcfcb88b76967397a16bc9ba3d675ff611e249e3448b123369c2623b6c302",
+      "tools/research/v6/e8/preregistration.json": "6d4ffb4b43bfadebdad9aea1481a52c5ea119ed9c05aae21337931d2c84c7a5b",
+      "tools/research/v6/e8/preregistration.py": "64d1975d4f2439c484edefc5e41eeacec4962e71f89ecf684f1f63e329fdd3f8",
+      "tools/research/v6/e8/preregistration_freeze.py": "70772f2cc734f142e6182d8e1ab9c239fa836ba54f75838c8e890d76e3a40b5e",
+      "tools/research/v6/e8/preregistration_freeze_v4.json": "bf4a409a782f1d3ae08dc4b26b710b37fb8d3e14c6fb76a6904adb9519de31ea",
+      "tools/research/v6/e8/rederive.py": "bece76469d88ed91dfac0f7153d4b603a98a0cc41b21e13ad972b159210ce2ac",
+      "tools/research/v6/e8/run_e8.py": "989175d4e582f4aa3345f68bd99fc2af30c10fa4b2ab1749295993eb196ceb9f",
+      "tools/research/v6/e8/seed_protocol.py": "f59708b3c12bb9afa5b63f683f691cd92547eea9fd8dfa91165161487f1a3967",
+      "tools/research/v6/e8/telemetry.py": "00d62198f05d34d5eaa713e308542c108851f3c143c1ca7cf50b56838b328db7",
+      "tools/research/v6/e8/traces.py": "4a30a4a20e8df0f032cad2e773e47ec3903ad84aabf1fc72ce5ef6416aef2fd6"
+    },
+    "tooling_source_sha": "6d3930a",
+    "versions": {
+      "analysis": 1,
+      "gates": 1,
+      "rederive": 1,
+      "runner": 1,
+      "telemetry": 1,
+      "trace_index": 1,
+      "traces": 1
+    }
+  },
+  "schema": "bytefray.v6.e8.analysis_freeze",
+  "seed_commitment": {
+    "status": "PENDING"
+  },
+  "status": "frozen before any E8 seed or matrix cell exists"
+}
