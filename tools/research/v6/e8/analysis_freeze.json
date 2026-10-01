@@ -1,6 +1,7 @@
 {
   "control_qualification": {
-    "status": "PENDING"
+    "record_sha256": "559cc4b04f9408b663cda4ed83420e12f9bac840d1e46643200aa20a2f3b0afe",
+    "status": "PASS"
   },
   "freeze_digest": "52e09e5fb422e7f90f912b4ceccf40b137286d2915e5e2a14ec76eb89288b106",
   "freeze_id": "v6-e8-analysis-v1-52e09e5fb422",
