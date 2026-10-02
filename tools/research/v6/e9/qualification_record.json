@@ -1,0 +1,2608 @@
+{
+  "scope": "E9 capability qualification only",
+  "version": 1,
+  "specification_commit": "3a2d1292e83d6cd608588d87e6561249905d9ced",
+  "specification_sha256_raw": "32f75816c20883b1d11d5694bd9b212c9294e9dbc43ef7a4682357bed9ffd18c",
+  "implementation_boundary": "Implementation, qualification tests/tooling, machine qualification record and human qualification record form the single capability boundary in the commit containing this record, above specification_commit.",
+  "constants": {
+    "initial": "DENSE",
+    "C": 2,
+    "L": 2,
+    "B": 4,
+    "adaptive_cadences": [
+      1,
+      4
+    ]
+  },
+  "requirement_C": "NOT ESTABLISHED",
+  "preregistration": "NOT AUTHORIZED",
+  "obligations": {
+    "Q-C1": {
+      "status": "PASS",
+      "evidence": [
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc1_frozen_callbacks_core_probes_search_and_rng[0-RUSH8-A]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc1_frozen_callbacks_core_probes_search_and_rng[0-RUSH8-B]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc1_frozen_callbacks_core_probes_search_and_rng[1-REACQ8-A]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc1_frozen_callbacks_core_probes_search_and_rng[1-REACQ8-B]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc1_tactical_copy_is_byte_identical_and_qc13_selector_has_no_extra_sources",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc1_qc11_legal_frozen_twin_search_and_core_fidelity[OFF-RUSH8-A]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc1_qc11_legal_frozen_twin_search_and_core_fidelity[OFF-RUSH8-B]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc1_qc11_legal_frozen_twin_search_and_core_fidelity[DENSE-REACQ8-A]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc1_qc11_legal_frozen_twin_search_and_core_fidelity[DENSE-REACQ8-B]",
+          "status": "PASS"
+        }
+      ]
+    },
+    "Q-C2": {
+      "status": "PASS",
+      "evidence": [
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc2_all_disabled_twins_reproduce_fixed_variants[0]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc2_all_disabled_twins_reproduce_fixed_variants[1]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc2_all_disabled_twins_reproduce_fixed_variants[2]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc2_all_disabled_twins_reproduce_fixed_variants[4]",
+          "status": "PASS"
+        }
+      ]
+    },
+    "Q-C3": {
+      "status": "PASS",
+      "evidence": [
+        {
+          "module": "engine.tests.test_v6_e9_selectors",
+          "name": "test_qc3_qc4_golden_reversals_deferred_promotion_and_budget",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc3_full_callbacks_repeated_revisions_and_deferred_request",
+          "status": "PASS"
+        }
+      ]
+    },
+    "Q-C4": {
+      "status": "PASS",
+      "evidence": [
+        {
+          "module": "engine.tests.test_v6_e9_selectors",
+          "name": "test_qc3_qc4_golden_reversals_deferred_promotion_and_budget",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_selectors",
+          "name": "test_qc4_activation_target_specificity_missing_priority_and_invalid_boundaries",
+          "status": "PASS"
+        }
+      ]
+    },
+    "Q-C5": {
+      "status": "PASS",
+      "evidence": [
+        {
+          "module": "engine.tests.test_v6_e9_selectors",
+          "name": "test_qc5_counterfactual_receipt_and_qc7_stale_unknown",
+          "status": "PASS"
+        }
+      ]
+    },
+    "Q-C6": {
+      "status": "PASS",
+      "evidence": [
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc6_qc13_irrelevant_metadata_diagnostics_reset_and_seed_poison",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc6_extra_contacts_and_circular_target_renaming",
+          "status": "PASS"
+        }
+      ]
+    },
+    "Q-C7": {
+      "status": "PASS",
+      "evidence": [
+        {
+          "module": "engine.tests.test_v6_e9_selectors",
+          "name": "test_qc5_counterfactual_receipt_and_qc7_stale_unknown",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc7_adapter_empty_absent_refused_wrong_process_and_multiple_anchors",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc7_activation_mid_tick_reflection_boundary_freshness_and_end[A]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc7_activation_mid_tick_reflection_boundary_freshness_and_end[B]",
+          "status": "PASS"
+        }
+      ]
+    },
+    "Q-C8": {
+      "status": "PASS",
+      "evidence": [
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc8_qc10_twin_same_prestate_then_real_sense_vs_productive_action",
+          "status": "PASS"
+        }
+      ]
+    },
+    "Q-C9": {
+      "status": "PASS",
+      "evidence": [
+        {
+          "module": "engine.tests.test_v6_e9_selectors",
+          "name": "test_qc9_canonical_schedule_class_and_independent_oracle",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_selectors",
+          "name": "test_qc9_literal_and_performance_schedules_reproduce_two_way_variation",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc9_policy_schedule_ignores_adaptive_receipts",
+          "status": "PASS"
+        }
+      ]
+    },
+    "Q-C10": {
+      "status": "PASS",
+      "evidence": [
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc8_qc10_twin_same_prestate_then_real_sense_vs_productive_action",
+          "status": "PASS"
+        }
+      ]
+    },
+    "Q-C11": {
+      "status": "PASS",
+      "evidence": [
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc11_transition_does_not_touch_inflight_search",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc11_full_search_exhaustion_matches_frozen_order_and_rng[A]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc11_full_search_exhaustion_matches_frozen_order_and_rng[B]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc1_qc11_legal_frozen_twin_search_and_core_fidelity[OFF-RUSH8-A]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc1_qc11_legal_frozen_twin_search_and_core_fidelity[OFF-RUSH8-B]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc1_qc11_legal_frozen_twin_search_and_core_fidelity[DENSE-REACQ8-A]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc1_qc11_legal_frozen_twin_search_and_core_fidelity[DENSE-REACQ8-B]",
+          "status": "PASS"
+        }
+      ]
+    },
+    "Q-C12": {
+      "status": "PASS",
+      "evidence": [
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[1-A]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[1-B]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[2-A]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[2-B]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[3-A]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[3-B]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[4-A]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[4-B]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[5-A]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[5-B]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[6-A]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[6-B]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[7-A]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[7-B]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[8-A]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[8-B]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc12_repeated_suppression_and_phase_preservation[A]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc12_repeated_suppression_and_phase_preservation[B]",
+          "status": "PASS"
+        }
+      ]
+    },
+    "Q-C13": {
+      "status": "PASS",
+      "evidence": [
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc6_qc13_irrelevant_metadata_diagnostics_reset_and_seed_poison",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_policy",
+          "name": "test_qc1_tactical_copy_is_byte_identical_and_qc13_selector_has_no_extra_sources",
+          "status": "PASS"
+        }
+      ]
+    },
+    "Q-C14": {
+      "status": "PASS",
+      "evidence": [
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc14_static_and_on_hit_opportunity[A]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc14_static_and_on_hit_opportunity[B]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc14_static_contact[A]",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_engine",
+          "name": "test_qc14_static_contact[B]",
+          "status": "PASS"
+        }
+      ]
+    },
+    "Q-C15": {
+      "status": "PASS",
+      "evidence": [
+        {
+          "module": "engine.tests.test_v6_e9_selectors",
+          "name": "test_qc15_independent_oracle_exhaustive_short_histories",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e9_selectors",
+          "name": "test_qc15_oracle_imports_no_production_policy_or_constants",
+          "status": "PASS"
+        }
+      ]
+    }
+  },
+  "focused": {
+    "sha256": "e492c374501d09f7748ae69a948ec2a6b788ef8f8d0d3bb5153068509b946620",
+    "cases": [
+      {
+        "module": "engine.tests.test_v6_e9_selectors",
+        "name": "test_qc3_qc4_golden_reversals_deferred_promotion_and_budget",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_selectors",
+        "name": "test_qc4_activation_target_specificity_missing_priority_and_invalid_boundaries",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_selectors",
+        "name": "test_qc5_counterfactual_receipt_and_qc7_stale_unknown",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_selectors",
+        "name": "test_qc15_independent_oracle_exhaustive_short_histories",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_selectors",
+        "name": "test_qc9_canonical_schedule_class_and_independent_oracle",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_selectors",
+        "name": "test_qc9_literal_and_performance_schedules_reproduce_two_way_variation",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_selectors",
+        "name": "test_qc15_oracle_imports_no_production_policy_or_constants",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc1_frozen_callbacks_core_probes_search_and_rng[0-RUSH8-A]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc1_frozen_callbacks_core_probes_search_and_rng[0-RUSH8-B]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc1_frozen_callbacks_core_probes_search_and_rng[1-REACQ8-A]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc1_frozen_callbacks_core_probes_search_and_rng[1-REACQ8-B]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc2_all_disabled_twins_reproduce_fixed_variants[0]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc2_all_disabled_twins_reproduce_fixed_variants[1]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc2_all_disabled_twins_reproduce_fixed_variants[2]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc2_all_disabled_twins_reproduce_fixed_variants[4]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc7_adapter_empty_absent_refused_wrong_process_and_multiple_anchors",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc7_activation_mid_tick_reflection_boundary_freshness_and_end[A]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc7_activation_mid_tick_reflection_boundary_freshness_and_end[B]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc8_qc10_twin_same_prestate_then_real_sense_vs_productive_action",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc6_qc13_irrelevant_metadata_diagnostics_reset_and_seed_poison",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc11_transition_does_not_touch_inflight_search",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc9_policy_schedule_ignores_adaptive_receipts",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc1_tactical_copy_is_byte_identical_and_qc13_selector_has_no_extra_sources",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc3_full_callbacks_repeated_revisions_and_deferred_request",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc6_extra_contacts_and_circular_target_renaming",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc11_full_search_exhaustion_matches_frozen_order_and_rng[A]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_policy",
+        "name": "test_qc11_full_search_exhaustion_matches_frozen_order_and_rng[B]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc14_static_and_on_hit_opportunity[A]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc14_static_and_on_hit_opportunity[B]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc14_static_contact[A]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc14_static_contact[B]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[1-A]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[1-B]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[2-A]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[2-B]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[3-A]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[3-B]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[4-A]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[4-B]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[5-A]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[5-B]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[6-A]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[6-B]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[7-A]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[7-B]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[8-A]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc12_every_hit_position_partial_ticks_and_full_suppression[8-B]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc12_repeated_suppression_and_phase_preservation[A]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc12_repeated_suppression_and_phase_preservation[B]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc1_qc11_legal_frozen_twin_search_and_core_fidelity[OFF-RUSH8-A]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc1_qc11_legal_frozen_twin_search_and_core_fidelity[OFF-RUSH8-B]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc1_qc11_legal_frozen_twin_search_and_core_fidelity[DENSE-REACQ8-A]",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e9_engine",
+        "name": "test_qc1_qc11_legal_frozen_twin_search_and_core_fidelity[DENSE-REACQ8-B]",
+        "status": "PASS"
+      }
+    ],
+    "counts": {
+      "PASS": 53,
+      "FAILURE": 0,
+      "ERROR": 0,
+      "SKIPPED": 0
+    }
+  },
+  "headless_regression": {
+    "sha256": "302414a5fd48e6c99c27493cc598341e5c69ca4c5362f646a939dcc5a5984a19",
+    "counts": {
+      "PASS": 6908,
+      "FAILURE": 2,
+      "ERROR": 0,
+      "SKIPPED": 18
+    },
+    "collected_cases": 6928,
+    "e9_cases_collected": 51,
+    "deselected": 3,
+    "nonpassing_cases": [
+      {
+        "module": "engine.tests.test_replay_history",
+        "name": "test_default_cache_path_is_outside_every_run_directory",
+        "status": "FAILURE"
+      },
+      {
+        "module": "engine.tests.test_v6_e6_audit",
+        "name": "test_the_runner_refuses_to_write_under_runs",
+        "status": "FAILURE"
+      }
+    ]
+  },
+  "corrected_temp_rerun": {
+    "sha256": "0378f7c6b7489677426640bee8f081ec3815c88fba5466bc953582f6c3ccca6c",
+    "cases": [
+      {
+        "module": "engine.tests.test_replay_history",
+        "name": "test_default_cache_path_is_outside_every_run_directory",
+        "status": "PASS"
+      },
+      {
+        "module": "engine.tests.test_v6_e6_audit",
+        "name": "test_the_runner_refuses_to_write_under_runs",
+        "status": "PASS"
+      }
+    ],
+    "counts": {
+      "PASS": 2,
+      "FAILURE": 0,
+      "ERROR": 0,
+      "SKIPPED": 0
+    }
+  },
+  "full_regression_note": "Both earlier full-suite environmental qualification events and their unchanged diagnostic reruns remain in headless_regression, corrected_temp_rerun and final_headless_regression. The authorized additional complete suite is recorded separately in clean_final_headless_regression: 6912 PASS, 0 FAILURE, 0 ERROR, 18 SKIPPED, 3 deselected. It satisfies the clean final full-suite gate.",
+  "synthetic_selector_histories": 15625,
+  "synthetic_selector_transitions": 93750,
+  "canonical_schedules": 1334,
+  "legal_matches_in_final_focused_run": 30,
+  "new_focal_legal_histories": 26,
+  "separate_frozen_reference_histories": 4,
+  "legal_qualification_preset": "existing public harness preset 7; not an experimental draw",
+  "opportunities": [
+    {
+      "case": "test_qc14_static_and_on_hit_op0",
+      "seat": "A",
+      "callbacks": 56,
+      "boundaries": [
+        {
+          "epoch": 1,
+          "tick": 2,
+          "before": {
+            "mode": 1,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "after": {
+            "mode": 1,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 2,
+          "tick": 3,
+          "before": {
+            "mode": 1,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "after": {
+            "mode": 1,
+            "c": 1,
+            "target": 191,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "receipts": [
+            {
+              "target": 191,
+              "issued_tick": 2,
+              "present": true
+            }
+          ],
+          "reason": "stay"
+        },
+        {
+          "epoch": 3,
+          "tick": 4,
+          "before": {
+            "mode": 1,
+            "c": 1,
+            "target": 191,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "after": {
+            "mode": 4,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [
+            {
+              "target": 191,
+              "issued_tick": 3,
+              "present": true
+            }
+          ],
+          "reason": "confirmations"
+        },
+        {
+          "epoch": 4,
+          "tick": 5,
+          "before": {
+            "mode": 4,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 5,
+          "tick": 6,
+          "before": {
+            "mode": 4,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 1,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 2,
+            "last_revision": 5
+          },
+          "receipts": [
+            {
+              "target": 191,
+              "issued_tick": 5,
+              "present": false
+            }
+          ],
+          "reason": "missing"
+        },
+        {
+          "epoch": 6,
+          "tick": 7,
+          "before": {
+            "mode": 1,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 2,
+            "last_revision": 5
+          },
+          "after": {
+            "mode": 1,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 2,
+            "last_revision": 5
+          },
+          "receipts": [
+            {
+              "target": 255,
+              "issued_tick": 6,
+              "present": false
+            }
+          ],
+          "reason": "stay"
+        }
+      ],
+      "first_callback_actions": [
+        {
+          "tick": 1,
+          "mode": 1,
+          "action": {
+            "kind": "sense",
+            "operand": 191,
+            "value": null
+          },
+          "purpose": "discover"
+        },
+        {
+          "tick": 2,
+          "mode": 1,
+          "action": {
+            "kind": "sense",
+            "operand": 191,
+            "value": null
+          },
+          "purpose": "verify"
+        },
+        {
+          "tick": 3,
+          "mode": 1,
+          "action": {
+            "kind": "sense",
+            "operand": 191,
+            "value": null
+          },
+          "purpose": "verify"
+        },
+        {
+          "tick": 4,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 191,
+            "value": 1
+          },
+          "purpose": null
+        },
+        {
+          "tick": 5,
+          "mode": 4,
+          "action": {
+            "kind": "sense",
+            "operand": 191,
+            "value": null
+          },
+          "purpose": "verify"
+        },
+        {
+          "tick": 6,
+          "mode": 1,
+          "action": {
+            "kind": "sense",
+            "operand": 255,
+            "value": null
+          },
+          "purpose": "verify"
+        },
+        {
+          "tick": 7,
+          "mode": 1,
+          "action": {
+            "kind": "sense",
+            "operand": 319,
+            "value": null
+          },
+          "purpose": "verify"
+        }
+      ],
+      "diagnostic_sha256": "52e02477323882274ffb6014bf3344bcab6887acf8112d0bf3c528033d0e1e5b"
+    },
+    {
+      "case": "test_qc14_static_and_on_hit_op1",
+      "seat": "B",
+      "callbacks": 48,
+      "boundaries": [
+        {
+          "epoch": 1,
+          "tick": 2,
+          "before": {
+            "mode": 1,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "after": {
+            "mode": 1,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 2,
+          "tick": 3,
+          "before": {
+            "mode": 1,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "after": {
+            "mode": 1,
+            "c": 1,
+            "target": 9,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "receipts": [
+            {
+              "target": 9,
+              "issued_tick": 2,
+              "present": true
+            }
+          ],
+          "reason": "stay"
+        },
+        {
+          "epoch": 3,
+          "tick": 4,
+          "before": {
+            "mode": 1,
+            "c": 1,
+            "target": 9,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "after": {
+            "mode": 1,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "receipts": [
+            {
+              "target": 9,
+              "issued_tick": 3,
+              "present": false
+            }
+          ],
+          "reason": "stay"
+        },
+        {
+          "epoch": 4,
+          "tick": 5,
+          "before": {
+            "mode": 1,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "after": {
+            "mode": 1,
+            "c": 1,
+            "target": 457,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "receipts": [
+            {
+              "target": 457,
+              "issued_tick": 4,
+              "present": true
+            }
+          ],
+          "reason": "stay"
+        },
+        {
+          "epoch": 5,
+          "tick": 6,
+          "before": {
+            "mode": 1,
+            "c": 1,
+            "target": 457,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "after": {
+            "mode": 1,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "receipts": [
+            {
+              "target": 457,
+              "issued_tick": 5,
+              "present": false
+            }
+          ],
+          "reason": "stay"
+        }
+      ],
+      "first_callback_actions": [
+        {
+          "tick": 1,
+          "mode": 1,
+          "action": {
+            "kind": "sense",
+            "operand": 9,
+            "value": null
+          },
+          "purpose": "discover"
+        },
+        {
+          "tick": 2,
+          "mode": 1,
+          "action": {
+            "kind": "sense",
+            "operand": 9,
+            "value": null
+          },
+          "purpose": "verify"
+        },
+        {
+          "tick": 3,
+          "mode": 1,
+          "action": {
+            "kind": "sense",
+            "operand": 9,
+            "value": null
+          },
+          "purpose": "verify"
+        },
+        {
+          "tick": 4,
+          "mode": 1,
+          "action": {
+            "kind": "sense",
+            "operand": 457,
+            "value": null
+          },
+          "purpose": "verify"
+        },
+        {
+          "tick": 5,
+          "mode": 1,
+          "action": {
+            "kind": "sense",
+            "operand": 457,
+            "value": null
+          },
+          "purpose": "verify"
+        },
+        {
+          "tick": 6,
+          "mode": 1,
+          "action": {
+            "kind": "sense",
+            "operand": 393,
+            "value": null
+          },
+          "purpose": "verify"
+        }
+      ],
+      "diagnostic_sha256": "9f1485d7872b47a394f87e7e5727e2f43ec9f9b333bf3c316d589a332e12af54"
+    },
+    {
+      "case": "test_qc14_static_contact_A_0",
+      "seat": "A",
+      "callbacks": 128,
+      "boundaries": [
+        {
+          "epoch": 1,
+          "tick": 2,
+          "before": {
+            "mode": 1,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "after": {
+            "mode": 1,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 2,
+          "tick": 3,
+          "before": {
+            "mode": 1,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "after": {
+            "mode": 1,
+            "c": 1,
+            "target": 191,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "receipts": [
+            {
+              "target": 191,
+              "issued_tick": 2,
+              "present": true
+            }
+          ],
+          "reason": "stay"
+        },
+        {
+          "epoch": 3,
+          "tick": 4,
+          "before": {
+            "mode": 1,
+            "c": 1,
+            "target": 191,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "after": {
+            "mode": 4,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [
+            {
+              "target": 191,
+              "issued_tick": 3,
+              "present": true
+            }
+          ],
+          "reason": "confirmations"
+        },
+        {
+          "epoch": 4,
+          "tick": 5,
+          "before": {
+            "mode": 4,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 5,
+          "tick": 6,
+          "before": {
+            "mode": 4,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 1,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [
+            {
+              "target": 191,
+              "issued_tick": 5,
+              "present": true
+            }
+          ],
+          "reason": "stay"
+        },
+        {
+          "epoch": 6,
+          "tick": 7,
+          "before": {
+            "mode": 4,
+            "c": 1,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 1,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 7,
+          "tick": 8,
+          "before": {
+            "mode": 4,
+            "c": 1,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 1,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 8,
+          "tick": 9,
+          "before": {
+            "mode": 4,
+            "c": 1,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 1,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 9,
+          "tick": 10,
+          "before": {
+            "mode": 4,
+            "c": 1,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 2,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [
+            {
+              "target": 191,
+              "issued_tick": 9,
+              "present": true
+            }
+          ],
+          "reason": "stay"
+        },
+        {
+          "epoch": 10,
+          "tick": 11,
+          "before": {
+            "mode": 4,
+            "c": 2,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 2,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 11,
+          "tick": 12,
+          "before": {
+            "mode": 4,
+            "c": 2,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 2,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 12,
+          "tick": 13,
+          "before": {
+            "mode": 4,
+            "c": 2,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 2,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 13,
+          "tick": 14,
+          "before": {
+            "mode": 4,
+            "c": 2,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 2,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [
+            {
+              "target": 191,
+              "issued_tick": 13,
+              "present": true
+            }
+          ],
+          "reason": "stay"
+        },
+        {
+          "epoch": 14,
+          "tick": 15,
+          "before": {
+            "mode": 4,
+            "c": 2,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 2,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 15,
+          "tick": 16,
+          "before": {
+            "mode": 4,
+            "c": 2,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 2,
+            "target": 191,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [],
+          "reason": "stay"
+        }
+      ],
+      "first_callback_actions": [
+        {
+          "tick": 1,
+          "mode": 1,
+          "action": {
+            "kind": "sense",
+            "operand": 191,
+            "value": null
+          },
+          "purpose": "discover"
+        },
+        {
+          "tick": 2,
+          "mode": 1,
+          "action": {
+            "kind": "sense",
+            "operand": 191,
+            "value": null
+          },
+          "purpose": "verify"
+        },
+        {
+          "tick": 3,
+          "mode": 1,
+          "action": {
+            "kind": "sense",
+            "operand": 191,
+            "value": null
+          },
+          "purpose": "verify"
+        },
+        {
+          "tick": 4,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 191,
+            "value": 1
+          },
+          "purpose": null
+        },
+        {
+          "tick": 5,
+          "mode": 4,
+          "action": {
+            "kind": "sense",
+            "operand": 191,
+            "value": null
+          },
+          "purpose": "verify"
+        },
+        {
+          "tick": 6,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 191,
+            "value": 1
+          },
+          "purpose": null
+        },
+        {
+          "tick": 7,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 191,
+            "value": 1
+          },
+          "purpose": null
+        },
+        {
+          "tick": 8,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 191,
+            "value": 1
+          },
+          "purpose": null
+        },
+        {
+          "tick": 9,
+          "mode": 4,
+          "action": {
+            "kind": "sense",
+            "operand": 191,
+            "value": null
+          },
+          "purpose": "verify"
+        },
+        {
+          "tick": 10,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 191,
+            "value": 1
+          },
+          "purpose": null
+        },
+        {
+          "tick": 11,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 191,
+            "value": 1
+          },
+          "purpose": null
+        },
+        {
+          "tick": 12,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 191,
+            "value": 1
+          },
+          "purpose": null
+        },
+        {
+          "tick": 13,
+          "mode": 4,
+          "action": {
+            "kind": "sense",
+            "operand": 191,
+            "value": null
+          },
+          "purpose": "verify"
+        },
+        {
+          "tick": 14,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 191,
+            "value": 1
+          },
+          "purpose": null
+        },
+        {
+          "tick": 15,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 191,
+            "value": 1
+          },
+          "purpose": null
+        },
+        {
+          "tick": 16,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 191,
+            "value": 1
+          },
+          "purpose": null
+        }
+      ],
+      "diagnostic_sha256": "10dead498851558a08e9fe2569e38cc44b73b0ebe260ff5eb04fdc9c5ad9781d"
+    },
+    {
+      "case": "test_qc14_static_contact_B_0",
+      "seat": "B",
+      "callbacks": 128,
+      "boundaries": [
+        {
+          "epoch": 1,
+          "tick": 2,
+          "before": {
+            "mode": 1,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "after": {
+            "mode": 1,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 2,
+          "tick": 3,
+          "before": {
+            "mode": 1,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "after": {
+            "mode": 1,
+            "c": 1,
+            "target": 9,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "receipts": [
+            {
+              "target": 9,
+              "issued_tick": 2,
+              "present": true
+            }
+          ],
+          "reason": "stay"
+        },
+        {
+          "epoch": 3,
+          "tick": 4,
+          "before": {
+            "mode": 1,
+            "c": 1,
+            "target": 9,
+            "request": false,
+            "changes": 0,
+            "last_revision": 0
+          },
+          "after": {
+            "mode": 4,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [
+            {
+              "target": 9,
+              "issued_tick": 3,
+              "present": true
+            }
+          ],
+          "reason": "confirmations"
+        },
+        {
+          "epoch": 4,
+          "tick": 5,
+          "before": {
+            "mode": 4,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 5,
+          "tick": 6,
+          "before": {
+            "mode": 4,
+            "c": 0,
+            "target": null,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 1,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [
+            {
+              "target": 9,
+              "issued_tick": 5,
+              "present": true
+            }
+          ],
+          "reason": "stay"
+        },
+        {
+          "epoch": 6,
+          "tick": 7,
+          "before": {
+            "mode": 4,
+            "c": 1,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 1,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 7,
+          "tick": 8,
+          "before": {
+            "mode": 4,
+            "c": 1,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 1,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 8,
+          "tick": 9,
+          "before": {
+            "mode": 4,
+            "c": 1,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 1,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 9,
+          "tick": 10,
+          "before": {
+            "mode": 4,
+            "c": 1,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 2,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [
+            {
+              "target": 9,
+              "issued_tick": 9,
+              "present": true
+            }
+          ],
+          "reason": "stay"
+        },
+        {
+          "epoch": 10,
+          "tick": 11,
+          "before": {
+            "mode": 4,
+            "c": 2,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 2,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 11,
+          "tick": 12,
+          "before": {
+            "mode": 4,
+            "c": 2,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 2,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 12,
+          "tick": 13,
+          "before": {
+            "mode": 4,
+            "c": 2,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 2,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 13,
+          "tick": 14,
+          "before": {
+            "mode": 4,
+            "c": 2,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 2,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [
+            {
+              "target": 9,
+              "issued_tick": 13,
+              "present": true
+            }
+          ],
+          "reason": "stay"
+        },
+        {
+          "epoch": 14,
+          "tick": 15,
+          "before": {
+            "mode": 4,
+            "c": 2,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 2,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [],
+          "reason": "stay"
+        },
+        {
+          "epoch": 15,
+          "tick": 16,
+          "before": {
+            "mode": 4,
+            "c": 2,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "after": {
+            "mode": 4,
+            "c": 2,
+            "target": 9,
+            "request": false,
+            "changes": 1,
+            "last_revision": 3
+          },
+          "receipts": [],
+          "reason": "stay"
+        }
+      ],
+      "first_callback_actions": [
+        {
+          "tick": 1,
+          "mode": 1,
+          "action": {
+            "kind": "sense",
+            "operand": 9,
+            "value": null
+          },
+          "purpose": "discover"
+        },
+        {
+          "tick": 2,
+          "mode": 1,
+          "action": {
+            "kind": "sense",
+            "operand": 9,
+            "value": null
+          },
+          "purpose": "verify"
+        },
+        {
+          "tick": 3,
+          "mode": 1,
+          "action": {
+            "kind": "sense",
+            "operand": 9,
+            "value": null
+          },
+          "purpose": "verify"
+        },
+        {
+          "tick": 4,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 9,
+            "value": 1
+          },
+          "purpose": null
+        },
+        {
+          "tick": 5,
+          "mode": 4,
+          "action": {
+            "kind": "sense",
+            "operand": 9,
+            "value": null
+          },
+          "purpose": "verify"
+        },
+        {
+          "tick": 6,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 9,
+            "value": 1
+          },
+          "purpose": null
+        },
+        {
+          "tick": 7,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 9,
+            "value": 1
+          },
+          "purpose": null
+        },
+        {
+          "tick": 8,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 9,
+            "value": 1
+          },
+          "purpose": null
+        },
+        {
+          "tick": 9,
+          "mode": 4,
+          "action": {
+            "kind": "sense",
+            "operand": 9,
+            "value": null
+          },
+          "purpose": "verify"
+        },
+        {
+          "tick": 10,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 9,
+            "value": 1
+          },
+          "purpose": null
+        },
+        {
+          "tick": 11,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 9,
+            "value": 1
+          },
+          "purpose": null
+        },
+        {
+          "tick": 12,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 9,
+            "value": 1
+          },
+          "purpose": null
+        },
+        {
+          "tick": 13,
+          "mode": 4,
+          "action": {
+            "kind": "sense",
+            "operand": 9,
+            "value": null
+          },
+          "purpose": "verify"
+        },
+        {
+          "tick": 14,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 9,
+            "value": 1
+          },
+          "purpose": null
+        },
+        {
+          "tick": 15,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 9,
+            "value": 1
+          },
+          "purpose": null
+        },
+        {
+          "tick": 16,
+          "mode": 4,
+          "action": {
+            "kind": "write",
+            "operand": 9,
+            "value": 1
+          },
+          "purpose": null
+        }
+      ],
+      "diagnostic_sha256": "4d6e80ddf0fb025076d55ee2c552055d607cee19f884c968c11e356697b76a21"
+    }
+  ],
+  "source_sha256_raw": {
+    "engine/tests/_e9_harness.py": "78426f542aaeba10ea87758c39bd15bc99e0161ad569c756aabbdb37c8066a9a",
+    "engine/tests/test_v6_e9_engine.py": "ca66027df680101ed668122d862494f01984ff8eaf8ff4363aca06edc216d23b",
+    "engine/tests/test_v6_e9_policy.py": "ef0d97f71e8909eefc25e6bf13a3b1e56cc8c797664aadffc9f37be74b5556b8",
+    "engine/tests/test_v6_e9_selectors.py": "45f1668d5edb951eec5aeb55b42c45fdac04b70ded4a850b3bab5d7372338028",
+    "tools/research/v6/e9/__init__.py": "4dd604a49edb9763090efc3b25c63f2d92673de89768f33a8f12e906e6c3538b",
+    "tools/research/v6/e9/oracle.py": "a01584764d4fcfbfc95de518696c8d9e01a18278d477626a8a9dbfd95ff1c518",
+    "tools/research/v6/e9/packages.py": "a87090ec6fdda53c376ce4231af1694e3f7f6327a9e11b24128fc519845ad314",
+    "tools/research/v6/e9/policy.py": "1e30b4b985fd726c4ffa13e424fbc795a05171d44e8b8c7c5fd381fc13516b81",
+    "tools/research/v6/e9/selectors.py": "541fa6fd31b874c8a48a4fa1a26ecd6988a3c36edd8a4b1a45e40da198ca2cd8",
+    "tools/research/v6/e9/tactics.py": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc"
+  },
+  "preservation": {
+    "frozen_pins": 47,
+    "engine_source": {
+      "path": "engine/src",
+      "files": 116,
+      "sha256": "9323307c4131105a30c94cad16845468937571657b6d354827a26cfbfcff2676"
+    },
+    "sealed_E8_result_sha256_raw": "9b93c488af11c53220c63dc5407bffbab31fcb64721701a648918c9fd8fd2a3e",
+    "tactical_sha256_raw": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+    "final_verification": {
+      "frozen_pins": 47,
+      "pin_groups": [
+        "analysis.tooling_sha256",
+        "analysis.reused_sha256",
+        "family.body.files",
+        "preregistration_v4.body.files"
+      ],
+      "pin_inventory": {
+        "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_IMPLEMENTATION_PLAN.md": "cd0549e5b9d41e447cdfb8aab5049527e3fe680df3430990b5ae4b8d6d923eff",
+        "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md": "1bf7c664cd91897a327429b5c6de4b18a82794d2085477676bbda2b1ce77f0f9",
+        "engine/tests/test_v6_e8_decision.py": "4988b227552652cacc3b18b0188295efc520ac4b548debb8ad0d5964750c38ca",
+        "engine/tests/test_v6_e8_preregistration.py": "8728ae63ddb95b32ba40efbb1dd176e3f2fd43c8f78a38609399a5cdf97ed6c6",
+        "tools/research/v6/e2/matrix.py": "bd8ca2a88f2945c5bf3d544ec5a59cf9293bd11b78e1548a2e443c787a131449",
+        "tools/research/v6/e3/action_parity.py": "86b1a557e3a31db157ba2bd8805ef3636f892f2c7e5f9468d0982961d4c4f211",
+        "tools/research/v6/e3/analyze_e3.py": "a8d0911939da5b9b9dcc554657168f6cb36800064043498ef8eaf49bd0610330",
+        "tools/research/v6/e3/gates.py": "0910fb541e9fd4a538d74a6abdcff8515ab4ddc3165ac960ce968c939d2cd9a9",
+        "tools/research/v6/e4/analyze_e4.py": "c891abe0a879f62b0265f5f38f46bd0a1214a860994f06977f05ca3bfaeb2ab1",
+        "tools/research/v6/e4/cell_metrics.py": "cbfe64242113badca6c797dcc2897dea89c88dfdb0040e7a6105f21e03e43e0b",
+        "tools/research/v6/e4/gates.py": "0ea1a03f696530467ee8a3a576712433b433c92ac362799fc168a58dca7fc969",
+        "tools/research/v6/e6/analyze_e6.py": "f9c3473649f7bf2fd18827f24a9af775f47f44d7b6c083acf27536a9e8ef906f",
+        "tools/research/v6/e6/describe.py": "c76b659d6133a897a1e4653a76456820a0feb7e246d58b0da63c928ad6be42ec",
+        "tools/research/v6/e6/discipline.py": "ac15881282d3f177aef7473fa6204385dd451cc791c9f7adaa275ead3f304985",
+        "tools/research/v6/e6/family.py": "ae584af5b052f1d8cd7dbd0be0c7ef7f0d0a924ffb54a138e5cacd323ecbbbd3",
+        "tools/research/v6/e6/interpretation.py": "a8ce142e0857a54f8dea1ca67f38868991c097e92b739c07df145526bfb73d34",
+        "tools/research/v6/e6/payoff.py": "6c482a673d9d796928e85bf80b410fd98faf8c8d1d413170d7e8617a9f191c3c",
+        "tools/research/v6/e6/rederive.py": "c6e6706d219678e43ff3d2c2db4f611854c670d5acba71cdb6d52aa3673ce4df",
+        "tools/research/v6/e6/telemetry.py": "2c6768e644e442d7731ff8abfc028894a7bfcd136be235fdbed30f86f6dbac5c",
+        "tools/research/v6/e6/traces.py": "9c2d75ac3c04b85057302383155052ccb3d75e0dc1d3342840ec597f72811f19",
+        "tools/research/v6/e6_audit/seat.py": "a6c03e7cce00f1a63c4415d5fd4ef0255677fd387e912a20ef4fc297a009ffbe",
+        "tools/research/v6/e8/__init__.py": "eb8812ab4f1846cdc6fb79fe01f5f99eda76201c1491b3035faf96b8ae20b7d4",
+        "tools/research/v6/e8/analysis_freeze.py": "b0a9c04b60135fcb414bb8d73d094d58b9df334fcccae8fe45edbe3ec817297f",
+        "tools/research/v6/e8/analyze_e8.py": "dffb5a4eb9768aef35a15c2986a1984849acf96d940099ba6a0f5fa7da719d79",
+        "tools/research/v6/e8/compatibility.py": "12d7c60cc76e0be435c0a139c93af804a6d269e2175e40d923cb66c80018868d",
+        "tools/research/v6/e8/decision.py": "32cf39962e01478b426bbc027bcd4c2a9efb429a33763ceab8a6af3770206bc0",
+        "tools/research/v6/e8/discipline.py": "56b23cfce3d95c89098caea38f865f57e0c33f2540e72f7b4e5a6a4f3e7dbbdc",
+        "tools/research/v6/e8/family.py": "5ea79eba26b5e27781cfddd692c95c199334817801a5c1bf68068c4952f2c156",
+        "tools/research/v6/e8/family_fingerprints.json": "26690d14cafd8a345520578aa2f4eb54f29579459ff1472a740fdbbfc5927595",
+        "tools/research/v6/e8/family_freeze.json": "4ec253d4b84469cdb90b91d68b2236310ecd0bb8e0f5c8f63a19e709cc3afbeb",
+        "tools/research/v6/e8/family_freeze.py": "7f23ef55825f5318395352c4250238c3fd34c83f170060f035fd89d1721d2210",
+        "tools/research/v6/e8/fixtures/README.md": "22ba8190065d0d0a13d487154eb9f3ed47b902c6f5f14b03ec1b34288ce574f8",
+        "tools/research/v6/e8/gates.py": "ef2b7de32a11605c3b9d02b0ade0d1fa11d71cf402c9f2fd6adda98dea99d601",
+        "tools/research/v6/e8/matrix.py": "02ab656e6b68e370cf04a912e313e247098878c7a0e14f5dea09d149a2f43c25",
+        "tools/research/v6/e8/parent_goldens.json": "2a323f2c643793cc92767a14b42517514de326e61e09c73056ceafed18e201fd",
+        "tools/research/v6/e8/parent_goldens.py": "b508025640a4e33d72bd819b5edf185fb10fcd922a8cc52becfc3a81ce1ba89a",
+        "tools/research/v6/e8/payoff.py": "da4bcfcb88b76967397a16bc9ba3d675ff611e249e3448b123369c2623b6c302",
+        "tools/research/v6/e8/preregistration.json": "6d4ffb4b43bfadebdad9aea1481a52c5ea119ed9c05aae21337931d2c84c7a5b",
+        "tools/research/v6/e8/preregistration.py": "64d1975d4f2439c484edefc5e41eeacec4962e71f89ecf684f1f63e329fdd3f8",
+        "tools/research/v6/e8/preregistration_freeze.py": "70772f2cc734f142e6182d8e1ab9c239fa836ba54f75838c8e890d76e3a40b5e",
+        "tools/research/v6/e8/preregistration_freeze_v4.json": "bf4a409a782f1d3ae08dc4b26b710b37fb8d3e14c6fb76a6904adb9519de31ea",
+        "tools/research/v6/e8/rederive.py": "bece76469d88ed91dfac0f7153d4b603a98a0cc41b21e13ad972b159210ce2ac",
+        "tools/research/v6/e8/run_e8.py": "989175d4e582f4aa3345f68bd99fc2af30c10fa4b2ab1749295993eb196ceb9f",
+        "tools/research/v6/e8/seed_protocol.py": "f59708b3c12bb9afa5b63f683f691cd92547eea9fd8dfa91165161487f1a3967",
+        "tools/research/v6/e8/telemetry.py": "00d62198f05d34d5eaa713e308542c108851f3c143c1ca7cf50b56838b328db7",
+        "tools/research/v6/e8/traces.py": "4a30a4a20e8df0f032cad2e773e47ec3903ad84aabf1fc72ce5ef6416aef2fd6",
+        "tools/research/v6/experiment_harness.py": "e137c02df84f1aa20d1097472bb3885820e4a27ddbd2849fa7b1be73980e0254"
+      },
+      "engine_source": {
+        "path": "engine/src",
+        "files": 116,
+        "sha256": "9323307c4131105a30c94cad16845468937571657b6d354827a26cfbfcff2676"
+      },
+      "sealed_E8_result_sha256_raw": "9b93c488af11c53220c63dc5407bffbab31fcb64721701a648918c9fd8fd2a3e",
+      "status": "PASS"
+    },
+    "retry_final_verification": {
+      "status": "PASS",
+      "date": "2026-10-02",
+      "frozen_pins": 47,
+      "pin_groups": [
+        "analysis.tooling_sha256",
+        "analysis.reused_sha256",
+        "family.body.files",
+        "preregistration_v4.body.files"
+      ],
+      "pin_inventory": {
+        "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_IMPLEMENTATION_PLAN.md": "cd0549e5b9d41e447cdfb8aab5049527e3fe680df3430990b5ae4b8d6d923eff",
+        "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md": "1bf7c664cd91897a327429b5c6de4b18a82794d2085477676bbda2b1ce77f0f9",
+        "engine/tests/test_v6_e8_decision.py": "4988b227552652cacc3b18b0188295efc520ac4b548debb8ad0d5964750c38ca",
+        "engine/tests/test_v6_e8_preregistration.py": "8728ae63ddb95b32ba40efbb1dd176e3f2fd43c8f78a38609399a5cdf97ed6c6",
+        "tools/research/v6/e2/matrix.py": "bd8ca2a88f2945c5bf3d544ec5a59cf9293bd11b78e1548a2e443c787a131449",
+        "tools/research/v6/e3/action_parity.py": "86b1a557e3a31db157ba2bd8805ef3636f892f2c7e5f9468d0982961d4c4f211",
+        "tools/research/v6/e3/analyze_e3.py": "a8d0911939da5b9b9dcc554657168f6cb36800064043498ef8eaf49bd0610330",
+        "tools/research/v6/e3/gates.py": "0910fb541e9fd4a538d74a6abdcff8515ab4ddc3165ac960ce968c939d2cd9a9",
+        "tools/research/v6/e4/analyze_e4.py": "c891abe0a879f62b0265f5f38f46bd0a1214a860994f06977f05ca3bfaeb2ab1",
+        "tools/research/v6/e4/cell_metrics.py": "cbfe64242113badca6c797dcc2897dea89c88dfdb0040e7a6105f21e03e43e0b",
+        "tools/research/v6/e4/gates.py": "0ea1a03f696530467ee8a3a576712433b433c92ac362799fc168a58dca7fc969",
+        "tools/research/v6/e6/analyze_e6.py": "f9c3473649f7bf2fd18827f24a9af775f47f44d7b6c083acf27536a9e8ef906f",
+        "tools/research/v6/e6/describe.py": "c76b659d6133a897a1e4653a76456820a0feb7e246d58b0da63c928ad6be42ec",
+        "tools/research/v6/e6/discipline.py": "ac15881282d3f177aef7473fa6204385dd451cc791c9f7adaa275ead3f304985",
+        "tools/research/v6/e6/family.py": "ae584af5b052f1d8cd7dbd0be0c7ef7f0d0a924ffb54a138e5cacd323ecbbbd3",
+        "tools/research/v6/e6/interpretation.py": "a8ce142e0857a54f8dea1ca67f38868991c097e92b739c07df145526bfb73d34",
+        "tools/research/v6/e6/payoff.py": "6c482a673d9d796928e85bf80b410fd98faf8c8d1d413170d7e8617a9f191c3c",
+        "tools/research/v6/e6/rederive.py": "c6e6706d219678e43ff3d2c2db4f611854c670d5acba71cdb6d52aa3673ce4df",
+        "tools/research/v6/e6/telemetry.py": "2c6768e644e442d7731ff8abfc028894a7bfcd136be235fdbed30f86f6dbac5c",
+        "tools/research/v6/e6/traces.py": "9c2d75ac3c04b85057302383155052ccb3d75e0dc1d3342840ec597f72811f19",
+        "tools/research/v6/e6_audit/seat.py": "a6c03e7cce00f1a63c4415d5fd4ef0255677fd387e912a20ef4fc297a009ffbe",
+        "tools/research/v6/e8/__init__.py": "eb8812ab4f1846cdc6fb79fe01f5f99eda76201c1491b3035faf96b8ae20b7d4",
+        "tools/research/v6/e8/analysis_freeze.py": "b0a9c04b60135fcb414bb8d73d094d58b9df334fcccae8fe45edbe3ec817297f",
+        "tools/research/v6/e8/analyze_e8.py": "dffb5a4eb9768aef35a15c2986a1984849acf96d940099ba6a0f5fa7da719d79",
+        "tools/research/v6/e8/compatibility.py": "12d7c60cc76e0be435c0a139c93af804a6d269e2175e40d923cb66c80018868d",
+        "tools/research/v6/e8/decision.py": "32cf39962e01478b426bbc027bcd4c2a9efb429a33763ceab8a6af3770206bc0",
+        "tools/research/v6/e8/discipline.py": "56b23cfce3d95c89098caea38f865f57e0c33f2540e72f7b4e5a6a4f3e7dbbdc",
+        "tools/research/v6/e8/family.py": "5ea79eba26b5e27781cfddd692c95c199334817801a5c1bf68068c4952f2c156",
+        "tools/research/v6/e8/family_fingerprints.json": "26690d14cafd8a345520578aa2f4eb54f29579459ff1472a740fdbbfc5927595",
+        "tools/research/v6/e8/family_freeze.json": "4ec253d4b84469cdb90b91d68b2236310ecd0bb8e0f5c8f63a19e709cc3afbeb",
+        "tools/research/v6/e8/family_freeze.py": "7f23ef55825f5318395352c4250238c3fd34c83f170060f035fd89d1721d2210",
+        "tools/research/v6/e8/fixtures/README.md": "22ba8190065d0d0a13d487154eb9f3ed47b902c6f5f14b03ec1b34288ce574f8",
+        "tools/research/v6/e8/gates.py": "ef2b7de32a11605c3b9d02b0ade0d1fa11d71cf402c9f2fd6adda98dea99d601",
+        "tools/research/v6/e8/matrix.py": "02ab656e6b68e370cf04a912e313e247098878c7a0e14f5dea09d149a2f43c25",
+        "tools/research/v6/e8/parent_goldens.json": "2a323f2c643793cc92767a14b42517514de326e61e09c73056ceafed18e201fd",
+        "tools/research/v6/e8/parent_goldens.py": "b508025640a4e33d72bd819b5edf185fb10fcd922a8cc52becfc3a81ce1ba89a",
+        "tools/research/v6/e8/payoff.py": "da4bcfcb88b76967397a16bc9ba3d675ff611e249e3448b123369c2623b6c302",
+        "tools/research/v6/e8/preregistration.json": "6d4ffb4b43bfadebdad9aea1481a52c5ea119ed9c05aae21337931d2c84c7a5b",
+        "tools/research/v6/e8/preregistration.py": "64d1975d4f2439c484edefc5e41eeacec4962e71f89ecf684f1f63e329fdd3f8",
+        "tools/research/v6/e8/preregistration_freeze.py": "70772f2cc734f142e6182d8e1ab9c239fa836ba54f75838c8e890d76e3a40b5e",
+        "tools/research/v6/e8/preregistration_freeze_v4.json": "bf4a409a782f1d3ae08dc4b26b710b37fb8d3e14c6fb76a6904adb9519de31ea",
+        "tools/research/v6/e8/rederive.py": "bece76469d88ed91dfac0f7153d4b603a98a0cc41b21e13ad972b159210ce2ac",
+        "tools/research/v6/e8/run_e8.py": "989175d4e582f4aa3345f68bd99fc2af30c10fa4b2ab1749295993eb196ceb9f",
+        "tools/research/v6/e8/seed_protocol.py": "f59708b3c12bb9afa5b63f683f691cd92547eea9fd8dfa91165161487f1a3967",
+        "tools/research/v6/e8/telemetry.py": "00d62198f05d34d5eaa713e308542c108851f3c143c1ca7cf50b56838b328db7",
+        "tools/research/v6/e8/traces.py": "4a30a4a20e8df0f032cad2e773e47ec3903ad84aabf1fc72ce5ef6416aef2fd6",
+        "tools/research/v6/experiment_harness.py": "e137c02df84f1aa20d1097472bb3885820e4a27ddbd2849fa7b1be73980e0254"
+      },
+      "engine_source": {
+        "path": "engine/src",
+        "files": 116,
+        "sha256": "9323307c4131105a30c94cad16845468937571657b6d354827a26cfbfcff2676"
+      },
+      "sealed_E8_result_sha256_raw": "9b93c488af11c53220c63dc5407bffbab31fcb64721701a648918c9fd8fd2a3e",
+      "qualified_source_hashes_unchanged": true,
+      "all_13_candidate_files_unchanged_during_full_suite": true
+    }
+  },
+  "limitations": [
+    "Seat B on-hit case remains DENSE; repeated evasion prevents C=2 confirmations.",
+    "Earlier single-process static seat-A case terminated before downgrade.",
+    "Legal scripts establish opportunity, not its frequency or payoff in the frozen ecology.",
+    "On-hit harness first-return inference is not identical to EVADE8.",
+    "Long-gap evidence is synthetic; legal repeated denial has intervening callback ticks.",
+    "Fixed/schedule performance selection method remains a separate design decision."
+  ],
+  "checks": {
+    "ruff_repository": "PASS",
+    "mypy_engine": "PASS",
+    "mypy_client": "PASS",
+    "mypy_e9": "PASS"
+  },
+  "final_headless_regression": {
+    "status": "ERROR",
+    "command": ".venv/Scripts/python.exe -m pytest --basetemp=.pytest-tmp/e9-capability-final-suite --junitxml=.pytest-tmp/e9-boundary-evidence/full-suite.xml",
+    "sha256": "8c3c5c1c16a50f0827e223c34ccdc0520f67e1529e2dff51ed25958021fbfc01",
+    "log_sha256": "0f2da778ef3c6eb96ac76d7a3301434650403d774bbd7fc02470da1ba31299c8",
+    "counts": {
+      "PASS": 6901,
+      "FAILURE": 0,
+      "ERROR": 11,
+      "SKIPPED": 18
+    },
+    "collected_cases": 6930,
+    "e9_cases_collected": 53,
+    "e9_cases_passed": 53,
+    "deselected": 3,
+    "total_collected_including_deselected": 6933,
+    "nonpassing_cases": [
+      {
+        "module": "engine.tests.test_v6_e3_pipeline",
+        "name": "test_control_telemetry_is_clean_and_repeatable",
+        "status": "ERROR"
+      },
+      {
+        "module": "engine.tests.test_v6_e3_pipeline",
+        "name": "test_populations_are_defined_from_the_control",
+        "status": "ERROR"
+      },
+      {
+        "module": "engine.tests.test_v6_e3_pipeline",
+        "name": "test_control_baseline_and_identity_evaluation_on_real_data",
+        "status": "ERROR"
+      },
+      {
+        "module": "engine.tests.test_v6_e3_pipeline",
+        "name": "test_identical_controls_reproduce",
+        "status": "ERROR"
+      },
+      {
+        "module": "engine.tests.test_v6_e3_pipeline",
+        "name": "test_reproduction_fails_on_replay_bytes",
+        "status": "ERROR"
+      },
+      {
+        "module": "engine.tests.test_v6_e3_pipeline",
+        "name": "test_reproduction_fails_on_result_identity_and_missing_cells",
+        "status": "ERROR"
+      },
+      {
+        "module": "engine.tests.test_v6_e3_pipeline",
+        "name": "test_reproduction_fails_on_telemetry",
+        "status": "ERROR"
+      },
+      {
+        "module": "engine.tests.test_v6_e3_pipeline",
+        "name": "test_parity_replicate_equals_f2_through_tick_1000",
+        "status": "ERROR"
+      },
+      {
+        "module": "engine.tests.test_v6_e3_pipeline",
+        "name": "test_prefix_gate_on_the_control_side",
+        "status": "ERROR"
+      },
+      {
+        "module": "engine.tests.test_v6_e3_pipeline",
+        "name": "test_treatment_gates_stop_a_whole_tick_corpus_presented_as_a_treatment",
+        "status": "ERROR"
+      },
+      {
+        "module": "engine.tests.test_v6_e3_pipeline",
+        "name": "test_frozen_analysis_runs_both_arms",
+        "status": "ERROR"
+      }
+    ],
+    "error_classification": "One shared frozen E3 control fixture failed during atomic evaluation.json replacement with PermissionError: WinError 5. All 11 dependent cases report that setup error. Specific filesystem cause remains unconfirmed; no assertion failure or E9 failure.",
+    "source_matches_final_focused_record": true,
+    "affected_module_diagnostic": {
+      "status": "PASS",
+      "command": ".venv/Scripts/python.exe -m pytest engine/tests/test_v6_e3_pipeline.py --basetemp=.pytest-tmp/e9-e3-recheck --junitxml=.pytest-tmp/e9-boundary-evidence/e3-recheck.xml",
+      "sha256": "fc7234664f3bb26cb92e22cd61f516232698530a05d4c54f561a179ab2e35d3f",
+      "log_sha256": "2ed39be1a36ea13208bc372ceaeb51f2e5c975fbb7e00d3989a29d02bedd52b2",
+      "counts": {
+        "PASS": 13,
+        "FAILURE": 0,
+        "ERROR": 0,
+        "SKIPPED": 0
+      },
+      "cases": [
+        {
+          "module": "engine.tests.test_v6_e3_pipeline",
+          "name": "test_control_telemetry_is_clean_and_repeatable",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e3_pipeline",
+          "name": "test_populations_are_defined_from_the_control",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e3_pipeline",
+          "name": "test_control_baseline_and_identity_evaluation_on_real_data",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e3_pipeline",
+          "name": "test_identical_controls_reproduce",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e3_pipeline",
+          "name": "test_reproduction_fails_on_replay_bytes",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e3_pipeline",
+          "name": "test_reproduction_fails_on_result_identity_and_missing_cells",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e3_pipeline",
+          "name": "test_reproduction_fails_on_telemetry",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e3_pipeline",
+          "name": "test_only_a_complete_non_sample_record_permits_treatment",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e3_pipeline",
+          "name": "test_parity_replicate_equals_f2_through_tick_1000",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e3_pipeline",
+          "name": "test_prefix_gate_on_the_control_side",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e3_pipeline",
+          "name": "test_prefix_gate_premise_on_real_slot_limited_and_whole_tick_replays",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e3_pipeline",
+          "name": "test_treatment_gates_stop_a_whole_tick_corpus_presented_as_a_treatment",
+          "status": "PASS"
+        },
+        {
+          "module": "engine.tests.test_v6_e3_pipeline",
+          "name": "test_frozen_analysis_runs_both_arms",
+          "status": "PASS"
+        }
+      ],
+      "duration_seconds": 105.91,
+      "code_changes": false,
+      "interpretation": "All affected E3 cases passed unchanged in a fresh ignored temp root. This supports a transient Windows filesystem error; exact cause is unconfirmed. It does not satisfy the clean full-suite commit gate."
+    },
+    "duration_seconds": 1115.61
+  },
+  "commit_push_gate": "CLEAN FULL-SUITE GATE SATISFIED; one capability commit authorized; push and live-remote agreement to be verified after commit.",
+  "comparator_design_review_gate": "ON HOLD per research-lead instruction on 2026-10-02; no E9 comparator/design-review work performed.",
+  "clean_final_headless_regression": {
+    "status": "PASS",
+    "date": "2026-10-02",
+    "command": ".venv/Scripts/python.exe -m pytest --basetemp=.pytest-tmp/e9r-20261002 --junitxml=.pytest-tmp/e9-retry-evidence-20261002/full-suite.xml",
+    "sha256": "e182417083b99759e5e946fc9fc9c0bee2bfdda63d43ae05b6cdd841c9efed09",
+    "log_sha256": "127b757cd103ebe544709b59fecde1d795947ff9f8c92c9866b5eb648f6b6716",
+    "counts": {
+      "PASS": 6912,
+      "FAILURE": 0,
+      "ERROR": 0,
+      "SKIPPED": 18
+    },
+    "collected_cases": 6930,
+    "deselected": 3,
+    "total_collected_including_deselected": 6933,
+    "e9_cases_collected": 53,
+    "e9_cases_passed": 53,
+    "e9_inventory_matches_focused_record": true,
+    "duration_seconds": 1242.31,
+    "nonpassing_cases": [],
+    "executable_and_test_files_changed": false,
+    "standalone_focused_rerun": "NOT REQUIRED: all ten executable/test hashes unchanged; all 53 cases passed in this complete suite.",
+    "authorization": "One additional full-suite invocation on the unchanged qualified tree, authorized by the research lead on 2026-10-02."
+  },
+  "qualification_history": [
+    {
+      "record": "headless_regression",
+      "classification": "ENVIRONMENTAL_TEMP_ROOT_POLICY_VIOLATION",
+      "description": "Earlier full run used basetemp under runs; 6908 passed, 2 failed, 18 skipped, 3 deselected. Both tests passed unchanged outside runs; original capability inventory had 51 cases."
+    },
+    {
+      "record": "final_headless_regression",
+      "classification": "ENVIRONMENTAL_WINDOWS_ATOMIC_REPLACEMENT_ERROR",
+      "description": "First final-tree legal-temp full run: 6901 passed, 11 setup errors, 18 skipped, 3 deselected. Shared E3 WinError 5; unchanged isolated module subsequently passed 13/13. Specific filesystem cause unconfirmed."
+    },
+    {
+      "record": "clean_final_headless_regression",
+      "classification": "CLEAN_FINAL_QUALIFICATION",
+      "description": "Authorized single additional complete invocation: 6912 passed, 18 skipped, 3 deselected; no errors or failures. All 53 E9 cases passed on unchanged executable/test bytes."
+    }
+  ]
+}
