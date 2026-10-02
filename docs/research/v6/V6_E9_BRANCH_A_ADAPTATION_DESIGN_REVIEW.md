@@ -2,6 +2,13 @@
 
 **Status:** Focused design review only, 2026-10-01. The research lead approved the E2–E8 synthesis direction and authorized this review after its separate boundary was pushed. This document is not a preregistration and does not authorize implementation, qualification matches, new seeds, analysis or execution. Requirement C remains **NOT ESTABLISHED**.
 
+**2026-10-02 readiness update:** The subsequent
+[design-decision addendum](V6_E9_DESIGN_DECISIONS_AND_PREREGISTRATION_READINESS.md)
+adopts the ten design directions and records **READY FOR PREREGISTRATION DRAFTING**
+for protocol preparation, with exact outstanding freeze inputs and the later
+analysis-instrument qualification gate. The review below retains its original
+assessment; the addendum supplies the current readiness boundary.
+
 ## 1. Decision and research question
 
 The next question should vary adaptive policy capability on the existing E8 mechanics. It should not add a mechanic merely to create opponent dependence or price information: E6 and E8 already established those properties in their scoped populations.
