@@ -33,6 +33,8 @@ from battle_engine.agent_api import (
     local_source_fingerprint,
 )
 from battle_engine.agent_trace import (
+    ABSENT,
+    Absent,
     DecisionRecordV2,
     ResetRecord,
     TraceActionV2,
@@ -190,6 +192,17 @@ class EntrantState:
         return self.core_base
 
 
+def _trace_sensing_window(ruleset_policy: RulesetPolicy) -> int | Absent:
+    """What a ``ResetRecord`` records as ``sensing_window`` (V6 E8, PR8 Sec 10).
+
+    The window in effect under an active Ruleset; :data:`ABSENT` under every
+    other, so a passive match's reset records serialize exactly as before.
+    """
+
+    window = ruleset_policy.sensing_window
+    return ABSENT if window is None else window
+
+
 class ProcessAgentCallError(RuntimeError):
     """A supervised API-v2 callback failed with a stable diagnostic."""
 
@@ -240,6 +253,24 @@ class ProcessMatchController:
         return (
             f"Ruleset {ruleset_policy.ruleset_id!r} limits sensing to detection_radius {radius}, "
             f"which requires arena_size > {2 * radius}; received {arena_size}."
+        )
+
+    @staticmethod
+    def _sensing_window_problem(ruleset_policy: RulesetPolicy, arena_size: int) -> str | None:
+        """Why ``ruleset_policy``'s SENSE window cannot run at ``arena_size``, if it cannot.
+
+        V6 E8's match-level check, the counterpart of
+        :meth:`_detection_radius_problem`: a half-width ``w`` requires
+        ``2 * w < arena_size``, or one window would cover the whole ring.
+        A passive Ruleset has no window and imposes nothing.
+        """
+
+        window = ruleset_policy.sensing_window
+        if window is None or 2 * window < arena_size:
+            return None
+        return (
+            f"Ruleset {ruleset_policy.ruleset_id!r} senses with half-width {window}, "
+            f"which requires arena_size > {2 * window}; received {arena_size}."
         )
 
     @classmethod
@@ -402,6 +433,13 @@ class ProcessMatchController:
                 stage="configuration",
                 message=detection_radius_problem,
             )
+        sensing_window_problem = cls._sensing_window_problem(ruleset_policy, config.arena_size)
+        if sensing_window_problem is not None:
+            raise cls._initialization_error(
+                code="match_configuration_invalid",
+                stage="configuration",
+                message=sensing_window_problem,
+            )
 
         worker_handles: list[AgentWorkerHandle] = []
         specs: list[ProcessEntrantSpec] = []
@@ -447,6 +485,7 @@ class ProcessMatchController:
                         # code. Empty for every agent without a schema.
                         parameters=MappingProxyType(dict(entrant.parameters)),
                         detection_radius=ruleset_policy.detection_radius,
+                        sensing_window=ruleset_policy.sensing_window,
                     )
                     instance = cast(AgentV2, loaded.instance)
                     reset_start = time.perf_counter()
@@ -457,6 +496,7 @@ class ProcessMatchController:
                             trace_writer.write_reset(ResetRecord(
                                 agent_id=entrant.agent_id,
                                 wall_time_ms=(time.perf_counter() - reset_start) * 1000,
+                                sensing_window=_trace_sensing_window(ruleset_policy),
                             ))
                         raise PythonEntrantInitializationError(
                             diagnose_reset_failure(exc, agent_id=entrant.agent_id, slot=slot)
@@ -465,6 +505,7 @@ class ProcessMatchController:
                         trace_writer.write_reset(ResetRecord(
                             agent_id=entrant.agent_id,
                             wall_time_ms=(time.perf_counter() - reset_start) * 1000,
+                            sensing_window=_trace_sensing_window(ruleset_policy),
                         ))
                     try:
                         declarations: object = instance.declare_processes()
@@ -527,11 +568,13 @@ class ProcessMatchController:
                         timeout=agent_call_timeout,
                         parameters=entrant.parameters,
                         detection_radius=ruleset_policy.detection_radius,
+                        sensing_window=ruleset_policy.sensing_window,
                     )
                     if trace_writer is not None:
                         trace_writer.write_reset(ResetRecord(
                             agent_id=entrant.agent_id,
                             wall_time_ms=(time.perf_counter() - reset_start) * 1000,
+                            sensing_window=_trace_sensing_window(ruleset_policy),
                         ))
                     if reset_result.status is not WorkerCallStatus.OK:
                         raise PythonEntrantInitializationError(
@@ -710,6 +753,9 @@ class ProcessMatchController:
         )
         if detection_radius_problem is not None:
             raise ValueError(detection_radius_problem)
+        sensing_window_problem = self._sensing_window_problem(self.ruleset_policy, config.arena_size)
+        if sensing_window_problem is not None:
+            raise ValueError(sensing_window_problem)
 
         for spec in entrant_specs:
             if not spec.processes:
@@ -832,8 +878,14 @@ class ProcessMatchController:
         making the resulting spatial fact entrant-wide without exposing which
         sensor observed it. Co-located enemies collapse to one occupied
         address; identities and structural metadata remain private.
+
+        Under ``sensing_mode == "active"`` (V6 E8, PR8 Sec 2.1) passive
+        visibility is off: the set is empty at every callback, and the only
+        way to learn where an enemy anchor is is the SENSE action.
         """
 
+        if self.ruleset_policy.sensing_mode == "active":
+            return ()
         enemy_positions = {
             process.position
             for spec in self.entrant_specs
@@ -865,6 +917,28 @@ class ProcessMatchController:
                     visible.add(enemy_position)
                     break
         return tuple(sorted(visible))
+
+    def _sensed_anchors(self, observer_spec: ProcessEntrantSpec, target: int) -> tuple[int, ...]:
+        """What a SENSE at ``target`` by ``observer_spec`` returns (V6 E8, PR8 Sec 2.3).
+
+        The ascending tuple of distinct positions of the processes of every
+        *other live* entrant within circular distance ``<= sensing_window``
+        of ``target``, inclusive, taken now -- the instant the action
+        executes. Suppression does not hide a process from it, co-located
+        anchors appear once, and the acting entrant's own processes never
+        appear.
+        """
+
+        window = self.ruleset_policy.sensing_window
+        if window is None:
+            raise RuntimeError(f"Ruleset {self.ruleset_policy.ruleset_id!r} has no SENSE window")
+        return tuple(sorted({
+            process.position
+            for spec in self.entrant_specs
+            if spec.agent_id != observer_spec.agent_id and self._states_by_agent_id[spec.agent_id].alive
+            for process in spec.processes
+            if process.position is not None and self._circular_dist(process.position, target) <= window
+        }))
 
     def _effective_process_quotas(
         self,
@@ -996,11 +1070,32 @@ class ProcessMatchController:
         return None
 
     @staticmethod
-    def _validate_v2_action(action: object) -> AgentAction:
+    def _refuse_unavailable_sense(action: object, *, sensing_available: bool) -> None:
+        """Raise the invalid-action ``ValueError`` for a SENSE its Ruleset does not offer.
+
+        V6 E8's A1 containment at the engine boundary (PR8 Sec 2.3 and 13):
+        SENSE exists only under ``sensing_mode == "active"``; anywhere else it
+        is an invalid v2 action, rejected before an action is recorded, and the
+        entrant forfeits exactly as for any other invalid action.
+        """
+
+        if not sensing_available and getattr(action, "kind", None) is ActionKindV2.SENSE:
+            raise ValueError("sense is available only under a Ruleset whose sensing_mode is 'active'")
+
+    @staticmethod
+    def _validate_v2_action(action: object, *, sensing_available: bool = False) -> AgentAction:
+        """Validate one returned v2 action's shape.
+
+        ``sensing_available`` defaults to ``False``, so every caller that does
+        not name a Ruleset -- a validation dry run belongs to none -- refuses
+        SENSE. Only a match under an active Ruleset passes ``True``.
+        """
+
         if not isinstance(action, AgentAction):
             raise ValueError("act() must return one AgentAction")
         if not isinstance(action.kind, ActionKindV2):
             raise ValueError("Agent API v2 supports READ, WRITE, and MOVE only")
+        ProcessMatchController._refuse_unavailable_sense(action, sensing_available=sensing_available)
         if isinstance(action.operand, bool) or not isinstance(action.operand, int):
             raise ValueError(f"{action.kind.value} requires one integer operand")
         if action.kind is ActionKindV2.WRITE:
@@ -1038,6 +1133,8 @@ class ProcessMatchController:
         action: TraceActionV2 | None,
         diag: TraceDiagnostic | None,
         res: TraceResultV2 | None,
+        *,
+        reflection: tuple[int, ...] | None | Absent = ABSENT,
     ) -> None:
         if writer is None:
             return
@@ -1055,6 +1152,7 @@ class ProcessMatchController:
             previous_action_applied=obs.previous_action_applied,
             previous_read_value=obs.previous_read_value,
             previous_read_owner=obs.previous_read_owner,
+            previous_sense_anchors=reflection,
         )
         writer.write_decision_v2(DecisionRecordV2(
             agent_id=agent_id,
@@ -1152,7 +1250,14 @@ class ProcessMatchController:
                     previous_action_applied=last_res.get("applied", False),
                     previous_read_value=last_res.get("read_val"),
                     previous_read_owner=last_res.get("read_owner"),
+                    previous_sense_anchors=last_res.get("sense_anchors"),
                 )
+                # V6 E8 (PR8 Sec 10): the callback after a SENSE record owes its
+                # reflection -- the tuple, or None after a refusal -- however many
+                # ticks of suppression came between. ``last_res`` holds a
+                # "sense_anchors" key exactly when this process's previous action
+                # was a SENSE; every other callback omits the trace field.
+                trace_reflection: tuple[int, ...] | None | Absent = last_res.get("sense_anchors", ABSENT)
 
                 trace_start = time.perf_counter() if self.trace_writer is not None else 0.0
 
@@ -1160,8 +1265,11 @@ class ProcessMatchController:
                 
                 try:
                     action = active_proc.act(obs, slot)
+                    sensing_available = self.ruleset_policy.sensing_mode == "active"
                     if spec.normalized_shares:
-                        action = self._validate_v2_action(action)
+                        action = self._validate_v2_action(action, sensing_available=sensing_available)
+                    else:
+                        self._refuse_unavailable_sense(action, sensing_available=sensing_available)
                 except ProcessAgentCallError as exc:
                     _proc_actions[st.agent_id][active_proc.process_id] += 1
                     st.cpu_used += 1
@@ -1184,7 +1292,7 @@ class ProcessMatchController:
                         code=exc.diagnostic.code, stage=exc.diagnostic.stage, message=exc.diagnostic.message,
                         agent_id=exc.diagnostic.agent_id, slot=exc.diagnostic.slot, exception_type=exc.diagnostic.exception_type,
                         tick=exc.diagnostic.tick, action_slot=exc.diagnostic.action_slot
-                    ), TraceResultV2(status="EXCEPTION"))
+                    ), TraceResultV2(status="EXCEPTION"), reflection=trace_reflection)
                     return
                 except ValueError as exc:
                     _proc_actions[st.agent_id][active_proc.process_id] += 1
@@ -1220,7 +1328,7 @@ class ProcessMatchController:
                         code=diagnostic.code, stage=diagnostic.stage, message=diagnostic.message,
                         agent_id=diagnostic.agent_id, slot=diagnostic.slot, exception_type=diagnostic.exception_type,
                         tick=diagnostic.tick, action_slot=diagnostic.action_slot
-                    ), TraceResultV2(status="EXCEPTION" if diagnostic.code != "agent_action_invalid" else "REJECTED_INVALID"))
+                    ), TraceResultV2(status="EXCEPTION" if diagnostic.code != "agent_action_invalid" else "REJECTED_INVALID"), reflection=trace_reflection)
                     return
                 except Exception as exc:
                     _proc_actions[st.agent_id][active_proc.process_id] += 1
@@ -1251,7 +1359,7 @@ class ProcessMatchController:
                         code=diagnostic.code, stage=diagnostic.stage, message=diagnostic.message,
                         agent_id=diagnostic.agent_id, slot=diagnostic.slot, exception_type=diagnostic.exception_type,
                         tick=diagnostic.tick, action_slot=diagnostic.action_slot
-                    ), TraceResultV2(status="EXCEPTION" if diagnostic.code != "agent_action_invalid" else "REJECTED_INVALID"))
+                    ), TraceResultV2(status="EXCEPTION" if diagnostic.code != "agent_action_invalid" else "REJECTED_INVALID"), reflection=trace_reflection)
                     return
                 _proc_actions[st.agent_id][active_proc.process_id] += 1
                 st.cpu_used += 1
@@ -1296,7 +1404,7 @@ class ProcessMatchController:
                         res_info["read_owner"] = None
                         res_info["applied"] = False
                         last_obs_results[st.agent_id][active_proc.process_id] = res_info
-                        ProcessMatchController._emit_decision_trace(self.trace_writer, st.agent_id, active_proc.process_id, trace_start, obs, trace_action, None, TraceResultV2(status="REJECTED_OUT_OF_REACH"))
+                        ProcessMatchController._emit_decision_trace(self.trace_writer, st.agent_id, active_proc.process_id, trace_start, obs, trace_action, None, TraceResultV2(status="REJECTED_OUT_OF_REACH"), reflection=trace_reflection)
                         return
 
                     val = self.vm.arena[target_addr]
@@ -1318,7 +1426,7 @@ class ProcessMatchController:
                         # Out of reach: write discarded
                         res_info["applied"] = False
                         last_obs_results[st.agent_id][active_proc.process_id] = res_info
-                        ProcessMatchController._emit_decision_trace(self.trace_writer, st.agent_id, active_proc.process_id, trace_start, obs, trace_action, None, TraceResultV2(status="REJECTED_OUT_OF_REACH"))
+                        ProcessMatchController._emit_decision_trace(self.trace_writer, st.agent_id, active_proc.process_id, trace_start, obs, trace_action, None, TraceResultV2(status="REJECTED_OUT_OF_REACH"), reflection=trace_reflection)
                         return
 
                     val = (action.value if action.value is not None else 0) & 0xFF
@@ -1351,6 +1459,30 @@ class ProcessMatchController:
                                     other_p.telemetry.total_disrupted_ticks += self.disruption_duration
                                     other_p.telemetry.disrupted_match_ticks.add(_tick)
 
+                elif action.kind is ActionKindV2.SENSE:
+                    # V6 E8 (PR8 Sec 2.3): reach is checked exactly as for READ.
+                    # Refused, the record's ``sensed_anchors`` is an explicit
+                    # null; applied, it is the tuple, possibly empty. Nothing in
+                    # the match changes either way, and the sensed entrant
+                    # learns nothing.
+                    target_addr = (action.operand if action.operand is not None else 0) % self.config.arena_size
+                    if (
+                        active_proc.reach is not None
+                        and active_proc.position is not None
+                        and self._circular_dist(target_addr, active_proc.position) > active_proc.reach
+                    ):
+                        res_info["applied"] = False
+                        res_info["sense_anchors"] = None
+                        last_obs_results[st.agent_id][active_proc.process_id] = res_info
+                        ProcessMatchController._emit_decision_trace(
+                            self.trace_writer, st.agent_id, active_proc.process_id, trace_start, obs, trace_action,
+                            None, TraceResultV2(status="REJECTED_OUT_OF_REACH", sensed_anchors=None),
+                            reflection=trace_reflection,
+                        )
+                        return
+                    res_info["normalized_address"] = target_addr
+                    res_info["sense_anchors"] = self._sensed_anchors(spec, target_addr)
+
                 last_obs_results[st.agent_id][active_proc.process_id] = res_info
                 
                 ProcessMatchController._emit_decision_trace(
@@ -1360,7 +1492,9 @@ class ProcessMatchController:
                         normalized_address=active_proc.position if (action and action.kind in (ActionKind.MOVE, ActionKindV2.MOVE)) else res_info.get("normalized_address"),
                         read_value=res_info.get("read_val"),
                         read_owner=res_info.get("read_owner"),
-                    )
+                        sensed_anchors=res_info.get("sense_anchors", ABSENT),
+                    ),
+                    reflection=trace_reflection,
                 )
 
             def execute_slot_limited_entrant_slot(

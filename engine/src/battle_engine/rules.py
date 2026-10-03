@@ -281,6 +281,35 @@ BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID = (
 )
 
 
+# V6 E8's active-spatial-sensing research identities (see
+# docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md Sec 2 and
+# docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_IMPLEMENTATION_PLAN.md Sec 4).
+# Each is a distinct research identity, never an alias of its parent: its sole
+# intended gameplay difference from that parent is
+# ``RulesetPolicy.sensing_mode == "active"`` instead of ``"passive"``. Passive
+# enemy-anchor visibility is then off, and the research-only SENSE action
+# (``ActionKindV2.SENSE``) is available instead: for one offer, charged
+# exactly as a READ, it returns the live enemy anchors within the registered
+# half-width of 27 cells of its target.
+#
+# The primary treatment's parent is E6's ``bytefray-rules-6-research-sensing-r32``
+# (C8, whole-tick disruption); the companion's parent is
+# ``bytefray-rules-6-research-disruption-slot1-sensing-r32`` (C8L, slot-limited
+# disruption). Each replaces its parent's ``-r32`` suffix with ``-active-w27``:
+# the parent's passive radius stays in the policy but is inert under
+# ``"active"``, and ``-w27`` records the one registered window, so a possible
+# second window would be a sibling rather than a rename. These are the
+# pre-registration's provisional identifiers, fixed here at implementation.
+# Deliberately not selectable from ``bytefray run``/``agents test``/tournament/
+# Designer surfaces or ``OMITTED_RULESET_CANDIDATES`` -- only ``agents
+# evaluate`` (or the Python API) can select either, and only by explicit
+# ``--ruleset`` name.
+BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID = "bytefray-rules-6-research-sensing-active-w27"
+BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID = (
+    "bytefray-rules-6-research-disruption-slot1-sensing-active-w27"
+)
+
+
 # v0.10 Phase 4: a finite, explicit historical-alias table -- deliberately
 # not a generic "normalize any evaluation-rules-N-shaped string" function.
 # Each entry records a relationship actually established by git-history
@@ -352,10 +381,12 @@ __all__ = [
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID",
+    "BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID",
     "RulesetConfidence",
     "RulesetProvenance",

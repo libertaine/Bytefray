@@ -89,6 +89,7 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     HISTORICAL_READONLY_RULESET_IDS,
@@ -245,7 +246,10 @@ def test_every_registered_policy_keeps_whole_tick_disruption_except_e3() -> None
     # same way (test_ruleset_v6_research_anchor_before_core.py). V6 E6's
     # companion is the E3 companion plus a sensing radius and inherits it too;
     # E6's primary is research-scale plus a sensing radius, so it keeps the
-    # whole-tick rule (test_ruleset_v6_research_sensing.py).
+    # whole-tick rule (test_ruleset_v6_research_sensing.py). V6 E8's companion is
+    # E6's companion with active sensing and inherits it again; E8's primary is
+    # E6's primary with active sensing, so it keeps the whole-tick rule
+    # (test_ruleset_v6_research_sensing_active.py).
     slot_limited = {
         *E3_IDS,
         BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
@@ -253,6 +257,7 @@ def test_every_registered_policy_keeps_whole_tick_disruption_except_e3() -> None
         BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID,
+        BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID,
     }
     assert {
         ruleset_id: policy.disruption_slot_limit for ruleset_id, policy in _RULESET_POLICIES.items()
@@ -415,8 +420,9 @@ def test_e3_is_explicitly_selectable_from_agents_evaluate() -> None:
     assert set(E3_IDS) <= set(choices)
     # V6 E4's two identities follow E3's (test_ruleset_v6_research_mirrored_passes.py),
     # V6 E5's two follow E4's (test_ruleset_v6_research_anchor_before_core.py),
-    # and V6 E6's two follow E5's (test_ruleset_v6_research_sensing.py).
-    assert choices[-8:-6] == [PRIMARY_ID, COMPANION_ID]
+    # V6 E6's two follow E5's (test_ruleset_v6_research_sensing.py), and V6 E8's
+    # two follow E6's (test_ruleset_v6_research_sensing_active.py).
+    assert choices[-10:-8] == [PRIMARY_ID, COMPANION_ID]
 
 
 # ---------------------------------------------------------------------------

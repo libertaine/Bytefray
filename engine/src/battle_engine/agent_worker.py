@@ -222,6 +222,7 @@ class AgentWorkerHandle:
         locality_reach: int | None = None,
         parameters: Mapping[str, Any] | None = None,
         detection_radius: int | None = None,
+        sensing_window: int | None = None,
     ) -> WorkerCallResult:
         return self._call(
             {
@@ -247,6 +248,10 @@ class AgentWorkerHandle:
                 # radius, read back through `.get(...)` with the same
                 # tolerance as the two keys above.
                 "detection_radius": detection_radius,
+                # V6 E8: additive, `None` for every Ruleset whose sensing mode
+                # is passive, read back through `.get(...)` with the same
+                # tolerance as the keys above.
+                "sensing_window": sensing_window,
             },
             timeout=timeout,
         )
@@ -270,6 +275,13 @@ class AgentWorkerHandle:
                 "previous_action_applied": observation.previous_action_applied,
                 "previous_read_value": observation.previous_read_value,
                 "previous_read_owner": observation.previous_read_owner,
+                # V6 E8: additive, read back through `.get(...)`, so an
+                # observation without the key reaches the agent as `None`.
+                "previous_sense_anchors": (
+                    None
+                    if observation.previous_sense_anchors is None
+                    else list(observation.previous_sense_anchors)
+                ),
             }
         else:
             observation_payload = {
@@ -454,6 +466,7 @@ def _handle_reset(state: _WorkerState, request: dict[str, Any], out: Any) -> Non
         rng=random.Random(seed),
         parameters=MappingProxyType(dict(request.get("parameters") or {})),
         detection_radius=request.get("detection_radius"),
+        sensing_window=request.get("sensing_window"),
     )
     try:
         state.loaded.instance.reset(context)
@@ -524,6 +537,11 @@ def _handle_act(state: _WorkerState, request: dict[str, Any], out: Any) -> None:
         previous_action_applied=observation_payload["previous_action_applied"],
         previous_read_value=observation_payload.get("previous_read_value"),
         previous_read_owner=observation_payload.get("previous_read_owner"),
+        previous_sense_anchors=(
+            None
+            if observation_payload.get("previous_sense_anchors") is None
+            else tuple(observation_payload["previous_sense_anchors"])
+        ),
     )
     action_slot = request.get("action_slot", 0)
     try:

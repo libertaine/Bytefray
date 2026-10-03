@@ -226,6 +226,16 @@ class MatchContextV2:
     #: Additive and last, with a default, exactly like ``parameters`` above:
     #: NOT an Agent API version change.
     detection_radius: int | None = None
+    #: The half-width of the research-only SENSE window in effect for this
+    #: match (V6 E8, docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md
+    #: Sec 2.3 and 10): ``27`` under a Ruleset whose ``sensing_mode`` is
+    #: ``"active"``, the only Rulesets under which ``ActionKindV2.SENSE`` is
+    #: accepted; ``None`` everywhere else, where returning SENSE is an invalid
+    #: action. An agent that may sense must check this first.
+    #:
+    #: Additive and last, with a default, exactly like the fields above: NOT an
+    #: Agent API version change.
+    sensing_window: int | None = None
 
 
 @dataclass(frozen=True)
@@ -242,12 +252,30 @@ class ObservationV2:
     previous_action_applied: bool
     previous_read_value: int | None
     previous_read_owner: str | None
+    #: V6 E8 (docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md
+    #: Sec 2.3): when this process's previous action was an applied SENSE, the
+    #: ascending tuple of distinct enemy anchor positions it returned (empty
+    #: if it found none); ``None`` otherwise, including after a SENSE refused
+    #: as out of reach. It is delivered at this process's next callback, even
+    #: when suppression moved that callback to a later tick.
+    #:
+    #: Additive and last, with a default, so this is NOT an Agent API version
+    #: change and existing keyword construction is unaffected.
+    previous_sense_anchors: tuple[int, ...] | None = None
 
 
 class ActionKindV2(str, Enum):
     READ = "read"
     WRITE = "write"
     MOVE = "move"
+    #: Research-only (V6 E8, A1 containment: docs/research/v6/
+    #: V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md Sec 2.3 and 13). One
+    #: integer operand, the target, and no value. Accepted only under a Ruleset
+    #: whose ``sensing_mode`` is ``"active"`` -- that is, only when
+    #: ``MatchContextV2.sensing_window`` is not ``None``; under every other
+    #: Ruleset it is an invalid action, and the entrant forfeits exactly as for
+    #: any other invalid action. Not a product feature.
+    SENSE = "sense"
 
 
 @dataclass(frozen=True)

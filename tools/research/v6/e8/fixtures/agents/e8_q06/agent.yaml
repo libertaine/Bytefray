@@ -1,0 +1,32 @@
+name: e8_q06
+display: E8 family package e8_q06
+description: Research-only V6 E8 family package (implementation plan Sec 5). Not a product starter agent.
+kind: python
+api_version: 2
+entrypoint: agent.py:create_agent
+version: "1.0.0"
+parameters:
+  acquire:
+    type: choice
+    choices: ["none", "spatial-fast", "spatial-paced", "ownership"]
+    default: "none"
+  reacquire:
+    type: choice
+    choices: ["none", "once", "repeat", "adaptive"]
+    default: "none"
+  posture:
+    type: choice
+    choices: ["attack", "guard", "paint"]
+    default: "paint"
+  evade:
+    type: choice
+    choices: ["off", "on-hit"]
+    default: "off"
+  processes:
+    type: integer
+    minimum: 1
+    maximum: 2
+    default: 1
+  stress:
+    type: boolean
+    default: false
