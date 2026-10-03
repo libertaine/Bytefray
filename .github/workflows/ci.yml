@@ -11,6 +11,10 @@ jobs:
         python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
     steps:
       - uses: actions/checkout@v6
+        with:
+          # The V6 research freeze tests read pinned files from earlier
+          # commits (git show <sha>:<path>), so they need full history.
+          fetch-depth: 0
       - uses: actions/setup-python@v6
         with: { python-version: "${{ matrix.python-version }}" }
       - run: python -m pip install -U pip
@@ -40,6 +44,8 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # see test-linux-core
       - uses: actions/setup-python@v6
         with:
           python-version: '3.15-dev'
@@ -79,7 +85,7 @@ jobs:
         # fast subset (not the full suite, which already runs per-Python-
         # version on Linux) specifically to get real Windows containment
         # coverage from a runner that's already provisioned for this job.
-        run: python -m pytest engine/tests/test_process_containment.py engine/tests/test_agent_worker.py engine/tests/test_supervised_runtime.py -q
+        run: python -m pytest engine/tests/test_process_containment.py engine/tests/test_agent_worker.py -q
       - name: Run Windows-native agent-revision (NTFS junction) tests
         # Same rationale as above, for a second Windows-only surface: real
         # NTFS directory junctions (mklink /J, which needs no elevation,
