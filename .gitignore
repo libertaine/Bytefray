@@ -82,3 +82,17 @@ engine/src/battle_engine/cli.py.*
 /*.spec
 .idea/
 .env
+
+# V6 E9 private historical-provenance evidence, kept out of this public
+# repository deliberately and shared privately with reviewers. The packets
+# carry redacted agent session-log excerpts; the handoff builder embeds a
+# private local session-log path and stays byte-identical to the
+# source_sha256_raw bound in tools/research/v6/e9/historical_provenance_handoff.json.
+# The public reports record the archive names and raw SHA-256 values.
+/docs/research/v6/e9_historical_provenance_01.zip
+/docs/research/v6/e9_historical_provenance_01.zip.sha256
+/docs/research/v6/e9_historical_provenance_02.zip
+/docs/research/v6/e9_historical_provenance_02.zip.sha256
+/docs/research/v6/e9_historical_provenance_03.zip
+/docs/research/v6/e9_historical_provenance_03.zip.sha256
+/tools/research/v6/e9/provenance_handoff.py
