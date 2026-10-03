@@ -1,0 +1,54 @@
+{
+  "schema": "bytefray.v6.e8.preregistration_freeze",
+  "version": 1,
+  "identity": "v6-e8-prereg-v1-116c9ed83400",
+  "digest": "116c9ed834009132f42463a0cc1bc210e9c8c132b687bdb3ec081a2365ddeac8",
+  "body": {
+    "experiment": "E8",
+    "phase": "I8-0",
+    "preregistration": {
+      "document": "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md",
+      "revision": 2,
+      "registration_commit": "090d11e",
+      "sha256": "0c6d0b741a4584ac10bc5f2aa3837bbc83213b8a608352d86949bdf809737286",
+      "historical": [
+        {
+          "revision": 1,
+          "commit": "28925fd",
+          "document_sha256": "6d50dae648dbdb0def2bcb94644e0705b4d62d4e818f7288190df4f8fac4efbb",
+          "standing": "historical provenance"
+        }
+      ]
+    },
+    "transcription": {
+      "path": "tools/research/v6/e8/preregistration.json",
+      "sha256": "0b3fe15952b307989e7623683476837690cdb3883017382c66f8890c2b0989a3"
+    },
+    "tooling_commit": "eda8be5",
+    "files": {
+      "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md": "0c6d0b741a4584ac10bc5f2aa3837bbc83213b8a608352d86949bdf809737286",
+      "tools/research/v6/e8/preregistration.json": "0b3fe15952b307989e7623683476837690cdb3883017382c66f8890c2b0989a3",
+      "tools/research/v6/e8/__init__.py": "df8549213207964d0340d83218bea069eb7fbc2e47bba3731597c4b5803dbc00",
+      "tools/research/v6/e8/preregistration.py": "835a0f6b3ab37f0104aead70f4c9666407c3bc372093f67ca735494d0baea07f",
+      "tools/research/v6/e8/decision.py": "3cf6943a7d2a229a2d11c38a4a57829186d8d5d0d6ae419e43eac9c216683f79",
+      "engine/tests/test_v6_e8_preregistration.py": "4ab0e3e2c0af65ff1547f0a1913b74861eb4556ce5d5a1614d099dfcf27a4c44",
+      "engine/tests/test_v6_e8_decision.py": "3220e946823958279f4a2496f7da5cea25f3226884ae21315b43086e50240dbc",
+      "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_IMPLEMENTATION_PLAN.md": "fc653355b196923e5ed4d5a7d7cd276992b355832b6eda8b1cac9165fb5fa8db"
+    },
+    "registered_draws": {
+      "resamples": 1000,
+      "draws_per_resample": 32,
+      "rng": "random.Random(42)",
+      "sha256": "933a603c671ed0ecf4afc4cad390ec8f4dde019d47bebf9ec4e774a6c2d273d5"
+    },
+    "census_prediction": [
+      "EVADE8"
+    ],
+    "later_identities": {
+      "structural_matrix": "v6-e8-matrix-v1-<12 hex>, at I8-4",
+      "analysis": "v6-e8-analysis-v1-<12 hex>, at I8-5",
+      "execution": "v6-e8-exec-v1-<12 hex>, at I8-6"
+    },
+    "seeds": "none exist"
+  }
+}

@@ -11,6 +11,108 @@ You write the agents: they maneuver, inspect, and rewrite memory while defending
 [![Python 3.10–3.14](https://img.shields.io/badge/Python-3.10%E2%80%933.14-blue)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+## Version 6 Research Branch
+
+> **This branch is not a preview of the Version 6 Alpha 1 feature set.**
+
+`v6-research` is Bytefray's active design and experimentation branch. It records the questions being investigated, the mechanisms being tested, what has been ruled out, and what evidence is shaping the eventual Version 6 design.
+
+Some experiments on this branch are deliberately temporary. Research rulesets, test agents, instrumentation, and experimental mechanics may never appear in a public V6 release.
+
+The purpose of this branch is to answer questions before those decisions are made.
+
+Bytefray 5.0.0 remains the current stable release.
+
+### What V6 research is trying to solve
+
+Version 6 began with a cleanup and architecture program — internally described as:
+
+> **Bytefray goes on a diet and a makeover.**
+
+The repository was simplified, obsolete execution paths were retired, historical compatibility was preserved, and major evaluation code was broken into smaller, more maintainable components.
+
+With that foundation in place, the research shifted toward a harder gameplay question:
+
+**How can Bytefray create meaningful opponent-dependent decisions rather than letting one broadly optimal strategy dominate most matchups?**
+
+The research is deliberately empirical. Instead of adding several mechanics at once and deciding whether the result "feels better," V6 isolates individual variables, runs controlled match matrices, and records what actually changes.
+
+### What has been learned so far
+
+| Research direction | What it told us |
+|---|---|
+| **Much larger arenas** | Simply making the arena larger does not automatically create deeper strategy. The existing competitive structure remains surprisingly persistent, while some agents fail in new ways. |
+| **Movement scaling** | Giving agents proportionally larger movement does not cleanly solve large-arena play and can introduce new artifacts. |
+| **Multi-tick capture** | Delaying capture removes one immediate forced line, but mostly converts it into delay, stalemate, or scheduler-dependent behavior. |
+| **Slot-limited disruption** | Restricting disruption to the victim's next action significantly reduces whole-tick first-mover dominance, but does not eliminate order dependence. |
+| **Mirrored pass ordering** | Balancing later action order removes much of the multi-pass ordering effect while exposing a separate opening-exchange effect. |
+| **Anchor/core separation** | Separating process spawn position from the core proved that their original co-location was not the main cause of the remaining advantage. |
+| **Priced sensing** | Limiting free information produced the first strong evidence that the best strategy can genuinely depend on the opponent and that obtaining information can compete with taking immediate action. |
+
+### The most interesting recent result
+
+The E6 **Priced Sensing** experiment asked what happens if an agent cannot automatically see opponents across its entire effective range.
+
+Instead, agents have to decide how much effort to spend finding an opponent versus acting immediately.
+
+Under the original control, one policy could remain a best response across the opponent field.
+
+Under priced sensing, that disappeared: different opponents rewarded different allocations of search, information, movement, and attack effort.
+
+The registered interpretation was:
+
+**`R-CREATES` — priced sensing created an opponent-dependent choice of how to allocate actions.**
+
+The experiment also showed that gathering **less** information could outperform gathering more information in some matchups.
+
+That is important because it demonstrates the kind of strategic tradeoff V6 has been looking for.
+
+It is **not**, however, a candidate for direct promotion.
+
+The primary experiment also created a new seat artifact, so its registered disposition was to reject that exact mechanic as a gameplay candidate. A companion experiment using a different disruption model reproduced the strategic result without the same artifact.
+
+The follow-up question—whether priced sensing interacts with disruption semantics to create the E6 seat artifact—was examined in a post-hoc factorial audit of the frozen E6 corpus. The audit found that the registered KC-5 event was a unit-level interaction involving priced sensing, whole-tick lockout, and ADAPT's absolute-tick behavior, but not a stable family-level sensing × disruption effect. That line is therefore closed with no E7 experiment. E8 is the next available experiment number for any new V6 gameplay study.
+
+### What this branch represents
+
+The contents of `v6-research` should be read as evidence, not as a V6 feature list.
+
+A mechanic appearing here may be:
+
+- a control condition,
+- an experimental treatment,
+- an intentionally exaggerated probe,
+- research instrumentation,
+- a failed candidate that taught us something useful,
+- or an idea that eventually contributes to a different mechanic.
+
+The eventual Version 6 Alpha 1 will be a separate design boundary created from the conclusions of this work.
+
+Research code should therefore not be interpreted as "coming in V6."
+
+### Current direction
+
+The research is increasingly pointing away from simply changing arena dimensions or scheduler constants and toward systems where agents must make meaningful tradeoffs.
+
+Areas being investigated include:
+
+- limited or priced information,
+- action economy,
+- opponent-dependent strategy,
+- disruption and response timing,
+- partial observability,
+- deployment and spatial commitment,
+- match variability,
+- and ways to prevent a single deterministic strategy ladder from dominating the game.
+
+These are research directions, not announced V6 features.
+
+For the detailed experimental record, see:
+
+- [`docs/ROADMAP.md`](docs/ROADMAP.md)
+- [`docs/FUTURE_PLANS.md`](docs/FUTURE_PLANS.md)
+- [`docs/research/v6/`](docs/research/v6/)
+
 <p align="center">
   <img src="docs/screenshots/v5-replay-showcase.gif" alt="Animated Bytefray replay showing two Python agents competing in the arena and a core capture" width="900">
 </p>
@@ -127,7 +229,7 @@ bytefray replay --replay runs/demo/replay.jsonl --renderer pygame
 | **Agent API** | Agent API v2 (`reset`, `declare_processes`, `act`) |
 | **Action Vocabulary** | `READ` (absolute address), `WRITE` (absolute address), `MOVE` (relative delta `[-64, 64]`) |
 | **Elimination Condition** | Core capture: an entrant is eliminated when it owns 0 cells of its 8-cell core at tick end |
-| **Artifact Formats** | `battle2.result` (schema v2 native JSON; v1 historical/pMARS), `battle2.replay` (schema v4 JSONL) |
+| **Artifact Formats** | `battle2.result` (schema v2 native JSON; v1 historical, including retired Redcode/pMARS records), `battle2.replay` (schema v4 JSONL) |
 | **Execution Model** | Local trusted Python execution; worker subprocesses with per-call timeouts for hang containment |
 | **Tooling** | Headless CLI, interactive Pygame replay visualizer, PySide6 visual Agent Designer |
 
@@ -344,7 +446,7 @@ Bytefray does not enforce sandboxing or runtime restrictions to prevent nondeter
 Bytefray includes a modular tool suite separating headless simulation from presentation:
 
 ### 1. Command-Line Interface (`bytefray`)
-* `bytefray run`: Execute native matches or pMARS ICWS'94 benchmarks.
+* `bytefray run`: Execute native Bytefray matches.
 * `bytefray replay`: Play back recorded `.jsonl` replays via headless terminal or Pygame.
 * `bytefray tournament`: Run or resume headless round-robin tournaments across rosters.
 * `bytefray design`: Launch the PySide6 visual Agent Designer.
@@ -454,12 +556,12 @@ The current permanent stable ruleset is `bytefray-rules-4`. An omitted `--rulese
 
 ### Historical Rulesets
 Earlier gameplay contracts remain executable and explicitly selectable for compatible agents, including historical reproduction:
-* `bytefray-rules-4-alpha2`: Semantic predecessor of Ruleset v4, preserved as a research milestone.
-* `bytefray-rules-4-alpha1`: Initial v4 alpha with evenly spaced core placement and priority process selection.
 * `bytefray-rules-2`: Permanent single-actor Python gameplay; still the omitted-ruleset default for Agent API v1 agents.
 * `bytefray-rules-1`: Historical Python Agent API v1 and native VM/blob gameplay. Mixed Python/VM matches remain unsupported.
 
-pMARS Redcode uses a separate backend and does not execute under a Bytefray ruleset. Designer Simple offers permanent v2 and v4; Advanced, Development, and pairwise Evaluation also expose historical choices. Group evaluation requires Ruleset v2.
+`bytefray-rules-4-alpha1` (initial v4 alpha, evenly spaced core placement and priority process selection) and `bytefray-rules-4-alpha2` (semantic predecessor of Ruleset v4) were retired from executable registration by V6 Phase 2B.10 Scope B: neither can create a new match any longer. Historical results, replays, and evaluations recorded under either remain fully readable, indexable, and replayable — see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)'s "Retired from execution / still recognised" table. Exact re-execution of either remains available through the `v5.0.0` release.
+
+Historical Redcode/pMARS execution (retired in V6) never executed under a Bytefray ruleset. Designer Simple offers only permanent v2 and v4; Advanced, Development, and pairwise Evaluation offer v1/v2/v4 — none offers either retired v4 alpha any longer. Group evaluation requires Ruleset v2.
 
 ### Scope Discipline
 Mechanics such as fixed process rosters and circular core sizes are ruleset-specific gameplay specifications (`RulesetPolicy`), not immutable project-wide engine constraints.
@@ -547,5 +649,4 @@ Contributions and issues are welcome on [GitHub](https://github.com/libertaine/B
 
 Bytefray is open-source software licensed under the [MIT License](LICENSE).
 
-* **pMARS Interoperability**: pMARS is separate GPL-licensed software. Distributions bundling pMARS preserve licensing materials in [third_party_licenses/](third_party_licenses/). The pure Python wheel does not bundle pMARS executables.
 * **Support**: If Bytefray is useful for your work or research, you can support ongoing development via [PayPal](https://www.paypal.com/donate/?hosted_button_id=DRJD388WT8DAL). Contributions are entirely optional.

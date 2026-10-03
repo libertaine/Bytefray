@@ -109,12 +109,8 @@ def _dialog_pairwise_ruleset_id(dialog: object) -> str | None:
     """The evaluation dialog's pairwise Ruleset selection, if it has one.
 
     Same defensive-``getattr`` fallback the ``mode``/``workers`` accessors
-    already use for dialog doubles that predate a control: a dialog without
-    the v3.0.0-alpha2 pairwise Ruleset selector yields ``None``, which
-    ``build_designer_evaluation_plan``/``build_designer_evaluate_command``
-    both treat as "historical behavior, unchanged" -- ``None`` and the
-    explicit v1 identity resolve to the same ``rules_compatibility_id``, so
-    no existing evaluation identity moves.
+    use for older dialog doubles: ``None`` is resolved by the evaluation
+    layer to stable bytefray-rules-4 for a new request.
     """
 
     getter = getattr(dialog, "pairwise_ruleset_id", None)
@@ -471,10 +467,7 @@ class AgentDesigner(QMainWindow):
             a_type=a_type,
             b_type=b_type,
             ruleset_id=cfg.ruleset_id,
-            a_blob=getattr(rowA, "blob_path", None),
-            b_blob=getattr(rowB, "blob_path", None),
             c_type=c_type,
-            c_blob=(getattr(rowC, "blob_path", None) if rowC else None),
             alive_w=alive_w,
             kill_w=kill_w,
             territory_w=terr_w,
@@ -538,10 +531,10 @@ class AgentDesigner(QMainWindow):
 
         proc = self._start_process(command, env, root, label="RunMatch")
 
-        c_log = f"  C={c_name} -> type='{c_type}' blob='{getattr(rowC, 'blob_path', None)}'" if rowC else ""
+        c_log = f"  C={c_name} -> type='{c_type}'" if rowC else ""
         self.advanced.appendLog(
-            f"[RunMatch] A={a_name} -> type='{a_type}' blob='{getattr(rowA,'blob_path',None)}'  "
-            f"B={b_name} -> type='{b_type}' blob='{getattr(rowB,'blob_path',None)}'{c_log}\n"
+            f"[RunMatch] A={a_name} -> type='{a_type}'  "
+            f"B={b_name} -> type='{b_type}'{c_log}\n"
             f"[RunMatch] ticks={ticks} arena={arena} seed={seed} "
             f"alive_w={alive_w} kill_w={kill_w} territory_w={terr_w} bucket={bucket}\n"
             f"[RunMatch] output: {run_directory}\n"
@@ -614,8 +607,6 @@ class AgentDesigner(QMainWindow):
             a_type=a_type,
             b_type=b_type,
             ruleset_id=cfg.ruleset_id,
-            a_blob=getattr(rowA, "blob_path", None),
-            b_blob=getattr(rowB, "blob_path", None),
         )
         match_arguments.extend(("--replay", str(replay_path)))
         trace_path = designer_trace_path(replay_path, cfg.ruleset_id)
@@ -651,8 +642,8 @@ class AgentDesigner(QMainWindow):
 
         # start
         self.simple.appendLog(
-            f"[RunMatch] A={cfg.a_type} -> type='{a_type}' blob='{getattr(rowA,'blob_path',None)}'  "
-            f"B={cfg.b_type} -> type='{b_type}' blob='{getattr(rowB,'blob_path',None)}'  "
+            f"[RunMatch] A={cfg.a_type} -> type='{a_type}'  "
+            f"B={cfg.b_type} -> type='{b_type}'  "
             f"ticks={cfg.ticks} arena={cfg.arena}\n"
             f"[RunMatch] output: {run_directory}\n"
         )
@@ -1078,8 +1069,8 @@ class AgentDesigner(QMainWindow):
             if mode == EVALUATION_MODE_PAIRWISE:
                 # The pairwise command surface is otherwise unchanged, but
                 # the Ruleset is now always sent explicitly (v3.0.0-alpha2)
-                # instead of being left to the CLI's own backward-compatible
-                # v1 default. It must be the same value
+                # instead of being left to the CLI's omitted-selection
+                # resolver. It must be the same value
                 # ``_build_evaluation_plan`` used to derive this run's
                 # evaluation_id/output directory, or the launched run would
                 # land in a directory named for a differently-resolved
@@ -1365,11 +1356,8 @@ class AgentDesigner(QMainWindow):
         arguments.extend(("--seed", str(seed)))
         arguments.extend(("--ticks", str(ticks)))
         arguments.extend(("--timeout", str(timeout)))
-        # Always explicit, never inherited. `bytefray agents test`'s own
-        # default is still the backward-compatible Ruleset v1; before
-        # v3.0.0-alpha2 this call omitted the flag and therefore ran every
-        # Designer development test under v1 without saying so, while the
-        # Simple/Advanced tabs beside it defaulted to v2.
+        # Always explicit, never inherited from the CLI omitted-selection
+        # resolver. Scope C offers only stable bytefray-rules-4 here.
         arguments.extend(("--ruleset", self.development.selected_ruleset_id()))
 
         try:

@@ -1,0 +1,3591 @@
+{
+ "schema": "bytefray.v6.e8.parent_goldens",
+ "version": 1,
+ "phase": "I8-1",
+ "clause": "D8-6",
+ "provenance": {
+  "source_commit": "3f3f709",
+  "engine_tree": "691f6666fd14446cd966c0ce879aaa7c1a7eadaf",
+  "tool": "tools/research/v6/e8/parent_goldens.py",
+  "tool_sha256": "b508025640a4e33d72bd819b5edf185fb10fcd922a8cc52becfc3a81ce1ba89a"
+ },
+ "definition": {
+  "arena_size": 512,
+  "max_ticks": 1000,
+  "quota": 8,
+  "golden_seeds": {
+   "values": [
+    1,
+    2,
+    3
+   ],
+   "standing": "infrastructure seeds for these goldens; not the E8 experiment seed set, which does not exist"
+  },
+  "parents": {
+   "C8": {
+    "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+    "policy": {
+     "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+     "supported_runtime_kinds": [
+      "python"
+     ],
+     "supported_python_api_versions": [
+      2
+     ],
+     "scheduler_mode": "chunked",
+     "scheduler_chunk_size": 2,
+     "scheduler_rotate_start": true,
+     "core_placement": "seeded",
+     "process_selection": "round_robin",
+     "movement_stride": "fixed_64",
+     "movement_displacement": "literal",
+     "capture_hold_ticks": 1,
+     "disruption_slot_limit": null,
+     "scheduler_pass_order": "forward",
+     "initial_anchor_placement": "core_base",
+     "detection_radius": 32
+    }
+   },
+   "C8L": {
+    "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+    "policy": {
+     "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+     "supported_runtime_kinds": [
+      "python"
+     ],
+     "supported_python_api_versions": [
+      2
+     ],
+     "scheduler_mode": "chunked",
+     "scheduler_chunk_size": 2,
+     "scheduler_rotate_start": true,
+     "core_placement": "seeded",
+     "process_selection": "round_robin",
+     "movement_stride": "fixed_64",
+     "movement_displacement": "literal",
+     "capture_hold_ticks": 1,
+     "disruption_slot_limit": 1,
+     "scheduler_pass_order": "forward",
+     "initial_anchor_placement": "core_base",
+     "detection_radius": 32
+    }
+   }
+  },
+  "scenarios": [
+   {
+    "name": "rush-vs-guard",
+    "first": "e6_q10",
+    "second": "e6_q11",
+    "exercises": "MOVE search, visibility at 32, disruption, verification READs, core writes, captures"
+   },
+   {
+    "name": "stealth-vs-evader",
+    "first": "e6_q07",
+    "second": "e6_q02",
+    "exercises": "READ stride search, a first-callback evasion MOVE, guard repair writes"
+   },
+   {
+    "name": "split-vs-adapt",
+    "first": "e6_q17",
+    "second": "e6_q06",
+    "exercises": "two processes of one entrant sharing its offers, ADAPT's own-core check READ"
+   },
+   {
+    "name": "paced-vs-lurk",
+    "first": "e6_q01",
+    "second": "e6_q18",
+    "exercises": "paced search on odd callback indexes, a non-searching attacker"
+   },
+   {
+    "name": "greed-mirror",
+    "first": "e6_q03",
+    "second": "e6_q04",
+    "exercises": "a primary-against-twin mirror of two painters, with no search or disruption"
+   },
+   {
+    "name": "scout-vs-repair",
+    "first": "v4_scout",
+    "second": "e2_repair_guard",
+    "exercises": "bounded reach 8, below the radius of 32, searching by movement"
+   }
+  ],
+  "orientations": "both",
+  "fixtures": {
+   "e2_repair_guard": {
+    "agent.py": "2db6ee5d06bed3582c5c371d6d441198933b92e622325cf7f442ed0d700c30dc",
+    "agent.yaml": "cb5d517b932559e2dd43c22c4781476660524148e842f37aa844645dcb3973a4"
+   },
+   "e6_q01": {
+    "agent.py": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent.yaml": "9c2207c855a753cfc3c85a021a0e85817bbab1c0efad59c3da0339ab30dae1ca"
+   },
+   "e6_q02": {
+    "agent.py": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent.yaml": "f231ea64f7e067a56a5ddc1571463bbc27d4b4c37da2406e671e245870639bd1"
+   },
+   "e6_q03": {
+    "agent.py": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent.yaml": "0284c7bc986b74d4f459a209117e3093ff2abb6642cc4d24dc7857ca02b6c9ed"
+   },
+   "e6_q04": {
+    "agent.py": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent.yaml": "7ed9b7f9d26fdf25bade31c1a9cf11a962a87e60a2803d176b44463388a4c96b"
+   },
+   "e6_q06": {
+    "agent.py": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent.yaml": "d23592f3fab03dccb361c9879c495139a6ba389380200cf00b5b008be0ac31a2"
+   },
+   "e6_q07": {
+    "agent.py": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent.yaml": "628943e7fc33c6e9115cc0ab59e7e09e4fe3957f28222e889e8d63accb266f65"
+   },
+   "e6_q10": {
+    "agent.py": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent.yaml": "d0e04f969d19f91c3dfd5847fa92ab2a1e5b9185dc883ec81364484b05f0b756"
+   },
+   "e6_q11": {
+    "agent.py": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent.yaml": "b1ed7c892a9259a82e8916cae47899411b801e735ef4c3c0a8dafd65279a05a0"
+   },
+   "e6_q17": {
+    "agent.py": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent.yaml": "07c7407b5274425660eb13ed62dc49e565e8277a1f44c68fb3810d48188ab610"
+   },
+   "e6_q18": {
+    "agent.py": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent.yaml": "e7528ca80847a8cb01b9fb9419dc1d76730c08e2b6729214fdaefc96849c4611"
+   },
+   "v4_scout": {
+    "agent.py": "0ab8bd15ef3b24c07f479112152417b7e14677ccf1951cea725e049bfd41e0e8",
+    "agent.yaml": "5d227f8e924ffba036fe6719c441e4810326157b6068f541216f084fa1a9f135"
+   }
+  },
+  "masked": {
+   "field": "wall_time_ms",
+   "as": "\"wall_time_ms\": \"<masked>\""
+  },
+  "trace_line_endings": "normalized to LF (the engine writes the trace with platform line endings)"
+ },
+ "cases": [
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "rush-vs-guard",
+   "seat_a": "e6_q10",
+   "seat_b": "e6_q11",
+   "seed": 1,
+   "golden": {
+    "winner": "A",
+    "ticks": 7,
+    "reason": "last_agent_standing",
+    "result_id": "result_20df4b4518e6e11159e93927",
+    "match_id": "match_454595ecc642e9a6e065018c",
+    "replay_sha256": "8712a11bb9cf7bcb6e583a1e033902fb92b82834b431faa4a0e15b62c7e995b0",
+    "trace_sha256": "0657c219797de3fb46a5dc423bdf93c94cd0af49dae9440b9bf5601768ebea02",
+    "trace_lines": 64,
+    "trace_record_sha256": {
+     "header": "451385ab1c1be91c3c4c1922d01003e5d4d94def80e845b461ae4262fd7d5278",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "55969dba164e01e7a5f261556213e07cf8d42c88f39e40075f18921c715a0d5d",
+     "binding": "569be35ca1aaadecc9339864294f3991069a979b5db8f5d2e6dac21d77c0e641"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "4d3f12a891f5db1ffec9ae3eac254ac48a66ecc1f22dfb238da0e354bbbada15",
+     "B": "9a4827658d0e139913444359cb1ee2b61b3fdd0f54a801816f87c679cf952d7e"
+    },
+    "coverage": {
+     "decisions": 58,
+     "action_kinds": {
+      "move": 2,
+      "read": 9,
+      "write": 47
+     },
+     "statuses": {
+      "APPLIED": 58
+     },
+     "visible_decisions": 56,
+     "short_ticks": 1,
+     "skipped_ticks": 5,
+     "first_movers": {
+      "A": 4,
+      "B": 3
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "rush-vs-guard",
+   "seat_a": "e6_q10",
+   "seat_b": "e6_q11",
+   "seed": 2,
+   "golden": {
+    "winner": "A",
+    "ticks": 5,
+    "reason": "last_agent_standing",
+    "result_id": "result_7a72a4c2225c6bba871b09ac",
+    "match_id": "match_f8515a15df617f96d60141a8",
+    "replay_sha256": "81d0cd2b5dfa48834a3c2bd4268bcf93c082f2d617e4a2d9ff7d669c70b151bc",
+    "trace_sha256": "57cadddbe721f8103b0c36a64dd1c9203ca11376291f44b75aaa08fad14b5a23",
+    "trace_lines": 48,
+    "trace_record_sha256": {
+     "header": "35ff1487b30265c74cd09237989e77097db1aba1895957c1dd790d24ce9540ab",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "bae37e569adf31f409d7e20f8d7cc7c1dbab6aa73064aed0226f286d8648d0ac",
+     "binding": "74e9d68e3a1181045c56b1801eea2d4aa55126730da051816801af73d0242d7a"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "6c8dfd541d64436573c13d3c4a75abb5750853252810ece56e2aa2903ff3b1fb",
+     "B": "1bbfb60c3b27445859760ad26c67022e79fec6b75634a5254a898b535c76d49e"
+    },
+    "coverage": {
+     "decisions": 42,
+     "action_kinds": {
+      "move": 3,
+      "read": 9,
+      "write": 30
+     },
+     "statuses": {
+      "APPLIED": 42
+     },
+     "visible_decisions": 37,
+     "short_ticks": 1,
+     "skipped_ticks": 3,
+     "first_movers": {
+      "A": 3,
+      "B": 2
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "rush-vs-guard",
+   "seat_a": "e6_q10",
+   "seat_b": "e6_q11",
+   "seed": 3,
+   "golden": {
+    "winner": "A",
+    "ticks": 7,
+    "reason": "last_agent_standing",
+    "result_id": "result_da26716c63b44e0bea3e17a1",
+    "match_id": "match_bc2504c74a3261cda9ca36d6",
+    "replay_sha256": "1ee9021c2e75ee6d91733e5d2d85e62575e14bc7632dde926f2b57b557faeea4",
+    "trace_sha256": "c9bb33af3e4f88ce08f0335e0e67607a78395bf701dfca83144e1329a651b716",
+    "trace_lines": 64,
+    "trace_record_sha256": {
+     "header": "0dc2092ea29f6051636bbaf032baddece173393cc5e499b7a5bda325249f8b88",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "1e46ae7bdd68c9f9f712d24f3e82b7ecfee956fff956b6c634b896a6bbcc37a8",
+     "binding": "09b387f6366b4da8cbbac660ff252a8d037fe88e4d59ba41e2e6f4641554e143"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "ab02ba70153af624dfeeec77fe77878a59e81ca0e5689a28bb37c72f5d3081aa",
+     "B": "ba7fbbdf2c85045307cffa12cac26d4626097a122bc9c4d7387b7644c0098f85"
+    },
+    "coverage": {
+     "decisions": 58,
+     "action_kinds": {
+      "move": 2,
+      "read": 9,
+      "write": 47
+     },
+     "statuses": {
+      "APPLIED": 58
+     },
+     "visible_decisions": 56,
+     "short_ticks": 1,
+     "skipped_ticks": 5,
+     "first_movers": {
+      "A": 4,
+      "B": 3
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "rush-vs-guard",
+   "seat_a": "e6_q11",
+   "seat_b": "e6_q10",
+   "seed": 1,
+   "golden": {
+    "winner": "B",
+    "ticks": 6,
+    "reason": "last_agent_standing",
+    "result_id": "result_a8da56b0373bebb6efa7d708",
+    "match_id": "match_dd6b90637d8f691c8a600641",
+    "replay_sha256": "6a957b97b4052f4220bf3790c318cd43328e89bb106d070b8e961857dc8dd108",
+    "trace_sha256": "50dd69e85d684030d63a54a313e90a4bb758e29a43bfd82e676c5e0c2ea2c2eb",
+    "trace_lines": 56,
+    "trace_record_sha256": {
+     "header": "62b42a2a1055e1d190f89f36c45ad38ba084c9ba3564d8239459fdc630dafcaf",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "2e07f2f0c642781b5593abe75ad281fa3d9aafca3ad9f5127278d4fa3bef4744",
+     "binding": "1382fdce0966adee3f85f8577e8b877a704ce540ea1572239c09c22b72c7779e"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "50421dde8ca2ba5db751b7e82dd28c1eb1f7cf9f342cf63d4ec7bc88c164d1d6",
+     "B": "c7a88ea236a46cb178c6b6a79c49e74d5b4415b6a385b3ed8b9dc25dcf8215c9"
+    },
+    "coverage": {
+     "decisions": 50,
+     "action_kinds": {
+      "move": 2,
+      "read": 9,
+      "write": 39
+     },
+     "statuses": {
+      "APPLIED": 50
+     },
+     "visible_decisions": 46,
+     "short_ticks": 1,
+     "skipped_ticks": 4,
+     "first_movers": {
+      "A": 3,
+      "B": 3
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "rush-vs-guard",
+   "seat_a": "e6_q11",
+   "seat_b": "e6_q10",
+   "seed": 2,
+   "golden": {
+    "winner": "B",
+    "ticks": 4,
+    "reason": "last_agent_standing",
+    "result_id": "result_260c5b21e99b638e2c7faf75",
+    "match_id": "match_ff5650b02ce45b265249b7b8",
+    "replay_sha256": "c60955a622ccb28c61e165c5954d30e6ffa854117f45685f6dfeca3485b0ecc4",
+    "trace_sha256": "f694797d7b1abf1ffc30819a25f0765eabaf917e74faf800fd8710bce33a6ea8",
+    "trace_lines": 44,
+    "trace_record_sha256": {
+     "header": "7d22c5a277d2e1d3469becc055cc772210b17c418abe64c08cb041777f142e14",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "aed3e0d2675d3283d9aed3356ffcfb8d9f7d6b7a5a6e5310eb8a6b0a22727200",
+     "binding": "fc9e67ec4a1ba156f9e937656bee1a7d9018e807d043790cb9ba6d0453d8e9fe"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "7670205889d6c6cd48782bbd5654b29fcaee908b6e5b641187a23edde6c54737",
+     "B": "52a8e28f46628d7385681745226cd75db14acf8fc977073f39d9236fb870fb56"
+    },
+    "coverage": {
+     "decisions": 38,
+     "action_kinds": {
+      "move": 5,
+      "read": 9,
+      "write": 24
+     },
+     "statuses": {
+      "APPLIED": 38
+     },
+     "visible_decisions": 27,
+     "short_ticks": 1,
+     "skipped_ticks": 2,
+     "first_movers": {
+      "A": 2,
+      "B": 2
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "rush-vs-guard",
+   "seat_a": "e6_q11",
+   "seat_b": "e6_q10",
+   "seed": 3,
+   "golden": {
+    "winner": "B",
+    "ticks": 6,
+    "reason": "last_agent_standing",
+    "result_id": "result_c271432efa175cab785055db",
+    "match_id": "match_e7f1e1808762b799c69dd711",
+    "replay_sha256": "2122ed03ebee4d28cb4b31ffe02f72ff9850828bd06518cec818a8a29c2287b1",
+    "trace_sha256": "580357926faf31ef44a00d86e98f1b49d5a415fb1bf1f6290a06d5d4005a3c79",
+    "trace_lines": 60,
+    "trace_record_sha256": {
+     "header": "9a640bdf5c476113b3dde25c5536e4d0351bbf3eb3d533cad36b876a30d90678",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "0773480b2623709edabb995523fed63c4c380de35e64248b8d7e58da6cd4f02d",
+     "binding": "44058b4afb6aa23a241090f285dc7b6ba103ad6749161428f82a449ae51f62ee"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "74424f2cb69428662f91b1ecc27aa9feeccd192352b0659ada9785e1fd3cc317",
+     "B": "39dab81404e5a5f1a16a8ad66d9feb8dbc788fccd74f8daa1361004c1fc9c6d3"
+    },
+    "coverage": {
+     "decisions": 54,
+     "action_kinds": {
+      "move": 6,
+      "read": 9,
+      "write": 39
+     },
+     "statuses": {
+      "APPLIED": 54
+     },
+     "visible_decisions": 42,
+     "short_ticks": 1,
+     "skipped_ticks": 4,
+     "first_movers": {
+      "A": 3,
+      "B": 3
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "stealth-vs-evader",
+   "seat_a": "e6_q07",
+   "seat_b": "e6_q02",
+   "seed": 1,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_5099d23bee34148d5a9dbe0d",
+    "match_id": "match_0eb2bbb8336a12d74ca83897",
+    "replay_sha256": "26fa65720dc16c4292c03eb637fe1be4d63ce514f5ce06a7161a78aa4170340c",
+    "trace_sha256": "fce2275cbcd55f368f07c42de5a61337307f8fab53c1b1baeaeafc5ca96fe126",
+    "trace_lines": 16006,
+    "trace_record_sha256": {
+     "header": "6c360186a79b0cfde71e751fa3084ebcfa19dfd50c46ae7b891071e20e5add80",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "62f3cd293f53ca58aaa058bde08579bc8706ad99f27eb8fe0047784cef964e7a",
+     "binding": "37a0574433912e8cf07d457c96bed921fa71434c5e99b004927fa8a19cdcdc1a"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "f41ba1f89f84775f6518b848a684ab449e7f62b82e62f2b1de25dd713da78700",
+     "B": "036065e112d5ae24f8232ea2732bd59a29b42b47586e8528842572e580b2c546"
+    },
+    "coverage": {
+     "decisions": 16000,
+     "action_kinds": {
+      "move": 1,
+      "read": 15,
+      "write": 15984
+     },
+     "statuses": {
+      "APPLIED": 16000
+     },
+     "visible_decisions": 0,
+     "short_ticks": 0,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "stealth-vs-evader",
+   "seat_a": "e6_q07",
+   "seat_b": "e6_q02",
+   "seed": 2,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_d4f139083d2da9f6bd5fea9c",
+    "match_id": "match_d984ab9a031ef62a46bec9e3",
+    "replay_sha256": "18875ad1700c561316a5c625da2d773a46aa5e822f8fae8b6ad091d39215379e",
+    "trace_sha256": "4f4b5cc9b2b0e80dca85f3b3cdb87642acded80a2fc6a05c981d67f38c1ab9b4",
+    "trace_lines": 16006,
+    "trace_record_sha256": {
+     "header": "f0c4e9b02b81be190889255832a60e3623275807457960151195b982e7e23d8b",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "9efcd05e54017f44ec84ae462f10dcb3548ad4ba43f51790f8d24c79fbeb3c11",
+     "binding": "4836f61bbe7d07c1fa2cc20e29a840a721917e2168cf2ccf5ab0f021fa1c25b4"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "8a3a040723b6faf8d42910e14361c9216f3aa32f60795d5ceabea3186c94c24d",
+     "B": "1a6d7d49f47aba4d218d318b87208fd6e972b3a29e11a8eba9a011dd902a3989"
+    },
+    "coverage": {
+     "decisions": 16000,
+     "action_kinds": {
+      "move": 1,
+      "read": 23,
+      "write": 15976
+     },
+     "statuses": {
+      "APPLIED": 16000
+     },
+     "visible_decisions": 0,
+     "short_ticks": 0,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "stealth-vs-evader",
+   "seat_a": "e6_q07",
+   "seat_b": "e6_q02",
+   "seed": 3,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_0b91beaf0cfcecf06ee85876",
+    "match_id": "match_3c7ac264b775e54baa95af99",
+    "replay_sha256": "c368b2fd2a83eae7dd8b3f7826ae6f6242b7399174ba5d28dcc3c04b7c3ce527",
+    "trace_sha256": "64ebad0306b31ffb8455fe5f8ab1d6ca906c04f403eaf4ef57831fbbea56f762",
+    "trace_lines": 16006,
+    "trace_record_sha256": {
+     "header": "3211ce109520c081c2df991c6ef3f44577d47684f39562d67e441ae9f474d6aa",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "97323ce39d1815a3078ea47b0b392e12c6b0006b21060f561eb45324a0f552df",
+     "binding": "6f4229c76b667433240a71ddb1c255c55a42b1b619c117d8e99e4f2603cf7bac"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "5c157af2cfe75aa683d8a10cab5350f934e1667e6155cc1c6280fbdaea867a35",
+     "B": "2ebd51ea2a7e54dfa97f1dcf1ee2e5c45cc1f815cef3fa824ee26a561ea6301f"
+    },
+    "coverage": {
+     "decisions": 16000,
+     "action_kinds": {
+      "move": 1,
+      "read": 14,
+      "write": 15985
+     },
+     "statuses": {
+      "APPLIED": 16000
+     },
+     "visible_decisions": 0,
+     "short_ticks": 0,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "stealth-vs-evader",
+   "seat_a": "e6_q02",
+   "seat_b": "e6_q07",
+   "seed": 1,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_def4e0ebdb9d4072c507e704",
+    "match_id": "match_7ce980f17452f9257b1d4d07",
+    "replay_sha256": "4fae18636bd02b5dbf49180c44f901e1d818431ae86a7f08a51a7796c7c08fba",
+    "trace_sha256": "a6e13c7e30c46d4fce6d6385879128713e00aeb7bc73f072569667e98807ce3e",
+    "trace_lines": 16006,
+    "trace_record_sha256": {
+     "header": "b59371edb38b97c9de77b6377cb1978d0a0ea823e682241d4aedf1be65746f9b",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "46402eabd0f17e79ea9d35fb11419f51dbc2b08bd7432d9447e42822f76a9a6e",
+     "binding": "9b3d5c5ebb73d4c48e4da483f04376678d2510f0d03861fc8a8f04ac5c10e74f"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "2753a53d5403d0d10abe4edc3c273e8310accb901d3edace6e9dbbcd5b05f81a",
+     "B": "562bd5360b8b333dd5d5e492a94aa3a9e4e8225b87e7d3828a4cf06be3e24216"
+    },
+    "coverage": {
+     "decisions": 16000,
+     "action_kinds": {
+      "move": 1,
+      "read": 16,
+      "write": 15983
+     },
+     "statuses": {
+      "APPLIED": 16000
+     },
+     "visible_decisions": 0,
+     "short_ticks": 0,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "stealth-vs-evader",
+   "seat_a": "e6_q02",
+   "seat_b": "e6_q07",
+   "seed": 2,
+   "golden": {
+    "winner": "B",
+    "ticks": 7,
+    "reason": "last_agent_standing",
+    "result_id": "result_26325a1fbe89701af8be700b",
+    "match_id": "match_936b44225587458e88f2dfe2",
+    "replay_sha256": "da1037131f30f3f471fd555c4c5b011f335dcd7614b857721cdf0fc849efaa0d",
+    "trace_sha256": "bdcedebad8cd2021efe20b2ed0b8e75ddbb8434cb17e72c4d25f9f27a0ec735c",
+    "trace_lines": 118,
+    "trace_record_sha256": {
+     "header": "039103cfbf717308567712acbc242f3bdc78bb4ff564ef5702b2a9368faadd56",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "5b11131b61f83fd9933725aaf7b6435eefdb0912a34e77db187270cb174c42b6",
+     "binding": "6acbf63330c03fcd39d46a451c09749bb711350d799be6bb62f209287652e6e9"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "1e1a2db9dd7ce7bcf7f1515993d22ae0a4115f74d799c7989145b56b34211501",
+     "B": "083542b412129a440e1c772ba972141b80c46b49e85ac4782223781d8f9bbe49"
+    },
+    "coverage": {
+     "decisions": 112,
+     "action_kinds": {
+      "move": 1,
+      "read": 41,
+      "write": 70
+     },
+     "statuses": {
+      "APPLIED": 112
+     },
+     "visible_decisions": 0,
+     "short_ticks": 0,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 4,
+      "B": 3
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "stealth-vs-evader",
+   "seat_a": "e6_q02",
+   "seat_b": "e6_q07",
+   "seed": 3,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_2e54ee97e7e1fd3adccad141",
+    "match_id": "match_8ea26279f34340868c9f5ac8",
+    "replay_sha256": "dd65b16194266aedb8f236dcbc74cc5949dc5c9499d8d69c109d3d9b4a9a8ceb",
+    "trace_sha256": "1f2afb43c0ecdf30710d04af3769b7d062f97c3d39868a4b401a2800613405c6",
+    "trace_lines": 16006,
+    "trace_record_sha256": {
+     "header": "642e29bf54da01e249b61a9745be2d14e73ce2d4914057ecbb971e86e97a9162",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "bf1df8262765f1a966ccd1375e872d156439c401782e29221b3b0891a2d6b071",
+     "binding": "4c3388eb3ddc84c8c7b92098195a3974f56a77191fdd3c00e572a63a58d2899e"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "68fa081e992eaf574fb60aa6d2471a40908091050fcb828243bf45c97151e162",
+     "B": "e53d19603312d646f527d4f51604b3092ac1e56371582362e3c11b59462dc1a6"
+    },
+    "coverage": {
+     "decisions": 16000,
+     "action_kinds": {
+      "move": 1,
+      "read": 51,
+      "write": 15948
+     },
+     "statuses": {
+      "APPLIED": 16000
+     },
+     "visible_decisions": 0,
+     "short_ticks": 0,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "split-vs-adapt",
+   "seat_a": "e6_q17",
+   "seat_b": "e6_q06",
+   "seed": 1,
+   "golden": {
+    "winner": "A",
+    "ticks": 3,
+    "reason": "last_agent_standing",
+    "result_id": "result_4950d32290ff967f1dc60ba9",
+    "match_id": "match_32cd043f957f11e1a738a911",
+    "replay_sha256": "fb2b54df26b5c411157e0c0dd581ee30dc8254156230715356085bb8fed1be96",
+    "trace_sha256": "d5344e590c53df2341ae5befd44e47bd3ebffdcc39485849cb6eab7129577349",
+    "trace_lines": 39,
+    "trace_record_sha256": {
+     "header": "8e79844d3eff224153312ccbbdc4bbb2ac8dd5b4a5f7d8cb1e3c805ebf08a778",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "929b5aa3487bb5e2edf51efbc99ac521a8e27c5f3e69eb19010b49c2da428ff0",
+     "decision_v2": "873919bd50b8da49839cd2deb058d27283b467b77188d0e937a193738ec16cf3",
+     "binding": "31c43bf8a40237cc5ab5cfaa3f796084f407b03bb1493e52c7d127fd49ac379f"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "624de1c4e77781a301c4007dbb897f6836f14eb947efdcf40516cbeb8ffa901b",
+     "B": "9297236a8f8f4ec22ce1c1bac0a77459eb464ca0623a24bcee70e7d56009e2aa"
+    },
+    "coverage": {
+     "decisions": 32,
+     "action_kinds": {
+      "move": 2,
+      "read": 11,
+      "write": 19
+     },
+     "statuses": {
+      "APPLIED": 32
+     },
+     "visible_decisions": 19,
+     "short_ticks": 2,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 2,
+      "B": 1
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "split-vs-adapt",
+   "seat_a": "e6_q17",
+   "seat_b": "e6_q06",
+   "seed": 2,
+   "golden": {
+    "winner": "A",
+    "ticks": 5,
+    "reason": "last_agent_standing",
+    "result_id": "result_7a2e97999a5d0eadae659157",
+    "match_id": "match_3b053f27f9a0d044d0402786",
+    "replay_sha256": "87ef752c8f1f355013e0eae7bb9a59aa7af88d720270721d7e3cd7f5976a67fd",
+    "trace_sha256": "036902049152b8a7e544071fb76b44b1f50b101e9d127ce7c83612353cda6725",
+    "trace_lines": 63,
+    "trace_record_sha256": {
+     "header": "4b1ebbd9bb9ede9092bd3ef951e08140b2371c905cabcf842e504f4d671ecbcc",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "929b5aa3487bb5e2edf51efbc99ac521a8e27c5f3e69eb19010b49c2da428ff0",
+     "decision_v2": "c6975bc5e40bcdcae283fa3d8e99a5ecd97572c27c7cb3c86cd6667f2772d2de",
+     "binding": "950d47a79cf33eb4957457ec76b600224f91aefd617bddfa2c46fe243336c985"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "458b3cdc1e057682d8c648a61ca5199ab9aa96cee1fca5238fbb96e4c3677122",
+     "B": "593c4d444996a57a6386e50fd31ad43a7d507c3d26297aa3f8395c0b843ee48e"
+    },
+    "coverage": {
+     "decisions": 56,
+     "action_kinds": {
+      "move": 3,
+      "read": 12,
+      "write": 41
+     },
+     "statuses": {
+      "APPLIED": 56
+     },
+     "visible_decisions": 29,
+     "short_ticks": 2,
+     "skipped_ticks": 1,
+     "first_movers": {
+      "A": 3,
+      "B": 2
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "split-vs-adapt",
+   "seat_a": "e6_q17",
+   "seat_b": "e6_q06",
+   "seed": 3,
+   "golden": {
+    "winner": "A",
+    "ticks": 3,
+    "reason": "last_agent_standing",
+    "result_id": "result_5aa558f7e5c095248e54bf47",
+    "match_id": "match_93d083977450c45594104291",
+    "replay_sha256": "741291a2688005768a8c18a85c462b4971d2239010b3f0200d63b1131b45c982",
+    "trace_sha256": "431d4a7af0b9ce133844496eeca94152dd0208bde4ee45da470f46070e57d850",
+    "trace_lines": 39,
+    "trace_record_sha256": {
+     "header": "ac5b48bd8ebb078e11624c54405345e9b335870c7695320c130daae50c65c5c1",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "929b5aa3487bb5e2edf51efbc99ac521a8e27c5f3e69eb19010b49c2da428ff0",
+     "decision_v2": "4312f03fd690ba1ac9a52e8a86fb21edbb9a675b85d1297ba036120109f2c9d4",
+     "binding": "5a84a95586822bfdce0588233f8500b368e1a724bd0301dfcdff4ace0e06771c"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "cdf011b3381ba844ac81c3aaf0ac1bf03be174208c2c5431ac840caa0cedeea3",
+     "B": "02a9901bbf1b10ea78d3622ffdfea13542abb0c60c0faeaf002169f9e52c4830"
+    },
+    "coverage": {
+     "decisions": 32,
+     "action_kinds": {
+      "move": 2,
+      "read": 11,
+      "write": 19
+     },
+     "statuses": {
+      "APPLIED": 32
+     },
+     "visible_decisions": 19,
+     "short_ticks": 2,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 2,
+      "B": 1
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "split-vs-adapt",
+   "seat_a": "e6_q06",
+   "seat_b": "e6_q17",
+   "seed": 1,
+   "golden": {
+    "winner": "B",
+    "ticks": 4,
+    "reason": "last_agent_standing",
+    "result_id": "result_027332259b15e034416f21b1",
+    "match_id": "match_46294ed830accdb0a97743cf",
+    "replay_sha256": "e7d0d866c0d5404dfbec619d9c78e57e5626aebeb034b938df3a7f95ff9f7eec",
+    "trace_sha256": "c078d670f56a5caf90bf4bd57a91270b574ec96d9167bb59749403b9000fa8e0",
+    "trace_lines": 51,
+    "trace_record_sha256": {
+     "header": "0b8cf22d2fc68f4984c752f90de102222af1c399df544bd7ee13fe39e543ca4d",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "88689cc0461f135c50b93a2d987765a4e9e0b8a2808f58a35cf2f6ee8f2845ba",
+     "decision_v2": "70113b541b6714db7c66c7b103f26a4551b8a6cd87a92538ade00861fbd25a7a",
+     "binding": "31dcd74337b0d3a4e8514a9a4b62f3e8f9f284c8bdfaa624a5695001440425b8"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "3ea7134235ad81e34eefe8d8b31481ff98472547b41f4ecc452b20d5003258e5",
+     "B": "a2000d300ff3daf301a9dda5615f827d9ae8834933c6e5aff7be27fe53efdc27"
+    },
+    "coverage": {
+     "decisions": 44,
+     "action_kinds": {
+      "move": 2,
+      "read": 11,
+      "write": 31
+     },
+     "statuses": {
+      "APPLIED": 44
+     },
+     "visible_decisions": 29,
+     "short_ticks": 1,
+     "skipped_ticks": 1,
+     "first_movers": {
+      "A": 2,
+      "B": 2
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "split-vs-adapt",
+   "seat_a": "e6_q06",
+   "seat_b": "e6_q17",
+   "seed": 2,
+   "golden": {
+    "winner": "B",
+    "ticks": 6,
+    "reason": "last_agent_standing",
+    "result_id": "result_aea262b14f61805157c99c8f",
+    "match_id": "match_66ba489093a07d0f4ebcc053",
+    "replay_sha256": "c3a745512ec01cc24cd96dad215a423f05388af7ab0bd7249f6f73b3589433c5",
+    "trace_sha256": "4757dca4c6c4325627c3e39602fa0031abd959ff9ef8e3e4f6a34d1e84a9207d",
+    "trace_lines": 79,
+    "trace_record_sha256": {
+     "header": "e2fabc03ef5c6d9becb2ef62c891a542f4ee1abc1ef47a5bf6618b0c7918a205",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "88689cc0461f135c50b93a2d987765a4e9e0b8a2808f58a35cf2f6ee8f2845ba",
+     "decision_v2": "a5ad3d3cfdfd4f6c0fcb55322a4ed3141d19d09981f465e181e46cc3da3c4726",
+     "binding": "f88d36597d9bcf07b96240d737798d5983616b89458bedc11307019708d3d4d6"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "b8a9c9cde48d2a563b620c1c39dbc59005532a28f93f3d64c9920b76fa7bb23e",
+     "B": "c7a1a458970b0aa927ac7ddb1c9c737b0653e2d6c350f5eda971e3603a8ac2a8"
+    },
+    "coverage": {
+     "decisions": 72,
+     "action_kinds": {
+      "move": 5,
+      "read": 13,
+      "write": 54
+     },
+     "statuses": {
+      "APPLIED": 72
+     },
+     "visible_decisions": 29,
+     "short_ticks": 2,
+     "skipped_ticks": 1,
+     "first_movers": {
+      "A": 3,
+      "B": 3
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "split-vs-adapt",
+   "seat_a": "e6_q06",
+   "seat_b": "e6_q17",
+   "seed": 3,
+   "golden": {
+    "winner": "B",
+    "ticks": 6,
+    "reason": "last_agent_standing",
+    "result_id": "result_06557d98b44b550954adc2eb",
+    "match_id": "match_b1620d676ecc79371e59b8af",
+    "replay_sha256": "4c438eda7a803a19f451b094c032686b1a2a724d6a00f0305d45d6b679dbc7b8",
+    "trace_sha256": "ac5d9157d62f7547d75ff56d55930508a0d1e75c60e7de1b048facca0a2c4b53",
+    "trace_lines": 83,
+    "trace_record_sha256": {
+     "header": "1205c6488597491ec448045cfdc7b035c0b2dd392e438cdcc2fd70fcfff80537",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "88689cc0461f135c50b93a2d987765a4e9e0b8a2808f58a35cf2f6ee8f2845ba",
+     "decision_v2": "9c917a61b884f79cc29898809682bec0e1b2bed6fe3513af5ee9fab11eabd1a6",
+     "binding": "ca12eebd301791fb545418a824e86d250015a4aa61db23264579f329d87632ec"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "ac9f95b51ff0efff0f40b4f0fde6bafa31d8885a2efd06987303ad08d1b822dc",
+     "B": "253b508f1a22af7ec0e8f166238e87da0f80a5d87b255d2ca73cb3f22741081c"
+    },
+    "coverage": {
+     "decisions": 76,
+     "action_kinds": {
+      "move": 6,
+      "read": 13,
+      "write": 57
+     },
+     "statuses": {
+      "APPLIED": 76
+     },
+     "visible_decisions": 29,
+     "short_ticks": 1,
+     "skipped_ticks": 1,
+     "first_movers": {
+      "A": 3,
+      "B": 3
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "paced-vs-lurk",
+   "seat_a": "e6_q01",
+   "seat_b": "e6_q18",
+   "seed": 1,
+   "golden": {
+    "winner": "A",
+    "ticks": 5,
+    "reason": "last_agent_standing",
+    "result_id": "result_684728da1d67b0942ac5d70b",
+    "match_id": "match_5e6284bf663c6b7cedbf3f6c",
+    "replay_sha256": "a6011929e5fe6cd24c873708a2660760caad407ab6efb718e2d12c8f455c3e96",
+    "trace_sha256": "b0f7e40c87b36c24bb3e510d868cf9a1e2ee00032ab897fc545455d539e10006",
+    "trace_lines": 48,
+    "trace_record_sha256": {
+     "header": "c8abfcee1f81f19665b69068a9360c8cb012758af66482e34caaee95d189c47b",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "ea62aaba5ed42fc126c6c64b85447096103cf2499ff0663a6853cef36e7ce80b",
+     "binding": "9d51e8416e911381306ac8b1dc9863e12b404e0aa679891e3da916c0c48a4754"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "2d57648c0de6decfb2bf7f2a80b2266a0c60ca539713132df47271767d33eae5",
+     "B": "f4365e58d67f524cf49be9660f000f9de0133facb7649d29d2163ced07645954"
+    },
+    "coverage": {
+     "decisions": 42,
+     "action_kinds": {
+      "move": 2,
+      "read": 23,
+      "write": 17
+     },
+     "statuses": {
+      "APPLIED": 42
+     },
+     "visible_decisions": 37,
+     "short_ticks": 1,
+     "skipped_ticks": 3,
+     "first_movers": {
+      "A": 3,
+      "B": 2
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "paced-vs-lurk",
+   "seat_a": "e6_q01",
+   "seat_b": "e6_q18",
+   "seed": 2,
+   "golden": {
+    "winner": "A",
+    "ticks": 5,
+    "reason": "last_agent_standing",
+    "result_id": "result_d5e5eaab1dad3fc7dbab24ea",
+    "match_id": "match_79a9148e17ff0494e482de88",
+    "replay_sha256": "db6412126f8074a796a4db2bb124403e363a064c20e913ec02cb260b466fb584",
+    "trace_sha256": "979d43d65fe84fbfadd796ade8c83c83294205bd0affd59366ef778133de551a",
+    "trace_lines": 50,
+    "trace_record_sha256": {
+     "header": "972b3db9d70fb2f29b209dbb40a77345c7277a3c3e2efbb240c727f4c62b2142",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "e63a0a8fdc62dc8ed9d53dfe84047a5fc177acd27c0f17e3dbdcb16b20cb0717",
+     "binding": "2411af5c4041053a845a1777ffaed94500193112e4c7b76681761a8f3e936ae9"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "c13f4646d7448ae8a45fd3ce38b26dd0b6528dcec0de1ab9cda00dc90041378d",
+     "B": "702b5a0ba1670c959889ee7b2fbdeb455d50867eeae2ebd2d5049582caf3e475"
+    },
+    "coverage": {
+     "decisions": 44,
+     "action_kinds": {
+      "move": 3,
+      "read": 23,
+      "write": 18
+     },
+     "statuses": {
+      "APPLIED": 44
+     },
+     "visible_decisions": 35,
+     "short_ticks": 1,
+     "skipped_ticks": 3,
+     "first_movers": {
+      "A": 3,
+      "B": 2
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "paced-vs-lurk",
+   "seat_a": "e6_q01",
+   "seat_b": "e6_q18",
+   "seed": 3,
+   "golden": {
+    "winner": "A",
+    "ticks": 5,
+    "reason": "last_agent_standing",
+    "result_id": "result_68c4a77d4d79d1d6c3c6b7c7",
+    "match_id": "match_f3c03d7a0ab12dc8ea9c41e8",
+    "replay_sha256": "6c71215bf581b08086610be22e8388f18f354d3fa7042ba73b3c02973ba50175",
+    "trace_sha256": "6ad12cf849013a777a4c40e807bfff5e9873fa296aea02249a7b69b66d652050",
+    "trace_lines": 48,
+    "trace_record_sha256": {
+     "header": "28bf9da39ad89b13f7e0204381b95592a808222705e696009cd975dc934f61f9",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "365bbca01c99d1eeb82f21a4268be706fde57a151964962bc00c1caada92042f",
+     "binding": "0ddcc7b8404df7035908a5fe59234d8eee1e029ced28a9a0cee42173733fed34"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "2facb8fc703d45212485b003d41771b51cf445676ae09b8cc72b006421e5f356",
+     "B": "ca31c3e711e76236d251ca91d2773bffe74b8b6f96a2030f098d3d51862452ee"
+    },
+    "coverage": {
+     "decisions": 42,
+     "action_kinds": {
+      "move": 2,
+      "read": 23,
+      "write": 17
+     },
+     "statuses": {
+      "APPLIED": 42
+     },
+     "visible_decisions": 37,
+     "short_ticks": 1,
+     "skipped_ticks": 3,
+     "first_movers": {
+      "A": 3,
+      "B": 2
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "paced-vs-lurk",
+   "seat_a": "e6_q18",
+   "seat_b": "e6_q01",
+   "seed": 1,
+   "golden": {
+    "winner": "B",
+    "ticks": 4,
+    "reason": "last_agent_standing",
+    "result_id": "result_e08aba08a9063288106fcd89",
+    "match_id": "match_1ce16b4bf6a120a1e07039e7",
+    "replay_sha256": "d13288d618729744964bd6fa6a8a729eefb8799b0e4d2dac0aa4400485c51f91",
+    "trace_sha256": "f38c6a09297368327231e90ac871b50a41cf2646f7a7c8b551d6084bf63f0192",
+    "trace_lines": 42,
+    "trace_record_sha256": {
+     "header": "0330fbe680a3c36b7425950bd6640301e7a25f34bae43a7dac7e3694ebd8a9a2",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "9d55aa74a68a153c5ab467803eda1b54d3dbe737f0e48603c3038f7d21fc1614",
+     "binding": "252c51862e6610a0e31c1d04b8fcc4044cd91cb1325c4f59fcc5a7435dde228d"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "529750d7c46608ffd75781a1c70037af47ebc12e1837dd89ebdb7e6079bd6de8",
+     "B": "275a32098ffd047cc2621703e08fd2ad6f83c92ada1d7aa8de2c0452c9efdac5"
+    },
+    "coverage": {
+     "decisions": 36,
+     "action_kinds": {
+      "move": 2,
+      "read": 16,
+      "write": 18
+     },
+     "statuses": {
+      "APPLIED": 36
+     },
+     "visible_decisions": 29,
+     "short_ticks": 1,
+     "skipped_ticks": 2,
+     "first_movers": {
+      "A": 2,
+      "B": 2
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "paced-vs-lurk",
+   "seat_a": "e6_q18",
+   "seat_b": "e6_q01",
+   "seed": 2,
+   "golden": {
+    "winner": "B",
+    "ticks": 6,
+    "reason": "last_agent_standing",
+    "result_id": "result_401f1aba651e114eb6c88f91",
+    "match_id": "match_17c96a9eeca4add6c7be70f0",
+    "replay_sha256": "b0530b01faf0e6b06a9c43a31b8c2cac2c38d048982debeb054201126abf404a",
+    "trace_sha256": "0d36bee33ebeea308e0c6236018bb3df1b8b5be5415127e3dd14a909c4663457",
+    "trace_lines": 62,
+    "trace_record_sha256": {
+     "header": "70ddcbbd33475cd62a8a3a1af623d6231480942f34160cb544aa590107ba3f09",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "e88753fceb5dd7a3a5587eb23a555c148213f8b05359ad7190edb4ba44ab95e0",
+     "binding": "d0318f6bc1b34b92e39bad05fd6b747decc22cc53db8092899669ea9e8eb39c7"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "ffc652cd4a4f8827a4d1d0d14489a30bac4a3ea2f164ab8f61e4246e91b6f5d4",
+     "B": "06bf54c75035796a2ad093f7559366c19644f20544090c7da3b46e3af4475826"
+    },
+    "coverage": {
+     "decisions": 56,
+     "action_kinds": {
+      "move": 5,
+      "read": 23,
+      "write": 28
+     },
+     "statuses": {
+      "APPLIED": 56
+     },
+     "visible_decisions": 39,
+     "short_ticks": 0,
+     "skipped_ticks": 4,
+     "first_movers": {
+      "A": 3,
+      "B": 3
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "paced-vs-lurk",
+   "seat_a": "e6_q18",
+   "seat_b": "e6_q01",
+   "seed": 3,
+   "golden": {
+    "winner": "B",
+    "ticks": 6,
+    "reason": "last_agent_standing",
+    "result_id": "result_aa794d141b38919e72355e57",
+    "match_id": "match_8de216c3169483dca02c23be",
+    "replay_sha256": "ac07a8fcedf84dddfaee4ff325124b3355c17fa5a675c24df209c4c4690f8085",
+    "trace_sha256": "1003bb3c59f71330711cbb8f1f9c90ba1f773f579712c34dafec6a42c1e9a673",
+    "trace_lines": 64,
+    "trace_record_sha256": {
+     "header": "12ac0a993f32565b17e473d919c19f2c59fd12e651130b881e9cd136ce3a6c76",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "fe949f8f24bd1c6dd66873cbed9804d48aa58f33ddab0a929d77081eebac9aa8",
+     "binding": "d30c787d6fe48831f306e430f7cb818007897aae0131c53335770a207962c2a5"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "01bf048aab510020486d28ec44de28bfa6842f38c6a7573ea4a1f6276a5c1caa",
+     "B": "628ba8dbf4eb5f7a357a1ced3f7deda84c3453625871debcb00fbb1a83e9a21c"
+    },
+    "coverage": {
+     "decisions": 58,
+     "action_kinds": {
+      "move": 6,
+      "read": 23,
+      "write": 29
+     },
+     "statuses": {
+      "APPLIED": 58
+     },
+     "visible_decisions": 37,
+     "short_ticks": 1,
+     "skipped_ticks": 3,
+     "first_movers": {
+      "A": 3,
+      "B": 3
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "greed-mirror",
+   "seat_a": "e6_q03",
+   "seat_b": "e6_q04",
+   "seed": 1,
+   "golden": {
+    "winner": "tie",
+    "ticks": 30,
+    "reason": "all_agents_dead",
+    "result_id": "result_b6367e8dce7b3aaa41b917a4",
+    "match_id": "match_50cb1b290aa1fd25242568eb",
+    "replay_sha256": "c6f872aea67d1b1e8779c1c74a7b9872d66df49f35a040aa05b31688ccf2dd87",
+    "trace_sha256": "ff4583776ab005b445c0a8fbb82c7809f99f2cfa05e1d572e5762c64c3921448",
+    "trace_lines": 480,
+    "trace_record_sha256": {
+     "header": "5210c331072875c616d97aacb0bc0d1656318efe40878c08ce64469da0ffc3f1",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "99dcc0d8826a75be63fc88cfdc55257822772d6cdae3cc8385d4aa50c91f481f",
+     "binding": "328c81096baacf244de6cc722f54c9b37bfb8e8b110100406b72ce12fac28620"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "b36c37be92b5a81f700c754dd340d3f90cdef8a132380d8775a7af3bb83da319",
+     "B": "2a195a77fda1a04219a6ca37f08878102dd46ab4682568293175d3f6d9d1c18d"
+    },
+    "coverage": {
+     "decisions": 474,
+     "action_kinds": {
+      "write": 474
+     },
+     "statuses": {
+      "APPLIED": 474
+     },
+     "visible_decisions": 0,
+     "short_ticks": 1,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 15,
+      "B": 15
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "greed-mirror",
+   "seat_a": "e6_q03",
+   "seat_b": "e6_q04",
+   "seed": 2,
+   "golden": {
+    "winner": "tie",
+    "ticks": 45,
+    "reason": "all_agents_dead",
+    "result_id": "result_128039bf2643097b248e7759",
+    "match_id": "match_4daf0f87cc41c7aaf912e729",
+    "replay_sha256": "207260cc20c957748116cb56b0905dff7d95e300616a9ef5a36b15d52fea5138",
+    "trace_sha256": "c261714fe30440a7dd9a4473a8bcef29769d44b3f68c4619dcead97d3de73ce0",
+    "trace_lines": 718,
+    "trace_record_sha256": {
+     "header": "779ef202391d34b5f8a8cf6d538c5e8e600c6bd151e61c5f59760815a1f0d3dd",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "9cd43a57f827288723595980eaec221ee03fc37529e4aafef8629891a9b59d2a",
+     "binding": "ead71a384997c3b642aa7084196bbadf495248a37a814fbb6232ee081b2dff58"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "71c30bdf8d89b5b79af38bb272573b66cde9baa4e0a61ad2641bba8614a096ec",
+     "B": "2d71c47dc8f85cfc54ccb857ec324190c29ac6bf6bd84baf4363df0078998fb6"
+    },
+    "coverage": {
+     "decisions": 712,
+     "action_kinds": {
+      "write": 712
+     },
+     "statuses": {
+      "APPLIED": 712
+     },
+     "visible_decisions": 0,
+     "short_ticks": 2,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 23,
+      "B": 22
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "greed-mirror",
+   "seat_a": "e6_q03",
+   "seat_b": "e6_q04",
+   "seed": 3,
+   "golden": {
+    "winner": "B",
+    "ticks": 27,
+    "reason": "last_agent_standing",
+    "result_id": "result_a054d24873b8b7fa18ca8bc0",
+    "match_id": "match_c5f39861afed5509a21ac71c",
+    "replay_sha256": "c9c8394131ca5eebd56b5afbec0ec88347fcabf92465b5b50babfc0e61186c96",
+    "trace_sha256": "162dd74b2bfd7a79af895cc5dcfc292a5e1f37ae7f40e7861a9618220bbf93ce",
+    "trace_lines": 430,
+    "trace_record_sha256": {
+     "header": "3098182dd456bccca50fcaba67e5979fc06a54224a0561bc1aa93376cf9ff43d",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "d1a4070f4ed30830081d297f5b63127ade3556930be0d4bd720790da13791b7b",
+     "binding": "a0d528300e858c820c656c9d71da0c17728d60d3ab64482dfbc3c3c04ef34455"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "fcbf90b292ec73b1a99939a7bd6b98a0899eb8e3cb9820e906d1eb14f845b586",
+     "B": "e610323165ad418a92fd9593a9290cb8eabf5f904f39405253759056da563f9c"
+    },
+    "coverage": {
+     "decisions": 424,
+     "action_kinds": {
+      "write": 424
+     },
+     "statuses": {
+      "APPLIED": 424
+     },
+     "visible_decisions": 0,
+     "short_ticks": 0,
+     "skipped_ticks": 1,
+     "first_movers": {
+      "A": 14,
+      "B": 13
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "greed-mirror",
+   "seat_a": "e6_q04",
+   "seat_b": "e6_q03",
+   "seed": 1,
+   "golden": {
+    "winner": "tie",
+    "ticks": 30,
+    "reason": "all_agents_dead",
+    "result_id": "result_ca1d42dff76089f6bec0dbcc",
+    "match_id": "match_885eb019a64748c33d7e7cbf",
+    "replay_sha256": "da24de2d7e95598ea020ea790f960910821bb86d2838610931182060d1c1c256",
+    "trace_sha256": "74185509fa3d66d0e988397623ef92d6ec09869b782719dd59e3ae9a5a657842",
+    "trace_lines": 480,
+    "trace_record_sha256": {
+     "header": "e4d06009a01e2507a129764a5d6b5871739311e8225a2a4622d93d342262a5d7",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "99dcc0d8826a75be63fc88cfdc55257822772d6cdae3cc8385d4aa50c91f481f",
+     "binding": "8e710f4213b5742a437bbcbadfbf4bc5bd96c21035a4d176b18dd41dce97e96b"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "b36c37be92b5a81f700c754dd340d3f90cdef8a132380d8775a7af3bb83da319",
+     "B": "2a195a77fda1a04219a6ca37f08878102dd46ab4682568293175d3f6d9d1c18d"
+    },
+    "coverage": {
+     "decisions": 474,
+     "action_kinds": {
+      "write": 474
+     },
+     "statuses": {
+      "APPLIED": 474
+     },
+     "visible_decisions": 0,
+     "short_ticks": 1,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 15,
+      "B": 15
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "greed-mirror",
+   "seat_a": "e6_q04",
+   "seat_b": "e6_q03",
+   "seed": 2,
+   "golden": {
+    "winner": "tie",
+    "ticks": 45,
+    "reason": "all_agents_dead",
+    "result_id": "result_825263865092e1a27a5c76cf",
+    "match_id": "match_3180ad1e6c271533c4cc3804",
+    "replay_sha256": "fc2f8d1071996eeb142ead2377c3a05e44bceb1b7a00e8d8cc045912568b8eb5",
+    "trace_sha256": "f81d50158578fae9f5487eb82c80f3e806ae83781e5768e1c97562d1e2f2d975",
+    "trace_lines": 718,
+    "trace_record_sha256": {
+     "header": "36638d4ececf8344f4781d715a262a9b5b6eccfad1e9126f0377ec29ce29cc93",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "9cd43a57f827288723595980eaec221ee03fc37529e4aafef8629891a9b59d2a",
+     "binding": "62dd6823ce7f236d0e619c794d8b2f4c6776a42ccb126ba7855d780ea140776e"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "71c30bdf8d89b5b79af38bb272573b66cde9baa4e0a61ad2641bba8614a096ec",
+     "B": "2d71c47dc8f85cfc54ccb857ec324190c29ac6bf6bd84baf4363df0078998fb6"
+    },
+    "coverage": {
+     "decisions": 712,
+     "action_kinds": {
+      "write": 712
+     },
+     "statuses": {
+      "APPLIED": 712
+     },
+     "visible_decisions": 0,
+     "short_ticks": 2,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 23,
+      "B": 22
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "greed-mirror",
+   "seat_a": "e6_q04",
+   "seat_b": "e6_q03",
+   "seed": 3,
+   "golden": {
+    "winner": "B",
+    "ticks": 27,
+    "reason": "last_agent_standing",
+    "result_id": "result_99474b0678a66368fcbbe099",
+    "match_id": "match_0509d01a33bc1857ff7d5942",
+    "replay_sha256": "355efbacc1c6c2bfeed1423560d18c05e688a2962986b3cbfa5bdf312fbeaaa4",
+    "trace_sha256": "9704caae04568581706da0a71dc068e3e46c506e0da05b08ffd32d15e10dc938",
+    "trace_lines": 430,
+    "trace_record_sha256": {
+     "header": "2ed77b4b9d26daed2063e8094c26e85953491842a859a7349c203567d89b88b0",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "d1a4070f4ed30830081d297f5b63127ade3556930be0d4bd720790da13791b7b",
+     "binding": "f709969e76166fa92e3fd49a73597cbaad0369669e537d8be1115bb5c9478b62"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "fcbf90b292ec73b1a99939a7bd6b98a0899eb8e3cb9820e906d1eb14f845b586",
+     "B": "e610323165ad418a92fd9593a9290cb8eabf5f904f39405253759056da563f9c"
+    },
+    "coverage": {
+     "decisions": 424,
+     "action_kinds": {
+      "write": 424
+     },
+     "statuses": {
+      "APPLIED": 424
+     },
+     "visible_decisions": 0,
+     "short_ticks": 0,
+     "skipped_ticks": 1,
+     "first_movers": {
+      "A": 14,
+      "B": 13
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "scout-vs-repair",
+   "seat_a": "v4_scout",
+   "seat_b": "e2_repair_guard",
+   "seed": 1,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_49a8e65c4687cba8202e3607",
+    "match_id": "match_b801d31b914d4b51ee6d102c",
+    "replay_sha256": "00e8a40b5efdf7a640e0aae63bc6ee69e067cb9b9091323c5e3ce62c5c07b1e1",
+    "trace_sha256": "a662c4ec29f7180f5fcc5c6192da7da291876dd7c9158e57b1d1b63427e111f4",
+    "trace_lines": 9048,
+    "trace_record_sha256": {
+     "header": "a77dfb4bfebe7d36cf1004648a37e9c991d088d3fa8d093a37ec5f6a914548e1",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "fc606f434918da5e6391e2317b70ee59db4abbebfa8f6d32ba8ed7d5b0f7607b",
+     "decision_v2": "893766c7b70fc257931b00a472e9ec7b95f8509830af614c2506e083d6eba087",
+     "binding": "9bbce48caed61ef0747670069b08f7ac0f530a41483f4db3af4d8f6e680dd27c"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "317781d74ffd1dd71b8b5746ccebc1df49a8ce20eb9ea71a578455ab711278a0",
+     "B": "8adecb5a2a975bc70c67b60c54ed4daca5f45d10f61676fe8dbde3612db7ad70"
+    },
+    "coverage": {
+     "decisions": 9042,
+     "action_kinds": {
+      "move": 49,
+      "write": 8993
+     },
+     "statuses": {
+      "APPLIED": 9042
+     },
+     "visible_decisions": 8947,
+     "short_ticks": 497,
+     "skipped_ticks": 497,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "scout-vs-repair",
+   "seat_a": "v4_scout",
+   "seat_b": "e2_repair_guard",
+   "seed": 2,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_34a142c5798962c80b303aaa",
+    "match_id": "match_afd325d39682c239f5fa7f91",
+    "replay_sha256": "c22d3debbb3c833765a421a83148f0807b4dbf5ffffc784c8cfe4e957cbdbc63",
+    "trace_sha256": "7e4bb6c1a48ecd19cdaf56bd3c087f2346bb1e455d2ae2880316e520ca20bebe",
+    "trace_lines": 9042,
+    "trace_record_sha256": {
+     "header": "04299b1ae17d39fc40bc3de424cdfc18ebd0728aed2a031db6fa88efbd8c9ad0",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "fc606f434918da5e6391e2317b70ee59db4abbebfa8f6d32ba8ed7d5b0f7607b",
+     "decision_v2": "4de4c21e8f8559eb5479b42ab56e63eb2f786b6451d9bdee2b60ba577b19f7c6",
+     "binding": "e046f20d4c8a09548cc9717771839cb842bd108cf8592da8bed5e72a437ca8e8"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "e5f691cbd741f95035d3bf82382c2c7f7bc49c45d061a35a6064c4fa648c95f2",
+     "B": "1b898cdb35d91267b3a893db1a299d9e7c09e92513c656de692774769dd0f17a"
+    },
+    "coverage": {
+     "decisions": 9036,
+     "action_kinds": {
+      "move": 41,
+      "write": 8995
+     },
+     "statuses": {
+      "APPLIED": 9036
+     },
+     "visible_decisions": 8959,
+     "short_ticks": 498,
+     "skipped_ticks": 497,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "scout-vs-repair",
+   "seat_a": "v4_scout",
+   "seat_b": "e2_repair_guard",
+   "seed": 3,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_46ade356b70c4363918d1caa",
+    "match_id": "match_6d8e8e853375afe39cb5a33a",
+    "replay_sha256": "808680208222d11dd014e235b37a8e62bc74a03b1d1d24b07c63b3a86b075e3f",
+    "trace_sha256": "4795de6c021fef99cce88a2d29d613f92e3dcef9765d4c4fa7af2131e2365ce0",
+    "trace_lines": 9050,
+    "trace_record_sha256": {
+     "header": "f0c993ed498188027e63454a801b08c2c5b3a841349b44128c3e602c496f97e4",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "fc606f434918da5e6391e2317b70ee59db4abbebfa8f6d32ba8ed7d5b0f7607b",
+     "decision_v2": "78618a50f5488aeec497e8de6294895ee5645b6ac20f3307535f5d5158c79a3a",
+     "binding": "56d003536951e1fa3cbf5849db89317d5b0e83e21a987d8a4dbb5e5d7dca9fad"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "8575947ddd94df61cdf826299b89014e5818df1f907a1b7158d0cea439282a80",
+     "B": "f8e2296804ff8f0006c600dea72e031c2637e483101701c23f409bdd9a56fcbe"
+    },
+    "coverage": {
+     "decisions": 9044,
+     "action_kinds": {
+      "move": 50,
+      "write": 8994
+     },
+     "statuses": {
+      "APPLIED": 9044
+     },
+     "visible_decisions": 8946,
+     "short_ticks": 498,
+     "skipped_ticks": 496,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "scout-vs-repair",
+   "seat_a": "e2_repair_guard",
+   "seat_b": "v4_scout",
+   "seed": 1,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_2f09a049a263b5575cdfae8c",
+    "match_id": "match_17538b1b13b08134323579e6",
+    "replay_sha256": "1bfb60b1a27f5cd2dfc4a23ef4a1a8cccc0a4b3fd22f46b2fffa2737530afb6b",
+    "trace_sha256": "29bc9a648e7d7ee8dbad32d567094530b735fdcd38dcd35f7d34e47627ebc70c",
+    "trace_lines": 9018,
+    "trace_record_sha256": {
+     "header": "24ed71b39b85669e368d92ec2bca0288928e30f09a3abdd8d0c2bd5a4a3e9967",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "b5ab7456029be777691d8548cf6b5de277b558380170268453d67ea76ac487d5",
+     "decision_v2": "897dd3f73d7e72a35919d16a1b412325bd8015e89f91212e66ae4c015b3ce3bf",
+     "binding": "5fc497c6f27ebefbc8dea3f43ccc021d8c72449a1530483e35c6abad4ec840a6"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "f60b7824db623293b1a8b927a00d2edabb2fd0a0b66150332f446a86e977eaa1",
+     "B": "f5dc1cb3a4e254ba0041edc9ff0ab15a8bf987bc54fb34d8deabf6342a0c565a"
+    },
+    "coverage": {
+     "decisions": 9012,
+     "action_kinds": {
+      "move": 14,
+      "write": 8998
+     },
+     "statuses": {
+      "APPLIED": 9012
+     },
+     "visible_decisions": 8988,
+     "short_ticks": 500,
+     "skipped_ticks": 498,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "scout-vs-repair",
+   "seat_a": "e2_repair_guard",
+   "seat_b": "v4_scout",
+   "seed": 2,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_e0fed0a6707b4ed00efdd88b",
+    "match_id": "match_c5cfc472994decaab5e1944a",
+    "replay_sha256": "ae5bfe49d16586fbfcf193272b0482e6652a38eb1c8655c53d9eb519963c6a97",
+    "trace_sha256": "118c0ea49aa24f8169fdd21a7239175d9b3c541d66f01efc7e4f22c358e6c4b7",
+    "trace_lines": 9026,
+    "trace_record_sha256": {
+     "header": "88bbbcc5dbe8f2f3c966256f35dfdb43ad0f1d4c040630735e24d843d0e9f814",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "b5ab7456029be777691d8548cf6b5de277b558380170268453d67ea76ac487d5",
+     "decision_v2": "a5bb234721cb9e05f26003f423a5d3c0af22e0087867918903beadaa2f8cf77f",
+     "binding": "349ab02254d15d11e322111792a211f96d3ad549bea827c7f5dba51f79dc7c0a"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "7da709752b46e74e6857350887c2e8cd3d17b127db7449c85a406ad2fae5d83a",
+     "B": "51f77f8133e77e063f96e34651cb6b61a51fabc985a7074fde03f7213dec5717"
+    },
+    "coverage": {
+     "decisions": 9020,
+     "action_kinds": {
+      "move": 22,
+      "write": 8998
+     },
+     "statuses": {
+      "APPLIED": 9020
+     },
+     "visible_decisions": 8978,
+     "short_ticks": 498,
+     "skipped_ticks": 498,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8",
+   "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+   "scenario": "scout-vs-repair",
+   "seat_a": "e2_repair_guard",
+   "seat_b": "v4_scout",
+   "seed": 3,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_86f5ddeaa26c1b7a0b5ef564",
+    "match_id": "match_92e27dfb417c1cade62ec155",
+    "replay_sha256": "76fff8cc647a1860857cfb52d984fca090766d053426c5d8b84d4377074dbe72",
+    "trace_sha256": "ca07a8a198f5dd314196d6777fce345a2dadc889e1d0bf01d59917420da9ad3b",
+    "trace_lines": 9016,
+    "trace_record_sha256": {
+     "header": "13560d823bbf8d7497d6c6c2041e02caa2ef3784faa42c846a02ed3d01b17570",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "b5ab7456029be777691d8548cf6b5de277b558380170268453d67ea76ac487d5",
+     "decision_v2": "bc4f7ce13d404517c5bb0c84c1f76c98464629bab0ab9f18dcf5b9656ee8db35",
+     "binding": "7eeba1e2ca80057e11c07054a000ef941d8fd8235e3037ce76370cd2cb763752"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "bdbf182b1a50c3e74214f6956b8ef6aa9619abf370011ff04bff66e8a8da3497",
+     "B": "f779913a10f0d0607d9a5a759b119db23ae33524956865d9935e0d3e2385065c"
+    },
+    "coverage": {
+     "decisions": 9010,
+     "action_kinds": {
+      "move": 13,
+      "write": 8997
+     },
+     "statuses": {
+      "APPLIED": 9010
+     },
+     "visible_decisions": 8989,
+     "short_ticks": 500,
+     "skipped_ticks": 498,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "rush-vs-guard",
+   "seat_a": "e6_q10",
+   "seat_b": "e6_q11",
+   "seed": 1,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_89ad4b2d97aa92cc29f9ef5f",
+    "match_id": "match_177a8159e55012aae7b5680f",
+    "replay_sha256": "52292925e228a4abbe3ad6bd51fdce885ed71fee3e25a11c14b1c7d392249bd6",
+    "trace_sha256": "8a69fc91d5aef3177dfa72f206e6768d1a1e0e0e75c9714d0cb62fbae4528cb3",
+    "trace_lines": 14006,
+    "trace_record_sha256": {
+     "header": "451385ab1c1be91c3c4c1922d01003e5d4d94def80e845b461ae4262fd7d5278",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "81463034354345359678eff6da08c25d2f09d09c8ac5664b0f01d0236de7388f",
+     "binding": "b9956fe9d017442a72fcf5e98b6bd743df8ff21e6d6aea959e4dc38bf8613c5b"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "2400e027ca01ef5afcb9ef2ddf7d6cec3d92a7fdbb70cc65a45a50cb870d2485",
+     "B": "1d1f5a3aa5ba87126cdcf5c5aea4ab5481afaf6ba107c6fb65627994d154a9e4"
+    },
+    "coverage": {
+     "decisions": 14000,
+     "action_kinds": {
+      "move": 2,
+      "read": 9,
+      "write": 13989
+     },
+     "statuses": {
+      "APPLIED": 14000
+     },
+     "visible_decisions": 13998,
+     "short_ticks": 2000,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "rush-vs-guard",
+   "seat_a": "e6_q10",
+   "seat_b": "e6_q11",
+   "seed": 2,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_cdf266a468a87714d49a3ed4",
+    "match_id": "match_da3ec2cc86cd9d69bd23784e",
+    "replay_sha256": "2e2dadaea6bc3a0f7333a0d328a5e1aa15578454557ec4ff42e4d8afd1f7ccb5",
+    "trace_sha256": "fe182377a5c3d928aaba22db77d49fec7a2be2f0a241f092e672f89f6b2ce5f3",
+    "trace_lines": 14006,
+    "trace_record_sha256": {
+     "header": "35ff1487b30265c74cd09237989e77097db1aba1895957c1dd790d24ce9540ab",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "b3cf9d7a1596305c54cf8515ee7f2e8f5302329a9b0dd22342457206bf28b2de",
+     "binding": "1acc112e0a73ed7f3b5a575204e5a2c74fb42e72f732b5e5b3551a0f709d5a98"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "f2637263fbe388b7de0ed19ef4de9dae6197635cf4e5f400a442e9fa961d6cb6",
+     "B": "fab1bfa305a4c10c5d5e0758c8e4617542700dc8e816cd523d5dd7eea97042fb"
+    },
+    "coverage": {
+     "decisions": 14000,
+     "action_kinds": {
+      "move": 3,
+      "read": 9,
+      "write": 13988
+     },
+     "statuses": {
+      "APPLIED": 14000
+     },
+     "visible_decisions": 13995,
+     "short_ticks": 2000,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "rush-vs-guard",
+   "seat_a": "e6_q10",
+   "seat_b": "e6_q11",
+   "seed": 3,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_7c597bb620d367c664daf14c",
+    "match_id": "match_310475074fed3c55dc15f807",
+    "replay_sha256": "feec96a314dd63e341fa66e8c70d55143783946fa37a2f59ae33a91d46031c39",
+    "trace_sha256": "88c9477332dfdf3e91d4606e1926686a9c863dfeb28904170e1d88e0286f059e",
+    "trace_lines": 14006,
+    "trace_record_sha256": {
+     "header": "0dc2092ea29f6051636bbaf032baddece173393cc5e499b7a5bda325249f8b88",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "b64a42f07f12f63f9e28f560ba334d8a090c98b627abf2868cd5e57d4792b776",
+     "binding": "38292c4109638de84bae75fc29455dd090d7b6e4f7509098767238c8ebcf6bbc"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "0e767c7b28fdc908c53b074b34873b80055ea93e9380b39515c21ae6d9f73ff5",
+     "B": "1fb908f3b7ac3ceb637543a71fb4a92c3ee9b674267fbd007b6910fcee30cb9e"
+    },
+    "coverage": {
+     "decisions": 14000,
+     "action_kinds": {
+      "move": 2,
+      "read": 9,
+      "write": 13989
+     },
+     "statuses": {
+      "APPLIED": 14000
+     },
+     "visible_decisions": 13998,
+     "short_ticks": 2000,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "rush-vs-guard",
+   "seat_a": "e6_q11",
+   "seat_b": "e6_q10",
+   "seed": 1,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_eeab4cef7617bb6940399e93",
+    "match_id": "match_59715eec082de53745bf1714",
+    "replay_sha256": "7b2c9735cc9065dcae25d0f3306cd3b48ae4d57c5cec9ee0c1b0912ac8d63baa",
+    "trace_sha256": "98bb7ffd029bcd4ffb0e6acb536c45da57837e4b7b95513034355668613033e4",
+    "trace_lines": 14006,
+    "trace_record_sha256": {
+     "header": "62b42a2a1055e1d190f89f36c45ad38ba084c9ba3564d8239459fdc630dafcaf",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "d4403f01908892aee191ed653e84097485c7b17cbb858cf64dc178f45ed5d522",
+     "binding": "6b4d7cb2021058d0f4183a346d0493f6467fa8afe7e388b911be9e9a2b0d9a23"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "50d1c4a16a6fc4fcee932282d55d38e845cacdc23381acd47f0dd23050aa6165",
+     "B": "8ef64f7ef341f23b2343b0aee59f1c630d04c490ac0845347b110664b74e36ad"
+    },
+    "coverage": {
+     "decisions": 14000,
+     "action_kinds": {
+      "move": 2,
+      "read": 9,
+      "write": 13989
+     },
+     "statuses": {
+      "APPLIED": 14000
+     },
+     "visible_decisions": 13996,
+     "short_ticks": 2000,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "rush-vs-guard",
+   "seat_a": "e6_q11",
+   "seat_b": "e6_q10",
+   "seed": 2,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_4a4f9425ce70fdece69c332a",
+    "match_id": "match_2ce2ddc5b7c97bba0ff35cd4",
+    "replay_sha256": "f8c319bd5c8961189fd1588ba36d26b545dd433428e744c36fda1fce4870d7a8",
+    "trace_sha256": "d3bf178429b52b177a19c1acc871ebd08f219f8a636a8321c82d879d684f1166",
+    "trace_lines": 14006,
+    "trace_record_sha256": {
+     "header": "7d22c5a277d2e1d3469becc055cc772210b17c418abe64c08cb041777f142e14",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "19d56084d3892da5232bb4f50f360cb10876bbf8c84ab04f6c181c847808b2b4",
+     "binding": "90cfb006bdc77b94bfba80a81846d38b8cab6739ea80d672b737c04817b6a81b"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "a1b05c86d04f050a9a1d9da38af86cf9393c2b3f9c53673ef901738d0b205919",
+     "B": "dda6cbdf130d3f042d724256db9776123fe849305986c3a2819d66495520763d"
+    },
+    "coverage": {
+     "decisions": 14000,
+     "action_kinds": {
+      "move": 5,
+      "read": 9,
+      "write": 13986
+     },
+     "statuses": {
+      "APPLIED": 14000
+     },
+     "visible_decisions": 13989,
+     "short_ticks": 2000,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "rush-vs-guard",
+   "seat_a": "e6_q11",
+   "seat_b": "e6_q10",
+   "seed": 3,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_334e7cfb2b221f798d5aa0ce",
+    "match_id": "match_2777233c9c7c81bfd64fedeb",
+    "replay_sha256": "fa2235c4bee697c932ceb659ada1b9afed6b30ed709fa53f8b5ce1bf09df5c1f",
+    "trace_sha256": "2f94e91e34520f21346f2419585f714b62a4580295ca21086467ffaee80ef352",
+    "trace_lines": 14007,
+    "trace_record_sha256": {
+     "header": "9a640bdf5c476113b3dde25c5536e4d0351bbf3eb3d533cad36b876a30d90678",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "b2da7505cc7b0767bf1ae5e36196f941e6cbdee1af43e6d0803fe4135dd1e5bd",
+     "binding": "be814967463971439f402bf145a4327c8823d0ab801a7e0f483257f5ec8ef74e"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "dd47a3cd06a7d52f287f17ad6e50fa209e7f80b39ea9fa9138a1218846a53dc3",
+     "B": "1014da690c4812867c935b3b3988a79793f17f72e14a25aa3cb0a2fa338d0152"
+    },
+    "coverage": {
+     "decisions": 14001,
+     "action_kinds": {
+      "move": 6,
+      "read": 9,
+      "write": 13986
+     },
+     "statuses": {
+      "APPLIED": 14001
+     },
+     "visible_decisions": 13989,
+     "short_ticks": 1999,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "stealth-vs-evader",
+   "seat_a": "e6_q07",
+   "seat_b": "e6_q02",
+   "seed": 1,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_e9dcf2dbc47b6368498bca4f",
+    "match_id": "match_2504df4d2963e440d3223364",
+    "replay_sha256": "b132ab928ba5bfe3db15ce2972222f467ba63164775473756135c961df903332",
+    "trace_sha256": "097ace33274cfbb2fcc3de4f0a1cd6484a6aff3b88e4679a638f0fc4d47c30d0",
+    "trace_lines": 16006,
+    "trace_record_sha256": {
+     "header": "6c360186a79b0cfde71e751fa3084ebcfa19dfd50c46ae7b891071e20e5add80",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "62f3cd293f53ca58aaa058bde08579bc8706ad99f27eb8fe0047784cef964e7a",
+     "binding": "777c8b8b7ffbb60c925fbae282dc34bca8cfeaebce2b1c041df8f2b902a3d883"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "f41ba1f89f84775f6518b848a684ab449e7f62b82e62f2b1de25dd713da78700",
+     "B": "036065e112d5ae24f8232ea2732bd59a29b42b47586e8528842572e580b2c546"
+    },
+    "coverage": {
+     "decisions": 16000,
+     "action_kinds": {
+      "move": 1,
+      "read": 15,
+      "write": 15984
+     },
+     "statuses": {
+      "APPLIED": 16000
+     },
+     "visible_decisions": 0,
+     "short_ticks": 0,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "stealth-vs-evader",
+   "seat_a": "e6_q07",
+   "seat_b": "e6_q02",
+   "seed": 2,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_233f4a139fcf25d4a9634f63",
+    "match_id": "match_031113c76a570f6bc4f09593",
+    "replay_sha256": "7ca04c54b2dffbf97ccda3eabba3f337fbeecb5ce2358b5778cb229b80b2f774",
+    "trace_sha256": "57663ccc530619f85de0fed1c610541cbac3f23112f46025220351426feef822",
+    "trace_lines": 16006,
+    "trace_record_sha256": {
+     "header": "f0c4e9b02b81be190889255832a60e3623275807457960151195b982e7e23d8b",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "9efcd05e54017f44ec84ae462f10dcb3548ad4ba43f51790f8d24c79fbeb3c11",
+     "binding": "018a961bcac626135d724d02e894507ee35c8dcd269b3dcec651f8355e2a5e7c"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "8a3a040723b6faf8d42910e14361c9216f3aa32f60795d5ceabea3186c94c24d",
+     "B": "1a6d7d49f47aba4d218d318b87208fd6e972b3a29e11a8eba9a011dd902a3989"
+    },
+    "coverage": {
+     "decisions": 16000,
+     "action_kinds": {
+      "move": 1,
+      "read": 23,
+      "write": 15976
+     },
+     "statuses": {
+      "APPLIED": 16000
+     },
+     "visible_decisions": 0,
+     "short_ticks": 0,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "stealth-vs-evader",
+   "seat_a": "e6_q07",
+   "seat_b": "e6_q02",
+   "seed": 3,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_b74158f31ea6c3142cbe9915",
+    "match_id": "match_b7cfd70eb9deb575395b4223",
+    "replay_sha256": "4563ecf729267c4e783d47fe1329eebefa5b8dbb7d4f06dc67d05014a461fe42",
+    "trace_sha256": "220efc4e3216de36a4e89890dcbcff2d0e81fde8f57238e2589f4beccfffee7b",
+    "trace_lines": 16006,
+    "trace_record_sha256": {
+     "header": "3211ce109520c081c2df991c6ef3f44577d47684f39562d67e441ae9f474d6aa",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "97323ce39d1815a3078ea47b0b392e12c6b0006b21060f561eb45324a0f552df",
+     "binding": "ddd0197f436049b8bb263569524c30ffc0846ecb8b28dad639b313d3dae6a4b6"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "5c157af2cfe75aa683d8a10cab5350f934e1667e6155cc1c6280fbdaea867a35",
+     "B": "2ebd51ea2a7e54dfa97f1dcf1ee2e5c45cc1f815cef3fa824ee26a561ea6301f"
+    },
+    "coverage": {
+     "decisions": 16000,
+     "action_kinds": {
+      "move": 1,
+      "read": 14,
+      "write": 15985
+     },
+     "statuses": {
+      "APPLIED": 16000
+     },
+     "visible_decisions": 0,
+     "short_ticks": 0,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "stealth-vs-evader",
+   "seat_a": "e6_q02",
+   "seat_b": "e6_q07",
+   "seed": 1,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_62c978d0bb460d25006e94bc",
+    "match_id": "match_d8755f80962287bf214fa5a0",
+    "replay_sha256": "f7957f0784bb136d1a736352c0a6d367b17b0c928f7ce5bf4a9898f68dc11437",
+    "trace_sha256": "d3b0970b02e21532fe0ae03cd0eda209587423629af45d25895567fd026ee530",
+    "trace_lines": 16006,
+    "trace_record_sha256": {
+     "header": "b59371edb38b97c9de77b6377cb1978d0a0ea823e682241d4aedf1be65746f9b",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "46402eabd0f17e79ea9d35fb11419f51dbc2b08bd7432d9447e42822f76a9a6e",
+     "binding": "37f17593ddfba610256719777847a3fa4fe07f5cf5bb4031299b0af752efe826"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "2753a53d5403d0d10abe4edc3c273e8310accb901d3edace6e9dbbcd5b05f81a",
+     "B": "562bd5360b8b333dd5d5e492a94aa3a9e4e8225b87e7d3828a4cf06be3e24216"
+    },
+    "coverage": {
+     "decisions": 16000,
+     "action_kinds": {
+      "move": 1,
+      "read": 16,
+      "write": 15983
+     },
+     "statuses": {
+      "APPLIED": 16000
+     },
+     "visible_decisions": 0,
+     "short_ticks": 0,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "stealth-vs-evader",
+   "seat_a": "e6_q02",
+   "seat_b": "e6_q07",
+   "seed": 2,
+   "golden": {
+    "winner": "B",
+    "ticks": 7,
+    "reason": "last_agent_standing",
+    "result_id": "result_a6516930f9a71cab1a8dbd33",
+    "match_id": "match_77d39c5b1ea57d2acfde449a",
+    "replay_sha256": "5d744bc389f0f8ad298889d01996e93ebd9eff3ccf276d82b854bb55e5a96750",
+    "trace_sha256": "ab9b3ceeaae9f2cfb096acbb37fa2460c78638ba9440d2be3a4a23504112308a",
+    "trace_lines": 118,
+    "trace_record_sha256": {
+     "header": "039103cfbf717308567712acbc242f3bdc78bb4ff564ef5702b2a9368faadd56",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "5b11131b61f83fd9933725aaf7b6435eefdb0912a34e77db187270cb174c42b6",
+     "binding": "454395000c5ec95a0d54a5a897107ee94b796fd46f05b20f166261dc8aab7c5f"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "1e1a2db9dd7ce7bcf7f1515993d22ae0a4115f74d799c7989145b56b34211501",
+     "B": "083542b412129a440e1c772ba972141b80c46b49e85ac4782223781d8f9bbe49"
+    },
+    "coverage": {
+     "decisions": 112,
+     "action_kinds": {
+      "move": 1,
+      "read": 41,
+      "write": 70
+     },
+     "statuses": {
+      "APPLIED": 112
+     },
+     "visible_decisions": 0,
+     "short_ticks": 0,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 4,
+      "B": 3
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "stealth-vs-evader",
+   "seat_a": "e6_q02",
+   "seat_b": "e6_q07",
+   "seed": 3,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_589d0d830f531cdc366b457a",
+    "match_id": "match_6a14ff40737bae99618b7a0b",
+    "replay_sha256": "223cefcc464e425e93b7431ca72cf2c7b8786afbca123dc8a0dca016edd22c96",
+    "trace_sha256": "72313103e59ee0da5f00168262153d146f41b72f1076cd23374948e9ae4b4a04",
+    "trace_lines": 16006,
+    "trace_record_sha256": {
+     "header": "642e29bf54da01e249b61a9745be2d14e73ce2d4914057ecbb971e86e97a9162",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "bf1df8262765f1a966ccd1375e872d156439c401782e29221b3b0891a2d6b071",
+     "binding": "9a6119b9993d9e56255870485805c99702c25f6ef37d1064dde4e30da61caf6c"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "68fa081e992eaf574fb60aa6d2471a40908091050fcb828243bf45c97151e162",
+     "B": "e53d19603312d646f527d4f51604b3092ac1e56371582362e3c11b59462dc1a6"
+    },
+    "coverage": {
+     "decisions": 16000,
+     "action_kinds": {
+      "move": 1,
+      "read": 51,
+      "write": 15948
+     },
+     "statuses": {
+      "APPLIED": 16000
+     },
+     "visible_decisions": 0,
+     "short_ticks": 0,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "split-vs-adapt",
+   "seat_a": "e6_q17",
+   "seat_b": "e6_q06",
+   "seed": 1,
+   "golden": {
+    "winner": "A",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_f20b0ee3ce7dcf597d33a6cb",
+    "match_id": "match_512fd82b3276f4aebfe8f3e7",
+    "replay_sha256": "deb47089b35ab1f389e1d0470acc834632874a77c9049280a12ce4dd1efe3f1b",
+    "trace_sha256": "38e9dbf7ac3894e493a29eb79d210e0f5388020f08276de3a4d9c426f0f1c0c6",
+    "trace_lines": 15004,
+    "trace_record_sha256": {
+     "header": "8e79844d3eff224153312ccbbdc4bbb2ac8dd5b4a5f7d8cb1e3c805ebf08a778",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "929b5aa3487bb5e2edf51efbc99ac521a8e27c5f3e69eb19010b49c2da428ff0",
+     "decision_v2": "042c744f1bbeec70426f04e6689f8cbab180ea1896c1ada93478de8aa7699a0d",
+     "binding": "831702ac604f4d03c5e8e89e16b2de9574c3535a7a601f0975e44146c44e5163"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "34c2ec960c9de826b6d7369880bf6452b2e736615a0be263fdd1dd724f1768be",
+     "B": "e404bbe3f03b16b2e2dfaac7cdddb72660c890804046367e469e453d3ac81628"
+    },
+    "coverage": {
+     "decisions": 14997,
+     "action_kinds": {
+      "move": 3,
+      "read": 1009,
+      "write": 13985
+     },
+     "statuses": {
+      "APPLIED": 14997
+     },
+     "visible_decisions": 13992,
+     "short_ticks": 1000,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "split-vs-adapt",
+   "seat_a": "e6_q17",
+   "seat_b": "e6_q06",
+   "seed": 2,
+   "golden": {
+    "winner": "A",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_127cdffd15c66710b2a054ac",
+    "match_id": "match_0299a920bd3b9a228f103e21",
+    "replay_sha256": "66e75e2f3746f2b1f552a8c191c781a6b7f62d7cd21ca607d83344fb51cfee80",
+    "trace_sha256": "62bbafa7a1dc1c3734f3b221c790ee4a3a4b80f9c9147e2df74851b777d0726d",
+    "trace_lines": 15006,
+    "trace_record_sha256": {
+     "header": "4b1ebbd9bb9ede9092bd3ef951e08140b2371c905cabcf842e504f4d671ecbcc",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "929b5aa3487bb5e2edf51efbc99ac521a8e27c5f3e69eb19010b49c2da428ff0",
+     "decision_v2": "ddf2e889acf8c498da92ed54bf81674b57ac92862a945f59580b5076229d9b6e",
+     "binding": "f09cf96fe26ab0b9fbf22d006db689c721633d8b6ad068612ab99e9e705ed356"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "017e71ea5288d83dae0e8a4458a7b5e0eb5391390b6e2f3e5c4a90406a937b9f",
+     "B": "677665702cb77b0cd816d089010b984ff52603b68dd158ac35a858eb050eff82"
+    },
+    "coverage": {
+     "decisions": 14999,
+     "action_kinds": {
+      "move": 4,
+      "read": 1009,
+      "write": 13986
+     },
+     "statuses": {
+      "APPLIED": 14999
+     },
+     "visible_decisions": 13981,
+     "short_ticks": 999,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "split-vs-adapt",
+   "seat_a": "e6_q17",
+   "seat_b": "e6_q06",
+   "seed": 3,
+   "golden": {
+    "winner": "A",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_38952c0ed10f641a5790c154",
+    "match_id": "match_254512691d51d1dbec19d683",
+    "replay_sha256": "63dc6cca028ac4d672c8b18e3c57cdfb8e3903d125d11e630d619202d9a307d4",
+    "trace_sha256": "9ce5b14a15d831f639ae6998146fadbbca353dc58c0fb9c7f255e0997335ead8",
+    "trace_lines": 16000,
+    "trace_record_sha256": {
+     "header": "ac5b48bd8ebb078e11624c54405345e9b335870c7695320c130daae50c65c5c1",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "929b5aa3487bb5e2edf51efbc99ac521a8e27c5f3e69eb19010b49c2da428ff0",
+     "decision_v2": "97f089d34742c773359db30b5c7a3157d8b481de95aae1113d3ba52bf537afaf",
+     "binding": "3e4039cc5dfbddc96759385e866f9e5a8eaccd65d06388e40933969d5f2f2a77"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "39ce697eb602731ef93d6beabeeb28e11885489ed62a24cdc87cd2ccebba9729",
+     "B": "960e4178b2028e26d2aa3f857636df7734871d3afe8c2147d3dab184fbe58e99"
+    },
+    "coverage": {
+     "decisions": 15993,
+     "action_kinds": {
+      "move": 3,
+      "read": 1009,
+      "write": 14981
+     },
+     "statuses": {
+      "APPLIED": 15993
+     },
+     "visible_decisions": 29,
+     "short_ticks": 7,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "split-vs-adapt",
+   "seat_a": "e6_q06",
+   "seat_b": "e6_q17",
+   "seed": 1,
+   "golden": {
+    "winner": "B",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_7cd7a39ce95a9e537eaab812",
+    "match_id": "match_6be525cf1daa623c6486e200",
+    "replay_sha256": "cb0e9db177eddcc118c898ebdaf02e169429dc524fa168831d53368d3b5e3d1b",
+    "trace_sha256": "439f02d037f61459afa784656ccc6d6954d3a1b993d3092290c4012cd5647375",
+    "trace_lines": 15999,
+    "trace_record_sha256": {
+     "header": "0b8cf22d2fc68f4984c752f90de102222af1c399df544bd7ee13fe39e543ca4d",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "88689cc0461f135c50b93a2d987765a4e9e0b8a2808f58a35cf2f6ee8f2845ba",
+     "decision_v2": "1715d78a8bcf0a66d1d757175f04f3c4b194a7ea5032e42659423e26f191305b",
+     "binding": "63c84382eaf3f39d5555909b5767b8c4241946bf8f7d30bfde8eeb7a9d9c75a8"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "3e7c03d7ab94f53c7f981fba7032cc2fc44220ea0bb0860d12c8e743452cde58",
+     "B": "f0bfc5c3cd967a4757eb5de9540d3c6b1c6d723fcb09e5d47572aad25d2efe45"
+    },
+    "coverage": {
+     "decisions": 15992,
+     "action_kinds": {
+      "move": 3,
+      "read": 1009,
+      "write": 14980
+     },
+     "statuses": {
+      "APPLIED": 15992
+     },
+     "visible_decisions": 51,
+     "short_ticks": 8,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "split-vs-adapt",
+   "seat_a": "e6_q06",
+   "seat_b": "e6_q17",
+   "seed": 2,
+   "golden": {
+    "winner": "B",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_fb5d42db033efe303f59b0e3",
+    "match_id": "match_2637d87d7eb844af6e4e9125",
+    "replay_sha256": "905d019c41c0ac9ae884c42d3208c5234020964b1816ab97e1d46fe3a0215f2b",
+    "trace_sha256": "880875d3c1baa4205c545b13cb5e65734a1d3bec4402d65fcd3a8f937e1368d5",
+    "trace_lines": 15999,
+    "trace_record_sha256": {
+     "header": "e2fabc03ef5c6d9becb2ef62c891a542f4ee1abc1ef47a5bf6618b0c7918a205",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "88689cc0461f135c50b93a2d987765a4e9e0b8a2808f58a35cf2f6ee8f2845ba",
+     "decision_v2": "2c9e64d769dda1ffeda94ef1220ef15f85184260d78728790cf5a634362b4659",
+     "binding": "6c8214df56673fd80f6b785e11ae8b56bf3c64c4d39c8b42289edbcafff086e5"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "6ed202243b55bcee0506b2bf91f5b94ea6ab861c89d84795d23b511b016dcaad",
+     "B": "8e4fa42fda307170a3edad92faf62c154be91c0fdb3ec5f94902fb57c08ec17a"
+    },
+    "coverage": {
+     "decisions": 15992,
+     "action_kinds": {
+      "move": 6,
+      "read": 1009,
+      "write": 14977
+     },
+     "statuses": {
+      "APPLIED": 15992
+     },
+     "visible_decisions": 56,
+     "short_ticks": 8,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "split-vs-adapt",
+   "seat_a": "e6_q06",
+   "seat_b": "e6_q17",
+   "seed": 3,
+   "golden": {
+    "winner": "B",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_7ff40e7f89b03949e6515080",
+    "match_id": "match_e07ba330a7797b7f1884ddda",
+    "replay_sha256": "a3d9ea90733494045038a1fd138209cca3858a716dd5e8b22fe07cce4cf4c0c7",
+    "trace_sha256": "5e812a1d18330dfc39f13e908a94fb7b92ffacb08ca10b341093d27714b03eb0",
+    "trace_lines": 15999,
+    "trace_record_sha256": {
+     "header": "1205c6488597491ec448045cfdc7b035c0b2dd392e438cdcc2fd70fcfff80537",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "88689cc0461f135c50b93a2d987765a4e9e0b8a2808f58a35cf2f6ee8f2845ba",
+     "decision_v2": "095d5b4b1e545aacd61191367cf5ca382e75f26578cb392f30889c8e0065e45d",
+     "binding": "4046bffc8bfb742a576a3d38fb3c5c151b93f8454d858bbc13aefd78fc909902"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "fbf60906f5bf5059f2a582b53b2057b1bdf2aab71c99bf2e25e93b5018b45812",
+     "B": "d80ba6f3ef66ef7c15e7226e08d3a573700ed4e6ed431c53af4dc0acdf65ddfb"
+    },
+    "coverage": {
+     "decisions": 15992,
+     "action_kinds": {
+      "move": 7,
+      "read": 1009,
+      "write": 14976
+     },
+     "statuses": {
+      "APPLIED": 15992
+     },
+     "visible_decisions": 41,
+     "short_ticks": 8,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "paced-vs-lurk",
+   "seat_a": "e6_q01",
+   "seat_b": "e6_q18",
+   "seed": 1,
+   "golden": {
+    "winner": "A",
+    "ticks": 4,
+    "reason": "last_agent_standing",
+    "result_id": "result_18ef7d38309045ae6b14d2f6",
+    "match_id": "match_c0cb4dbd7cb5a143efa6515c",
+    "replay_sha256": "112a259591842a200881999f8a0f09624f47965f7a58dbae7b89d42d4502ad6d",
+    "trace_sha256": "3b117c4db24a3df2753432dc6bb6f529808fcd3dde22e8811363af9245534a75",
+    "trace_lines": 62,
+    "trace_record_sha256": {
+     "header": "c8abfcee1f81f19665b69068a9360c8cb012758af66482e34caaee95d189c47b",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "eaa9b891b179f9248cd79a075ff73a93f202b4eb95b861baa558a2cbd552c046",
+     "binding": "6249686ceb983538ab62e2265bc5aa20a89d09e73e42a325c7fbecdbed527bb5"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "86aff93e1fc9508fd5a172c4248444a8010bfdb01a13cbac4ada11600d3910a3",
+     "B": "c0603308d6f2a883c77aae72b0cd2e92be9cf6e0f1541cd2a6d445ce111147d9"
+    },
+    "coverage": {
+     "decisions": 56,
+     "action_kinds": {
+      "move": 2,
+      "read": 30,
+      "write": 24
+     },
+     "statuses": {
+      "APPLIED": 56
+     },
+     "visible_decisions": 51,
+     "short_ticks": 8,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 2,
+      "B": 2
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "paced-vs-lurk",
+   "seat_a": "e6_q01",
+   "seat_b": "e6_q18",
+   "seed": 2,
+   "golden": {
+    "winner": "A",
+    "ticks": 4,
+    "reason": "last_agent_standing",
+    "result_id": "result_87b250146b7343fde0da8709",
+    "match_id": "match_f18235fdf8aed0729da948e1",
+    "replay_sha256": "89469e24f1bcb311635d7312d1db87670048c8b3d66ee8cd5341b94064e05f71",
+    "trace_sha256": "bc1ec40513ab8af9b1c007485f865a932bb9702b6ec7722fd9ce12f80fd13f5e",
+    "trace_lines": 62,
+    "trace_record_sha256": {
+     "header": "972b3db9d70fb2f29b209dbb40a77345c7277a3c3e2efbb240c727f4c62b2142",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "ddc658453ec4ffa463580ed6866a5cf04c883e5ce9b3cf57da4c5ace48334ad5",
+     "binding": "cae6249e739ddec5cc464d6a5959c3ac6009b813e8d2edf9c953f78aa531cb4e"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "0cd4a3ae483699d76f2e94871e73e4bb2b09913f1fbc00677a49acb0bc1376ef",
+     "B": "11e604b822fd6c8fed913c0ac8ff85b7bd6155d93d0231b49e751d956dde7dd0"
+    },
+    "coverage": {
+     "decisions": 56,
+     "action_kinds": {
+      "move": 3,
+      "read": 28,
+      "write": 25
+     },
+     "statuses": {
+      "APPLIED": 56
+     },
+     "visible_decisions": 47,
+     "short_ticks": 8,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 2,
+      "B": 2
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "paced-vs-lurk",
+   "seat_a": "e6_q01",
+   "seat_b": "e6_q18",
+   "seed": 3,
+   "golden": {
+    "winner": "A",
+    "ticks": 4,
+    "reason": "last_agent_standing",
+    "result_id": "result_b8ad03e07076e4c30deb1b7f",
+    "match_id": "match_9f81a5b5598cf067abb0de1e",
+    "replay_sha256": "047aaf04df416a1a8808eefec02b3e8ea6d05587e6370ea1b6f93f741f7b9ab1",
+    "trace_sha256": "a718906ae0470d9aa65aadcc464a7074e18265092fe81ba7f46fb4c7d7f7e9fc",
+    "trace_lines": 62,
+    "trace_record_sha256": {
+     "header": "28bf9da39ad89b13f7e0204381b95592a808222705e696009cd975dc934f61f9",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "82b13bcdd4deb1c7102bf1ce39d3f08112c2f148d38087be95e34fcd9c40b68b",
+     "binding": "c3d978e409cbcaa37f09d0b9d3efbd23380845e614ba6365426a3c0f8faba6e5"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "8385f8ddb06d7257f22acfc53d935f1e58f0b0b547677db309a7bc70e2893b87",
+     "B": "1daf17d3d64ab1715d8692f696011fec1ee6fadebc9d0bd216b7a199198ebfb3"
+    },
+    "coverage": {
+     "decisions": 56,
+     "action_kinds": {
+      "move": 2,
+      "read": 30,
+      "write": 24
+     },
+     "statuses": {
+      "APPLIED": 56
+     },
+     "visible_decisions": 51,
+     "short_ticks": 8,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 2,
+      "B": 2
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "paced-vs-lurk",
+   "seat_a": "e6_q18",
+   "seat_b": "e6_q01",
+   "seed": 1,
+   "golden": {
+    "winner": "B",
+    "ticks": 4,
+    "reason": "last_agent_standing",
+    "result_id": "result_d70f867b8c7162e3a2c6bb92",
+    "match_id": "match_579c8ac70924e01e1988edbb",
+    "replay_sha256": "cfb02d380c22f9fcade1c45814e69c7e538d8c0b9d8147e79b20a7e3ee0fb1bc",
+    "trace_sha256": "019755b889845e30ba1a228adb482c3d479ec96f903fa50f94c13cdf1d6b83c5",
+    "trace_lines": 62,
+    "trace_record_sha256": {
+     "header": "0330fbe680a3c36b7425950bd6640301e7a25f34bae43a7dac7e3694ebd8a9a2",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "82b1eb113886b4c4fceabe2e03c25df7c1df0b0444fb6d56a29a3128172558ec",
+     "binding": "94311461b984be1177430eb34f55a62bcfe6b4c946e853e555dd926680412519"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "fc79cd3c2f529c69336d6ac15e02cebac71039f265f8388a23896650ec963c1c",
+     "B": "d23176f7e677ba028c1f55f7a82ae586133a7de4c3d91c53824d68badb302552"
+    },
+    "coverage": {
+     "decisions": 56,
+     "action_kinds": {
+      "move": 2,
+      "read": 28,
+      "write": 26
+     },
+     "statuses": {
+      "APPLIED": 56
+     },
+     "visible_decisions": 49,
+     "short_ticks": 8,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 2,
+      "B": 2
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "paced-vs-lurk",
+   "seat_a": "e6_q18",
+   "seat_b": "e6_q01",
+   "seed": 2,
+   "golden": {
+    "winner": "B",
+    "ticks": 4,
+    "reason": "last_agent_standing",
+    "result_id": "result_ee3e95326f1b335c2953f98c",
+    "match_id": "match_4f698aea108b4bbc8e2e8d21",
+    "replay_sha256": "b39ce08f07bc3c96323c585818d19b2304ebeb63cb52142c8f150a72b1102340",
+    "trace_sha256": "da814fe27ac46421a03b38b2ee6b309bdf7e9515d0b383584ea245ef60088f1a",
+    "trace_lines": 64,
+    "trace_record_sha256": {
+     "header": "70ddcbbd33475cd62a8a3a1af623d6231480942f34160cb544aa590107ba3f09",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "dd5dfe09f8c6d858728390383cccbfa3ad50e4c2e904b58df1b9187f1c816567",
+     "binding": "359df58ef3b55b11bf0b55d6b1cee8f6e09d94327a3d1df673e164d81fe926a0"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "687931c95cd8bc2f4c76f945dce598608970a34ec5e1afe45a5a9a8635141ae3",
+     "B": "e15fe84255a363c87b9b8b1c143f01bb423c0d02dfbdefd8845a8c3b9414d252"
+    },
+    "coverage": {
+     "decisions": 58,
+     "action_kinds": {
+      "move": 5,
+      "read": 26,
+      "write": 27
+     },
+     "statuses": {
+      "APPLIED": 58
+     },
+     "visible_decisions": 41,
+     "short_ticks": 6,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 2,
+      "B": 2
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "paced-vs-lurk",
+   "seat_a": "e6_q18",
+   "seat_b": "e6_q01",
+   "seed": 3,
+   "golden": {
+    "winner": "B",
+    "ticks": 5,
+    "reason": "last_agent_standing",
+    "result_id": "result_efc7a1315b542e0c893ca198",
+    "match_id": "match_01a2e18b1e57bba7f80e23b0",
+    "replay_sha256": "b1b417081a9c4163884ca701fcfb544e76d5f1c3c411f2dafb41c05676c75995",
+    "trace_sha256": "d7d561c7166536c9dae4fe3e6bd2d754a27aa27e055b6fe83fd9eeb848d14009",
+    "trace_lines": 78,
+    "trace_record_sha256": {
+     "header": "12ac0a993f32565b17e473d919c19f2c59fd12e651130b881e9cd136ce3a6c76",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "d511ad178437b1ff49505b3a9db939e8d501cc92e69328f12ab9cbe9958021ce",
+     "binding": "7cac5b9dbef425a16707b04b02bbaab64de176cdf371848f93f98b0e3adfdca4"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "1a13b40fe2d647f8c4cc31c2fc27e2dad6111048e004f5876d49919bc1c9f6a8",
+     "B": "b4af822ded22c9afa2564d679a86b05dd92e8037dd2f8aa25dbcb0fc77ccfca1"
+    },
+    "coverage": {
+     "decisions": 72,
+     "action_kinds": {
+      "move": 6,
+      "read": 30,
+      "write": 36
+     },
+     "statuses": {
+      "APPLIED": 72
+     },
+     "visible_decisions": 51,
+     "short_ticks": 8,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 3,
+      "B": 2
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "greed-mirror",
+   "seat_a": "e6_q03",
+   "seat_b": "e6_q04",
+   "seed": 1,
+   "golden": {
+    "winner": "tie",
+    "ticks": 30,
+    "reason": "all_agents_dead",
+    "result_id": "result_1effb11c3c1d0d3e6b7e7c12",
+    "match_id": "match_8bef01c61a2a8b4dbb67cd44",
+    "replay_sha256": "18f0982a770393a036ac2a7df6b7294b3425bca853a064248882297905e15e2d",
+    "trace_sha256": "8aa4db8b0507418803dbfd6c0544192fc3ef9104907c60391e753b132fef8a9c",
+    "trace_lines": 484,
+    "trace_record_sha256": {
+     "header": "5210c331072875c616d97aacb0bc0d1656318efe40878c08ce64469da0ffc3f1",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "86d8b1cd8f2a7c6c52d61bfefbdb51fbba304e8d637d29df890bad2509c822b6",
+     "binding": "103f243543a67770d7feaeb2cf11b4b9b810e22224163d39beb0fb4df197a03b"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "29987edf7c8e3a91315e8a97f18348745f10016ab7f25b3c6fce78c71f01fb99",
+     "B": "b9340b81076cbfd0b511d87b8d639876585221f113961d1dcd9cc3bf0327d7c5"
+    },
+    "coverage": {
+     "decisions": 478,
+     "action_kinds": {
+      "write": 478
+     },
+     "statuses": {
+      "APPLIED": 478
+     },
+     "visible_decisions": 0,
+     "short_ticks": 2,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 15,
+      "B": 15
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "greed-mirror",
+   "seat_a": "e6_q03",
+   "seat_b": "e6_q04",
+   "seed": 2,
+   "golden": {
+    "winner": "tie",
+    "ticks": 45,
+    "reason": "all_agents_dead",
+    "result_id": "result_5a2f6e34bc36fc609f090557",
+    "match_id": "match_dcea95e247db7f3ba010d127",
+    "replay_sha256": "91825af5250069af59d9ae5adaddc2b9537c18c76b6c2a5c768f9395f0d28869",
+    "trace_sha256": "9752f343488a5ce3532f0c68158febe995629ac5fa2a1a638cebab0e4ffc0403",
+    "trace_lines": 724,
+    "trace_record_sha256": {
+     "header": "779ef202391d34b5f8a8cf6d538c5e8e600c6bd151e61c5f59760815a1f0d3dd",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "7a80d45b6507b3997657f797d9efbd1d2f4b01dd6f35d710922acf7d63b8287b",
+     "binding": "6c56a2e1716600a41df54a14127b002fee726abd38f8e07f4c1cd30d3399bfe0"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "a2badbe0e1d50aa160a1984f9e68ddd0cc04f5372d1e3c4961b05337e9434e1b",
+     "B": "bdc3c9508847f83b573a42e3b4d1fdfd541eacd169e34a0afdf5dcfe1bcf7c80"
+    },
+    "coverage": {
+     "decisions": 718,
+     "action_kinds": {
+      "write": 718
+     },
+     "statuses": {
+      "APPLIED": 718
+     },
+     "visible_decisions": 0,
+     "short_ticks": 2,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 23,
+      "B": 22
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "greed-mirror",
+   "seat_a": "e6_q03",
+   "seat_b": "e6_q04",
+   "seed": 3,
+   "golden": {
+    "winner": "B",
+    "ticks": 27,
+    "reason": "last_agent_standing",
+    "result_id": "result_1bad7233fc1dbda4c7d1d877",
+    "match_id": "match_1baea2907a9032f4d812a31b",
+    "replay_sha256": "ba13bb02e91c3d9f1acaec66a99152ec0e293d0e34719fb4196cb86b117eb012",
+    "trace_sha256": "2fc5229ca1a42fe327718a35e140800f02d405c246689006d9efab253682c44b",
+    "trace_lines": 437,
+    "trace_record_sha256": {
+     "header": "3098182dd456bccca50fcaba67e5979fc06a54224a0561bc1aa93376cf9ff43d",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "5c93da7a57e33f9d1a281090b31bc3eaa91168b82833ab516d571f32283e4fcd",
+     "binding": "e020ba0cd89a3810d02e0a4421be92dac246bc5dc46b9c41c133bee50000f3f3"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "68ebf3833f12db14a5ba20c23d62e33cf5bcbaee6f3a59e62ef14d4f740c686a",
+     "B": "e610323165ad418a92fd9593a9290cb8eabf5f904f39405253759056da563f9c"
+    },
+    "coverage": {
+     "decisions": 431,
+     "action_kinds": {
+      "write": 431
+     },
+     "statuses": {
+      "APPLIED": 431
+     },
+     "visible_decisions": 0,
+     "short_ticks": 1,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 14,
+      "B": 13
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "greed-mirror",
+   "seat_a": "e6_q04",
+   "seat_b": "e6_q03",
+   "seed": 1,
+   "golden": {
+    "winner": "tie",
+    "ticks": 30,
+    "reason": "all_agents_dead",
+    "result_id": "result_818a76a00fc114d844a1558c",
+    "match_id": "match_c273bb4e584912a624e20981",
+    "replay_sha256": "cd8a1065e79fd999135db997e8b9e082af74556f677d4cf83af7dcd8d94ee53d",
+    "trace_sha256": "0e7fdd539b884037af3c6e7b2805c243cd8db790c855e7e217daeadfc329f623",
+    "trace_lines": 484,
+    "trace_record_sha256": {
+     "header": "e4d06009a01e2507a129764a5d6b5871739311e8225a2a4622d93d342262a5d7",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "86d8b1cd8f2a7c6c52d61bfefbdb51fbba304e8d637d29df890bad2509c822b6",
+     "binding": "dc680f28ce5f07303315242788b3f0d2f3605ebda2c620c8fa2ea31faf9bf875"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "29987edf7c8e3a91315e8a97f18348745f10016ab7f25b3c6fce78c71f01fb99",
+     "B": "b9340b81076cbfd0b511d87b8d639876585221f113961d1dcd9cc3bf0327d7c5"
+    },
+    "coverage": {
+     "decisions": 478,
+     "action_kinds": {
+      "write": 478
+     },
+     "statuses": {
+      "APPLIED": 478
+     },
+     "visible_decisions": 0,
+     "short_ticks": 2,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 15,
+      "B": 15
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "greed-mirror",
+   "seat_a": "e6_q04",
+   "seat_b": "e6_q03",
+   "seed": 2,
+   "golden": {
+    "winner": "tie",
+    "ticks": 45,
+    "reason": "all_agents_dead",
+    "result_id": "result_0be0e685abfa31995b3e4a5e",
+    "match_id": "match_39ed7ba665ac9c32d1e3be60",
+    "replay_sha256": "9a15afba6b9ee1d2dc8d8fdf5e31e11a6f0c370ece8248b0f6a718bc27cdcc86",
+    "trace_sha256": "ab026845de700af335920d71c297026cade88d260df94a60d222e3c42a10703a",
+    "trace_lines": 724,
+    "trace_record_sha256": {
+     "header": "36638d4ececf8344f4781d715a262a9b5b6eccfad1e9126f0377ec29ce29cc93",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "7a80d45b6507b3997657f797d9efbd1d2f4b01dd6f35d710922acf7d63b8287b",
+     "binding": "79baccf6cfc443a656e868ffb9bea9b7846f4af3da80513addd83a35622ab10c"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "a2badbe0e1d50aa160a1984f9e68ddd0cc04f5372d1e3c4961b05337e9434e1b",
+     "B": "bdc3c9508847f83b573a42e3b4d1fdfd541eacd169e34a0afdf5dcfe1bcf7c80"
+    },
+    "coverage": {
+     "decisions": 718,
+     "action_kinds": {
+      "write": 718
+     },
+     "statuses": {
+      "APPLIED": 718
+     },
+     "visible_decisions": 0,
+     "short_ticks": 2,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 23,
+      "B": 22
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "greed-mirror",
+   "seat_a": "e6_q04",
+   "seat_b": "e6_q03",
+   "seed": 3,
+   "golden": {
+    "winner": "B",
+    "ticks": 27,
+    "reason": "last_agent_standing",
+    "result_id": "result_0f39970ba8ac20ab5371496f",
+    "match_id": "match_8fe1f3b35ad7581ee350d764",
+    "replay_sha256": "cfaede58f4b6c54018659051a7352beced1722fd2d90b8224466a1fe6843a199",
+    "trace_sha256": "d4d1810f47a37ac0248bee324bed5b40b9b7b4a4a3e58b6abf2f44da698a8964",
+    "trace_lines": 437,
+    "trace_record_sha256": {
+     "header": "2ed77b4b9d26daed2063e8094c26e85953491842a859a7349c203567d89b88b0",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "27cb3a0cd0617e0da91e468debaca528b72ef629361117333fa2e43211ddea03",
+     "decision_v2": "5c93da7a57e33f9d1a281090b31bc3eaa91168b82833ab516d571f32283e4fcd",
+     "binding": "4564856035cc7dffc2c8fcc64b5c109f0a52f432777f0cf648d5edf4949bcf9a"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "68ebf3833f12db14a5ba20c23d62e33cf5bcbaee6f3a59e62ef14d4f740c686a",
+     "B": "e610323165ad418a92fd9593a9290cb8eabf5f904f39405253759056da563f9c"
+    },
+    "coverage": {
+     "decisions": 431,
+     "action_kinds": {
+      "write": 431
+     },
+     "statuses": {
+      "APPLIED": 431
+     },
+     "visible_decisions": 0,
+     "short_ticks": 1,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 14,
+      "B": 13
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "scout-vs-repair",
+   "seat_a": "v4_scout",
+   "seat_b": "e2_repair_guard",
+   "seed": 1,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_832d176915caa6641f9244ab",
+    "match_id": "match_e81a0638910795e63a21bb0d",
+    "replay_sha256": "ffee4b1f12311738449b2337c45255b24b9bdb5183a665c5400c75b9312a3676",
+    "trace_sha256": "1db9ac787d68867c77cda5d02ce4cd7ebc72cb91ce557872df4818a66bdffd2b",
+    "trace_lines": 12527,
+    "trace_record_sha256": {
+     "header": "a77dfb4bfebe7d36cf1004648a37e9c991d088d3fa8d093a37ec5f6a914548e1",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "fc606f434918da5e6391e2317b70ee59db4abbebfa8f6d32ba8ed7d5b0f7607b",
+     "decision_v2": "f78d4bf7e8e7b7e3743fd168b454395dd242ba533d95bbc8fb85d28d7389bbc3",
+     "binding": "46dfb2a6294e86e14691b611fe8235f1349129bf26c75ce125053eff3f1d71cb"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "317781d74ffd1dd71b8b5746ccebc1df49a8ce20eb9ea71a578455ab711278a0",
+     "B": "9763457a6dd82252e64705c36b5d412eba74fe89d4184826d3bc492ac6fe5430"
+    },
+    "coverage": {
+     "decisions": 12521,
+     "action_kinds": {
+      "move": 49,
+      "write": 12472
+     },
+     "statuses": {
+      "APPLIED": 12521
+     },
+     "visible_decisions": 12426,
+     "short_ticks": 994,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "scout-vs-repair",
+   "seat_a": "v4_scout",
+   "seat_b": "e2_repair_guard",
+   "seed": 2,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_ac93a293af05bc5931a19408",
+    "match_id": "match_ef7e0ca32d477f45656e6e63",
+    "replay_sha256": "4845ef9a8a57fabf53d93514c705905d7c7326219e14b5c6b003049816f2fa4d",
+    "trace_sha256": "17de6ca0f8184c1484bbe6f07d7d69c6f29aad8fad7dff7f830ab35c76b778cd",
+    "trace_lines": 12524,
+    "trace_record_sha256": {
+     "header": "04299b1ae17d39fc40bc3de424cdfc18ebd0728aed2a031db6fa88efbd8c9ad0",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "fc606f434918da5e6391e2317b70ee59db4abbebfa8f6d32ba8ed7d5b0f7607b",
+     "decision_v2": "028afb1b3dac8c7a16b3a8957a7b2f6188daa9d439876c853fad911ba30100b8",
+     "binding": "cfa1dd0c3eeab82ea4d666e80aab11efbf0faef4195159ec9aff060a68619a65"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "e5f691cbd741f95035d3bf82382c2c7f7bc49c45d061a35a6064c4fa648c95f2",
+     "B": "b9b178173a88d21eeb217cc4f1d948f9f715887beb9952a425a9b2085d0d0940"
+    },
+    "coverage": {
+     "decisions": 12518,
+     "action_kinds": {
+      "move": 41,
+      "write": 12477
+     },
+     "statuses": {
+      "APPLIED": 12518
+     },
+     "visible_decisions": 12441,
+     "short_ticks": 995,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "scout-vs-repair",
+   "seat_a": "v4_scout",
+   "seat_b": "e2_repair_guard",
+   "seed": 3,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_643f3b60f8f4f64c0626d133",
+    "match_id": "match_fad2ccd750054e5d97380a11",
+    "replay_sha256": "2c892ed6a40953f9977f4cb74f4170188380c853843cf12a9746fec48c38d06b",
+    "trace_sha256": "e9692bd6181945b4fb3878af205d1337e603f5b2450c7084b88a12f9be0e5665",
+    "trace_lines": 12528,
+    "trace_record_sha256": {
+     "header": "f0c993ed498188027e63454a801b08c2c5b3a841349b44128c3e602c496f97e4",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "fc606f434918da5e6391e2317b70ee59db4abbebfa8f6d32ba8ed7d5b0f7607b",
+     "decision_v2": "a8088dab66704c6a97b8620f8cf8ff1b4a327dd0ea83ca5bd160ef5a829a6fd6",
+     "binding": "60d4d2297b72c3d7f9c0248b27de394817843c2de923e6858d8be593488f81f8"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "8575947ddd94df61cdf826299b89014e5818df1f907a1b7158d0cea439282a80",
+     "B": "f68ae259b635635adc47c8dca51c2770bc02eb2d1dd9bce98311d5ff2ccd2c48"
+    },
+    "coverage": {
+     "decisions": 12522,
+     "action_kinds": {
+      "move": 50,
+      "write": 12472
+     },
+     "statuses": {
+      "APPLIED": 12522
+     },
+     "visible_decisions": 12424,
+     "short_ticks": 994,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "scout-vs-repair",
+   "seat_a": "e2_repair_guard",
+   "seat_b": "v4_scout",
+   "seed": 1,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_0ed54299d2337e8587c6ef2e",
+    "match_id": "match_97ecef1a44b0b9c5c725b7e8",
+    "replay_sha256": "3602a01541fb54a33ab041876657d02ee4cc59c8ff9f0e147c8775e9f9edc383",
+    "trace_sha256": "401d79c355ea6d3f1e0d27c62c2c449b92b0472e6982d52360c6aa1deb300391",
+    "trace_lines": 12512,
+    "trace_record_sha256": {
+     "header": "24ed71b39b85669e368d92ec2bca0288928e30f09a3abdd8d0c2bd5a4a3e9967",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "b5ab7456029be777691d8548cf6b5de277b558380170268453d67ea76ac487d5",
+     "decision_v2": "ebf3c18239137dfb73a3b1190e333fe5ae47e9979df7c3536f5205f4cd8c1d2b",
+     "binding": "f5666c8584690ef7f46cfc37a60d1b0453c441f9b25b8e2790071850e50fb735"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "f1b97945f1586687d63fb390232421ac2522dc2c7f084552f6ff6f1838adcade",
+     "B": "f5dc1cb3a4e254ba0041edc9ff0ab15a8bf987bc54fb34d8deabf6342a0c565a"
+    },
+    "coverage": {
+     "decisions": 12506,
+     "action_kinds": {
+      "move": 14,
+      "write": 12492
+     },
+     "statuses": {
+      "APPLIED": 12506
+     },
+     "visible_decisions": 12482,
+     "short_ticks": 999,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "scout-vs-repair",
+   "seat_a": "e2_repair_guard",
+   "seat_b": "v4_scout",
+   "seed": 2,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_99b7fa7615a3847272c2d1f7",
+    "match_id": "match_d09673fb61023d8ad51a680d",
+    "replay_sha256": "6fc8aa23316512a3fa440b8b14cff60c884e247b4df7d59c0e6bf6a76ad56556",
+    "trace_sha256": "8b80b8bd616305c9a013637d207194f1ef938a8e5372f735aa1ab1f698dee7c9",
+    "trace_lines": 12516,
+    "trace_record_sha256": {
+     "header": "88bbbcc5dbe8f2f3c966256f35dfdb43ad0f1d4c040630735e24d843d0e9f814",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "b5ab7456029be777691d8548cf6b5de277b558380170268453d67ea76ac487d5",
+     "decision_v2": "df46b0c7195d231116f3cb700931899ca73475ea66448ce61f9a525a5b977201",
+     "binding": "125462fad27355cc1839e829dd29926e00e4e72766ba3a0239c344b3360e99f8"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "cd204e01e03448cfc27b7b1c95ba57889e4e3f546d939ae516b4f705e8279710",
+     "B": "51f77f8133e77e063f96e34651cb6b61a51fabc985a7074fde03f7213dec5717"
+    },
+    "coverage": {
+     "decisions": 12510,
+     "action_kinds": {
+      "move": 22,
+      "write": 12488
+     },
+     "statuses": {
+      "APPLIED": 12510
+     },
+     "visible_decisions": 12468,
+     "short_ticks": 997,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  },
+  {
+   "condition": "C8L",
+   "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+   "scenario": "scout-vs-repair",
+   "seat_a": "e2_repair_guard",
+   "seat_b": "v4_scout",
+   "seed": 3,
+   "golden": {
+    "winner": "tie",
+    "ticks": 1000,
+    "reason": "tick_limit",
+    "result_id": "result_c1fafe5ca5d44c7ce765d20b",
+    "match_id": "match_35a8c1fa85314b53d80ae2cb",
+    "replay_sha256": "f5a19815dba7d0ce32c444b9834e88533483b73f3e67034b0106e8deb052e8a9",
+    "trace_sha256": "27833e9415fbc0c547fc03a6e167bbaeb5bc49bb5258c9f9f2e752d042b4745a",
+    "trace_lines": 12511,
+    "trace_record_sha256": {
+     "header": "13560d823bbf8d7497d6c6c2041e02caa2ef3784faa42c846a02ed3d01b17570",
+     "reset": "b88f869a2572f790528837d3305fc0465d42516e6620e687e3b22f45e2fa219f",
+     "declaration": "b5ab7456029be777691d8548cf6b5de277b558380170268453d67ea76ac487d5",
+     "decision_v2": "10989144d28e3bc8fb86901e7b501fa2b75e4d8564cf130b60a8380c34096c47",
+     "binding": "38c49ab293dfecf19f1da46f4bd9f26eb723e610b51039c14ffc000dc5878f24"
+    },
+    "unknown_record_types": [],
+    "d8_3_surface_sha256": {
+     "A": "96157e779cc776063265236a08e0f85a5ca0da2461ef0d92d4ab4f2c30ca8ba4",
+     "B": "f779913a10f0d0607d9a5a759b119db23ae33524956865d9935e0d3e2385065c"
+    },
+    "coverage": {
+     "decisions": 12505,
+     "action_kinds": {
+      "move": 13,
+      "write": 12492
+     },
+     "statuses": {
+      "APPLIED": 12505
+     },
+     "visible_decisions": 12484,
+     "short_ticks": 999,
+     "skipped_ticks": 0,
+     "first_movers": {
+      "A": 500,
+      "B": 500
+     }
+    }
+   }
+  }
+ ]
+}

@@ -27,9 +27,10 @@ from PySide6.QtWidgets import QDialog, QDialogButtonBox, QPlainTextEdit, QVBoxLa
 _TRUST_DISCLOSURE = (
     "This reports package structure and self-consistency/integrity only; it "
     "does not authenticate who created the package. It is not a safety or "
-    "trust statement about the contained agent's code -- "
-    "Python and blob agents are executable/loadable content, and Bytefray "
-    "does not sandbox agent execution (see docs/AGENT_LAB.md)."
+    "trust statement about the contained agent's code. Current Bytefray "
+    "executes only compatible Agent API v2 Python packages, and that code "
+    "is not sandboxed (see docs/AGENT_LAB.md); retired payloads remain "
+    "inspection-only and are rejected on import."
 )
 
 

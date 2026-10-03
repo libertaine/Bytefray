@@ -17,45 +17,50 @@ from battle_engine.agent_evaluation import (
     EVALUATION_ARENA_ALIGNMENT_MODE,
     ORIENTATION_CANDIDATE_FIRST,
     ORIENTATION_MODE_CANDIDATE_FIRST_ONLY,
-    STANDARD_V2_SEEDS,
+    STANDARD_V4_SEEDS,
     EvaluationCell,
     EvaluationConfigurationError,
     EvaluationRequest,
-    EvaluationService,
-    build_matrix,
     is_ruleset_v2_methodology,
-    parse_opponents,
-    parse_seed_list,
-    parse_seed_range,
     read_evaluation,
-    rerun_command,
 )
 from battle_engine.agent_parameters import (
     EMPTY_PARAMETER_SCHEMA,
     AgentParameterSchema,
     resolve_parameters,
 )
-from battle_engine.config import Config
 from battle_engine.evaluation_analysis import EvaluationAnalysis
 from battle_engine.evaluation_analysis import analyze as analyze_evaluation
 from battle_engine.evaluation_behavior import BehaviorAnalysis, cell_ref_from_evaluation_cell
 from battle_engine.evaluation_behavior import analyze_behavior as analyze_behavior_evaluation
 from battle_engine.evaluation_capture import CaptureAnalysis
 from battle_engine.evaluation_capture import analyze_capture as analyze_capture_evaluation
+
+# V6 Phase 3K: the CLI/Designer parsing and rerun-command helpers are owned
+# by ``evaluation_cli`` -- Designer reaches them directly rather than
+# through the CLI/presentation facade, mirroring how it already reaches
+# ``EvaluationService`` directly (see the Phase 3J note below).
+from battle_engine.evaluation_cli import (
+    parse_opponents,
+    parse_seed_list,
+    parse_seed_range,
+    rerun_command,
+)
 from battle_engine.evaluation_group_analysis import (
     GroupAnalysis,
     analyze_group,
     group_cell_ref_from_evaluation_cell,
 )
 from battle_engine.evaluation_history.models import evaluation_cells_from_raw
+from battle_engine.evaluation_planning import build_matrix
+
+# V6 Phase 3J: Designer constructs the coordinator directly through its
+# canonical owner rather than through the CLI/presentation facade -- see
+# docs/specs/agent_evaluation.md Sec 13 and AGENTS.md's Designer boundary.
+from battle_engine.evaluation_service import EvaluationService
 from battle_engine.launchers import build_agents_command, build_tournament_command
 from battle_engine.result_model import read_result
-from battle_engine.ruleset_policy import (
-    BYTEFRAY_RULESET_V2_ID,
-    BYTEFRAY_RULESET_V4_ALPHA1_ID,
-    BYTEFRAY_RULESET_V4_ALPHA2_ID,
-    BYTEFRAY_RULESET_V4_ID,
-)
+from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
 
 from app.services.agent_catalog import AgentRow
 
@@ -213,7 +218,7 @@ def agent_parameter_schema(row: AgentRow) -> AgentParameterSchema:
 def agent_receives_parameters(row: AgentRow) -> bool:
     """Whether resolved parameters would actually reach this agent.
 
-    Only Agent API v2 agents receive ``MatchContextV2.parameters``. Everything
+    Only current Agent API v2 agents receive ``MatchContextV2.parameters``. Everything
     else keeps the historical free-form path, where supplied parameters are
     warned about and ignored by ``cli.py`` -- not rejected, because the
     Designer has always exported its Agent Params field for whatever agent was
@@ -275,11 +280,9 @@ def validate_entrant_parameters(
     programmatically constructed run -- can start a subprocess that is only
     going to fail once the agent is imported.
 
-    An agent that is not Agent API v2 is deliberately not validated: it never
-    receives resolved parameters at all, and ``cli.py`` warns about and
-    ignores whatever was supplied. Enforcing a schema rule there would break
-    the pre-existing Designer path that exports Agent Params for Agent API v1
-    agents, which have always ignored them.
+    An agent that is not Agent API v2 is deliberately not parameter-validated:
+    it is retained only as discovery/inspection metadata and the Ruleset gate
+    rejects it before launch.
     """
 
     if not parameters or not agent_receives_parameters(row):
@@ -312,15 +315,21 @@ def match_artifact_paths(replay_path: Path) -> tuple[Path, Path]:
 
 
 # Ruleset identities for which a normal Designer match automatically
-# records the Alpha3 spectator trace alongside its replay -- every v4
-# identity (alpha1, alpha2, and the permanent stable identity as of
-# v4.0.0-rc1 Phase 2). v1 and v2 deliberately keep their existing artifact
-# set unchanged: a normal v4 Designer match should automatically be
-# spectator-capable, without a new opt-in control (Alpha3 follow-up
+# records the Alpha3 spectator trace alongside its replay -- originally
+# every v4 identity (alpha1, alpha2, and the permanent stable identity, as
+# of v4.0.0-rc1 Phase 2). v1 and v2 deliberately keep their existing
+# artifact set unchanged: a normal v4 Designer match should automatically
+# be spectator-capable, without a new opt-in control (Alpha3 follow-up
 # Phase 2).
-DESIGNER_AUTO_TRACE_RULESET_IDS: frozenset[str] = frozenset(
-    {BYTEFRAY_RULESET_V4_ALPHA1_ID, BYTEFRAY_RULESET_V4_ALPHA2_ID, BYTEFRAY_RULESET_V4_ID}
-)
+#
+# V6 Phase 2B.10 Scope B removed alpha1/alpha2: this table gates whether a
+# match *about to launch* also writes a trace file, so it is
+# execution-only -- no historical reader consults it (only
+# ``app/agent_designer.py`` calls :func:`designer_trace_path` below, always
+# with an about-to-run match's own configured Ruleset). Neither alpha can
+# launch a new Designer match at all any longer, so their membership here
+# was dead.
+DESIGNER_AUTO_TRACE_RULESET_IDS: frozenset[str] = frozenset({BYTEFRAY_RULESET_V4_ID})
 
 
 def designer_trace_path(replay_path: Path, ruleset_id: str) -> Path | None:
@@ -518,7 +527,7 @@ def _designer_evaluation_seeds(
             return parse_seed_range(seed_range_text)
     except EvaluationConfigurationError as exc:
         raise DesignerValidationError(str(exc)) from exc
-    return STANDARD_V2_SEEDS if ruleset_id == BYTEFRAY_RULESET_V2_ID else (Config().seed,)
+    return STANDARD_V4_SEEDS
 
 
 def build_designer_evaluation_plan(
@@ -538,27 +547,23 @@ def build_designer_evaluation_plan(
 ) -> DesignerEvaluationPlan:
     """Validate and build the exact matrix the Designer will execute.
 
-    ``ruleset_id`` applies to pairwise evaluation only; group evaluation is
-    Ruleset-v2-only by construction and ignores it. ``None`` preserves the
-    exact historical pairwise behavior (``resolve_evaluation_ruleset_id``
-    maps both ``None`` and the explicit v1 identity to the same
-    ``rules_compatibility_id``, byte-identical in every downstream identity
-    hash), so callers that do not pass it are unaffected.
+    New group evaluation was tied to retired Ruleset 2 and is rejected.
+    Historical group artifacts remain readable by the presentation adapters
+    below. Pairwise evaluation resolves to stable Ruleset 4 when omitted.
     """
 
     if mode not in (EVALUATION_MODE_PAIRWISE, EVALUATION_MODE_GROUP):
         raise DesignerValidationError(f"Unsupported evaluation mode: {mode!r}.")
+    if mode == EVALUATION_MODE_GROUP:
+        raise DesignerValidationError(
+            "Group evaluation creation was retired in V6 Phase 2B.12; "
+            "historical group artifacts remain readable."
+        )
     candidate = candidate_id.strip()
     if not candidate:
         raise DesignerValidationError("Focus agent is required." if mode == EVALUATION_MODE_GROUP else "Candidate is required.")
     baseline = baseline_id.strip() if baseline_id else None
     opponents = tuple(opponent_ids)
-    if mode == EVALUATION_MODE_GROUP:
-        ruleset_id = BYTEFRAY_RULESET_V2_ID
-    if mode == EVALUATION_MODE_GROUP and len(opponents) < 2:
-        raise DesignerValidationError(
-            "Group evaluation requires at least two roster members in addition to the focus agent."
-        )
     seeds = _designer_evaluation_seeds(
         seeds_text=seeds_text, seed_range_text=seed_range_text, ruleset_id=ruleset_id
     )
@@ -610,18 +615,14 @@ def build_designer_evaluate_command_from_plan(
     arguments.extend(("--seeds", ",".join(str(seed) for seed in request.seeds)))
     arguments.extend(("--ticks", str(request.ticks), "--output", str(request.output_dir)))
     if request.group:
-        arguments.extend(("--ruleset", BYTEFRAY_RULESET_V2_ID, "--group"))
-    else:
-        # Always explicit for pairwise too, so the launched evaluation can
-        # never quietly resolve `agents evaluate`'s own backward-compatible
-        # v1 default. `request.resolved_rules_compatibility_id` is exactly
-        # what the plan was validated and identity-hashed against, so the
-        # subprocess reproduces the previewed matrix rather than a
-        # differently-resolved one.
-        arguments.extend(("--ruleset", request.resolved_rules_compatibility_id))
-        if not request.both_orientations:
-            arguments.append("--single-orientation")
-    if preset_name and not request.group:
+        raise DesignerValidationError(
+            "Group evaluation creation was retired in V6 Phase 2B.12."
+        )
+    # Always explicit so the subprocess reproduces the previewed matrix.
+    arguments.extend(("--ruleset", request.resolved_rules_compatibility_id))
+    if not request.both_orientations:
+        arguments.append("--single-orientation")
+    if preset_name:
         arguments.extend(("--preset", preset_name))
     if request.workers != 1:
         arguments.extend(("--workers", str(request.workers)))

@@ -1,7 +1,7 @@
 """Phase 4 aggregate/statistical analysis over already-authoritative
 evaluation data (``docs/archive/v1/V1_6_PHASE4_EVALUATION_ANALYSIS.md``).
 
-Pure, derived interpretation layer over ``agent_evaluation.SubjectAggregate``/
+Pure, derived interpretation layer over ``evaluation_contracts.SubjectAggregate``/
 ``ComparisonEntry`` — computes nothing that changes match execution,
 scoring, canonical identity, or the persisted ``bytefray.evaluation``
 schema. Every function here is a pure function of already-computed
@@ -16,7 +16,7 @@ Statistical design (full rationale in the durable record above):
   rates are always reported alongside so this choice is never hidden.
 - An exact two-sided binomial test (the exact sign test / exact McNemar
   test at p=0.5) over *discordant* paired candidate/baseline outcomes —
-  "discordant" and "better"/"worse" reuse ``agent_evaluation.classify()``
+  "discordant" and "better"/"worse" reuse this module's ``classify()``
   unchanged (``win > tie > loss``); no second concept of improvement is
   invented here.
 - Opponent and orientation are real blocking factors: the overall paired
@@ -32,12 +32,13 @@ from __future__ import annotations
 
 import math
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
+from itertools import zip_longest
 from statistics import NormalDist
 from typing import Any
 
-from battle_engine.agent_evaluation import (
+from battle_engine.evaluation_contracts import (
     BASELINE,
     CANDIDATE,
     ORIENTATION_CANDIDATE_FIRST,
@@ -45,11 +46,234 @@ from battle_engine.agent_evaluation import (
     ComparisonEntry,
     EvaluationCell,
     SubjectAggregate,
-    all_subject_aggregates,
-    compare_candidate_baseline,
 )
 
 DEFAULT_CONFIDENCE_LEVEL = 0.95
+_OUTCOME_RANK = {"loss": 0, "tie": 1, "win": 2}
+
+
+# ---------------------------------------------------------------------------
+# Aggregation and comparison (Sec 11)
+# ---------------------------------------------------------------------------
+
+
+def aggregate_cells(
+    subject_role: str, subject_id: str, cells: Sequence[EvaluationCell]
+) -> SubjectAggregate:
+    own = [
+        cell
+        for cell in cells
+        if cell.subject_role == subject_role and cell.subject_id == subject_id
+    ]
+    scored = [cell for cell in own if cell.is_scored]
+    played = len(scored)
+    wins = sum(1 for cell in scored if cell.outcome == "win")
+    losses = sum(1 for cell in scored if cell.outcome == "loss")
+    ties = sum(1 for cell in scored if cell.outcome == "tie")
+    subject_init_failures = sum(1 for cell in own if cell.outcome == "subject_init_failed")
+    opponent_init_failures = sum(1 for cell in own if cell.outcome == "opponent_init_failed")
+    failed = sum(1 for cell in own if cell.status == "failed")
+
+    score_total = sum(cell.score_subject or 0.0 for cell in scored)
+    ticks_total = sum(cell.ticks_run or 0 for cell in scored)
+    territory_total = sum(cell.territory_subject or 0.0 for cell in scored)
+    # v2.0.0-beta2 Phase 3 (Sec 34): a group scope's differentials are
+    # always None (see SubjectAggregate's own field docstring) -- an
+    # evaluation is either wholly group or wholly pairwise by construction
+    # (EvaluationService._validate/build_matrix never mix the two), so
+    # checking `own` here is equivalent to checking every scored cell.
+    is_group_scope = any(cell.is_group for cell in own)
+    score_differential_avg: float | None
+    territory_differential_avg: float | None
+    if is_group_scope or played == 0:
+        score_differential_avg = None
+        territory_differential_avg = None
+    else:
+        score_diff_total = sum(
+            (cell.score_subject or 0.0) - (cell.score_opponent or 0.0) for cell in scored
+        )
+        territory_diff_total = sum(
+            (cell.territory_subject or 0.0) - (cell.territory_opponent or 0.0) for cell in scored
+        )
+        score_differential_avg = (score_diff_total / played) if played else 0.0
+        territory_differential_avg = (territory_diff_total / played) if played else 0.0
+
+    return SubjectAggregate(
+        subject_role=subject_role,
+        subject_id=subject_id,
+        matches_played=played,
+        wins=wins,
+        losses=losses,
+        ties=ties,
+        subject_init_failures=subject_init_failures,
+        opponent_init_failures=opponent_init_failures,
+        failed=failed,
+        score_total=score_total,
+        score_avg=(score_total / played) if played else 0.0,
+        score_differential_avg=score_differential_avg,
+        ticks_avg=(ticks_total / played) if played else 0.0,
+        territory_avg=(territory_total / played) if played else 0.0,
+        territory_differential_avg=territory_differential_avg,
+    )
+
+
+def all_subject_aggregates(
+    candidate_id: str, baseline_id: str | None, cells: Sequence[EvaluationCell]
+) -> tuple[SubjectAggregate, ...]:
+    """Pooled + per-orientation aggregate views for candidate (and baseline).
+
+    v0.9 Phase 6 (Phase 5 spec Sec K.2): three views per subject -- pooled
+    (``orientation_scope="all"``, today's only view before Phase 6, now
+    spanning up to 2x the cells), ``candidate_first``, and
+    ``opponent_first`` -- always computed and surfaced together, reusing
+    :func:`aggregate_cells` unchanged for each (never a second, drifting
+    aggregation implementation). Shared by
+    ``EvaluationService._all_aggregates`` (the live-run path) and
+    ``evaluation_history``'s v1/v2 adapters (the historical-read path) so
+    both compute this identically; a legacy cell reconstructed without a
+    recorded ``orientation`` field defaults to ``candidate_first``
+    (``EvaluationCell.orientation``'s own default), which is also the
+    historically correct fact for every pre-Phase-6 cell (Sec L.2).
+    """
+
+    subjects: list[tuple[str, str]] = [(CANDIDATE, candidate_id)]
+    if baseline_id is not None:
+        subjects.append((BASELINE, baseline_id))
+    scoped_cells: dict[str, list[EvaluationCell]] = {
+        "all": list(cells),
+        ORIENTATION_CANDIDATE_FIRST: [
+            cell for cell in cells if cell.orientation == ORIENTATION_CANDIDATE_FIRST
+        ],
+        ORIENTATION_OPPONENT_FIRST: [
+            cell for cell in cells if cell.orientation == ORIENTATION_OPPONENT_FIRST
+        ],
+    }
+    aggregates: list[SubjectAggregate] = []
+    for role, subject_id in subjects:
+        for scope, scope_cells in scoped_cells.items():
+            aggregates.append(
+                replace(aggregate_cells(role, subject_id, scope_cells), orientation_scope=scope)
+            )
+    return tuple(aggregates)
+
+
+def classify(candidate_outcome: str, baseline_outcome: str) -> str:
+    """Deterministic outcome-rank comparator (Sec 11). ``win > tie > loss`` only."""
+
+    delta = _OUTCOME_RANK[candidate_outcome] - _OUTCOME_RANK[baseline_outcome]
+    if delta > 0:
+        return "improved"
+    if delta < 0:
+        return "regressed"
+    return "unchanged"
+
+
+def compare_candidate_baseline(
+    cells: Sequence[EvaluationCell],
+) -> tuple[ComparisonEntry, ...]:
+    # Grouped into lists (not a plain {(opponent_id, seed, orientation):
+    # cell} dict) and paired positionally below so a repeated (opponent_id,
+    # seed, orientation) triple -- explicitly preserved as distinct cells by
+    # build_matrix -- produces one comparison entry per duplicate occurrence
+    # instead of silently collapsing all but the last-seen duplicate on
+    # each side into a single entry (which previously undercounted "of
+    # {total} matched cells" and dropped some duplicates from the
+    # comparison entirely).
+    #
+    # v0.9 Phase 6 (Phase 5 spec Sec K.3): orientation joined the grouping
+    # key alongside (opponent_id, seed) -- without it, a candidate's
+    # candidate_first cell could pair against a baseline's opponent_first
+    # cell for the "same" nominal matchup, silently attributing an
+    # orientation effect to a candidate/baseline difference that isn't
+    # real. This is the direct comparison-side consequence of never
+    # averaging orientation away within a cell (Sec H.2).
+    candidate_by_key: dict[tuple[str, int, str, str], list[EvaluationCell]] = {}
+    for cell in cells:
+        if cell.subject_role == CANDIDATE:
+            candidate_by_key.setdefault(
+                (cell.opponent_id, cell.seed, cell.orientation, cell.placement_id), []
+            ).append(cell)
+    baseline_by_key: dict[tuple[str, int, str, str], list[EvaluationCell]] = {}
+    for cell in cells:
+        if cell.subject_role == BASELINE:
+            baseline_by_key.setdefault(
+                (cell.opponent_id, cell.seed, cell.orientation, cell.placement_id), []
+            ).append(cell)
+    keys = sorted(set(candidate_by_key) | set(baseline_by_key))
+
+    entries: list[ComparisonEntry] = []
+    for opponent_id, seed, orientation, placement_id in keys:
+        key = (opponent_id, seed, orientation, placement_id)
+        candidate_list = candidate_by_key.get(key, [])
+        baseline_list = baseline_by_key.get(key, [])
+        for candidate_cell, baseline_cell in zip_longest(candidate_list, baseline_list):
+            if candidate_cell is None or baseline_cell is None:
+                entries.append(
+                    ComparisonEntry(
+                        opponent_id=opponent_id,
+                        seed=seed,
+                        orientation=orientation,
+                        placement_id=placement_id,
+                        classification="inconclusive",
+                        candidate_outcome=candidate_cell.outcome if candidate_cell else None,
+                        baseline_outcome=baseline_cell.outcome if baseline_cell else None,
+                        reason="cell missing on one side",
+                        candidate_schedule_id=candidate_cell.schedule_id if candidate_cell else None,
+                        baseline_schedule_id=baseline_cell.schedule_id if baseline_cell else None,
+                    )
+                )
+                continue
+            if not candidate_cell.is_scored or not baseline_cell.is_scored:
+                entries.append(
+                    ComparisonEntry(
+                        opponent_id=opponent_id,
+                        seed=seed,
+                        orientation=orientation,
+                        placement_id=placement_id,
+                        classification="inconclusive",
+                        candidate_outcome=candidate_cell.outcome,
+                        baseline_outcome=baseline_cell.outcome,
+                        reason=(
+                            f"candidate={candidate_cell.status}/{candidate_cell.outcome} "
+                            f"baseline={baseline_cell.status}/{baseline_cell.outcome}"
+                        ),
+                        candidate_schedule_id=candidate_cell.schedule_id,
+                        baseline_schedule_id=baseline_cell.schedule_id,
+                    )
+                )
+                continue
+            assert candidate_cell.outcome is not None and baseline_cell.outcome is not None
+            classification = classify(candidate_cell.outcome, baseline_cell.outcome)
+            candidate_score_diff = (
+                None
+                if candidate_cell.score_subject is None or candidate_cell.score_opponent is None
+                else candidate_cell.score_subject - candidate_cell.score_opponent
+            )
+            baseline_score_diff = (
+                None
+                if baseline_cell.score_subject is None or baseline_cell.score_opponent is None
+                else baseline_cell.score_subject - baseline_cell.score_opponent
+            )
+            entries.append(
+                ComparisonEntry(
+                    opponent_id=opponent_id,
+                    seed=seed,
+                    orientation=orientation,
+                    placement_id=placement_id,
+                    classification=classification,
+                    candidate_outcome=candidate_cell.outcome,
+                    baseline_outcome=baseline_cell.outcome,
+                    candidate_score=candidate_cell.score_subject,
+                    baseline_score=baseline_cell.score_subject,
+                    candidate_score_differential=candidate_score_diff,
+                    baseline_score_differential=baseline_score_diff,
+                    candidate_territory=candidate_cell.territory_subject,
+                    baseline_territory=baseline_cell.territory_subject,
+                    candidate_schedule_id=candidate_cell.schedule_id,
+                    baseline_schedule_id=baseline_cell.schedule_id,
+                )
+            )
+    return tuple(entries)
 
 
 def _z_value(confidence_level: float) -> float:
@@ -404,7 +628,7 @@ def paired_evidence_from_verdicts(
     verdict sequence — e.g. ``evaluation_history.comparison.
     ComparisonRow.verdict``, which uses the identical vocabulary
     (``comparison.py``'s ``verdict()`` is documented as "the identical
-    mapping to ``agent_evaluation.classify``, oriented right-vs-left").
+    mapping to this module's ``classify``, oriented right-vs-left").
     Used for ``evaluations compare`` (no ``ComparisonEntry`` of its own —
     it compares two separate evaluation artifacts, not candidate vs.
     baseline within one).
@@ -489,7 +713,7 @@ def analyze(
     analysis from already-canonical evaluation cells.
 
     Pure; reads nothing from disk, executes no agent code, and never
-    recomputes anything ``agent_evaluation.all_subject_aggregates``/
+    recomputes anything ``all_subject_aggregates``/
     ``compare_candidate_baseline`` already compute -- this function only
     interprets their output.
     """

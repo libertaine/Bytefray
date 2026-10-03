@@ -47,9 +47,11 @@ class ResultHealth(str, Enum):
 class ReplayState(str, Enum):
     """Current capability state of an occurrence's replay artifact.
 
-    ``NOT_PRODUCED`` is the intentional-absence case (a pMARS/Redcode result
-    records ``replay: null``); it is deliberately distinct from ``MISSING``,
-    which means a replay was referenced and is not on disk right now.
+    ``NOT_PRODUCED`` is the intentional-absence case (a historical redcode94
+    result records ``replay: null``; V6 no longer produces new results of
+    this kind, but existing ones remain readable); it is deliberately
+    distinct from ``MISSING``, which means a replay was referenced and is
+    not on disk right now.
     ``UNCHECKED`` exists for rows whose replay state could not be observed at
     all, so a future refresh can resolve it rather than a reader having to
     guess which of the other states applies.

@@ -112,21 +112,23 @@ def _no_events_session(tmp_path):
 
 
 def _python_session(tmp_path):
-    """A real (not hand-built) 2-agent Python match, for coverage of the
+    """A real (not hand-built) 2-agent API-v2 match, for coverage of the
     runtime-kind branch in selected_cell_info."""
-    from battle_engine.agent_api import ActionKind, AgentAction  # noqa: F401
     from battle_engine.config import Config
     from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
 
     source = """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 
 class Agent:
     def reset(self, context):
         pass
 
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
     def act(self, observation):
-        return AgentAction(ActionKind.NOP)
+        return AgentAction(ActionKindV2.READ, 0)
 
 def create_agent():
     return Agent()
@@ -142,7 +144,7 @@ def create_agent():
         (directory / "agent.yaml").write_text(
             json.dumps(
                 {
-                    "kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent",
+                    "kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent",
                     "name": name, "display": name.title(), "version": "1.0",
                 }
             ),
@@ -153,37 +155,13 @@ def create_agent():
 
     entrants = (
         MatchEntrant.python("A", "a", 0, _python_spec(tmp_path, "a")),
-        MatchEntrant.python("B", "b", 4, _python_spec(tmp_path, "b")),
+        MatchEntrant.python("B", "b", 16, _python_spec(tmp_path, "b")),
     )
     replay_path = tmp_path / "python_replay.jsonl"
     NativeMatchService().run(
         MatchRequest(
-            Config(arena_size=32, instr_per_tick=1, seed=1),
+            Config(arena_size=32, instr_per_tick=8, seed=1),
             entrants, max_ticks=2, replay_path=replay_path, verbose=False,
-        )
-    )
-    session = ReplaySession()
-    session.load(replay_path)
-    return session
-
-
-def _run_vm_kill_match(tmp_path):
-    """A real (not hand-built) VM match where A halts -- used to confirm
-    collect_match_events picks up a genuine engine-produced death event,
-    not just a hand-built one."""
-    from battle_engine.config import Config
-    from battle_engine.core import HALT, NOP, enc
-    from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
-
-    entrants = (
-        MatchEntrant("A", "halts", 0, enc(HALT)),
-        MatchEntrant("B", "waits", 16, enc(NOP)),
-    )
-    replay_path = tmp_path / "vm_events.jsonl"
-    NativeMatchService().run(
-        MatchRequest(
-            Config(arena_size=32, instr_per_tick=1, seed=1337),
-            entrants, 2, replay_path, False,
         )
     )
     session = ReplaySession()
@@ -201,11 +179,14 @@ def _python_forfeit_session(tmp_path):
     from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
 
     failing_source = """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import AgentAction, ProcessDeclaration
 
 class Agent:
     def reset(self, context):
         pass
+
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
 
     def act(self, observation):
         raise RuntimeError("boom")
@@ -214,14 +195,17 @@ def create_agent():
     return Agent()
 """
     nop_source = """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 
 class Agent:
     def reset(self, context):
         pass
 
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
     def act(self, observation):
-        return AgentAction(ActionKind.NOP)
+        return AgentAction(ActionKindV2.READ, 0)
 
 def create_agent():
     return Agent()
@@ -233,7 +217,7 @@ def create_agent():
         (directory / "agent.yaml").write_text(
             json.dumps(
                 {
-                    "kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent",
+                    "kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent",
                     "name": name, "display": name.title(), "version": "1.0",
                 }
             ),
@@ -249,7 +233,7 @@ def create_agent():
     replay_path = tmp_path / "forfeit_replay.jsonl"
     NativeMatchService().run(
         MatchRequest(
-            Config(arena_size=32, instr_per_tick=1, seed=1),
+            Config(arena_size=32, instr_per_tick=8, seed=1),
             entrants, max_ticks=2, replay_path=replay_path, verbose=False,
         )
     )
@@ -372,10 +356,13 @@ def test_collect_match_events_on_a_replay_with_no_events_is_empty(tmp_path):
     assert collect_match_events(session) == []
 
 
-def test_collect_match_events_on_a_real_vm_match_finds_the_recorded_death(tmp_path):
-    session = _run_vm_kill_match(tmp_path)
+def test_collect_match_events_reads_schema_correct_historical_vm_events(tmp_path):
+    session = _events_session(tmp_path)
     events = collect_match_events(session)
-    assert events == [(1, KillDeathEvent("death", "A", None))]
+    assert events == [
+        (2, KillDeathEvent("kill", "B", "A")),
+        (4, KillDeathEvent("death", "C", None)),
+    ]
 
 
 def test_collect_match_events_on_a_real_python_forfeit_match(tmp_path):

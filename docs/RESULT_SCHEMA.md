@@ -2,8 +2,8 @@
 
 Bytefray writes `result.json` with the established schema identifier
 `battle2.result`. Native VM and Python results use version 2 beginning with V5
-Replay History Phase 7A. Historical results and pMARS/Redcode output remain
-version 1. The same high-level envelope represents every mode.
+Replay History Phase 7A. Historical results, including retired Redcode/pMARS
+output, remain version 1. The same high-level envelope represents every mode.
 
 `battle2.result` is retained solely as a compatibility identifier. A local tag
 audit found it in every inspected released writer from v0.3.0 through V5 Alpha
@@ -19,7 +19,7 @@ any other schema identifier are rejected. The common writer shape contains
 `result_id`, `match_id`, `mode`, `status`, `winner`, `termination_reason`,
 `ticks`, `score`, `entrants`, `reproducibility`, `replay`, `backend`, and
 `ruleset_id`. Native results reference a replay by `replay_id`, SHA-256 digest,
-and portable filename. pMARS results set `replay` to `null`.
+and portable filename. Historical pMARS results set `replay` to `null`.
 
 ## Version 2 occurrence metadata
 
@@ -63,8 +63,9 @@ as written rather than normalized during parsing.
 `ResultEnvelope` defaults to schema version 1 for source compatibility with
 existing code that constructs historical envelopes directly. Native
 production finalization explicitly selects current version 2 and supplies all
-required metadata. The pMARS/Redcode writer explicitly selects version 1, so
-its artifact behavior remains unchanged.
+required metadata. The retired Redcode/pMARS writer explicitly selected
+version 1; no current writer emits a v1 envelope, but the reader continues to
+support it for historical artifacts.
 
 ## Ruleset identity
 
@@ -74,23 +75,23 @@ gameplay Ruleset identity (`battle_engine.rules.BYTEFRAY_RULESET_ID`, see
 current native writers** — every VM or Python match produced by
 `NativeMatchService`/`match_service._finalize_native_artifacts` sets it to the
 exact resolved identity (`bytefray-rules-1`, `bytefray-rules-2`, or
-`bytefray-rules-4-alpha1`) — but it is **not required for all historical
+`bytefray-rules-4`) — but it is **not required for all historical
 artifacts**.
 
 **Present-as-`null` versus genuinely absent — these are two different
 facts and this schema distinguishes them precisely:**
 
-- `ResultEnvelope.as_dict()` (the one writer both native and pMARS paths
-  use) always emits the `ruleset_id` key for *any* result written by the
-  current codebase — the exact identity for a native match,
+- `ResultEnvelope.as_dict()` (the one writer both native and, historically,
+  pMARS paths used) always emits the `ruleset_id` key for *any* result
+  written by the codebase — the exact identity for a native match,
   literally **`"ruleset_id": null`** (key present, JSON `null`) for a
-  `redcode94`/pMARS result, since Bytefray Ruleset v1 is not applicable to
-  Redcode/pMARS execution (see [RULES.md](RULES.md)'s "Redcode/pMARS — not
-  Ruleset v1") and `cli.py`'s pMARS path never passes a value for it. This
-  is not a compatibility gap to close — it is the honest, permanent answer
-  for that mode, chosen for one consistent writer behavior (the key is
-  always present in current output) rather than a per-mode conditional
-  key.
+  historical `redcode94`/pMARS result, since Bytefray Ruleset v1 was never
+  applicable to that retired execution mode (see [RULES.md](RULES.md)'s
+  "Redcode/pMARS — not Ruleset v1 (historical)") and `cli.py`'s former
+  pMARS path never passed a value for it. This is not a compatibility gap
+  to close — it is the honest, permanent answer for that mode, chosen for
+  one consistent writer behavior (the key is always present in current
+  output) rather than a per-mode conditional key.
 - A `battle2.result` v1 result written **before this field existed at
   all** (any pre-Phase-4 artifact, native or pMARS alike) has the key
   genuinely, structurally **absent** — there was no `ruleset_id` concept
@@ -268,12 +269,13 @@ Per-entrant termination is a separate, deliberately smaller vocabulary:
 `normal_halt` or `forfeit`, populated only for Python entrants (`null` for
 every VM entrant -- the native VM scheduler does not track a per-agent
 termination reason at this granularity; see REPLAY_SCHEMA.md's runtime-kind
-table). pMARS results set `termination_reason` to the backend-specific value
-`"backend_completed"`, which is intentionally **not** part of the native
-enum -- pMARS is architecturally separate, and forcing a false equivalence
-between "the native scheduler determined a stopping condition" and "the
-pMARS subprocess exited" would misrepresent what's actually known about a
-pMARS match's ending.
+table). Historical pMARS results set `termination_reason` to the
+backend-specific value `"backend_completed"`, which is intentionally **not**
+part of the native enum -- pMARS was architecturally separate, and forcing a
+false equivalence between "the native scheduler determined a stopping
+condition" and "the pMARS subprocess exited" would misrepresent what was
+actually known about a pMARS match's ending. No current writer produces this
+value; the reader retains tolerance for it in historical artifacts.
 
 ## Digest integrity
 

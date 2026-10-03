@@ -154,8 +154,8 @@ trap - EXIT
 
 # --- 'agents create' resource smoke --------------------------------------
 # Regression check mirroring tools/build_win.ps1: proves the frozen unified
-# executable's bundled battle_engine/data/agent_template resource is
-# actually reachable at runtime, not just declared in the .spec's datas.
+# executable's two supported Agent API v2 template resources are actually
+# reachable at runtime, not just declared in the .spec's datas.
 SMOKE_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/bytefray-agents-create-smoke.XXXXXXXX")"
 PREVIOUS_BYTEFRAY_ROOT="${BYTEFRAY_ROOT:-}"
 
@@ -173,13 +173,21 @@ trap cleanup_agents_create_smoke EXIT
 
 export BYTEFRAY_ROOT="${SMOKE_ROOT}"
 BYTEFRAY_EXE="${DIST_DIR}/bytefray/bytefray"
-log "'agents create' smoke test against ${BYTEFRAY_EXE} (BYTEFRAY_ROOT=${SMOKE_ROOT})"
-"${BYTEFRAY_EXE}" agents create smoke_agent \
-  || die "'bytefray agents create smoke_agent' failed"
-
-[[ -f "${SMOKE_ROOT}/agents/smoke_agent/agent.yaml" && -f "${SMOKE_ROOT}/agents/smoke_agent/agent.py" ]] \
-  || die "'bytefray agents create smoke_agent' did not write the expected agent.yaml/agent.py under ${SMOKE_ROOT}"
-log "'agents create' smoke test passed."
+for variant in blank annotated; do
+  agent_id="smoke_agent_v2_${variant}"
+  create_args=(--api-version 2)
+  if [[ "${variant}" == "annotated" ]]; then
+    create_args+=(--template annotated)
+  fi
+  log "'agents create ${agent_id}' smoke test against ${BYTEFRAY_EXE} (BYTEFRAY_ROOT=${SMOKE_ROOT})"
+  "${BYTEFRAY_EXE}" agents create "${agent_id}" "${create_args[@]}" \
+    || die "'bytefray agents create ${agent_id}' failed"
+  [[ -f "${SMOKE_ROOT}/agents/${agent_id}/agent.yaml" && -f "${SMOKE_ROOT}/agents/${agent_id}/agent.py" ]] \
+    || die "'bytefray agents create ${agent_id}' did not write the expected agent.yaml/agent.py under ${SMOKE_ROOT}"
+  "${BYTEFRAY_EXE}" agents validate "${agent_id}" \
+    || die "'bytefray agents validate ${agent_id}' failed"
+done
+log "'agents create' smoke tests passed."
 
 cleanup_agents_create_smoke
 trap - EXIT

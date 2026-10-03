@@ -15,7 +15,7 @@ import shutil
 from pathlib import Path
 
 import pytest
-from battle_engine import agent_evaluation
+from battle_engine import evaluation_artifact, evaluation_service
 from battle_engine.agent_evaluation import (
     EvaluationConfigurationError,
     EvaluationRequest,
@@ -31,7 +31,7 @@ from battle_engine.agent_revisions import (
     walk_agent_files,
 )
 
-NOP_ACTION = "AgentAction(ActionKind.NOP)"
+NOP_ACTION = "AgentAction(ActionKindV2.READ, 0)"
 
 
 def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> Path:
@@ -41,7 +41,7 @@ def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> Path
         json.dumps(
             {
                 "kind": "python",
-                "api_version": 1,
+                "api_version": 2,
                 "entrypoint": "agent.py:create_agent",
                 "version": "1.0",
             }
@@ -50,8 +50,9 @@ def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> Path
     )
     (directory / "agent.py").write_text(
         f"""
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
+    def declare_processes(self): return [ProcessDeclaration("main", 1, 1.0)]
     def reset(self, context): pass
     def act(self, observation): return {action}
 def create_agent(): return Agent()
@@ -181,14 +182,14 @@ def test_source_mutation_during_freeze_aborts_before_any_cell_executes(
     archive a revision that doesn't match the frozen plan."""
 
     candidate_dir = two_agents / "agents" / "candidate"
-    real_walk_agent_files = agent_evaluation.walk_agent_files
+    real_walk_agent_files = evaluation_artifact.walk_agent_files
     mutated = {"done": False}
 
     def mutating_walk(agent_dir: Path):
         if not mutated["done"] and agent_dir == candidate_dir:
             mutated["done"] = True
             (agent_dir / "agent.py").write_text(
-                "from battle_engine.agent_api import ActionKind, AgentAction\n"
+                "from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration\n"
                 "class Agent:\n"
                 "    def reset(self, context): pass\n"
                 f"    def act(self, observation): return {NOP_ACTION}\n"
@@ -198,16 +199,20 @@ def test_source_mutation_during_freeze_aborts_before_any_cell_executes(
             )
         return real_walk_agent_files(agent_dir)
 
-    monkeypatch.setattr(agent_evaluation, "walk_agent_files", mutating_walk)
+    monkeypatch.setattr(evaluation_artifact, "walk_agent_files", mutating_walk)
 
     execute_calls: list[object] = []
-    real_execute_cell = EvaluationService._execute_cell
+    # V6 Phase 3J: ``EvaluationService.run`` now looks up ``execute_cell`` in
+    # ``evaluation_service``'s own module globals, not ``agent_evaluation``'s
+    # (the facade re-exports the same function object, but patching it there
+    # would no longer be observed at the actual call site).
+    real_execute_cell = evaluation_service.execute_cell
 
-    def spying_execute_cell(self, *args, **kwargs):
+    def spying_execute_cell(*args, **kwargs):
         execute_calls.append(args)
-        return real_execute_cell(self, *args, **kwargs)
+        return real_execute_cell(*args, **kwargs)
 
-    monkeypatch.setattr(EvaluationService, "_execute_cell", spying_execute_cell)
+    monkeypatch.setattr(evaluation_service, "execute_cell", spying_execute_cell)
 
     request = _request(two_agents)
     with pytest.raises(EvaluationConfigurationError):
@@ -225,14 +230,14 @@ def test_no_cell_executes_after_freeze_mismatch_with_a_larger_matrix(
     _write_python_agent(tmp_path, "opponent-b")
     candidate_dir = tmp_path / "agents" / "candidate"
 
-    real_walk_agent_files = agent_evaluation.walk_agent_files
+    real_walk_agent_files = evaluation_artifact.walk_agent_files
     mutated = {"done": False}
 
     def mutating_walk(agent_dir: Path):
         if not mutated["done"] and agent_dir == candidate_dir:
             mutated["done"] = True
             (agent_dir / "agent.py").write_text(
-                "from battle_engine.agent_api import ActionKind, AgentAction\n"
+                "from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration\n"
                 "class Agent:\n"
                 "    def reset(self, context): pass\n"
                 f"    def act(self, observation): return {NOP_ACTION}\n"
@@ -242,7 +247,7 @@ def test_no_cell_executes_after_freeze_mismatch_with_a_larger_matrix(
             )
         return real_walk_agent_files(agent_dir)
 
-    monkeypatch.setattr(agent_evaluation, "walk_agent_files", mutating_walk)
+    monkeypatch.setattr(evaluation_artifact, "walk_agent_files", mutating_walk)
 
     request = _request(
         tmp_path,
@@ -419,17 +424,17 @@ def test_prior_revision_lookup_degrades_gracefully_without_agent_revisions_key()
     """Unit-level coverage for the defensive branch integration can't reach
     today (_load_state's own gate already guarantees a resumable ``prior``
     always has schema_version == SCHEMA_VERSION, hence always has
-    ``agent_revisions``) -- ``_prior_revision_by_agent_id`` must still
+    ``agent_revisions``) -- ``prior_revision_by_agent_id`` must still
     degrade to "nothing recorded yet" rather than raising, matching
     AGENTS.md's "treat malformed persisted artifacts as untrusted input"
     for any future caller that doesn't happen to share that guarantee."""
 
-    from battle_engine.agent_evaluation import _prior_revision_by_agent_id
+    from battle_engine.evaluation_artifact import prior_revision_by_agent_id
 
-    assert _prior_revision_by_agent_id({}) == {}
-    assert _prior_revision_by_agent_id({"candidate_id": "candidate"}) == {}
+    assert prior_revision_by_agent_id({}) == {}
+    assert prior_revision_by_agent_id({"candidate_id": "candidate"}) == {}
     assert (
-        _prior_revision_by_agent_id(
+        prior_revision_by_agent_id(
             {"candidate_id": "candidate", "agent_revisions": "not-a-mapping"}
         )
         == {}

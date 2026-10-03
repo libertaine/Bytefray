@@ -696,6 +696,25 @@ def test_inspect_reports_incompatible_agent_api_version(
     assert not (other_data_root / "agents").exists()
 
 
+def test_api_v1_package_is_inspectable_but_cannot_be_imported_or_loaded(
+    data_root: Path, other_data_root: Path, tmp_path: Path
+) -> None:
+    """Retirement preserves package forensics without restoring execution."""
+
+    _make_python_agent(data_root, "historical_v1", api_version=1)
+    result = export_agent("historical_v1", data_root=data_root, output=tmp_path)
+
+    inspection = inspect_package(result.package_path)
+    assert inspection.valid is True
+    assert inspection.agent_api_version == 1
+    assert inspection.compatible is False
+    assert any("Agent API v1" in note for note in inspection.compatibility_notes)
+
+    with pytest.raises(PackageCompatibilityError):
+        import_package(result.package_path, data_root=other_data_root)
+    assert not (other_data_root / "agents").exists()
+
+
 def test_package_compatibility_shares_loader_authoritative_supported_versions() -> None:
     """B1 regression guard: the package gate must consume the loader's own
     supported-version set rather than a second, independently maintained

@@ -13,7 +13,7 @@ from battle_client.renderers.pygame_renderer import dispatch_key
 from battle_engine.agents import resolve_agent
 from battle_engine.config import Config, Weights
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
-from battle_engine.ruleset_policy import RULESET_V4_ALPHA1
+from battle_engine.ruleset_policy import RULESET_V4
 from battle_engine.spectator_perspective import (
     analyze_perspective,
 )
@@ -170,7 +170,7 @@ def _run_match(
         max_ticks=max_ticks,
         replay_path=replay_path,
         trace_path=trace_path,
-        ruleset_id=RULESET_V4_ALPHA1.ruleset_id,
+        ruleset_id=RULESET_V4.ruleset_id,
     )
     result = NativeMatchService().run(request)
     return replay_path, trace_path, result
@@ -208,7 +208,7 @@ def _duel(root: Path, label: str = "duel", *, seed: int = 11):
         max_ticks=12,
         replay_path=replay_path,
         trace_path=trace_path,
-        ruleset_id=RULESET_V4_ALPHA1.ruleset_id,
+        ruleset_id=RULESET_V4.ruleset_id,
     )
     result = NativeMatchService().run(request)
     return replay_path, trace_path, result
@@ -368,7 +368,7 @@ def test_colocation_ambiguity_and_geometry_trap(tmp_path: Path) -> None:
         max_ticks=8,
         replay_path=replay_path,
         trace_path=trace_path,
-        ruleset_id=RULESET_V4_ALPHA1.ruleset_id,
+        ruleset_id=RULESET_V4.ruleset_id,
     )
     NativeMatchService().run(request)
 
@@ -577,7 +577,7 @@ def _blind_duel(root: Path, label: str = "blind"):
             max_ticks=6,
             replay_path=replay_path,
             trace_path=trace_path,
-            ruleset_id=RULESET_V4_ALPHA1.ruleset_id,
+            ruleset_id=RULESET_V4.ruleset_id,
         )
     )
     return replay_path, trace_path

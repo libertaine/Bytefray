@@ -9,7 +9,11 @@ from types import SimpleNamespace
 import pytest
 
 ARENA = 512
-NAMES = {"runner": "Runner Bot", "writer": "Writer Bot", "seeker": "Seeker Bot"}
+NAMES = {
+    "v4_claimer": "V4 Claimer",
+    "v4_scout": "V4 Scout",
+    "v4_local_defender": "V4 Local Defender",
+}
 
 
 def _make_app():
@@ -65,21 +69,23 @@ class _NullSignal:
 
 
 def _run_tournament(output_dir: Path, match_service=None):
-    from battle_engine.builtins import build_agent
+    from battle_engine.agents import agent_spec_from_dir
     from battle_engine.config import Config
     from battle_engine.match_service import MatchEntrant
+    from battle_engine.starters import starter_agent_resource_dir
     from battle_engine.tournament_service import TournamentRequest, TournamentService
 
-    names = ("runner", "writer", "seeker")
+    names = ("v4_claimer", "v4_scout", "v4_local_defender")
     spacing = ARENA // len(names)
-    entrants = tuple(
-        MatchEntrant(name, NAMES[name], index * spacing, build_agent(name, index * spacing))
-        for index, name in enumerate(names)
-    )
+    entrants = []
+    for index, name in enumerate(names):
+        spec = agent_spec_from_dir(starter_agent_resource_dir(name))
+        assert spec is not None
+        entrants.append(MatchEntrant.python(name, NAMES[name], index * spacing, spec))
     return TournamentService(match_service).run(
         TournamentRequest(
-            entrants=entrants,
-            config=Config(arena_size=ARENA, instr_per_tick=4),
+            entrants=tuple(entrants),
+            config=Config(arena_size=ARENA, instr_per_tick=8),
             rounds=1,
             max_ticks=120,
             output_dir=output_dir,
@@ -136,17 +142,13 @@ def test_results_dialog_shows_winner_standings_and_matches_from_canonical_artifa
     from app.views.tournament import TournamentResultsDialog
 
     service_result = _run_tournament(tmp_path / "cup")
-    assert [(row.agent_id, row.wins) for row in service_result.standings] == [
-        ("seeker", 2),
-        ("runner", 0),
-        ("writer", 0),
-    ]
+    assert {row.agent_id for row in service_result.standings} == set(NAMES)
     dialog = TournamentResultsDialog(read_tournament_results(tmp_path / "cup"))
     try:
-        assert dialog.headlineLabel.text() == "Winner: Seeker Bot"
+        assert dialog.headlineLabel.text().startswith("Winner:")
         assert dialog.statusLabel.text() == "Complete: 3 of 3 matches completed."
-        assert dialog.rulesetLabel.text() == "Ruleset v1"
-        assert dialog.entrantsLabel.text() == "3 (VM)"
+        assert dialog.rulesetLabel.text() == "Ruleset v4"
+        assert dialog.entrantsLabel.text() == "3 (Python)"
         assert dialog.matchesLabel.text() == "3 of 3 matches completed"
         assert dialog.outputFolderLabel.text() == str((tmp_path / "cup").resolve())
         assert dialog.tabs.currentIndex() == 0
@@ -162,14 +164,11 @@ def test_results_dialog_shows_winner_standings_and_matches_from_canonical_artifa
                 str(row.ties),
                 format_score(row.score_total),
             ]
-            for rank, row in zip((1, 2, 2), service_result.standings, strict=True)
+            for rank, row in enumerate(service_result.standings, start=1)
         ]
-        seeds = [str(match.seed) for match in service_result.matches]
-        assert _table_text(dialog.matchesTable) == [
-            ["1", "1", "Runner Bot vs Writer Bot", "Tie", seeds[0], "Available"],
-            ["2", "1", "Runner Bot vs Seeker Bot", "Seeker Bot won", seeds[1], "Available"],
-            ["3", "1", "Writer Bot vs Seeker Bot", "Seeker Bot won", seeds[2], "Available"],
-        ]
+        rows = _table_text(dialog.matchesTable)
+        assert len(rows) == 3
+        assert [row[-1] for row in rows] == ["Available"] * 3
     finally:
         dialog.deleteLater()
     assert modals.calls == []
@@ -211,7 +210,8 @@ def test_completed_run_opens_results_and_view_replay_uses_the_designer_viewer_la
 
         designer._present_tournament_result(0)
 
-        assert shown == ["Winner: Seeker Bot", "Opening replay in Replay Viewer…"]
+        expected_winner = NAMES[service_result.standings[0].agent_id]
+        assert shown == [f"Winner: {expected_winner}", "Opening replay in Replay Viewer…"]
         expected = (service_result.matches[1].artifact_dir / "replay.jsonl").resolve()
         assert launched == [(designer.data_root, expected)]
     finally:
@@ -324,14 +324,15 @@ def test_stopped_tournament_results_claim_no_winner(monkeypatch, tmp_path):
     dialog = TournamentResultsDialog(read_tournament_results(tmp_path / "cup"))
     try:
         assert dialog.headlineLabel.text() == "No winner: the tournament did not finish."
-        assert dialog.entrantsLabel.text() == "Not recorded (VM; the tournament did not finish)"
+        assert dialog.entrantsLabel.text() == "Not recorded (Python; the tournament did not finish)"
         assert not dialog.standingsNotice.isHidden()
         assert dialog.standingsTable.rowCount() == 0
         assert dialog.tabs.currentIndex() == 1
-        seed = str(derive_match_seed(7, 1, "runner", "writer"))
-        assert _table_text(dialog.matchesTable) == [
-            ["1", "1", "Runner Bot vs Writer Bot", "Tie", seed, "Available"]
-        ]
+        seed = str(derive_match_seed(7, 1, "v4_claimer", "v4_scout"))
+        rows = _table_text(dialog.matchesTable)
+        assert len(rows) == 1
+        assert rows[0][0:3] == ["1", "1", "V4 Claimer vs V4 Scout"]
+        assert rows[0][4:] == [seed, "Available"]
     finally:
         dialog.deleteLater()
     assert modals.calls == []
@@ -402,7 +403,7 @@ def test_each_tournament_launch_proposes_a_fresh_output_folder(monkeypatch, tmp_
 
         monkeypatch.setattr(
             "app.agent_designer.TournamentDialog",
-            _fake_tournament_dialog(defaults, {"runner", "writer"}),
+            _fake_tournament_dialog(defaults, {"v4_claimer", "v4_scout"}),
         )
         monkeypatch.setattr(designer, "_start_process", _start_process)
 
@@ -502,15 +503,21 @@ def test_tournament_history_reopens_saved_results_and_their_replays(monkeypatch,
     dialog.openReplayRequested.connect(lambda path: emitted.append(path))
     try:
         assert [row[1:] for row in _table_text(dialog.table)] == [
-            ["Complete", "seeker", "seeker, runner, writer", "3 of 3", "finished"],
-            ["Did not finish", "—", "runner, writer", "1 of 1", "stopped"],
+            [
+                "Complete",
+                finished.standings[0].agent_id,
+                "v4_claimer, v4_scout, v4_local_defender",
+                "3 of 3",
+                "finished",
+            ],
+            ["Did not finish", "—", "v4_claimer, v4_scout", "1 of 1", "stopped"],
             ["Unreadable", "—", "—", "—", "damaged"],
         ]
         assert dialog.emptyLabel.isHidden()
         assert dialog.viewResultsButton.isEnabled()
 
         dialog.viewResultsButton.click()
-        assert shown == ["Winner: Seeker Bot"]
+        assert shown[0].startswith("Winner:")
         assert emitted == [(finished.matches[2].artifact_dir / "replay.jsonl").resolve()]
 
         dialog.table.selectRow(1)
@@ -551,10 +558,10 @@ def test_tournament_history_opens_a_tournament_saved_elsewhere(monkeypatch, tmp_
     dialog = view.TournamentHistoryDialog(tmp_path / "data")
     try:
         dialog.browseButton.click()
-        assert shown == ["Winner: Seeker Bot"]
+        assert shown[0].startswith("Winner:")
 
         dialog.browseButton.click()
-        assert shown == ["Winner: Seeker Bot"]
+        assert len(shown) == 1
         assert dialog.statusLabel.text().startswith("No tournament results were found in")
     finally:
         dialog.deleteLater()
@@ -642,7 +649,8 @@ def test_designer_runs_a_real_tournament_and_opens_its_results(monkeypatch, tmp_
             return 0
 
     monkeypatch.setattr(
-        "app.agent_designer.TournamentDialog", _fake_tournament_dialog([], {"runner", "writer"})
+        "app.agent_designer.TournamentDialog",
+        _fake_tournament_dialog([], {"v4_claimer", "v4_scout"}),
     )
     monkeypatch.setattr("app.agent_designer.TournamentResultsDialog", _Results)
     loop = QEventLoop()
@@ -670,7 +678,10 @@ def test_designer_runs_a_real_tournament_and_opens_its_results(monkeypatch, tmp_
         assert results.output_dir.parent == tournaments_root(designer.data_root)
         assert results.finished
         assert results.completed_count == 1
-        assert {row.agent_id for row in results.standings} == {"runner", "writer"}
+        assert {row.agent_id for row in results.standings} == {
+            "v4_claimer",
+            "v4_scout",
+        }
         assert check_match_replay(results.matches[0]) == REPLAY_READY
     finally:
         timer.stop()

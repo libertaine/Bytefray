@@ -575,7 +575,7 @@ text and in the `docs/AGENT_AUTHORING.md` update (§13).
 |---|---|
 | `kind: builtin` (a built-in VM agent, or a starter-populated manifest like `agents/runner/agent.yaml`) | `agent_kind_unsupported`, §4.2. Exit `2`. |
 | `kind: blob` | `agent_kind_unsupported`, §4.2. Exit `2`. |
-| Redcode/pMARS warrior | Redcode warriors are never entries under `<data_root>/agents/`; they are separate files passed to `bytefray run --mode redcode94 --red-a/--red-b` and never reach `discover_agents`/`resolve_agent` at all (`ARCHITECTURE.md`'s "run" description). Passing a Redcode filename or warrior name as `<agent-id>` therefore resolves as an **unknown agent** (`agent_unknown`, §4.1) — there is no separate "this looks like Redcode" detection, because nothing distinguishes it from any other unknown ID at this layer, and inventing such detection would be exactly the "static source linting" this spec excludes (§12). |
+| Redcode/pMARS warrior (historical; V6 retired this execution mode entirely) | Redcode warriors were never entries under `<data_root>/agents/`; they were separate files passed directly to the now-removed Redcode execution flags and never reached `discover_agents`/`resolve_agent` at all (`ARCHITECTURE.md`'s "run" description). Passing a Redcode filename or warrior name as `<agent-id>` therefore resolves as an **unknown agent** (`agent_unknown`, §4.1) — there is no separate "this looks like Redcode" detection, because nothing distinguishes it from any other unknown ID at this layer, and inventing such detection would be exactly the "static source linting" this spec excludes (§12). |
 | Unknown ID | `agent_unknown`, §4.1. Exit `2`. |
 
 Phase 2 does not pretend validation has meaning for any non-Python kind;

@@ -38,7 +38,6 @@ from pathlib import Path
 
 from battle_engine.agent_api import AgentValidationError
 from battle_engine.agent_parameters import resolve_entrant_parameters
-from battle_engine.agent_scaffold import template_resource_dir
 from battle_engine.agents import AgentSpec, resolve_agent
 from battle_engine.config import Config, Weights
 from battle_engine.match_service import (
@@ -58,13 +57,8 @@ from battle_engine.python_runtime import (
     RuntimeDiagnostic,
 )
 from battle_engine.results import WINNER_TIE_SENTINEL
-from battle_engine.rules import BYTEFRAY_RULESET_ID
 from battle_engine.ruleset_policy import (
-    BYTEFRAY_RULESET_V2_ID,
-    BYTEFRAY_RULESET_V4_ALPHA1_ID,
-    BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
-    PROCESS_RULESET_IDS,
     NoCompatibleRulesetError,
     resolve_omitted_ruleset_for_agents,
 )
@@ -123,63 +117,34 @@ def _timeout_value(value: str) -> float:
     return parsed
 
 
-def _reference_opponent_spec(
-    resource_root: Path | None = None,
-    *,
-    ruleset_id: str | None = None,
-) -> AgentSpec:
+def _reference_opponent_spec(resource_root: Path | None = None) -> AgentSpec:
     """Build an ``AgentSpec`` for the internal reference opponent.
 
-    Loaded directly from the bundled ``agent_template`` package resource --
-    the same static files ``bytefray agents create`` copies -- never
-    copied into the user's writable ``agents/`` catalog and never
-    discoverable via ``resolve_agent``/``discover_agents``.
+    Loaded directly from the bundled ``v4_claimer`` starter -- Bytefray's
+    Agent API v2 process-agent reference. V6 Phase 2B.12 retired Agent API
+    v1 execution, so this is the only opponent generation ``agents test``
+    can run against; there is no longer a Ruleset-dependent choice to make
+    here (see docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md).
     """
 
     resources = resource_root or get_resource_root()
-    # Every process Ruleset needs the Agent API v2 reference, not only the
-    # first one that existed: the API generation the opponent must speak is
-    # a property of the process runtime, not of one v4 alpha.
-    if ruleset_id in PROCESS_RULESET_IDS:
-        starter_dir = starter_agent_resource_dir(
-            "v4_claimer", resource_root=resources
-        )
-        return AgentSpec(
-            name=REFERENCE_OPPONENT_NAME,
-            display="Bytefray v4 reference agent",
-            dir=starter_dir,
-            blob=None,
-            defaults={},
-            kind="python",
-            api_version=2,
-            version="1.0.0",
-            source_path=(starter_dir / "agent.py").resolve(),
-            entry_point="agent.py:create_agent",
-            manifest={
-                "kind": "python",
-                "api_version": 2,
-                "entrypoint": "agent.py:create_agent",
-                "version": "1.0.0",
-            },
-        )
-
-    template_dir = template_resource_dir(resources)
+    starter_dir = starter_agent_resource_dir("v4_claimer", resource_root=resources)
     return AgentSpec(
         name=REFERENCE_OPPONENT_NAME,
-        display="Bytefray reference agent",
-        dir=template_dir,
+        display="Bytefray v4 reference agent",
+        dir=starter_dir,
         blob=None,
         defaults={},
         kind="python",
-        api_version=1,
-        version="0.1.0",
-        source_path=(template_dir / "agent.py").resolve(),
+        api_version=2,
+        version="1.0.0",
+        source_path=(starter_dir / "agent.py").resolve(),
         entry_point="agent.py:create_agent",
         manifest={
             "kind": "python",
-            "api_version": 1,
+            "api_version": 2,
             "entrypoint": "agent.py:create_agent",
-            "version": "0.1.0",
+            "version": "1.0.0",
         },
     )
 
@@ -187,7 +152,7 @@ def _reference_opponent_spec(
 def _resolve_python_entrant(
     agent_id: str, *, data_root: Path, role: str
 ) -> AgentSpec:
-    """Resolve ``agent_id`` and require it to be a Python agent.
+    """Resolve ``agent_id`` and require a current Agent API v2 Python agent.
 
     ``role`` is only used for message text ("test agent"/"opponent"); both
     positions apply the identical unknown/non-Python checks, before the
@@ -216,6 +181,16 @@ def _resolve_python_entrant(
             message=(
                 f"{role.capitalize()} {agent_id!r} is kind {spec.kind!r}; "
                 "agents test requires Python agents only."
+            ),
+        )
+    if spec.api_version != 2:
+        raise _tool_error(
+            stage="discovery",
+            code="agent_api_version_unsupported",
+            message=(
+                f"{role.capitalize()} {agent_id!r} declares Agent API "
+                f"v{spec.api_version}; Agent API v1 execution is retired and "
+                "agents test requires Agent API v2."
             ),
         )
     return spec
@@ -270,7 +245,7 @@ class DevelopmentTestOutcome:
     ticks_requested: int
     match_result: NativeMatchResult
     summary_path: Path
-    ruleset_id: str = BYTEFRAY_RULESET_ID
+    ruleset_id: str = BYTEFRAY_RULESET_V4_ID
     trace_path: Path | None = None
 
 
@@ -343,7 +318,7 @@ def test_agent(
     alive_weight: float | None = None,
     territory_weight: float | None = None,
     scheduler_chunk_size: int | None = None,
-    scheduler_rotate_start: bool = False,
+    scheduler_rotate_start: bool | None = None,
 ) -> DevelopmentTestOutcome | InitializationFailureOutcome:
     """Run one short, real development match for ``agent_id``."""
     try:
@@ -403,7 +378,7 @@ def _test_agent(
     alive_weight: float | None = None,
     territory_weight: float | None = None,
     scheduler_chunk_size: int | None = None,
-    scheduler_rotate_start: bool = False,
+    scheduler_rotate_start: bool | None = None,
 ) -> DevelopmentTestOutcome | InitializationFailureOutcome:
     root = (data_root or get_data_root()).expanduser().resolve()
     resources = resource_root or get_resource_root()
@@ -415,11 +390,7 @@ def _test_agent(
 
     if opponent is None:
         try:
-            opponent_spec = (
-                _reference_opponent_spec(resources, ruleset_id=ruleset_id)
-                if ruleset_id in PROCESS_RULESET_IDS
-                else _reference_opponent_spec(resources)
-            )
+            opponent_spec = _reference_opponent_spec(resources)
         except FileNotFoundError as exc:
             raise _tool_error(
                 stage="internal",
@@ -585,7 +556,7 @@ def _test_agent(
         ticks_requested=effective_ticks,
         match_result=match_result,
         summary_path=summary_path,
-        ruleset_id=ruleset_id or BYTEFRAY_RULESET_ID,
+        ruleset_id=ruleset_id or BYTEFRAY_RULESET_V4_ID,
         trace_path=trace_path if trace_path is not None and trace_path.exists() else None,
     )
 
@@ -668,7 +639,7 @@ def test_agents(
     alive_weight: float | None = None,
     territory_weight: float | None = None,
     scheduler_chunk_size: int | None = None,
-    scheduler_rotate_start: bool = False,
+    scheduler_rotate_start: bool | None = None,
 ) -> GroupTestOutcome | GroupInitializationFailureOutcome:
     """Run one short, real N-entrant (N >= 2) development match."""
     try:
@@ -720,7 +691,7 @@ def _test_agents(
     alive_weight: float | None = None,
     territory_weight: float | None = None,
     scheduler_chunk_size: int | None = None,
-    scheduler_rotate_start: bool = False,
+    scheduler_rotate_start: bool | None = None,
 ) -> GroupTestOutcome | GroupInitializationFailureOutcome:
 
     if len(entrants) < 2:
@@ -844,7 +815,7 @@ def _test_agents(
         seed=effective_seed,
         ticks_requested=effective_ticks,
         match_result=match_result,
-        ruleset_id=ruleset_id or BYTEFRAY_RULESET_ID,
+        ruleset_id=ruleset_id or BYTEFRAY_RULESET_V4_ID,
         trace_path=trace_path if trace_path is not None and trace_path.exists() else None,
     )
 
@@ -980,7 +951,7 @@ def _entrant_compatibility_metadata(agent_id: str) -> dict[str, object]:
     module's own diagnostic vocabulary (``agent_unknown``,
     ``agent_kind_unsupported``, ...), and it runs a moment later with the
     full tool-error presentation around it. An id that cannot be resolved
-    here therefore falls back to the historical Python/Agent API v1
+    here therefore falls back to the current Python/Agent API v2
     projection, which resolves the same Ruleset this CLI resolved before --
     leaving the established error path to produce the real diagnostic
     rather than pre-empting it with a resolution failure.
@@ -989,7 +960,7 @@ def _entrant_compatibility_metadata(agent_id: str) -> dict[str, object]:
     try:
         spec = resolve_agent(get_data_root(), agent_id)
     except (SystemExit, AgentValidationError, OSError, ValueError):
-        return {"agent_id": agent_id, "kind": "python", "api_version": 1}
+        return {"agent_id": agent_id, "kind": "python", "api_version": 2}
     return {"agent_id": agent_id, "kind": spec.kind, "api_version": spec.api_version}
 
 
@@ -1041,26 +1012,14 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--ruleset",
-        choices=[
-            BYTEFRAY_RULESET_ID,
-            BYTEFRAY_RULESET_V2_ID,
-            BYTEFRAY_RULESET_V4_ALPHA1_ID,
-            BYTEFRAY_RULESET_V4_ALPHA2_ID,
-            BYTEFRAY_RULESET_V4_ID,
-        ],
+        choices=[BYTEFRAY_RULESET_V4_ID],
         default=None,
         help=(
-            f"gameplay Ruleset identity. If omitted, an Agent API v1 roster "
-            f"uses {BYTEFRAY_RULESET_V2_ID} and an Agent API v2 roster uses "
-            f"{BYTEFRAY_RULESET_V4_ID} -- agents test entrants are "
-            f"always Python. {BYTEFRAY_RULESET_V2_ID} supports Agent API v1; "
-            f"{BYTEFRAY_RULESET_V4_ID} and both v4 alphas support Agent API v2. "
-            f"{BYTEFRAY_RULESET_V4_ID} is the current, permanent v4 gameplay "
-            "contract and is what an omitted Ruleset selects for an Agent API "
-            "v2 roster; v4 alpha1/alpha2 remain selectable by name to "
-            "reproduce historical prerelease matches. "
-            "Affects gameplay semantics and is recorded in the match's "
-            "result/replay artifacts."
+            f"gameplay Ruleset identity. {BYTEFRAY_RULESET_V4_ID} is the "
+            "only Ruleset Agent API v2 (process) agents can run under, and "
+            "is selected automatically when this flag is omitted -- agents "
+            "test entrants are always Python. Affects gameplay semantics "
+            "and is recorded in the match's result/replay artifacts."
         ),
     )
     return parser
@@ -1074,20 +1033,15 @@ def main(argv: list[str] | None = None) -> int:
     # --timeout. Direct library callers (existing tests, other tooling)
     # keep test_agent()'s own unsupervised default unless they opt in.
     effective_timeout = DEFAULT_AGENT_TIMEOUT if args.timeout is None else args.timeout
-    # RC1 default-Ruleset-defect fix, made Agent-API-aware: `agents test`
-    # entrants are always Python -- _resolve_python_entrant rejects anything
-    # else -- but "Python" alone no longer identifies a Ruleset, since
-    # bytefray-rules-2 and the bytefray-rules-4 family are both Python-only
-    # and differ by Agent API version. The tested agent's own declared
-    # metadata therefore selects the Ruleset, so an Agent API v2 agent
-    # reaches the stable bytefray-rules-4 (v4.0.0-rc1 Phase 2) without its
-    # author naming an internal Ruleset identity.
+    # Omitted selection is resolved from entrant metadata at the CLI boundary.
+    # Scope C leaves one executable combination -- Agent API v2 Python under
+    # stable bytefray-rules-4 -- while incompatible historical metadata fails
+    # closed before test_agent() can create a run directory.
     #
     # The default reference opponent is deliberately not part of this
-    # roster: _reference_opponent_spec already supplies whichever Agent API
-    # generation the resolved Ruleset needs, so including it would be
-    # circular. An explicit --opponent is a real user-selected entrant and
-    # does participate.
+    # roster: _reference_opponent_spec is the fixed current API-v2 reference,
+    # so including it would be redundant. An explicit --opponent is a real
+    # user-selected entrant and does participate.
     #
     # test_agent()'s own `ruleset_id=None` default (used by every direct
     # library/test caller that never goes through this CLI) is untouched --

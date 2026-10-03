@@ -1,12 +1,10 @@
 """Shared runtime-labeled agent combo-box behavior for match selectors.
 
-Both the Simple and Advanced tabs show each agent's runtime kind next to
-its name (``claimer [Python]``, ``runner [VM]``) and disable Agent B
-choices whose runtime kind is incompatible with the selected Agent A --
-the UX correction that surfaces the existing mixed-VM/Python-execution
-restriction *before* a user attempts an invalid match, instead of only
-after ``validate_homogeneous`` rejects it. This module is the one shared
-implementation both tabs call, so the two selectors cannot drift apart.
+Both the Simple and Advanced tabs show each discovered agent's retained
+runtime metadata next to its name. Ruleset filtering consumes that metadata
+and disables historical API-v1/VM rows for new execution while keeping them
+visible for inspection. This module is the one shared implementation both
+tabs call, so the two selectors cannot drift apart.
 
 The combo's ``DisplayRole`` is always the decorated label; the real,
 undecorated discovery identifier (``AgentRow.agent_id``, with a
@@ -30,10 +28,9 @@ from app.services.ruleset_options import agent_row_metadata
 _NAME_ROLE = Qt.ItemDataRole.UserRole
 _KIND_ROLE = Qt.ItemDataRole.UserRole + 1
 # The row's full compatibility metadata (runtime kind *and* Agent API
-# version). Carried alongside the runtime kind because the kind alone
-# cannot tell bytefray-rules-2 from bytefray-rules-4-alpha1 -- both are
-# Python-only -- so Ruleset filtering needs the whole projection the engine
-# policy consumes, not just this combo's display-oriented kind.
+# version). Carried alongside the runtime kind because current execution
+# eligibility requires both Python kind and Agent API v2; the display label
+# alone is not an execution decision.
 _META_ROLE = Qt.ItemDataRole.UserRole + 2
 
 

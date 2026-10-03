@@ -36,22 +36,24 @@ TEMPLATE_FILES = ("agent.yaml", "agent.py")
 # that cross-reference sibling starters by name) would misrepresent a
 # newly scaffolded agent's identity if copied verbatim.
 DEFAULT_TEMPLATE = "blank"
+
+# V6 Phase 2B.12 retired Agent API v1 execution: the scaffold no longer
+# offers a v1 template set at all, so the only remaining template names are
+# the process-agent (Agent API v2) blank/annotated pair below.
 TEMPLATE_DIRECTORIES = {
-    "blank": "agent_template",
-    "annotated": "agent_template_annotated",
+    "blank": "agent_template_v2",
+    "annotated": "agent_template_v2_annotated",
 }
 
 # The Agent API generation a scaffold produces when the author does not ask
-# for one. Deliberately pinned to 1 rather than tracking
-# ``agent_api.AGENT_API_VERSION``: ``bytefray agents create <id>`` has always
-# produced an Agent API v1 agent, and repointing an established command's
-# default at a newer generation would silently change the meaning of every
-# existing script and instruction that uses it. Agent API v2 is reachable by
-# asking for it explicitly (``--api-version 2``); which *Ruleset* such an
-# agent then runs under is derived automatically from the manifest it
-# declares (``ruleset_policy.resolve_omitted_ruleset_for_agents``), so
-# choosing a newer default here would buy nothing anyway.
-DEFAULT_API_VERSION = 1
+# for one. Repointed from 1 to 2 by V6 Phase 2B.12
+# (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md): Agent API
+# v1 execution is retired, so a v1-default scaffold would produce an agent
+# this installation's runtime cannot run at all. This is a deliberate,
+# recorded compatibility break. Historical API-v1 templates can only be
+# obtained from an older Bytefray installation; this scaffold deliberately
+# cannot produce an execution-incompatible agent.
+DEFAULT_API_VERSION = 2
 
 # One template set per supported Agent API generation. Keyed by the same
 # ``api_version`` value a manifest declares, so the scaffold cannot offer an
@@ -60,12 +62,13 @@ DEFAULT_API_VERSION = 1
 # authoritative set introduced by the Phase 1 packaging remediation) and
 # ``test_scaffold_templates_cover_every_supported_api_version`` fails loudly
 # if a future generation is added to that set without a template here.
+#
+# V6 Phase 2B.12 removed the Agent API v1 entry (``agent_template``/
+# ``agent_template_annotated``) along with Agent API v1 execution -- those
+# two template directories were deleted from ``data/``, not merely
+# unregistered here.
 TEMPLATE_DIRECTORIES_BY_API_VERSION: dict[int, dict[str, str]] = {
-    1: TEMPLATE_DIRECTORIES,
-    2: {
-        "blank": "agent_template_v2",
-        "annotated": "agent_template_v2_annotated",
-    },
+    2: TEMPLATE_DIRECTORIES,
 }
 
 __all__ = [
@@ -145,11 +148,9 @@ def template_resource_dir(
 ) -> Path:
     """Locate one bundled template directory.
 
-    ``api_version`` is keyword-only and defaults to
-    :data:`DEFAULT_API_VERSION`, so every pre-existing positional caller --
-    notably ``agent_test._reference_opponent_spec``, which loads the Agent
-    API v1 blank template as its internal reference opponent -- keeps
-    resolving exactly the directory it resolved before.
+    ``api_version`` is keyword-only and defaults to the sole supported
+    generation, so positional callers resolve the Agent API v2 blank
+    template unless they choose the annotated variant.
     """
     validate_api_version(api_version)
     validate_template(template, api_version)
@@ -183,17 +184,17 @@ def create_agent(
     rename, so a failure partway through writing never leaves a
     partially-created agent visible at the real path.
 
-    ``template`` defaults to ``"blank"`` -- the original, sole template --
-    so every pre-Phase-2 caller that omits it gets byte-identical output to
-    before. See :data:`TEMPLATE_DIRECTORIES` for the full set.
+    ``template`` defaults to ``"blank"``. See :data:`TEMPLATE_DIRECTORIES`
+    for the full set.
 
     ``api_version`` selects the Agent API generation to scaffold and
-    defaults to :data:`DEFAULT_API_VERSION` (v1), so every caller that omits
-    it -- including Agent Designer's New Agent dialog -- also gets
-    byte-identical output to before. Pass ``2`` for a process agent that
-    runs under the stable ``bytefray-rules-4`` (v4.0.0-rc1 Phase 2) by
-    default, or explicitly under ``bytefray-rules-4-alpha1``/``-alpha2`` to
-    reproduce a historical prerelease match.
+    defaults to :data:`DEFAULT_API_VERSION` (v2 -- the process agent
+    contract, ``reset``/``declare_processes``/``act``), so every caller that
+    omits it -- including Agent Designer's New Agent dialog -- gets a
+    runnable agent under the stable ``bytefray-rules-4``. V6 Phase 2B.12
+    retired Agent API v1 execution entirely
+    (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md); Agent
+    API v2 is the only generation this installation can scaffold or run.
     """
     validate_agent_id(agent_id)
     validate_api_version(api_version)
@@ -255,10 +256,9 @@ def _parser() -> argparse.ArgumentParser:
         choices=sorted(scaffold_api_versions()),
         default=DEFAULT_API_VERSION,
         help=(
-            f"Agent API generation to scaffold (default: {DEFAULT_API_VERSION}). "
-            "1 is the historical single-actor API and runs under "
-            "bytefray-rules-2; 2 is the process API (reset, declare_processes, "
-            "act) and runs under the stable bytefray-rules-4. The Ruleset is "
+            f"Agent API generation to scaffold (default: {DEFAULT_API_VERSION}, "
+            "the only supported generation). The process API (reset, "
+            "declare_processes, act) runs under the stable bytefray-rules-4, "
             "selected automatically from the created agent's manifest."
         ),
     )
@@ -268,8 +268,8 @@ def _parser() -> argparse.ArgumentParser:
         default=DEFAULT_TEMPLATE,
         help=(
             "starting-point content: 'blank' (default, a minimal skeleton) or "
-            "'annotated' (a commented example). Both are available for every "
-            "--api-version."
+            "'annotated' (a commented example). Both target the sole supported "
+            "Agent API v2 generation."
         ),
     )
     return parser

@@ -1,0 +1,126 @@
+{
+  "schema": "bytefray.v6.e6.preregistration",
+  "version": 1,
+  "experiment": "V6 E6 priced sensing",
+  "authority": {
+    "document": "docs/research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md",
+    "registration_commit": "f43f5d2",
+    "note": "The markdown is the authoritative wording; this file transcribes it for the frozen instrument."
+  },
+  "research_question": "Does limiting passive enemy-anchor visibility to min(declared reach, 32) cells make the best allocation of actions depend on the opponent, or does it act only as a discovery tax?",
+  "decisions": {
+    "O-1": {"decision": "Experiment identity", "decided": "E6; tooling under tools/research/v6/e6/"},
+    "O-2": {"decision": "A ninth member, LURK (search none, posture attack)", "decided": "Added. Nine members."},
+    "O-3": {"decision": "Tolerance epsilon for best responses", "decided": "1/16"},
+    "O-4": {"decision": "Bootstrap", "decided": "1000 resamples, stability >= 9/10, random.Random(42)"},
+    "O-5": {"decision": "The tick bound for a forced-line capture", "decided": "<= 3"},
+    "O-6": {"decision": "ADAPT's no-contact switch tick", "decided": "16"},
+    "O-7": {"decision": "Seeds per cell", "decided": "32"},
+    "O-8": {"decision": "Instrument for stalling", "decided": "E4 cell metrics (FMA and FPS), descriptive only"},
+    "P-1": {"decision": "The trace-retention threshold", "decided": "40 GB, with the subset of seed positions 1-4. Callback telemetry stays complete for every cell."},
+    "P-2": {"decision": "The evade range", "decided": "[8, 64], sign and magnitude drawn from the seeded RNG"},
+    "P-3": {"decision": "SPLIT's shares", "decided": "0.25 sensor, 0.75 striker"},
+    "P-4": {"decision": "ADAPT's damage check", "decided": "One cyclic own-core READ per tick: at the first callback of tick t, own-core cell (t - 1) mod 8"},
+    "P-5": {"decision": "The idle action", "decided": "Outward alternating painting, starting side drawn from the seeded RNG"},
+    "P-6": {"decision": "Unverified adoption at the first callback", "decided": "Kept"}
+  },
+  "treatment": {
+    "field": "RulesetPolicy.detection_radius",
+    "from": null,
+    "to": 32,
+    "rule": "a friendly process with declared reach r sees an enemy anchor iff their circular distance is <= min(r, 32); inclusive",
+    "validation": {"policy": "None or a positive integer", "match": "d < arena_size / 2", "experiment": "A = 512 and d = 32 exactly"}
+  },
+  "conditions": [
+    {"id": "C-E6", "ruleset_id": "bytefray-rules-6-research-scale", "parent": null, "role": "control", "arm": "primary"},
+    {"id": "T-E6", "ruleset_id": "bytefray-rules-6-research-sensing-r32", "parent": "C-E6", "role": "treatment", "arm": "primary"},
+    {"id": "C-E6L", "ruleset_id": "bytefray-rules-6-research-disruption-slot1", "parent": null, "role": "control", "arm": "companion"},
+    {"id": "T-E6L", "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32", "parent": "C-E6L", "role": "treatment", "arm": "companion"}
+  ],
+  "fixed_across_conditions": {"arena_size": 512, "tick_limit": 1000, "quota": 8, "chunk": 2, "rotation": true, "capture_hold_ticks": 1, "placement": "seeded", "spawn": "core_base", "pass_order": "forward"},
+  "population": {
+    "members": {
+      "RUSH": {"search": "fast", "posture": "attack", "evade": false, "processes": 1},
+      "PACED": {"search": "paced", "posture": "attack", "evade": false, "processes": 1},
+      "SPLIT": {"search": "fast", "posture": "attack", "evade": false, "processes": 2},
+      "STEALTH": {"search": "read", "posture": "attack", "evade": false, "processes": 1},
+      "LURK": {"search": "none", "posture": "attack", "evade": false, "processes": 1},
+      "GUARD": {"search": "none", "posture": "guard", "evade": false, "processes": 1},
+      "EVADER": {"search": "none", "posture": "guard", "evade": true, "processes": 1},
+      "GREED": {"search": "none", "posture": "paint", "evade": false, "processes": 1},
+      "ADAPT": {"search": "adaptive", "posture": "adaptive", "evade": "adaptive", "processes": 1}
+    },
+    "fixed_set_pi_f": ["RUSH", "PACED", "SPLIT", "STEALTH", "LURK", "GUARD", "EVADER", "GREED"],
+    "opponent_set_pi": ["RUSH", "PACED", "SPLIT", "STEALTH", "LURK", "GUARD", "EVADER", "GREED", "ADAPT"],
+    "packages": "a primary and a twin per member; opaque package IDs; one byte-identical policy source"
+  },
+  "fields": {
+    "F1": {"pairs": "every ordered pair of distinct members", "seeds": 32, "cells_per_condition": 2304},
+    "F2": {"pairs": "every twin mirror, both orientations", "seeds": 32, "cells_per_condition": 576},
+    "cells_per_condition": 2880,
+    "cells_total": 11520
+  },
+  "operationalizations": {
+    "O-VALUE": {"win": "1", "tie": "1/2", "loss": "0", "source": "experiment_harness.cell_seat_result"},
+    "O-PAYOFF": {"per_seed": "mean of i's value over the two F1 orientations", "u": "mean of p_s over the 32 seeds", "self": "1/2"},
+    "O-EPS": {"epsilon": "1/16"},
+    "O-BR": {"best_response": "i in Pi_F with u(i, j) >= max_k u(k, j) - epsilon", "universal": "in BR_eps(j) for every j in Pi", "P_none": "no member of Pi_F is universal"},
+    "O-BOOT": {"resamples": 1000, "draws": 32, "rng": "random.Random(42)", "joint": true, "stability_min": "9/10"},
+    "O-CONTRAST": {"L": [["LURK", "RUSH"], ["PACED", "RUSH"]], "delta": "u(lo, j) - u(hi, j)", "P_win": "some delta >= epsilon", "P_never": "every delta <= 0"},
+    "O-CLASS": {"classes": ["A_WIN", "B_WIN", "TICK_LIMIT_TIE", "MUTUAL_ELIMINATION", "OTHER"], "source": "analyze_e3.outcome_class", "capture": "analyze_e4.is_capture"},
+    "O-EARLY": {"forced_line_tick_max": 3},
+    "O-SEAT": {"source": "analyze_e4.pairing_seat_metrics / mirror_seat_metrics", "seat_dominant_min": "9/10"},
+    "O-CONTACT": {"definition": "some entrant writes a cell of the opponent's core, from replay memory diffs and tick-0 cores"},
+    "O-DETECT": {"descriptive_only": true},
+    "O-EVIDENCE": {"n_distinct": "distinct harness trajectory_key values", "rate_min_n_distinct": 8}
+  },
+  "gates": {
+    "E6-D": [
+      {"id": "D-1", "kind": "Ruleset invariant", "name": "Visibility"},
+      {"id": "D-2", "kind": "Ruleset invariant", "name": "Initial invisibility"},
+      {"id": "D-3", "kind": "Ruleset invariant", "name": "Parent identity"},
+      {"id": "D-4", "kind": "Family characterization", "name": "No early blind strike", "ticks": [1, 2]},
+      {"id": "D-5", "kind": "Family characterization, checked statically", "name": "Discipline"},
+      {"id": "D-6", "kind": "Protocol", "name": "Seed commitment", "when": "after the frozen gameplay analysis, before interpretation"},
+      {"id": "D-7", "kind": "Ruleset invariant", "name": "Mirror relabeling"}
+    ],
+    "CQ-1": {"members": ["RUSH", "PACED", "STEALTH", "LURK"], "condition": "identical action streams in every matched control cell", "on_failure": "halt before any treatment"}
+  },
+  "hypotheses": {
+    "E6-H1T": {"statement": "The best response under T-E6 is not constant", "supported": "P_none at the point estimate and stab(P_none) >= 9/10", "refuted": "not P_none at the point estimate and stab(not P_none) >= 9/10"},
+    "E6-H1C": {"statement": "The best response under C-E6 is not constant", "supported": "the same, computed on C-E6", "refuted": "the same, computed on C-E6"},
+    "E6-H2": {"statement": "Less information can win under T-E6", "supported": "P_win at the point estimate and stab(P_win) >= 9/10", "refuted": "P_never at the point estimate and stab(P_never) >= 9/10"},
+    "E6-H0": {"statement": "Delay only: priced sensing is a discovery tax", "supported": "A >= 9/10 and B >= 9/10", "refuted": "A <= 2/3", "A": "share of paired F1 cells with equal outcome class", "B": "over the cells counted by A: share with treatment final tick >= control final tick"},
+    "E6-H3": {"statement": "A delayed forced line defeats every defender", "supported": "some attacker a has min over d of FL(a, d) >= 9/10", "refuted": "every attacker a has min over d of FL(a, d) <= 1/10", "attackers": ["RUSH", "PACED", "SPLIT", "STEALTH", "LURK"], "defenders": ["GUARD", "EVADER"]}
+  },
+  "thresholds": {"stability": "9/10", "h0_keep": "9/10", "h0_refute": "2/3", "h3_supported": "9/10", "h3_refuted": "1/10", "pathology": "1/10", "epsilon": "1/16", "forced_line_tick": 3},
+  "pathology": {
+    "PF-1": "tick-limit share under T-E6 minus the share under C-E6 >= 1/10",
+    "PF-2": "no-hostile-core-contact share under T-E6 minus the share under C-E6 >= 1/10",
+    "PF-3": "some member of Pi_F never core-captured in its F1 matches under T-E6 although captured under C-E6",
+    "PF-4": "some F1 pairing or F2 mirror with SDom < 9/10 and |GSB| <= 1/10 under C-E6 but SDom >= 9/10 or |GSB| > 1/10 under T-E6"
+  },
+  "interpretation": {
+    "rows": [
+      {"id": "STOP", "e6_d": "FAIL", "combinations": "all"},
+      {"id": "R-CREATES", "e6_d": "PASS", "combinations": [["SUPPORTED", "REFUTED"]], "qualified_by": "E6-H2"},
+      {"id": "R-PREEXISTING", "e6_d": "PASS", "combinations": [["SUPPORTED", "SUPPORTED"]]},
+      {"id": "R-TREATMENT-ONLY", "e6_d": "PASS", "combinations": [["SUPPORTED", "NEITHER"]]},
+      {"id": "R-REMOVES", "e6_d": "PASS", "combinations": [["REFUTED", "SUPPORTED"]]},
+      {"id": "R-NO-CHOICE", "e6_d": "PASS", "combinations": [["REFUTED", "REFUTED"]], "qualified_by": "E6-H0"},
+      {"id": "R-TREATMENT-DOMINANT", "e6_d": "PASS", "combinations": [["REFUTED", "NEITHER"]]},
+      {"id": "NONE", "e6_d": "PASS", "combinations": [["NEITHER", "SUPPORTED"], ["NEITHER", "REFUTED"], ["NEITHER", "NEITHER"]]}
+    ],
+    "recorded_alongside": ["E6-H3", "PF-1", "PF-2", "PF-3", "PF-4", "ADAPT", "companion"]
+  },
+  "kill_criteria": {
+    "KC-1": "E6-H1T is REFUTED",
+    "KC-2": "GREED is universal at the point estimate and stab(GREED universal) >= 9/10",
+    "KC-3": "PF-1 or PF-2 is raised",
+    "KC-4": "E6-H3 is SUPPORTED",
+    "KC-5": "PF-4 is raised"
+  },
+  "disposition": ["VOID if E6-D fails", "otherwise REJECT as a gameplay candidate if any KC fires", "otherwise CANDIDATE if the row is R-CREATES and E6-H2 is SUPPORTED", "otherwise NOT ESTABLISHED"],
+  "seed_protocol": {"count": 32, "generator": "secrets.randbelow(2**53)", "commitment": "SHA-256 of the canonical encoding", "structural_identity": "v6-e6-matrix-v1-<12 hex>", "execution_identity": "v6-e6-exec-v1-<12 hex>", "order": ["treatment", "treatment gates", "frozen gameplay analysis", "seed reveal and D-6", "E6-D final status", "interpretation and disposition", "results record"]},
+  "evidence_rules": ["every frozen unit counted; n_distinct beside every figure; a rate needs n_distinct >= 8", "payoffs weight every seed equally; tick metrics per match, unit value the median over seeds", "control-against-control: E6-H0 SUPPORTED (A = B = 1), E6-H2 REFUTED, no PF raised, E6-H1T = E6-H1C", "the companion never replaces a primary verdict", "ADAPT is never a condition of a row or a kill", "no threshold, set, operationalization, row or rule changes after any matrix cell exists"]
+}

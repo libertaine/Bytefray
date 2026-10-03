@@ -37,7 +37,7 @@ glibc symbol version is `GLIBC_2.38`. Ubuntu 22.04 LTS (glibc 2.35) and
 Debian 12 "Bookworm" (glibc 2.36) are **not** claimed as compatible, and no
 universal Linux compatibility is claimed; only the two Ubuntu releases
 actually tested are called out above. See
-[`docs/research/v4/V4_RC2_LINUX_RELEASE_BASELINE_QUALIFICATION.md`](research/v4/V4_RC2_LINUX_RELEASE_BASELINE_QUALIFICATION.md)
+[`docs/archive/v4/V4_RC2_LINUX_RELEASE_BASELINE_QUALIFICATION.md`](archive/v4/V4_RC2_LINUX_RELEASE_BASELINE_QUALIFICATION.md)
 for the full qualification record.
 
 ## Python wheel installation
@@ -77,7 +77,7 @@ smoke-tested on a native GNOME/Wayland desktop — Ubuntu 26.04.1 LTS, Python
 3.14.4 — where both `bytefray-agent-designer` and
 `bytefray replay --renderer pygame` launched, ran stably, and exited cleanly;
 see
-[`docs/research/v5/V5_FINAL_ARTIFACT_REBUILD_AND_CROSS_PLATFORM_REQUALIFICATION.md`](research/v5/V5_FINAL_ARTIFACT_REBUILD_AND_CROSS_PLATFORM_REQUALIFICATION.md#23-native-linux-wayland-gui-qualification--final-closeout-2026-09-15)
+[`docs/archive/v5/V5_FINAL_ARTIFACT_REBUILD_AND_CROSS_PLATFORM_REQUALIFICATION.md`](archive/v5/V5_FINAL_ARTIFACT_REBUILD_AND_CROSS_PLATFORM_REQUALIFICATION.md#23-native-linux-wayland-gui-qualification--final-closeout-2026-09-15)
 for the full evidence. That establishes native GNOME/Wayland as validated for
 the tested Ubuntu configuration, not as a guarantee across every Wayland
 compositor, distribution, or GPU stack, and it did not include the deeper
@@ -113,26 +113,4 @@ bytefray --help
 bytefray run --ticks 500 --quota 2 --a-type writer --b-type runner
 bytefray replay --replay ~/.local/share/bytefray/runs/_loose/replay.jsonl \
   --renderer headless
-```
-
-The wheel does not bundle a Linux pMARS executable or select the repository's
-Windows PE executables on Linux. `PMARS_CMD` remains authoritative and an
-executable `pmars` may be discovered through `PATH`. Upstream supports a
-console-only build, but the audited Ubuntu 0.9.5 package is compiled with X11;
-`-b` means brief output and does not disable its display. Bytefray now provides a
-pinned, experimental build script for the authoritative pMARS 0.9.5 source in
-`tools/build_pmars_linux.sh`; it produces a libc-only console executable without
-patching or modifying the supplied source. Linux Redcode operation still requires
-a user-provided executable and is not part of wheel validation.
-Any future bundled pMARS build must comply with GPL-2.0-or-later distribution
-requirements, including the license notice and corresponding source offer or
-delivery; the current wheel deliberately contains neither pMARS nor its source.
-The corresponding-source and separately licensed documentation layout for a
-future binary release remains a release-policy task; see `tools/pmars/README.md`.
-
-Select one console-only executable path without fixed arguments:
-
-```bash
-PMARS_CMD=/absolute/path/to/pmars bytefray run --mode redcode94 \
-  --red-a path/to/a.red --red-b path/to/b.red
 ```

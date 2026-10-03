@@ -43,18 +43,14 @@ def test_agent_development_tab_present_and_catalog_filters_to_python_agents(monk
         assert hasattr(designer, "development")
         assert designer.tabs.indexOf(designer.development) >= 0
 
-        # Bytefray seeds both VM starters (kind != python) and Python
-        # starters (kind == python) at startup -- see
-        # battle_engine.starters. The Agent Development combo must show
-        # only the Python ones. Identify them by discovery id (independent
-        # of the catalog's current size or ordering) so this keeps holding
-        # if the starter roster grows on either side of that split.
+        # Phase 2B.12 seeds only the ten current API-v2 Python starters.
+        # The Development combo receives that same current catalog.
         assert designer.simple.agentA.count() > 0
         catalog_rows = designer.catalog.list_agents()
         python_ids = {row.agent_id for row in catalog_rows if row.meta.get("kind") == "python"}
         non_python_ids = {row.agent_id for row in catalog_rows if row.meta.get("kind") != "python"}
         assert python_ids, "expected at least one Python starter agent"
-        assert non_python_ids, "expected at least one non-Python (VM) starter agent"
+        assert non_python_ids == set()
 
         dev_ids_before = {agent_id for _, agent_id in designer.development.python_agent_names()}
         assert dev_ids_before == python_ids
@@ -424,7 +420,8 @@ def test_new_agent_dialog_annotated_template_produces_commented_agent(monkeypatc
 
     assert dialog.result is not None
     source = dialog.result.source_path.read_text(encoding="utf-8")
-    assert "last_read" in source  # the annotated template explains this field
+    assert "declare_processes" in source
+    assert "self_reach" in source
 
 
 @pytest.mark.gui
@@ -498,10 +495,9 @@ def test_validate_and_test_buttons_reload_source_before_running(monkeypatch, tmp
         "clickable_agent",
         str(result.source_path.parent),
         None,
-        # Mirrors what agent_catalog actually records for the agent this
-        # test just scaffolded: create_agent writes api_version 1, and
-        # Ruleset compatibility (which gates Test) reads that field.
-        {"kind": "python", "api_version": 1},
+        # Mirrors the sole current scaffold contract; Ruleset compatibility
+        # (which gates Test) reads this field.
+        {"kind": "python", "api_version": 2},
         agent_id="clickable_agent",
     )
     panel = AgentDevelopmentPanel()
@@ -597,8 +593,6 @@ def test_match_selectors_and_development_receive_their_intended_catalogs(
     data_root = tmp_path / "data"
     monkeypatch.setenv("BYTEFRAY_ROOT", str(data_root))
 
-    from battle_engine.rules import BYTEFRAY_RULESET_ID
-
     from app.agent_designer import AgentDesigner
 
     designer = AgentDesigner()
@@ -609,7 +603,7 @@ def test_match_selectors_and_development_receive_their_intended_catalogs(
         catalog_rows = designer.catalog.list_agents()
         python_ids = {row.agent_id for row in catalog_rows if row.meta.get("kind") == "python"}
         non_python_ids = {row.agent_id for row in catalog_rows if row.meta.get("kind") != "python"}
-        assert non_python_ids, "expected at least one non-Python (VM) starter agent"
+        assert non_python_ids == set()
 
         dev_ids = {agent_id for _, agent_id in designer.development.python_agent_names()}
         simple_ids = {
@@ -636,15 +630,6 @@ def test_match_selectors_and_development_receive_their_intended_catalogs(
         }
         assert advanced_ids == v4_ids
 
-        # The full historical catalog, including VM starters, remains
-        # reachable in Advanced by selecting Ruleset v1.
-        designer.advanced.ruleset.setCurrentIndex(
-            designer.advanced.ruleset.findData(BYTEFRAY_RULESET_ID)
-        )
-        advanced_v1_ids = {
-            designer.advanced.agentA.itemData(index)
-            for index in range(designer.advanced.agentA.count())
-        }
-        assert non_python_ids <= advanced_v1_ids
+        assert designer.advanced.ruleset.count() == 1
     finally:
         designer.deleteLater()

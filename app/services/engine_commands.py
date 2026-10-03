@@ -10,7 +10,7 @@ from subprocess import Popen
 from typing import Any
 
 from battle_engine.launchers import build_match_command, build_replay_command
-from battle_engine.rules import BYTEFRAY_RULESET_ID
+from battle_engine.rules import BYTEFRAY_RULESET_V4_ID
 
 from app.services.osutil import DefaultPaths, pythonpath_separator
 
@@ -19,7 +19,13 @@ from app.services.osutil import DefaultPaths, pythonpath_separator
 class RunConfig:
     a_type: str
     b_type: str
-    ruleset_id: str = BYTEFRAY_RULESET_ID
+    # V6 Phase 2B.12 retired bytefray-rules-1 (and every Ruleset but the
+    # bytefray-rules-4 control); every real caller (Simple, Advanced) always
+    # passes an explicit, combo-derived ruleset_id, so this default matters
+    # only to a caller that omits it -- it must name the sole Ruleset
+    # `--ruleset` still accepts, or ``bytefray run`` rejects the launch with
+    # "invalid choice" before any match code runs.
+    ruleset_id: str = BYTEFRAY_RULESET_V4_ID
     arena: int = 512
     ticks: int = 600
     alive_w: float | None = None

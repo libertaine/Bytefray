@@ -83,7 +83,7 @@ def test_the_catalog_carries_each_agents_parsed_schema(tmp_path):
     # Every historical starter stays schema-less, so the Designer keeps
     # showing it the free-form surface it has always had.
     assert agent_parameter_schema(rows["v4_scout"]).is_empty
-    assert agent_parameter_schema(rows["runner"]).is_empty
+    assert agent_parameter_schema(rows["v4_claimer"]).is_empty
 
 
 def test_a_row_built_without_a_schema_still_answers(tmp_path):

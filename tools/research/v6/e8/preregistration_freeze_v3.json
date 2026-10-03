@@ -1,0 +1,84 @@
+{
+  "schema": "bytefray.v6.e8.preregistration_freeze",
+  "version": 3,
+  "identity": "v6-e8-prereg-v3-4058c890e992",
+  "digest": "4058c890e992071f8eec32f2dc0b593c5211e5f7f39dedb4b00ac2e649d51fdc",
+  "body": {
+    "experiment": "E8",
+    "phase": "I8-0",
+    "preregistration": {
+      "document": "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md",
+      "revision": 4,
+      "registration_commit": "ae37cf9",
+      "sha256": "8a9971a0630f85291e41034a07940cdf915e97cde4c87fb133dcb6bca8ae63fa",
+      "historical": [
+        {
+          "revision": 1,
+          "commit": "28925fd",
+          "document_sha256": "6d50dae648dbdb0def2bcb94644e0705b4d62d4e818f7288190df4f8fac4efbb",
+          "standing": "historical provenance"
+        },
+        {
+          "revision": 2,
+          "commit": "090d11e",
+          "document_sha256": "0c6d0b741a4584ac10bc5f2aa3837bbc83213b8a608352d86949bdf809737286",
+          "standing": "historical provenance"
+        },
+        {
+          "revision": 3,
+          "commit": "00fb420",
+          "document_sha256": "a822bd15d9be8f968facb2f7b9c7e228d0e59b65ce34b790ae2a9e3538583a5a",
+          "standing": "historical provenance"
+        }
+      ]
+    },
+    "transcription": {
+      "path": "tools/research/v6/e8/preregistration.json",
+      "sha256": "db698fb154e68fb6f8eda18aabe48942ef361198fbf293476cf4383dc48d4f0b"
+    },
+    "tooling_commit": "72ee492",
+    "files": {
+      "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md": "8a9971a0630f85291e41034a07940cdf915e97cde4c87fb133dcb6bca8ae63fa",
+      "tools/research/v6/e8/preregistration.json": "db698fb154e68fb6f8eda18aabe48942ef361198fbf293476cf4383dc48d4f0b",
+      "tools/research/v6/e8/__init__.py": "197204edbc7ca01f4b4092a023361eb64c929a1e01c0fd5751b74dd175193034",
+      "tools/research/v6/e8/preregistration.py": "efd8a41ee23d81809cb316ac4e404fc6fba3261360b4901c30f66797e1c8a542",
+      "tools/research/v6/e8/decision.py": "2540dc129ee5c3a1e957eb322c3e5229f02c40659ae74960d606c4a1081b72cb",
+      "engine/tests/test_v6_e8_preregistration.py": "c0860fb77e31b6001a680a7dde469201f1bdf97cd6b50baddf4240c622e1578d",
+      "engine/tests/test_v6_e8_decision.py": "8be53d8de6a0bb88a0164feb0981f3c8b3715d17d2500e37df45c2aa2561dafc",
+      "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_IMPLEMENTATION_PLAN.md": "30053ce3ef16a177f65fa19c2165004e8f48954ad4b3722cadaee283ad5b1525"
+    },
+    "registered_draws": {
+      "resamples": 1000,
+      "draws_per_resample": 32,
+      "rng": "random.Random(42)",
+      "sha256": "933a603c671ed0ecf4afc4cad390ec8f4dde019d47bebf9ec4e774a6c2d273d5"
+    },
+    "census_prediction": [
+      "EVADE8"
+    ],
+    "supersedes": [
+      {
+        "identity": "v6-e8-prereg-v2-e478f519c070",
+        "digest": "e478f519c070e54fb664b442a675d89cb5b035426b299cad8777a114781182dd",
+        "record": "tools/research/v6/e8/preregistration_freeze_v2.json",
+        "record_sha256": "693ff786196b8e3be85f62477f04cb0638bbc381e83780772d6daff0915e86cc",
+        "pinned": "pre-registration revision 3, at tooling commit 8b03ed3",
+        "reason": "pre-registration revision 4 registered when each E8 trace field is present, before any exposure"
+      },
+      {
+        "identity": "v6-e8-prereg-v1-116c9ed83400",
+        "digest": "116c9ed834009132f42463a0cc1bc210e9c8c132b687bdb3ec081a2365ddeac8",
+        "record": "tools/research/v6/e8/preregistration_freeze.json",
+        "record_sha256": "c0895fe81dea8ca87f03647478f9a751aef844bc5ebbc32e5be46a90df901430",
+        "pinned": "pre-registration revision 2, at tooling commit eda8be5",
+        "reason": "pre-registration revision 3 corrected when initial acquisition ends, before any exposure"
+      }
+    ],
+    "later_identities": {
+      "structural_matrix": "v6-e8-matrix-v1-<12 hex>, at I8-4",
+      "analysis": "v6-e8-analysis-v1-<12 hex>, at I8-5",
+      "execution": "v6-e8-exec-v1-<12 hex>, at I8-6"
+    },
+    "seeds": "none exist"
+  }
+}

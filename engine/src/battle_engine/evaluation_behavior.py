@@ -52,7 +52,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from battle_engine.agent_evaluation import (
+from battle_engine.evaluation_contracts import (
     BASELINE,
     CANDIDATE,
     ORIENTATION_CANDIDATE_FIRST,

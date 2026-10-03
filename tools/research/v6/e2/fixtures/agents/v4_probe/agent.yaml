@@ -1,0 +1,7 @@
+name: v4_probe
+display: V4 Exploit Probe
+description: Research-only V6 E2 fixture (design review Sec G.2) - exact copy of the frozen V4 CompetentGlobalSniperProbe (continuity with the V4 exploit characterization). Not a product starter agent.
+kind: python
+api_version: 2
+entrypoint: agent.py:create_agent
+version: "1.0.0"

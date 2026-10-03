@@ -118,11 +118,12 @@ class ResultEnvelope:
     # for a current native VM/Python match). Additive to battle2.result v1
     # -- unknown keys have always been tolerated by every released reader
     # (see docs/RESULT_SCHEMA.md), so no schema bump was required. ``None``
-    # for a pMARS/redcode94 result (Bytefray Ruleset v1 is never applicable
-    # to Redcode execution -- see docs/RULES.md) and for any result written
-    # before this field existed; use :func:`resolve_result_ruleset` to
-    # recover a confidence-qualified answer for the latter case rather than
-    # treating an absent field as "unknown gameplay" by itself.
+    # for a historical redcode94 result (Bytefray Ruleset v1 was never
+    # applicable to that retired execution mode -- see docs/RULES.md) and
+    # for any result written before this field existed; use
+    # :func:`resolve_result_ruleset` to recover a confidence-qualified
+    # answer for the latter case rather than treating an absent field as
+    # "unknown gameplay" by itself.
     ruleset_id: str | None = None
     # V5 Replay History Phase 7A: occurrence metadata is deliberately
     # excluded from deterministic match/result/replay identity. Historical
@@ -276,8 +277,8 @@ def resolve_result_ruleset(envelope: ResultEnvelope) -> RulesetProvenance:
     * ``ruleset_id`` present -> ``"recorded"`` with that exact value.
     * ``ruleset_id`` absent, native (``mode == "b2"``) -> ``"recovered"``
       ``BYTEFRAY_RULESET_ID`` (VM and Python alike -- see docs/RULES.md).
-    * ``ruleset_id`` absent, pMARS (``mode == "redcode94"``) ->
-      ``"not_applicable"``: Redcode/pMARS execution never runs under
+    * ``ruleset_id`` absent, historical Redcode (``mode == "redcode94"``) ->
+      ``"not_applicable"``: that retired execution mode never ran under
       Bytefray Ruleset v1 and must never be stamped with it.
     * anything else (an unrecognized/corrupt ``mode``) -> ``"unknown"``.
     """
@@ -346,7 +347,7 @@ def verify_replay_digest(result: ResultEnvelope, replay_path: str | Path) -> str
 
     if result.replay is None:
         raise ReplayIntegrityError(
-            "Result has no replay reference to verify (e.g. a pMARS match).",
+            "Result has no replay reference to verify (e.g. a historical redcode94 match).",
             code="replay_reference_missing",
         )
     return verify_replay_digest_value(result.replay.sha256, replay_path)
@@ -364,7 +365,7 @@ def verify_result_replay(path: str | Path) -> str:
     envelope = read_result(result_path)
     if envelope.replay is None:
         raise ReplayIntegrityError(
-            "Result has no replay reference to verify (e.g. a pMARS match).",
+            "Result has no replay reference to verify (e.g. a historical redcode94 match).",
             code="replay_reference_missing",
         )
     return verify_replay_digest(envelope, result_path.parent / envelope.replay.filename)

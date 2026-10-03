@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from battle_engine.agent_evaluation import SCHEMA_NAME as V2_SCHEMA_NAME
+from battle_engine.evaluation_contracts import SCHEMA_NAME as V2_SCHEMA_NAME
 from battle_engine.paths import get_data_root
 
 from .models import (
