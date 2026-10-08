@@ -64,7 +64,8 @@ def artifact(raw: bytes, evidence_id: str, visibility: str = "PRIVATE") -> dict:
 
 
 def frozen_limitations() -> tuple[list[str], list[str]]:
-    contract = json.loads(CONTRACT.read_bytes())
+    from .records import regular_bytes
+    contract = json.loads(regular_bytes(CONTRACT))
     return contract["preserved_gap_ids"], contract["preserved_dependency_ids"]
 
 

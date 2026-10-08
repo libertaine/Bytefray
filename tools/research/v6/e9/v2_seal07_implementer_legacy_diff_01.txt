@@ -1,0 +1,104 @@
+--- Seal06 original
++++ Seal07 candidate29
+@@ -262,21 +262,20 @@
+ 
+ def write_spy(monkeypatch, study, *, on_W=None):
+     """Lock state and durable tip at every producer write, retention of W included."""
+-    seen, real_bytes, real_retain = [], pv.durable_bytes, study.log.retain_record
++    seen, real_publish = [], pv._publish
+     lock = study.log.root / "exclusive.lock"
+ 
+-    def durable(path, raw):
++    def publication(folder, ordinal, path, raw):
+         if path.name == "W.json" and on_W is not None:
+             on_W()
+-        seen.append((path.name, lock.exists(), active_tip(study)))
+-        return real_bytes(path, raw)
+-
+-    def retain(record):
+-        if record["body"]["record_role"] == "W":
+-            seen.append(("retain W", lock.exists(), active_tip(study)))
+-        return real_retain(record)
+-    monkeypatch.setattr(pv, "durable_bytes", durable)
+-    monkeypatch.setattr(study.log, "retain_record", retain)
++        name = path.name
++        if path.parent.name == "evidence-records":
++            name = "retain W"
++        elif path.parent.name == "evidence-raw":
++            name = "retain result"
++        seen.append((name, lock.exists(), active_tip(study)))
++        return real_publish(folder, ordinal, path, raw)
++    monkeypatch.setattr(pv, "_publish", publication)
+     return seen
+ 
+ 
+@@ -287,7 +286,8 @@
+     W = study.log.resolve(study.produce())
+     tip = W["body"]["active_authority_tip"]
+     assert [name for name, _, _ in seen] == [
+-        "attempt-0001.intent.json", "retain W", "W.json", "attempt-0001.outcome.json"]
++        "attempt-0001.intent.json", "recovery.json", "retain result", "retain W", "W.json",
++        "attempt-0001.outcome.json"]
+     assert seen[0][1] is False  # the intent precedes the lease
+     assert all(locked and durable_tip == tip for _, locked, durable_tip in seen[1:])
+     assert labels(study) == ["PASS"]
+@@ -319,13 +319,13 @@
+ def test_s6_f3_a_write_failure_leaves_no_outcome_and_is_listed_as_interrupted(tmp_path, monkeypatch):
+     """S6-F3-03: retention of W fails."""
+     study = built(tmp_path)
+-    real_retain = study.log.retain_record
+-
+-    def failing(record):
++    real_retain = pv._retain_w
++
++    def failing(authority, folder, ordinal, record):
+         if record["body"]["record_role"] == "W":
+             raise IntegrityError("simulated W retention failure")
+-        return real_retain(record)
+-    monkeypatch.setattr(study.log, "retain_record", failing)
++        return real_retain(authority, folder, ordinal, record)
++    monkeypatch.setattr(pv, "_retain_w", failing)
+     with pytest.raises(IntegrityError, match="simulated W retention failure"):
+         study.produce()
+     assert labels(study) == [] and not (study.folder / "W.json").exists()
+@@ -337,12 +337,12 @@
+ 
+ 
+ def test_s6_f3_a_partial_w_file_leaves_no_outcome_and_fails_closed(tmp_path, monkeypatch):
+-    """S6-F3-03: the W.json write is interrupted after partial bytes."""
++    """S6-F3-03 superseded by Scope03 L2a: only a proven staged tear recovers."""
+     study = built(tmp_path)
+     real_bytes = pv.durable_bytes
+ 
+     def partial(path, raw):
+-        if path.name == "W.json":
++        if path.name == "W.json.candidate":
+             path.write_bytes(raw[:20])
+             raise OSError("simulated interrupted W write")
+         return real_bytes(path, raw)
+@@ -350,10 +350,23 @@
+     with pytest.raises(OSError):
+         study.produce()
+     assert labels(study) == []
++    candidate = pv._staging(study.folder) / "attempt-0001.staging" / "W.json.candidate"
++    partial_raw = candidate.read_bytes()
++    assert len(partial_raw) == 20 and not (study.folder / "W.json").exists()
+     monkeypatch.undo()
++    calls = verifier_calls(monkeypatch)
++    study.produce()
++    assert calls == [True] and labels(study) == ["PASS"]
++    assert candidate.read_bytes() == partial_raw
++    assert study.outcomes()[0]["interrupted_prior_attempts"] == [1]
++    # An unproven partial canonical file remains unresolved and unchanged.
++    legacy = built(tmp_path / "unproven")
++    (legacy.folder).mkdir(parents=True, exist_ok=True)
++    (legacy.folder / "W.json").write_bytes(partial_raw)
+     with pytest.raises(pv.Refused, match="partial W file"):
+-        study.produce()
+-    assert labels(study) == ["REFUSED_PRECONDITION"] and len((study.folder / "W.json").read_bytes()) == 20
++        legacy.produce()
++    assert labels(legacy) == ["REFUSED_PRECONDITION"]
++    assert (legacy.folder / "W.json").read_bytes() == partial_raw
+ 
+ 
+ def test_s6_f3_a_failed_post_action_recheck_after_pass_adds_no_second_outcome(tmp_path):

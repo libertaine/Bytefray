@@ -17,11 +17,13 @@ from pathlib import Path
 from typing import TypeVar
 
 from .records import (
+    DurableUnavailable,
     IntegrityError,
     canonical_bytes,
     exact_keys,
     make_record,
     record_ref,
+    regular_bytes,
     sha256,
     validate_actor,
     validate_artifact_ref,
@@ -31,6 +33,21 @@ from .records import (
 )
 
 T = TypeVar("T")
+
+
+class ProducerRegistryUnavailable(DurableUnavailable):
+    """S7-DEV-F1: a registered_producers read of an entry, its G record or an event file is unavailable."""
+
+
+@contextmanager
+def _producer_registry_read() -> Iterator[None]:
+    """Type only these mapped reads so F1 can defer them; any other Unavailable stays immediate."""
+    try:
+        yield
+    except DurableUnavailable as exc:
+        raise ProducerRegistryUnavailable(*exc.args) from exc
+
+
 GENESIS = "genesis"
 THROUGH_G = ("P", "I", "Q", "O", "V", "A", "R", "B", "G")
 OPERATION_ROLES = {
@@ -73,9 +90,9 @@ def pinned_source_checker(repo_root: Path, instrument: dict, qualification: dict
                 raise IntegrityError("complete source/qualification manifest required")
             for relative, expected in manifest.items():
                 path = (root / relative).resolve()
-                if not path.is_relative_to(root) or not path.is_file():
+                if not path.is_relative_to(root):
                     raise IntegrityError("source manifest outside repository or absent")
-                if sha256(path.read_bytes()) != expected:
+                if sha256(regular_bytes(path)) != expected:
                     raise IntegrityError("instrument/qualification source pin drift")
     return check
 
@@ -87,7 +104,7 @@ def durable_bytes(path: Path, raw: bytes) -> None:
         stream.write(raw)
         stream.flush()
         os.fsync(stream.fileno())
-    if path.read_bytes() != raw:
+    if regular_bytes(path) != raw:
         raise IntegrityError("durable evidence read-back failed")
 
 
@@ -136,7 +153,7 @@ class AuthorityLog:
         for ordinal, path in enumerate(paths, 1):
             if path.name != f"event-{ordinal:08d}.json":
                 raise IntegrityError("authority event gap/fork")
-            raw = path.read_bytes()
+            raw = regular_bytes(path)
             event = json.loads(raw)
             if raw != canonical_bytes(event) + b"\n":
                 raise IntegrityError("noncanonical authority event")
@@ -187,7 +204,7 @@ class AuthorityLog:
         if paths:
             if not active_path.exists():
                 raise IntegrityError("active authority tip unavailable")
-            marker = json.loads(active_path.read_bytes())
+            marker = json.loads(regular_bytes(active_path))
             if marker != {"sequence": len(paths), "tip": tip}:
                 raise IntegrityError("unknown/stale/forked active tip")
         elif active_path.exists():
@@ -205,12 +222,14 @@ class AuthorityLog:
         path = self.root / "evidence-records" / (ref["digest"] + ".json")
         try:
             if path.exists():
-                raw = path.read_bytes()
+                raw = regular_bytes(path)
                 record = json.loads(raw)
                 if raw != canonical_bytes(record) + b"\n":
                     raise IntegrityError("retained evidence record bytes changed")
             else:
                 record = self.resolver(ref)
+        except DurableUnavailable:
+            raise
         except (KeyError, OSError, ValueError) as exc:
             raise IntegrityError("exact record unavailable") from exc
         if record_ref(record) != ref:
@@ -222,7 +241,7 @@ class AuthorityLog:
         path = self.root / "evidence-records" / (record["digest"] + ".json")
         raw = canonical_bytes(record) + b"\n"
         if path.exists():
-            if path.read_bytes() != raw:
+            if regular_bytes(path) != raw:
                 raise IntegrityError("immutable evidence record collision")
         else:
             durable_bytes(path, raw)
@@ -233,7 +252,7 @@ class AuthorityLog:
         ref = artifact(raw, evidence_id)
         path = self.root / "evidence-raw" / (ref["sha256_raw"] + ".bin")
         if path.exists():
-            if path.read_bytes() != raw:
+            if regular_bytes(path) != raw:
                 raise IntegrityError("immutable private evidence collision")
         else:
             durable_bytes(path, raw)
@@ -242,7 +261,7 @@ class AuthorityLog:
     def read_artifact(self, ref: dict) -> bytes:
         validate_artifact_ref(ref)
         try:
-            raw = (self.root / "evidence-raw" / (ref["sha256_raw"] + ".bin")).read_bytes()
+            raw = regular_bytes(self.root / "evidence-raw" / (ref["sha256_raw"] + ".bin"))
         except OSError as exc:
             raise IntegrityError("complete private evidence unavailable") from exc
         if len(raw) != ref["bytes"] or sha256(raw) != ref["sha256_raw"]:
@@ -253,31 +272,62 @@ class AuthorityLog:
         return self.root / "producer-roots" / (G_digest + ".json")
 
     def registered_producers(self) -> dict:
+        """Every durable producer-registry entry, checked against its G record and the event log.
+
+        D8-01 (Seal 08): an unavailable mapped read is deferred rather than ending the scan. Every
+        check whose inputs are readable still runs, so positive mismatch evidence found later
+        raises as before; only a scan that finds none raises the first deferred error. Any other
+        error after a deferral ends the scan with that deferred error, where it used to stop.
+        """
         from .inventory import strict_private_json
         result = {}
-        for path in sorted((self.root / "producer-roots").glob("*.json")):
-            raw = path.read_bytes()
-            item = strict_private_json(raw)
-            exact_keys(item, {"study_id", "G", "operation_id", "producer_root", "recorder", "binding_tuple"})
-            validate_actor(item["recorder"])
-            validate_refs(item["binding_tuple"])
-            if (path.stem != item["G"]["digest"] or item["study_id"] != self.study_id
-                    or item["recorder"]["role"] != "recorder"
-                    or self.actors.get(item["recorder"]["actor_id"]) != "recorder"):
-                raise IntegrityError("producer registry source/study/actor mismatch")
-            validate_record_ref(item["G"])
-            G = self.resolve(item["G"])["body"]
-            if (G["study_id"] != item["study_id"] or G["operation_id"] != item["operation_id"]
-                    or item["binding_tuple"].get("G") != item["G"]):
-                raise IntegrityError("producer registry original G operation/source mismatch")
-            from .inventory import artifact
-            ref = artifact(raw, "PRODUCER-ROOT-" + path.stem)
-            for event_path in self.root.glob("event-*.json"):
-                event = json.loads(event_path.read_bytes())["body"]
-                if (event["event_kind"] == "CONSUME" and item["G"] in event["affected_authorizations"]
-                        and ref not in event["evidence"]):
-                    raise IntegrityError("producer registry differs from immutable G consumption evidence")
-            result[path.stem] = item
+        deferred: ProducerRegistryUnavailable | None = None
+        try:
+            for path in sorted((self.root / "producer-roots").glob("*.json")):
+                try:
+                    with _producer_registry_read():
+                        raw = regular_bytes(path)
+                except ProducerRegistryUnavailable as exc:
+                    deferred = deferred or exc
+                    continue
+                item = strict_private_json(raw)
+                exact_keys(item, {"study_id", "G", "operation_id", "producer_root", "recorder", "binding_tuple"})
+                validate_actor(item["recorder"])
+                validate_refs(item["binding_tuple"])
+                if (path.stem != item["G"]["digest"] or item["study_id"] != self.study_id
+                        or item["recorder"]["role"] != "recorder"
+                        or self.actors.get(item["recorder"]["actor_id"]) != "recorder"):
+                    raise IntegrityError("producer registry source/study/actor mismatch")
+                validate_record_ref(item["G"])
+                try:
+                    with _producer_registry_read():
+                        G = self.resolve(item["G"])["body"]
+                except ProducerRegistryUnavailable as exc:
+                    deferred = deferred or exc
+                else:
+                    if (G["study_id"] != item["study_id"] or G["operation_id"] != item["operation_id"]
+                            or item["binding_tuple"].get("G") != item["G"]):
+                        raise IntegrityError("producer registry original G operation/source mismatch")
+                from .inventory import artifact
+                ref = artifact(raw, "PRODUCER-ROOT-" + path.stem)
+                for event_path in self.root.glob("event-*.json"):
+                    try:
+                        with _producer_registry_read():
+                            event_raw = regular_bytes(event_path)
+                    except ProducerRegistryUnavailable as exc:
+                        deferred = deferred or exc
+                        continue
+                    event = json.loads(event_raw)["body"]
+                    if (event["event_kind"] == "CONSUME" and item["G"] in event["affected_authorizations"]
+                            and ref not in event["evidence"]):
+                        raise IntegrityError("producer registry differs from immutable G consumption evidence")
+                result[path.stem] = item
+        except Exception as exc:
+            if deferred is None or (isinstance(exc, IntegrityError) and not isinstance(exc, DurableUnavailable)):
+                raise
+            raise deferred  # DV8-4: not positive mismatch evidence; the scan ends where it previously stopped
+        if deferred is not None:
+            raise deferred
         return result
 
     def register_producer(self, producer_root: Path, recorder: dict, *, operation_id: str) -> dict:

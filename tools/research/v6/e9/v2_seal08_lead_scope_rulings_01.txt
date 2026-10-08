@@ -1,0 +1,290 @@
+**Seal-08 scope rulings**
+
+The stop was correct. Resolve the two boundary conflicts as follows, then freeze the Seal-08 scope and continue the already authorized Seal-08 cycle.
+
+No Seal-07 artifact may be modified except the exact qualification cases authorized below.
+
+# D8-01 — APPROVE OPTION C
+
+Expand the Seal-08 implementation boundary to include:
+
+`tools/research/v6/e9/v2/authority.py`
+
+in addition to:
+
+`tools/research/v6/e9/v2/private_verification.py`
+
+This expansion is authorized only to restore the complete frozen F1 positive-mismatch precedence.
+
+## Required `registered_producers` behavior
+
+When scanning producer-registry material:
+
+1. Do not stop permanently at the first mapped durable-read `Unavailable`.
+2. Retain/defer that unavailability condition.
+3. Continue examining every registry item whose evidence remains available.
+4. If any available item produces an existing positive consistency/identity mismatch, preserve its existing terminal classification:
+   `FAILED_VERIFICATION`.
+5. Only if the complete scan finds **no positive mismatch evidence** may the deferred unavailable condition become the resulting `Unavailable`.
+6. Do not create replacement evidence, infer contents of unavailable files, or weaken any existing mismatch check.
+
+This is an ordering change, not a new validation rule.
+
+### Preserve existing single-condition semantics
+
+The change must not alter behavior when only one condition exists:
+
+- mismatch alone → same `FAILED_VERIFICATION` as before;
+- unavailable alone → same availability/refusal behavior as before;
+- fully valid registry → same result as before.
+
+The behavior changes only in combined states where an earlier unavailable read previously prevented discovery of later positive mismatch evidence.
+
+## Scope limit
+
+`authority.py` may change only within the registry-scan path required to implement this ordering.
+
+Do not broaden typed-unavailability deferral into unrelated authority reads.
+
+Do not change public authority semantics beyond what is necessary to ensure:
+
+**positive available mismatch evidence wins over deferred unavailability.**
+
+`private_verification.py` should still perform the current-G registry-byte comparison independently of the aggregate scan result, as proposed in the plan.
+
+This creates the complete ordering:
+
+- current-G registry mismatch → `FAILED_VERIFICATION`;
+- marker mismatch → `FAILED_VERIFICATION`;
+- other available registry-entry consistency mismatch → `FAILED_VERIFICATION`;
+- event/registry unavailability with no available positive mismatch → availability classification;
+- no mismatch/unavailability → normal processing.
+
+Option N is rejected.
+
+Seal-08 qualification must not explicitly exclude the other-entry masking case.
+
+---
+
+# Additional required F1 coverage from D8-01
+
+Add implementer and independently authored cases for combined ordering, including at minimum:
+
+- an earlier-sorting unavailable registry entry plus a later available registry consistency mismatch → `FAILED_VERIFICATION`;
+- an earlier-sorting unavailable registry entry plus no mismatch anywhere else → expected unavailable classification;
+- event-file unavailable plus another available registry mismatch → `FAILED_VERIFICATION`;
+- current-G wrong registry bytes plus scan unavailability → `FAILED_VERIFICATION`;
+- marker mismatch plus scan unavailability → `FAILED_VERIFICATION`.
+
+Also prove the recovery distinction:
+
+- a pure availability condition may later recover when the **exact** unavailable evidence returns;
+- a discovered positive mismatch may not later become PASS merely because an unrelated unavailable condition is repaired.
+
+The independent author should derive these expectations from Disposition 05 and the frozen F1 ordering, not from the implementer's new tests.
+
+---
+
+# D8-02 — AUTHORIZE THE FOUR PRECISE SEALED-TEST EDITS
+
+The four Seal-07 cases encode the classification that S7-IQ-F2 explicitly supersedes.
+
+Authorize exactly the proposed changes.
+
+## Implementer-owned test
+
+In:
+
+`engine/tests/test_v6_e9_v2_gate8_seal07.py`
+
+only the existing function:
+
+`test_s7_operational_durable_objects_are_unavailable_without_read`
+
+may change for the three protected-entry parameter branches:
+
+- event
+- active
+- retained
+
+For those branches only, update the expected classification from:
+
+`UNAVAILABLE`
+
+to:
+
+`REFUSED_PRECONDITION`
+
+as required by Disposition 05 and Planning Revision 02.
+
+No neighboring parameter, setup behavior or assertion is authorized to change except what is mechanically necessary to express the new expected label.
+
+## Independent Seal-07 test
+
+In:
+
+`engine/tests/test_v6_e9_v2_independent_gate8_seal07.py`
+
+only:
+
+`test_R01_audited_source_checker_rejects_at_both_protected_checks`
+
+may change for the:
+
+`entry`
+
+branch.
+
+Change only the superseded expected entry classification:
+
+`UNAVAILABLE` → `REFUSED_PRECONDITION`
+
+The edit must be performed by a **new independent test-author context**.
+
+Preserve:
+
+- original Seal-07 bytes through its seal/manifests;
+- exact before/after hashes or diff;
+- independent-author provenance.
+
+The exit/protected-state behavior not superseded by the ruling must remain unchanged.
+
+The sweep of all 45 `UNAVAILABLE` assertions found no additional direct conflicts, so no other existing test edit is authorized.
+
+---
+
+# D8-03 — DERIVED READINGS CONFIRMED
+
+## DV8-1 — CONFIRMED
+
+For S7-IQ-F2:
+
+**"protected verification entered" means the producer has successfully crossed the protected-entry boundary and completed the conditions required to begin evidence verification.**
+
+Therefore, unavailability encountered while establishing that protected verification state — including within its entry/precondition checks — is:
+
+`REFUSED_PRECONDITION`
+
+not:
+
+`UNAVAILABLE`.
+
+Once protected verification has actually begun, unavailable durable scientific/evidence inputs retain their existing `UNAVAILABLE` semantics where the frozen F1/F2 rules prescribe them.
+
+Do not globally translate all later `Unavailable` conditions to `REFUSED_PRECONDITION`.
+
+---
+
+## DV8-2 — CONFIRMED
+
+The S7-IQ-F3 catalogue behavior remains unchanged.
+
+Seal 08 does not repair or broaden S7-IQ-F3.
+
+The earlier current-G registry check merely prevents an unavailable catalogue/scan from masking a known wrong-bytes condition for this G.
+
+That is part of the authorized F1 precedence repair, not an S7-IQ-F3 repair.
+
+---
+
+## DV8-3 — CONFIRMED AS A SCOPE CONSTRAINT
+
+Option C must not add new registry reads.
+
+It changes only the control flow around the **existing** registry traversal:
+
+- remember mapped unavailability;
+- continue existing reads/checks;
+- prefer any discovered positive mismatch;
+- emit deferred unavailability only if no positive mismatch is found.
+
+If implementation unexpectedly requires new evidence reads or changes which registry objects are consulted, stop and report that dependency rather than treating it as covered by Option C.
+
+---
+
+# Seal-08 implementation boundary
+
+The expected implementation boundary is now:
+
+- `tools/research/v6/e9/v2/private_verification.py`
+- `tools/research/v6/e9/v2/authority.py`
+
+New qualification:
+
+- `engine/tests/test_v6_e9_v2_gate8_seal08.py`
+- `engine/tests/test_v6_e9_v2_independent_gate8_seal08.py`
+
+Precisely authorized legacy qualification exceptions:
+
+- the three C1–C3 parameter branches in the Seal-07 implementer module;
+- the C4 `entry` branch in the Seal-07 independent module.
+
+No other implementation or existing qualification file is authorized to change.
+
+If scope drafting identifies another required file, stop before freezing.
+
+---
+
+# Scope freeze and continuation authorization
+
+You are now authorized to:
+
+1. incorporate D8-01 through D8-03 into the Seal-08 plan;
+2. create the write-once Seal-08 scope record and readable mirror;
+3. bind Disposition 05, Seal 07, its failed independent reproduction, the Seal-08 plan and the exact legacy-test exceptions;
+4. verify all Seal-07 manifested bytes before and after scope creation;
+5. freeze the scope;
+6. proceed directly with Seal-08 implementation and synthetic qualification if the final scope contains only the boundary approved above.
+
+No additional lead confirmation is required after scope freeze unless:
+
+- another implementation file becomes necessary;
+- another existing sealed test must change;
+- a frozen requirement conflicts with these rulings.
+
+---
+
+# Candidate and validation
+
+Candidate 30/final_07 remains immutable historical evidence.
+
+The next candidate is expected to be candidate 31.
+
+Any source/test change after candidate 31 is bound requires candidate 32, etc.
+
+Fresh Seal-08 validation must include:
+
+- combined F1 mismatch/unavailability cases;
+- S7-IQ-F2 protected-entry classification cases;
+- implementer Seal-08 focus;
+- independent Seal-08 focus;
+- all applicable prior Gate-8 qualification;
+- full applicable V2 suite;
+- WSL/native supplements;
+- Ruff;
+- mypy engine;
+- mypy client;
+- inherited-preservation/bindings checks.
+
+Do not seal unless the entire required candidate validation completes successfully.
+
+Then create Seal 08 and commission a fresh independent reproduction.
+
+The independent qualifier should explicitly probe combined unavailability + later positive mismatch ordering rather than relying solely on the named regression tests.
+
+---
+
+# Status remains
+
+- Seal 07: **INDEPENDENT REPRODUCTION FAIL**
+- S7-IQ-F1: **Seal-08 blocker**
+- S7-IQ-F2: **Seal-08 repair**
+- S7-IQ-F3–F10: **record only**
+- Gate-8 operational acceptance: **NOT ESTABLISHED**
+- Requirement C: **NOT ESTABLISHED**
+- Execution: **LOCKED**
+- Q: **absent**
+
+No REAL entropy, operational generation, W, salt, publication, Gate 7, O/V/A/R/B, commit or push is authorized during this cycle.
+
+Freeze the bounded Seal-08 scope and continue.

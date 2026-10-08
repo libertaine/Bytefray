@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import stat
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,95 @@ class IntegrityError(ValueError):
 
 class ExecutionLocked(IntegrityError):
     """An operation lacks its separate current authorization."""
+
+
+class DurableUnavailable(IntegrityError):
+    """Expected regular durable evidence is missing, unreadable or unsupported."""
+
+
+def regular_bytes(path: Path) -> bytes:
+    """Read through Path.open after a type check, detecting ordinary object drift.
+
+    Symlinks to regular files are supported. The check/open interval assumes no
+    hostile concurrent replacement; Path.open cannot prevent that attack.
+    """
+    try:
+        before = path.stat()
+        if not stat.S_ISREG(before.st_mode):
+            raise DurableUnavailable("durable path is not a regular file; unavailable")
+        with path.open("rb") as stream:
+            opened = os.fstat(stream.fileno())
+            if not stat.S_ISREG(opened.st_mode):
+                raise DurableUnavailable("opened durable object is not a regular file; unavailable")
+            if (before.st_dev, before.st_ino) != (opened.st_dev, opened.st_ino):
+                raise IntegrityError("durable object identity changed before read")
+            raw = stream.read()
+            after = os.fstat(stream.fileno())
+            current = path.stat()
+            if ((opened.st_dev, opened.st_ino, opened.st_size, opened.st_mtime_ns)
+                    != (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns)
+                    or (after.st_dev, after.st_ino) != (current.st_dev, current.st_ino)
+                    or len(raw) != after.st_size):
+                raise IntegrityError("durable object or bytes changed during read")
+            return raw
+    except OSError as exc:
+        raise DurableUnavailable("regular durable evidence unavailable") from exc
+
+
+def flush_directory(path: Path) -> bool:
+    """Flush directory metadata on POSIX; Windows stdlib has no such primitive.
+
+    This supports the absent-or-complete publication model, not a guarantee
+    against controller, filesystem or physical power-loss corruption.
+    """
+    if os.name == "nt":
+        return False
+    fd = os.open(path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+    return True
+
+
+def publication_directory(path: Path) -> None:
+    """Create and flush each newly introduced parent entry for scoped outputs."""
+    missing = []
+    parent = path
+    while not parent.exists():
+        missing.append(parent)
+        parent = parent.parent
+    for directory in reversed(missing):
+        directory.mkdir(exist_ok=True)
+        flush_directory(directory)
+        flush_directory(directory.parent)
+
+
+def publish_once(path: Path, raw: bytes, candidate: Path, *,
+                 writer: Callable[[Path, bytes], None]) -> None:
+    """Scoped W publication: retained candidate, flush/readback, atomic no-replace.
+
+    Hard-link installation has no direct-write or overwrite-capable fallback.
+    Unsupported filesystems fail without publishing the canonical destination.
+    An existing complete destination is only compared, never written again.
+    """
+    publication_directory(path.parent)
+    publication_directory(candidate.parent)
+    if path.exists():
+        if regular_bytes(path) != raw:
+            raise IntegrityError("immutable publication collision")
+        flush_directory(path.parent)
+        return
+    writer(candidate, raw)
+    if regular_bytes(candidate) != raw:
+        raise IntegrityError("publication candidate read-back failed")
+    flush_directory(candidate.parent)
+    try:
+        os.link(candidate, path)
+    except FileExistsError:
+        if regular_bytes(path) != raw:
+            raise IntegrityError("immutable publication collision") from None
+    flush_directory(path.parent)
 
 
 ADOPTED_RAW = "63e678d75dc8b73cc7e69ac2c413bc58d26220ec883748355d9e85c6a227f2b4"
@@ -45,7 +135,7 @@ def strict_json(raw: bytes) -> Any:
 
 
 def catalogue() -> dict[str, Any]:
-    return strict_json((BASE / "amended_record_schemas_v2_proposed_02.json").read_bytes())
+    return strict_json(regular_bytes(BASE / "amended_record_schemas_v2_proposed_02.json"))
 
 
 def exact_keys(value: Any, required: set[str], optional: set[str] | None = None) -> None:
@@ -216,7 +306,7 @@ def _field(name: str, value: Any, desc: str) -> None:
         for flag in ("historical_completeness", "exhaustive_historical_non_reuse"):
             if value[flag] != "NOT ESTABLISHED":
                 raise IntegrityError("finite verification cannot establish exhaustive history")
-        contract = strict_json((BASE / "amended_rule_contract_v2_proposed_02.json").read_bytes())
+        contract = strict_json(regular_bytes(BASE / "amended_rule_contract_v2_proposed_02.json"))
         if (value["unresolved_gap_ids"] != contract["preserved_gap_ids"]
                 or value["unresolved_dependency_ids"] != contract["preserved_dependency_ids"]):
             raise IntegrityError("all historical gap/dependency IDs must remain preserved")
@@ -271,7 +361,7 @@ def _field(name: str, value: Any, desc: str) -> None:
         if value != "NOT ESTABLISHED":
             raise IntegrityError("historical coverage remains not established")
     elif name == "permanent_limitation":
-        contract = strict_json((BASE / "amended_rule_contract_v2_proposed_02.json").read_bytes())
+        contract = strict_json(regular_bytes(BASE / "amended_rule_contract_v2_proposed_02.json"))
         if value != contract["exact_interpretation"]["permanent_limitation_text"]:
             raise IntegrityError("permanent limitation mismatch")
     else:
@@ -413,7 +503,7 @@ def record_ref(record: dict) -> dict:
 
 
 def read_record(path: Path, role: str | None = None, resolver=None) -> dict:
-    raw = path.read_bytes()
+    raw = regular_bytes(path)
     record = strict_json(raw)
     if raw != canonical_bytes(record) + b"\n":
         raise IntegrityError("noncanonical record file")

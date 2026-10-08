@@ -65,9 +65,53 @@ def test_separate_adoption_attestation_exact_review_and_unchanged_body():
         assert len(z.namelist()) == len(set(z.namelist())) == 20
         for path in z.namelist():
             assert z.read(path) == (ROOT / path).read_bytes()
-    preserved = json.loads((E9 / "v2_inherited_preservation_manifest_01.json").read_bytes())
-    for path, expected in preserved["tracked_files"].items():
-        assert independent_sha((ROOT / path).read_bytes()) == expected
+    adoption_commit = "2dd8f69c5c6feb5f3a7d8fc0eb81b0c06802dee2"
+    adoption_blob = "7064b0bb9d533b312b45f0c368610a64777ec8b6"
+    adoption_pin = "d26332b37bbcac74a5e369317df33cbbecd4042f4ca6867770e38a54307bfd86"
+    checkpoint_commit = "e035def989dfc5e26ae3eb2c9ccfd16aed54b66c"
+    checkpoint_blob = "89bba2ee71b70188107be24fd918c078b0b6ae76"
+    superseding_sha = "97128feeef25cbe98af6770173d09a809b1c0f626ec2a5ac558236aaf4b99555"
+    manifest_raw = (E9 / "v2_inherited_preservation_manifest_01.json").read_bytes()
+    assert independent_sha(manifest_raw) == "b1f86c1d9b59be0f8841bf1b587b7a88d3ffb7bed34cffa476ef582606660147"
+    preserved = json.loads(manifest_raw)
+    pins = preserved["tracked_files"]
+    assert pins[".gitattributes"] == adoption_pin
+    record_raw = (E9 / "v2_inherited_preservation_supersession_01.json").read_bytes()
+    assert independent_sha(record_raw) == "319528a4d7e29266a680e198acea9769229cef41aaf86693607e5044852b4661"
+    record = json.loads(record_raw)
+    assert record_raw == independent_json(record) + b"\n"
+    assert independent_sha(independent_json(record["body"])) == record["digest"]
+    assert record["digest"] == "a82d0caccf3b131d4ee853bac1174868db338b6b71d032be33c2677178dd4e9f"
+    assert record["identity"] == "v6-e9-v2-preservation-supersession-a82d0caccf3b"
+    original = record["body"]["original_manifest"]
+    assert original["path"] == "tools/research/v6/e9/v2_inherited_preservation_manifest_01.json"
+    assert original["sha256_raw"] == independent_sha(manifest_raw)
+    assert original["tracked_file_pins"] == len(pins) == 1203
+    assert record["body"]["semantics"]["superseded_paths"] == [".gitattributes"]
+    entry = record["body"]["superseded_entry"]
+    assert entry["path"] == ".gitattributes"
+    assert entry["adoption_pin_sha256_raw"] == adoption_pin
+    assert entry["superseding_bytes"]["commit_parent"] == adoption_commit
+    assert independent_sha(entry["change"]["diff_utf8"].encode("utf-8")) == entry["change"]["diff_sha256_raw"]
+    parents = subprocess.check_output(["git", "rev-list", "--parents", "-n", "1", checkpoint_commit],
+                                      cwd=ROOT, text=True)
+    assert parents == f"{checkpoint_commit} {adoption_commit}\n"
+    for side, commit, blob, sha in (("adoption_bytes", adoption_commit, adoption_blob, adoption_pin),
+                                    ("superseding_bytes", checkpoint_commit, checkpoint_blob, superseding_sha)):
+        assert (entry[side]["commit"], entry[side]["git_blob"], entry[side]["sha256_raw"]) == (commit, blob, sha)
+        tree_entry = subprocess.check_output(["git", "rev-parse", "--verify", f"{commit}:.gitattributes"],
+                                             cwd=ROOT, text=True)
+        assert tree_entry == f"{blob}\n"
+        blob_raw = subprocess.check_output(["git", "cat-file", "blob", blob], cwd=ROOT)
+        assert hashlib.sha1(b"blob " + str(len(blob_raw)).encode() + b"\x00" + blob_raw).hexdigest() == blob
+        assert independent_sha(blob_raw) == sha
+        assert blob_raw == entry[side]["utf8"].encode("utf-8")
+    current = (ROOT / ".gitattributes").read_bytes()
+    assert independent_sha(current) == superseding_sha
+    assert current == subprocess.check_output(["git", "cat-file", "blob", checkpoint_blob], cwd=ROOT)
+    actual = {path: independent_sha((ROOT / path).read_bytes()) for path in pins}
+    mismatched = {path: digest for path, digest in actual.items() if digest != pins[path]}
+    assert mismatched == {".gitattributes": superseding_sha}
 
 
 def test_preserved_r0_parent_and_draft_bytes():

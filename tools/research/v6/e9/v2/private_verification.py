@@ -15,7 +15,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from .authority import THROUGH_G, AuthorityLog, Lease, durable_bytes
+from .authority import THROUGH_G, AuthorityLog, Lease, ProducerRegistryUnavailable, durable_bytes
 from .commitment import (
     PrivateValues,
     check_public_content,
@@ -34,12 +34,18 @@ from .records import (
     catalogue,
     exact_keys,
     make_record,
+    publication_directory,
+    publish_once,
     record_ref,
+    regular_bytes,
     sha256,
     strict_json,
     validate_actor,
     validate_artifact_ref,
     validate_record,
+)
+from .records import (
+    DurableUnavailable as Unavailable,
 )
 
 OUTCOMES = ("REFUSED_PRECONDITION", "UNAVAILABLE", "INTERRUPTED", "FAILED_VERIFICATION", "PASS")
@@ -58,10 +64,6 @@ class Refused(IntegrityError):
     """A precondition failed before any private byte was read."""
 
 
-class Unavailable(IntegrityError):
-    """Retained private evidence is missing or unreadable; verification did not complete."""
-
-
 def _raw(value: Any) -> bytes:
     return canonical_bytes(value) + b"\n"
 
@@ -72,19 +74,45 @@ def _folder(authority: AuthorityLog) -> Path:
 
 
 def _outcomes(folder: Path) -> list[dict]:
-    return [strict_private_json(path.read_bytes()) for path in sorted(folder.glob("attempt-*.outcome.json"))]
+    return [strict_private_json(regular_bytes(path)) for path in sorted(folder.glob("attempt-*.outcome.json"))]
+
+
+def _staging(folder: Path) -> Path:
+    """Retained infrastructure is separate from the frozen canonical W folder."""
+    return folder.with_name(folder.name + ".staging")
+
+
+def _publish(folder: Path, ordinal: int, path: Path, raw: bytes) -> None:
+    """Only W-path outputs use staged no-overwrite publication; candidates survive."""
+    candidate = _staging(folder) / f"attempt-{ordinal:04d}.staging" / (path.name + ".candidate")
+    publish_once(path, raw, candidate, writer=durable_bytes)
 
 
 def _begin(folder: Path, *, S: dict | None, verifier: dict, expected_tip: str,
            operation_id: str) -> tuple[int, list[int]]:
     """Write-once attempt intent; earlier intents without an outcome are INTERRUPTED."""
-    folder.mkdir(parents=True, exist_ok=True)
+    publication_directory(folder)
     intents = sorted(folder.glob("attempt-*.intent.json"))
-    if [path.name for path in intents] != [f"attempt-{i:04d}.intent.json" for i in range(1, len(intents) + 1)]:
+    allocations = sorted(_staging(folder).glob("attempt-*.staging"))
+    numbers = {path.name.split(".")[0] for path in [*intents, *allocations]}
+    if sorted(numbers) != [f"attempt-{i:04d}" for i in range(1, len(numbers) + 1)]:
         raise IntegrityError("W attempt record gap/fork")
-    ordinal = len(intents) + 1
+    for path in intents:
+        raw = regular_bytes(path)
+        intent = strict_private_json(raw)
+        if (raw != _raw(intent) or not isinstance(intent, dict)
+                or path.name != f"attempt-{intent.get('attempt', 0):04d}.intent.json"):
+            raise Refused("ambiguous prior W intent requires separate disposition")
+    ordinal = len(numbers) + 1
     interrupted = [i for i in range(1, ordinal) if not (folder / f"attempt-{i:04d}.outcome.json").exists()]
-    durable_bytes(folder / f"attempt-{ordinal:04d}.intent.json", _raw({
+    publication_directory(_staging(folder))
+    allocation = _staging(folder) / f"attempt-{ordinal:04d}.staging"
+    allocation.mkdir(exist_ok=False)
+    # Flush the allocation itself and its parent, including death before intent publication.
+    from .records import flush_directory
+    flush_directory(allocation)
+    flush_directory(allocation.parent)
+    _publish(folder, ordinal, folder / f"attempt-{ordinal:04d}.intent.json", _raw({
         "attempt": ordinal, "S": S, "verifier": verifier.get("actor_id"), "expected_tip": expected_tip,
         "operation_id": operation_id, "interrupted_prior_attempts": interrupted}))
     return ordinal, interrupted
@@ -92,7 +120,7 @@ def _begin(folder: Path, *, S: dict | None, verifier: dict, expected_tip: str,
 
 def _finish(folder: Path, ordinal: int, outcome: str, *, interrupted: list[int],
             reason: str | None = None, W: dict | None = None) -> None:
-    durable_bytes(folder / f"attempt-{ordinal:04d}.outcome.json", _raw({
+    _publish(folder, ordinal, folder / f"attempt-{ordinal:04d}.outcome.json", _raw({
         "attempt": ordinal, "outcome": outcome, "reason": reason, "W": W,
         "interrupted_prior_attempts": interrupted}))
 
@@ -103,7 +131,7 @@ def _reader(authority: AuthorityLog) -> Callable[[dict], bytes]:
         validate_artifact_ref(ref)
         path = authority.root / "evidence-raw" / (ref["sha256_raw"] + ".bin")
         try:
-            raw = path.read_bytes()
+            raw = regular_bytes(path)
         except OSError as exc:
             raise Unavailable("retained private evidence unavailable") from exc
         if len(raw) != ref["bytes"] or sha256(raw) != ref["sha256_raw"]:
@@ -113,7 +141,7 @@ def _reader(authority: AuthorityLog) -> Callable[[dict], bytes]:
 
 
 def _durable_log(authority: AuthorityLog) -> list[dict]:
-    return [strict_private_json(path.read_bytes()) for path in sorted(authority.root.glob("event-*.json"))]
+    return [strict_private_json(regular_bytes(path)) for path in sorted(authority.root.glob("event-*.json"))]
 
 
 def _resolver(authority: AuthorityLog, events: list[dict]) -> Callable[[dict], dict]:
@@ -151,10 +179,12 @@ def _preconditions(authority: AuthorityLog, verifier: dict, folder: Path) -> Non
                  for role in ("O", "S", "G")}
     if identity in producers:
         raise Refused("W verifier must be independent of the custodian, recorder and lead")
-    if (folder / "W.json").exists():
-        raise Refused("W already produced for this S, or a partial W file is present")
-    if any(item["outcome"] == "FAILED_VERIFICATION" for item in _outcomes(folder)):
+    outcomes = _outcomes(folder)
+    if any(item["outcome"] == "FAILED_VERIFICATION" for item in outcomes):
         raise Refused("a completed verification of this S already failed")
+    if any(item["outcome"] == "PASS" for item in outcomes):
+        raise Refused("W already produced for this S, or a partial W file is present")
+    _recovery(authority, verifier, folder)
     # After a completed-stage continuation the sealed verifier requires the chain to end at the
     # active tip. Tuple-extending ISSUE events after it are permitted by W-04, so they block W as
     # an authority state, never as a section-11 material failure. Any other event falls to the
@@ -178,9 +208,47 @@ def _preconditions(authority: AuthorityLog, verifier: dict, folder: Path) -> Non
 def _durable(path: Path) -> bytes | None:
     """Exact durable bytes, or None when the file is missing or unreadable."""
     try:
-        return path.read_bytes()
-    except OSError:
+        return regular_bytes(path)
+    except Unavailable:
         return None
+
+
+def _recovery(authority: AuthorityLog, verifier: dict, folder: Path) -> list[dict]:
+    """Accept only prospective Seal-07 transition provenance, never legacy damage."""
+    transitions = []
+    log_hash = sha256(_raw(_durable_log(authority)))
+    for path in sorted(_staging(folder).glob("attempt-*.staging/recovery.json")):
+        try:
+            raw = regular_bytes(path)
+            plan = strict_private_json(raw)
+            exact_keys(plan, {"kind", "attempt", "intent_sha256_raw", "bindings", "verifier",
+                              "authority_log_sha256_raw", "W", "result_sha256_raw"})
+            intent_path = folder / f"attempt-{plan['attempt']:04d}.intent.json"
+            intent_raw = regular_bytes(intent_path)
+            intent = strict_private_json(intent_raw)
+            if (raw != _raw(plan) or intent_raw != _raw(intent)
+                    or path.parent.name != f"attempt-{plan['attempt']:04d}.staging"
+                    or plan["kind"] != "SEAL07-W-TRANSITION-V1"
+                    or sha256(intent_raw) != plan["intent_sha256_raw"]
+                    or intent.get("S") != authority.bindings.get("S")
+                    or intent.get("verifier") != verifier.get("actor_id")
+                    or intent.get("expected_tip") != plan["W"]["body"]["active_authority_tip"]
+                    or plan["bindings"] != authority.bindings or plan["verifier"] != verifier):
+                raise Refused("interrupted W provenance/input mismatch requires separate disposition")
+            validate_record(plan["W"], resolver=authority.resolve)
+            if (plan["authority_log_sha256_raw"] != log_hash
+                    or plan["W"]["body"]["active_authority_tip"] != intent["expected_tip"]):
+                raise Refused("authority event intervened; exact W recovery unavailable")
+        except Unavailable:
+            raise
+        except (IntegrityError, KeyError, TypeError, ValueError) as exc:
+            if isinstance(exc, Refused):
+                raise
+            raise Refused("ambiguous W transition requires separate disposition") from exc
+        transitions.append(plan)
+    if (folder / "W.json").exists() and not transitions:
+        raise Refused("W already produced for this S, or a partial W file is present")
+    return transitions
 
 
 def _operational_boundary(authority: AuthorityLog, boundary: dict, read: Callable[[dict], bytes]) -> None:
@@ -214,13 +282,18 @@ def _operational_boundary(authority: AuthorityLog, boundary: dict, read: Callabl
     registry = _durable(authority.root / "producer-roots" / (G["digest"] + ".json"))
     if registry is None:
         unavailable.append("producer registry")
+    elif registry != producers[0]:
+        # S7-IQ-F1 (disposition 05): this G's own durable entry is positive evidence by itself and
+        # is never left to the registry scan, whose mapped reads may be deferred.
+        mismatched.append("generation boundary does not bind the registered producer root")
     else:
         try:
             registered = authority.registered_producers().get(G["digest"])
-        except OSError:
+        except (OSError, ProducerRegistryUnavailable):
+            # S7-DEV-F1: deferred so a present first-raw marker is still checked for a mismatch.
             unavailable.append("producer registry")
         else:
-            if registry != producers[0] or registered is None or _raw(registered) != producers[0]:
+            if registered is None or _raw(registered) != producers[0]:
                 mismatched.append("generation boundary does not bind the registered producer root")
     marker = _durable(authority.root / "first-raw" / (G["digest"] + ".json"))
     if marker is None:
@@ -229,6 +302,14 @@ def _operational_boundary(authority: AuthorityLog, boundary: dict, read: Callabl
         mismatched.append("generation boundary does not bind the durable first-raw marker")
     if mismatched:
         raise IntegrityError(mismatched[0])
+    if registry is None:
+        # D8-01 (Seal 08): this G's own entry is unavailable, but every other readable registry entry
+        # is still checked; a positive mismatch there raises, and only the scan's unavailability is
+        # ignored. It runs after the marker so an unmapped Unavailable cannot mask a marker mismatch.
+        try:
+            authority.registered_producers()
+        except (OSError, ProducerRegistryUnavailable):
+            pass
     if unavailable:
         raise Unavailable("durable " + " and ".join(unavailable) + " unavailable")
 
@@ -329,8 +410,8 @@ def _full_list_history(chain: list[dict], resolve: Callable[[dict], dict], read:
     return history, receipts
 
 
-def _verify(authority: AuthorityLog, verifier: dict, lease: Lease) -> dict:
-    """Complete private verification under the held lease; returns the unwritten W."""
+def _derive(authority: AuthorityLog, verifier: dict, lease: Lease) -> tuple[dict, bytes]:
+    """Complete private verification and exact derivation, without output writes."""
     events = _durable_log(authority)
     read, resolve = _reader(authority), _resolver(authority, events)
     S = resolve(authority.bindings["S"])["body"]
@@ -358,10 +439,12 @@ def _verify(authority: AuthorityLog, verifier: dict, lease: Lease) -> dict:
         active_chain_tip=lease.authority_tip)
     if result.get("decision") != "PASS" or result.get("entropy_source") != "REAL":
         raise IntegrityError("complete private verification did not pass for REAL entropy")
-    evidence = authority.retain_artifact(_raw({
+    result_raw = _raw({
         "kind": "GATE8_PRIVATE_VERIFICATION_RESULT_V1", "verifier_result": result,
         "supplement_chain": chain, "authority_tips": tips, "active_chain_tip": lease.authority_tip,
-        "history_receipts": [receipt.receipt_digest for receipt in receipts]}), RESULT_ID)
+        "history_receipts": [receipt.receipt_digest for receipt in receipts]})
+    from .inventory import artifact
+    evidence = artifact(result_raw, RESULT_ID)
     W = make_record("W", {
         "record_role": "W", "study_id": authority.study_id, "actor": verifier, "decision": "PASS",
         "dependencies": {role: authority.bindings[role] for role in W_DEPENDENCIES},
@@ -378,7 +461,21 @@ def _verify(authority: AuthorityLog, verifier: dict, lease: Lease) -> dict:
         "commitment": commitment, "payload": S["payload"], "salt": S["salt"],
         "supplement_chain": chain})
     verify_W_bytes(W, payload_raw=payload_raw, salt_raw=salt_raw, expected_commitment=commitment)
-    return W
+    return W, result_raw
+
+
+def _verify(authority: AuthorityLog, verifier: dict, lease: Lease) -> dict:
+    """Complete verification; returns the unwritten W, preserving the local interface."""
+    return _derive(authority, verifier, lease)[0]
+
+
+def _retain_result(authority: AuthorityLog, folder: Path, ordinal: int, raw: bytes) -> None:
+    _publish(folder, ordinal, authority.root / "evidence-raw" / (sha256(raw) + ".bin"), raw)
+
+
+def _retain_w(authority: AuthorityLog, folder: Path, ordinal: int, W: dict) -> None:
+    validate_record(W, resolver=authority.resolve)
+    _publish(folder, ordinal, authority.root / "evidence-records" / (W["digest"] + ".json"), _raw(W))
 
 
 def produce_private_verification(authority: AuthorityLog, *, verifier: dict, expected_tip: str,
@@ -399,12 +496,30 @@ def produce_private_verification(authority: AuthorityLog, *, verifier: dict, exp
         nonlocal phase
         _preconditions(authority, verifier, folder)
         phase = "verification"
-        W = _verify(authority, verifier, lease)
+        W, result_raw = _derive(authority, verifier, lease)
         # F3: W, its retained record and PASS are written under the lease that verified them, so
         # no authority change can interleave between the verified state and the durable result.
         phase = "write"
-        authority.retain_record(W)
-        durable_bytes(folder / "W.json", _raw(W))
+        transitions = _recovery(authority, verifier, folder)
+        for plan in transitions:
+            if _raw(plan["W"]) != _raw(W) or plan["result_sha256_raw"] != sha256(result_raw):
+                raise Refused("re-derived result/W mismatch; exact recovery unavailable")
+        # Compare every published continuation before publishing anything further.
+        for path, raw in ((authority.root / "evidence-raw" / (sha256(result_raw) + ".bin"), result_raw),
+                          (authority.root / "evidence-records" / (W["digest"] + ".json"), _raw(W)),
+                          (folder / "W.json", _raw(W))):
+            if path.exists() and regular_bytes(path) != raw:
+                raise Refused("published result/W mismatch requires separate disposition")
+        intent_path = folder / f"attempt-{ordinal:04d}.intent.json"
+        _publish(folder, ordinal, _staging(folder) / f"attempt-{ordinal:04d}.staging" / "recovery.json", _raw({
+            "kind": "SEAL07-W-TRANSITION-V1", "attempt": ordinal,
+            "intent_sha256_raw": sha256(regular_bytes(intent_path)),
+            "bindings": authority.bindings, "verifier": verifier,
+            "authority_log_sha256_raw": sha256(_raw(_durable_log(authority))),
+            "W": W, "result_sha256_raw": sha256(result_raw)}))
+        _retain_result(authority, folder, ordinal, result_raw)
+        _retain_w(authority, folder, ordinal, W)
+        _publish(folder, ordinal, folder / "W.json", _raw(W))
         _finish(folder, ordinal, "PASS", interrupted=interrupted, W=record_ref(W))
         phase = "recorded"
         return W
@@ -417,10 +532,12 @@ def produce_private_verification(authority: AuthorityLog, *, verifier: dict, exp
             # A failed write leaves no outcome, as before seal 06; a failed post-action recheck
             # after PASS propagates without a second, contradictory outcome.
             raise
-        if isinstance(exc, Unavailable):
-            outcome = "UNAVAILABLE"
-        elif isinstance(exc, Refused) or phase != "verification":
+        if isinstance(exc, Refused) or phase != "verification":
+            # S7-IQ-F2 (disposition 05): until protected verification has been entered, unavailability
+            # too is a refused precondition, never a verification-stage outcome.
             outcome = "REFUSED_PRECONDITION"
+        elif isinstance(exc, Unavailable):
+            outcome = "UNAVAILABLE"
         else:
             outcome = "FAILED_VERIFICATION"
         _finish(folder, ordinal, outcome, interrupted=interrupted, reason=str(exc))
@@ -429,7 +546,7 @@ def produce_private_verification(authority: AuthorityLog, *, verifier: dict, exp
 
 
 def _frozen_limitation() -> str:
-    contract = strict_json((BASE / "amended_rule_contract_v2_proposed_02.json").read_bytes())
+    contract = strict_json(regular_bytes(BASE / "amended_rule_contract_v2_proposed_02.json"))
     return contract["exact_interpretation"]["permanent_limitation_text"]
 
 

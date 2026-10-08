@@ -251,29 +251,95 @@ ATTEMPT_RECORD = re.compile(r"attempt-(\d+)\.(intent|outcome)\.json")
 class Writes:
     """Observe, and optionally interrupt, durable writes under one study's authority root.
 
-    Every write-mode open (io, builtin or os level) and every os.replace target under the root
-    is recorded with whether the exclusive authority lock exists and the durable active tip at
-    that moment. retain_record(W) and the writes of the attempt intent and outcome records and
-    of W.json in the study's S folder are also passed to an optional hook, which may raise to
-    simulate a fault in that write step or act while it is pending."""
+    Scope03 support exception: logical scoped publication is observed at its staged writer;
+    atomic installation emits a separate successful-publication hook. Physical candidate
+    opens retain their existing negative-read visibility. The lock and tip are captured at
+    each logical write, including producer-local W retention. Unrelated opens/replace remain
+    observed as before. Candidate fault hooks never write a torn canonical destination."""
 
     def __init__(self, monkeypatch, study: producer.Study,
                  hook: Callable[[str, Path | None], None] | None = None):
+        from tools.research.v6.e9.v2 import authority as authority_io
+        from tools.research.v6.e9.v2 import records as record_io
+
         self.study, self.hook, self.inside = study, hook, False
         self.events: list[tuple[str, str, bool, str | None]] = []
+        self.storage: list[tuple[str, str, bool, str | None]] = []
         self.root = os.path.normcase(os.path.abspath(study.log.root))
         for module in (io, builtins):
             monkeypatch.setattr(module, "open", self._open(module.open))
         monkeypatch.setattr(os, "open", self._os_open(os.open))
         monkeypatch.setattr(os, "replace", self._replace(os.replace))
-        retain = AuthorityLog.retain_record
+        self.pending: tuple[str, Path] | None = None
+        publish, writer, link = pv._publish, pv.durable_bytes, os.link
 
-        def retain_record(log: AuthorityLog, record: dict) -> dict:
-            body = record.get("body") if isinstance(record, dict) else None
-            if not self.inside and isinstance(body, dict) and body.get("record_role") == "W":
-                self._seen("W-retention", "evidence-records", None)
-            return retain(log, record)
-        monkeypatch.setattr(AuthorityLog, "retain_record", retain_record)
+        def publication(folder, ordinal, path, raw):
+            kind = "other"
+            if path.name == "W.json":
+                kind = "W.json"
+            elif match := ATTEMPT_RECORD.fullmatch(path.name):
+                kind = f"{match[2]}-{int(match[1])}"
+            elif json.loads(raw).get("body", {}).get("record_role") == "W":
+                kind = "W-retention"
+            previous, self.pending = self.pending, (kind, path)
+            try:
+                result = publish(folder, ordinal, path, raw)
+                if self.hook is not None:
+                    self.hook(kind + "-published", path)  # includes completed metadata flush
+                return result
+            finally:
+                self.pending = previous
+
+        def staged(candidate, raw):
+            if self.pending is not None:
+                kind, target = self.pending
+                self._seen(kind, target.name, candidate)
+                self.inside = True
+                try:
+                    return writer(candidate, raw)
+                finally:
+                    self.inside = False
+            return writer(candidate, raw)
+
+        def installed(source, target, *args, **kwargs):
+            result = link(source, target, *args, **kwargs)
+            storage("installed")
+            return result
+
+        def storage(phase):
+            if self.pending is not None:
+                previous, self.inside = self.inside, True
+                try:
+                    lock, tip = self._state()
+                    self.storage.append((phase, self.pending[0], lock, tip))
+                finally:
+                    self.inside = previous
+
+        read_regular = record_io.regular_bytes
+        fsync, flush_directory = os.fsync, record_io.flush_directory
+
+        def readback(path):
+            result = read_regular(path)
+            storage("readback")
+            return result
+
+        def synced(fd):
+            result = fsync(fd)
+            storage("fsync")
+            return result
+
+        def metadata(path):
+            result = flush_directory(path)
+            storage("directory-flush-complete")
+            return result
+
+        monkeypatch.setattr(pv, "_publish", publication)
+        monkeypatch.setattr(pv, "durable_bytes", staged)
+        monkeypatch.setattr(os, "link", installed)
+        monkeypatch.setattr(os, "fsync", synced)
+        monkeypatch.setattr(record_io, "regular_bytes", readback)
+        monkeypatch.setattr(authority_io, "regular_bytes", readback)
+        monkeypatch.setattr(record_io, "flush_directory", metadata)
 
     def kinds(self) -> list[str]:
         return [kind for kind, *_ in self.events if kind != "other"]
@@ -298,7 +364,7 @@ class Writes:
             self.inside = False
 
     def _path(self, file: Any) -> None:
-        if self.inside or not isinstance(file, (str, bytes, os.PathLike)):
+        if self.inside or self.pending is not None or not isinstance(file, (str, bytes, os.PathLike)):
             return
         path = Path(os.fsdecode(file))
         absolute = os.path.normcase(os.path.abspath(path))
@@ -630,6 +696,12 @@ def test_s6_f3_01_W_retention_W_json_and_PASS_are_written_under_the_lease_at_its
     assert kinds.index("intent-1") < first[0] and first == sorted(first)
     under_lock = [event for event in writes.events if event[2]]
     assert under_lock[-1][0] == "outcome-1"  # PASS is the last write of the protected action
+    for kind in PASS_WRITES:
+        phases = [phase for phase, label, lock, durable_tip in writes.storage if label == kind]
+        assert {"fsync", "readback", "installed", "directory-flush-complete"} <= set(phases)
+        assert all(lock and durable_tip == tip for _phase, label, lock, durable_tip in writes.storage
+                   if label == kind)
+    assert writes.storage[-1] == ("directory-flush-complete", "outcome-1", True, tip)
     (outcome,) = outcomes(study)
     assert (outcome["outcome"], outcome["W"]) == ("PASS", reference)
     assert lock_free(study) and study.log.tip == tip
@@ -699,17 +771,21 @@ def test_s6_f3_03_a_write_step_exception_propagates_without_an_outcome(
     folder = w_folder(study)
     assert not (folder / OUTCOME).exists() and outcomes(study) == []  # no outcome record
     assert lock_free(study)
+    left = (folder / "W.json").read_bytes() if step == "outcome-1" else None
+    torn = {path: path.read_bytes() for path in pv._staging(folder).rglob("*")
+            if path.is_file() and path.read_bytes() == PARTIAL_W}
+    if step == "outcome-1":
+        assert left == encode(json.loads(left))
+    if fault == "partial_then_stop":
+        assert torn and not (folder / "W.json").exists()
+    calls = producer.verifier_spy(monkeypatch)
+    reference = produce(study)
+    assert labels(study) == ["PASS"] and record_ref(read_W(study)) == reference
     if step == "outcome-1" or fault == "partial_then_stop":
-        left = (folder / "W.json").read_bytes()
-        if step == "outcome-1":  # W.json was complete before the last write, the PASS outcome
-            assert left == encode(json.loads(left))
-        with pytest.raises(IntegrityError):
-            produce(study)
-        assert set(labels(study)) <= {"REFUSED_PRECONDITION"}  # never PASS, never a failure
-        assert (folder / "W.json").read_bytes() == left
-    else:
-        reference = produce(study)
-        assert labels(study) == ["PASS"] and record_ref(read_W(study)) == reference
+        assert len(calls) == 1  # superseded L1/L2b require complete exact re-verification
+        if left is not None:
+            assert (folder / "W.json").read_bytes() == left
+        assert all(path.read_bytes() == raw for path, raw in torn.items())
     for record in outcomes(study):  # the next attempt lists the faulted one as interrupted
         assert len(record["interrupted_prior_attempts"]) == 1
 
@@ -719,7 +795,7 @@ def test_s6_f3_04_a_post_action_recheck_failure_after_PASS_propagates_with_one_o
     study = clone(bases("issued"), tmp_path)
 
     def drift_at_pass(kind: str, _path: Path | None) -> None:
-        if kind == "outcome-1":
+        if kind == "outcome-1-published":
             study.flags["source_drift"] = True  # pinned-source drift seen only by the recheck
     Writes(monkeypatch, study, drift_at_pass)
     with pytest.raises(IntegrityError, match="source pin drift"):
