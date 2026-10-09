@@ -1800,6 +1800,10 @@ def test_keyboard_navigation_action_tab_order_and_filter_focus(history_env, monk
     from PySide6.QtTest import QTest
 
     window = _opened(history_env)
+    # A bare Xvfb server has no window manager to activate a shown window,
+    # and focusWidget() stays None for a window that is never active.
+    window.activateWindow()
+    assert QTest.qWaitForWindowActive(window), "window never became active"
     window.table.selectRow(0)
     window.table.setFocus()
     QTest.keyClick(window.table, Qt.Key_Down)
