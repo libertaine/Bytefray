@@ -292,9 +292,12 @@ EVERY_RULESET = tuple(sorted(_RULESET_POLICIES))
 
 def test_the_gate_reads_the_registered_condition_rulesets() -> None:
     assert dict(compatibility.CONDITION_RULESETS) == {"C8": C8, "T8": T8, "C8L": C8L, "T8L": T8L}
-    # The ungated class's Rulesets are exactly the registered Rulesets with active sensing.
+    # The frozen ungated class accepts the active E8 conditions, not product identities.
     assert compatibility.ACCEPTED[discipline.UNGATED] == {
-        ruleset_id for ruleset_id, policy in _RULESET_POLICIES.items() if policy.sensing_mode == "active"}
+        ruleset_id for ruleset_id, policy in _RULESET_POLICIES.items()
+        if ruleset_id in compatibility.CONDITION_RULESETS.values() and policy.sensing_mode == "active"}
+    assert not compatibility.compatible(discipline.UNGATED, "bytefray-rules-6-alpha1")
+    assert not compatibility.compatible(discipline.CONTEXT_GATED, "bytefray-rules-6-alpha1")
 
 
 @pytest.mark.parametrize("static_class", discipline.CLASSES)

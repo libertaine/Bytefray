@@ -37,6 +37,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from battle_engine.agent_api import AgentValidationError
+from battle_engine.agent_capabilities import preflight_agent_capabilities
 from battle_engine.agent_parameters import resolve_entrant_parameters
 from battle_engine.agents import AgentSpec, resolve_agent
 from battle_engine.config import Config, Weights
@@ -61,6 +62,7 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
     NoCompatibleRulesetError,
     resolve_omitted_ruleset_for_agents,
+    resolve_ruleset_policy,
 )
 from battle_engine.starters import starter_agent_resource_dir
 
@@ -357,6 +359,17 @@ def test_agent(
         ) from exc
 
 
+def _preflight_capabilities(specs: Sequence[AgentSpec], ruleset_id: str | None) -> None:
+    policy = resolve_ruleset_policy(ruleset_id or BYTEFRAY_RULESET_V4_ID)
+    for spec in specs:
+        try:
+            preflight_agent_capabilities(
+                spec, available=policy.available_capabilities, ruleset_id=policy.ruleset_id
+            )
+        except AgentValidationError as exc:
+            raise _tool_error(stage="load", code=exc.code, message=str(exc)) from exc
+
+
 def _test_agent(
     agent_id: str,
     *,
@@ -406,6 +419,8 @@ def _test_agent(
             opponent, data_root=root, role="opponent"
         )
         opponent_name = opponent
+
+    _preflight_capabilities((tested_spec, opponent_spec), ruleset_id)
 
     if run_dir is None:
         run_label = _run_label(opponent_name)
@@ -717,6 +732,7 @@ def _test_agents(
         _resolve_python_entrant(entrant.agent_id, data_root=root, role=f"entrant {entrant.seat}")
         for entrant in entrants
     ]
+    _preflight_capabilities(specs, ruleset_id)
 
     if run_dir is None:
         run_label = _run_label("group")

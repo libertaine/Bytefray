@@ -60,6 +60,7 @@ from battle_engine.result_model import (
 from battle_engine.results import WINNER_TIE_SENTINEL
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
@@ -422,6 +423,7 @@ class OverlappingCoreError(ValueError):
 # must not introduce.
 _CORE_PLACEMENT_GUARDED_RULESET_IDS: frozenset[str] = frozenset(
     {
+        BYTEFRAY_RULESET_V6_ALPHA1_ID,
         BYTEFRAY_RULESET_V4_ID,
         # V6 Phase 4B: the variable-arena research Ruleset shares
         # `core_placement="seeded"` and the same vulnerable-core semantics
@@ -653,6 +655,12 @@ def _effective_ruleset_policy(request: MatchRequest) -> RulesetPolicy:
     """
 
     policy = resolve_ruleset_policy(_resolve_ruleset_id(request))
+    if policy.ruleset_id == BYTEFRAY_RULESET_V6_ALPHA1_ID and (
+        request.scheduler_chunk_size is not None or request.scheduler_rotate_start is not None
+    ):
+        raise UnsupportedMatchCompositionError(
+            "V6 alpha1 fixes scheduler chunk size 2 and rotating start; scheduler overrides are unsupported."
+        )
     kwargs: dict[str, Any] = {}
     if request.scheduler_chunk_size is not None:
         kwargs["scheduler_chunk_size"] = request.scheduler_chunk_size
@@ -1274,6 +1282,15 @@ class NativeMatchService:
         if unsupported_agents:
             raise RulesetAgentUnsupportedError(
                 ruleset_policy.ruleset_id, unsupported_agents
+            )
+
+        from battle_engine.agent_capabilities import preflight_agent_capabilities
+
+        for entrant in request.entrants:
+            preflight_agent_capabilities(
+                entrant.python_spec,
+                available=ruleset_policy.available_capabilities,
+                ruleset_id=ruleset_policy.ruleset_id,
             )
 
         # RC2 fail-closed guard (v2.0.0-rc1's release-blocking defect,

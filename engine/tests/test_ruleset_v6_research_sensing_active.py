@@ -221,9 +221,9 @@ def test_an_invalid_sensing_mode_is_rejected_never_coerced(value: Any) -> None:
 
 def test_every_registered_policy_is_passive_except_t8_and_t8l() -> None:
     active = {ruleset_id for ruleset_id, policy in _RULESET_POLICIES.items() if policy.sensing_mode == "active"}
-    assert active == set(E8_IDS)
+    assert active == {*E8_IDS, "bytefray-rules-6-alpha1"}
     for ruleset_id, policy in _RULESET_POLICIES.items():
-        assert policy.sensing_window == (27 if ruleset_id in E8_IDS else None), ruleset_id
+        assert policy.sensing_window == (27 if ruleset_id in {*E8_IDS, "bytefray-rules-6-alpha1"} else None), ruleset_id
 
 
 def test_there_is_no_match_request_override() -> None:
@@ -275,7 +275,10 @@ def test_each_treatment_is_registered_and_executable_on_the_process_runtime(rule
 
 
 def test_the_lifecycle_sets_still_partition_every_executable_policy() -> None:
-    lifecycles = (PUBLIC_STABLE_RULESET_IDS, ACTIVE_RESEARCH_RULESET_IDS, RETIRED_RESEARCH_RULESET_IDS)
+    from battle_engine.ruleset_policy import PUBLIC_EXPERIMENTAL_RULESET_IDS
+
+    lifecycles = (PUBLIC_STABLE_RULESET_IDS, PUBLIC_EXPERIMENTAL_RULESET_IDS,
+                 ACTIVE_RESEARCH_RULESET_IDS, RETIRED_RESEARCH_RULESET_IDS)
     for ruleset_id in _RULESET_POLICIES:
         assert sum(ruleset_id in ids for ids in lifecycles) == 1, ruleset_id
     assert set().union(*lifecycles) == set(_RULESET_POLICIES)
@@ -438,7 +441,7 @@ def test_only_t8_and_t8l_accept_sense(tmp_path: Path, ruleset_id: str) -> None:
     run = run_traced(tmp_path, policy, [("A", 0, [process("a", 100, 64, QUOTA, Scripted("A", log, {1: sense(100)}))]),
                                         ("B", 256, [process("b", 120, 1, QUOTA, Scripted("B", log))])])
     first = run.decisions("A")[0]
-    if ruleset_id in E8_IDS:
+    if ruleset_id in {*E8_IDS, "bytefray-rules-6-alpha1"}:
         assert first["applied_result"]["status"] == "APPLIED" and run.controller.states[0].alive
         assert presence_problems(run.records, active=True) == []
     else:

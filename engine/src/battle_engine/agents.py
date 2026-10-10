@@ -8,6 +8,7 @@ from typing import Any
 import yaml
 
 from battle_engine.agent_api import AgentManifestError
+from battle_engine.agent_capabilities import parse_required_capabilities
 from battle_engine.agent_parameters import (
     EMPTY_PARAMETER_SCHEMA,
     AgentParameterSchema,
@@ -196,6 +197,7 @@ def _spec_from_dir(agent_dir: Path) -> AgentSpec | None:
     # discovery/resolution, as an AgentManifestError naming the file, long
     # before any agent code is imported or executed.
     parameter_schema = parse_parameter_schema(meta, path=yaml_path if meta else None)
+    parse_required_capabilities(meta, path=yaml_path if meta else None)
 
     return AgentSpec(
         name=name,

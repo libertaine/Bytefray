@@ -310,7 +310,7 @@ def test_every_registered_policy_keeps_unlimited_sensing_except_e6() -> None:
     # V6 E8's two identities are E6's with active sensing: each keeps its E6
     # parent's radius, inert there because passive visibility is off
     # (test_ruleset_v6_research_sensing_active.py).
-    radius_32 = {*E6_IDS, BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID,
+    radius_32 = {*E6_IDS, "bytefray-rules-6-alpha1", BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID,
                  BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID}
     assert {ruleset_id: policy.detection_radius for ruleset_id, policy in _RULESET_POLICIES.items()} == {
         ruleset_id: (32 if ruleset_id in radius_32 else None) for ruleset_id in _RULESET_POLICIES
@@ -426,8 +426,11 @@ def test_treatment_is_registered_and_executable_on_the_process_runtime(ruleset_i
 
 
 def test_lifecycle_sets_partition_every_executable_policy() -> None:
+    from battle_engine.ruleset_policy import PUBLIC_EXPERIMENTAL_RULESET_IDS
+
     executable_lifecycles = {
         "public_stable": PUBLIC_STABLE_RULESET_IDS,
+        "public_experimental": PUBLIC_EXPERIMENTAL_RULESET_IDS,
         "active_research": ACTIVE_RESEARCH_RULESET_IDS,
         "retired_research": RETIRED_RESEARCH_RULESET_IDS,
     }

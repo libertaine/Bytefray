@@ -205,14 +205,15 @@ def test_a_validation_dry_run_has_no_window() -> None:
 @pytest.mark.parametrize("ruleset_id", sorted(_RULESET_POLICIES))
 def test_every_registered_ruleset_delivers_its_own_window(tmp_path: Path, ruleset_id: str, worker: bool) -> None:
     policy = resolve_ruleset_policy(ruleset_id)
-    expected = "w27" if ruleset_id in E8_IDS else "wNone"
+    active_ids = {*E8_IDS, "bytefray-rules-6-alpha1"}
+    expected = "w27" if ruleset_id in active_ids else "wNone"
     controller, records = _loaded_match(tmp_path, policy, (REPORTER_SOURCE, REPORTER_SOURCE), (0, 256),
                                         worker=worker, ticks=1)
     assert [spec.processes[0].process_id for spec in controller.entrant_specs] == [expected, expected]
     resets = [r for r in records if r["record_type"] == "reset"]
     assert len(resets) == 2
     for reset in resets:
-        assert reset.get("sensing_window", "<absent>") == (27 if ruleset_id in E8_IDS else "<absent>")
+        assert reset.get("sensing_window", "<absent>") == (27 if ruleset_id in active_ids else "<absent>")
 
 
 def test_a_worker_reset_without_the_key_delivers_none(tmp_path: Path) -> None:

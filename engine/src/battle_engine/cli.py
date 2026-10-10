@@ -609,6 +609,7 @@ def main(argv: Iterable[str] | None = None) -> int:
             )
         )
     except (
+        AgentValidationError,
         UnsupportedMatchCompositionError,
         RulesetRuntimeUnsupportedError,
         RulesetAgentUnsupportedError,

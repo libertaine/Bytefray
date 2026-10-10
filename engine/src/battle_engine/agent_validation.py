@@ -44,6 +44,7 @@ from battle_engine.agent_api import (
     ProcessDeclaration,
     load_python_agent,
 )
+from battle_engine.agent_capabilities import preflight_agent_capabilities
 from battle_engine.agent_trace import (
     ResetRecord,
     TraceAction,
@@ -67,6 +68,13 @@ from battle_engine.python_runtime import (
     diagnose_invalid_action,
     diagnose_load_failure,
     diagnose_reset_failure,
+)
+from battle_engine.ruleset_policy import (
+    PUBLIC_EXPERIMENTAL_RULESET_IDS,
+    PUBLIC_STABLE_RULESET_IDS,
+    RULESET_V4,
+    RulesetPolicy,
+    resolve_ruleset_policy,
 )
 from battle_engine.supervised_runtime import diagnostic_for_worker_result
 
@@ -102,7 +110,9 @@ class AgentValidationFailedError(RuntimeError):
         self.diagnostic = diagnostic
 
 
-def build_validation_context(api_version: int = 2) -> MatchContextV2:
+def build_validation_context(
+    api_version: int = 2, *, ruleset_policy: RulesetPolicy | None = None
+) -> MatchContextV2:
     """Build the one deterministic ``MatchContext`` used for a dry-run reset.
 
     Uses the exact production seed-derivation function
@@ -121,10 +131,9 @@ def build_validation_context(api_version: int = 2) -> MatchContextV2:
         arena_size=VALIDATION_ARENA_SIZE,
         tick_limit=1,
         rng=random.Random(seed),
-        # A dry run belongs to no Ruleset, so it has no sensing radius, and no
-        # SENSE window: a SENSE returned here is refused as an invalid action.
-        detection_radius=None,
-        sensing_window=None,
+        # Omitted policy preserves the established ruleset-free dry run.
+        detection_radius=ruleset_policy.detection_radius if ruleset_policy else None,
+        sensing_window=ruleset_policy.sensing_window if ruleset_policy else None,
     )
 
 
@@ -201,6 +210,7 @@ def _validate_agent(
     data_root: Path | None,
     timeout: float | None = None,
     trace_path: Path | None = None,
+    ruleset_id: str | None = None,
 ) -> ValidationResult:
     root = (data_root or get_data_root()).expanduser().resolve()
     # None means "unsupervised" (this function's own default, matching
@@ -266,13 +276,29 @@ def _validate_agent(
             )
         )
 
+    policy = resolve_ruleset_policy(ruleset_id) if ruleset_id is not None else RULESET_V4
+    try:
+        preflight_agent_capabilities(
+            spec, available=policy.available_capabilities, ruleset_id=policy.ruleset_id
+        )
+    except AgentValidationError as exc:
+        raise AgentValidationFailedError(
+            diagnose_load_failure(exc, agent_id=agent_id, slot=VALIDATION_SLOT)
+        ) from exc
+    validation_policy = policy if ruleset_id is not None else None
+
     trace_writer = _open_validation_trace_writer(
         trace_path, api_version=spec.api_version, timeout=timeout
     )
     try:
         if timeout is None:
-            return _validate_agent_unsupervised(agent_id, spec, trace_writer=trace_writer)
-        return _validate_agent_supervised(agent_id, spec, timeout=timeout, trace_writer=trace_writer)
+            return _validate_agent_unsupervised(
+                agent_id, spec, trace_writer=trace_writer, ruleset_policy=validation_policy
+            )
+        return _validate_agent_supervised(
+            agent_id, spec, timeout=timeout, trace_writer=trace_writer,
+            ruleset_policy=validation_policy,
+        )
     finally:
         if trace_writer is not None:
             trace_writer.close()
@@ -310,9 +336,10 @@ def _trace_validation_reset(
 
 
 def _validate_agent_unsupervised(
-    agent_id: str, spec: Any, *, trace_writer: TraceWriter | None
+    agent_id: str, spec: Any, *, trace_writer: TraceWriter | None,
+    ruleset_policy: RulesetPolicy | None = None,
 ) -> ValidationResult:
-    """Stages 3-5, unmodified from v0.4.0: in-process, untimed. See module docstring."""
+    """Stages 3-5 in-process; explicit policy supplies capability-aware context."""
 
     # Stage 3: manifest/API version/entry point, import/factory, and
     # contract checking -- one indivisible call to the real production
@@ -339,7 +366,7 @@ def _validate_agent_unsupervised(
         )
 
     # Stage 4: deterministic reset.
-    context = build_validation_context(api_version)
+    context = build_validation_context(api_version, ruleset_policy=ruleset_policy)
     instance = cast(AgentV2, loaded.instance)
     reset_start = time.perf_counter()
     try:
@@ -400,7 +427,9 @@ def _validate_agent_unsupervised(
         raise AgentValidationFailedError(diagnostic) from exc
 
     try:
-        validated_action = ProcessMatchController._validate_v2_action(action)
+        validated_action = ProcessMatchController._validate_v2_action(
+            action, sensing_available=bool(ruleset_policy and ruleset_policy.sensing_window)
+        )
     except (InvalidPythonActionError, ValueError) as exc:
         invalid = (
             exc
@@ -469,7 +498,8 @@ def _observation_tick(observation: ObservationV2) -> int:
 
 
 def _validate_agent_supervised(
-    agent_id: str, spec: Any, *, timeout: float, trace_writer: TraceWriter | None
+    agent_id: str, spec: Any, *, timeout: float, trace_writer: TraceWriter | None,
+    ruleset_policy: RulesetPolicy | None = None,
 ) -> ValidationResult:
     """Stages 3-5 via one whole-dry-run-lifetime worker subprocess, with a timeout.
 
@@ -480,7 +510,10 @@ def _validate_agent_supervised(
     handle = AgentWorkerHandle(agent_id=VALIDATION_AGENT_ID, slot=VALIDATION_SLOT)
     handle.start()
     try:
-        load_result = handle.load(spec, timeout=timeout)
+        load_result = handle.load(
+            spec, timeout=timeout,
+            ruleset_id=(ruleset_policy or RULESET_V4).ruleset_id,
+        )
         if load_result.status is not WorkerCallStatus.OK:
             diagnostic = diagnostic_for_worker_result(
                 load_result,
@@ -503,6 +536,8 @@ def _validate_agent_supervised(
             tick_limit=1,
             action_budget=1,
             timeout=timeout,
+            detection_radius=ruleset_policy.detection_radius if ruleset_policy else None,
+            sensing_window=ruleset_policy.sensing_window if ruleset_policy else None,
         )
         if reset_result.status is not WorkerCallStatus.OK:
             diagnostic = diagnostic_for_worker_result(
@@ -612,7 +647,10 @@ def _validate_agent_supervised(
                 operand=action_payload.get("operand"),
                 value=action_payload.get("value"),
             )
-            validated_action = ProcessMatchController._validate_v2_action(validated_action)
+            validated_action = ProcessMatchController._validate_v2_action(
+                validated_action,
+                sensing_available=bool(ruleset_policy and ruleset_policy.sensing_window),
+            )
         except (KeyError, ValueError, InvalidPythonActionError) as exc:
             invalid = (
                 exc
@@ -648,6 +686,7 @@ def validate_agent(
     data_root: Path | None = None,
     timeout: float | None = None,
     trace_path: Path | None = None,
+    ruleset_id: str | None = None,
 ) -> ValidationResult:
     """Validate one Python agent's Agent API v2 contract with one dry-run tick.
 
@@ -671,7 +710,10 @@ def validate_agent(
     """
 
     try:
-        return _validate_agent(agent_id, data_root=data_root, timeout=timeout, trace_path=trace_path)
+        return _validate_agent(
+            agent_id, data_root=data_root, timeout=timeout, trace_path=trace_path,
+            ruleset_id=ruleset_id,
+        )
     except AgentValidationFailedError:
         raise
     except Exception as exc:
@@ -698,6 +740,10 @@ def _parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument("agent_id", help="agent's discovery id to validate")
+    parser.add_argument(
+        "--ruleset", choices=sorted(PUBLIC_STABLE_RULESET_IDS | PUBLIC_EXPERIMENTAL_RULESET_IDS),
+        default=None, help="explicit Ruleset for capability-aware dry-run validation",
+    )
     parser.add_argument(
         "--timeout",
         type=_timeout_value,
@@ -737,7 +783,8 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         result = validate_agent(
-            agent_id, timeout=effective_timeout, trace_path=args.trace_path
+            agent_id, timeout=effective_timeout, trace_path=args.trace_path,
+            ruleset_id=args.ruleset,
         )
     except AgentValidationFailedError as exc:
         diagnostic = exc.diagnostic

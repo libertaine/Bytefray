@@ -32,6 +32,7 @@ from battle_engine.agent_api import (
     load_python_agent,
     local_source_fingerprint,
 )
+from battle_engine.agent_capabilities import preflight_agent_capabilities
 from battle_engine.agent_trace import (
     ABSENT,
     Absent,
@@ -441,6 +442,19 @@ class ProcessMatchController:
                 message=sensing_window_problem,
             )
 
+        # Preflight the whole roster before importing even the first entrant.
+        for slot, entrant in enumerate(entrants):
+            try:
+                preflight_agent_capabilities(
+                    entrant.python_spec,
+                    available=ruleset_policy.available_capabilities,
+                    ruleset_id=ruleset_policy.ruleset_id,
+                )
+            except AgentValidationError as exc:
+                raise PythonEntrantInitializationError(
+                    diagnose_load_failure(exc, agent_id=entrant.agent_id, slot=slot)
+                ) from exc
+
         worker_handles: list[AgentWorkerHandle] = []
         specs: list[ProcessEntrantSpec] = []
         try:
@@ -541,7 +555,8 @@ class ProcessMatchController:
                     handle.start()
                     worker_handles.append(handle)
                     load_result = handle.load(
-                        entrant.python_spec, timeout=agent_call_timeout
+                        entrant.python_spec, timeout=agent_call_timeout,
+                        ruleset_id=ruleset_policy.ruleset_id,
                     )
                     if load_result.status is not WorkerCallStatus.OK:
                         raise PythonEntrantInitializationError(

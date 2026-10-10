@@ -282,8 +282,11 @@ def test_e2_is_registered_and_executable_on_the_process_runtime() -> None:
 
 
 def test_lifecycle_sets_partition_every_executable_policy() -> None:
+    from battle_engine.ruleset_policy import PUBLIC_EXPERIMENTAL_RULESET_IDS
+
     executable_lifecycles = {
         "public_stable": PUBLIC_STABLE_RULESET_IDS,
+        "public_experimental": PUBLIC_EXPERIMENTAL_RULESET_IDS,
         "active_research": ACTIVE_RESEARCH_RULESET_IDS,
         "retired_research": RETIRED_RESEARCH_RULESET_IDS,
     }

@@ -66,6 +66,10 @@ from battle_engine.agent_api import (
     ProcessDeclaration,
     load_python_agent,
 )
+from battle_engine.agent_capabilities import (
+    parse_required_capabilities,
+    preflight_agent_capabilities,
+)
 from battle_engine.agents import AgentSpec
 from battle_engine.launchers import build_agents_command
 from battle_engine.process_containment import (
@@ -80,6 +84,8 @@ from battle_engine.python_runtime import (
     diagnose_load_failure,
     diagnose_reset_failure,
 )
+from battle_engine.rules import BYTEFRAY_RULESET_V4_ID
+from battle_engine.ruleset_policy import resolve_ruleset_policy
 
 WORKER_SUBCOMMAND = "_worker"
 
@@ -105,6 +111,8 @@ class WorkerCallResult:
 def agent_spec_to_payload(spec: AgentSpec) -> dict[str, Any]:
     """Serialize the ``AgentSpec`` fields ``load_python_agent`` actually reads."""
 
+    manifest = getattr(spec, "manifest", {})
+    required = parse_required_capabilities(manifest, path=spec.dir)
     return {
         "name": spec.name,
         "display": spec.display,
@@ -113,6 +121,9 @@ def agent_spec_to_payload(spec: AgentSpec) -> dict[str, Any]:
         "api_version": spec.api_version,
         "version": spec.version,
         "entry_point": spec.entry_point,
+        # Unrelated legacy YAML metadata may contain non-JSON types (dates).
+        "manifest": ({"capabilities": {"version": 1, "required": sorted(required)}}
+                     if "capabilities" in manifest else {}),
     }
 
 
@@ -199,13 +210,16 @@ class AgentWorkerHandle:
         status = WorkerCallStatus.OK if response.get("ok") else WorkerCallStatus.FAILED
         return WorkerCallResult(status, response)
 
-    def load(self, spec: AgentSpec, *, timeout: float) -> WorkerCallResult:
+    def load(
+        self, spec: AgentSpec, *, timeout: float, ruleset_id: str = BYTEFRAY_RULESET_V4_ID
+    ) -> WorkerCallResult:
         return self._call(
             {
                 "cmd": "load",
                 "agent_id": self.agent_id,
                 "slot": self.slot,
                 "spec": agent_spec_to_payload(spec),
+                "ruleset_id": ruleset_id,
             },
             timeout=timeout,
         )
@@ -413,8 +427,19 @@ def _handle_load(state: _WorkerState, request: dict[str, Any], out: Any) -> None
         version=payload.get("version"),
         source_path=None,
         entry_point=payload.get("entry_point"),
+        manifest=payload.get("manifest", {}),
     )
     try:
+        ruleset_id = request.get("ruleset_id", BYTEFRAY_RULESET_V4_ID)
+        # Direct controllers also use injected characterization policies.
+        # Loading callbacks with no requirements needs no registry lookup;
+        # NativeMatchService still owns executable identity validation.
+        required = parse_required_capabilities(spec.manifest, path=spec.dir)
+        available = (resolve_ruleset_policy(ruleset_id).available_capabilities
+                     if required else frozenset())
+        preflight_agent_capabilities(
+            spec, available=available, ruleset_id=ruleset_id
+        )
         loaded = load_python_agent(spec)
     except AgentValidationError as exc:
         diagnostic = diagnose_load_failure(exc, agent_id=agent_id, slot=slot)

@@ -134,8 +134,9 @@ def test_a_validation_dry_run_has_no_radius() -> None:
 @pytest.mark.parametrize("ruleset_id", sorted(_RULESET_POLICIES))
 def test_every_registered_ruleset_delivers_its_own_radius(tmp_path: Path, ruleset_id: str, worker: bool) -> None:
     policy = resolve_ruleset_policy(ruleset_id)
-    expected = "r32" if ruleset_id in RADIUS_32_IDS else "rNone"
-    assert policy.detection_radius == (32 if ruleset_id in RADIUS_32_IDS else None)
+    radius_32_ids = {*RADIUS_32_IDS, "bytefray-rules-6-alpha1"}
+    expected = "r32" if ruleset_id in radius_32_ids else "rNone"
+    assert policy.detection_radius == (32 if ruleset_id in radius_32_ids else None)
     assert _delivered(tmp_path, policy, worker=worker) == [expected, expected]
 
 

@@ -70,6 +70,7 @@ def test_v6_research_scale_is_registered_but_never_automatic() -> None:
     assert BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID not in OMITTED_RULESET_CANDIDATES
     assert PROCESS_RULESET_IDS == frozenset(
         {
+            "bytefray-rules-6-alpha1",
             BYTEFRAY_RULESET_V4_ID,
             BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
             BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,

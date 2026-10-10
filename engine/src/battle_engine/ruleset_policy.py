@@ -33,10 +33,13 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import ClassVar
 
+from battle_engine.agent_api import AgentValidationError
+from battle_engine.agent_capabilities import preflight_agent_capabilities
 from battle_engine.rules import (
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
@@ -354,6 +357,11 @@ class RulesetPolicy:
         """
 
         return ACTIVE_SENSING_HALF_WIDTH if self.sensing_mode == "active" else None
+
+    @property
+    def available_capabilities(self) -> frozenset[str]:
+        """Manifest capabilities supported by this policy's mechanics."""
+        return frozenset({"sense"}) if self.sensing_mode == "active" else frozenset()
 
     def resolve_initial_anchor(self, core_base: int, arena_size: int) -> int:
         """Return the spawn address of a process that declares no position.
@@ -1078,6 +1086,27 @@ RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27 = RulesetPolicy(
 )
 
 
+# M1: literal approved T8 mechanics with an independent product identity.
+RULESET_V6_ALPHA1 = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V6_ALPHA1_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seeded",
+    process_selection="round_robin",
+    movement_stride="fixed_64",
+    movement_displacement="literal",
+    capture_hold_ticks=1,
+    disruption_slot_limit=None,
+    scheduler_pass_order="forward",
+    initial_anchor_placement="core_base",
+    detection_radius=32,
+    sensing_mode="active",
+)
+
+
 # Which Ruleset identities execute on the Agent API v2 process runtime
 # (``battle_engine.process_runtime.ProcessMatchController``). A finite, explicit set for the
 # same reason ``_RULESET_POLICIES`` is a finite table -- and the one place
@@ -1129,6 +1158,7 @@ RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27 = RulesetPolicy(
 # sensing mode.
 PROCESS_RULESET_IDS: frozenset[str] = frozenset(
     {
+        BYTEFRAY_RULESET_V6_ALPHA1_ID,
         BYTEFRAY_RULESET_V4_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
@@ -1150,12 +1180,14 @@ PROCESS_RULESET_IDS: frozenset[str] = frozenset(
 # V6 Phase 11: Explicit Ruleset Lifecycle Sets
 #
 # Every executable identity in ``_RULESET_POLICIES`` belongs to exactly one
-# of PUBLIC_STABLE / ACTIVE_RESEARCH / RETIRED_RESEARCH (V6 E2 design review
+# of PUBLIC_STABLE / PUBLIC_EXPERIMENTAL / ACTIVE_RESEARCH / RETIRED_RESEARCH
+# (M1 K4 extends the original V6 E2 design review
 # Sec A.2/J.2; enforced by ``engine/tests/test_ruleset_v6_research_capture_
 # hold.py``). The per-surface exposure lists (``OMITTED_RULESET_CANDIDATES``,
 # the CLI ``--ruleset`` choices, the Designer options, the evaluation
 # allow-list) remain the actual exposure controls.
 PUBLIC_STABLE_RULESET_IDS: frozenset[str] = frozenset({BYTEFRAY_RULESET_V4_ID})
+PUBLIC_EXPERIMENTAL_RULESET_IDS: frozenset[str] = frozenset({BYTEFRAY_RULESET_V6_ALPHA1_ID})
 ACTIVE_RESEARCH_RULESET_IDS: frozenset[str] = frozenset(
     {
         BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
@@ -1240,6 +1272,7 @@ class UnknownRulesetError(LookupError):
 # alongside it -- explicitly, by its own entry here, never by widening
 # ``bytefray-rules-4``'s own registration.
 _RULESET_POLICIES: Mapping[str, RulesetPolicy] = {
+    RULESET_V6_ALPHA1.ruleset_id: RULESET_V6_ALPHA1,
     RULESET_V4.ruleset_id: RULESET_V4,
     RULESET_V6_RESEARCH_SCALE.ruleset_id: RULESET_V6_RESEARCH_SCALE,
     RULESET_V6_RESEARCH_SCALE_MOVE.ruleset_id: RULESET_V6_RESEARCH_SCALE_MOVE,
@@ -1296,7 +1329,7 @@ def agent_supported_by_ruleset(agent: object, ruleset_id: str) -> bool:
     ``agent`` may be an :class:`~battle_engine.agents.AgentSpec`, a manifest
     mapping, or another metadata projection exposing ``kind`` and
     ``api_version`` attributes.  Ruleset identity and those authoritative
-    fields are the complete decision input; agent IDs and display names are
+    fields and manifest capability requirements are the decision input; agent IDs and display names are
     deliberately ignored.
     """
 
@@ -1308,6 +1341,12 @@ def agent_supported_by_ruleset(agent: object, ruleset_id: str) -> bool:
     try:
         policy = resolve_ruleset_policy(ruleset_id)
     except UnknownRulesetError:
+        return False
+    try:
+        preflight_agent_capabilities(
+            agent, available=policy.available_capabilities, ruleset_id=policy.ruleset_id
+        )
+    except AgentValidationError:
         return False
     return policy.supports_agent(kind=kind, api_version=api_version)
 
@@ -1525,6 +1564,7 @@ __all__ = [
     "BYTEFRAY_RULESET_V4_ALPHA1_ID",
     "BYTEFRAY_RULESET_V4_ALPHA2_ID",
     "BYTEFRAY_RULESET_V4_ID",
+    "BYTEFRAY_RULESET_V6_ALPHA1_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID",
     "BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID",
@@ -1542,9 +1582,11 @@ __all__ = [
     "HISTORICAL_READONLY_RULESET_IDS",
     "OMITTED_RULESET_CANDIDATES",
     "PROCESS_RULESET_IDS",
+    "PUBLIC_EXPERIMENTAL_RULESET_IDS",
     "PUBLIC_STABLE_RULESET_IDS",
     "RETIRED_RESEARCH_RULESET_IDS",
     "RULESET_V4",
+    "RULESET_V6_ALPHA1",
     "RULESET_V6_RESEARCH_CAPTURE_HOLD_K2",
     "RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1",
     "RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE",
