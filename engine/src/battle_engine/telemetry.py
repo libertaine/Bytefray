@@ -30,7 +30,8 @@ class JSONLSink:
         self._f.write(json.dumps(record, separators=(",", ":")) + "\n")
 
     def close(self) -> None:
-        self._f.close()
+        if hasattr(self, "_f") and self._f is not None and not self._f.closed:
+            self._f.close()
 
 
 class JSONSummarySink:

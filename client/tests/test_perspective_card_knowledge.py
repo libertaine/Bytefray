@@ -12,6 +12,38 @@ the brief's Sec. 38 mandatory real-match negative regression: a real replay
 proving a hidden canonical opponent core/score/territory change never
 reaches a Perspective card while the identical Broadcast card shows it
 plainly.
+
+**V6 Phase 2B.10 Scope B note on the real-match regression.** That
+regression's precondition -- a live tick where an entrant's *core* has
+taken damage but is not yet eliminated -- can only ever be produced by a
+match whose Ruleset is a member of
+``battle_engine.python_runtime.VULNERABLE_CORE_RULESET_IDS``
+(``client/src/battle_client/replay_status.py``'s ``_core_status`` returns
+``None`` for any other Ruleset, by design -- the core mechanic's
+visibility is Ruleset-gated, not universal). Among Agent-API-v2/process
+Rulesets, only ``bytefray-rules-4-alpha1`` was ever such a member; stable
+``bytefray-rules-4`` and ``bytefray-rules-4-alpha2`` never were (this is
+pre-existing, deliberate product behavior, unrelated to this phase --
+confirmed in
+docs/research/v6/V6_PHASE2B8_LEGACY_RULESET_RETIREMENT_AUDIT.md Sec E.2).
+Retiring alpha1 from execution therefore does not just remove one identity
+choice for this fixture -- it removes the *only* Ruleset that could ever
+produce this regression's precondition live. Re-pointing this test to
+stable ``bytefray-rules-4`` was tried first and confirmed structurally
+impossible (a search across >1,000 seed/arena/geometry combinations, all
+under the stable control, never produced a tick with partial core
+damage -- because ``.core`` is always ``None`` for it, not because of an
+unlucky seed). Per the phase task's Sec 10 guidance ("prefer converting it
+to a frozen persisted-artifact... characterization" over discarding real
+coverage), this test now loads a real ``bytefray-rules-4-alpha1``
+replay+trace pair captured before retirement
+(``client/tests/fixtures/perspective_card_knowledge/``) instead of running
+a live match. Every assertion the test makes is otherwise unchanged: it is
+still real reader-layer evidence (``get_entrant_statuses``,
+``PerspectiveManager``, ``PygameRenderer``) driven from a real recorded
+match, not a hand-built fixture -- only the *execution* step moved before
+retirement, exactly the boundary this repository's evidence standard
+requires readers to stay independent of the executable registry.
 """
 
 from __future__ import annotations
@@ -28,12 +60,10 @@ from battle_client.renderers.pygame_renderer import (
 )
 from battle_client.replay_status import get_entrant_statuses
 from battle_client.session import ReplaySession, ReplayState
-from battle_engine.agents import resolve_agent
-from battle_engine.config import Config, Weights
-from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
 from battle_engine.replay import AgentState, KillDeathEvent
-from battle_engine.ruleset_policy import RULESET_V4_ALPHA1
 from battle_engine.spectator_derivation import SpectatorEventKind, analyze_pair
+
+FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures" / "perspective_card_knowledge"
 
 
 def _state(tick: int, agents: dict) -> ReplayState:
@@ -41,85 +71,29 @@ def _state(tick: int, agents: dict) -> ReplayState:
         tick=tick, arena=bytes(0), owners=(), agents=agents, score={}, runtime_kind="vm"
     )
 
-_IMPORTS = (
-    "from battle_engine.agent_api import AgentV2, ObservationV2, AgentAction, "
-    "ActionKindV2, MatchContextV2, ProcessDeclaration\n"
-)
 
-# Reused verbatim from engine/tests/test_v4_spectator_director.py's own
-# EXECUTIONER/SLEEPER fixture (Phase 7 Sec. 13's mandatory timing-disclosure
-# regression) -- exact same agents, arena size, tick budget and seed, which
-# already proved (real derivation, not assumption) that this match produces
-# a genuine core-strip-to-elimination and that the victim receives zero
-# visible events for the whole match. Reusing a fixture already proven to
-# converge avoids the exact kind of degenerate-fixture risk Phase 8 Sec. 2
-# disclosed and had to fix (two of its sixteen corpus scenarios initially
-# came back degenerate).
-EXECUTIONER = _IMPORTS + '''
-class Executioner:
-    api_version = 2
-    def declare_processes(self):
-        return [ProcessDeclaration(id="axe", reach=24, share=1.0)]
-    def reset(self, context: MatchContextV2):
-        self.target = None
-        self.step = 0
-    def act(self, obs: ObservationV2) -> AgentAction:
-        if self.target is None and obs.visible_enemy_anchor_addresses:
-            self.target = obs.visible_enemy_anchor_addresses[0]
-        if self.target is None or obs.self_anchor + 4 < self.target:
-            return AgentAction(ActionKindV2.MOVE, 4)
-        self.step += 1
-        return AgentAction(ActionKindV2.WRITE, self.target + (self.step % 8), 0x11)
-def create_agent() -> AgentV2:
-    return Executioner()
-'''
+def _frozen_kill() -> tuple[Path, Path]:
+    """The frozen ``bytefray-rules-4-alpha1`` executioner-vs-sleeper fixture.
 
-SLEEPER = _IMPORTS + '''
-class Sleeper:
-    api_version = 2
-    def declare_processes(self):
-        return [ProcessDeclaration(id="z", reach=1, share=1.0)]
-    def reset(self, context: MatchContextV2):
-        pass
-    def act(self, obs: ObservationV2) -> AgentAction:
-        return AgentAction(ActionKindV2.READ, obs.self_anchor)
-def create_agent() -> AgentV2:
-    return Sleeper()
-'''
+    Captured at commit ``8244e6b588397206d482ddaf2245201f5f09d80d`` (the
+    ``v6-research`` HEAD immediately before Phase 2B.10 Scope B's registry
+    edit landed) from a real match run with the exact agents, arena size,
+    tick budget and seed this test always used: an "executioner" (single
+    process, reach 24, moves toward the opponent's anchor then writes its
+    core addresses in sequence) versus a "sleeper" (single process, reach
+    1, inert) -- reused verbatim from
+    engine/tests/test_v4_spectator_director.py's own EXECUTIONER/SLEEPER
+    fixture (Phase 7 Sec. 13's mandatory timing-disclosure regression),
+    which already proved this exact scenario produces a genuine
+    core-strip-to-elimination with zero visible events for the whole
+    match. See this file's module docstring for why the fixture must stay
+    frozen rather than being re-executed live.
+    """
 
-
-def _write_agent(root: Path, name: str, source: str) -> None:
-    directory = root / "agents" / name
-    directory.mkdir(parents=True, exist_ok=True)
-    (directory / "agent.py").write_text(source)
-    (directory / "agent.yaml").write_text(
-        f"name: {name}\ndescription: Phase 8.5 fixture\nversion: '1.0'\napi_version: 2\n"
+    return (
+        FIXTURES_DIR / "alpha1_executioner_vs_sleeper_replay.jsonl",
+        FIXTURES_DIR / "alpha1_executioner_vs_sleeper_trace.jsonl",
     )
-
-
-def _kill(root: Path) -> tuple[Path, Path]:
-    """A (executioner) strips B's (sleeper's) core to elimination."""
-
-    _write_agent(root, "executioner", EXECUTIONER)
-    _write_agent(root, "sleeper", SLEEPER)
-    replay_path = root / "replay.jsonl"
-    trace_path = root / "trace.jsonl"
-    NativeMatchService().run(
-        MatchRequest(
-            config=Config(
-                seed=13, arena_size=64, instr_per_tick=8, win_mode="capture", weights=Weights()
-            ),
-            entrants=(
-                MatchEntrant.python("A", "Entrant A", 0, resolve_agent(root, "executioner")),
-                MatchEntrant.python("B", "Entrant B", 32, resolve_agent(root, "sleeper")),
-            ),
-            max_ticks=40,
-            replay_path=replay_path,
-            trace_path=trace_path,
-            ruleset_id=RULESET_V4_ALPHA1.ruleset_id,
-        )
-    )
-    return replay_path, trace_path
 
 
 # ---------------------------------------------------------------------------
@@ -232,9 +206,7 @@ def test_advance_capture_callout_keeps_the_selected_entrants_own_capture_redacte
 # ---------------------------------------------------------------------------
 # Sec. 38 mandatory real-match negative regression.
 # ---------------------------------------------------------------------------
-def test_real_match_hidden_opponent_core_loss_never_reaches_a_perspective_card(
-    tmp_path: Path,
-) -> None:
+def test_real_match_hidden_opponent_core_loss_never_reaches_a_perspective_card() -> None:
     """A real replay + trace, run through ``analyze_pair`` and a real
     ``PerspectiveManager``, proving a hidden canonical opponent core/score
     change never reaches entrant A's Perspective card while the identical
@@ -242,9 +214,14 @@ def test_real_match_hidden_opponent_core_loss_never_reaches_a_perspective_card(
     Sec. 13's Director regression and Phase 8's Fight Night ribbon
     regression, for the persistent entrant cards Phase 8 Sec. 11.1 left
     unresolved.
+
+    Loads the frozen ``bytefray-rules-4-alpha1`` fixture (see
+    ``_frozen_kill`` and this file's module docstring) rather than running
+    a live match -- stable ``bytefray-rules-4`` structurally cannot
+    produce this regression's precondition.
     """
 
-    replay_path, trace_path = _kill(tmp_path)
+    replay_path, trace_path = _frozen_kill()
     derivation = analyze_pair(replay_path, trace_path)
 
     # Precondition, proven from the real artifact: the match actually

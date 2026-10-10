@@ -1,0 +1,31 @@
+{
+  "attempt_id": "e9-v2-seal07-native-posix-candidate28",
+  "owner": "implementer",
+  "kind": "guarded-native-posix-pytest",
+  "counts": {
+    "passed": 4,
+    "deselected": 324,
+    "failed": 0,
+    "collected": 4,
+    "skipped": 0,
+    "errors": 0
+  },
+  "exit_code": 0,
+  "implementation_manifest_sha256_raw": "89504e58eb7b46e70bfd43e28b6a4b09fc679868a72e7f2517c888d28f07e23f",
+  "qualification_manifest_sha256_raw": "11ed6b763d1ff754fed224a6e1082d3d222c1bf70fd70e656d42870000d64551",
+  "source_bytes_unchanged_during_attempt": true,
+  "modules": [
+    "engine/tests/test_v6_e9_v2_gate8_seal07.py",
+    "engine/tests/test_v6_e9_v2_independent_gate8_seal07.py"
+  ],
+  "filter": "native_posix_fifo_socket_device_and_publication or native_nonregular_objects_are_refused_in_bounded_subprocess",
+  "retained_artifact_digests": {
+    "stdout.log": "3c3594a95536eb6c3f3110026d11d067502a09eabbfc8bcb102b80ee2e5bda69",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results.xml": "094feac4ce3762b1171aa8869ffd487cd696a84828c77b4c27cf5e247958ae70"
+  },
+  "execution": "LOCKED",
+  "real_E9_entropy_draws": 0,
+  "operational_actions": 0,
+  "note": "Four actual POSIX special-object/program cases, Python3.12 WSL Linux; not full suite, not physical power-loss proof."
+}

@@ -617,8 +617,9 @@ def parse_parameter_schema(
     # Resolved parameters are delivered as `MatchContextV2.parameters`, which
     # only an Agent API v2 agent receives. Declaring a schema anywhere else
     # would be metadata that silently never arrives, so it is refused rather
-    # than accepted and ignored. A VM/blob agent keeps its historical
-    # free-form `defaults` + kwargs path, untouched by Phase D.
+    # than accepted and ignored. Historical VM/blob manifests may still be
+    # inspected through their legacy free-form metadata, but no current
+    # execution path consumes it.
     api_version = manifest.get("api_version")
     if api_version != 2:
         raise error(

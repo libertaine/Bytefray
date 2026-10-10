@@ -126,17 +126,16 @@ before any design decision below was made.
     object, not a copy) — the one place a subprocess redesign has to change
     something.
 12. There is no `multiprocessing` usage anywhere in the repository today,
-    and no per-agent worker-process infrastructure to build on. The two
-    existing subprocess precedents are: `pmars.py`'s
-    `subprocess.run(..., timeout=DEFAULT_TIMEOUT_SECONDS)` (the one place
-    in the codebase that already does hard external-process timeout
-    containment, no shell, argument-list spawn), and the Designer's
-    `QProcess`-per-CLI-invocation pattern (out-of-process specifically
-    *because* agent code is untrusted and unbounded, but with **no
-    timeout** — the only termination path today is a manual, user-triggered
-    `kill()`). `AGENT_API_V1.md` explicitly names "per-callback workers...
-    whole-match worker containment" as a documented future direction, not
-    yet built.
+    and no per-agent worker-process infrastructure to build on. The one
+    existing subprocess precedent is the Designer's `QProcess`-per-CLI-
+    invocation pattern (out-of-process specifically *because* agent code is
+    untrusted and unbounded, but with **no timeout** — the only termination
+    path today is a manual, user-triggered `kill()`). V6's retired
+    `pmars.py` previously did hard external-process timeout containment
+    (`subprocess.run(..., timeout=DEFAULT_TIMEOUT_SECONDS)`, no shell,
+    argument-list spawn) but no longer exists as a precedent to follow.
+    `AGENT_API_V1.md` explicitly names "per-callback workers... whole-match
+    worker containment" as a documented future direction, not yet built.
 13. `engine/src/battle_engine/launchers.py` already has the exact
     frozen-vs-source resolution and argument-list-only spawn pattern needed
     for a new worker process: `build_agents_command(subcommand, arguments)`
@@ -147,7 +146,8 @@ before any design decision below was made.
     `_agents()`. This sidesteps `multiprocessing`'s Windows-frozen
     `freeze_support()` danger zone entirely: a worker is just another
     invocation of the same already-frozen executable with a hidden
-    subcommand, exactly like pMARS/QProcess-launched CLI already are today.
+    subcommand, exactly like a QProcess-launched CLI invocation already is
+    today.
 
 ### Replay
 
@@ -213,8 +213,9 @@ every frozen entry point, and the repository has zero existing precedent
 or packaging coverage for that combination. A worker that is simply
 another invocation of the same executable (source or frozen) with a
 hidden `agents _worker` subcommand needs none of that — it reuses the
-exact spawn-safe, argument-list-only mechanism `pmars.py` and Designer's
-`QProcess` launches already use in production today.
+exact spawn-safe, argument-list-only mechanism the Designer's `QProcess`
+launches already use in production today (the retired `pmars.py` used the
+same pattern before V6).
 
 **Hung-agent containment: per-*call* subprocess (fresh process per
 `act()`).** Rejected: `random.Random` state and any agent-instance state
@@ -256,8 +257,9 @@ so `bytefray run` and the tournament service are provably unaffected:
   *this* match run through **one worker subprocess per Python entrant, kept
   alive for the whole match** (Option B, refined per finding 13: no
   `multiprocessing`, just `subprocess.Popen` on the same executable with a
-  new hidden `agents _worker` verb, mirroring `pmars.py`'s external-timeout
-  precedent at per-call granularity instead of whole-process granularity).
+  new hidden `agents _worker` verb, mirroring the retired `pmars.py`'s
+  external-timeout precedent at per-call granularity instead of
+  whole-process granularity).
   The worker owns the agent instance, its derived RNG, `reset()`, and
   `act()`; the parent (engine) continues to own the arena, tick scheduling,
   and `apply_action` — execution stays exactly where it is today (finding

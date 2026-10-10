@@ -1313,23 +1313,65 @@ def test_index_open_rejects_nothing_but_still_reports_size(tree: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
+_REAL_MATCH_PASSIVE_SOURCE = """
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
+
+class Agent:
+    def reset(self, context):
+        self.arena_size = context.arena_size
+
+    def declare_processes(self):
+        return [ProcessDeclaration(id="main", reach=self.arena_size - 1, share=1.0)]
+
+    def act(self, observation):
+        return AgentAction(ActionKindV2.READ, observation.self_anchor)
+
+def create_agent():
+    return Agent()
+"""
+
+
+def _ensure_real_match_agent(agents_root: Path, name: str) -> None:
+    directory = agents_root / "agents" / name
+    if directory.exists():
+        return
+    directory.mkdir(parents=True)
+    (directory / "agent.yaml").write_text(
+        json.dumps(
+            {
+                "kind": "python",
+                "api_version": 2,
+                "entrypoint": "agent.py:create_agent",
+                "name": name,
+                "version": "1.0",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (directory / "agent.py").write_text(_REAL_MATCH_PASSIVE_SOURCE, encoding="utf-8")
+
+
 def _run_real_match(destination: Path, *, seed: int = 73) -> None:
     """Produce genuine current artifacts through the production writer."""
 
-    from battle_engine.builtins import build_agent
+    from battle_engine.agents import resolve_agent
     from battle_engine.config import Config, Weights
     from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
 
+    agents_root = destination.parents[2] / "fixture_agents"
+    _ensure_real_match_agent(agents_root, "a")
+    _ensure_real_match_agent(agents_root, "b")
+
     config = Config(
         arena_size=128,
-        instr_per_tick=4,
+        instr_per_tick=8,
         seed=seed,
         win_mode="score_fallback",
         weights=Weights(alive=0.25, kill=3.5, territory=0.5, territory_bucket=16),
     )
     entrants = (
-        MatchEntrant("A", "writer", 0, build_agent("writer", 0, offset=80, byte=0x99)),
-        MatchEntrant("B", "runner", 64, build_agent("runner", 64)),
+        MatchEntrant.python("A", "v4_scout", 0, resolve_agent(agents_root, "a")),
+        MatchEntrant.python("B", "v5_region_attacker", 64, resolve_agent(agents_root, "b")),
     )
     destination.mkdir(parents=True, exist_ok=True)
     NativeMatchService().run(

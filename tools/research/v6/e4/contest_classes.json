@@ -1,0 +1,202 @@
+{
+ "authority": "docs/research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md Sec D.1, Sec N",
+ "classes": {
+  "F1": {
+   "e2_disrupt_guard|e2_greedy_painter": "INCIDENTAL",
+   "e2_disrupt_guard|e2_guarded_painter": "OPENING-ONLY",
+   "e2_disrupt_guard|e2_min_guard": "MULTI-PASS",
+   "e2_disrupt_guard|e2_spread_defender": "MULTI-PASS",
+   "e2_disrupt_guard|e2_spread_sniper": "MULTI-PASS",
+   "e2_greedy_painter|e2_guarded_painter": "INCIDENTAL",
+   "e2_greedy_painter|e2_spread_defender": "INCIDENTAL",
+   "e2_greedy_painter|e2_spread_sniper": "INCIDENTAL",
+   "e2_guarded_painter|e2_spread_defender": "OPENING-ONLY",
+   "e2_guarded_painter|e2_spread_sniper": "OPENING-ONLY",
+   "e2_min_guard|e2_greedy_painter": "INCIDENTAL",
+   "e2_min_guard|e2_guarded_painter": "OPENING-ONLY",
+   "e2_min_guard|e2_spread_defender": "OPENING-ONLY",
+   "e2_min_guard|e2_spread_sniper": "OPENING-ONLY",
+   "e2_repair_guard|e2_disrupt_guard": "OPENING-ONLY",
+   "e2_repair_guard|e2_greedy_painter": "INCIDENTAL",
+   "e2_repair_guard|e2_guarded_painter": "OPENING-ONLY",
+   "e2_repair_guard|e2_min_guard": "MULTI-PASS",
+   "e2_repair_guard|e2_spread_defender": "MULTI-PASS",
+   "e2_repair_guard|e2_spread_sniper": "MULTI-PASS",
+   "e2_sniper|e2_disrupt_guard": "MULTI-PASS",
+   "e2_sniper|e2_greedy_painter": "INCIDENTAL",
+   "e2_sniper|e2_guarded_painter": "OPENING-ONLY",
+   "e2_sniper|e2_min_guard": "OPENING-ONLY",
+   "e2_sniper|e2_repair_guard": "MULTI-PASS",
+   "e2_sniper|e2_spread_defender": "OPENING-ONLY",
+   "e2_sniper|e2_spread_sniper": "INCIDENTAL",
+   "e2_spread_sniper|e2_spread_defender": "OPENING-ONLY",
+   "v4_probe|e2_disrupt_guard": "MULTI-PASS",
+   "v4_probe|e2_greedy_painter": "INCIDENTAL",
+   "v4_probe|e2_guarded_painter": "OPENING-ONLY",
+   "v4_probe|e2_min_guard": "OPENING-ONLY",
+   "v4_probe|e2_repair_guard": "MULTI-PASS",
+   "v4_probe|e2_sniper": "INCIDENTAL",
+   "v4_probe|e2_spread_defender": "OPENING-ONLY",
+   "v4_probe|e2_spread_sniper": "INCIDENTAL"
+  },
+  "F2": {
+   "e2_disrupt_guard|e2_disrupt_guard_twin": "OPENING-ONLY",
+   "e2_greedy_painter|e2_greedy_painter_twin": "INCIDENTAL",
+   "e2_guarded_painter|e2_guarded_painter_twin": "OPENING-ONLY",
+   "e2_min_guard|e2_min_guard_twin": "OPENING-ONLY",
+   "e2_repair_guard|e2_repair_guard_twin": "INCIDENTAL",
+   "e2_sniper|e2_sniper_twin": "INCIDENTAL",
+   "e2_spread_defender|e2_spread_defender_twin": "OPENING-ONLY",
+   "e2_spread_sniper|e2_spread_sniper_twin": "INCIDENTAL",
+   "v4_probe|v4_probe_twin": "INCIDENTAL"
+  },
+  "F2-P": {
+   "e2_disrupt_guard|e2_disrupt_guard_twin": "OPENING-ONLY",
+   "e2_greedy_painter|e2_greedy_painter_twin": "INCIDENTAL",
+   "e2_guarded_painter|e2_guarded_painter_twin": "OPENING-ONLY",
+   "e2_min_guard|e2_min_guard_twin": "OPENING-ONLY",
+   "e2_repair_guard|e2_repair_guard_twin": "INCIDENTAL",
+   "e2_sniper|e2_sniper_twin": "INCIDENTAL",
+   "e2_spread_defender|e2_spread_defender_twin": "OPENING-ONLY",
+   "e2_spread_sniper|e2_spread_sniper_twin": "INCIDENTAL",
+   "v4_probe|v4_probe_twin": "INCIDENTAL"
+  },
+  "F4": {
+   "e3_jam_sniper|e2_disrupt_guard": "MULTI-PASS",
+   "e3_jam_sniper|e2_greedy_painter": "INCIDENTAL",
+   "e3_jam_sniper|e2_guarded_painter": "OPENING-ONLY",
+   "e3_jam_sniper|e2_min_guard": "OPENING-ONLY",
+   "e3_jam_sniper|e2_repair_guard": "MULTI-PASS",
+   "e3_jam_sniper|e2_sniper": "INCIDENTAL",
+   "e3_jam_sniper|e2_spread_defender": "OPENING-ONLY",
+   "e3_jam_sniper|e2_spread_sniper": "INCIDENTAL",
+   "e3_jam_sniper|e3_jam_sniper_twin": "INCIDENTAL",
+   "e3_jam_sniper|v4_probe": "INCIDENTAL"
+  }
+ },
+ "rule": "MULTI-PASS: one side writes the other's non-base core cells and the other repairs non-base core cells. OPENING-ONLY: no multi-pass contest, but one side writes the other's anchor (its core cell 0) and the other repairs its base. INCIDENTAL: neither. Assigned from source roles alone, before any treatment data exists; a twin has its primary's roles.",
+ "schema": "bytefray.v6.e4.contest_classes",
+ "source_roles": {
+  "e2_disrupt_guard": {
+   "repairs_own_base": true,
+   "repairs_own_non_base": true,
+   "review_sec_d1_row": [
+    "first action",
+    "(cell 0 as part of 0–6)",
+    "yes (0–6)",
+    "—"
+   ],
+   "writes_enemy_anchor": true,
+   "writes_enemy_non_base": false
+  },
+  "e2_greedy_painter": {
+   "repairs_own_base": false,
+   "repairs_own_non_base": false,
+   "review_sec_d1_row": [
+    "—",
+    "—",
+    "—",
+    "— (paints outward)"
+   ],
+   "writes_enemy_anchor": false,
+   "writes_enemy_non_base": false
+  },
+  "e2_guarded_painter": {
+   "repairs_own_base": true,
+   "repairs_own_non_base": false,
+   "review_sec_d1_row": [
+    "first action",
+    "yes",
+    "—",
+    "— (paints outward)"
+   ],
+   "writes_enemy_anchor": true,
+   "writes_enemy_non_base": false
+  },
+  "e2_min_guard": {
+   "repairs_own_base": true,
+   "repairs_own_non_base": false,
+   "review_sec_d1_row": [
+    "first action",
+    "yes",
+    "—",
+    "yes"
+   ],
+   "writes_enemy_anchor": true,
+   "writes_enemy_non_base": true
+  },
+  "e2_repair_guard": {
+   "repairs_own_base": true,
+   "repairs_own_non_base": true,
+   "review_sec_d1_row": [
+    "—",
+    "—",
+    "yes (cyclic cursor across ticks)",
+    "—"
+   ],
+   "writes_enemy_anchor": false,
+   "writes_enemy_non_base": false
+  },
+  "e2_sniper": {
+   "repairs_own_base": false,
+   "repairs_own_non_base": false,
+   "review_sec_d1_row": [
+    "first action",
+    "—",
+    "—",
+    "yes (sweep)"
+   ],
+   "writes_enemy_anchor": true,
+   "writes_enemy_non_base": true
+  },
+  "e2_spread_defender": {
+   "repairs_own_base": true,
+   "repairs_own_non_base": false,
+   "review_sec_d1_row": [
+    "each visible anchor",
+    "yes",
+    "—",
+    "yes"
+   ],
+   "writes_enemy_anchor": true,
+   "writes_enemy_non_base": true
+  },
+  "e2_spread_sniper": {
+   "repairs_own_base": false,
+   "repairs_own_non_base": false,
+   "review_sec_d1_row": [
+    "each visible anchor",
+    "—",
+    "—",
+    "yes"
+   ],
+   "writes_enemy_anchor": true,
+   "writes_enemy_non_base": true
+  },
+  "e3_jam_sniper": {
+   "repairs_own_base": false,
+   "repairs_own_non_base": false,
+   "review_sec_d1_row": [
+    "on every even action",
+    "—",
+    "—",
+    "yes (odd actions)"
+   ],
+   "writes_enemy_anchor": true,
+   "writes_enemy_non_base": true
+  },
+  "v4_probe": {
+   "repairs_own_base": false,
+   "repairs_own_non_base": false,
+   "review_sec_d1_row": [
+    "first action",
+    "—",
+    "—",
+    "yes (sweep)"
+   ],
+   "writes_enemy_anchor": true,
+   "writes_enemy_non_base": true
+  }
+ },
+ "version": 1
+}

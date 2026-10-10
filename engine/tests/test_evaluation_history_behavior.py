@@ -15,8 +15,8 @@ from battle_engine.evaluation_history.cli import main as evaluations_main
 from battle_engine.evaluation_history.discovery import adapt_any
 from battle_engine.evaluation_history.v1_adapter import adapt_v1
 
-WRITE_ACTION = "AgentAction(ActionKind.WRITE, 0, 1)"
-NOP_ACTION = "AgentAction(ActionKind.NOP)"
+WRITE_ACTION = "AgentAction(ActionKindV2.WRITE, 0, 1)"
+NOP_ACTION = "AgentAction(ActionKindV2.READ, 0)"
 
 
 def _write_python_agent(root: Path, name: str, action: str = WRITE_ACTION) -> None:
@@ -24,14 +24,15 @@ def _write_python_agent(root: Path, name: str, action: str = WRITE_ACTION) -> No
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
     (directory / "agent.py").write_text(
         f"""
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
+    def declare_processes(self): return [ProcessDeclaration("main", 1, 1.0)]
     def reset(self, context): pass
     def act(self, observation): return {action}
 def create_agent(): return Agent()

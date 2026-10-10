@@ -32,7 +32,10 @@ from battle_engine.agent_api import (
     load_python_agent,
     local_source_fingerprint,
 )
+from battle_engine.agent_capabilities import preflight_agent_capabilities
 from battle_engine.agent_trace import (
+    ABSENT,
+    Absent,
     DecisionRecordV2,
     ResetRecord,
     TraceActionV2,
@@ -109,6 +112,15 @@ class ProcessInstance:
         self.local_state: dict[str, Any] = {}
         self.telemetry = ProcessTelemetry(process_id=process_id, role=role.value)
         self.disrupted_until_tick = 0
+        # V6 E3 slot-limited disruption: how many more offers to this
+        # process's own entrant it stays suppressed for inside its current
+        # disruption window. Maintained only by ``ProcessMatchController``
+        # and read only when ``RulesetPolicy.disruption_slot_limit`` is an
+        # integer (see ``ProcessMatchController._is_suppressed``); a stale
+        # positive value left over from an earlier tick is never read,
+        # because suppression also requires ``is_disrupted``. Runtime-only:
+        # never serialized.
+        self.disruption_slots_left = 0
         if initial_position is not None:
             self.telemetry.positions_visited.add(initial_position)
 
@@ -118,6 +130,7 @@ class ProcessInstance:
     def reset(self) -> None:
         self.local_state.clear()
         self.disrupted_until_tick = 0
+        self.disruption_slots_left = 0
         if self.position is not None:
             self.telemetry.positions_visited.add(self.position)
 
@@ -166,10 +179,29 @@ class EntrantState:
     last_read: int | None = None
     diagnostic: RuntimeDiagnostic | None = None
     entrant_termination: str | None = None
+    # V6 E2 capture-hold progress, maintained only by
+    # ``python_runtime.apply_core_capture`` (see its docstring): consecutive
+    # zero-core capture evaluations so far, and the capturer attributed at
+    # the evaluation where that streak began. Runtime-only: replay snapshots
+    # and results read named attributes, never this dataclass wholesale, so
+    # neither field is ever serialized.
+    core_zero_streak: int = 0
+    core_zero_onset_capturer: str | None = None
 
     @property
     def core_start(self) -> int:
         return self.core_base
+
+
+def _trace_sensing_window(ruleset_policy: RulesetPolicy) -> int | Absent:
+    """What a ``ResetRecord`` records as ``sensing_window`` (V6 E8, PR8 Sec 10).
+
+    The window in effect under an active Ruleset; :data:`ABSENT` under every
+    other, so a passive match's reset records serialize exactly as before.
+    """
+
+    window = ruleset_policy.sensing_window
+    return ABSENT if window is None else window
 
 
 class ProcessAgentCallError(RuntimeError):
@@ -203,6 +235,43 @@ class ProcessMatchController:
                 slot=slot,
                 exception_type=exception_type,
             )
+        )
+
+    @staticmethod
+    def _detection_radius_problem(ruleset_policy: RulesetPolicy, arena_size: int) -> str | None:
+        """Why ``ruleset_policy``'s sensing radius cannot run at ``arena_size``, if it cannot.
+
+        V6 E6's match-level validation layer (``RulesetPolicy`` checks the
+        other: ``None`` or an integer >= 1). A radius ``d`` requires
+        ``2 * d < arena_size``: no two cells are farther apart than half the
+        ring, so a larger radius would sense every anchor on it. ``None``
+        imposes nothing.
+        """
+
+        radius = ruleset_policy.detection_radius
+        if radius is None or 2 * radius < arena_size:
+            return None
+        return (
+            f"Ruleset {ruleset_policy.ruleset_id!r} limits sensing to detection_radius {radius}, "
+            f"which requires arena_size > {2 * radius}; received {arena_size}."
+        )
+
+    @staticmethod
+    def _sensing_window_problem(ruleset_policy: RulesetPolicy, arena_size: int) -> str | None:
+        """Why ``ruleset_policy``'s SENSE window cannot run at ``arena_size``, if it cannot.
+
+        V6 E8's match-level check, the counterpart of
+        :meth:`_detection_radius_problem`: a half-width ``w`` requires
+        ``2 * w < arena_size``, or one window would cover the whole ring.
+        A passive Ruleset has no window and imposes nothing.
+        """
+
+        window = ruleset_policy.sensing_window
+        if window is None or 2 * window < arena_size:
+            return None
+        return (
+            f"Ruleset {ruleset_policy.ruleset_id!r} senses with half-width {window}, "
+            f"which requires arena_size > {2 * window}; received {arena_size}."
         )
 
     @classmethod
@@ -354,6 +423,37 @@ class ProcessMatchController:
                 stage="configuration",
                 message="V4 matches require arena_size > 1 and a positive tick limit.",
             )
+        # The same check ``__init__`` makes, here so an invalid match fails
+        # before any entrant's code is loaded or reset.
+        detection_radius_problem = cls._detection_radius_problem(
+            ruleset_policy, config.arena_size
+        )
+        if detection_radius_problem is not None:
+            raise cls._initialization_error(
+                code="match_configuration_invalid",
+                stage="configuration",
+                message=detection_radius_problem,
+            )
+        sensing_window_problem = cls._sensing_window_problem(ruleset_policy, config.arena_size)
+        if sensing_window_problem is not None:
+            raise cls._initialization_error(
+                code="match_configuration_invalid",
+                stage="configuration",
+                message=sensing_window_problem,
+            )
+
+        # Preflight the whole roster before importing even the first entrant.
+        for slot, entrant in enumerate(entrants):
+            try:
+                preflight_agent_capabilities(
+                    entrant.python_spec,
+                    available=ruleset_policy.available_capabilities,
+                    ruleset_id=ruleset_policy.ruleset_id,
+                )
+            except AgentValidationError as exc:
+                raise PythonEntrantInitializationError(
+                    diagnose_load_failure(exc, agent_id=entrant.agent_id, slot=slot)
+                ) from exc
 
         worker_handles: list[AgentWorkerHandle] = []
         specs: list[ProcessEntrantSpec] = []
@@ -398,6 +498,8 @@ class ProcessMatchController:
                         # already failed the match without importing agent
                         # code. Empty for every agent without a schema.
                         parameters=MappingProxyType(dict(entrant.parameters)),
+                        detection_radius=ruleset_policy.detection_radius,
+                        sensing_window=ruleset_policy.sensing_window,
                     )
                     instance = cast(AgentV2, loaded.instance)
                     reset_start = time.perf_counter()
@@ -408,6 +510,7 @@ class ProcessMatchController:
                             trace_writer.write_reset(ResetRecord(
                                 agent_id=entrant.agent_id,
                                 wall_time_ms=(time.perf_counter() - reset_start) * 1000,
+                                sensing_window=_trace_sensing_window(ruleset_policy),
                             ))
                         raise PythonEntrantInitializationError(
                             diagnose_reset_failure(exc, agent_id=entrant.agent_id, slot=slot)
@@ -416,6 +519,7 @@ class ProcessMatchController:
                         trace_writer.write_reset(ResetRecord(
                             agent_id=entrant.agent_id,
                             wall_time_ms=(time.perf_counter() - reset_start) * 1000,
+                            sensing_window=_trace_sensing_window(ruleset_policy),
                         ))
                     try:
                         declarations: object = instance.declare_processes()
@@ -451,7 +555,8 @@ class ProcessMatchController:
                     handle.start()
                     worker_handles.append(handle)
                     load_result = handle.load(
-                        entrant.python_spec, timeout=agent_call_timeout
+                        entrant.python_spec, timeout=agent_call_timeout,
+                        ruleset_id=ruleset_policy.ruleset_id,
                     )
                     if load_result.status is not WorkerCallStatus.OK:
                         raise PythonEntrantInitializationError(
@@ -477,11 +582,14 @@ class ProcessMatchController:
                         action_budget=config.instr_per_tick,
                         timeout=agent_call_timeout,
                         parameters=entrant.parameters,
+                        detection_radius=ruleset_policy.detection_radius,
+                        sensing_window=ruleset_policy.sensing_window,
                     )
                     if trace_writer is not None:
                         trace_writer.write_reset(ResetRecord(
                             agent_id=entrant.agent_id,
                             wall_time_ms=(time.perf_counter() - reset_start) * 1000,
+                            sensing_window=_trace_sensing_window(ruleset_policy),
                         ))
                     if reset_result.status is not WorkerCallStatus.OK:
                         raise PythonEntrantInitializationError(
@@ -629,7 +737,7 @@ class ProcessMatchController:
         entrant_specs: list[ProcessEntrantSpec],
         max_ticks: int,
         ruleset_policy: RulesetPolicy | None = None,
-        max_move_delta: int = 64,
+        max_move_delta: int | None = None,
         trace_writer: TraceWriter | None = None,
         **kwargs
     ):
@@ -638,7 +746,11 @@ class ProcessMatchController:
         self.max_ticks = max_ticks
         self.ruleset_policy = ruleset_policy or RULESET_V4
         self.disruption_duration = 1
-        self.max_move_delta = max_move_delta
+        self.max_move_delta = (
+            max_move_delta
+            if max_move_delta is not None
+            else self.ruleset_policy.resolve_max_move_delta(config.arena_size)
+        )
         self.trace_writer = trace_writer
         # v4 alpha2's round-robin process-selection cursor: for each entrant,
         # the index its next intra-entrant selection scan starts from. Alpha1
@@ -651,6 +763,14 @@ class ProcessMatchController:
 
         if config.instr_per_tick <= 0 or config.arena_size <= 1 or max_ticks <= 0:
             raise ValueError("process matches require positive arena, quota, and tick limit")
+        detection_radius_problem = self._detection_radius_problem(
+            self.ruleset_policy, config.arena_size
+        )
+        if detection_radius_problem is not None:
+            raise ValueError(detection_radius_problem)
+        sensing_window_problem = self._sensing_window_problem(self.ruleset_policy, config.arena_size)
+        if sensing_window_problem is not None:
+            raise ValueError(sensing_window_problem)
 
         for spec in entrant_specs:
             if not spec.processes:
@@ -713,11 +833,17 @@ class ProcessMatchController:
             for cell in core_cells:
                 self.vm._wr8(cell, 0xCE, owner=spec.agent_id)
 
-            # Reset processes
+            # Reset processes. A process with no declared position spawns
+            # where the Ruleset says (``RulesetPolicy.resolve_initial_anchor``):
+            # on core cell 0 historically, one cell before the core under V6
+            # E5's ``"before_core"``. A spawn rule only -- nothing here or
+            # elsewhere constrains where a process may move afterwards.
             for p in spec.processes:
                 p.reset()
                 if p.position is None:
-                    p.position = start
+                    p.position = self.ruleset_policy.resolve_initial_anchor(
+                        start, config.arena_size
+                    )
                 else:
                     unnormalized_position = p.position
                     p.position %= config.arena_size
@@ -726,10 +852,34 @@ class ProcessMatchController:
                 p.telemetry.positions_visited.add(p.position)
 
         self._states_by_agent_id = {st.agent_id: st for st in self.states}
+        self._specs_by_agent_id = {spec.agent_id: spec for spec in entrant_specs}
 
     def _circular_dist(self, a: int, b: int) -> int:
         d = abs(a - b)
         return min(d, self.config.arena_size - d)
+
+    def _is_suppressed(self, process: ProcessInstance, tick: int) -> bool:
+        """Whether disruption currently makes ``process`` unable to act or sense.
+
+        The one predicate behind both process eligibility
+        (:meth:`_effective_process_quotas`) and entrant sensing
+        (:meth:`_visible_enemy_anchors`). A process is suppressed only inside
+        its tick-level disruption window (:meth:`ProcessInstance.is_disrupted`),
+        and, when ``RulesetPolicy.disruption_slot_limit`` is an integer
+        (V6 E3), only while it still has suppressed offers left. Under
+        ``None`` this is exactly ``is_disrupted``: whole-tick disruption.
+
+        Deliberately *not* what the replay's per-process ``disrupted`` flag
+        reports: that flag keeps its permanent meaning, "hit during this
+        tick" (``is_disrupted``), under every Ruleset.
+        """
+
+        if not process.is_disrupted(tick):
+            return False
+        return (
+            self.ruleset_policy.disruption_slot_limit is None
+            or process.disruption_slots_left > 0
+        )
 
     def _visible_enemy_anchors(
         self,
@@ -743,8 +893,14 @@ class ProcessMatchController:
         making the resulting spatial fact entrant-wide without exposing which
         sensor observed it. Co-located enemies collapse to one occupied
         address; identities and structural metadata remain private.
+
+        Under ``sensing_mode == "active"`` (V6 E8, PR8 Sec 2.1) passive
+        visibility is off: the set is empty at every callback, and the only
+        way to learn where an enemy anchor is is the SENSE action.
         """
 
+        if self.ruleset_policy.sensing_mode == "active":
+            return ()
         enemy_positions = {
             process.position
             for spec in self.entrant_specs
@@ -757,13 +913,17 @@ class ProcessMatchController:
         observers = [
             process
             for process in observer_spec.processes
-            if process.position is not None and not process.is_disrupted(tick)
+            if process.position is not None and not self._is_suppressed(process, tick)
         ]
         visible: set[int] = set()
         for enemy_position in enemy_positions:
             for observer in observers:
                 observer_position = observer.position
-                radius = observer.reach
+                radius = (
+                    None
+                    if observer.reach is None
+                    else self.ruleset_policy.resolve_sensing_radius(observer.reach)
+                )
                 if (
                     observer_position is not None
                     and radius is not None
@@ -772,6 +932,28 @@ class ProcessMatchController:
                     visible.add(enemy_position)
                     break
         return tuple(sorted(visible))
+
+    def _sensed_anchors(self, observer_spec: ProcessEntrantSpec, target: int) -> tuple[int, ...]:
+        """What a SENSE at ``target`` by ``observer_spec`` returns (V6 E8, PR8 Sec 2.3).
+
+        The ascending tuple of distinct positions of the processes of every
+        *other live* entrant within circular distance ``<= sensing_window``
+        of ``target``, inclusive, taken now -- the instant the action
+        executes. Suppression does not hide a process from it, co-located
+        anchors appear once, and the acting entrant's own processes never
+        appear.
+        """
+
+        window = self.ruleset_policy.sensing_window
+        if window is None:
+            raise RuntimeError(f"Ruleset {self.ruleset_policy.ruleset_id!r} has no SENSE window")
+        return tuple(sorted({
+            process.position
+            for spec in self.entrant_specs
+            if spec.agent_id != observer_spec.agent_id and self._states_by_agent_id[spec.agent_id].alive
+            for process in spec.processes
+            if process.position is not None and self._circular_dist(process.position, target) <= window
+        }))
 
     def _effective_process_quotas(
         self,
@@ -794,7 +976,7 @@ class ProcessMatchController:
                 limits_by_id[process.process_id] = limits_by_id.get(process.process_id, 0) + limit
             return {process: limits_by_id[process.process_id] for process in allocations}
 
-        eligible = [p for p in spec.processes if not p.is_disrupted(tick)]
+        eligible = [p for p in spec.processes if not self._is_suppressed(p, tick)]
         if not eligible:
             return {}
 
@@ -903,11 +1085,32 @@ class ProcessMatchController:
         return None
 
     @staticmethod
-    def _validate_v2_action(action: object) -> AgentAction:
+    def _refuse_unavailable_sense(action: object, *, sensing_available: bool) -> None:
+        """Raise the invalid-action ``ValueError`` for a SENSE its Ruleset does not offer.
+
+        V6 E8's A1 containment at the engine boundary (PR8 Sec 2.3 and 13):
+        SENSE exists only under ``sensing_mode == "active"``; anywhere else it
+        is an invalid v2 action, rejected before an action is recorded, and the
+        entrant forfeits exactly as for any other invalid action.
+        """
+
+        if not sensing_available and getattr(action, "kind", None) is ActionKindV2.SENSE:
+            raise ValueError("sense is available only under a Ruleset whose sensing_mode is 'active'")
+
+    @staticmethod
+    def _validate_v2_action(action: object, *, sensing_available: bool = False) -> AgentAction:
+        """Validate one returned v2 action's shape.
+
+        ``sensing_available`` defaults to ``False``, so every caller that does
+        not name a Ruleset -- a validation dry run belongs to none -- refuses
+        SENSE. Only a match under an active Ruleset passes ``True``.
+        """
+
         if not isinstance(action, AgentAction):
             raise ValueError("act() must return one AgentAction")
         if not isinstance(action.kind, ActionKindV2):
             raise ValueError("Agent API v2 supports READ, WRITE, and MOVE only")
+        ProcessMatchController._refuse_unavailable_sense(action, sensing_available=sensing_available)
         if isinstance(action.operand, bool) or not isinstance(action.operand, int):
             raise ValueError(f"{action.kind.value} requires one integer operand")
         if action.kind is ActionKindV2.WRITE:
@@ -945,6 +1148,8 @@ class ProcessMatchController:
         action: TraceActionV2 | None,
         diag: TraceDiagnostic | None,
         res: TraceResultV2 | None,
+        *,
+        reflection: tuple[int, ...] | None | Absent = ABSENT,
     ) -> None:
         if writer is None:
             return
@@ -962,6 +1167,7 @@ class ProcessMatchController:
             previous_action_applied=obs.previous_action_applied,
             previous_read_value=obs.previous_read_value,
             previous_read_owner=obs.previous_read_owner,
+            previous_sense_anchors=reflection,
         )
         writer.write_decision_v2(DecisionRecordV2(
             agent_id=agent_id,
@@ -1059,7 +1265,14 @@ class ProcessMatchController:
                     previous_action_applied=last_res.get("applied", False),
                     previous_read_value=last_res.get("read_val"),
                     previous_read_owner=last_res.get("read_owner"),
+                    previous_sense_anchors=last_res.get("sense_anchors"),
                 )
+                # V6 E8 (PR8 Sec 10): the callback after a SENSE record owes its
+                # reflection -- the tuple, or None after a refusal -- however many
+                # ticks of suppression came between. ``last_res`` holds a
+                # "sense_anchors" key exactly when this process's previous action
+                # was a SENSE; every other callback omits the trace field.
+                trace_reflection: tuple[int, ...] | None | Absent = last_res.get("sense_anchors", ABSENT)
 
                 trace_start = time.perf_counter() if self.trace_writer is not None else 0.0
 
@@ -1067,8 +1280,11 @@ class ProcessMatchController:
                 
                 try:
                     action = active_proc.act(obs, slot)
+                    sensing_available = self.ruleset_policy.sensing_mode == "active"
                     if spec.normalized_shares:
-                        action = self._validate_v2_action(action)
+                        action = self._validate_v2_action(action, sensing_available=sensing_available)
+                    else:
+                        self._refuse_unavailable_sense(action, sensing_available=sensing_available)
                 except ProcessAgentCallError as exc:
                     _proc_actions[st.agent_id][active_proc.process_id] += 1
                     st.cpu_used += 1
@@ -1091,7 +1307,7 @@ class ProcessMatchController:
                         code=exc.diagnostic.code, stage=exc.diagnostic.stage, message=exc.diagnostic.message,
                         agent_id=exc.diagnostic.agent_id, slot=exc.diagnostic.slot, exception_type=exc.diagnostic.exception_type,
                         tick=exc.diagnostic.tick, action_slot=exc.diagnostic.action_slot
-                    ), TraceResultV2(status="EXCEPTION"))
+                    ), TraceResultV2(status="EXCEPTION"), reflection=trace_reflection)
                     return
                 except ValueError as exc:
                     _proc_actions[st.agent_id][active_proc.process_id] += 1
@@ -1127,7 +1343,7 @@ class ProcessMatchController:
                         code=diagnostic.code, stage=diagnostic.stage, message=diagnostic.message,
                         agent_id=diagnostic.agent_id, slot=diagnostic.slot, exception_type=diagnostic.exception_type,
                         tick=diagnostic.tick, action_slot=diagnostic.action_slot
-                    ), TraceResultV2(status="EXCEPTION" if diagnostic.code != "agent_action_invalid" else "REJECTED_INVALID"))
+                    ), TraceResultV2(status="EXCEPTION" if diagnostic.code != "agent_action_invalid" else "REJECTED_INVALID"), reflection=trace_reflection)
                     return
                 except Exception as exc:
                     _proc_actions[st.agent_id][active_proc.process_id] += 1
@@ -1158,7 +1374,7 @@ class ProcessMatchController:
                         code=diagnostic.code, stage=diagnostic.stage, message=diagnostic.message,
                         agent_id=diagnostic.agent_id, slot=diagnostic.slot, exception_type=diagnostic.exception_type,
                         tick=diagnostic.tick, action_slot=diagnostic.action_slot
-                    ), TraceResultV2(status="EXCEPTION" if diagnostic.code != "agent_action_invalid" else "REJECTED_INVALID"))
+                    ), TraceResultV2(status="EXCEPTION" if diagnostic.code != "agent_action_invalid" else "REJECTED_INVALID"), reflection=trace_reflection)
                     return
                 _proc_actions[st.agent_id][active_proc.process_id] += 1
                 st.cpu_used += 1
@@ -1181,7 +1397,10 @@ class ProcessMatchController:
                 elif action.kind in (ActionKind.MOVE, ActionKindV2.MOVE):
                     if active_proc.position is not None:
                         op = action.operand if action.operand is not None else 0
-                        delta = max(-self.max_move_delta, min(op, self.max_move_delta))
+                        clamped_op = max(-self.max_move_delta, min(op, self.max_move_delta))
+                        delta = self.ruleset_policy.resolve_movement_displacement(
+                            clamped_op, self.config.arena_size
+                        )
                         new_pos = (active_proc.position + delta) % self.config.arena_size
                         active_proc.position = new_pos
                         active_proc.telemetry.total_moves += 1
@@ -1200,7 +1419,7 @@ class ProcessMatchController:
                         res_info["read_owner"] = None
                         res_info["applied"] = False
                         last_obs_results[st.agent_id][active_proc.process_id] = res_info
-                        ProcessMatchController._emit_decision_trace(self.trace_writer, st.agent_id, active_proc.process_id, trace_start, obs, trace_action, None, TraceResultV2(status="REJECTED_OUT_OF_REACH"))
+                        ProcessMatchController._emit_decision_trace(self.trace_writer, st.agent_id, active_proc.process_id, trace_start, obs, trace_action, None, TraceResultV2(status="REJECTED_OUT_OF_REACH"), reflection=trace_reflection)
                         return
 
                     val = self.vm.arena[target_addr]
@@ -1222,7 +1441,7 @@ class ProcessMatchController:
                         # Out of reach: write discarded
                         res_info["applied"] = False
                         last_obs_results[st.agent_id][active_proc.process_id] = res_info
-                        ProcessMatchController._emit_decision_trace(self.trace_writer, st.agent_id, active_proc.process_id, trace_start, obs, trace_action, None, TraceResultV2(status="REJECTED_OUT_OF_REACH"))
+                        ProcessMatchController._emit_decision_trace(self.trace_writer, st.agent_id, active_proc.process_id, trace_start, obs, trace_action, None, TraceResultV2(status="REJECTED_OUT_OF_REACH"), reflection=trace_reflection)
                         return
 
                     val = (action.value if action.value is not None else 0) & 0xFF
@@ -1237,6 +1456,7 @@ class ProcessMatchController:
                     # current anchor occupies this cell is disrupted. Friendly
                     # processes are immune even when co-located.
                     if self.disruption_duration > 0:
+                        slot_limit = self.ruleset_policy.disruption_slot_limit
                         for other_spec in self.entrant_specs:
                             if other_spec.agent_id == st.agent_id:
                                 continue
@@ -1245,9 +1465,38 @@ class ProcessMatchController:
                             for other_p in other_spec.processes:
                                 if other_p.position is not None and other_p.position == target_addr:
                                     other_p.disrupted_until_tick = _tick + self.disruption_duration
+                                    # V6 E3: assigned, never accumulated -- a
+                                    # second hit before the victim's next
+                                    # offer still suppresses only one offer.
+                                    if slot_limit is not None:
+                                        other_p.disruption_slots_left = slot_limit
                                     other_p.telemetry.disruption_hits_received += 1
                                     other_p.telemetry.total_disrupted_ticks += self.disruption_duration
                                     other_p.telemetry.disrupted_match_ticks.add(_tick)
+
+                elif action.kind is ActionKindV2.SENSE:
+                    # V6 E8 (PR8 Sec 2.3): reach is checked exactly as for READ.
+                    # Refused, the record's ``sensed_anchors`` is an explicit
+                    # null; applied, it is the tuple, possibly empty. Nothing in
+                    # the match changes either way, and the sensed entrant
+                    # learns nothing.
+                    target_addr = (action.operand if action.operand is not None else 0) % self.config.arena_size
+                    if (
+                        active_proc.reach is not None
+                        and active_proc.position is not None
+                        and self._circular_dist(target_addr, active_proc.position) > active_proc.reach
+                    ):
+                        res_info["applied"] = False
+                        res_info["sense_anchors"] = None
+                        last_obs_results[st.agent_id][active_proc.process_id] = res_info
+                        ProcessMatchController._emit_decision_trace(
+                            self.trace_writer, st.agent_id, active_proc.process_id, trace_start, obs, trace_action,
+                            None, TraceResultV2(status="REJECTED_OUT_OF_REACH", sensed_anchors=None),
+                            reflection=trace_reflection,
+                        )
+                        return
+                    res_info["normalized_address"] = target_addr
+                    res_info["sense_anchors"] = self._sensed_anchors(spec, target_addr)
 
                 last_obs_results[st.agent_id][active_proc.process_id] = res_info
                 
@@ -1258,12 +1507,52 @@ class ProcessMatchController:
                         normalized_address=active_proc.position if (action and action.kind in (ActionKind.MOVE, ActionKindV2.MOVE)) else res_info.get("normalized_address"),
                         read_value=res_info.get("read_val"),
                         read_owner=res_info.get("read_owner"),
-                    )
+                        sensed_anchors=res_info.get("sense_anchors", ABSENT),
+                    ),
+                    reflection=trace_reflection,
                 )
 
-            # Execute tick via ruleset policy scheduler
+            def execute_slot_limited_entrant_slot(
+                st: EntrantState,
+                slot: int,
+                _tick: int = tick,
+            ) -> None:
+                """One offer to ``st`` under V6 E3 slot-limited disruption.
+
+                The suppressed set is fixed at offer entry: exactly this
+                entrant's processes that are suppressed right now. The offer
+                itself -- eligibility, quota redistribution, round-robin
+                selection, the cursor, execution, and forfeiting the offer
+                when nothing is eligible -- is ``execute_entrant_slot``,
+                unchanged. However the offer ends, every process in that set
+                has then used one of its suppressed offers. Processes hit
+                during this offer belong to other entrants, so they are never
+                in the set: their own entrant's next offer is the one they
+                lose.
+                """
+
+                spec = self._specs_by_agent_id[st.agent_id]
+                suppressed_at_offer = [
+                    process for process in spec.processes if self._is_suppressed(process, _tick)
+                ]
+                try:
+                    execute_entrant_slot(st, slot)
+                finally:
+                    for process in suppressed_at_offer:
+                        process.disruption_slots_left -= 1
+
+            # Execute tick via ruleset policy scheduler. Whole-tick
+            # disruption (``disruption_slot_limit is None``) keeps its
+            # historical per-offer callback exactly.
             self.ruleset_policy.run_scheduler(
-                self.states, self.config.instr_per_tick, execute_entrant_slot, tick=tick
+                self.states,
+                self.config.instr_per_tick,
+                (
+                    execute_entrant_slot
+                    if self.ruleset_policy.disruption_slot_limit is None
+                    else execute_slot_limited_entrant_slot
+                ),
+                tick=tick,
             )
 
             apply_core_capture(
@@ -1275,6 +1564,7 @@ class ProcessMatchController:
                 self.statistics_collector,
                 self.statistics,
                 events,
+                hold_ticks=self.ruleset_policy.capture_hold_ticks,
             )
 
             self.statistics_collector.record_tick(

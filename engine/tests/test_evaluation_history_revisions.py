@@ -16,12 +16,12 @@ import json
 from pathlib import Path
 
 import pytest
-from battle_engine.agent_evaluation import SCHEMA_VERSION, EvaluationRequest, EvaluationService
+from battle_engine.agent_evaluation import EvaluationRequest, EvaluationService
 from battle_engine.agent_revisions import agent_revisions_root
 from battle_engine.evaluation_history import FieldConfidence, RevisionVerificationStatus, adapt_any
 from battle_engine.evaluation_history.verification import verify_summary
 
-NOP_ACTION = "AgentAction(ActionKind.NOP)"
+NOP_ACTION = "AgentAction(ActionKindV2.READ, 0)"
 
 
 def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> Path:
@@ -31,7 +31,7 @@ def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> Path
         json.dumps(
             {
                 "kind": "python",
-                "api_version": 1,
+                "api_version": 2,
                 "entrypoint": "agent.py:create_agent",
                 "version": "1.0",
             }
@@ -40,8 +40,9 @@ def _write_python_agent(root: Path, name: str, action: str = NOP_ACTION) -> Path
     )
     (directory / "agent.py").write_text(
         f"""
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
+    def declare_processes(self): return [ProcessDeclaration("main", 1, 1.0)]
     def reset(self, context): pass
     def act(self, observation): return {action}
 def create_agent(): return Agent()
@@ -132,7 +133,8 @@ def test_v2_shaped_artifact_without_agent_revisions_key_is_unknown(tmp_path: Pat
 def test_v3_artifact_exposes_recorded_revision_ids(evaluated) -> None:
     _tmp_path, result = evaluated
     summary = adapt_any(result.state_path)
-    assert summary.schema.schema_version == SCHEMA_VERSION
+    from battle_engine.agent_evaluation import SCHEMA_VERSION_V4
+    assert summary.schema.schema_version == SCHEMA_VERSION_V4
     assert summary.candidate_agent_revision_id.confidence == FieldConfidence.RECORDED
     assert summary.baseline_agent_revision_id.confidence == FieldConfidence.RECORDED
     assert summary.candidate_agent_revision_error.confidence == FieldConfidence.RECORDED
@@ -271,7 +273,7 @@ def test_deep_verification_never_falls_back_to_live_agent_source(evaluated) -> N
 
     tmp_path, result = evaluated
     (tmp_path / "agents" / "candidate" / "agent.py").write_text(
-        "from battle_engine.agent_api import ActionKind, AgentAction\n"
+        "from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration\n"
         "class Agent:\n"
         "    def reset(self, context): pass\n"
         f"    def act(self, observation): return {NOP_ACTION}\n"

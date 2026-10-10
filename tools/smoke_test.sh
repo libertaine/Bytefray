@@ -2,14 +2,12 @@
 # tools/smoke_test.sh
 # Basic functionality checks for the battle project:
 #  1) CLI run with built-in agents
-#  2) Redcode run via pMARS backend
-#  3) Agent-type battle ("builder" style) execution
+#  2) Agent-type battle ("builder" style) execution
 #
 # Assumptions:
 #  - Linux environment (or WSL Ubuntu)
 #  - Project root contains engine/src/battle_engine
 #  - Python 3 available; optional .venv in project root
-#  - pmars installed for the redcode test (script will skip if missing)
 
 set -euo pipefail
 
@@ -24,14 +22,6 @@ RUN_DIR="${RUN_ROOT}/${TIMESTAMP}"
 # Built-in agent types known by the CLI parser (adjust if your set differs)
 AGENT_A="runner"
 AGENT_B="bomber"
-
-# Redcode params
-RED_ROUNDS=3
-RED_CORE_SIZE=8000
-RED_MAX_CYCLES=80000
-RED_MAX_PROCESSES=8000
-RED_MAX_LEN=100
-RED_MIN_DIST=100
 
 # --- helpers --------------------------------------------------------------
 log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*"; }
@@ -63,35 +53,6 @@ ensure_dirs() {
   log "Run dir: ${RUN_DIR}"
 }
 
-# Create minimal Redcode warriors in a temp dir if not present
-prepare_redcode_warriors() {
-  local wdir="$1"
-  mkdir -p "${wdir}"
-
-  # Standard tiny "imp" (redcode'94 dialect)
-  cat > "${wdir}/imp.red" <<'RED'
-;name Imp
-;author SmokeTest
-;strategy 1-instruction process that marches through core
-        MOV     0, 1
-RED
-
-  # Standard tiny "dwarf" bomber
-  cat > "${wdir}/dwarf.red" <<'RED'
-;name Dwarf
-;author SmokeTest
-;strategy Bomb every 4 cells
-STEP    EQU     4
-        ADD     #STEP,   BAIT
-BAIT    DAT     #0,      #0
-        MOV     BAIT,    @BAIT
-        JMP     -2
-        END
-RED
-
-  echo "${wdir}/imp.red;${wdir}/dwarf.red"
-}
-
 run_cli() {
   log "Running CLI: $*"
   python3 -m "${CLI_MOD}" "$@"
@@ -104,7 +65,7 @@ require_python3() {
 # --- tests ---------------------------------------------------------------
 
 test_1_simple_cli() {
-  log "=== [1/3] Simple CLI battle with built-in agents (${AGENT_A} vs ${AGENT_B}) ==="
+  log "=== [1/2] Simple CLI battle with built-in agents (${AGENT_A} vs ${AGENT_B}) ==="
   run_cli \
     --ticks 50 \
     --arena 512 \
@@ -116,33 +77,8 @@ test_1_simple_cli() {
   log "PASS: simple CLI battle"
 }
 
-test_2_redcode_pmars() {
-  log "=== [2/3] Redcode battle via pMARS ==="
-  if ! have pmars; then
-    log "pMARS not found; skipping redcode test. Install with: sudo apt-get install pmars"
-    return 0
-  fi
-
-  local wdir="${RUN_DIR}/warriors"
-  IFS=';' read -r WIMP WDWARF < <(prepare_redcode_warriors "${wdir}")
-
-  run_cli \
-    --mode redcode94 \
-    --red-a "${WIMP}" \
-    --red-b "${WDWARF}" \
-    --rounds "${RED_ROUNDS}" \
-    --core-size "${RED_CORE_SIZE}" \
-    --max-cycles "${RED_MAX_CYCLES}" \
-    --max-processes "${RED_MAX_PROCESSES}" \
-    --max-len "${RED_MAX_LEN}" \
-    --min-dist "${RED_MIN_DIST}" \
-    --quiet || die "Redcode test failed (pmars present but run errored)"
-
-  log "PASS: redcode/pmars battle executed"
-}
-
-test_3_agent_builder() {
-  log "=== [3/3] Agent-type 'builder' execution (no extra weights) ==="
+test_2_agent_builder() {
+  log "=== [2/2] Agent-type 'builder' execution (no extra weights) ==="
   run_cli \
     --ticks 120 \
     --arena 1024 \
@@ -187,8 +123,7 @@ except Exception as e:
 PY
 
   test_1_simple_cli
-  test_2_redcode_pmars
-  test_3_agent_builder
+  test_2_agent_builder
   post_check_artifacts
 
   log "=== ALL TESTS COMPLETED ==="

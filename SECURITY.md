@@ -38,11 +38,12 @@ agent formats:
 
 - **Python agents** (Agent API v1 and Agent API v2) run in-process or in a
   worker subprocess with the same OS-level privileges and filesystem/network
-  access as the process running Bytefray. Agent API v2 (used by Rulesets
-  `bytefray-rules-4-alpha1`, `bytefray-rules-4-alpha2`, and the permanent
-  `bytefray-rules-4`) changes the Python programming contract, not the
-  execution/isolation model — the same non-sandboxed guarantees below apply
-  identically across both API generations and all Ruleset identities. The
+  access as the process running Bytefray. Agent API v2 (the contract for
+  the permanent `bytefray-rules-4` identity, and historically for the two
+  retired v4 prerelease identities that preceded it) changes the Python
+  programming contract, not the execution/isolation model — the same
+  non-sandboxed guarantees below apply identically across both API
+  generations and all Ruleset identities. The
   optional worker-subprocess timeout used by `bytefray agents validate`/`test`
   and Agent Lab (see
   [docs/AGENT_LAB.md](docs/AGENT_LAB.md)) exists to contain accidental
@@ -50,10 +51,6 @@ agent formats:
   **development-time hang containment, not a security boundary**, and it is
   not used on every execution path (`bytefray run` and headless tournaments
   do not run through it).
-- **Redcode (`.red`/`.asm`) agents** are executed via an external pMARS
-  process. Bytefray does not modify or sandbox pMARS itself beyond invoking
-  it as a subprocess without a shell.
-
 **Do not run agents you do not trust, or run them only in an environment
 (dedicated user account, container, VM, or similar) whose blast radius you
 have already accepted.** Bytefray is a simulation/competition platform, not
@@ -71,10 +68,6 @@ regression against, without implying a sandbox:
 - **Artifact validation** — replay, result, and evaluation-history files
   read back by Bytefray are schema-validated; malformed or unexpected
   artifacts are rejected (fail-closed) rather than trusted and executed.
-- **pMARS invocation** — the pMARS backend is invoked with an explicit
-  executable path and argument list, never through a shell, and rejects an
-  invalid explicit `PMARS_CMD` rather than silently falling back.
-
 If you find a way to escape these specific boundaries (e.g., writing outside
 an intended data root via a crafted agent-revision archive, or getting a
 malformed artifact to execute code during validation rather than being

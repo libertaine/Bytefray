@@ -2,3 +2,17 @@
 *.py text eol=lf
 *.sh text eol=lf
 *.ps1 text eol=crlf
+
+# Preserve exact raw bytes of E9 evidence and its bound recovery test source.
+# These retained CRLF files are hashed by scientific records; do not normalize.
+engine/tests/test_v6_e9_targeted_recovery_verifier.py -text
+tools/research/v6/e9/historical_targeted_evidence_index.json -text
+tools/research/v6/e9/historical_targeted_validation.json -text
+tools/research/v6/e9/v2_seal07_planning_rulings_01.txt -text
+
+# Seal 06 binds CRLF working-tree bytes for these existing tracked files.
+engine/src/battle_engine/evaluation_cell_execution.py -text
+engine/src/battle_engine/evaluation_history/v2_adapter.py -text
+engine/src/battle_engine/evaluation_history/verification.py -text
+engine/src/battle_engine/evaluation_worker.py -text
+engine/tests/conftest.py -text

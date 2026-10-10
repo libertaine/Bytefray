@@ -1,0 +1,16 @@
+{
+  "schema": "bytefray.v6.e9.seal07_independent_author_transcript_attestation",
+  "session_id": "01a117a2-ad1d-7be2-bdba-4998660e8afd",
+  "parent_session_id": "01a117a0-f94c-7c53-81c0-797a60fd67c9",
+  "agent_path": "/root/seal07_independent_author",
+  "fork_turns": "none",
+  "transcript_sha256_raw": "1baa616ce9853a89176e4d39c9236773aae70ebe70083a27795d25a1efadc121",
+  "source_and_retained_copy_equal": true,
+  "transcript_retention": "Full completed author transcript in ignored private cycle evidence; qualifier read access; original unchanged",
+  "handoff_sha256_raw": "4c3d8efceef5534c39dcc6458a809acd5020c6a811cb28542069c331c45f6766",
+  "limitations": [
+    "Unsigned mutable local session logs; hashes show byte identity, not independent authentication.",
+    "AI implementer and author may share a model family."
+  ],
+  "operational_actions": 0
+}

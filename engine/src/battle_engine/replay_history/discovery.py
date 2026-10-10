@@ -552,8 +552,9 @@ class ArtifactScanner:
         self, candidate: ArtifactCandidate, envelope: ResultEnvelope
     ) -> tuple[ReplayState, ArtifactFingerprint, DiagnosticCategory | None, str | None]:
         if envelope.replay is None:
-            # pMARS/Redcode and any other workflow that legitimately produces
-            # no native replay. Intentional absence, not a missing file.
+            # A historical redcode94 result and any other workflow that
+            # legitimately produces no native replay. Intentional absence,
+            # not a missing file.
             return (
                 ReplayState.NOT_PRODUCED,
                 ArtifactFingerprint(relative_path=None, exists=False),

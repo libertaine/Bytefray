@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 from battle_engine import command
-from battle_engine.agent_api import ActionKind, MatchContext, Observation, load_python_agent
+from battle_engine.agent_api import ActionKindV2, load_python_agent
 from battle_engine.agent_scaffold import (
     DEFAULT_TEMPLATE,
     TEMPLATE_DIRECTORIES,
@@ -28,29 +28,36 @@ def _resource_root() -> Path:
     return ROOT
 
 
-def _context(agent_id: str = "A") -> MatchContext:
+def _context_v2(agent_id: str = "A"):
     import random
 
-    return MatchContext(
+    from battle_engine.agent_api import MatchContextV2
+
+    return MatchContextV2(
         agent_id=agent_id,
         seed=1,
         arena_size=256,
         tick_limit=10,
-        action_budget=1,
         rng=random.Random(1),
     )
 
 
-def _observation(agent_id: str = "A") -> Observation:
-    return Observation(
-        tick=0,
-        agent_id=agent_id,
-        pc=0,
-        register_a=0,
-        register_p=0,
-        zero_flag=False,
-        last_read=None,
-        alive=True,
+def _observation_v2(anchor: int = 0, reach: int = 1):
+    from battle_engine.agent_api import ObservationV2
+
+    return ObservationV2(
+        current_tick=1,
+        last_callback_tick=0,
+        previous_action_tick=0,
+        self_process_id="main",
+        self_anchor=anchor,
+        self_reach=reach,
+        own_core_base=0,
+        own_core_size=8,
+        visible_enemy_anchor_addresses=(),
+        previous_action_applied=True,
+        previous_read_value=None,
+        previous_read_owner=None,
     )
 
 
@@ -113,7 +120,7 @@ def test_generated_manifest_parses_with_expected_fields(tmp_path):
     specs = discover_agents(tmp_path)
     spec = specs["example"]
     assert spec.kind == "python"
-    assert spec.api_version == 1
+    assert spec.api_version == 2
     assert spec.entry_point == "agent.py:create_agent"
     assert spec.version == "0.1.0"
 
@@ -132,10 +139,12 @@ def test_generated_agent_loads_and_writes_a_deterministic_byte(tmp_path):
 
     spec = discover_agents(tmp_path)["example"]
     loaded = load_python_agent(spec)
-    loaded.instance.reset(_context())
-    action = loaded.instance.act(_observation())
+    loaded.instance.reset(_context_v2())
+    declarations = loaded.instance.declare_processes()
+    assert declarations
+    action = loaded.instance.act(_observation_v2())
 
-    assert action.kind == ActionKind.WRITE
+    assert action.kind == ActionKindV2.WRITE
     assert action.operand in range(256)
     assert action.value == 0xA5
 
@@ -242,12 +251,12 @@ def test_creating_over_a_materialized_starter_is_rejected(tmp_path):
     ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
 
     with pytest.raises(AgentScaffoldError, match="already exists"):
-        create_agent("runner", data_root=tmp_path, resource_root=_resource_root())
+        create_agent("v4_claimer", data_root=tmp_path, resource_root=_resource_root())
 
 
 def test_creating_over_an_unmaterialized_starter_name_succeeds(tmp_path):
-    # "bomber" is a compiled-in VM built-in with no starter directory, so no
-    # prior ensure_starter_agents() call has populated agents/bomber/.
+    # An ordinary valid identifier not in the ten-starter catalogue remains
+    # available after starters are materialized.
     result = create_agent("bomber", data_root=tmp_path, resource_root=_resource_root())
     assert result.agent_id == "bomber"
 
@@ -423,9 +432,10 @@ def test_annotated_template_differs_from_blank_and_is_valid(tmp_path):
 
     spec = discover_agents(tmp_path)["annotated_agent"]
     loaded = load_python_agent(spec)
-    loaded.instance.reset(_context())
-    action = loaded.instance.act(_observation())
-    assert action.kind == ActionKind.READ
+    loaded.instance.reset(_context_v2())
+    assert loaded.instance.declare_processes()
+    action = loaded.instance.act(_observation_v2())
+    assert action.kind == ActionKindV2.WRITE
 
 
 def test_annotated_template_manifest_omits_deliberately_excluded_fields(tmp_path):
@@ -472,35 +482,6 @@ def test_cli_template_flag_rejects_unknown_choice(tmp_path, monkeypatch, capsys)
 # ---------------------------------------------------------------------------
 
 
-def _context_v2(agent_id: str = "A"):
-    import random
-
-    from battle_engine.agent_api import MatchContextV2
-
-    return MatchContextV2(
-        agent_id=agent_id, seed=1, arena_size=256, tick_limit=10, rng=random.Random(1)
-    )
-
-
-def _observation_v2(anchor: int = 0, reach: int = 1):
-    from battle_engine.agent_api import ObservationV2
-
-    return ObservationV2(
-        current_tick=1,
-        last_callback_tick=0,
-        previous_action_tick=0,
-        self_process_id="main",
-        self_anchor=anchor,
-        self_reach=reach,
-        own_core_base=0,
-        own_core_size=8,
-        visible_enemy_anchor_addresses=(),
-        previous_action_applied=True,
-        previous_read_value=None,
-        previous_read_owner=None,
-    )
-
-
 def test_scaffold_templates_cover_every_supported_api_version() -> None:
     """A future Agent API generation cannot be added to the authoritative
     supported set without also giving ``agents create`` a template for it.
@@ -524,27 +505,22 @@ def test_scaffold_templates_cover_every_supported_api_version() -> None:
         assert set(directories) == set(TEMPLATE_DIRECTORIES)
 
 
-def test_omitted_api_version_still_scaffolds_agent_api_v1(tmp_path):
-    """`agents create <id>` has always produced an Agent API v1 agent.
-
-    Agent API v2 being newer must never silently repoint this established
-    command's default -- reaching v2 is an explicit opt-in.
-    """
+def test_omitted_api_version_scaffolds_the_only_supported_api_v2(tmp_path):
 
     from battle_engine.agent_scaffold import DEFAULT_API_VERSION
 
-    assert DEFAULT_API_VERSION == 1
+    assert DEFAULT_API_VERSION == 2
     create_agent("default_api", data_root=tmp_path, resource_root=_resource_root())
 
     spec = discover_agents(tmp_path)["default_api"]
-    assert spec.api_version == 1
-    assert "api_version: 1" in (tmp_path / "agents" / "default_api" / "agent.yaml").read_text()
+    assert spec.api_version == 2
+    assert "api_version: 2" in (tmp_path / "agents" / "default_api" / "agent.yaml").read_text()
 
 
-def test_explicit_api_version_1_is_byte_identical_to_omitting_it(tmp_path):
+def test_explicit_api_version_2_is_byte_identical_to_omitting_it(tmp_path):
     create_agent("implicit", data_root=tmp_path / "a", resource_root=_resource_root())
     create_agent(
-        "explicit", data_root=tmp_path / "b", resource_root=_resource_root(), api_version=1
+        "explicit", data_root=tmp_path / "b", resource_root=_resource_root(), api_version=2
     )
 
     implicit_dir = tmp_path / "a" / "agents" / "implicit"
@@ -589,17 +565,10 @@ def test_api_version_2_scaffold_is_discoverable_loadable_and_runnable(tmp_path, 
     assert isinstance(action.kind, ActionKindV2)
 
 
-def test_api_version_2_templates_differ_from_their_v1_counterparts(tmp_path):
-    create_agent("v1_agent", data_root=tmp_path / "a", resource_root=_resource_root())
-    create_agent(
-        "v2_agent", data_root=tmp_path / "b", resource_root=_resource_root(), api_version=2
-    )
-
-    v1_source = (tmp_path / "a" / "agents" / "v1_agent" / "agent.py").read_text()
-    v2_source = (tmp_path / "b" / "agents" / "v2_agent" / "agent.py").read_text()
-    assert v1_source != v2_source
-    assert "declare_processes" in v2_source
-    assert "declare_processes" not in v1_source
+def test_api_version_1_scaffold_is_rejected_without_mutation(tmp_path):
+    with pytest.raises(AgentScaffoldError, match="Unsupported Agent API version"):
+        create_agent("legacy", data_root=tmp_path, resource_root=_resource_root(), api_version=1)
+    assert not (tmp_path / "agents").exists()
 
 
 def test_unsupported_api_version_is_rejected_without_mutation(tmp_path):
@@ -626,15 +595,10 @@ def test_cli_api_version_flag_rejects_unsupported_choice(tmp_path, monkeypatch):
     assert not (tmp_path / "agents").exists()
 
 
-def test_reference_opponent_template_lookup_is_unchanged_by_api_versions() -> None:
-    """``agent_test._reference_opponent_spec`` loads the Agent API v1 blank
-    template positionally; adding API-v2 templates must not move it."""
-
+def test_default_template_lookup_is_the_api_v2_template() -> None:
     assert (
         template_resource_dir(_resource_root(), "blank")
-        == template_resource_dir(_resource_root(), "blank", api_version=1)
+        == template_resource_dir(_resource_root(), "blank", api_version=2)
     )
-    assert (
-        template_resource_dir(_resource_root(), "blank", api_version=2)
-        != template_resource_dir(_resource_root(), "blank")
-    )
+    with pytest.raises(AgentScaffoldError, match="Unsupported Agent API version"):
+        template_resource_dir(_resource_root(), "blank", api_version=1)

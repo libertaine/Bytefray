@@ -168,13 +168,17 @@ def _cmd_import(args: argparse.Namespace) -> int:
     print(f"Imported {result.agent_id} -> {result.target_dir}")
     print(f"Revision: {result.agent_revision_id}")
     print(
-        "This is executable Python/blob agent code. Bytefray verified the package's "
-        "structure, integrity, and provenance -- it did not, and cannot, verify that "
-        "the agent's own logic is safe or trustworthy."
+        "Bytefray verified the package's structure, integrity, and provenance -- it "
+        "did not, and cannot, verify that the contained agent is safe or trustworthy. "
+        "Current compatible Agent API v2 Python code executes without a sandbox; "
+        "retired payload kinds remain non-executable."
     )
     if result.local_archive_error:
         print(f"NOTE: local revision-store archival did not succeed ({result.local_archive_error}); the imported agent itself is unaffected.")
-    print(f"Run 'bytefray agents validate {result.agent_id}' to try it.")
+    print(
+        f"Use 'bytefray agents list' to confirm {result.agent_id!r}; validation "
+        "is available only for compatible Agent API v2 Python agents."
+    )
     return 0
 
 

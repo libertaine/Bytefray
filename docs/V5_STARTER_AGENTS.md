@@ -210,7 +210,7 @@ for the keeper.
 
 ## Where the design came from
 
-The V5 research program (Phases 0 and R1–R4, under `docs/research/v5/`)
+The V5 research program (Phases 0 and R1–R4, under `docs/archive/v5/`)
 established that stable V4's mechanics were never the reason matches failed to
 convert — the bundled agent population was. Phase R3 proved that a plain region
 sweep captures cores in tens of ticks under unmodified `bytefray-rules-4`, and
@@ -223,4 +223,4 @@ renamed and shipped. The six `v4_*` agents are unchanged and still available —
 the research corpora and existing replays refer to those IDs by name.
 
 Full implementation and qualification record:
-`docs/research/v5/V5_ALPHA1_PHASE_C_STARTER_AGENTS.md`.
+`docs/archive/v5/V5_ALPHA1_PHASE_C_STARTER_AGENTS.md`.

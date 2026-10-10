@@ -1,5 +1,25 @@
 global-exclude *.py[cod]
 
+# V6 Phase 2B.12 retains research inputs in the repository but removes every
+# retired Agent API v1 / VM execution resource from installable artifacts.
+prune engine/src/battle_engine/data/benchmarks
+prune engine/src/battle_engine/data/reference_agents
+prune engine/src/battle_engine/data/v3_closeout_agents
+prune engine/src/battle_engine/data/v3_phase7_agents
+prune engine/src/battle_engine/data/agent_template
+prune engine/src/battle_engine/data/agent_template_annotated
+prune engine/src/battle_engine/data/starter_agents/adaptive
+prune engine/src/battle_engine/data/starter_agents/claimer
+prune engine/src/battle_engine/data/starter_agents/hunter
+prune engine/src/battle_engine/data/starter_agents/raider
+prune engine/src/battle_engine/data/starter_agents/runner
+prune engine/src/battle_engine/data/starter_agents/seeker
+prune engine/src/battle_engine/data/starter_agents/sentinel
+prune engine/src/battle_engine/data/starter_agents/spiral
+prune engine/src/battle_engine/data/starter_agents/strider
+prune engine/src/battle_engine/data/starter_agents/wanderer
+prune engine/src/battle_engine/data/starter_agents/writer
+
 # The sdist is a buildable/installable source distribution, not a full
 # development checkout -- it ships engine/src, client/src, and app/, not
 # any test suite. Root tests/ (Designer/GUI tests) was previously included

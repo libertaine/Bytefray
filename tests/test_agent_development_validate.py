@@ -62,7 +62,7 @@ def _write_agent(agents_dir: Path, agent_id: str, source: str) -> None:
     agent_dir = agents_dir / agent_id
     agent_dir.mkdir(parents=True)
     (agent_dir / "agent.yaml").write_text(
-        'kind: python\napi_version: 1\nentrypoint: agent.py:create_agent\nversion: "0.1.0"\n',
+        'kind: python\napi_version: 2\nentrypoint: agent.py:create_agent\nversion: "0.1.0"\n',
         encoding="utf-8",
     )
     (agent_dir / "agent.py").write_text(source, encoding="utf-8")
@@ -70,24 +70,30 @@ def _write_agent(agents_dir: Path, agent_id: str, source: str) -> None:
 
 _HANGING_AGENT_SOURCE = (
     "import time\n"
-    "from battle_engine.agent_api import ActionKind, AgentAction, MatchContext, Observation\n\n"
+    "from battle_engine.agent_api import ActionKindV2, AgentAction, MatchContextV2, "
+    "ObservationV2, ProcessDeclaration\n\n"
     "class Agent:\n"
-    "    def reset(self, context: MatchContext) -> None:\n"
+    "    def reset(self, context: MatchContextV2) -> None:\n"
     "        while True:\n"
     "            time.sleep(0.05)\n\n"
-    "    def act(self, observation: Observation) -> AgentAction:\n"
-    "        return AgentAction(ActionKind.HALT, None, None)\n\n"
+    "    def declare_processes(self):\n"
+    "        return [ProcessDeclaration('p', 1, 1.0)]\n\n"
+    "    def act(self, observation: ObservationV2) -> AgentAction:\n"
+    "        return AgentAction(ActionKindV2.MOVE, 1)\n\n"
     "def create_agent() -> Agent:\n"
     "    return Agent()\n"
 )
 
 _RESET_RAISES_SOURCE = (
-    "from battle_engine.agent_api import ActionKind, AgentAction, MatchContext, Observation\n\n"
+    "from battle_engine.agent_api import ActionKindV2, AgentAction, MatchContextV2, "
+    "ObservationV2, ProcessDeclaration\n\n"
     "class Agent:\n"
-    "    def reset(self, context: MatchContext) -> None:\n"
+    "    def reset(self, context: MatchContextV2) -> None:\n"
     "        raise RuntimeError('boom')\n\n"
-    "    def act(self, observation: Observation) -> AgentAction:\n"
-    "        return AgentAction(ActionKind.HALT, None, None)\n\n"
+    "    def declare_processes(self):\n"
+    "        return [ProcessDeclaration('p', 1, 1.0)]\n\n"
+    "    def act(self, observation: ObservationV2) -> AgentAction:\n"
+    "        return AgentAction(ActionKindV2.MOVE, 1)\n\n"
     "def create_agent() -> Agent:\n"
     "    return Agent()\n"
 )
@@ -113,12 +119,12 @@ def test_show_validation_result_renders_valid():
     panel = AgentDevelopmentPanel()
     panel.show_validation_result(
         ValidationPresentation(
-            agent_id="my_agent", valid=True, api_version=1, dry_run_action="WRITE operand=232 value=165"
+            agent_id="my_agent", valid=True, api_version=2, dry_run_action="WRITE operand=232 value=165"
         )
     )
     text = panel.statusLabel.text()
     assert "Last validation: Valid" in text
-    assert "API: 1" in text
+    assert "API: 2" in text
     assert "Dry-run action: WRITE operand=232 value=165" in text
 
 
@@ -274,7 +280,7 @@ def test_selection_change_clears_prior_validation_result(monkeypatch, tmp_path):
 
         designer.development.selectAgent("agent_one")
         designer.development.show_validation_result(
-            ValidationPresentation(agent_id="agent_one", valid=True, api_version=1, dry_run_action="HALT")
+            ValidationPresentation(agent_id="agent_one", valid=True, api_version=2, dry_run_action="MOVE operand=1")
         )
         assert "Valid" in designer.development.statusLabel.text()
 
@@ -302,7 +308,7 @@ def test_refresh_with_same_selection_preserves_validation_result(monkeypatch, tm
         create_agent("stable_agent", data_root=data_root)
         designer.refresh_agents(select="stable_agent")
         designer.development.show_validation_result(
-            ValidationPresentation(agent_id="stable_agent", valid=True, api_version=1, dry_run_action="HALT")
+            ValidationPresentation(agent_id="stable_agent", valid=True, api_version=2, dry_run_action="MOVE operand=1")
         )
 
         designer.refresh_agents()  # same agent remains selected
@@ -360,7 +366,7 @@ def test_validate_success_via_real_qprocess_updates_ui_and_recovers(monkeypatch,
         create_agent("stub_valid_agent", data_root=data_root)
         designer.refresh_agents(select="stub_valid_agent")
 
-        stdout = "agent: stub_valid_agent\nstatus: valid\napi_version: 1\ndry_run_action: WRITE operand=1 value=2\n"
+        stdout = "agent: stub_valid_agent\nstatus: valid\napi_version: 2\ndry_run_action: WRITE operand=1 value=2\n"
         monkeypatch.setattr(
             agent_designer_module,
             "build_agents_command",
@@ -375,7 +381,7 @@ def test_validate_success_via_real_qprocess_updates_ui_and_recovers(monkeypatch,
 
         text = designer.development.statusLabel.text()
         assert "Last validation: Valid" in text
-        assert "API: 1" in text
+        assert "API: 2" in text
         assert designer.development.btnValidate.isEnabled() is True
         assert designer.development.agentCombo.isEnabled() is True
         assert designer.simple.btnRun.isEnabled() is True
@@ -460,7 +466,7 @@ def test_validate_uses_discovery_id_not_display_name_when_they_differ(monkeypatc
             captured_args.append(list(arguments))
             return _stub_command(
                 tmp_path,
-                stdout="agent: validate_disc_id\nstatus: valid\napi_version: 1\n",
+                stdout="agent: validate_disc_id\nstatus: valid\napi_version: 2\n",
             )
 
         monkeypatch.setattr(agent_designer_module, "build_agents_command", _capture)
@@ -624,7 +630,7 @@ def test_duplicate_validate_click_does_not_start_second_process(monkeypatch, tmp
             agent_designer_module,
             "build_agents_command",
             lambda subcommand, arguments: _stub_command(
-                tmp_path, stdout="agent: x\nstatus: valid\napi_version: 1\ndry_run_action: HALT\n"
+                tmp_path, stdout="agent: x\nstatus: valid\napi_version: 2\ndry_run_action: MOVE operand=1\n"
             ),
         )
 
@@ -660,7 +666,7 @@ def test_match_run_disables_validate_and_validate_disables_match(monkeypatch, tm
             agent_designer_module,
             "build_agents_command",
             lambda subcommand, arguments: _stub_command(
-                tmp_path, stdout="agent: x\nstatus: valid\napi_version: 1\ndry_run_action: HALT\n"
+                tmp_path, stdout="agent: x\nstatus: valid\napi_version: 2\ndry_run_action: MOVE operand=1\n"
             ),
         )
         designer._on_validate_agent()
@@ -749,7 +755,7 @@ def test_validate_runs_out_of_process_not_a_direct_call(monkeypatch, tmp_path):
             "build_agents_command",
             lambda subcommand, arguments: _stub_command(
                 tmp_path,
-                stdout="agent: isolated_agent\nstatus: valid\napi_version: 1\ndry_run_action: HALT\n",
+                stdout="agent: isolated_agent\nstatus: valid\napi_version: 2\ndry_run_action: MOVE operand=1\n",
             ),
         )
 
@@ -824,7 +830,7 @@ def test_end_to_end_real_cli_validates_a_scaffolded_agent(monkeypatch, tmp_path)
 
         text = designer.development.statusLabel.text()
         assert "Last validation: Valid" in text
-        assert "API: 1" in text
+        assert "API: 2" in text
         assert "WRITE" in text
     finally:
         designer.deleteLater()

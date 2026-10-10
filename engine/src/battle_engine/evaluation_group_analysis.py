@@ -105,9 +105,9 @@ from pathlib import Path
 from statistics import median
 from typing import Any
 
-from battle_engine.agent_evaluation import EvaluationCell, seat_label
 from battle_engine.evaluation_analysis import WilsonInterval, wilson_interval
 from battle_engine.evaluation_capture import CORE_CAPTURED_TERMINATION_REASON
+from battle_engine.evaluation_contracts import EvaluationCell, seat_label
 from battle_engine.result_model import read_result
 from battle_engine.ruleset_policy import TerminationReason
 

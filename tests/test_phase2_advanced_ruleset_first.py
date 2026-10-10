@@ -26,7 +26,6 @@ import os
 
 import pytest
 
-BYTEFRAY_RULESET_V2_ID = "bytefray-rules-2"
 BYTEFRAY_RULESET_V4_ID = "bytefray-rules-4"
 
 
@@ -77,28 +76,26 @@ def test_advanced_ruleset_row_precedes_agent_rows_structurally(tmp_path):
 
 
 @pytest.mark.gui
-def test_advanced_ruleset_round_trip_is_deterministic(tmp_path):
-    """Ruleset A -> Ruleset B -> Ruleset A must land back on the same
-    roster contents and the same selections, not merely "a" valid state."""
+def test_advanced_current_roster_refresh_is_deterministic(tmp_path):
+    """Refreshing the same catalog preserves roster order and selections."""
 
     _make_app()
     from app.views.advanced import AdvancedPanel
 
     panel = AdvancedPanel(catalog=None, data_root=tmp_path)
     try:
-        panel.setAgents(
-            [
-                _row("legacy", "python", 1),
-                _row("legacy2", "python", 1),
-                _row("proc", "python", 2),
-            ]
-        )
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
+        rows = [
+            _row("legacy", "python", 1),
+            _row("proc", "python", 2),
+            _row("proc2", "python", 2),
+        ]
+        panel.setAgents(rows)
+        panel.agentA.setCurrentIndex(panel.agentA.findData("proc2"))
+        panel.agentB.setCurrentIndex(panel.agentB.findData("proc"))
         roster_before = [panel.agentA.itemData(i) for i in range(panel.agentA.count())]
         selection_before = (panel.agentA.currentData(), panel.agentB.currentData())
 
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
+        panel.setAgents(rows)
 
         roster_after = [panel.agentA.itemData(i) for i in range(panel.agentA.count())]
         selection_after = (panel.agentA.currentData(), panel.agentB.currentData())
@@ -129,21 +126,20 @@ def test_advanced_run_config_uses_discovery_ids_not_display_text(tmp_path):
             "Friendly",
             "/agents/alpha_id",
             None,
-            {"display": "Friendly", "kind": "python", "api_version": 1},
+            {"display": "Friendly", "kind": "python", "api_version": 2},
             agent_id="alpha_id",
         ),
         AgentRow(
             "Friendly",
             "/agents/beta_id",
             None,
-            {"display": "Friendly", "kind": "python", "api_version": 1},
+            {"display": "Friendly", "kind": "python", "api_version": 2},
             agent_id="beta_id",
         ),
     ]
     panel = AdvancedPanel(catalog=None, data_root=tmp_path)
     try:
         panel.setAgents(rows)
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
         panel.agentA.setCurrentIndex(panel.agentA.findData("alpha_id"))
         panel.agentB.setCurrentIndex(panel.agentB.findData("beta_id"))
 
@@ -154,7 +150,7 @@ def test_advanced_run_config_uses_discovery_ids_not_display_text(tmp_path):
         assert len(captured) == 1
         assert captured[0].a_type == "alpha_id"
         assert captured[0].b_type == "beta_id"
-        assert captured[0].ruleset_id == BYTEFRAY_RULESET_V2_ID
+        assert captured[0].ruleset_id == BYTEFRAY_RULESET_V4_ID
         assert "Friendly" not in captured[0].a_type
         assert "Friendly" not in captured[0].b_type
     finally:
@@ -167,18 +163,16 @@ def test_advanced_run_config_uses_discovery_ids_not_display_text(tmp_path):
 
 
 @pytest.mark.gui
-def test_advanced_ruleset_change_does_not_reset_unrelated_fields(tmp_path):
-    """Changing Ruleset must only touch Agent A/B and the explanation text
-    -- Arena Size, Ticks, scoring weights, Seed, and Agent Params are
-    untouched by the compatibility recompute."""
+def test_advanced_catalog_refresh_does_not_reset_unrelated_fields(tmp_path):
+    """Compatibility refresh leaves match controls and Agent Params untouched."""
 
     _make_app()
     from app.views.advanced import AdvancedPanel
 
     panel = AdvancedPanel(catalog=None, data_root=tmp_path)
     try:
-        panel.setAgents([_row("legacy", "python", 1), _row("proc", "python", 2)])
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
+        rows = [_row("legacy", "python", 1), _row("proc", "python", 2)]
+        panel.setAgents(rows)
 
         panel.arena.setValue(1024)
         panel.ticks.setValue(4242)
@@ -189,7 +183,7 @@ def test_advanced_ruleset_change_does_not_reset_unrelated_fields(tmp_path):
         panel.seed.setValue(777)
         panel.editorA.text.setPlainText('{"x": 1}')
 
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
+        panel.setAgents(rows)
 
         assert panel.arena.value() == 1024
         assert panel.ticks.value() == 4242

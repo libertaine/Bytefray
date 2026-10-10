@@ -143,8 +143,9 @@ class ReplayHeader:
     # (extended in place, like every other v3 field before it -- see
     # docs/REPLAY_SCHEMA.md's "Compatibility note"); ``None`` for any
     # header produced before this field existed, and always ``None`` for a
-    # non-native/non-canonical header (Redcode/pMARS produces no canonical
-    # replay at all, so this case does not arise in practice).
+    # non-native/non-canonical header (historical redcode94 execution
+    # produced no canonical replay at all, so this case does not arise in
+    # practice).
     ruleset_id: str | None = None
     schema: str = SCHEMA_NAME
     schema_version: int = SCHEMA_VERSION

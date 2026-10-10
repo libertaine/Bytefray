@@ -1,0 +1,97 @@
+{
+  "D8_10": false,
+  "H8_interpretation": false,
+  "analysis_freeze": {
+    "identity": "v6-e8-analysis-v1-52e09e5fb422",
+    "identity_digest": "52e09e5fb422e7f90f912b4ceccf40b137286d2915e5e2a14ec76eb89288b106",
+    "record_sha256": "6cbdcb6e72fade96a2f0c7354a5c5afccb1d7258185771d9e1a15d079bf3b27c"
+  },
+  "boundary": "seed reveal only; stopped before final registered analysis",
+  "commitment_verification": {
+    "execution_identity": "PASS",
+    "frozen_ordering": "PASS",
+    "private_before_reveal": "PASS",
+    "public_independent_recomputation": "PASS"
+  },
+  "corpus_verification": {
+    "control": {
+      "files": 42634,
+      "manifest_sha256": "adcb7e48e939ad097a84ca6033343cbd633c3607b5821dfdf782e674740696c1",
+      "raw_bytes": 4288542119,
+      "status": "PASS"
+    },
+    "treatment": {
+      "files": 42634,
+      "manifest_sha256": "84ab2f9729401cf06ef60ca6e1b07045c9b9aae51c1a7497972bb3527bb061e6",
+      "raw_bytes": 3981048565,
+      "status": "PASS"
+    }
+  },
+  "disposition": false,
+  "engine_source": {
+    "files": 116,
+    "path": "engine/src",
+    "sha256": "9323307c4131105a30c94cad16845468937571657b6d354827a26cfbfcff2676"
+  },
+  "execution_matrix_identity": "v6-e8-exec-v1-34a254752449",
+  "exploratory_analysis": false,
+  "family_freeze": {
+    "identity": "v6-e8-family-v1-981fc8b12beb",
+    "record_sha256": "4ec253d4b84469cdb90b91d68b2236310ecd0bb8e0f5c8f63a19e709cc3afbeb"
+  },
+  "final_registered_analysis": false,
+  "new_matches": false,
+  "pre_reveal_commit": "bc3b435b65e99493720db78df88d1293f45c9dfe",
+  "pre_reveal_manifest_sha256": "c99edbf642be2464f659d34401e41c624e637f6d7c1e827b25c1304ef4f57600",
+  "preregistration_freeze": {
+    "identity": "v6-e8-prereg-v4-0166cdc0b37a",
+    "record_sha256": "bf4a409a782f1d3ae08dc4b26b710b37fb8d3e14c6fb76a6904adb9519de31ea"
+  },
+  "privacy_rule": "Seed values are public; seed-bearing private filesystem paths, raw diagnostics, and private corpus structure remain private.",
+  "qualified_tooling_commit": "6d3930a",
+  "repairs": false,
+  "retries": false,
+  "revealed_at_utc": "2026-10-01T21:55:25.962204Z",
+  "seed_commitment": "94a58a002b0e44a14b2e7a41d03b8007484079ead7973618d3d09bce01046dc9",
+  "seed_count": 32,
+  "seed_encoding": "decimal ASCII, one per line, LF, trailing LF, in listed order",
+  "seed_order": "frozen generation and matrix order",
+  "seed_reveal": true,
+  "seeds": [
+    7473637547799004,
+    7053886906531591,
+    5461179767857180,
+    4578163496542371,
+    3381480381733695,
+    4714725005404647,
+    7144889623394035,
+    6285574310516696,
+    3607299203129069,
+    3255303488819917,
+    929536930469823,
+    1776599565364092,
+    7341057895083432,
+    8403646079221897,
+    1685773863826812,
+    8714587754306980,
+    941907466663644,
+    5936667945896610,
+    7452095466200765,
+    1336811056824315,
+    837942589198128,
+    7800657539037591,
+    2438202248135061,
+    8920926279137145,
+    1518049584672582,
+    4696554321086320,
+    8453235768247520,
+    2117716841534006,
+    2686710607479678,
+    747141354071991,
+    3910763991215651,
+    8308510773884308
+  ],
+  "stop_boundary": "Final registered analysis requires separate authorization after this reveal boundary is committed and pushed.",
+  "structural_digest": "e0d322b597da298686c7a392a7ae495a96ea6a5428b5fb47f15138fa3af26fc7",
+  "structural_matrix_identity": "v6-e8-matrix-v1-e0d322b597da"
+}

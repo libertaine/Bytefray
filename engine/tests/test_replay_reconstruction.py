@@ -3,8 +3,17 @@
 These tests exist to prove -- not merely assert -- that the canonical
 ``battle2.replay`` stream produced by ``NativeMatchService`` is sufficient to
 reconstruct engine-observable match state (arena content, ownership, and
-per-entrant controller state) at any tick using only the public typed reader
-API (``iter_replay``), without rerunning any agent.
+per-tick score) at any tick using only the public typed reader API
+(``iter_replay``), without rerunning any agent.
+
+V6 Phase 2B.12 (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md)
+retired VM/blob execution: this file's VM-specific ground-truth cross-check
+(re-simulating a match with ``vm.step`` independently of ``NativeMatchService``
+to prove the replay matches) and its VM-HALT death-event case were removed
+along with the opcode-execution machinery they depended on. The Python-agent
+cases -- the file's real subject -- are converted from Agent API v1 fixtures
+to Agent API v2, and every identity/digest test now runs a real
+``bytefray-rules-4`` match instead of a VM one.
 """
 
 from __future__ import annotations
@@ -12,10 +21,7 @@ from __future__ import annotations
 import json
 
 import pytest
-from battle_engine.agent_state import Agent
-from battle_engine.builtins import build_agent
-from battle_engine.config import Config, Weights
-from battle_engine.core import HALT, NOP, enc
+from battle_engine.config import Config
 from battle_engine.match_service import (
     MatchEntrant,
     MatchRequest,
@@ -23,7 +29,6 @@ from battle_engine.match_service import (
     canonical_match_id,
 )
 from battle_engine.replay import (
-    KillDeathEvent,
     MatchResult,
     ReplayHeader,
     TickSnapshot,
@@ -37,7 +42,6 @@ from battle_engine.result_model import (
     verify_replay_digest_value,
     verify_result_replay,
 )
-from battle_engine.vm import VM
 
 
 # ---------------------------------------------------------------------------
@@ -68,6 +72,7 @@ def _reconstruct_ticks(replay_path):
             reconstructed[record.tick] = {
                 "arena": bytes(arena),
                 "owners": tuple(owners),
+                "score": dict(record.score),
                 "agents": {
                     agent.agent_id: agent for agent in record.agents
                 },
@@ -76,7 +81,7 @@ def _reconstruct_ticks(replay_path):
     return header, reconstructed
 
 
-def _config(arena_size=64, instr_per_tick=1, seed=1337):
+def _config(arena_size=64, instr_per_tick=8, seed=1337):
     return Config(arena_size=arena_size, instr_per_tick=instr_per_tick, seed=seed)
 
 
@@ -89,7 +94,7 @@ def _python_spec(root, name, source):
         json.dumps(
             {
                 "kind": "python",
-                "api_version": 1,
+                "api_version": 2,
                 "entrypoint": "agent.py:create_agent",
                 "name": name,
                 "display": name.title(),
@@ -102,29 +107,56 @@ def _python_spec(root, name, source):
     return resolve_agent(root, name)
 
 
+# A single-process, full-reach agent so its declared process can legally
+# target any arena address (a narrower ``reach`` rejects an out-of-range
+# WRITE/READ target as an invalid action) -- see ``ProcessDeclaration``'s
+# own reach semantics in ``docs/AGENT_API_V2.md``.
 WRITER_SOURCE = """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 
 class Agent:
     def reset(self, context):
-        pass
+        self.arena_size = context.arena_size
+
+    def declare_processes(self):
+        return [ProcessDeclaration(id="main", reach=self.arena_size - 1, share=1.0)]
 
     def act(self, observation):
-        return AgentAction(ActionKind.WRITE, 10, 0xAB)
+        return AgentAction(ActionKindV2.WRITE, 10, 0xAB)
 
 def create_agent():
     return Agent()
 """
 
 READER_SOURCE = """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 
 class Agent:
     def reset(self, context):
-        pass
+        self.arena_size = context.arena_size
+
+    def declare_processes(self):
+        return [ProcessDeclaration(id="main", reach=self.arena_size - 1, share=1.0)]
 
     def act(self, observation):
-        return AgentAction(ActionKind.READ, 10)
+        return AgentAction(ActionKindV2.READ, 10)
+
+def create_agent():
+    return Agent()
+"""
+
+PASSIVE_SOURCE = """
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
+
+class Agent:
+    def reset(self, context):
+        self.arena_size = context.arena_size
+
+    def declare_processes(self):
+        return [ProcessDeclaration(id="main", reach=self.arena_size - 1, share=1.0)]
+
+    def act(self, observation):
+        return AgentAction(ActionKindV2.READ, observation.self_anchor)
 
 def create_agent():
     return Agent()
@@ -132,179 +164,54 @@ def create_agent():
 
 
 # ---------------------------------------------------------------------------
-# End-to-end reconstruction: VM match
-# ---------------------------------------------------------------------------
-def test_vm_match_state_is_reconstructable_from_replay_alone(tmp_path):
-    config = Config(
-        arena_size=128,
-        instr_per_tick=2,
-        seed=1337,
-        weights=Weights(alive=1, kill=5, territory=0),
-    )
-    entrants = (
-        MatchEntrant("A", "writer", 0, build_agent("writer", 0, offset=96, byte=0x42)),
-        MatchEntrant("B", "runner", 48, build_agent("runner", 48)),
-    )
-    replay_path = tmp_path / "replay.jsonl"
-    result = NativeMatchService().run(
-        MatchRequest(config, entrants, max_ticks=6, replay_path=replay_path, verbose=False)
-    )
-
-    # Independently derive ground-truth per-tick state using only the
-    # lowest-level VM/Agent primitives -- deliberately not match.py's
-    # MatchRunner (the code that produced the replay being verified), so
-    # this is a genuine cross-check rather than a circular comparison.
-    vm = VM(config.arena_size)
-    live_agents = []
-    for entrant in entrants:
-        start, end = vm.load_code(entrant.start % config.arena_size, entrant.code, entrant.agent_id)
-        live_agents.append(Agent(agent_id=entrant.agent_id, pc=start, region=(start, end)))
-    ground_truth = {
-        0: {
-            "arena": bytes(vm.arena),
-            "owners": tuple(vm.writer),
-            "agents": {
-                a.agent_id: (a.pc, a.alive, dict(a.regs), a.cpu_used, a.mem_writes, a.region)
-                for a in live_agents
-            },
-        }
-    }
-    for tick in range(1, 7):
-        for agent in live_agents:
-            agent.cpu_used = 0
-        for agent in live_agents:
-            if not agent.alive:
-                continue
-            for _ in range(config.instr_per_tick):
-                if not agent.alive:
-                    break
-                vm.step(agent)
-                agent.cpu_used += 1
-        ground_truth[tick] = {
-            "arena": bytes(vm.arena),
-            "owners": tuple(vm.writer),
-            "agents": {
-                a.agent_id: (a.pc, a.alive, dict(a.regs), a.cpu_used, a.mem_writes, a.region)
-                for a in live_agents
-            },
-        }
-        if sum(1 for a in live_agents if a.alive) <= 1:
-            break
-
-    header, reconstructed = _reconstruct_ticks(replay_path)
-    assert header.runtime_kind == "vm"
-    assert header.match_id == result.match_id
-
-    assert set(ground_truth) <= set(reconstructed)
-    for tick, expected in ground_truth.items():
-        actual = reconstructed[tick]
-        assert actual["arena"] == expected["arena"], f"arena mismatch at tick {tick}"
-        assert actual["owners"] == expected["owners"], f"ownership mismatch at tick {tick}"
-        for agent_id, (pc, alive, regs, cpu_used, mem_writes, region) in expected[
-            "agents"
-        ].items():
-            state = actual["agents"][agent_id]
-            assert state.pc == pc, f"pc mismatch for {agent_id} at tick {tick}"
-            assert state.alive == alive, f"alive mismatch for {agent_id} at tick {tick}"
-            assert state.register_a == regs["A"], f"A mismatch for {agent_id} at tick {tick}"
-            assert state.register_p == regs["P"], f"P mismatch for {agent_id} at tick {tick}"
-            assert state.zero_flag == bool(regs["Z"]), f"Z mismatch for {agent_id} at tick {tick}"
-            assert state.cpu_used == cpu_used
-            assert state.mem_writes == mem_writes
-            assert state.region == region
-
-    # The terminal record independently confirms winner/termination/score,
-    # matching the canonical result envelope built from the same run.
-    terminal = list(iter_replay(replay_path))[-1]
-    assert isinstance(terminal, MatchResult)
-    assert terminal.match_id == result.match_id
-    assert terminal.result_id == result.result_id
-    assert terminal.ticks == result.ticks_run
-    assert dict(terminal.score) == dict(result.score)
-    envelope = read_result(result.result_path)
-    assert terminal.termination_reason == envelope.termination_reason
-    assert (terminal.winner or "tie") == envelope.winner
-
-
-# ---------------------------------------------------------------------------
-# End-to-end reconstruction: Python match
+# End-to-end reconstruction: Python (Agent API v2) match
 # ---------------------------------------------------------------------------
 def test_python_match_state_is_reconstructable_from_replay_alone(tmp_path):
     entrants = (
-        MatchEntrant.python("A", "writer", 0, _python_spec(tmp_path, "writer", WRITER_SOURCE)),
+        MatchEntrant.python("A", "v4_scout", 0, _python_spec(tmp_path, "v4_scout", WRITER_SOURCE)),
         MatchEntrant.python("B", "reader", 32, _python_spec(tmp_path, "reader", READER_SOURCE)),
     )
     replay_path = tmp_path / "replay.jsonl"
     result = NativeMatchService().run(
-        MatchRequest(_config(instr_per_tick=1), entrants, max_ticks=3, replay_path=replay_path, verbose=False)
+        MatchRequest(_config(), entrants, max_ticks=3, replay_path=replay_path, verbose=False)
     )
 
     header, reconstructed = _reconstruct_ticks(replay_path)
     assert header.runtime_kind == "python"
     assert header.match_id == result.match_id
 
-    # Ground truth is fully analytic: "writer" unconditionally writes 0xAB
-    # to address 10 every tick and never touches its own registers; "reader"
-    # runs after "writer" in the same tick (sequential same-tick visibility,
-    # already characterized elsewhere) and so always observes 0xAB.
-    assert reconstructed[0]["arena"][10] == 0  # nothing written before tick 1
+    # Ground truth is fully analytic: "v4_scout" unconditionally writes 0xAB
+    # to address 10 every tick; "reader" runs after "v4_scout" in the same
+    # tick (sequential same-tick visibility) and so always observes it.
     for tick in (1, 2, 3):
         assert reconstructed[tick]["arena"][10] == 0xAB
         assert reconstructed[tick]["owners"][10] == "A"
-        writer_state = reconstructed[tick]["agents"]["A"]
-        assert writer_state.mem_writes == tick
-        assert writer_state.register_a == 0  # WRITE never touches register_a
-        reader_state = reconstructed[tick]["agents"]["B"]
-        assert reader_state.register_a == 0xAB
-        assert reader_state.last_read == 0xAB
-        assert reader_state.zero_flag is False
-        assert writer_state.cpu_used == 1
-        assert reader_state.cpu_used == 1
-        assert reconstructed[tick]["agents"]["A"].region == (0, 0)
 
-    records = list(iter_replay(replay_path))
-    ticks = {record.tick: record for record in records if isinstance(record, TickSnapshot)}
-    assert dict(ticks[3].score) == {"A": 3, "B": 3}
-
+    # The reconstructed final tick must agree exactly with the terminal
+    # record and the live result -- the replay stream, read alone, recovers
+    # the same score/outcome ``NativeMatchService`` itself computed.
     terminal = list(iter_replay(replay_path))[-1]
     assert isinstance(terminal, MatchResult)
-    assert terminal.ticks == 3 == result.ticks_run
-    assert terminal.termination_reason == "tick_limit"
-    # Both entrants survive to the tick limit -> no single winner.
-    assert terminal.winner is None
+    assert terminal.match_id == result.match_id
+    assert terminal.result_id == result.result_id
+    assert terminal.ticks == result.ticks_run == 3
+    assert dict(terminal.score) == dict(result.score) == reconstructed[3]["score"]
     envelope = read_result(result.result_path)
-    assert envelope.winner == "tie"
-
-
-def test_replay_preserves_representative_vm_death_event(tmp_path):
-    entrants = (
-        MatchEntrant("A", "halts", 0, enc(HALT)),
-        MatchEntrant("B", "waits", 16, enc(NOP)),
-    )
-    result = NativeMatchService().run(
-        MatchRequest(_config(arena_size=32), entrants, 2, tmp_path / "events.jsonl", False)
-    )
-    tick_one = next(
-        record
-        for record in iter_replay(result.replay_path)
-        if isinstance(record, TickSnapshot) and record.tick == 1
-    )
-
-    assert tick_one.events == (KillDeathEvent("death", "A", None),)
+    assert terminal.termination_reason == envelope.termination_reason == "tick_limit"
+    assert (terminal.winner or "tie") == envelope.winner
 
 
 # ---------------------------------------------------------------------------
 # Replay digest verification
 # ---------------------------------------------------------------------------
 def _run_simple_match(tmp_path):
-    config = _config(arena_size=32, instr_per_tick=1)
     entrants = (
-        MatchEntrant("A", "a", 0, build_agent("runner", 0)),
-        MatchEntrant("B", "b", 16, build_agent("runner", 16)),
+        MatchEntrant.python("A", "passive_a", 0, _python_spec(tmp_path, "passive_a", PASSIVE_SOURCE)),
+        MatchEntrant.python("B", "passive_b", 32, _python_spec(tmp_path, "passive_b", PASSIVE_SOURCE)),
     )
     replay_path = tmp_path / "replay.jsonl"
     result = NativeMatchService().run(
-        MatchRequest(config, entrants, max_ticks=2, replay_path=replay_path, verbose=False)
+        MatchRequest(_config(arena_size=64), entrants, max_ticks=2, replay_path=replay_path, verbose=False)
     )
     return result
 
@@ -485,24 +392,20 @@ def test_result_id_is_stable_despite_nondeterministic_exception_text(tmp_path, m
     marker_env_var = "BYTEFRAY_TEST_RESULT_ID_MARKER"
     failing_source = f"""
 import os
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ProcessDeclaration
 
 class Agent:
     def reset(self, context):
-        pass
+        self.arena_size = context.arena_size
+
+    def declare_processes(self):
+        return [ProcessDeclaration(id="main", reach=self.arena_size - 1, share=1.0)]
 
     def act(self, observation):
         raise RuntimeError("boom-" + os.environ["{marker_env_var}"])
 
 def create_agent():
     return Agent()
-"""
-    passive_source = """
-from battle_engine.agent_api import ActionKind, AgentAction
-class Agent:
-    def reset(self, context): pass
-    def act(self, observation): return AgentAction(ActionKind.NOP)
-def create_agent(): return Agent()
 """
 
     def _spec(root, name, source):
@@ -512,7 +415,7 @@ def create_agent(): return Agent()
             json.dumps(
                 {
                     "kind": "python",
-                    "api_version": 1,
+                    "api_version": 2,
                     "entrypoint": "agent.py:create_agent",
                     "name": name,
                     "display": name.title(),
@@ -528,7 +431,7 @@ def create_agent(): return Agent()
         root = tmp_path / label
         entrants = (
             MatchEntrant.python("A", "failing", 0, _spec(root, "failing", failing_source)),
-            MatchEntrant.python("B", "passive", 32, _spec(root, "passive", passive_source)),
+            MatchEntrant.python("B", "passive", 32, _spec(root, "passive", PASSIVE_SOURCE)),
         )
         replay_path = root / "replay.jsonl"
         monkeypatch.setenv(marker_env_var, label)
@@ -557,13 +460,14 @@ def create_agent(): return Agent()
 # match_id / result_id identity pinning
 # ---------------------------------------------------------------------------
 def test_match_id_is_stable_across_different_absolute_checkout_paths(tmp_path):
+    spec = _python_spec(tmp_path, "passive", PASSIVE_SOURCE)
     entrants_one = (
-        MatchEntrant("A", "a", 0, build_agent("runner", 0)),
-        MatchEntrant("B", "b", 16, build_agent("runner", 16)),
+        MatchEntrant.python("A", "a", 0, spec),
+        MatchEntrant.python("B", "b", 16, spec),
     )
     entrants_two = (
-        MatchEntrant("A", "a", 0, build_agent("runner", 0)),
-        MatchEntrant("B", "b", 16, build_agent("runner", 16)),
+        MatchEntrant.python("A", "a", 0, spec),
+        MatchEntrant.python("B", "b", 16, spec),
     )
     first = NativeMatchService().run(
         MatchRequest(
@@ -589,9 +493,11 @@ def test_match_id_is_stable_across_different_absolute_checkout_paths(tmp_path):
 
 
 def test_match_id_changes_with_meaningful_config_or_code_changes(tmp_path):
+    passive_spec = _python_spec(tmp_path, "passive", PASSIVE_SOURCE)
+    writer_spec = _python_spec(tmp_path, "v4_scout", WRITER_SOURCE)
     base_entrants = (
-        MatchEntrant("A", "a", 0, build_agent("runner", 0)),
-        MatchEntrant("B", "b", 16, build_agent("runner", 16)),
+        MatchEntrant.python("A", "a", 0, passive_spec),
+        MatchEntrant.python("B", "b", 16, passive_spec),
     )
     baseline = NativeMatchService().run(
         MatchRequest(
@@ -609,8 +515,8 @@ def test_match_id_changes_with_meaningful_config_or_code_changes(tmp_path):
         MatchRequest(
             _config(arena_size=32),
             (
-                MatchEntrant("A", "a", 0, build_agent("writer", 0)),
-                MatchEntrant("B", "b", 16, build_agent("runner", 16)),
+                MatchEntrant.python("A", "a", 0, writer_spec),
+                MatchEntrant.python("B", "b", 16, passive_spec),
             ),
             max_ticks=2,
             replay_path=tmp_path / "code" / "replay.jsonl",
@@ -629,11 +535,18 @@ def test_canonical_match_id_changes_if_ruleset_identity_changes(monkeypatch, tmp
     Ruleset today, so this is proven by monkeypatching the canonical
     constant ``canonical_match_id`` actually reads (rather than requiring a
     real second Ruleset to exist) and confirming the computed id changes.
+
+    V6 Phase 2B.12 re-pointed the omitted-``ruleset_id`` default from the
+    retired ``BYTEFRAY_RULESET_ID`` to the retained control
+    ``BYTEFRAY_RULESET_V4_ID`` (docs/research/v6/
+    V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md, trap F-1); that is now the
+    constant this monkeypatch targets.
     """
 
+    spec = _python_spec(tmp_path, "passive", PASSIVE_SOURCE)
     entrants = (
-        MatchEntrant("A", "a", 0, build_agent("runner", 0)),
-        MatchEntrant("B", "b", 16, build_agent("runner", 16)),
+        MatchEntrant.python("A", "a", 0, spec),
+        MatchEntrant.python("B", "b", 16, spec),
     )
     request = MatchRequest(
         _config(arena_size=32), entrants, max_ticks=2,
@@ -642,7 +555,7 @@ def test_canonical_match_id_changes_if_ruleset_identity_changes(monkeypatch, tmp
     baseline_id = canonical_match_id(request)
 
     monkeypatch.setattr(
-        "battle_engine.match_service.BYTEFRAY_RULESET_ID", "bytefray-rules-2-hypothetical"
+        "battle_engine.match_service.BYTEFRAY_RULESET_V4_ID", "bytefray-rules-6-hypothetical"
     )
     changed_id = canonical_match_id(request)
 
@@ -658,9 +571,10 @@ def test_result_id_changes_when_outcome_differs_for_same_match_id(tmp_path):
     # Assert the weaker, still-meaningful property: two runs with identical
     # inputs (hence identical match_id) produce identical result_id too,
     # since the engine is deterministic.
+    spec = _python_spec(tmp_path, "passive", PASSIVE_SOURCE)
     entrants = (
-        MatchEntrant("A", "a", 0, build_agent("runner", 0)),
-        MatchEntrant("B", "b", 16, build_agent("runner", 16)),
+        MatchEntrant.python("A", "a", 0, spec),
+        MatchEntrant.python("B", "b", 16, spec),
     )
     first = NativeMatchService().run(
         MatchRequest(

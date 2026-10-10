@@ -11,47 +11,33 @@ from pathlib import Path
 
 from battle_engine.paths import get_data_root, get_resource_root
 
-# The first four are native VM starters (manifest-only; resolved against
-# the built-in VM programs in battle_engine.builtins by name -- see
-# cli.py's SUPPORTED fallback). The remaining seven are Agent API v1 Python
-# starters, each shipping its own agent.py implementing a distinct strategy
-# against the restricted Python Agent API rather than native VM bytecode --
-# see each agent.py's module docstring for its strategy and the reasoning
-# behind it. ensure_starter_agents() treats both kinds identically: install
-# when absent, refresh when provably an untouched older bundled copy, and
-# otherwise preserve, into the same writable agents/ catalog.
+# V6 Phase 2B.12 (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md)
+# removed the eleven obsolete active starters this tuple used to list:
+# * the four native VM starters (runner, writer, seeker, spiral) --
+#   VM/blob execution is retired entirely;
+# * raider and sentinel (Agent API v1 vulnerable-core demos) -- Agent API
+#   v1 execution is retired, and their archetype is already covered by
+#   v4_concentrated_attacker/v5_region_attacker (attack) and
+#   v4_local_defender/v5_core_defender (defense);
+# * claimer, strider, hunter, wanderer, adaptive -- the five Agent API v1
+#   expansion-family starters that were content-addressed members of the
+#   retired Ruleset-2 benchmark population. The user-approved Scope C
+#   disposition removes both those packages and their three corpora; Git
+#   history and historical releases retain the reproducibility evidence.
 #
-# Five of the Python starters (claimer, strider, hunter, wanderer,
-# adaptive, added in v0.6.1) are expansion-family strategies and are also
-# pinned members of the frozen v2 benchmark population -- their source is
-# content-addressed in battle_engine/data/benchmarks/v2_baseline.json and
-# must never be edited (see docs/V3_PHASE0_RESEARCH_BASELINE.md Sec 3).
-# raider and sentinel (added in v3.0.0-alpha2) are deliberately NOT
-# benchmark members: they exist to demonstrate the Ruleset-v2 vulnerable-
-# core mechanic itself -- attacking a core and defending one -- which no
-# expansion starter exercises, and they stay freely maintainable precisely
-# because they carry no benchmark identity.
+# ensure_starter_agents() installs when absent, refreshes when provably an
+# untouched older bundled copy, and otherwise preserves, into the writable
+# agents/ catalog -- unchanged for the ten remaining Agent API v2 starters.
 #
-# The four v5_* starters (added in v5.0.0a1, V5 Alpha 1 Phase C -- see
-# docs/research/v5/V5_ALPHA1_PHASE_C_STARTER_AGENTS.md) are the Agent API
-# v2 educational ladder: regional offense, search-and-strike movement,
-# READ-driven core defense, and a two-process team. They are ADDITIVE. The
-# six v4_* entries above them keep their historical behavior byte for byte
-# -- replays, evaluation records and the Phase 0/R3/R4 research corpora all
-# refer to those IDs, so a v5_* redesign gets a new ID rather than silently
-# replacing an old one.
+# The four v4_* entries (added in v4.0.0-rc1) keep their historical
+# behavior byte for byte -- replays, evaluation records and the Phase
+# 0/R3/R4 research corpora all refer to those IDs. The four v5_* starters
+# (added in v5.0.0a1, V5 Alpha 1 Phase C -- see
+# docs/research/v5/V5_ALPHA1_PHASE_C_STARTER_AGENTS.md) are the newer
+# educational ladder: regional offense, search-and-strike movement,
+# READ-driven core defense, and a two-process team. A v5_* redesign gets a
+# new ID rather than silently replacing an old one.
 STARTER_AGENT_NAMES = (
-    "runner",
-    "writer",
-    "seeker",
-    "spiral",
-    "claimer",
-    "strider",
-    "hunter",
-    "wanderer",
-    "adaptive",
-    "raider",
-    "sentinel",
     "v4_claimer",
     "v4_concentrated_attacker",
     "v4_defender_scout",
@@ -263,17 +249,6 @@ SUPERSEDED_STARTER_DIGESTS: Mapping[str, tuple[str, ...]] = {
 #: upgrade instead of being frozen as "customized"), then update the value
 #: below. Never update this alone.
 CURRENT_STARTER_DIGESTS: Mapping[str, str] = {
-    "runner": "f8ec6ebac4425526b1a883d6abd8f55c8e055ba00e78590d562b1542a959686b",
-    "writer": "624a5ce1aad0101325e2ac306b4013c1405e9e0ee2658528e61eefa88305f2f8",
-    "seeker": "681985583bc07e7811c7fb771677e1daf0de8481bfdf5086558fa291a68ad67b",
-    "spiral": "f45fcad27e523945f34ee003a29852a46a80bfdb2ad29af1aca725d118e3ccfd",
-    "claimer": "6f3c7acd16b077c74ce4ea87de8eb26c830858042d5f96e5871b881a141ebcec",
-    "strider": "b8321e66eca6cba0d7116c6f456eece2c8f8b8a4a4700bb670cec82cbc6b23f0",
-    "hunter": "da5108134ac89462cb560fe826d4e4a3104b1c1cbd6dbcb8efb5d840fb6a5d7b",
-    "wanderer": "9eb8d8034a9a295129218f9b5d9b0105606b0b708cec8fe9230e3cbfcea77f1a",
-    "adaptive": "88964b8f5b4442601f1aecea3a2d02001a3ee9ecab7cccd25de436888697947f",
-    "raider": "1fe4b14877d8fa737284bffca47f4d102425d7e3787c1e2441fd90cb6548afde",
-    "sentinel": "4fdb2601c287bbd261dc07115082f8dfaf840c4ff47586ca71d58c53ccbd58a0",
     "v4_claimer": "f34d61b83819776368cddf95c597b1997591aa2b97d92949371704596b54b2ed",
     "v4_concentrated_attacker": (
         "94e9b1cd5a674bce2ec35aa60f1677370ecc322d023610a7494a463f89bbd09d"

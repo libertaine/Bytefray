@@ -1,0 +1,568 @@
+{
+  "schema": "bytefray.v6.e4.preregistration",
+  "schema_version": 1,
+  "status": "frozen before any T-E4 or T-E4K1 matrix data exists",
+  "authority": "docs/research/v6/V6_E4_ORDER_VS_EVALUATION_TIMING_DESIGN_REVIEW.md Sec M (metrics), Sec N (populations, hypotheses, interpretation), Sec O (matrix), Sec P (evidence rules), Sec Q (historical-control reuse), Sec R (qualification, freeze and hard stops)",
+  "rule": "Hypothesis statements, criteria, refutations, probe priors, the population definitions, the metric definitions, the transition classes, the interpretation table, the threshold rationale, the evidence rules and the hard stops are copied verbatim from the design review; only markdown emphasis, code formatting and pipe escapes are removed, and wording, symbols and numbers are unchanged. The operationalizations below fix, before any treatment data exists, only what the review leaves unspecified; each says what it adds. No threshold was derived from probe, corpus or control outcomes, and none may be re-tuned after treatment data exists.",
+  "arms": {
+    "primary": {
+      "control": "C-E4",
+      "treatment": "T-E4",
+      "note": "The verdict arm."
+    },
+    "companion": {
+      "control": "C-E4K1",
+      "treatment": "T-E4K1",
+      "note": "Feeds H4 only; never replaces a primary verdict (Sec P rule 7)."
+    }
+  },
+  "populations": {
+    "items": [
+      "P-PAR (primary): standard-field (F1, F2) matchups with |median FMA_C| ≥ 0.5.",
+      "P-STALE (continuity): E3's frozen stalemate cells within the E4 field.",
+      "Contest class of each matchup, assigned a priori from §D.1 source roles: MULTI-PASS, OPENING-ONLY or INCIDENTAL.",
+      "F4 is a separate stratum (G.4′)."
+    ],
+    "operationalizations": [
+      "O-P-PAR",
+      "O-P-STALE",
+      "O-CONTEST",
+      "O-CONTEST-ROLES",
+      "O-UNIT"
+    ]
+  },
+  "metrics": {
+    "seat_metrics": [
+      {
+        "metric": "DSC(s)",
+        "definition": "1 if w_XY(s) = w_YX(s) ∈ {A, B}. SDI = mean over seeds (the legacy E2/E3 metric, retained)."
+      },
+      {
+        "metric": "EC(s)",
+        "definition": "1 if e_XY(s) = e_YX(s) ∈ {X, Y} (entrant consistency)"
+      },
+      {
+        "metric": "OS",
+        "definition": "Orientation sensitivity = mean over seeds of 1[e_XY(s) ≠ e_YX(s)]"
+      },
+      {
+        "metric": "GSB",
+        "definition": "Global seat bias = (#A wins − #B wins) / (2S)"
+      },
+      {
+        "metric": "SCP",
+        "definition": "p_A = the share of seat-consistent seeds won by A. SB = |2p_A − 1|"
+      },
+      {
+        "metric": "SDom",
+        "definition": "Seat dominance = SDI · SB. High only when one seat wins across seeds; this is E2's notion of \"seat-determined\"."
+      },
+      {
+        "metric": "SCD",
+        "definition": "Seed-conditioned determinism = SDI · (1 − SB). Each seed is seat-consistent, but the winning seat varies by seed."
+      }
+    ],
+    "twin_mirrors": [
+      "GSB = (#A − #B) / S;",
+      "p_A over decisive seeds;",
+      "SDom = decisive share · SB;",
+      "SCD = decisive share · (1 − SB)."
+    ],
+    "relabel": "Relabel identity is a gate, not a metric.",
+    "f1_caveat": "F1 caveat. Orientation swaps change seat parity, core position and the seat-derived RNG stream together, so no parity attribution is made from F1 seat metrics alone.",
+    "example": "Example (T-E3, guarded-painter mirror): 32/32 decisive, p_A = 19/32, SB = 0.1875, SDom 0.19 and SCD 0.81. This is seed-conditioned, not seat-determined.",
+    "parity": [
+      "FMA (first-mover core advantage). Let b(t) = (A's own-core cells) − (B's own-core cells) at the end of tick t. Over ticks at which both entrants are alive, FMA = ½ (mean over A-first ticks of b − mean over B-first ticks of b). It is measured in cells, in [−8, 8]. Agent asymmetry cancels, so FMA is defined with zero swings. It requires at least 10 both-alive ticks of each parity; otherwise the cell is DECIDED_EARLY.",
+      "Five bands, fixed a priori. Round |FMA| to the nearest cell: 0 → neutral, 1 → moderate, ≥ 2 → strong, each signed first or last. That is: strong-first: FMA ≥ 1.5; moderate-first: 0.5 ≤ FMA < 1.5; neutral: |FMA| < 0.5; moderate-last: −1.5 < FMA ≤ −0.5; strong-last: FMA ≤ −1.5.",
+      "PM-1 (FMS, PD, bands) is retained for continuity, with NOT_SCOREABLE counted and never dropped.",
+      "FPS (final-chunk-owner share). The share of swings that favour the tick's final-chunk owner, read from the registry. Under the stock order FPS = 1 − FMS; under the mirrored order FPS = FMS.",
+      "Transition classes (matchup-level, control → treatment, on FMA bands):"
+    ],
+    "transition_classes": [
+      {
+        "class": "NEUTRALIZED",
+        "definition": "control non-neutral → treatment neutral"
+      },
+      {
+        "class": "FOLLOWS-FINAL",
+        "definition": "control last-side → treatment first-side (the new final-chunk owner)"
+      },
+      {
+        "class": "STAYS",
+        "definition": "control last-side → treatment last-side, same band"
+      },
+      {
+        "class": "WEAKENED / STRENGTHENED",
+        "definition": "same side, band down / up"
+      },
+      {
+        "class": "NEW",
+        "definition": "control neutral → treatment non-neutral"
+      },
+      {
+        "class": "UNCHANGED-NEUTRAL",
+        "definition": "neutral → neutral"
+      },
+      {
+        "class": "FIRST-SIDE-CONTROL",
+        "definition": "control first-side (no discriminating prediction; reported)"
+      },
+      {
+        "class": "DECIDED-EARLY",
+        "definition": "fewer than 10 both-alive ticks per parity in either arm"
+      }
+    ],
+    "weighting": [
+      "Primary unit: the ordered matchup (field, Seat-A agent, Seat-B agent), summarized by its median over seeds. Twin mirrors count as one unit.",
+      "The census counts matchups. This prevents 32 identical deterministic cells from dominating, which was E3's mixture problem.",
+      "Cell-weighted and distinct-transition-weighted values are secondary and always reported.",
+      "Every matchup carries its n_distinct of (C key, T key) transitions."
+    ],
+    "operationalizations": [
+      "O-FMA-CELL",
+      "O-FMA-BAND",
+      "O-MATCHUP-MEDIAN",
+      "O-TRANSITION",
+      "O-FPS",
+      "O-SEAT-METRICS",
+      "O-MIRROR-CLAIM",
+      "O-CONTROL-CENSUS",
+      "O-RELABEL",
+      "O-G4-PRIME"
+    ]
+  },
+  "hypotheses": [
+    {
+      "id": "E4-H0",
+      "review_id": "E4-H0",
+      "statement": "No structural effect",
+      "supported_if": "STAYS + UNCHANGED-NEUTRAL ≥ 0.90 of P-PAR, and H1 refuted",
+      "refuted_if": "< 0.90",
+      "probe_prior": "Fails",
+      "criterion": {
+        "population": "P-PAR",
+        "stays_or_unchanged_neutral_min": "0.90",
+        "requires": {
+          "E4-H1": "REFUTED"
+        }
+      },
+      "operationalizations": [
+        "O-UNIT",
+        "O-MATCHUP-MEDIAN",
+        "O-TRANSITION",
+        "O-P-PAR",
+        "O-STATUS"
+      ]
+    },
+    {
+      "id": "E4-H1",
+      "review_id": "E4-H1",
+      "statement": "Response-order concentration is load-bearing",
+      "supported_if": "In MULTI-PASS P-PAR matchups, NEUTRALIZED + WEAKENED ≥ 2/3, and overall FOLLOWS-FINAL ≤ 1/10",
+      "refuted_if": "NEUTRALIZED + WEAKENED ≤ 1/10 of MULTI-PASS",
+      "probe_prior": "Supported",
+      "criterion": {
+        "population": "P-PAR",
+        "contest_class": "MULTI-PASS",
+        "multi_pass_neutralized_or_weakened_min": "2/3",
+        "follows_final_overall_max": "1/10",
+        "refuted_multi_pass_neutralized_or_weakened_max": "1/10"
+      },
+      "operationalizations": [
+        "O-UNIT",
+        "O-MATCHUP-MEDIAN",
+        "O-TRANSITION",
+        "O-P-PAR",
+        "O-CONTEST",
+        "O-STATUS"
+      ]
+    },
+    {
+      "id": "E4-H2",
+      "review_id": "E4-H2",
+      "statement": "Final pre-sample position (≡ evaluation adjacency) is load-bearing: the privilege transfers",
+      "supported_if": "FOLLOWS-FINAL ≥ 2/3 of MULTI-PASS P-PAR",
+      "refuted_if": "≤ 1/10",
+      "probe_prior": "Fails (0 flips in any named scenario)",
+      "criterion": {
+        "population": "P-PAR",
+        "contest_class": "MULTI-PASS",
+        "multi_pass_follows_final_min": "2/3",
+        "refuted_multi_pass_follows_final_max": "1/10"
+      },
+      "operationalizations": [
+        "O-UNIT",
+        "O-MATCHUP-MEDIAN",
+        "O-TRANSITION",
+        "O-P-PAR",
+        "O-CONTEST",
+        "O-STATUS"
+      ]
+    },
+    {
+      "id": "E4-H3",
+      "review_id": "E4-H3",
+      "statement": "Opening-pass response privilege",
+      "supported_if": "In OPENING-ONLY P-PAR matchups, STAYS ≥ 2/3",
+      "refuted_if": "STAYS ≤ 1/10",
+      "probe_prior": "Supported",
+      "criterion": {
+        "population": "P-PAR",
+        "contest_class": "OPENING-ONLY",
+        "opening_only_stays_min": "2/3",
+        "refuted_opening_only_stays_max": "1/10"
+      },
+      "operationalizations": [
+        "O-UNIT",
+        "O-MATCHUP-MEDIAN",
+        "O-TRANSITION",
+        "O-P-PAR",
+        "O-CONTEST",
+        "O-STATUS"
+      ]
+    },
+    {
+      "id": "E4-H4",
+      "review_id": "E4-H4",
+      "statement": "Hold × order masking",
+      "supported_if": "Companion outcome-class change share in MULTI-PASS exposed F1 cells ≥ 0.10 while the primary's is ≤ 0.02",
+      "refuted_if": "Companion ≤ 0.02",
+      "probe_prior": "Supported (under K = 1, 3 named cases change outcome; under K = 2, none)",
+      "criterion": {
+        "population": "exposed F1 cells of each arm's control, MULTI-PASS pairings",
+        "companion_change_share_min": "0.10",
+        "primary_change_share_max": "0.02",
+        "refuted_companion_change_share_max": "0.02"
+      },
+      "operationalizations": [
+        "O-EXPOSED",
+        "O-OUTCOME-CLASS",
+        "O-CONTEST",
+        "O-H4-H6",
+        "O-STATUS"
+      ]
+    },
+    {
+      "id": "E4-H5",
+      "review_id": "E4-H5",
+      "statement": "New early-capture pathology",
+      "supported_if": "Primary: ≥ 0.10 of control non-capture exposed F1 cells become captures",
+      "refuted_if": "< 0.10",
+      "probe_prior": "Fails",
+      "criterion": {
+        "population": "primary: control non-capture exposed F1 cells",
+        "become_captures_min": "0.10"
+      },
+      "operationalizations": [
+        "O-EXPOSED",
+        "O-CAPTURE",
+        "O-H4-H6",
+        "O-STATUS"
+      ]
+    },
+    {
+      "id": "E4-H6",
+      "review_id": "E4-H6",
+      "statement": "Stasis / draw-ification",
+      "supported_if": "Exposed-F1 tick-limit share rises ≥ 0.10 (flag). Also reported: the share of NEUTRALIZED matchups with < 10 treatment swings (\"static neutralization\")",
+      "refuted_if": "Rise < 0.10",
+      "probe_prior": "Static neutralization is present; the flag is unknown",
+      "criterion": {
+        "population": "primary: exposed F1 cells",
+        "tick_limit_rise_min": "0.10",
+        "static_swing_ticks_below": 10
+      },
+      "operationalizations": [
+        "O-EXPOSED",
+        "O-H4-H6",
+        "O-STATUS"
+      ]
+    },
+    {
+      "id": "E4-H7",
+      "review_id": "E4-H7",
+      "statement": "Seed-conditioned seat dependence remains",
+      "supported_if": "|GSB| ≤ 0.10 in every unit, and ≥ 1 unit with SCD ≥ 0.5 at n_distinct ≥ 8",
+      "refuted_if": "No unit with SCD ≥ 0.5",
+      "probe_prior": "Likely (guarded-painter mirror)",
+      "criterion": {
+        "units": "T-E4 F1 pairings and F2 mirror units",
+        "abs_gsb_max": "0.10",
+        "scd_min": "0.5",
+        "n_distinct_min": 8
+      },
+      "operationalizations": [
+        "O-SEAT-METRICS",
+        "O-STATUS"
+      ]
+    },
+    {
+      "id": "E4-H8",
+      "review_id": "E4-H8",
+      "statement": "Tick-limit parity artifact",
+      "supported_if": "Any mirror claim differs between 1000 and 1001 (TICK_LIMIT_PARITY_DEPENDENT)",
+      "refuted_if": "All agree",
+      "probe_prior": "Unknown",
+      "criterion": {
+        "units": "T-E4 mirrors, F2 (1000 ticks) against F2-P (1001 ticks)"
+      },
+      "operationalizations": [
+        "O-SEAT-METRICS",
+        "O-MIRROR-CLAIM",
+        "O-STATUS"
+      ]
+    },
+    {
+      "id": "D9-PRIME",
+      "review_id": "D9′",
+      "statement": "G.5′ immunity (theorem)",
+      "supported_if": "T-E4: 0 completions against repair and disrupt guards (and twins). Also a hard stop.",
+      "refuted_if": "—",
+      "probe_prior": "Theorem",
+      "criterion": {
+        "condition": "T-E4",
+        "completions_against_guards_max": 0,
+        "hard_stop": true
+      },
+      "operationalizations": [
+        "O-D9-PRIME"
+      ]
+    }
+  ],
+  "interpretation_note": "Pre-registered interpretation. \"A clean negative is reachable\" (H0).",
+  "interpretation": [
+    {
+      "result": "H1 ∧ H3 ∧ ¬H2",
+      "conclusion": "The residual has two order mechanisms. In multi-pass contests it is response-order concentration, which order can remove. In anchor-base contests it is the second mover's opening response, which order cannot touch. Neither the final action nor the evaluation instant is the cause. Next: co-location of anchor and core cell 0 (a spatial study, registered separately).",
+      "rule": {
+        "kind": "all",
+        "requires": {
+          "E4-H1": "SUPPORTED",
+          "E4-H3": "SUPPORTED",
+          "E4-H2": "REFUTED"
+        }
+      }
+    },
+    {
+      "result": "H1 ∧ ¬H3 ∧ ¬H2",
+      "conclusion": "Response-order concentration causes the residual broadly",
+      "rule": {
+        "kind": "all",
+        "requires": {
+          "E4-H1": "SUPPORTED",
+          "E4-H3": "REFUTED",
+          "E4-H2": "REFUTED"
+        }
+      }
+    },
+    {
+      "result": "H2",
+      "conclusion": "The privilege follows the final pre-sample chunk. Next: evaluation structure (a multi-sample capture rule, registered separately)",
+      "rule": {
+        "kind": "all",
+        "requires": {
+          "E4-H2": "SUPPORTED"
+        }
+      }
+    },
+    {
+      "result": "¬H1 ∧ H3",
+      "conclusion": "The residual is the opening-pass effect. The in-tick order line closes. Next: co-location",
+      "rule": {
+        "kind": "all",
+        "requires": {
+          "E4-H1": "REFUTED",
+          "E4-H3": "SUPPORTED"
+        }
+      }
+    },
+    {
+      "result": "H0",
+      "conclusion": "Order is not load-bearing. The line closes",
+      "rule": {
+        "kind": "all",
+        "requires": {
+          "E4-H0": "SUPPORTED"
+        }
+      }
+    },
+    {
+      "result": "H5, H6, H8",
+      "conclusion": "Recorded as pathologies whatever else holds",
+      "rule": {
+        "kind": "any_supported",
+        "hypotheses": [
+          "E4-H5",
+          "E4-H6",
+          "E4-H8"
+        ]
+      }
+    },
+    {
+      "result": "none",
+      "conclusion": "\"No registered row applies\" is itself the registered outcome. The census is reported.",
+      "rule": {
+        "kind": "none"
+      }
+    }
+  ],
+  "threshold_rationale": [
+    "2/3 is a supermajority, 1/10 is E3's practical floor, and 0.02 means \"essentially none\".",
+    "The FMA bands come from the cell resolution (M.2).",
+    "None was derived from probe or corpus outcomes. The probe values in the prior column are predictions to be falsified."
+  ],
+  "evidence_rules": [
+    "The unit is the ordered matchup, with the distinct paired transition counted within it. A matchup with n_distinct = 1 is a deterministic characterization. Rate claims need n_distinct ≥ 8.",
+    "Population criteria are census counts of matchup characterizations, not medians of mixtures. E3-style cell-weighted medians are reported for continuity on P-STALE and carry no interpretive weight.",
+    "Parity is two-sided with direction. NOT_SCOREABLE and DECIDED_EARLY are counted categories. Static neutralization is scored through FMA, never dropped.",
+    "Every criterion is computed control-vs-control, where it must be 100% STAYS or UNCHANGED-NEUTRAL, and frozen before treatment.",
+    "Mirrors are analysed at the seed level. Claims must agree at 1000 and 1001 ticks.",
+    "F4 is never pooled with F1 or F2.",
+    "The companion never replaces a primary verdict; it feeds H4 only.",
+    "The Bradley–Terry reading and residuals are dropped as criteria. E3 showed they are saturated by dominance on this field; they may be reported descriptively."
+  ],
+  "hard_stops": [
+    "A frozen golden fails (V4, K = 1, E2, E3-parent or E4-parent).",
+    "A parent reproduction mismatch.",
+    "Fixture fingerprint drift.",
+    "The one-field difference fails, or an override is not None.",
+    "A scheduler manipulation check fails: the scripted exact sequence FFLLFFLLLLFFLLFF is not reproduced, or F4's second-mover minimum ≠ 5 under treatment, or any G.4′ violation.",
+    "Σ cpu_used ≠ cpu_total, or an exclusive or zero-action live tick.",
+    "A capture-analyzer disagreement.",
+    "A D9′ violation.",
+    "The twin-mirror relabel identity fails.",
+    "The source manifest changes, or the tree is dirty, during execution.",
+    "The control-vs-control census is not 100% unchanged.",
+    "An analyzer defect after treatment exposure: stop interpretation and do not re-freeze under the same identity."
+  ],
+  "no_prefix_gate": "There is no prefix gate, because order differs from tick 1. Stops 5 and 9 replace it.",
+  "statistics": {
+    "min_distinct_for_rate_claim": 8,
+    "fma_min_both_alive_ticks_per_parity": 10,
+    "fms_fps_min_swings": 10,
+    "fma_bands": {
+      "strong_first_min": "3/2",
+      "moderate_first_min": "1/2",
+      "neutral_abs_below": "1/2",
+      "moderate_last_max": "-1/2",
+      "strong_last_max": "-3/2"
+    },
+    "mirror_claim": {
+      "seat_dominant_sdom_min": "9/10",
+      "seed_conditioned_scd_min": "1/2"
+    },
+    "bradley_terry": "dropped as a criterion (Sec P rule 8)"
+  },
+  "operationalizations": [
+    {
+      "id": "O-FMA-CELL",
+      "kind": "clarification",
+      "text": "b(t) is rebuilt from the replay's ownership exactly as E3 PM-1 rebuilds it (the tick-0 seeding diffs, each core the contiguous run at its entrant's recorded pc) and cross-checked against E3 PM-1 (swing ticks, first-mover-favouring swings, both-alive ticks) and capture analyzer v2 (final owned cells, zero-core evaluations split by who moved first). A tick counts when both entrants are alive at its end. A-first ticks are those whose first mover is Seat A, (t - 1) mod 2 = 0. FMA is computed as an exact rational; a cell with fewer than 10 both-alive ticks of either parity is DECIDED_EARLY, counted and never dropped."
+    },
+    {
+      "id": "O-FMA-BAND",
+      "kind": "clarification",
+      "text": "Bands are assigned by the Sec M.2 inequalities on the exact value, so a boundary value (0.5, 1.5) takes the band its inequality names (moderate, strong). The side of a band is first for strong-first and moderate-first, last for strong-last and moderate-last, none for neutral."
+    },
+    {
+      "id": "O-UNIT",
+      "kind": "clarification (Sec M.3 names the unit; this fixes it per field)",
+      "text": "A round-robin pairing {X, Y} gives two ordered matchups, (field, Seat-A agent, Seat-B agent), one per orientation, each observed at seeds 1..32. A twin mirror {X, X_twin} gives one unit whose observations are its seeds: the candidate-first cell of each seed (X in Seat A). The duplicate orientation is used only by the relabel gate. The F4 jam mirror is a twin-mirror unit inside F4. F2 units are standard; F2-P units are the tick-limit parity stratum; F4 units are the jammer stratum; the three are never pooled."
+    },
+    {
+      "id": "O-MATCHUP-MEDIAN",
+      "kind": "clarification (Sec M.3 says 'median over seeds'; this fixes decided-early seeds)",
+      "text": "A unit's FMA is the exact median of its defined cell FMAs (the mean of the two middle values for an even count). A unit is DECIDED-EARLY in an arm when fewer than half of its cells have a defined FMA; its median is then not used. The band of the median is the unit's band."
+    },
+    {
+      "id": "O-TRANSITION",
+      "kind": "resolution of an overlap in Sec M.2, fixed before any treatment data exists",
+      "text": "Sec M.2 defines NEUTRALIZED as 'control non-neutral -> treatment neutral' and WEAKENED/STRENGTHENED as 'same side, band down/up', which also cover a first-side control, while FIRST-SIDE-CONTROL is 'control first-side (no discriminating prediction; reported)'. So that the classes partition the units, they are assigned in this order: (1) DECIDED-EARLY if the unit is decided early in either arm; (2) FIRST-SIDE-CONTROL if the control band is first-side; (3) for a neutral control, UNCHANGED-NEUTRAL if the treatment is neutral, else NEW; (4) for a last-side control: NEUTRALIZED if the treatment is neutral, FOLLOWS-FINAL if it is first-side, STAYS if it is the same band, WEAKENED if it is the weaker last band, STRENGTHENED if the stronger. The Sec M.2 wording of every class is otherwise unchanged; no class is merged."
+    },
+    {
+      "id": "O-P-PAR",
+      "kind": "clarification",
+      "text": "P-PAR is the set of F1 ordered matchups and F2 mirror units whose control (C-E4) is not DECIDED-EARLY and whose control median FMA band is not neutral (|median FMA_C| >= 0.5). It is frozen from the control corpus before any treatment data exists and never recomputed from treatment data. The companion's P-PAR (from C-E4K1) is frozen and reported only."
+    },
+    {
+      "id": "O-P-STALE",
+      "kind": "clarification",
+      "text": "P-STALE is the E3 primary arm's frozen stalemate population (tools/research/v6/e3/control_populations.json, SHA-256 pinned by E3 freeze v6-e3-freeze-v1-506811e78ad8) in F1, F2 and F4, restricted to cells whose pairing is in the E4 field. It carries cell-weighted PM-1 and FMA summaries for continuity only, with no interpretive weight (Sec P rule 2)."
+    },
+    {
+      "id": "O-CONTEST",
+      "kind": "procedure",
+      "text": "Each unit's contest class is its pairing's class in the frozen contest-class table (tools/research/v6/e4/contest_classes.json, SHA-256 pinned in the matrix definition), derived from the Sec D.1 source roles alone. A twin has its primary's roles."
+    },
+    {
+      "id": "O-CONTEST-ROLES",
+      "kind": "clarification (one Sec D.1 role reading)",
+      "text": "Sec D.1 gives e2_repair_guard no base-only repair, but its cyclic cursor writes every own core cell, cell 0 included, across ticks, and Sec D.2 files repair guard v guarded painter under OPENING-ONLY because the guard's cursor sets whether its base repair comes before or after the painter's hit. The repair guard therefore counts as repairing its base."
+    },
+    {
+      "id": "O-EXPOSED",
+      "kind": "clarification",
+      "text": "A cell is exposed when E3 action/parity analyzer v1 marks it exposed: some live entrant lost an offer in some tick. Exposure is taken from each arm's control cell (C-E4 for the primary, C-E4K1 for the companion) and frozen with the populations."
+    },
+    {
+      "id": "O-OUTCOME-CLASS",
+      "kind": "clarification",
+      "text": "The outcome class is E3's, unchanged (tools/research/v6/e3/analyze_e3.outcome_class): A win, B win, tick-limit tie, mutual elimination, or other."
+    },
+    {
+      "id": "O-CAPTURE",
+      "kind": "clarification",
+      "text": "A cell is a capture when some entrant's termination is core_captured; otherwise it is a non-capture cell."
+    },
+    {
+      "id": "O-H4-H6",
+      "kind": "clarification",
+      "text": "H4: the share of cells whose outcome class differs between control and treatment, over the arm's exposed F1 cells in MULTI-PASS pairings; the companion's share uses C-E4K1 -> T-E4K1 and C-E4K1's exposure, the primary's C-E4 -> T-E4 and C-E4's exposure. H5: over C-E4's non-capture exposed F1 cells, the share that are captures under T-E4. H6: over C-E4's exposed F1 cells, the T-E4 tick-limit share minus the C-E4 tick-limit share; static neutralization is the share of the primary's NEUTRALIZED units whose median T-E4 swing count is below 10. Every value carries its n_distinct of (C key, T key) transitions."
+    },
+    {
+      "id": "O-SEAT-METRICS",
+      "kind": "clarification",
+      "text": "Round-robin pairings (F1; F4 reported separately): for each seed s the XY cell puts X in Seat A and the YX cell puts Y in Seat A. DSC, EC, OS, GSB, p_A, SB, SDom and SCD follow Sec M.1, with SDI the mean of DSC over seeds. When no seed is seat-consistent, p_A and SB are undefined and SDom = SCD = 0. The legacy harness SDI (the mean over distinct seed-level trajectories, E2 O-SDI-UNIT) is reported unchanged beside it. Twin mirrors: the unit is the seed (the candidate-first cell), with decisive share, GSB = (#A - #B) / S, p_A over decisive seeds, SB, SDom = decisive share * SB and SCD = decisive share * (1 - SB); with no decisive seed, SDom = SCD = 0. Each unit carries n_distinct: distinct seed-level trajectory pairs for a pairing, distinct trajectory keys for a mirror. H7's units are the T-E4 F1 pairings and F2 mirror units."
+    },
+    {
+      "id": "O-MIRROR-CLAIM",
+      "kind": "clarification (Sec N H8 names mirror claims; E3's claim used the degenerate mirror SDI)",
+      "text": "A mirror's claim at one tick limit is seat_dominant with its favoured seat when SDom >= 0.9 (E2/E3's seat-determination level), seed_conditioned when SCD >= 0.5 (H7's level), and not_seat_determined otherwise. H8 compares each T-E4 mirror's claim at 1000 ticks (F2) and 1001 ticks (F2-P); any difference is TICK_LIMIT_PARITY_DEPENDENT. Control claims are reported."
+    },
+    {
+      "id": "O-FPS",
+      "kind": "clarification",
+      "text": "The final-chunk owner of a tick is read from the Ruleset registry: the replay's Ruleset policy runs its own scheduler for that tick with both entrants live, and the last offer's entrant owns the final chunk. FPS is scored only with at least 10 swing ticks (PM-1's rule). The identities FPS = 1 - FMS (forward) and FPS = FMS (mirrored) are checked in every cell."
+    },
+    {
+      "id": "O-D9-PRIME",
+      "kind": "clarification",
+      "text": "D9' counts capture completions under T-E4, in every field, whose victim is e2_repair_guard, e2_disrupt_guard or their twins. Any completion is a hard stop: an implementation or experiment failure, not a gameplay result. T-E4K1's count is reported."
+    },
+    {
+      "id": "O-G4-PRIME",
+      "kind": "clarification",
+      "text": "The treatment manipulation checks (hard stops 5 and 6), per T-E4 and T-E4K1 cell: every entrant alive throughout a tick without a forfeit executes at least 5 actions in both roles; no zero-action live tick; no exclusive tick; the E3 cpu_used cross-check holds. The runtime offer sequence FFLLFFLLLLFFLLFF is verified before treatment on a scripted, non-matrix scenario."
+    },
+    {
+      "id": "O-RELABEL",
+      "kind": "procedure",
+      "text": "For every condition, every F2 seed and every F4 jam-mirror seed, the two orientations' replay tick records must be byte-identical and name the same winning seat. Any failure is a hard stop and no mirror metric is computed."
+    },
+    {
+      "id": "O-CONTROL-CENSUS",
+      "kind": "procedure (Sec P rule 4)",
+      "text": "Before treatment, every unit is classified control against the same control. Only identity classes may occur: STAYS (last-side control), UNCHANGED-NEUTRAL (neutral control), FIRST-SIDE-CONTROL (first-side control) and DECIDED-EARLY. Any other class is an analyzer defect and a hard stop."
+    },
+    {
+      "id": "O-STATUS",
+      "kind": "clarification",
+      "text": "Each hypothesis is SUPPORTED, REFUTED or NEITHER from the frozen values by its registered thresholds, compared exactly (rationals); NOT_EVALUABLE when its denominator is empty. D9' is HOLDS or STOP. Each value carries its evidence label; no threshold crossing on a deterministic characterization is described as a rate."
+    },
+    {
+      "id": "O-INTERPRETATION",
+      "kind": "clarification",
+      "text": "A row of the interpretation table applies when every hypothesis it names has the required status: a plain hypothesis SUPPORTED, a negated one REFUTED; NEITHER and NOT_EVALUABLE satisfy neither. The pathology row (H5, H6, H8) applies when any of them is SUPPORTED. The 'none' row applies when none of the five main rows applies. Several rows may apply and all are reported. A D9' STOP replaces the reading."
+    }
+  ]
+}

@@ -184,12 +184,10 @@ class NewAgentDialog(QDialog):
 class AgentDevelopmentPanel(QWidget):
     """Agent Development tab: catalog selection, New Agent, Open Folder, Validate.
 
-    Only ``kind: python`` agents are shown -- v0.4 authoring (create,
-    validate, development-test) applies to Agent API v1 Python agents only,
-    and ``Open Agent Folder``/``Validate`` must only ever be available for a
-    real, user-owned Python agent directory (never a VM built-in/starter or
-    the internal reference opponent, which is never discoverable through
-    the catalog at all).
+    Only ``kind: python`` agents are shown. Creation emits Agent API v2;
+    discovery and validation may still identify an older package so the UI
+    can report its incompatibility, but development-test and evaluation are
+    enabled only when the current Ruleset supports the selection.
     """
 
     refreshAgentsRequested = Signal()
@@ -355,17 +353,11 @@ class AgentDevelopmentPanel(QWidget):
         options_row.addWidget(self.timeoutSpin)
         test_layout.addLayout(options_row)
 
-        # Ruleset is an explicit, visible choice here, never an inherited
-        # CLI default. Before v3.0.0-alpha2 this tab passed no --ruleset at
-        # all, so every development test silently resolved `bytefray agents
-        # test`'s own backward-compatible Ruleset-v1 default while the
-        # Simple/Advanced match tabs beside it defaulted to v2. Agent
-        # Development is Bytefray v3's primary Python-authoring workflow, so
-        # it now defaults to the current gameplay Ruleset and says which one
-        # it used. This tab filters to Python agents only (see
-        # _is_python_agent), and Python entrants are valid under both
-        # identities, so no entrant-kind gating is needed on this selector --
-        # unlike Simple/Advanced, whose combos also carry VM agents.
+        # Ruleset is explicit and visible rather than inherited from a CLI
+        # default. Stable bytefray-rules-4 is the sole offered identity.
+        # Historical Python rows may remain visible for inspection, but the
+        # compatibility synchronizer leaves them with no executable choice
+        # and disables Test.
         ruleset_row = QHBoxLayout()
         self.rulesetLabel = QLabel("Ruleset")
         self.rulesetCombo = QComboBox()
@@ -528,8 +520,8 @@ class AgentDevelopmentPanel(QWidget):
         """The Ruleset identity to pass explicitly to ``bytefray agents test``.
 
         Always a concrete identity, never ``None``: this tab must not let the
-        CLI's own backward-compatible default decide which Ruleset a
-        development test ran under.
+        CLI's omitted-selection resolver decide which Ruleset a development
+        test ran under.
         """
         return selected_ruleset_id(self.rulesetCombo)
 
@@ -799,10 +791,9 @@ class AgentDevelopmentPanel(QWidget):
     def _opponent_row(self) -> AgentRow | None:
         """The explicitly selected opponent's row, or ``None`` for Reference.
 
-        The internal reference opponent deliberately imposes no Ruleset
-        constraint: ``agents test`` supplies whichever Agent API generation
-        the resolved Ruleset needs, so it can never be the incompatible
-        entrant.
+        The internal reference opponent deliberately imposes no additional
+        Ruleset constraint: ``agents test`` supplies the current Agent API
+        v2 reference opponent.
         """
 
         opponent_id = self.selected_opponent_id()
@@ -815,10 +806,9 @@ class AgentDevelopmentPanel(QWidget):
     def _sync_ruleset(self) -> None:
         """Offer only Rulesets compatible with the selected entrants.
 
-        Only the *Ruleset* choices narrow here -- the agent catalog itself
-        keeps listing every discovered Python agent, so this tab stays
-        usable for historical Agent API v1 agents and current Agent API v2
-        ones alike.
+        Only the *Ruleset* choices narrow here. The catalog may still show a
+        discovered historical package for inspection/validation, but no
+        executable Ruleset is offered for incompatible metadata.
         """
 
         rows = [row for row in (self.selectedAgentRow(), self._opponent_row()) if row is not None]

@@ -8,6 +8,7 @@ from typing import Any
 import yaml
 
 from battle_engine.agent_api import AgentManifestError
+from battle_engine.agent_capabilities import parse_required_capabilities
 from battle_engine.agent_parameters import (
     EMPTY_PARAMETER_SCHEMA,
     AgentParameterSchema,
@@ -52,11 +53,13 @@ def agent_runtime_label(spec: AgentSpec) -> str:
     Deliberately the same two-value vocabulary and bracketed spelling the
     Agent Designer's own match selectors already use
     (``app.services.designer_workflows.decorate_agent_display``), so the CLI
-    and GUI never describe the same agent's runtime differently. The split
-    matches the one the engine actually enforces: only ``kind == "python"``
-    entrants may execute under Ruleset v2
-    (``ruleset_policy.RULESET_V2.supported_runtime_kinds``); every other
-    manifest shape resolves to a VM/blob entrant, which is Ruleset-v1-only.
+    and GUI never describe the same agent's runtime differently. V6 Phase
+    2B.12 retired VM/blob execution entirely
+    (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md): every
+    executable agent is now ``kind == "python"``, so ``[VM]`` only labels a
+    manifest shape (``kind in {"builtin", "blob"}``) no Ruleset can execute
+    any longer -- discovery/inspection still classifies it, so this label
+    still exists to say so clearly rather than crash.
 
     Presentation only -- never parse an agent's runtime back out of this
     string, and never persist it. No artifact schema carries it.
@@ -194,6 +197,7 @@ def _spec_from_dir(agent_dir: Path) -> AgentSpec | None:
     # discovery/resolution, as an AgentManifestError naming the file, long
     # before any agent code is imported or executed.
     parameter_schema = parse_parameter_schema(meta, path=yaml_path if meta else None)
+    parse_required_capabilities(meta, path=yaml_path if meta else None)
 
     return AgentSpec(
         name=name,

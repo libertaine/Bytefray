@@ -12,6 +12,22 @@ Covers the scheduler half of the alpha2 Ruleset delta
   on its own rather than inferred from a match outcome;
 * end-to-end match coverage proving the entrant-level K=2 scheduler, the
   quota allocator, and alpha1's own frozen selection are all untouched.
+
+**V6 Phase 2B.10 Scope B note.** ``ProcessMatchController`` accepts a
+``RulesetPolicy`` object directly, via the ``ruleset_policy=`` keyword
+every ``_controller()`` call below uses, and never consults the
+executable registry (``resolve_ruleset_policy``) to get one. That makes
+this file's tests genuinely independent of alpha1/alpha2's
+executable-registration status, which V6 Phase 2B.10 Scope B retired
+(docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md). What did
+change is that the named ``RULESET_V4_ALPHA1``/``RULESET_V4_ALPHA2``
+objects were removed from ``ruleset_policy.py`` entirely (not merely
+deregistered), so they can no longer be imported; this file reconstructs
+their exact frozen field values locally instead (see
+``_FROZEN_ALPHA1_POLICY``/``_FROZEN_ALPHA2_POLICY``, traceable to
+``ruleset_policy.py``'s own retirement comment, which documents the same
+values), keeping every assertion below just as meaningful as before
+retirement.
 """
 
 from typing import Any
@@ -25,10 +41,37 @@ from battle_engine.process_runtime import (
     ProcessMatchController,
     ProcessRole,
 )
-from battle_engine.ruleset_policy import RULESET_V4_ALPHA1, RULESET_V4_ALPHA2
+from battle_engine.ruleset_policy import (
+    BYTEFRAY_RULESET_V4_ALPHA1_ID,
+    BYTEFRAY_RULESET_V4_ALPHA2_ID,
+    RulesetPolicy,
+)
 
 QUOTA = 8
 ARENA = 512
+
+# Reconstructed exactly as ``ruleset_policy.py``'s own retirement comment
+# documents them (frozen, never to change) -- see this module's docstring.
+RULESET_V4_ALPHA1 = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V4_ALPHA1_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seat_spread",
+    process_selection="priority",
+)
+RULESET_V4_ALPHA2 = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V4_ALPHA2_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seeded",
+    process_selection="round_robin",
+)
 
 
 def _noop(_observation: ObservationV2, _state: dict[str, Any]) -> AgentAction:

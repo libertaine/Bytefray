@@ -1,0 +1,136 @@
+{
+  "control_qualification": {
+    "controls": {
+      "C-E5": {
+        "cells": 1792,
+        "generated_at": [
+          [
+            "a6d11167b1ae957ff382b35a7ebef947c234ebb8",
+            false,
+            "v6-e5-freeze-v1-5ba12be258c8"
+          ]
+        ]
+      },
+      "C-E5K1": {
+        "cells": 1792,
+        "generated_at": [
+          [
+            "a6d11167b1ae957ff382b35a7ebef947c234ebb8",
+            false,
+            "v6-e5-freeze-v1-5ba12be258c8"
+          ]
+        ]
+      }
+    },
+    "min_sweep_backed": {
+      "primary_arm": 17,
+      "required": 6,
+      "status": "PASS"
+    },
+    "note": "Control data only: no T-E5 or T-E5K1 match existed when this freeze was qualified.",
+    "populations": {
+      "path": "tools/research/v6/e5/control_populations.json",
+      "sha256": "1cf96a2e48b4c4bcc95d011b2289963a24fed92a555d5ad927de636b718e1737"
+    },
+    "records": {
+      "analyzer_qualification.json": {
+        "path": "runs/research_v6_e5/v6-e5-matrix-v1-ef7fa327ea81/freezes/v6-e5-freeze-v1-5ba12be258c8/analyzer_qualification.json",
+        "sha256": "dfefe5f3507a399d05e2e1feb03c4edad864484a5463d39074ebe4fc4f2ff1d8"
+      },
+      "d9_real_fixture_gate.json": {
+        "path": "runs/research_v6_e5/v6-e5-matrix-v1-ef7fa327ea81/freezes/v6-e5-freeze-v1-5ba12be258c8/d9_real_fixture_gate.json",
+        "sha256": "b091770c9510e33b0eaa0bb3f93728536292a2c736235fbcee63095e1bc437f1"
+      },
+      "observation_delta_gate.json": {
+        "path": "runs/research_v6_e5/v6-e5-matrix-v1-ef7fa327ea81/freezes/v6-e5-freeze-v1-5ba12be258c8/observation_delta_gate.json",
+        "sha256": "29049fbd905f23be27cb024b64f01bce481d33df705bf93dcb17196508fb09cf"
+      },
+      "p5_inertness_gate.json": {
+        "path": "runs/research_v6_e5/v6-e5-matrix-v1-ef7fa327ea81/freezes/v6-e5-freeze-v1-5ba12be258c8/p5_inertness_gate.json",
+        "sha256": "18f927a9b4f44a098e690cd174e2b7baa9f7cfc0a734d81e97b4240dfc1c569c"
+      },
+      "parent_reproduction.json": {
+        "path": "runs/research_v6_e5/v6-e5-matrix-v1-ef7fa327ea81/freezes/v6-e5-freeze-v1-5ba12be258c8/parent_reproduction.json",
+        "sha256": "ee68117e204892baf7e7278fe140245f9823f81e2c3fd00fd241d1522b920dca"
+      }
+    },
+    "status": "PASS"
+  },
+  "freeze_digest": "5ba12be258c80bd0876542b035bc66d183a9447d4c6c014528aff9f2ea516227",
+  "freeze_id": "v6-e5-freeze-v1-5ba12be258c8",
+  "identity": {
+    "action_parity_version": 1,
+    "capture_analyzer_version": 2,
+    "e4_cell_metrics_version": 1,
+    "e5_analysis_sha256": "6bc65a26d88a1e939248f85c2452ce372ae35f84719e0ecbedfb70c944768538",
+    "e5_analysis_version": 1,
+    "e5_cell_metrics_sha256": "25c5e0d8119f1783b36333adfaf938d78252c28392f782143e9fa974cb9f7964",
+    "e5_cell_metrics_version": 1,
+    "freeze_version": 1,
+    "historical_parent": {
+      "conditions": {
+        "C-E5": "C-E4",
+        "C-E5K1": "C-E4K1"
+      },
+      "freeze_id": "v6-e4-freeze-v1-101a941f5e30",
+      "generation": {
+        "engine_tree": "940a27bcf8c62268eb15210cc30c28cae4d33e50",
+        "source_commit": "e0d39b3560477e21ac619e2fd26130e25938c798"
+      },
+      "matrix_digest": "fc29d575dd256777a9b18c1d076716677a89a6e4eac8943ec2cefc703ceff4ef",
+      "matrix_id": "v6-e4-matrix-v1-fc29d575dd25"
+    },
+    "match_generation_path": "engine/src",
+    "match_generation_tree": "da3f9ac2b5268cbe5bbcfa4701ea076554598d35",
+    "matches_total": 7168,
+    "matrix_digest": "ef7fa327ea81904c3f8e21161b3c5472837822e298a960d1b3087be8d2388d28",
+    "matrix_id": "v6-e5-matrix-v1-ef7fa327ea81",
+    "parent_freeze": {
+      "commit": "8f6717d",
+      "matches": 96,
+      "path": "engine/tests/test_v6_e5_parent_byte_identity.py"
+    },
+    "preregistration_sha256": "6e226fa8e620ff9c62bdbff46c7bc67af2331ae300607a4dcd1f8019a40818f4",
+    "reused_e4_freeze_id": "v6-e4-freeze-v1-101a941f5e30",
+    "tooling_sha256": {
+      "tools/research/v6/e2/capture_analyzer.py": "b818f53e32ba160fb55386cddccd555812def9dc7c54434923c7451fa2c18f86",
+      "tools/research/v6/e2/matrix.py": "bd8ca2a88f2945c5bf3d544ec5a59cf9293bd11b78e1548a2e443c787a131449",
+      "tools/research/v6/e2/requalification.py": "752072e3bb404e7c6f2beb37b3d355c137e9cae470e03e29d4b5e8b20d5963bd",
+      "tools/research/v6/e3/action_parity.py": "86b1a557e3a31db157ba2bd8805ef3636f892f2c7e5f9468d0982961d4c4f211",
+      "tools/research/v6/e3/analysis_freeze.py": "fa4152e537edc2729a303f9b3565cd7f67552b572becba7ac17f604dce530c70",
+      "tools/research/v6/e3/analyze_e3.py": "a8d0911939da5b9b9dcc554657168f6cb36800064043498ef8eaf49bd0610330",
+      "tools/research/v6/e3/d9_gate.py": "0c37b7e4d6a2c21c52cc9d6d7c0996ecad5f448bd0c4c7cfdefcccf9d8144aee",
+      "tools/research/v6/e3/entrants.py": "07ad9ee6cc5ed5709b8caf676da358925654d37466d777de091e44018ad5e72d",
+      "tools/research/v6/e3/gates.py": "0910fb541e9fd4a538d74a6abdcff8515ab4ddc3165ac960ce968c939d2cd9a9",
+      "tools/research/v6/e3/matrix.py": "bdbb33dcf9b4c399eeb42179af0b7f12118b2cb051aa93dd1156844772e737bb",
+      "tools/research/v6/e3/populations.py": "25ca85a94d91407d55ebc39a53bf5a5d430dcfa0867b1d855ba3be8b6ce2d01b",
+      "tools/research/v6/e4/analysis_freeze.py": "ee0c30b2c85f6b59aabe4f4f89c2af78cb0cbb2353f24e2cffa3df4d46488cd9",
+      "tools/research/v6/e4/analyze_e4.py": "c891abe0a879f62b0265f5f38f46bd0a1214a860994f06977f05ca3bfaeb2ab1",
+      "tools/research/v6/e4/cell_metrics.py": "cbfe64242113badca6c797dcc2897dea89c88dfdb0040e7a6105f21e03e43e0b",
+      "tools/research/v6/e4/contest_classes.json": "47097041e36189e4a92c837080055cacd40ab53c4203f699564550d6507f7969",
+      "tools/research/v6/e4/contest_classes.py": "2cccc6d768ae53129e6aaed33be35a77b6037799b59bcfe10f0c86fe098079a0",
+      "tools/research/v6/e4/control_populations.json": "56a8c1090b27929cb8b33fc861f385dacb8898d86e673ee6a42505e8eeef06c5",
+      "tools/research/v6/e4/gates.py": "0ea1a03f696530467ee8a3a576712433b433c92ac362799fc168a58dca7fc969",
+      "tools/research/v6/e4/matrix.py": "3ecd80ee234d8dd91ad7b986acc105905c64bcbf2ac10e37aa107a4eab00d583",
+      "tools/research/v6/e4/populations.py": "2ca6e913583f7299e8d1512c376abc59139a850301e496df53b0a66f0044dba2",
+      "tools/research/v6/e4/preregistration.json": "56307844e1c01a52b46b3fc1d100a34706e13d6a645614d6d2bcea94757b9973",
+      "tools/research/v6/e4/preregistration.py": "d1a5fac130067e32c25d1547673bac1aef7ae7d91f70e5735366d959d4f7d722",
+      "tools/research/v6/e4/telemetry.py": "1dd5a5956c54a9e8f3daf8aeee04b85c28872a316d2a654e098735fbae380715",
+      "tools/research/v6/e5/analysis_freeze.py": "14ff3d23bd3cc82eb5bfb70631f94d53a3f87a14428e9a488050083bc63475b2",
+      "tools/research/v6/e5/analyze_e5.py": "6bc65a26d88a1e939248f85c2452ce372ae35f84719e0ecbedfb70c944768538",
+      "tools/research/v6/e5/cell_metrics.py": "25c5e0d8119f1783b36333adfaf938d78252c28392f782143e9fa974cb9f7964",
+      "tools/research/v6/e5/gates.py": "e1a853c2ada5c0a4009cb912bb3790c3e1c5d0ba2ab29224a2a4537c4d01b004",
+      "tools/research/v6/e5/matrix.py": "130f0a92b67b17b7fe5cf0981b3011ee12827471fcad61877fea05ee28184bb7",
+      "tools/research/v6/e5/nonmatrix_gates.py": "aa79ebfb4b829950a09907c4cec6684aedc0e8cb31b7fffa1c21d2fa0a75ad5e",
+      "tools/research/v6/e5/populations.py": "b84e94e3a08ec6a42a8d1c4705d162b138c3a191f745e5175e26cd36e1953a13",
+      "tools/research/v6/e5/preregistration.json": "6e226fa8e620ff9c62bdbff46c7bc67af2331ae300607a4dcd1f8019a40818f4",
+      "tools/research/v6/e5/preregistration.py": "0f6832bd5b91869ddac0bc3a984a5fe6a58b4fd19d62b709a38c634fb0302944",
+      "tools/research/v6/e5/run_e5.py": "492df6f9467f3d79c4bd03bbe366049fd09147bd897353f669dfb4c8966739ca",
+      "tools/research/v6/e5/telemetry.py": "90a4d99cebb17ab3753ad78ed2978674a09e438e7f8fcc835a0489087cddd1c6",
+      "tools/research/v6/experiment_harness.py": "e137c02df84f1aa20d1097472bb3885820e4a27ddbd2849fa7b1be73980e0254"
+    },
+    "tooling_source_sha": "76c1d625c83c39cf353e28db37ca2d756bd53d55"
+  },
+  "schema": "bytefray.v6.e5.analysis_freeze",
+  "status": "frozen before any T-E5 or T-E5K1 matrix data exists"
+}

@@ -1,0 +1,148 @@
+{
+  "backend": null,
+  "entrants": [
+    {
+      "agent_id": "A",
+      "alive": true,
+      "diagnostic": null,
+      "metadata": {
+        "agent_version": "0.1.0",
+        "api_version": 1,
+        "derived_seed": 59841460587895260709279494161835219359,
+        "entry_point": "agent.py:create_agent",
+        "kind": "python",
+        "local_source_fingerprint": "a435d0e204703c2b2fb1b802446484c48246bcdd3b8381a43e78748a46dd4991",
+        "local_source_fingerprint_final": "a435d0e204703c2b2fb1b802446484c48246bcdd3b8381a43e78748a46dd4991",
+        "slot": 0,
+        "source_sha256": "a829d5fdf797284d1f7d36da234b04f5ff917da87f52d88c584a012316124190"
+      },
+      "name": "core_seeker",
+      "score": 488.0,
+      "statistics": {
+        "alive": true,
+        "alive_ticks": 98,
+        "cpu_total": 784,
+        "deaths": 0,
+        "kills": 2,
+        "mem_writes": 635,
+        "name": "core_seeker",
+        "score": 488.0,
+        "territory_avg": 277.9795918367347,
+        "territory_last": 548,
+        "territory_max": 548,
+        "territory_pct_avg": 6.7866111288265305,
+        "territory_pct_last": 13.37890625,
+        "territory_pct_max": 13.37890625
+      },
+      "termination_reason": null
+    },
+    {
+      "agent_id": "B",
+      "alive": false,
+      "diagnostic": null,
+      "metadata": {
+        "agent_version": "0.1.0",
+        "api_version": 1,
+        "derived_seed": 36350180380968599705714459651530614550,
+        "entry_point": "agent.py:create_agent",
+        "kind": "python",
+        "local_source_fingerprint": "50b12c68cd44b6eec17f8423317325c7491933c621baa31be4d84e947ab7c0cb",
+        "local_source_fingerprint_final": "50b12c68cd44b6eec17f8423317325c7491933c621baa31be4d84e947ab7c0cb",
+        "slot": 1,
+        "source_sha256": "3666d81cd6a30b51db27d1f4f4196dba5b086d7fba0dffd1f0001faf812f0829"
+      },
+      "name": "claimer",
+      "score": 603.0,
+      "statistics": {
+        "alive": false,
+        "alive_ticks": 97,
+        "cpu_total": 784,
+        "deaths": 1,
+        "kills": 0,
+        "mem_writes": 784,
+        "name": "claimer",
+        "score": 603.0,
+        "territory_avg": 363.33673469387753,
+        "territory_last": 687,
+        "territory_max": 687,
+        "territory_pct_avg": 8.870525749362244,
+        "territory_pct_last": 16.7724609375,
+        "territory_pct_max": 16.7724609375
+      },
+      "termination_reason": "core_captured"
+    },
+    {
+      "agent_id": "C",
+      "alive": false,
+      "diagnostic": null,
+      "metadata": {
+        "agent_version": "0.1.0",
+        "api_version": 1,
+        "derived_seed": 27560192653857568516497181429740019551,
+        "entry_point": "agent.py:create_agent",
+        "kind": "python",
+        "local_source_fingerprint": "096696da078d10f4f67c8c01b809b60a1e7d9739d937624a0bcc569de28a4b20",
+        "local_source_fingerprint_final": "096696da078d10f4f67c8c01b809b60a1e7d9739d937624a0bcc569de28a4b20",
+        "slot": 2,
+        "source_sha256": "cd988d1f22ec47550a329a0168298850395318f1a230f384ff025354c96ffdeb"
+      },
+      "name": "hunter",
+      "score": 485.0,
+      "statistics": {
+        "alive": false,
+        "alive_ticks": 63,
+        "cpu_total": 512,
+        "deaths": 1,
+        "kills": 0,
+        "mem_writes": 512,
+        "name": "hunter",
+        "score": 485.0,
+        "territory_avg": 307.6530612244898,
+        "territory_last": 399,
+        "territory_max": 451,
+        "territory_pct_avg": 7.511061065051021,
+        "territory_pct_last": 9.7412109375,
+        "territory_pct_max": 11.0107421875
+      },
+      "termination_reason": "core_captured"
+    }
+  ],
+  "match_id": "match_e511f429e6818825e971390d",
+  "mode": "b2",
+  "replay": {
+    "filename": "replay.jsonl",
+    "replay_id": "match_e511f429e6818825e971390d",
+    "sha256": "2fbf7c04432467a8ab5b0204871189f8bca98f8a82978b730b6a4837844e6a56"
+  },
+  "reproducibility": {
+    "action_budget": 8,
+    "arena_size": 4096,
+    "entrant_order": [
+      "A",
+      "B",
+      "C"
+    ],
+    "seed": 1,
+    "tick_limit": 400,
+    "weights": {
+      "alive": 1.0,
+      "kill": 5.0,
+      "territory": 1.0,
+      "territory_bucket": 64
+    },
+    "win_mode": "score_fallback"
+  },
+  "result_id": "result_8ddf401a1bee1b292d159825",
+  "ruleset_id": "bytefray-rules-2",
+  "schema": "battle2.result",
+  "schema_version": 1,
+  "score": {
+    "A": 488.0,
+    "B": 603.0,
+    "C": 485.0
+  },
+  "status": "completed",
+  "termination_reason": "last_agent_standing",
+  "ticks": 98,
+  "winner": "A"
+}

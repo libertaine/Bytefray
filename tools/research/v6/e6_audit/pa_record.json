@@ -1,0 +1,7572 @@
+{
+ "decision_rule": {
+  "integrity_and_identity_pass": true,
+  "load_bearing_findings": {
+   "LB-1 PACED-ADAPT counts reproduce exactly": true,
+   "LB-2 arm contrast below the 9/10 convention": true,
+   "LB-3 I_common_neutral positive stability below the 9/10 convention": true,
+   "LB-4 I_all positive stability below the 9/10 convention": true
+  },
+  "note": "A decision-convention reading under the adopted rule, not a hypothesis verdict.",
+  "outcome": "REPRODUCED: close the sensing x disruption interaction question with no E7 experiment"
+ },
+ "decomposition": {
+  "by_field": {
+   "F1": {
+    "disruption_only": 232,
+    "interaction": 481,
+    "invariant": 1070,
+    "sensing_only": 521
+   },
+   "F2": {
+    "disruption_only": 22,
+    "interaction": 112,
+    "invariant": 270,
+    "sensing_only": 172
+   }
+  },
+  "by_unit": {
+   "F1|EVADER|ADAPT": {
+    "interaction:odd:T-E6L": 1,
+    "invariant": 2,
+    "sensing_only": 61
+   },
+   "F1|EVADER|GREED": {
+    "invariant": 64
+   },
+   "F1|GREED|ADAPT": {
+    "interaction:odd:T-E6": 5,
+    "invariant": 4,
+    "sensing_only": 55
+   },
+   "F1|GUARD|ADAPT": {
+    "sensing_only": 64
+   },
+   "F1|GUARD|EVADER": {
+    "invariant": 64
+   },
+   "F1|GUARD|GREED": {
+    "invariant": 64
+   },
+   "F1|LURK|ADAPT": {
+    "interaction:odd:C-E6L": 7,
+    "interaction:other": 57
+   },
+   "F1|LURK|EVADER": {
+    "disruption_only": 1,
+    "interaction:odd:C-E6": 3,
+    "interaction:odd:C-E6L": 29,
+    "invariant": 1,
+    "sensing_only": 30
+   },
+   "F1|LURK|GREED": {
+    "interaction:odd:T-E6": 1,
+    "interaction:odd:T-E6L": 11,
+    "interaction:other": 10,
+    "invariant": 6,
+    "sensing_only": 36
+   },
+   "F1|LURK|GUARD": {
+    "interaction:odd:C-E6L": 64
+   },
+   "F1|PACED|ADAPT": {
+    "disruption_only": 47,
+    "interaction:diagonal": 2,
+    "interaction:odd:C-E6": 10,
+    "interaction:odd:C-E6L": 5
+   },
+   "F1|PACED|EVADER": {
+    "disruption_only": 3,
+    "interaction:odd:C-E6": 30,
+    "interaction:odd:T-E6": 4,
+    "invariant": 27
+   },
+   "F1|PACED|GREED": {
+    "invariant": 64
+   },
+   "F1|PACED|GUARD": {
+    "disruption_only": 62,
+    "interaction:odd:C-E6L": 2
+   },
+   "F1|PACED|LURK": {
+    "interaction:odd:T-E6": 2,
+    "interaction:odd:T-E6L": 2,
+    "invariant": 33,
+    "sensing_only": 27
+   },
+   "F1|PACED|SPLIT": {
+    "interaction:odd:T-E6": 1,
+    "interaction:odd:T-E6L": 2,
+    "interaction:other": 2,
+    "invariant": 34,
+    "sensing_only": 25
+   },
+   "F1|PACED|STEALTH": {
+    "interaction:odd:T-E6": 3,
+    "interaction:odd:T-E6L": 5,
+    "invariant": 28,
+    "sensing_only": 28
+   },
+   "F1|RUSH|ADAPT": {
+    "disruption_only": 33,
+    "interaction:diagonal": 13,
+    "interaction:odd:C-E6": 6,
+    "interaction:odd:C-E6L": 12
+   },
+   "F1|RUSH|EVADER": {
+    "disruption_only": 2,
+    "interaction:odd:C-E6": 31,
+    "interaction:odd:T-E6": 1,
+    "invariant": 30
+   },
+   "F1|RUSH|GREED": {
+    "invariant": 64
+   },
+   "F1|RUSH|GUARD": {
+    "disruption_only": 62,
+    "interaction:odd:C-E6L": 2
+   },
+   "F1|RUSH|LURK": {
+    "interaction:odd:T-E6": 2,
+    "invariant": 33,
+    "sensing_only": 29
+   },
+   "F1|RUSH|PACED": {
+    "interaction:odd:T-E6L": 1,
+    "interaction:other": 1,
+    "invariant": 45,
+    "sensing_only": 17
+   },
+   "F1|RUSH|SPLIT": {
+    "interaction:odd:T-E6": 1,
+    "interaction:other": 1,
+    "invariant": 40,
+    "sensing_only": 22
+   },
+   "F1|RUSH|STEALTH": {
+    "interaction:odd:T-E6": 2,
+    "interaction:other": 1,
+    "invariant": 32,
+    "sensing_only": 29
+   },
+   "F1|SPLIT|ADAPT": {
+    "invariant": 64
+   },
+   "F1|SPLIT|EVADER": {
+    "invariant": 64
+   },
+   "F1|SPLIT|GREED": {
+    "invariant": 64
+   },
+   "F1|SPLIT|GUARD": {
+    "invariant": 64
+   },
+   "F1|SPLIT|LURK": {
+    "interaction:odd:T-E6": 2,
+    "interaction:odd:T-E6L": 2,
+    "invariant": 30,
+    "sensing_only": 30
+   },
+   "F1|SPLIT|STEALTH": {
+    "interaction:odd:T-E6": 4,
+    "interaction:odd:T-E6L": 1,
+    "interaction:other": 1,
+    "invariant": 26,
+    "sensing_only": 32
+   },
+   "F1|STEALTH|ADAPT": {
+    "disruption_only": 6,
+    "interaction:odd:C-E6": 10,
+    "interaction:odd:C-E6L": 48
+   },
+   "F1|STEALTH|EVADER": {
+    "disruption_only": 1,
+    "interaction:odd:C-E6": 30,
+    "interaction:odd:C-E6L": 2,
+    "invariant": 27,
+    "sensing_only": 4
+   },
+   "F1|STEALTH|GREED": {
+    "invariant": 64
+   },
+   "F1|STEALTH|GUARD": {
+    "disruption_only": 15,
+    "interaction:diagonal": 9,
+    "interaction:odd:C-E6L": 40
+   },
+   "F1|STEALTH|LURK": {
+    "invariant": 32,
+    "sensing_only": 32
+   },
+   "F2|ADAPT|ADAPT": {
+    "interaction:odd:T-E6": 8,
+    "interaction:other": 4,
+    "invariant": 14,
+    "sensing_only": 38
+   },
+   "F2|EVADER|EVADER": {
+    "invariant": 64
+   },
+   "F2|GREED|GREED": {
+    "disruption_only": 22,
+    "invariant": 42
+   },
+   "F2|GUARD|GUARD": {
+    "invariant": 64
+   },
+   "F2|LURK|LURK": {
+    "interaction:odd:T-E6L": 14,
+    "interaction:other": 8,
+    "invariant": 4,
+    "sensing_only": 38
+   },
+   "F2|PACED|PACED": {
+    "interaction:odd:T-E6": 6,
+    "interaction:odd:T-E6L": 16,
+    "interaction:other": 6,
+    "invariant": 16,
+    "sensing_only": 20
+   },
+   "F2|RUSH|RUSH": {
+    "interaction:odd:T-E6": 4,
+    "interaction:odd:T-E6L": 4,
+    "interaction:other": 2,
+    "invariant": 26,
+    "sensing_only": 28
+   },
+   "F2|SPLIT|SPLIT": {
+    "interaction:odd:T-E6": 6,
+    "interaction:odd:T-E6L": 6,
+    "interaction:other": 2,
+    "invariant": 26,
+    "sensing_only": 24
+   },
+   "F2|STEALTH|STEALTH": {
+    "interaction:odd:T-E6": 2,
+    "interaction:odd:T-E6L": 14,
+    "interaction:other": 10,
+    "invariant": 14,
+    "sensing_only": 24
+   }
+  },
+  "interaction_sublabels": {
+   "diagonal": 24,
+   "odd:C-E6": 120,
+   "odd:C-E6L": 211,
+   "odd:T-E6": 54,
+   "odd:T-E6L": 79,
+   "other": 105
+  },
+  "keys": 2880,
+  "overall": {
+   "disruption_only": 254,
+   "interaction": 593,
+   "invariant": 1340,
+   "sensing_only": 693
+  }
+ },
+ "governing_review": {
+  "commit": "4a135f8",
+  "path": "docs/research/v6/V6_E7_SENSING_DISRUPTION_INTERACTION_DESIGN_REVIEW.md"
+ },
+ "integrity": {
+  "callback_row_files_verified": 2176,
+  "identity_check": {
+   "compared": 180,
+   "mismatches": [],
+   "status": "PASS"
+  },
+  "pf4_point_equals_frozen": true,
+  "pins": {
+   "execution_matrix_identity": "v6-e6-exec-v1-62b88ba3ddb4",
+   "freeze_id": "v6-e6-freeze-v2-275057e27725",
+   "pinned_files_verified": 42,
+   "seed_commitment": "61e292f6f9dcd951ccc6d8eaf5dc77a41c04c6c4865246ca3b5e5bac5c0e1c83",
+   "seeds": 32,
+   "structural_matrix_id": "v6-e6-matrix-v2-7de29a4a6954"
+  }
+ },
+ "mechanism_tables": {
+  "F1|GREED|ADAPT": {
+   "C-E6": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "119": 1,
+       "122": 1,
+       "124": 1,
+       "125": 1,
+       "159": 1,
+       "172": 1,
+       "242": 1,
+       "243": 1,
+       "250": 1,
+       "258": 1,
+       "268": 1,
+       "269": 1,
+       "275": 1,
+       "282": 1,
+       "283": 1,
+       "317": 1,
+       "347": 1,
+       "420": 1,
+       "453": 1,
+       "477": 1,
+       "640": 1,
+       "664": 1,
+       "666": 1,
+       "690": 2,
+       "754": 1,
+       "848": 1,
+       "856": 1,
+       "904": 1,
+       "970": 2,
+       "978": 1
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 32
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 32,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1000": 31,
+      "970": 1
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "3": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "119": 1,
+       "122": 1,
+       "124": 1,
+       "125": 1,
+       "159": 1,
+       "172": 1,
+       "242": 1,
+       "243": 1,
+       "250": 1,
+       "258": 1,
+       "268": 1,
+       "269": 1,
+       "275": 1,
+       "282": 1,
+       "283": 1,
+       "317": 1,
+       "347": 1,
+       "420": 1,
+       "453": 1,
+       "477": 1,
+       "640": 1,
+       "664": 1,
+       "666": 1,
+       "690": 2,
+       "754": 1,
+       "848": 1,
+       "856": 1,
+       "904": 1,
+       "970": 2,
+       "978": 1
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "last_agent_standing": 1,
+      "tick_limit": 31
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "121": 1,
+       "126": 1,
+       "132": 1,
+       "146": 1,
+       "168": 1,
+       "170": 1,
+       "192": 2,
+       "235": 1,
+       "246": 1,
+       "254": 1,
+       "256": 1,
+       "262": 1,
+       "265": 1,
+       "267": 1,
+       "275": 1,
+       "276": 1,
+       "286": 1,
+       "313": 1,
+       "339": 1,
+       "354": 1,
+       "362": 1,
+       "410": 1,
+       "449": 1,
+       "472": 2,
+       "473": 1,
+       "480": 1,
+       "617": 1,
+       "657": 1,
+       "none": 2
+      },
+      "first_check_after_contact": {
+       "t3:cell2:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 30
+       },
+       "not_evaded": {
+        "X": 2
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 32,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1000": 32
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "3": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "121": 1,
+       "126": 1,
+       "132": 1,
+       "146": 1,
+       "168": 1,
+       "170": 1,
+       "192": 2,
+       "235": 1,
+       "246": 1,
+       "254": 1,
+       "256": 1,
+       "262": 1,
+       "265": 1,
+       "267": 1,
+       "275": 1,
+       "276": 1,
+       "286": 1,
+       "313": 1,
+       "339": 1,
+       "354": 1,
+       "362": 1,
+       "410": 1,
+       "449": 1,
+       "472": 2,
+       "473": 1,
+       "480": 1,
+       "617": 1,
+       "657": 1,
+       "none": 2
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "Y": 32
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    }
+   },
+   "C-E6L": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "123": 1,
+       "184": 1,
+       "19": 3,
+       "195": 1,
+       "20": 1,
+       "21": 1,
+       "240": 1,
+       "25": 1,
+       "26": 1,
+       "30": 2,
+       "36": 1,
+       "37": 1,
+       "39": 4,
+       "41": 1,
+       "42": 1,
+       "52": 1,
+       "58": 1,
+       "61": 1,
+       "69": 1,
+       "70": 2,
+       "71": 1,
+       "none": 4
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 28
+       },
+       "not_evaded": {
+        "X": 4
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1000": 32
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "123": 1,
+       "184": 1,
+       "19": 3,
+       "195": 1,
+       "20": 1,
+       "21": 1,
+       "240": 1,
+       "25": 1,
+       "26": 1,
+       "30": 2,
+       "36": 1,
+       "37": 1,
+       "39": 4,
+       "41": 1,
+       "42": 1,
+       "52": 1,
+       "58": 1,
+       "61": 1,
+       "69": 1,
+       "70": 2,
+       "71": 1,
+       "none": 4
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "110": 1,
+       "18": 1,
+       "187": 1,
+       "192": 1,
+       "20": 2,
+       "21": 1,
+       "24": 1,
+       "25": 1,
+       "256": 1,
+       "325": 1,
+       "36": 1,
+       "38": 2,
+       "41": 1,
+       "484": 1,
+       "50": 1,
+       "52": 1,
+       "61": 1,
+       "65": 1,
+       "70": 2,
+       "91": 1,
+       "99": 1,
+       "none": 8
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 24
+       },
+       "not_evaded": {
+        "X": 8
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1000": 32
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "110": 1,
+       "18": 1,
+       "187": 1,
+       "192": 1,
+       "20": 2,
+       "21": 1,
+       "24": 1,
+       "25": 1,
+       "256": 1,
+       "325": 1,
+       "36": 1,
+       "38": 2,
+       "41": 1,
+       "484": 1,
+       "50": 1,
+       "52": 1,
+       "61": 1,
+       "65": 1,
+       "70": 2,
+       "91": 1,
+       "99": 1,
+       "none": 8
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "Y": 32
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    }
+   },
+   "T-E6": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "16": 2,
+       "none": 30
+      },
+      "first_check_after_contact": {
+       "none": 31,
+       "t17:cell0:own": 1
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 1,
+        "Y": 1
+       },
+       "not_evaded": {
+        "Y": 30
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1000": 1
+     },
+     "decision_tick_of_Y_wins": {
+      "19": 20,
+      "20": 10,
+      "27": 1
+     },
+     "first_callback_after_rival_detection": {
+      "X": {
+       "17": 1,
+       "19": 30,
+       "none": 1
+      },
+      "Y": {
+       "17": 1,
+       "18": 17,
+       "20": 4,
+       "none": 10
+      }
+     },
+     "first_detection": {
+      "X": {
+       "16": 1,
+       "17": 17,
+       "19": 13,
+       "none": 1
+      },
+      "Y": {
+       "16": 1,
+       "17": 30,
+       "none": 1
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "16": 2,
+       "17": 30
+      }
+     },
+     "outcome_for_X": {
+      "X": 1,
+      "Y": 31,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "X": 18,
+      "Y": 13,
+      "none": 1
+     },
+     "termination": {
+      "last_agent_standing": 31,
+      "tick_limit": 1
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "16": 1,
+       "none": 31
+      },
+      "first_check_after_contact": {
+       "none": 31,
+       "t17:cell0:own": 1
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 1
+       },
+       "not_evaded": {
+        "X": 2,
+        "Y": 28,
+        "tie": 1
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1000": 1,
+      "17": 2
+     },
+     "decision_tick_of_Y_wins": {
+      "19": 18,
+      "20": 10
+     },
+     "first_callback_after_rival_detection": {
+      "X": {
+       "18": 30,
+       "none": 2
+      },
+      "Y": {
+       "17": 1,
+       "18": 17,
+       "19": 12,
+       "none": 2
+      }
+     },
+     "first_detection": {
+      "X": {
+       "16": 1,
+       "17": 17,
+       "18": 12,
+       "none": 2
+      },
+      "Y": {
+       "16": 1,
+       "17": 31
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "16": 1,
+       "17": 31
+      }
+     },
+     "outcome_for_X": {
+      "X": 3,
+      "Y": 28,
+      "other": 0,
+      "tie": 1
+     },
+     "saw_first": {
+      "X": 18,
+      "Y": 14
+     },
+     "termination": {
+      "all_agents_dead": 1,
+      "last_agent_standing": 30,
+      "tick_limit": 1
+     }
+    }
+   },
+   "T-E6L": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "16": 2,
+       "none": 30
+      },
+      "first_check_after_contact": {
+       "none": 31,
+       "t17:cell0:own": 1
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 1,
+        "Y": 1
+       },
+       "not_evaded": {
+        "X": 3,
+        "Y": 27
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1000": 1,
+      "17": 1,
+      "18": 1,
+      "19": 1
+     },
+     "decision_tick_of_Y_wins": {
+      "19": 18,
+      "20": 9,
+      "27": 1
+     },
+     "first_callback_after_rival_detection": {
+      "X": {
+       "17": 1,
+       "18": 29,
+       "none": 2
+      },
+      "Y": {
+       "17": 1,
+       "18": 25,
+       "19": 4,
+       "none": 2
+      }
+     },
+     "first_detection": {
+      "X": {
+       "16": 1,
+       "17": 26,
+       "18": 4,
+       "none": 1
+      },
+      "Y": {
+       "16": 1,
+       "17": 30,
+       "none": 1
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "16": 2,
+       "17": 30
+      }
+     },
+     "outcome_for_X": {
+      "X": 4,
+      "Y": 28,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "X": 18,
+      "Y": 13,
+      "none": 1
+     },
+     "termination": {
+      "last_agent_standing": 31,
+      "tick_limit": 1
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "16": 1,
+       "none": 31
+      },
+      "first_check_after_contact": {
+       "none": 31,
+       "t17:cell0:own": 1
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 1
+       },
+       "not_evaded": {
+        "X": 4,
+        "Y": 27
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1000": 1,
+      "17": 2,
+      "18": 1,
+      "19": 1
+     },
+     "decision_tick_of_Y_wins": {
+      "19": 18,
+      "20": 9
+     },
+     "first_callback_after_rival_detection": {
+      "X": {
+       "17": 1,
+       "18": 29,
+       "none": 2
+      },
+      "Y": {
+       "17": 1,
+       "18": 29,
+       "none": 2
+      }
+     },
+     "first_detection": {
+      "X": {
+       "16": 1,
+       "17": 31
+      },
+      "Y": {
+       "16": 1,
+       "17": 31
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "16": 1,
+       "17": 31
+      }
+     },
+     "outcome_for_X": {
+      "X": 5,
+      "Y": 27,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "X": 18,
+      "Y": 14
+     },
+     "termination": {
+      "last_agent_standing": 31,
+      "tick_limit": 1
+     }
+    }
+   }
+  },
+  "F1|LURK|ADAPT": {
+   "C-E6": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "none": 32
+      },
+      "first_check_after_contact": {
+       "none": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {},
+       "not_evaded": {
+        "X": 32
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1": 32
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "last_agent_standing": 32
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "5": 32
+      },
+      "first_check_after_contact": {
+       "t3:cell2:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 32
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 32,
+      "Y": 32
+     },
+     "decision_tick_of_X_wins": {
+      "5": 32
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "3": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "5": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "Y": 32
+     },
+     "termination": {
+      "last_agent_standing": 32
+     }
+    }
+   },
+   "C-E6L": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "1": 32
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "tie": 32
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {},
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 0,
+      "Y": 0,
+      "other": 0,
+      "tie": 32
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "3": 32
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "tie": 32
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {},
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "3": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 0,
+      "Y": 0,
+      "other": 0,
+      "tie": 32
+     },
+     "saw_first": {
+      "Y": 32
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    }
+   },
+   "T-E6": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "16": 2,
+       "none": 30
+      },
+      "first_check_after_contact": {
+       "none": 31,
+       "t18:cell1:own": 1
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 1,
+        "Y": 1
+       },
+       "not_evaded": {
+        "X": 3,
+        "Y": 27
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "41": 1,
+      "603": 1,
+      "687": 1,
+      "717": 1
+     },
+     "decision_tick_of_Y_wins": {
+      "20": 9,
+      "22": 18,
+      "27": 1
+     },
+     "first_callback_after_rival_detection": {
+      "X": {
+       "19": 31,
+       "none": 1
+      },
+      "Y": {
+       "18": 18,
+       "20": 13,
+       "none": 1
+      }
+     },
+     "first_detection": {
+      "X": {
+       "16": 1,
+       "17": 17,
+       "19": 13,
+       "none": 1
+      },
+      "Y": {
+       "17": 13,
+       "18": 18,
+       "none": 1
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "16": 2,
+       "17": 30
+      }
+     },
+     "outcome_for_X": {
+      "X": 4,
+      "Y": 28,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "X": 18,
+      "Y": 13,
+      "none": 1
+     },
+     "termination": {
+      "last_agent_standing": 32
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "16": 1,
+       "none": 31
+      },
+      "first_check_after_contact": {
+       "none": 31,
+       "t17:cell0:own": 1
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 1
+       },
+       "not_evaded": {
+        "X": 2,
+        "Y": 29
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "17": 2,
+      "34": 1
+     },
+     "decision_tick_of_Y_wins": {
+      "21": 7,
+      "23": 22
+     },
+     "first_callback_after_rival_detection": {
+      "X": {
+       "18": 13,
+       "20": 17,
+       "none": 2
+      },
+      "Y": {
+       "17": 1,
+       "19": 29,
+       "none": 2
+      }
+     },
+     "first_detection": {
+      "X": {
+       "16": 1,
+       "17": 17,
+       "18": 12,
+       "none": 2
+      },
+      "Y": {
+       "17": 15,
+       "19": 17
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "16": 1,
+       "17": 31
+      }
+     },
+     "outcome_for_X": {
+      "X": 3,
+      "Y": 29,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "X": 18,
+      "Y": 14
+     },
+     "termination": {
+      "last_agent_standing": 32
+     }
+    }
+   },
+   "T-E6L": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "16": 2,
+       "none": 30
+      },
+      "first_check_after_contact": {
+       "none": 31,
+       "t17:cell0:own": 1
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 1,
+        "Y": 1
+       },
+       "not_evaded": {
+        "X": 5,
+        "Y": 25
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1000": 1,
+      "32": 1,
+      "359": 1,
+      "407": 1,
+      "41": 1,
+      "425": 1
+     },
+     "decision_tick_of_Y_wins": {
+      "19": 7,
+      "20": 18,
+      "27": 1
+     },
+     "first_callback_after_rival_detection": {
+      "X": {
+       "17": 1,
+       "18": 30,
+       "none": 1
+      },
+      "Y": {
+       "17": 1,
+       "18": 26,
+       "19": 4,
+       "none": 1
+      }
+     },
+     "first_detection": {
+      "X": {
+       "16": 1,
+       "17": 26,
+       "18": 4,
+       "none": 1
+      },
+      "Y": {
+       "16": 1,
+       "17": 30,
+       "none": 1
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "16": 2,
+       "17": 30
+      }
+     },
+     "outcome_for_X": {
+      "X": 6,
+      "Y": 26,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "X": 18,
+      "Y": 13,
+      "none": 1
+     },
+     "termination": {
+      "last_agent_standing": 31,
+      "tick_limit": 1
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "16": 1,
+       "none": 31
+      },
+      "first_check_after_contact": {
+       "none": 31,
+       "t17:cell0:own": 1
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 1
+       },
+       "not_evaded": {
+        "X": 2,
+        "Y": 29
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1000": 1,
+      "17": 2
+     },
+     "decision_tick_of_Y_wins": {
+      "19": 7,
+      "20": 22
+     },
+     "first_callback_after_rival_detection": {
+      "X": {
+       "17": 1,
+       "18": 29,
+       "none": 2
+      },
+      "Y": {
+       "17": 1,
+       "18": 29,
+       "none": 2
+      }
+     },
+     "first_detection": {
+      "X": {
+       "16": 1,
+       "17": 31
+      },
+      "Y": {
+       "16": 1,
+       "17": 31
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "16": 1,
+       "17": 31
+      }
+     },
+     "outcome_for_X": {
+      "X": 3,
+      "Y": 29,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "X": 18,
+      "Y": 14
+     },
+     "termination": {
+      "last_agent_standing": 31,
+      "tick_limit": 1
+     }
+    }
+   }
+  },
+  "F1|LURK|GREED": {
+   "C-E6": {
+    "X@A": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1": 32
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "last_agent_standing": 32
+     }
+    },
+    "X@B": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 32
+     },
+     "decision_tick_of_X_wins": {
+      "3": 32
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "3": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "Y": 32
+     },
+     "termination": {
+      "last_agent_standing": 32
+     }
+    }
+   },
+   "C-E6L": {
+    "X@A": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1": 32
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "last_agent_standing": 32
+     }
+    },
+    "X@B": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "3": 32
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "Y": 32
+     },
+     "termination": {
+      "last_agent_standing": 32
+     }
+    }
+   },
+   "T-E6": {
+    "X@A": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "17": 2,
+      "32": 1,
+      "33": 1,
+      "34": 1,
+      "35": 1,
+      "37": 1,
+      "41": 1,
+      "61": 1
+     },
+     "decision_tick_of_Y_wins": {
+      "26": 2,
+      "31": 1,
+      "34": 1,
+      "35": 1,
+      "36": 1,
+      "44": 1,
+      "62": 1
+     },
+     "first_callback_after_rival_detection": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 9,
+      "Y": 8,
+      "other": 0,
+      "tie": 15
+     },
+     "saw_first": {
+      "none": 32
+     },
+     "termination": {
+      "all_agents_dead": 15,
+      "last_agent_standing": 17
+     }
+    },
+    "X@B": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "26": 2,
+      "31": 1,
+      "34": 1,
+      "35": 1,
+      "36": 1,
+      "44": 1,
+      "62": 1
+     },
+     "decision_tick_of_Y_wins": {
+      "17": 2,
+      "32": 1,
+      "33": 1,
+      "34": 1,
+      "35": 1,
+      "37": 1,
+      "41": 1,
+      "61": 1
+     },
+     "first_callback_after_rival_detection": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 8,
+      "Y": 9,
+      "other": 0,
+      "tie": 15
+     },
+     "saw_first": {
+      "none": 32
+     },
+     "termination": {
+      "all_agents_dead": 15,
+      "last_agent_standing": 17
+     }
+    }
+   },
+   "T-E6L": {
+    "X@A": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "17": 1,
+      "33": 1
+     },
+     "decision_tick_of_Y_wins": {
+      "31": 1,
+      "34": 1,
+      "35": 1,
+      "36": 1,
+      "44": 1
+     },
+     "first_callback_after_rival_detection": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 2,
+      "Y": 5,
+      "other": 0,
+      "tie": 25
+     },
+     "saw_first": {
+      "none": 32
+     },
+     "termination": {
+      "all_agents_dead": 25,
+      "last_agent_standing": 7
+     }
+    },
+    "X@B": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "31": 1,
+      "34": 1,
+      "35": 1,
+      "36": 1,
+      "44": 1
+     },
+     "decision_tick_of_Y_wins": {
+      "17": 1,
+      "33": 1
+     },
+     "first_callback_after_rival_detection": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 5,
+      "Y": 2,
+      "other": 0,
+      "tie": 25
+     },
+     "saw_first": {
+      "none": 32
+     },
+     "termination": {
+      "all_agents_dead": 25,
+      "last_agent_standing": 7
+     }
+    }
+   }
+  },
+  "F1|PACED|ADAPT": {
+   "C-E6": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "none": 32
+      },
+      "first_check_after_contact": {
+       "none": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {},
+       "not_evaded": {
+        "X": 32
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1": 32
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "last_agent_standing": 32
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "5": 32
+      },
+      "first_check_after_contact": {
+       "t3:cell2:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 32
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 32,
+      "Y": 32
+     },
+     "decision_tick_of_X_wins": {
+      "5": 32
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "3": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "5": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "Y": 32
+     },
+     "termination": {
+      "last_agent_standing": 32
+     }
+    }
+   },
+   "C-E6L": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "1": 32
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "tie": 32
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {},
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 0,
+      "Y": 0,
+      "other": 0,
+      "tie": 32
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "3": 32
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "tie": 32
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {},
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "3": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 0,
+      "Y": 0,
+      "other": 0,
+      "tie": 32
+     },
+     "saw_first": {
+      "Y": 32
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    }
+   },
+   "T-E6": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "4": 6,
+       "6": 5,
+       "none": 21
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 15,
+       "t4:cell3:damage": 4,
+       "t4:cell3:own": 13
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 9,
+        "tie": 2
+       },
+       "not_evaded": {
+        "X": 21
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 13,
+      "Y": 32
+     },
+     "decision_tick_of_X_wins": {
+      "10": 3,
+      "4": 4,
+      "5": 21,
+      "6": 2
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "3": 15,
+       "5": 15,
+       "none": 2
+      },
+      "Y": {
+       "2": 15,
+       "4": 17
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 15,
+       "2": 17
+      },
+      "Y": {
+       "2": 15,
+       "4": 17
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "4": 6,
+       "6": 5,
+       "none": 21
+      }
+     },
+     "outcome_for_X": {
+      "X": 30,
+      "Y": 0,
+      "other": 0,
+      "tie": 2
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "last_agent_standing": 30,
+      "tick_limit": 2
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "3": 11,
+       "5": 10,
+       "9": 1,
+       "none": 10
+      },
+      "first_check_after_contact": {
+       "t3:cell2:damage": 11,
+       "t3:cell2:own": 21
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 12,
+        "tie": 10
+       },
+       "not_evaded": {
+        "X": 10
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 10,
+      "Y": 32
+     },
+     "decision_tick_of_X_wins": {
+      "11": 2,
+      "12": 1,
+      "3": 5,
+      "4": 1,
+      "5": 4,
+      "6": 9
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "4": 27,
+       "none": 5
+      },
+      "Y": {
+       "3": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 17,
+       "2": 15
+      },
+      "Y": {
+       "3": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "3": 11,
+       "5": 10,
+       "9": 1,
+       "none": 10
+      }
+     },
+     "outcome_for_X": {
+      "X": 22,
+      "Y": 0,
+      "other": 0,
+      "tie": 10
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "last_agent_standing": 22,
+      "tick_limit": 10
+     }
+    }
+   },
+   "T-E6L": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "1": 2,
+       "4": 5,
+       "5": 19,
+       "6": 4,
+       "9": 2
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 15,
+       "t3:cell2:own": 17
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 3,
+        "tie": 29
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "26": 1,
+      "8": 2
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 15,
+       "3": 17
+      },
+      "Y": {
+       "2": 15,
+       "3": 17
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 15,
+       "2": 17
+      },
+      "Y": {
+       "1": 15,
+       "2": 17
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 2,
+       "4": 5,
+       "5": 19,
+       "6": 4,
+       "9": 2
+      }
+     },
+     "outcome_for_X": {
+      "X": 3,
+      "Y": 0,
+      "other": 0,
+      "tie": 29
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "last_agent_standing": 3,
+      "tick_limit": 29
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "3": 3,
+       "4": 12,
+       "5": 9,
+       "6": 5,
+       "8": 2,
+       "9": 1
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 17,
+       "t3:cell2:own": 15
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 4,
+        "tie": 28
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "35": 1,
+      "7": 3
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 12,
+       "3": 20
+      },
+      "Y": {
+       "2": 17,
+       "3": 15
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 17,
+       "2": 15
+      },
+      "Y": {
+       "1": 12,
+       "2": 20
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "3": 3,
+       "4": 12,
+       "5": 9,
+       "6": 5,
+       "8": 2,
+       "9": 1
+      }
+     },
+     "outcome_for_X": {
+      "X": 4,
+      "Y": 0,
+      "other": 0,
+      "tie": 28
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "last_agent_standing": 4,
+      "tick_limit": 28
+     }
+    }
+   }
+  },
+  "F1|PACED|EVADER": {
+   "C-E6": {
+    "X@A": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1": 32
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "last_agent_standing": 32
+     }
+    },
+    "X@B": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 32,
+      "Y": 32
+     },
+     "decision_tick_of_X_wins": {
+      "10": 1
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "3": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 1,
+      "Y": 0,
+      "other": 0,
+      "tie": 31
+     },
+     "saw_first": {
+      "Y": 32
+     },
+     "termination": {
+      "last_agent_standing": 1,
+      "tick_limit": 31
+     }
+    }
+   },
+   "C-E6L": {
+    "X@A": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {},
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 0,
+      "Y": 0,
+      "other": 0,
+      "tie": 32
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    },
+    "X@B": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {},
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 0,
+      "Y": 0,
+      "other": 0,
+      "tie": 32
+     },
+     "saw_first": {
+      "Y": 32
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    }
+   },
+   "T-E6": {
+    "X@A": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 32,
+      "Y": 32
+     },
+     "decision_tick_of_X_wins": {
+      "9": 2
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "3": 15,
+       "5": 17
+      },
+      "Y": {
+       "2": 11,
+       "4": 21
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 11,
+       "2": 17,
+       "3": 4
+      },
+      "Y": {
+       "1": 4,
+       "2": 11,
+       "4": 17
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 30,
+       "2": 2
+      }
+     },
+     "outcome_for_X": {
+      "X": 2,
+      "Y": 0,
+      "other": 0,
+      "tie": 30
+     },
+     "saw_first": {
+      "X": 28,
+      "Y": 4
+     },
+     "termination": {
+      "last_agent_standing": 2,
+      "tick_limit": 30
+     }
+    },
+    "X@B": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 32,
+      "Y": 32
+     },
+     "decision_tick_of_X_wins": {
+      "10": 1,
+      "6": 2,
+      "8": 2
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 2,
+       "4": 30
+      },
+      "Y": {
+       "3": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 17,
+       "2": 15
+      },
+      "Y": {
+       "1": 2,
+       "3": 30
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "1": 30,
+       "none": 2
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 5,
+      "Y": 0,
+      "other": 0,
+      "tie": 27
+     },
+     "saw_first": {
+      "X": 30,
+      "Y": 2
+     },
+     "termination": {
+      "last_agent_standing": 5,
+      "tick_limit": 27
+     }
+    }
+   },
+   "T-E6L": {
+    "X@A": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {},
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 15,
+       "3": 14,
+       "4": 3
+      },
+      "Y": {
+       "2": 15,
+       "3": 17
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 15,
+       "2": 17
+      },
+      "Y": {
+       "1": 15,
+       "2": 14,
+       "3": 3
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 0,
+      "Y": 0,
+      "other": 0,
+      "tie": 32
+     },
+     "saw_first": {
+      "X": 28,
+      "Y": 4
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    },
+    "X@B": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {},
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 14,
+       "3": 18
+      },
+      "Y": {
+       "2": 19,
+       "3": 13
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 19,
+       "2": 13
+      },
+      "Y": {
+       "1": 14,
+       "2": 18
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "1": 30,
+       "none": 2
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 0,
+      "Y": 0,
+      "other": 0,
+      "tie": 32
+     },
+     "saw_first": {
+      "X": 30,
+      "Y": 2
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    }
+   }
+  },
+  "F1|PACED|GUARD": {
+   "C-E6": {
+    "X@A": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1": 32
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "last_agent_standing": 32
+     }
+    },
+    "X@B": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 32,
+      "Y": 32
+     },
+     "decision_tick_of_X_wins": {
+      "6": 32
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "3": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "Y": 32
+     },
+     "termination": {
+      "last_agent_standing": 32
+     }
+    }
+   },
+   "C-E6L": {
+    "X@A": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {},
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 0,
+      "Y": 0,
+      "other": 0,
+      "tie": 32
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    },
+    "X@B": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {},
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 0,
+      "Y": 0,
+      "other": 0,
+      "tie": 32
+     },
+     "saw_first": {
+      "Y": 32
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    }
+   },
+   "T-E6": {
+    "X@A": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 15,
+      "Y": 32
+     },
+     "decision_tick_of_X_wins": {
+      "5": 27,
+      "7": 5
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "3": 15,
+       "5": 17
+      },
+      "Y": {
+       "2": 15,
+       "4": 17
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 15,
+       "2": 17
+      },
+      "Y": {
+       "2": 15,
+       "4": 17
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "last_agent_standing": 32
+     }
+    },
+    "X@B": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 20,
+      "Y": 32
+     },
+     "decision_tick_of_X_wins": {
+      "4": 12,
+      "6": 20
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "4": 32
+      },
+      "Y": {
+       "3": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 17,
+       "2": 15
+      },
+      "Y": {
+       "3": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "last_agent_standing": 32
+     }
+    }
+   },
+   "T-E6L": {
+    "X@A": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {},
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 15,
+       "3": 17
+      },
+      "Y": {
+       "2": 15,
+       "3": 17
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 15,
+       "2": 17
+      },
+      "Y": {
+       "1": 15,
+       "2": 17
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 0,
+      "Y": 0,
+      "other": 0,
+      "tie": 32
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    },
+    "X@B": {
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1000": 2
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 12,
+       "3": 20
+      },
+      "Y": {
+       "2": 17,
+       "3": 15
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 17,
+       "2": 15
+      },
+      "Y": {
+       "1": 12,
+       "2": 20
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 2,
+      "Y": 0,
+      "other": 0,
+      "tie": 30
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    }
+   }
+  },
+  "F1|RUSH|ADAPT": {
+   "C-E6": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "none": 32
+      },
+      "first_check_after_contact": {
+       "none": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {},
+       "not_evaded": {
+        "X": 32
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1": 32
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "last_agent_standing": 32
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "5": 32
+      },
+      "first_check_after_contact": {
+       "t3:cell2:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 32
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 32,
+      "Y": 32
+     },
+     "decision_tick_of_X_wins": {
+      "5": 32
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "3": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "5": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "Y": 32
+     },
+     "termination": {
+      "last_agent_standing": 32
+     }
+    }
+   },
+   "C-E6L": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "1": 32
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "tie": 32
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {},
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 0,
+      "Y": 0,
+      "other": 0,
+      "tie": 32
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "3": 32
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "tie": 32
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {},
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "3": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 0,
+      "Y": 0,
+      "other": 0,
+      "tie": 32
+     },
+     "saw_first": {
+      "Y": 32
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    }
+   },
+   "T-E6": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "4": 2,
+       "6": 24,
+       "none": 6
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 15,
+       "t4:cell3:own": 17
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 17,
+        "tie": 9
+       },
+       "not_evaded": {
+        "X": 6
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 30,
+      "Y": 32
+     },
+     "decision_tick_of_X_wins": {
+      "10": 3,
+      "4": 2,
+      "5": 6,
+      "6": 7,
+      "8": 5
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "3": 32
+      },
+      "Y": {
+       "2": 15,
+       "4": 17
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 15,
+       "3": 17
+      },
+      "Y": {
+       "1": 17,
+       "2": 15
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "4": 2,
+       "6": 24,
+       "none": 6
+      }
+     },
+     "outcome_for_X": {
+      "X": 23,
+      "Y": 0,
+      "other": 0,
+      "tie": 9
+     },
+     "saw_first": {
+      "X": 15,
+      "Y": 17
+     },
+     "termination": {
+      "last_agent_standing": 23,
+      "tick_limit": 9
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "3": 6,
+       "5": 18,
+       "9": 3,
+       "none": 5
+      },
+      "first_check_after_contact": {
+       "t3:cell2:damage": 6,
+       "t3:cell2:own": 26
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 17,
+        "tie": 10
+       },
+       "not_evaded": {
+        "X": 5
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 17,
+      "Y": 32
+     },
+     "decision_tick_of_X_wins": {
+      "10": 1,
+      "11": 2,
+      "22": 1,
+      "26": 1,
+      "28": 1,
+      "3": 3,
+      "4": 5,
+      "5": 8
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 17,
+       "4": 12,
+       "none": 3
+      },
+      "Y": {
+       "3": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 15,
+       "2": 17
+      },
+      "Y": {
+       "1": 17,
+       "3": 15
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "3": 6,
+       "5": 18,
+       "9": 3,
+       "none": 5
+      }
+     },
+     "outcome_for_X": {
+      "X": 22,
+      "Y": 0,
+      "other": 0,
+      "tie": 10
+     },
+     "saw_first": {
+      "X": 15,
+      "Y": 17
+     },
+     "termination": {
+      "last_agent_standing": 22,
+      "tick_limit": 10
+     }
+    }
+   },
+   "T-E6L": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "1": 2,
+       "3": 6,
+       "4": 5,
+       "5": 18,
+       "6": 1
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 14,
+        "tie": 18
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "8": 14
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 2,
+       "3": 6,
+       "4": 5,
+       "5": 18,
+       "6": 1
+      }
+     },
+     "outcome_for_X": {
+      "X": 14,
+      "Y": 0,
+      "other": 0,
+      "tie": 18
+     },
+     "saw_first": {
+      "X": 15,
+      "Y": 17
+     },
+     "termination": {
+      "last_agent_standing": 14,
+      "tick_limit": 18
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "14": 1,
+       "3": 3,
+       "4": 12,
+       "5": 12,
+       "8": 1,
+       "9": 1,
+       "946": 1,
+       "none": 1
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 10,
+        "tie": 21
+       },
+       "not_evaded": {
+        "X": 1
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1000": 2,
+      "35": 1,
+      "7": 8
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 28,
+       "3": 4
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 28,
+       "2": 4
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "14": 1,
+       "3": 3,
+       "4": 12,
+       "5": 12,
+       "8": 1,
+       "9": 1,
+       "946": 1,
+       "none": 1
+      }
+     },
+     "outcome_for_X": {
+      "X": 11,
+      "Y": 0,
+      "other": 0,
+      "tie": 21
+     },
+     "saw_first": {
+      "X": 15,
+      "Y": 17
+     },
+     "termination": {
+      "last_agent_standing": 9,
+      "tick_limit": 23
+     }
+    }
+   }
+  },
+  "F1|STEALTH|ADAPT": {
+   "C-E6": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "none": 32
+      },
+      "first_check_after_contact": {
+       "none": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {},
+       "not_evaded": {
+        "X": 32
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1": 32
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "last_agent_standing": 32
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "5": 32
+      },
+      "first_check_after_contact": {
+       "t3:cell2:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 32
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 32,
+      "Y": 32
+     },
+     "decision_tick_of_X_wins": {
+      "5": 32
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "3": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "5": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 32,
+      "Y": 0,
+      "other": 0,
+      "tie": 0
+     },
+     "saw_first": {
+      "Y": 32
+     },
+     "termination": {
+      "last_agent_standing": 32
+     }
+    }
+   },
+   "C-E6L": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "1": 32
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "tie": 32
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {},
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 0,
+      "Y": 0,
+      "other": 0,
+      "tie": 32
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "3": 32
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "tie": 32
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {},
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "3": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 0,
+      "Y": 0,
+      "other": 0,
+      "tie": 32
+     },
+     "saw_first": {
+      "Y": 32
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    }
+   },
+   "T-E6": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "3": 4,
+       "4": 3,
+       "5": 1,
+       "7": 3,
+       "none": 21
+      },
+      "first_check_after_contact": {
+       "none": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 6,
+        "tie": 5
+       },
+       "not_evaded": {
+        "X": 21
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "3": 1,
+      "4": 5,
+      "5": 3,
+      "6": 4,
+      "7": 5,
+      "8": 7,
+      "9": 2
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "3": 4,
+       "4": 3,
+       "5": 1,
+       "7": 3,
+       "none": 21
+      }
+     },
+     "outcome_for_X": {
+      "X": 27,
+      "Y": 0,
+      "other": 0,
+      "tie": 5
+     },
+     "saw_first": {
+      "none": 32
+     },
+     "termination": {
+      "last_agent_standing": 27,
+      "tick_limit": 5
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "3": 6,
+       "4": 4,
+       "6": 3,
+       "none": 19
+      },
+      "first_check_after_contact": {
+       "none": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 8,
+        "tie": 5
+       },
+       "not_evaded": {
+        "X": 19
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "3": 3,
+      "4": 2,
+      "5": 6,
+      "6": 2,
+      "7": 7,
+      "8": 7
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "3": 2,
+       "none": 30
+      },
+      "Y": {
+       "none": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "3": 6,
+       "4": 4,
+       "6": 3,
+       "none": 19
+      }
+     },
+     "outcome_for_X": {
+      "X": 27,
+      "Y": 0,
+      "other": 0,
+      "tie": 5
+     },
+     "saw_first": {
+      "X": 2,
+      "none": 30
+     },
+     "termination": {
+      "last_agent_standing": 27,
+      "tick_limit": 5
+     }
+    }
+   },
+   "T-E6L": {
+    "X@A": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "3": 4,
+       "4": 3,
+       "5": 1,
+       "7": 3,
+       "9": 2,
+       "none": 19
+      },
+      "first_check_after_contact": {
+       "none": 31,
+       "t10:cell1:own": 1
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 6,
+        "tie": 7
+       },
+       "not_evaded": {
+        "X": 19
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "3": 1,
+      "4": 5,
+      "5": 3,
+      "6": 4,
+      "7": 5,
+      "8": 7
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "10": 1,
+       "none": 31
+      },
+      "Y": {
+       "10": 1,
+       "none": 31
+      }
+     },
+     "first_detection": {
+      "X": {
+       "9": 1,
+       "none": 31
+      },
+      "Y": {
+       "9": 1,
+       "none": 31
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "3": 4,
+       "4": 3,
+       "5": 1,
+       "7": 3,
+       "9": 2,
+       "none": 19
+      }
+     },
+     "outcome_for_X": {
+      "X": 25,
+      "Y": 0,
+      "other": 0,
+      "tie": 7
+     },
+     "saw_first": {
+      "Y": 1,
+      "none": 31
+     },
+     "termination": {
+      "last_agent_standing": 25,
+      "tick_limit": 7
+     }
+    },
+    "X@B": {
+     "adapt_Y": {
+      "evasion_tick": {
+       "3": 6,
+       "4": 5,
+       "6": 3,
+       "8": 2,
+       "none": 16
+      },
+      "first_check_after_contact": {
+       "none": 31,
+       "t4:cell3:damage": 1
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 7,
+        "tie": 9
+       },
+       "not_evaded": {
+        "X": 16
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "3": 2,
+      "4": 1,
+      "5": 6,
+      "6": 2,
+      "7": 7,
+      "8": 5
+     },
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "4": 1,
+       "none": 31
+      },
+      "Y": {
+       "4": 1,
+       "none": 31
+      }
+     },
+     "first_detection": {
+      "X": {
+       "3": 2,
+       "none": 30
+      },
+      "Y": {
+       "3": 2,
+       "none": 30
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "none": 32
+      },
+      "Y": {
+       "3": 6,
+       "4": 5,
+       "6": 3,
+       "8": 2,
+       "none": 16
+      }
+     },
+     "outcome_for_X": {
+      "X": 23,
+      "Y": 0,
+      "other": 0,
+      "tie": 9
+     },
+     "saw_first": {
+      "X": 2,
+      "none": 30
+     },
+     "termination": {
+      "last_agent_standing": 23,
+      "tick_limit": 9
+     }
+    }
+   }
+  },
+  "F2|ADAPT|ADAPT": {
+   "C-E6": {
+    "X@A": {
+     "adapt_X": {
+      "evasion_tick": {
+       "9": 32
+      },
+      "first_check_after_contact": {
+       "t3:cell2:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "tie": 32
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "adapt_Y": {
+      "evasion_tick": {
+       "9": 32
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "tie": 32
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 32,
+      "Y": 32
+     },
+     "decision_tick_of_X_wins": {},
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "3": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "9": 32
+      },
+      "Y": {
+       "9": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 0,
+      "Y": 0,
+      "other": 0,
+      "tie": 32
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    }
+   },
+   "C-E6L": {
+    "X@A": {
+     "adapt_X": {
+      "evasion_tick": {
+       "9": 32
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "tie": 32
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "adapt_Y": {
+      "evasion_tick": {
+       "1": 32
+      },
+      "first_check_after_contact": {
+       "t2:cell1:own": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "tie": 32
+       },
+       "not_evaded": {}
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {},
+     "decision_tick_of_Y_wins": {},
+     "first_callback_after_rival_detection": {
+      "X": {
+       "2": 32
+      },
+      "Y": {
+       "2": 32
+      }
+     },
+     "first_detection": {
+      "X": {
+       "1": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "9": 32
+      },
+      "Y": {
+       "1": 32
+      }
+     },
+     "outcome_for_X": {
+      "X": 0,
+      "Y": 0,
+      "other": 0,
+      "tie": 32
+     },
+     "saw_first": {
+      "X": 32
+     },
+     "termination": {
+      "tick_limit": 32
+     }
+    }
+   },
+   "T-E6": {
+    "X@A": {
+     "adapt_X": {
+      "evasion_tick": {
+       "none": 32
+      },
+      "first_check_after_contact": {
+       "none": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {},
+       "not_evaded": {
+        "X": 14,
+        "Y": 11,
+        "tie": 7
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "adapt_Y": {
+      "evasion_tick": {
+       "20": 2,
+       "22": 6,
+       "none": 24
+      },
+      "first_check_after_contact": {
+       "none": 24,
+       "t18:cell1:own": 2,
+       "t20:cell3:own": 6
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 8
+       },
+       "not_evaded": {
+        "X": 6,
+        "Y": 11,
+        "tie": 7
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1000": 3,
+      "20": 2,
+      "22": 1,
+      "24": 5,
+      "321": 1,
+      "353": 1,
+      "373": 1
+     },
+     "decision_tick_of_Y_wins": {
+      "1000": 1,
+      "196": 1,
+      "22": 3,
+      "24": 5,
+      "916": 1
+     },
+     "first_callback_after_rival_detection": {
+      "X": {
+       "19": 21,
+       "21": 5,
+       "none": 6
+      },
+      "Y": {
+       "18": 7,
+       "20": 19,
+       "none": 6
+      }
+     },
+     "first_detection": {
+      "X": {
+       "17": 7,
+       "18": 5,
+       "19": 14,
+       "none": 6
+      },
+      "Y": {
+       "17": 11,
+       "18": 10,
+       "20": 5,
+       "none": 6
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "17": 32
+      },
+      "Y": {
+       "17": 24,
+       "20": 2,
+       "22": 6
+      }
+     },
+     "outcome_for_X": {
+      "X": 14,
+      "Y": 11,
+      "other": 0,
+      "tie": 7
+     },
+     "saw_first": {
+      "X": 12,
+      "Y": 14,
+      "none": 6
+     },
+     "termination": {
+      "last_agent_standing": 21,
+      "tick_limit": 11
+     }
+    }
+   },
+   "T-E6L": {
+    "X@A": {
+     "adapt_X": {
+      "evasion_tick": {
+       "none": 32
+      },
+      "first_check_after_contact": {
+       "none": 32
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {},
+       "not_evaded": {
+        "X": 11,
+        "Y": 10,
+        "tie": 11
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "adapt_Y": {
+      "evasion_tick": {
+       "17": 2,
+       "19": 6,
+       "none": 24
+      },
+      "first_check_after_contact": {
+       "none": 24,
+       "t18:cell1:own": 8
+      },
+      "outcome_for_X_by_evasion": {
+       "evaded": {
+        "X": 6,
+        "tie": 2
+       },
+       "not_evaded": {
+        "X": 5,
+        "Y": 10,
+        "tie": 9
+       }
+      },
+      "unclassified_early_moves": 0
+     },
+     "cells": 32,
+     "cells_with_silent_ticks_after_rival_detection": {
+      "X": 0,
+      "Y": 0
+     },
+     "decision_tick_of_X_wins": {
+      "1000": 1,
+      "194": 1,
+      "212": 1,
+      "224": 1,
+      "23": 1,
+      "24": 5,
+      "770": 1
+     },
+     "decision_tick_of_Y_wins": {
+      "1000": 2,
+      "20": 6,
+      "21": 1,
+      "542": 1
+     },
+     "first_callback_after_rival_detection": {
+      "X": {
+       "18": 18,
+       "19": 8,
+       "none": 6
+      },
+      "Y": {
+       "18": 18,
+       "19": 8,
+       "none": 6
+      }
+     },
+     "first_detection": {
+      "X": {
+       "17": 18,
+       "18": 8,
+       "none": 6
+      },
+      "Y": {
+       "17": 18,
+       "18": 8,
+       "none": 6
+      }
+     },
+     "first_off_core_move": {
+      "X": {
+       "17": 32
+      },
+      "Y": {
+       "17": 26,
+       "19": 6
+      }
+     },
+     "outcome_for_X": {
+      "X": 11,
+      "Y": 10,
+      "other": 0,
+      "tie": 11
+     },
+     "saw_first": {
+      "X": 12,
+      "Y": 14,
+      "none": 6
+     },
+     "termination": {
+      "all_agents_dead": 3,
+      "last_agent_standing": 18,
+      "tick_limit": 11
+     }
+    }
+   }
+  }
+ },
+ "neutral_counts": {
+  "C-E6": 26,
+  "C-E6L": 30,
+  "T-E6": 38,
+  "T-E6L": 39
+ },
+ "pa_version": 1,
+ "pairing_checks": {
+  "f1_cells": 2304,
+  "identical_seat_geometry_and_assignment": 2880,
+  "keys": 2880,
+  "keys_in_all_four_conditions": 2880,
+  "same_first_detection_T-E6_vs_T-E6L": 2285,
+  "same_first_seer_T-E6_vs_T-E6L": 2299
+ },
+ "pf4_point": {
+  "companion": [],
+  "primary": [
+   "F1|PACED|ADAPT"
+  ]
+ },
+ "point": {
+  "I_all": "-31/720",
+  "I_common_neutral": "-3/1664",
+  "I_flag": "1/26",
+  "L0": "1/26",
+  "L1": "0/1",
+  "means": {
+   "all": "-31/720",
+   "all_adapt": "7/576",
+   "all_mirrors": "-1/288",
+   "all_non_adapt": "-131/2304",
+   "all_pairings": "-61/1152",
+   "common_neutral": "-3/1664",
+   "common_neutral_adapt": "7/576",
+   "common_neutral_non_adapt": "-5/544",
+   "stratum_neutral_both": "-3/1664",
+   "stratum_neutral_neither": "-1/320",
+   "stratum_neutral_one": "-59/128"
+  }
+ },
+ "review_comparison": {
+  "checks": [
+   {
+    "group": "LB-1",
+    "name": "C-E6 X@A outcome_for_X",
+    "pa": {
+     "X": 32,
+     "Y": 0,
+     "other": 0,
+     "tie": 0
+    },
+    "review": {
+     "X": 32,
+     "Y": 0,
+     "other": 0,
+     "tie": 0
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "C-E6 X@B outcome_for_X",
+    "pa": {
+     "X": 32,
+     "Y": 0,
+     "other": 0,
+     "tie": 0
+    },
+    "review": {
+     "X": 32,
+     "Y": 0,
+     "other": 0,
+     "tie": 0
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6 X@A outcome_for_X",
+    "pa": {
+     "X": 30,
+     "Y": 0,
+     "other": 0,
+     "tie": 2
+    },
+    "review": {
+     "X": 30,
+     "Y": 0,
+     "other": 0,
+     "tie": 2
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6 X@B outcome_for_X",
+    "pa": {
+     "X": 22,
+     "Y": 0,
+     "other": 0,
+     "tie": 10
+    },
+    "review": {
+     "X": 22,
+     "Y": 0,
+     "other": 0,
+     "tie": 10
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "C-E6L X@A outcome_for_X",
+    "pa": {
+     "X": 0,
+     "Y": 0,
+     "other": 0,
+     "tie": 32
+    },
+    "review": {
+     "X": 0,
+     "Y": 0,
+     "other": 0,
+     "tie": 32
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "C-E6L X@B outcome_for_X",
+    "pa": {
+     "X": 0,
+     "Y": 0,
+     "other": 0,
+     "tie": 32
+    },
+    "review": {
+     "X": 0,
+     "Y": 0,
+     "other": 0,
+     "tie": 32
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6L X@A outcome_for_X",
+    "pa": {
+     "X": 3,
+     "Y": 0,
+     "other": 0,
+     "tie": 29
+    },
+    "review": {
+     "X": 3,
+     "Y": 0,
+     "other": 0,
+     "tie": 29
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6L X@B outcome_for_X",
+    "pa": {
+     "X": 4,
+     "Y": 0,
+     "other": 0,
+     "tie": 28
+    },
+    "review": {
+     "X": 4,
+     "Y": 0,
+     "other": 0,
+     "tie": 28
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6 X@A saw_first",
+    "pa": {
+     "X": 32
+    },
+    "review": {
+     "X": 32
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6 X@A first_detection.X",
+    "pa": {
+     "1": 15,
+     "2": 17
+    },
+    "review": {
+     "1": 15,
+     "2": 17
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6 X@A first_callback_after_rival_detection.Y",
+    "pa": {
+     "2": 15,
+     "4": 17
+    },
+    "review": {
+     "2": 15,
+     "4": 17
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6 X@A adapt_Y.first_check_after_contact",
+    "pa": {
+     "t2:cell1:own": 15,
+     "t4:cell3:damage": 4,
+     "t4:cell3:own": 13
+    },
+    "review": {
+     "t2:cell1:own": 15,
+     "t4:cell3:damage": 4,
+     "t4:cell3:own": 13
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6 X@A adapt_Y.evasion_tick",
+    "pa": {
+     "4": 6,
+     "6": 5,
+     "none": 21
+    },
+    "review": {
+     "4": 6,
+     "6": 5,
+     "none": 21
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6 X@A adapt_Y.outcome_for_X_by_evasion.evaded",
+    "pa": {
+     "X": 9,
+     "tie": 2
+    },
+    "review": {
+     "X": 9,
+     "tie": 2
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6 X@A adapt_Y.outcome_for_X_by_evasion.not_evaded",
+    "pa": {
+     "X": 21
+    },
+    "review": {
+     "X": 21
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6 X@A decision_tick_of_X_wins",
+    "pa": {
+     "10": 3,
+     "4": 4,
+     "5": 21,
+     "6": 2
+    },
+    "review": {
+     "10": 3,
+     "4": 4,
+     "5": 21,
+     "6": 2
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6 X@B saw_first",
+    "pa": {
+     "X": 32
+    },
+    "review": {
+     "X": 32
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6 X@B first_detection.X",
+    "pa": {
+     "1": 17,
+     "2": 15
+    },
+    "review": {
+     "1": 17,
+     "2": 15
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6 X@B first_callback_after_rival_detection.Y",
+    "pa": {
+     "3": 32
+    },
+    "review": {
+     "3": 32
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6 X@B adapt_Y.first_check_after_contact",
+    "pa": {
+     "t3:cell2:damage": 11,
+     "t3:cell2:own": 21
+    },
+    "review": {
+     "t3:cell2:damage": 11,
+     "t3:cell2:own": 21
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6 X@B adapt_Y.evasion_tick",
+    "pa": {
+     "3": 11,
+     "5": 10,
+     "9": 1,
+     "none": 10
+    },
+    "review": {
+     "3": 11,
+     "5": 10,
+     "9": 1,
+     "none": 10
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6 X@B adapt_Y.outcome_for_X_by_evasion.evaded",
+    "pa": {
+     "X": 12,
+     "tie": 10
+    },
+    "review": {
+     "X": 12,
+     "tie": 10
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6 X@B adapt_Y.outcome_for_X_by_evasion.not_evaded",
+    "pa": {
+     "X": 10
+    },
+    "review": {
+     "X": 10
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6 X@B decision_tick_of_X_wins",
+    "pa": {
+     "11": 2,
+     "12": 1,
+     "3": 5,
+     "4": 1,
+     "5": 4,
+     "6": 9
+    },
+    "review": {
+     "11": 2,
+     "12": 1,
+     "3": 5,
+     "4": 1,
+     "5": 4,
+     "6": 9
+    },
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6L X@A adapt_Y.evasion_tick.none",
+    "pa": 0,
+    "review": 0,
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6L X@A cells_with_silent_ticks_after_rival_detection.Y",
+    "pa": 0,
+    "review": 0,
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6L X@B adapt_Y.evasion_tick.none",
+    "pa": 0,
+    "review": 0,
+    "same": true
+   },
+   {
+    "group": "LB-1",
+    "name": "T-E6L X@B cells_with_silent_ticks_after_rival_detection.Y",
+    "pa": 0,
+    "review": 0,
+    "same": true
+   },
+   {
+    "group": "LB-2",
+    "name": "arm contrast (primary raised, companion not) share",
+    "pa": "177/1000",
+    "review": "177/1000",
+    "same": true
+   },
+   {
+    "group": "LB-3",
+    "name": "stab(I_common_neutral > 0)",
+    "pa": "519/1000",
+    "review": "519/1000",
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "pairing keys",
+    "pa": 2880,
+    "review": 2880,
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "pairing keys_in_all_four_conditions",
+    "pa": 2880,
+    "review": 2880,
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "pairing identical_seat_geometry_and_assignment",
+    "pa": 2880,
+    "review": 2880,
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "pairing f1_cells",
+    "pa": 2304,
+    "review": 2304,
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "pairing same_first_seer_T-E6_vs_T-E6L",
+    "pa": 2299,
+    "review": 2299,
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "pairing same_first_detection_T-E6_vs_T-E6L",
+    "pa": 2285,
+    "review": 2285,
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "neutral units C-E6",
+    "pa": 26,
+    "review": 26,
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "neutral units T-E6",
+    "pa": 38,
+    "review": 38,
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "neutral units C-E6L",
+    "pa": 30,
+    "review": 30,
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "neutral units T-E6L",
+    "pa": 39,
+    "review": 39,
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "size stratum_neutral_both",
+    "pa": 26,
+    "review": 26,
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "size stratum_neutral_one",
+    "pa": 4,
+    "review": 4,
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "size stratum_neutral_neither",
+    "pa": 15,
+    "review": 15,
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "I_common_neutral",
+    "pa": "-3/1664",
+    "review": "-3/1664",
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "I over U* without ADAPT",
+    "pa": "-5/544",
+    "review": "-5/544",
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "I over ADAPT units of U*",
+    "pa": "7/576",
+    "review": "7/576",
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "I_flag",
+    "pa": "1/26",
+    "review": "1/26",
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "PACED-ADAPT signed interaction",
+    "pa": "9/64",
+    "review": "9/64",
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "PACED-ADAPT I_u",
+    "pa": "7/64",
+    "review": "7/64",
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "stab common_neutral_non_adapt>0",
+    "pa": "249/1000",
+    "review": "249/1000",
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "stab common_neutral_adapt>0",
+    "pa": "373/500",
+    "review": "746/1000",
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "stab I_flag>0",
+    "pa": "53/100",
+    "review": "53/100",
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "stab pf4_raised.primary",
+    "pa": "967/1000",
+    "review": "967/1000",
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "stab pf4_raised.companion",
+    "pa": "819/1000",
+    "review": "819/1000",
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "stab pf4_raised.primary_non_adapt",
+    "pa": "429/1000",
+    "review": "429/1000",
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "stab pf4_raised.companion_non_adapt",
+    "pa": "477/1000",
+    "review": "477/1000",
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "stab PACED-ADAPT signed interaction positive",
+    "pa": "1/1",
+    "review": "1/1",
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "stab PACED-ADAPT |GSB|>1/10 under T-E6",
+    "pa": "94/125",
+    "review": "94/125",
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "stab PACED-ADAPT |GSB|>1/10 under T-E6L",
+    "pa": "1/250",
+    "review": "1/250",
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "PF-4 joint",
+    "pa": {
+     "primary=not,companion=not": 4,
+     "primary=not,companion=raised": 29,
+     "primary=raised,companion=not": 177,
+     "primary=raised,companion=raised": 790
+    },
+    "review": {
+     "primary=not,companion=not": 4,
+     "primary=not,companion=raised": 29,
+     "primary=raised,companion=not": 177,
+     "primary=raised,companion=raised": 790
+    },
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "PF-4 joint without ADAPT",
+    "pa": {
+     "primary=not,companion=not": 284,
+     "primary=not,companion=raised": 287,
+     "primary=raised,companion=not": 239,
+     "primary=raised,companion=raised": 190
+    },
+    "review": {
+     "primary=not,companion=not": 284,
+     "primary=not,companion=raised": 287,
+     "primary=raised,companion=not": 239,
+     "primary=raised,companion=raised": 190
+    },
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "PACED-ADAPT signed interaction quantiles",
+    "pa": {
+     "0.025": "3/64",
+     "0.5": "9/64",
+     "0.975": "1/4"
+    },
+    "review": {
+     "0.025": "3/64",
+     "0.5": "9/64",
+     "0.975": "1/4"
+    },
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "PF-4 crossings primary",
+    "pa": {
+     "F1|EVADER|ADAPT": 2,
+     "F1|GREED|ADAPT": 257,
+     "F1|LURK|ADAPT": 157,
+     "F1|LURK|GREED": 421,
+     "F1|PACED|ADAPT": 752,
+     "F1|RUSH|ADAPT": 44,
+     "F1|STEALTH|ADAPT": 44,
+     "F1|STEALTH|GUARD": 17,
+     "F2|ADAPT|ADAPT": 549
+    },
+    "review": {
+     "F1|EVADER|ADAPT": 2,
+     "F1|GREED|ADAPT": 257,
+     "F1|LURK|ADAPT": 157,
+     "F1|LURK|GREED": 421,
+     "F1|PACED|ADAPT": 752,
+     "F1|RUSH|ADAPT": 44,
+     "F1|STEALTH|ADAPT": 44,
+     "F1|STEALTH|GUARD": 17,
+     "F2|ADAPT|ADAPT": 549
+    },
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "PF-4 crossings companion",
+    "pa": {
+     "F1|GREED|ADAPT": 17,
+     "F1|LURK|ADAPT": 382,
+     "F1|LURK|EVADER": 8,
+     "F1|LURK|GREED": 432,
+     "F1|PACED|ADAPT": 4,
+     "F1|PACED|GUARD": 6,
+     "F1|RUSH|ADAPT": 93,
+     "F1|RUSH|GUARD": 6,
+     "F1|STEALTH|ADAPT": 143,
+     "F1|STEALTH|EVADER": 19,
+     "F1|STEALTH|GUARD": 100,
+     "F2|ADAPT|ADAPT": 443
+    },
+    "review": {
+     "F1|GREED|ADAPT": 17,
+     "F1|LURK|ADAPT": 382,
+     "F1|LURK|EVADER": 8,
+     "F1|LURK|GREED": 432,
+     "F1|PACED|ADAPT": 4,
+     "F1|PACED|GUARD": 6,
+     "F1|RUSH|ADAPT": 93,
+     "F1|RUSH|GUARD": 6,
+     "F1|STEALTH|ADAPT": 143,
+     "F1|STEALTH|EVADER": 19,
+     "F1|STEALTH|GUARD": 100,
+     "F2|ADAPT|ADAPT": 443
+    },
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "units of U* with a positive I_u",
+    "pa": {
+     "F1|EVADER|ADAPT": "1/64",
+     "F1|GREED|ADAPT": "3/64",
+     "F1|PACED|ADAPT": "7/64",
+     "F2|ADAPT|ADAPT": "1/16"
+    },
+    "review": {
+     "F1|EVADER|ADAPT": "1/64",
+     "F1|GREED|ADAPT": "3/64",
+     "F1|PACED|ADAPT": "7/64",
+     "F2|ADAPT|ADAPT": "1/16"
+    },
+    "same": true
+   },
+   {
+    "group": "other",
+    "name": "point PF-4 units",
+    "pa": {
+     "companion": [],
+     "primary": [
+      "F1|PACED|ADAPT"
+     ]
+    },
+    "review": {
+     "companion": [],
+     "primary": [
+      "F1|PACED|ADAPT"
+     ]
+    },
+    "same": true
+   }
+  ],
+  "differences": []
+ },
+ "schema": "bytefray.v6.e6.post_hoc_factorial_audit",
+ "scope": "Post-hoc description of E6's own frozen cells. It changes zero E6 registered findings: every E6 hypothesis status, pathology flag, kill criterion, interpretation row and disposition stands exactly as the frozen interpreter issued it. No match was run, no E6 record was edited, and nothing was written under runs/. The 9/10 bar is a research-program decision convention, never a hypothesis verdict.",
+ "stability": {
+  "pf4_crossings": {
+   "companion": {
+    "F1|GREED|ADAPT": 17,
+    "F1|LURK|ADAPT": 382,
+    "F1|LURK|EVADER": 8,
+    "F1|LURK|GREED": 432,
+    "F1|PACED|ADAPT": 4,
+    "F1|PACED|GUARD": 6,
+    "F1|RUSH|ADAPT": 93,
+    "F1|RUSH|GUARD": 6,
+    "F1|STEALTH|ADAPT": 143,
+    "F1|STEALTH|EVADER": 19,
+    "F1|STEALTH|GUARD": 100,
+    "F2|ADAPT|ADAPT": 443
+   },
+   "primary": {
+    "F1|EVADER|ADAPT": 2,
+    "F1|GREED|ADAPT": 257,
+    "F1|LURK|ADAPT": 157,
+    "F1|LURK|GREED": 421,
+    "F1|PACED|ADAPT": 752,
+    "F1|RUSH|ADAPT": 44,
+    "F1|STEALTH|ADAPT": 44,
+    "F1|STEALTH|GUARD": 17,
+    "F2|ADAPT|ADAPT": 549
+   }
+  },
+  "pf4_joint": {
+   "primary=not,companion=not": 4,
+   "primary=not,companion=raised": 29,
+   "primary=raised,companion=not": 177,
+   "primary=raised,companion=raised": 790
+  },
+  "pf4_joint_non_adapt": {
+   "primary=not,companion=not": 284,
+   "primary=not,companion=raised": 287,
+   "primary=raised,companion=not": 239,
+   "primary=raised,companion=raised": 190
+  },
+  "pf4_raised": {
+   "companion": "819/1000",
+   "companion_non_adapt": "477/1000",
+   "primary": "967/1000",
+   "primary_non_adapt": "429/1000"
+  },
+  "positive": {
+   "I_flag>0": "53/100",
+   "all>0": "1/1000",
+   "all_adapt>0": "373/500",
+   "all_mirrors>0": "289/500",
+   "all_non_adapt>0": "0/1",
+   "all_pairings>0": "0/1",
+   "common_neutral>0": "519/1000",
+   "common_neutral_adapt>0": "373/500",
+   "common_neutral_non_adapt>0": "249/1000",
+   "stratum_neutral_both>0": "519/1000",
+   "stratum_neutral_neither>0": "127/250",
+   "stratum_neutral_one>0": "0/1"
+  },
+  "resamples": 1000,
+  "tracked_units": {
+   "F1|PACED|ADAPT": {
+    "abs_gsb_above_one_tenth": {
+     "T-E6": "94/125",
+     "T-E6L": "1/250"
+    },
+    "signed_interaction_positive": "1/1",
+    "signed_interaction_quantiles": {
+     "0.025": "3/64",
+     "0.5": "9/64",
+     "0.975": "1/4"
+    }
+   }
+  }
+ },
+ "tooling_sha256": {
+  "__init__.py": "1fffb4f56cbc8a548ac438f5df5f843f40a72e33cf0c8aa1168875f6494e095e",
+  "corpus.py": "498bd19c9edc838aeff90cc4a9fc1786d90c52e301479f8c9b89806bd5193b0b",
+  "decompose.py": "157bbd601030f981e5e9a050fc425665072c0422ae43e16f74aab6b67329492a",
+  "estimands.py": "476c2016b8f1a2ca88aa294a3a8c600938aa0cffaf35accbaab7f4250ebcfb77",
+  "mechanism.py": "d410cad7324fb679df79dbc8ca0bfb17fc4c6ed0ceb06ecaa8b9feb5f3691d53",
+  "review_values.py": "040a5f8cac313506ac3b9a95998af18398ffad6261789986b5ad8edd13784bcc",
+  "run_audit.py": "dff8603c90978460e34f0cc6e98f6fcd8ac96c1876a5b0d7a09dfe176cc48434",
+  "seat.py": "a6c03e7cce00f1a63c4415d5fd4ef0255677fd387e912a20ef4fc297a009ffbe"
+ },
+ "unit_sets": {
+  "all": [
+   "F1|RUSH|PACED",
+   "F1|RUSH|SPLIT",
+   "F1|RUSH|STEALTH",
+   "F1|RUSH|LURK",
+   "F1|RUSH|GUARD",
+   "F1|RUSH|EVADER",
+   "F1|RUSH|GREED",
+   "F1|RUSH|ADAPT",
+   "F1|PACED|SPLIT",
+   "F1|PACED|STEALTH",
+   "F1|PACED|LURK",
+   "F1|PACED|GUARD",
+   "F1|PACED|EVADER",
+   "F1|PACED|GREED",
+   "F1|PACED|ADAPT",
+   "F1|SPLIT|STEALTH",
+   "F1|SPLIT|LURK",
+   "F1|SPLIT|GUARD",
+   "F1|SPLIT|EVADER",
+   "F1|SPLIT|GREED",
+   "F1|SPLIT|ADAPT",
+   "F1|STEALTH|LURK",
+   "F1|STEALTH|GUARD",
+   "F1|STEALTH|EVADER",
+   "F1|STEALTH|GREED",
+   "F1|STEALTH|ADAPT",
+   "F1|LURK|GUARD",
+   "F1|LURK|EVADER",
+   "F1|LURK|GREED",
+   "F1|LURK|ADAPT",
+   "F1|GUARD|EVADER",
+   "F1|GUARD|GREED",
+   "F1|GUARD|ADAPT",
+   "F1|EVADER|GREED",
+   "F1|EVADER|ADAPT",
+   "F1|GREED|ADAPT",
+   "F2|RUSH|RUSH",
+   "F2|PACED|PACED",
+   "F2|SPLIT|SPLIT",
+   "F2|STEALTH|STEALTH",
+   "F2|LURK|LURK",
+   "F2|GUARD|GUARD",
+   "F2|EVADER|EVADER",
+   "F2|GREED|GREED",
+   "F2|ADAPT|ADAPT"
+  ],
+  "all_adapt": [
+   "F1|RUSH|ADAPT",
+   "F1|PACED|ADAPT",
+   "F1|SPLIT|ADAPT",
+   "F1|STEALTH|ADAPT",
+   "F1|LURK|ADAPT",
+   "F1|GUARD|ADAPT",
+   "F1|EVADER|ADAPT",
+   "F1|GREED|ADAPT",
+   "F2|ADAPT|ADAPT"
+  ],
+  "all_mirrors": [
+   "F2|RUSH|RUSH",
+   "F2|PACED|PACED",
+   "F2|SPLIT|SPLIT",
+   "F2|STEALTH|STEALTH",
+   "F2|LURK|LURK",
+   "F2|GUARD|GUARD",
+   "F2|EVADER|EVADER",
+   "F2|GREED|GREED",
+   "F2|ADAPT|ADAPT"
+  ],
+  "all_non_adapt": [
+   "F1|RUSH|PACED",
+   "F1|RUSH|SPLIT",
+   "F1|RUSH|STEALTH",
+   "F1|RUSH|LURK",
+   "F1|RUSH|GUARD",
+   "F1|RUSH|EVADER",
+   "F1|RUSH|GREED",
+   "F1|PACED|SPLIT",
+   "F1|PACED|STEALTH",
+   "F1|PACED|LURK",
+   "F1|PACED|GUARD",
+   "F1|PACED|EVADER",
+   "F1|PACED|GREED",
+   "F1|SPLIT|STEALTH",
+   "F1|SPLIT|LURK",
+   "F1|SPLIT|GUARD",
+   "F1|SPLIT|EVADER",
+   "F1|SPLIT|GREED",
+   "F1|STEALTH|LURK",
+   "F1|STEALTH|GUARD",
+   "F1|STEALTH|EVADER",
+   "F1|STEALTH|GREED",
+   "F1|LURK|GUARD",
+   "F1|LURK|EVADER",
+   "F1|LURK|GREED",
+   "F1|GUARD|EVADER",
+   "F1|GUARD|GREED",
+   "F1|EVADER|GREED",
+   "F2|RUSH|RUSH",
+   "F2|PACED|PACED",
+   "F2|SPLIT|SPLIT",
+   "F2|STEALTH|STEALTH",
+   "F2|LURK|LURK",
+   "F2|GUARD|GUARD",
+   "F2|EVADER|EVADER",
+   "F2|GREED|GREED"
+  ],
+  "all_pairings": [
+   "F1|RUSH|PACED",
+   "F1|RUSH|SPLIT",
+   "F1|RUSH|STEALTH",
+   "F1|RUSH|LURK",
+   "F1|RUSH|GUARD",
+   "F1|RUSH|EVADER",
+   "F1|RUSH|GREED",
+   "F1|RUSH|ADAPT",
+   "F1|PACED|SPLIT",
+   "F1|PACED|STEALTH",
+   "F1|PACED|LURK",
+   "F1|PACED|GUARD",
+   "F1|PACED|EVADER",
+   "F1|PACED|GREED",
+   "F1|PACED|ADAPT",
+   "F1|SPLIT|STEALTH",
+   "F1|SPLIT|LURK",
+   "F1|SPLIT|GUARD",
+   "F1|SPLIT|EVADER",
+   "F1|SPLIT|GREED",
+   "F1|SPLIT|ADAPT",
+   "F1|STEALTH|LURK",
+   "F1|STEALTH|GUARD",
+   "F1|STEALTH|EVADER",
+   "F1|STEALTH|GREED",
+   "F1|STEALTH|ADAPT",
+   "F1|LURK|GUARD",
+   "F1|LURK|EVADER",
+   "F1|LURK|GREED",
+   "F1|LURK|ADAPT",
+   "F1|GUARD|EVADER",
+   "F1|GUARD|GREED",
+   "F1|GUARD|ADAPT",
+   "F1|EVADER|GREED",
+   "F1|EVADER|ADAPT",
+   "F1|GREED|ADAPT"
+  ],
+  "common_neutral": [
+   "F1|RUSH|GUARD",
+   "F1|RUSH|GREED",
+   "F1|RUSH|ADAPT",
+   "F1|PACED|GUARD",
+   "F1|PACED|GREED",
+   "F1|PACED|ADAPT",
+   "F1|SPLIT|GUARD",
+   "F1|SPLIT|EVADER",
+   "F1|SPLIT|GREED",
+   "F1|SPLIT|ADAPT",
+   "F1|STEALTH|GUARD",
+   "F1|STEALTH|GREED",
+   "F1|STEALTH|ADAPT",
+   "F1|LURK|GUARD",
+   "F1|LURK|GREED",
+   "F1|LURK|ADAPT",
+   "F1|GUARD|EVADER",
+   "F1|GUARD|GREED",
+   "F1|GUARD|ADAPT",
+   "F1|EVADER|GREED",
+   "F1|EVADER|ADAPT",
+   "F1|GREED|ADAPT",
+   "F2|GUARD|GUARD",
+   "F2|EVADER|EVADER",
+   "F2|GREED|GREED",
+   "F2|ADAPT|ADAPT"
+  ],
+  "common_neutral_adapt": [
+   "F1|RUSH|ADAPT",
+   "F1|PACED|ADAPT",
+   "F1|SPLIT|ADAPT",
+   "F1|STEALTH|ADAPT",
+   "F1|LURK|ADAPT",
+   "F1|GUARD|ADAPT",
+   "F1|EVADER|ADAPT",
+   "F1|GREED|ADAPT",
+   "F2|ADAPT|ADAPT"
+  ],
+  "common_neutral_non_adapt": [
+   "F1|RUSH|GUARD",
+   "F1|RUSH|GREED",
+   "F1|PACED|GUARD",
+   "F1|PACED|GREED",
+   "F1|SPLIT|GUARD",
+   "F1|SPLIT|EVADER",
+   "F1|SPLIT|GREED",
+   "F1|STEALTH|GUARD",
+   "F1|STEALTH|GREED",
+   "F1|LURK|GUARD",
+   "F1|LURK|GREED",
+   "F1|GUARD|EVADER",
+   "F1|GUARD|GREED",
+   "F1|EVADER|GREED",
+   "F2|GUARD|GUARD",
+   "F2|EVADER|EVADER",
+   "F2|GREED|GREED"
+  ],
+  "stratum_neutral_both": [
+   "F1|RUSH|GUARD",
+   "F1|RUSH|GREED",
+   "F1|RUSH|ADAPT",
+   "F1|PACED|GUARD",
+   "F1|PACED|GREED",
+   "F1|PACED|ADAPT",
+   "F1|SPLIT|GUARD",
+   "F1|SPLIT|EVADER",
+   "F1|SPLIT|GREED",
+   "F1|SPLIT|ADAPT",
+   "F1|STEALTH|GUARD",
+   "F1|STEALTH|GREED",
+   "F1|STEALTH|ADAPT",
+   "F1|LURK|GUARD",
+   "F1|LURK|GREED",
+   "F1|LURK|ADAPT",
+   "F1|GUARD|EVADER",
+   "F1|GUARD|GREED",
+   "F1|GUARD|ADAPT",
+   "F1|EVADER|GREED",
+   "F1|EVADER|ADAPT",
+   "F1|GREED|ADAPT",
+   "F2|GUARD|GUARD",
+   "F2|EVADER|EVADER",
+   "F2|GREED|GREED",
+   "F2|ADAPT|ADAPT"
+  ],
+  "stratum_neutral_neither": [
+   "F1|RUSH|PACED",
+   "F1|RUSH|SPLIT",
+   "F1|RUSH|STEALTH",
+   "F1|RUSH|LURK",
+   "F1|PACED|SPLIT",
+   "F1|PACED|STEALTH",
+   "F1|PACED|LURK",
+   "F1|SPLIT|STEALTH",
+   "F1|SPLIT|LURK",
+   "F1|STEALTH|LURK",
+   "F2|RUSH|RUSH",
+   "F2|PACED|PACED",
+   "F2|SPLIT|SPLIT",
+   "F2|STEALTH|STEALTH",
+   "F2|LURK|LURK"
+  ],
+  "stratum_neutral_one": [
+   "F1|RUSH|EVADER",
+   "F1|PACED|EVADER",
+   "F1|STEALTH|EVADER",
+   "F1|LURK|EVADER"
+  ]
+ },
+ "units": [
+  {
+   "I_u": "1/64",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/1",
+    "T-E6L": "63/64"
+   },
+   "gsb": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "7/16",
+    "T-E6L": "27/64"
+   },
+   "neutral": {
+    "C-E6": false,
+    "C-E6L": false,
+    "T-E6": false,
+    "T-E6L": false
+   },
+   "sdom": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "7/16",
+    "T-E6L": "13/32"
+   },
+   "signed_I_u": "1/64",
+   "stratum": "neutral_neither",
+   "unit": "F1|RUSH|PACED"
+  },
+  {
+   "I_u": "-1/64",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "63/64",
+    "T-E6L": "1/1"
+   },
+   "gsb": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "17/64",
+    "T-E6L": "9/32"
+   },
+   "neutral": {
+    "C-E6": false,
+    "C-E6L": false,
+    "T-E6": false,
+    "T-E6L": false
+   },
+   "sdom": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/4",
+    "T-E6L": "9/32"
+   },
+   "signed_I_u": "-1/64",
+   "stratum": "neutral_neither",
+   "unit": "F1|RUSH|SPLIT"
+  },
+  {
+   "I_u": "-5/64",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/1",
+    "T-E6L": "63/64"
+   },
+   "gsb": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "0/1",
+    "T-E6L": "5/64"
+   },
+   "neutral": {
+    "C-E6": false,
+    "C-E6L": false,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "0/1",
+    "T-E6L": "1/16"
+   },
+   "signed_I_u": "-5/64",
+   "stratum": "neutral_neither",
+   "unit": "F1|RUSH|STEALTH"
+  },
+  {
+   "I_u": "-1/16",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/1",
+    "T-E6L": "1/1"
+   },
+   "gsb": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/32",
+    "T-E6L": "3/32"
+   },
+   "neutral": {
+    "C-E6": false,
+    "C-E6L": false,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/32",
+    "T-E6L": "3/32"
+   },
+   "signed_I_u": "-1/16",
+   "stratum": "neutral_neither",
+   "unit": "F1|RUSH|LURK"
+  },
+  {
+   "I_u": "-1/32",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "0/1",
+    "T-E6": "1/1",
+    "T-E6L": "1/32"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "-1/32"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "1/32",
+   "stratum": "neutral_both",
+   "unit": "F1|RUSH|GUARD"
+  },
+  {
+   "I_u": "-15/32",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "33/64",
+    "C-E6L": "0/1",
+    "T-E6": "3/64",
+    "T-E6L": "0/1"
+   },
+   "gsb": {
+    "C-E6": "31/64",
+    "C-E6L": "0/1",
+    "T-E6": "-1/64",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": false,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "-1/2",
+   "stratum": "neutral_one",
+   "unit": "F1|RUSH|EVADER"
+  },
+  {
+   "I_u": "0/1",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/1",
+    "T-E6L": "1/1"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "0/1",
+   "stratum": "neutral_both",
+   "unit": "F1|RUSH|GREED"
+  },
+  {
+   "I_u": "-1/32",
+   "contains_adapt": true,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "0/1",
+    "T-E6": "45/64",
+    "T-E6L": "25/64"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "1/64",
+    "T-E6L": "3/64"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "-1/32",
+   "stratum": "neutral_both",
+   "unit": "F1|RUSH|ADAPT"
+  },
+  {
+   "I_u": "1/32",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "63/64",
+    "T-E6L": "63/64"
+   },
+   "gsb": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "9/64",
+    "T-E6L": "7/64"
+   },
+   "neutral": {
+    "C-E6": false,
+    "C-E6L": false,
+    "T-E6": false,
+    "T-E6L": false
+   },
+   "sdom": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "5/32",
+    "T-E6L": "1/8"
+   },
+   "signed_I_u": "1/32",
+   "stratum": "neutral_neither",
+   "unit": "F1|PACED|SPLIT"
+  },
+  {
+   "I_u": "1/32",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/1",
+    "T-E6L": "31/32"
+   },
+   "gsb": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/32",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": false,
+    "C-E6L": false,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/32",
+    "T-E6L": "1/32"
+   },
+   "signed_I_u": "1/32",
+   "stratum": "neutral_neither",
+   "unit": "F1|PACED|STEALTH"
+  },
+  {
+   "I_u": "0/1",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/1",
+    "T-E6L": "1/1"
+   },
+   "gsb": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "3/32",
+    "T-E6L": "3/32"
+   },
+   "neutral": {
+    "C-E6": false,
+    "C-E6L": false,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "3/32",
+    "T-E6L": "3/32"
+   },
+   "signed_I_u": "0/1",
+   "stratum": "neutral_neither",
+   "unit": "F1|PACED|LURK"
+  },
+  {
+   "I_u": "-1/32",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "0/1",
+    "T-E6": "1/1",
+    "T-E6L": "1/32"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "-1/32"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "1/32",
+   "stratum": "neutral_both",
+   "unit": "F1|PACED|GUARD"
+  },
+  {
+   "I_u": "-7/16",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "33/64",
+    "C-E6L": "0/1",
+    "T-E6": "7/64",
+    "T-E6L": "0/1"
+   },
+   "gsb": {
+    "C-E6": "31/64",
+    "C-E6L": "0/1",
+    "T-E6": "-3/64",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": false,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "-17/32",
+   "stratum": "neutral_one",
+   "unit": "F1|PACED|EVADER"
+  },
+  {
+   "I_u": "0/1",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/1",
+    "T-E6L": "1/1"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "0/1",
+   "stratum": "neutral_both",
+   "unit": "F1|PACED|GREED"
+  },
+  {
+   "I_u": "7/64",
+   "contains_adapt": true,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "0/1",
+    "T-E6": "13/16",
+    "T-E6L": "7/64"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "1/8",
+    "T-E6L": "-1/64"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": false,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "9/64",
+   "stratum": "neutral_both",
+   "unit": "F1|PACED|ADAPT"
+  },
+  {
+   "I_u": "1/8",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/1",
+    "T-E6L": "31/32"
+   },
+   "gsb": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "-5/32",
+    "T-E6L": "-1/32"
+   },
+   "neutral": {
+    "C-E6": false,
+    "C-E6L": false,
+    "T-E6": false,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "5/32",
+    "T-E6L": "1/32"
+   },
+   "signed_I_u": "-1/8",
+   "stratum": "neutral_neither",
+   "unit": "F1|SPLIT|STEALTH"
+  },
+  {
+   "I_u": "0/1",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/1",
+    "T-E6L": "1/1"
+   },
+   "gsb": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": false,
+    "C-E6L": false,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "0/1",
+   "stratum": "neutral_neither",
+   "unit": "F1|SPLIT|LURK"
+  },
+  {
+   "I_u": "0/1",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/1",
+    "T-E6L": "1/1"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "0/1",
+   "stratum": "neutral_both",
+   "unit": "F1|SPLIT|GUARD"
+  },
+  {
+   "I_u": "0/1",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/1",
+    "T-E6L": "1/1"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "0/1",
+   "stratum": "neutral_both",
+   "unit": "F1|SPLIT|EVADER"
+  },
+  {
+   "I_u": "0/1",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/1",
+    "T-E6L": "1/1"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "0/1",
+   "stratum": "neutral_both",
+   "unit": "F1|SPLIT|GREED"
+  },
+  {
+   "I_u": "0/1",
+   "contains_adapt": true,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/1",
+    "T-E6L": "1/1"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "0/1",
+   "stratum": "neutral_both",
+   "unit": "F1|SPLIT|ADAPT"
+  },
+  {
+   "I_u": "0/1",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/1",
+    "T-E6L": "1/1"
+   },
+   "gsb": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": false,
+    "C-E6L": false,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "0/1",
+   "stratum": "neutral_neither",
+   "unit": "F1|STEALTH|LURK"
+  },
+  {
+   "I_u": "-1/32",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "0/1",
+    "T-E6": "55/64",
+    "T-E6L": "49/64"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "1/64",
+    "T-E6L": "3/64"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "-1/32",
+   "stratum": "neutral_both",
+   "unit": "F1|STEALTH|GUARD"
+  },
+  {
+   "I_u": "-15/32",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "33/64",
+    "C-E6L": "0/1",
+    "T-E6": "7/64",
+    "T-E6L": "3/32"
+   },
+   "gsb": {
+    "C-E6": "31/64",
+    "C-E6L": "0/1",
+    "T-E6": "-3/64",
+    "T-E6L": "-1/32"
+   },
+   "neutral": {
+    "C-E6": false,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "-1/2",
+   "stratum": "neutral_one",
+   "unit": "F1|STEALTH|EVADER"
+  },
+  {
+   "I_u": "0/1",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/1",
+    "T-E6L": "1/1"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "0/1",
+   "stratum": "neutral_both",
+   "unit": "F1|STEALTH|GREED"
+  },
+  {
+   "I_u": "-1/32",
+   "contains_adapt": true,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "0/1",
+    "T-E6": "27/32",
+    "T-E6L": "3/4"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "1/32"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "-1/32",
+   "stratum": "neutral_both",
+   "unit": "F1|STEALTH|ADAPT"
+  },
+  {
+   "I_u": "0/1",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "0/1",
+    "T-E6": "1/1",
+    "T-E6L": "1/1"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "0/1",
+   "stratum": "neutral_both",
+   "unit": "F1|LURK|GUARD"
+  },
+  {
+   "I_u": "-15/32",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "33/64",
+    "C-E6L": "0/1",
+    "T-E6": "15/16",
+    "T-E6L": "59/64"
+   },
+   "gsb": {
+    "C-E6": "31/64",
+    "C-E6L": "0/1",
+    "T-E6": "-1/32",
+    "T-E6L": "-1/64"
+   },
+   "neutral": {
+    "C-E6": false,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "-1/2",
+   "stratum": "neutral_one",
+   "unit": "F1|LURK|EVADER"
+  },
+  {
+   "I_u": "-1/16",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "17/32",
+    "T-E6L": "7/32"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "1/32",
+    "T-E6L": "-3/32"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "1/32",
+    "T-E6L": "3/32"
+   },
+   "signed_I_u": "1/8",
+   "stratum": "neutral_both",
+   "unit": "F1|LURK|GREED"
+  },
+  {
+   "I_u": "-1/16",
+   "contains_adapt": true,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "0/1",
+    "T-E6": "1/1",
+    "T-E6L": "1/1"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "1/32",
+    "T-E6L": "3/32"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "1/32",
+    "T-E6L": "3/32"
+   },
+   "signed_I_u": "-1/16",
+   "stratum": "neutral_both",
+   "unit": "F1|LURK|ADAPT"
+  },
+  {
+   "I_u": "0/1",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "0/1",
+   "stratum": "neutral_both",
+   "unit": "F1|GUARD|EVADER"
+  },
+  {
+   "I_u": "0/1",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/1",
+    "T-E6L": "1/1"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "0/1",
+   "stratum": "neutral_both",
+   "unit": "F1|GUARD|GREED"
+  },
+  {
+   "I_u": "0/1",
+   "contains_adapt": true,
+   "decisive_share": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "1/1",
+    "T-E6L": "1/1"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "0/1",
+   "stratum": "neutral_both",
+   "unit": "F1|GUARD|ADAPT"
+  },
+  {
+   "I_u": "0/1",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/1",
+    "T-E6L": "1/1"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "0/1",
+   "stratum": "neutral_both",
+   "unit": "F1|EVADER|GREED"
+  },
+  {
+   "I_u": "1/64",
+   "contains_adapt": true,
+   "decisive_share": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "61/64",
+    "T-E6L": "31/32"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "1/64",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "1/64",
+   "stratum": "neutral_both",
+   "unit": "F1|EVADER|ADAPT"
+  },
+  {
+   "I_u": "3/64",
+   "contains_adapt": true,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "63/64",
+    "T-E6L": "1/1"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "-5/64",
+    "T-E6L": "-1/32"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "1/16",
+    "T-E6L": "1/32"
+   },
+   "signed_I_u": "-3/64",
+   "stratum": "neutral_both",
+   "unit": "F1|GREED|ADAPT"
+  },
+  {
+   "I_u": "0/1",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "25/32",
+    "T-E6L": "25/32"
+   },
+   "gsb": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "5/32",
+    "T-E6L": "5/32"
+   },
+   "neutral": {
+    "C-E6": false,
+    "C-E6L": false,
+    "T-E6": false,
+    "T-E6L": false
+   },
+   "sdom": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "5/32",
+    "T-E6L": "5/32"
+   },
+   "signed_I_u": "0/1",
+   "stratum": "neutral_neither",
+   "unit": "F2|RUSH|RUSH"
+  },
+  {
+   "I_u": "3/32",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "25/32",
+    "T-E6L": "9/16"
+   },
+   "gsb": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "7/32",
+    "T-E6L": "1/8"
+   },
+   "neutral": {
+    "C-E6": false,
+    "C-E6L": false,
+    "T-E6": false,
+    "T-E6L": false
+   },
+   "sdom": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "7/32",
+    "T-E6L": "1/8"
+   },
+   "signed_I_u": "3/32",
+   "stratum": "neutral_neither",
+   "unit": "F2|PACED|PACED"
+  },
+  {
+   "I_u": "-3/32",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "15/16",
+    "T-E6L": "27/32"
+   },
+   "gsb": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/16",
+    "T-E6L": "5/32"
+   },
+   "neutral": {
+    "C-E6": false,
+    "C-E6L": false,
+    "T-E6": true,
+    "T-E6L": false
+   },
+   "sdom": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/16",
+    "T-E6L": "5/32"
+   },
+   "signed_I_u": "-3/32",
+   "stratum": "neutral_neither",
+   "unit": "F2|SPLIT|SPLIT"
+  },
+  {
+   "I_u": "-1/32",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "15/16",
+    "T-E6L": "19/32"
+   },
+   "gsb": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "-1/16",
+    "T-E6L": "-3/32"
+   },
+   "neutral": {
+    "C-E6": false,
+    "C-E6L": false,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/16",
+    "T-E6L": "3/32"
+   },
+   "signed_I_u": "1/32",
+   "stratum": "neutral_neither",
+   "unit": "F2|STEALTH|STEALTH"
+  },
+  {
+   "I_u": "-1/16",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "17/32",
+    "T-E6L": "7/32"
+   },
+   "gsb": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/32",
+    "T-E6L": "-3/32"
+   },
+   "neutral": {
+    "C-E6": false,
+    "C-E6L": false,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "1/1",
+    "C-E6L": "1/1",
+    "T-E6": "1/32",
+    "T-E6L": "3/32"
+   },
+   "signed_I_u": "1/8",
+   "stratum": "neutral_neither",
+   "unit": "F2|LURK|LURK"
+  },
+  {
+   "I_u": "0/1",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "0/1",
+   "stratum": "neutral_both",
+   "unit": "F2|GUARD|GUARD"
+  },
+  {
+   "I_u": "0/1",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "0/1",
+    "T-E6L": "0/1"
+   },
+   "signed_I_u": "0/1",
+   "stratum": "neutral_both",
+   "unit": "F2|EVADER|EVADER"
+  },
+  {
+   "I_u": "0/1",
+   "contains_adapt": false,
+   "decisive_share": {
+    "C-E6": "17/32",
+    "C-E6L": "7/32",
+    "T-E6": "17/32",
+    "T-E6L": "7/32"
+   },
+   "gsb": {
+    "C-E6": "1/32",
+    "C-E6L": "-3/32",
+    "T-E6": "1/32",
+    "T-E6L": "-3/32"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "1/32",
+    "C-E6L": "3/32",
+    "T-E6": "1/32",
+    "T-E6L": "3/32"
+   },
+   "signed_I_u": "0/1",
+   "stratum": "neutral_both",
+   "unit": "F2|GREED|GREED"
+  },
+  {
+   "I_u": "1/16",
+   "contains_adapt": true,
+   "decisive_share": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "25/32",
+    "T-E6L": "21/32"
+   },
+   "gsb": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "3/32",
+    "T-E6L": "1/32"
+   },
+   "neutral": {
+    "C-E6": true,
+    "C-E6L": true,
+    "T-E6": true,
+    "T-E6L": true
+   },
+   "sdom": {
+    "C-E6": "0/1",
+    "C-E6L": "0/1",
+    "T-E6": "3/32",
+    "T-E6L": "1/32"
+   },
+   "signed_I_u": "1/16",
+   "stratum": "neutral_both",
+   "unit": "F2|ADAPT|ADAPT"
+  }
+ ]
+}

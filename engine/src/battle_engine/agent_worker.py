@@ -58,16 +58,17 @@ from types import MappingProxyType
 from typing import Any
 
 from battle_engine.agent_api import (
-    ActionKind,
     ActionKindV2,
     AgentAction,
     AgentValidationError,
-    MatchContext,
     MatchContextV2,
-    Observation,
     ObservationV2,
     ProcessDeclaration,
     load_python_agent,
+)
+from battle_engine.agent_capabilities import (
+    parse_required_capabilities,
+    preflight_agent_capabilities,
 )
 from battle_engine.agents import AgentSpec
 from battle_engine.launchers import build_agents_command
@@ -83,6 +84,8 @@ from battle_engine.python_runtime import (
     diagnose_load_failure,
     diagnose_reset_failure,
 )
+from battle_engine.rules import BYTEFRAY_RULESET_V4_ID
+from battle_engine.ruleset_policy import resolve_ruleset_policy
 
 WORKER_SUBCOMMAND = "_worker"
 
@@ -108,6 +111,8 @@ class WorkerCallResult:
 def agent_spec_to_payload(spec: AgentSpec) -> dict[str, Any]:
     """Serialize the ``AgentSpec`` fields ``load_python_agent`` actually reads."""
 
+    manifest = getattr(spec, "manifest", {})
+    required = parse_required_capabilities(manifest, path=spec.dir)
     return {
         "name": spec.name,
         "display": spec.display,
@@ -116,6 +121,9 @@ def agent_spec_to_payload(spec: AgentSpec) -> dict[str, Any]:
         "api_version": spec.api_version,
         "version": spec.version,
         "entry_point": spec.entry_point,
+        # Unrelated legacy YAML metadata may contain non-JSON types (dates).
+        "manifest": ({"capabilities": {"version": 1, "required": sorted(required)}}
+                     if "capabilities" in manifest else {}),
     }
 
 
@@ -202,13 +210,16 @@ class AgentWorkerHandle:
         status = WorkerCallStatus.OK if response.get("ok") else WorkerCallStatus.FAILED
         return WorkerCallResult(status, response)
 
-    def load(self, spec: AgentSpec, *, timeout: float) -> WorkerCallResult:
+    def load(
+        self, spec: AgentSpec, *, timeout: float, ruleset_id: str = BYTEFRAY_RULESET_V4_ID
+    ) -> WorkerCallResult:
         return self._call(
             {
                 "cmd": "load",
                 "agent_id": self.agent_id,
                 "slot": self.slot,
                 "spec": agent_spec_to_payload(spec),
+                "ruleset_id": ruleset_id,
             },
             timeout=timeout,
         )
@@ -224,6 +235,8 @@ class AgentWorkerHandle:
         timeout: float,
         locality_reach: int | None = None,
         parameters: Mapping[str, Any] | None = None,
+        detection_radius: int | None = None,
+        sensing_window: int | None = None,
     ) -> WorkerCallResult:
         return self._call(
             {
@@ -245,12 +258,20 @@ class AgentWorkerHandle:
                 # construction, so they cross this JSON wire unchanged; read
                 # back through `.get(...)` for the same tolerance as above.
                 "parameters": dict(parameters or {}),
+                # V6 E6: additive, `None` for every Ruleset without a sensing
+                # radius, read back through `.get(...)` with the same
+                # tolerance as the two keys above.
+                "detection_radius": detection_radius,
+                # V6 E8: additive, `None` for every Ruleset whose sensing mode
+                # is passive, read back through `.get(...)` with the same
+                # tolerance as the keys above.
+                "sensing_window": sensing_window,
             },
             timeout=timeout,
         )
 
     def act(
-        self, observation: Observation | ObservationV2, *, action_slot: int, timeout: float
+        self, observation: ObservationV2, *, action_slot: int, timeout: float
     ) -> WorkerCallResult:
         if isinstance(observation, ObservationV2):
             observation_payload = {
@@ -268,6 +289,13 @@ class AgentWorkerHandle:
                 "previous_action_applied": observation.previous_action_applied,
                 "previous_read_value": observation.previous_read_value,
                 "previous_read_owner": observation.previous_read_owner,
+                # V6 E8: additive, read back through `.get(...)`, so an
+                # observation without the key reaches the agent as `None`.
+                "previous_sense_anchors": (
+                    None
+                    if observation.previous_sense_anchors is None
+                    else list(observation.previous_sense_anchors)
+                ),
             }
         else:
             observation_payload = {
@@ -399,8 +427,19 @@ def _handle_load(state: _WorkerState, request: dict[str, Any], out: Any) -> None
         version=payload.get("version"),
         source_path=None,
         entry_point=payload.get("entry_point"),
+        manifest=payload.get("manifest", {}),
     )
     try:
+        ruleset_id = request.get("ruleset_id", BYTEFRAY_RULESET_V4_ID)
+        # Direct controllers also use injected characterization policies.
+        # Loading callbacks with no requirements needs no registry lookup;
+        # NativeMatchService still owns executable identity validation.
+        required = parse_required_capabilities(spec.manifest, path=spec.dir)
+        available = (resolve_ruleset_policy(ruleset_id).available_capabilities
+                     if required else frozenset())
+        preflight_agent_capabilities(
+            spec, available=available, ruleset_id=ruleset_id
+        )
         loaded = load_python_agent(spec)
     except AgentValidationError as exc:
         diagnostic = diagnose_load_failure(exc, agent_id=agent_id, slot=slot)
@@ -430,26 +469,30 @@ def _handle_reset(state: _WorkerState, request: dict[str, Any], out: Any) -> Non
         return
     match_seed = request["match_seed"]
     api_version = request["api_version"]
+    if api_version != 2 or api_version != state.loaded.metadata.api_version:
+        diagnostic = RuntimeDiagnostic(
+            code="agent_api_version_unsupported",
+            stage="reset",
+            message=(
+                f"Worker reset requires loaded Agent API v2 metadata; received "
+                f"request version {api_version!r}."
+            ),
+            agent_id=state.agent_id,
+            slot=state.slot,
+        )
+        _respond(out, {"ok": False, "diagnostic": asdict(diagnostic)})
+        return
     seed = derive_agent_seed(match_seed, state.slot or 0, state.agent_id or "", api_version)
-    if api_version == 2:
-        context: MatchContext | MatchContextV2 = MatchContextV2(
-            agent_id=state.agent_id or "",
-            seed=seed,
-            arena_size=request["arena_size"],
-            tick_limit=request["tick_limit"],
-            rng=random.Random(seed),
-            parameters=MappingProxyType(dict(request.get("parameters") or {})),
-        )
-    else:
-        context = MatchContext(
-            agent_id=state.agent_id or "",
-            seed=seed,
-            arena_size=request["arena_size"],
-            tick_limit=request["tick_limit"],
-            action_budget=request["action_budget"],
-            rng=random.Random(seed),
-            locality_reach=request.get("locality_reach"),
-        )
+    context = MatchContextV2(
+        agent_id=state.agent_id or "",
+        seed=seed,
+        arena_size=request["arena_size"],
+        tick_limit=request["tick_limit"],
+        rng=random.Random(seed),
+        parameters=MappingProxyType(dict(request.get("parameters") or {})),
+        detection_radius=request.get("detection_radius"),
+        sensing_window=request.get("sensing_window"),
+    )
     try:
         state.loaded.instance.reset(context)
     except Exception as exc:
@@ -504,35 +547,27 @@ def _handle_act(state: _WorkerState, request: dict[str, Any], out: Any) -> None:
         _respond(out, {"ok": False, "diagnostic": asdict(diagnostic)})
         return
     observation_payload = request["observation"]
-    if state.loaded.metadata.api_version == 2:
-        observation: Observation | ObservationV2 = ObservationV2(
-            current_tick=observation_payload["current_tick"],
-            last_callback_tick=observation_payload["last_callback_tick"],
-            previous_action_tick=observation_payload["previous_action_tick"],
-            self_process_id=observation_payload["self_process_id"],
-            self_anchor=observation_payload["self_anchor"],
-            self_reach=observation_payload["self_reach"],
-            own_core_base=observation_payload["own_core_base"],
-            own_core_size=observation_payload["own_core_size"],
-            visible_enemy_anchor_addresses=tuple(
-                observation_payload["visible_enemy_anchor_addresses"]
-            ),
-            previous_action_applied=observation_payload["previous_action_applied"],
-            previous_read_value=observation_payload.get("previous_read_value"),
-            previous_read_owner=observation_payload.get("previous_read_owner"),
-        )
-    else:
-        observation = Observation(
-            tick=observation_payload["tick"],
-            agent_id=observation_payload["agent_id"],
-            pc=observation_payload["pc"],
-            register_a=observation_payload["register_a"],
-            register_p=observation_payload["register_p"],
-            zero_flag=observation_payload["zero_flag"],
-            last_read=observation_payload.get("last_read"),
-            alive=observation_payload["alive"],
-            locus=observation_payload.get("locus"),
-        )
+    observation = ObservationV2(
+        current_tick=observation_payload["current_tick"],
+        last_callback_tick=observation_payload["last_callback_tick"],
+        previous_action_tick=observation_payload["previous_action_tick"],
+        self_process_id=observation_payload["self_process_id"],
+        self_anchor=observation_payload["self_anchor"],
+        self_reach=observation_payload["self_reach"],
+        own_core_base=observation_payload["own_core_base"],
+        own_core_size=observation_payload["own_core_size"],
+        visible_enemy_anchor_addresses=tuple(
+            observation_payload["visible_enemy_anchor_addresses"]
+        ),
+        previous_action_applied=observation_payload["previous_action_applied"],
+        previous_read_value=observation_payload.get("previous_read_value"),
+        previous_read_owner=observation_payload.get("previous_read_owner"),
+        previous_sense_anchors=(
+            None
+            if observation_payload.get("previous_sense_anchors") is None
+            else tuple(observation_payload["previous_sense_anchors"])
+        ),
+    )
     action_slot = request.get("action_slot", 0)
     try:
         action = state.loaded.instance.act(observation)
@@ -541,17 +576,12 @@ def _handle_act(state: _WorkerState, request: dict[str, Any], out: Any) -> None:
             exc,
             agent_id=state.agent_id or "",
             slot=state.slot or 0,
-            tick=(
-                observation.current_tick
-                if isinstance(observation, ObservationV2)
-                else observation.tick
-            ),
+            tick=observation.current_tick,
             action_slot=action_slot,
         )
         _respond(out, {"ok": False, "diagnostic": asdict(diagnostic)})
         return
-    expected_kind = ActionKindV2 if state.loaded.metadata.api_version == 2 else ActionKind
-    if isinstance(action, AgentAction) and isinstance(action.kind, expected_kind):
+    if isinstance(action, AgentAction) and isinstance(action.kind, ActionKindV2):
         _respond(
             out,
             {
@@ -565,7 +595,7 @@ def _handle_act(state: _WorkerState, request: dict[str, Any], out: Any) -> None:
         )
     else:
         # Not a valid AgentAction shape at all: forward as "no action",
-        # which validate_action rejects on the parent identically to an
+        # which parent-side Agent API v2 action validation rejects identically to an
         # in-process call returning the same malformed value -- see
         # docs/specs/agent_lab.md §6 and this module's docstring.
         _respond(out, {"ok": True, "action": None})
