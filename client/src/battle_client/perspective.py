@@ -27,7 +27,31 @@ from battle_engine.spectator_perspective import (
     project_perspective,
 )
 
+from battle_client.sensing import SensingCursor
+from battle_client.session import ReplaySession
+
 BROADCAST_MODE = "broadcast"
+
+
+def load_sensing_cursor(
+    session: ReplaySession,
+    replay_path: Path,
+    trace_path: Path,
+    *,
+    entrant_id: str = "A",
+    demo_path: Path | None = None,
+    result_path: Path | None = None,
+) -> SensingCursor:
+    """Explicit active-sensing seam; passive projections retain their contract.
+
+    A failed load raises a sanitized SensingProjectionError. The caller may
+    continue labeled replay-only omniscient viewing with the original session.
+    No renderer/CLI routing is introduced before M1-5.
+    """
+    return SensingCursor.from_paths(
+        session, replay_path, trace_path, entrant_id,
+        demo_path=demo_path, result_path=result_path,
+    )
 
 
 @dataclass(frozen=True)
@@ -265,4 +289,5 @@ __all__ = [
     "PerspectiveState",
     "ReadKnowledge",
     "TickBoundary",
+    "load_sensing_cursor",
 ]

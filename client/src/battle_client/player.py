@@ -34,6 +34,7 @@ from typing import Any
 from battle_engine.replay import ReplayRecord
 
 from battle_client.renderers.base import AbstractRenderer
+from battle_client.sensing import OmniscientView, PhasePosition, SensingCursor, SensingView
 from battle_client.session import ReplaySession, ReplayState
 
 
@@ -80,6 +81,87 @@ class ReplayPlayer:
 SPEEDS: tuple[float, ...] = (0.25, 0.5, 1.0, 2.0, 4.0, 8.0)
 DEFAULT_SPEED_INDEX = SPEEDS.index(1.0)
 DEFAULT_TICK_INTERVAL = 0.05  # seconds per tick at 1x, if the caller supplies none
+
+
+class PhasePlaybackController:
+    """Existing speed/pause conventions applied to permitted sensing phases.
+
+    Every visible phase takes one constant interval, independent of hidden
+    callbacks, wall times, diagnostic text, or omniscient event salience.
+    Renderer and GUI wiring remains a later milestone.
+    """
+
+    def __init__(self, cursor: SensingCursor, *, phase_interval: float = DEFAULT_TICK_INTERVAL):
+        self._cursor = cursor
+        self.phase_interval = phase_interval if phase_interval > 0 else DEFAULT_TICK_INTERVAL
+        self.playing = False
+        self._speed_index = DEFAULT_SPEED_INDEX
+        self._accumulated = 0.0
+
+    @property
+    def current_view(self) -> SensingView | OmniscientView:
+        return self._cursor.current_view
+
+    @property
+    def positions(self) -> tuple[PhasePosition, ...]:
+        return self._cursor.positions
+
+    @property
+    def speed(self) -> float:
+        return SPEEDS[self._speed_index]
+
+    def set_speed(self, value: float) -> None:
+        self._speed_index = min(range(len(SPEEDS)), key=lambda i: abs(SPEEDS[i] - value))
+
+    def speed_up(self) -> None:
+        self._speed_index = min(len(SPEEDS) - 1, self._speed_index + 1)
+
+    def speed_down(self) -> None:
+        self._speed_index = max(0, self._speed_index - 1)
+
+    def pause(self) -> None:
+        self.playing = False
+        self._accumulated = 0.0
+
+    def play(self) -> None:
+        if self._cursor.at_end:
+            self._cursor.restart()
+        self._accumulated = 0.0
+        self.playing = True
+
+    def toggle_play_pause(self) -> None:
+        self.pause() if self.playing else self.play()
+
+    def step_forward(self) -> SensingView | OmniscientView:
+        self.pause()
+        return self._cursor.step_forward()
+
+    def step_backward(self) -> SensingView | OmniscientView:
+        self.pause()
+        return self._cursor.step_backward()
+
+    def seek_to(self, position: PhasePosition) -> SensingView | OmniscientView:
+        self.pause()
+        return self._cursor.seek(position)
+
+    def restart(self) -> SensingView | OmniscientView:
+        self.pause()
+        return self._cursor.restart()
+
+    def switch_view(self, entrant_id: str | None) -> SensingView | OmniscientView:
+        self.pause()
+        self._cursor = self._cursor.switch_view(entrant_id)
+        return self.current_view
+
+    def update(self, elapsed_seconds: float) -> None:
+        if not self.playing:
+            return
+        self._accumulated += max(0.0, elapsed_seconds) * self.speed
+        while self._accumulated >= self.phase_interval and not self._cursor.at_end:
+            self._accumulated -= self.phase_interval
+            self._cursor.step_forward()
+        if self._cursor.at_end:
+            self.pause()
 
 
 class PlaybackMovementKind(str, Enum):
