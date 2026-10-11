@@ -403,7 +403,7 @@ def test_generated_files_use_lf_line_endings(tmp_path):
 
 def test_default_template_is_blank():
     assert DEFAULT_TEMPLATE == "blank"
-    assert set(TEMPLATE_DIRECTORIES) == {"blank", "annotated"}
+    assert set(TEMPLATE_DIRECTORIES) == {"blank", "annotated", "window_scout"}
 
 
 def test_omitting_template_is_byte_identical_to_explicit_blank(tmp_path):

@@ -69,7 +69,7 @@ def test_engine_cli_starts_and_displays_current_help():
     assert "usage: bytefray run" in result.stdout
     assert "--list-agents" in result.stdout
     assert "--quota" in result.stdout
-    assert "--ruleset {bytefray-rules-4}" in result.stdout
+    assert "--ruleset {bytefray-rules-4,bytefray-rules-6-alpha1}" in result.stdout
     for retired_surface in (
         "--mode",
         "redcode94",

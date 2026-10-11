@@ -614,6 +614,7 @@ def test_match_selectors_and_development_receive_their_intended_catalogs(
             row.agent_id
             for row in catalog_rows
             if row.meta.get("kind") == "python" and row.meta.get("api_version") == 2
+            and not row.meta.get("capabilities", {}).get("required", [])
         }
         assert v4_ids, "expected at least one Agent API v2 starter agent"
         assert dev_ids == python_ids
@@ -630,6 +631,6 @@ def test_match_selectors_and_development_receive_their_intended_catalogs(
         }
         assert advanced_ids == v4_ids
 
-        assert designer.advanced.ruleset.count() == 1
+        assert designer.advanced.ruleset.count() == 2
     finally:
         designer.deleteLater()

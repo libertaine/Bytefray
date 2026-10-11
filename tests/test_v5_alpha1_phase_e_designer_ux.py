@@ -763,7 +763,7 @@ def test_the_designer_never_offers_a_rejected_research_ruleset(tmp_path):
         # V6 Phase 2B.10 removed the v4 alphas; Phase 2B.12 also retires
         # Rulesets 1/2 from new execution. The Designer therefore exposes
         # only the stable executable v4 Ruleset.
-        assert offered == {BYTEFRAY_RULESET_V4_ID}
+        assert offered == {BYTEFRAY_RULESET_V4_ID, "bytefray-rules-6-alpha1"}
         assert not any("r1" in str(item) or "r2" in str(item) for item in offered)
     finally:
         panel.deleteLater()

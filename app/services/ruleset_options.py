@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 
+from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
     UnknownRulesetError,
@@ -26,11 +27,13 @@ class DesignerRulesetOption:
 # docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md); V6 Phase
 # 2B.12 removed ``RULESET_V1_OPTION``/``RULESET_V2_OPTION`` the same way,
 # retiring Agent API v1 and VM/blob execution entirely
-# (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md). This is now
-# the only Ruleset option any Designer surface offers, so the "(Agent API
-# v2)" qualifier no longer distinguishes it from anything.
+# (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md). Stable v4
+# remains the default; M1-5 adds an explicit experimental sensing choice.
 RULESET_V4_OPTION = DesignerRulesetOption(
     BYTEFRAY_RULESET_V4_ID, "Ruleset v4 — Current / Recommended"
+)
+RULESET_V6_ALPHA1_OPTION = DesignerRulesetOption(
+    BYTEFRAY_RULESET_V6_ALPHA1_ID, "V6 alpha1 — Experimental sensing"
 )
 
 # V5 Alpha 1 Phase 1: the Designer's canonical new-session/fresh-state
@@ -53,22 +56,19 @@ RULESET_V4_OPTION = DesignerRulesetOption(
 # exactly as before, using the same unchanged product-preference order.
 DEFAULT_DESIGNER_RULESET_ID = BYTEFRAY_RULESET_V4_ID
 
-# V6 Phase 2B.12 narrowed every Designer Ruleset surface to the single
-# retained control (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md):
-# Agent API v1 and VM/blob execution are retired, so ``bytefray-rules-4`` is
-# the only Ruleset any of them can offer. Kept as separate tuples (rather
-# than collapsed into one shared constant) so a future Ruleset 6 has three
-# obvious, independently-decidable places to be added back, mirroring the
-# pre-2B.12 precedent these replace.
+# M1-5 adds sensing to Advanced and Development. Simple and Evaluation
+# retain their stable-v4 scope; neither chooses an experiment automatically.
 SIMPLE_RULESET_OPTIONS = (RULESET_V4_OPTION,)
 EVALUATION_RULESET_OPTIONS = (RULESET_V4_OPTION,)
-DESIGNER_RULESET_OPTIONS = (RULESET_V4_OPTION,)
+DESIGNER_RULESET_OPTIONS = (RULESET_V4_OPTION, RULESET_V6_ALPHA1_OPTION)
 
 RULESET_DESCRIPTION = (
     "Ruleset v4 is Bytefray's current, permanent process-agent gameplay "
     "contract and requires Agent API v2; it places entrant cores from the "
     "match seed and rotates action slots between an entrant's own "
-    "processes."
+    "processes. V6 alpha1 — Experimental sensing requires explicit selection; "
+    "Window Scout requires this option. Edit personal-copy parameters in Advanced, "
+    "then run a full match there. Development Test uses manifest defaults."
 )
 
 
@@ -149,7 +149,10 @@ def agent_row_metadata(row: object) -> object:
 
 def validate_designer_ruleset(ruleset_id: str, kinds: set[str]) -> None:
     """Keep programmatic launch callers behind the engine policy boundary."""
-    if not ruleset_supports_runtime_kinds(ruleset_id, kinds):
+    if (
+        ruleset_id not in {option.ruleset_id for option in DESIGNER_RULESET_OPTIONS}
+        or not ruleset_supports_runtime_kinds(ruleset_id, kinds)
+    ):
         kinds_text = ", ".join(sorted(kinds)) or "selected"
         raise ValueError(
             f"Ruleset {ruleset_id} does not support {kinds_text} entrants. "

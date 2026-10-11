@@ -210,6 +210,7 @@ class AgentDesigner(QMainWindow):
             self.development.openTestReplayRequested.connect(self._on_open_test_replay)
             self.development.inspectTraceRequested.connect(self._on_inspect_trace)
             self.development.evaluateRequested.connect(self._on_evaluate)
+            self.development.sourceRevisionChanged.connect(self.advanced._mark_earlier_result)
             self.tabs.addTab(self.development, "Agent Development")
         except Exception as e:
             QMessageBox.warning(
@@ -1289,7 +1290,10 @@ class AgentDesigner(QMainWindow):
         agent_id = row.agent_id
 
         try:
-            command = build_agents_command("validate", [agent_id])
+            command = build_agents_command("validate", [
+                agent_id, "--ruleset", self.development.selected_ruleset_id(),
+                "--timeout", str(self.development.selected_timeout()),
+            ])
         except FileNotFoundError as exc:
             self.development.show_tool_failure(agent_id, str(exc))
             return

@@ -16,6 +16,7 @@ from pathlib import Path
 import pytest
 from battle_engine.agents import agent_runtime_label, discover_agents
 from battle_engine.command import main as cli_main
+from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
 from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID, agent_supported_by_ruleset
 from battle_engine.starters import STARTER_AGENT_NAMES, ensure_starter_agents
 
@@ -68,7 +69,8 @@ def test_listing_explains_the_single_current_runtime_contract(
 
     assert cli_main(["agents"]) == 0
     out = capsys.readouterr().out
-    assert "[Python] agents run under bytefray-rules-4 with Agent API v2." in out
+    assert "[Python] agents use Agent API v2; bytefray-rules-4 is the default." in out
+    assert "Window Scout requires explicit --ruleset bytefray-rules-6-alpha1" in out
     assert "Ruleset v1" not in out
     assert "Ruleset v2" not in out
     assert "[VM]" not in out
@@ -109,4 +111,4 @@ def test_labelling_follows_the_engines_current_ruleset_restriction(data_root: Pa
 
     for spec in discover_agents(data_root).values():
         assert agent_runtime_label(spec) == "[Python]"
-        assert agent_supported_by_ruleset(spec, BYTEFRAY_RULESET_V4_ID)
+        assert agent_supported_by_ruleset(spec, BYTEFRAY_RULESET_V4_ID) or agent_supported_by_ruleset(spec, BYTEFRAY_RULESET_V6_ALPHA1_ID)

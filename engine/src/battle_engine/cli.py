@@ -25,6 +25,8 @@ from battle_engine.placement import resolve_direct_match_starts
 from battle_engine.python_runtime import PythonEntrantInitializationError
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
+    PUBLIC_EXPERIMENTAL_RULESET_IDS,
+    PUBLIC_STABLE_RULESET_IDS,
     NoCompatibleRulesetError,
     resolve_omitted_ruleset_for_agents,
 )
@@ -251,12 +253,12 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     )
     p.add_argument(
         "--ruleset",
-        choices=[BYTEFRAY_RULESET_V4_ID],
+        choices=sorted(PUBLIC_STABLE_RULESET_IDS | PUBLIC_EXPERIMENTAL_RULESET_IDS),
         default=None,
         help=(
             f"gameplay Ruleset identity. {BYTEFRAY_RULESET_V4_ID} is the "
-            "only Ruleset Agent API v2 (process) agents can run under, and "
-            "is selected automatically when this flag is omitted. Affects "
+            "default when this flag is omitted. V6 alpha1 experimental sensing "
+            "requires explicit selection. Affects "
             "gameplay semantics and is recorded in the match's result/replay "
             "artifacts."
         ),
@@ -449,7 +451,8 @@ def main(argv: Iterable[str] | None = None) -> int:
             # `result: none` / `replay: none`).
             blob = spec.blob.name if spec.blob else "none"
             print(f" - {name:20} {disp:20} {agent_runtime_label(spec):8} blob={blob}")
-        print("\n[Python] agents run under bytefray-rules-4 with Agent API v2.")
+        print("\n[Python] agents use Agent API v2; bytefray-rules-4 is the default.")
+        print("Window Scout requires explicit --ruleset bytefray-rules-6-alpha1 (experimental sensing).")
         return 0
 
     # Build current Config correctly against Config.weights

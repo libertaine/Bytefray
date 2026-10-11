@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
 from PySide6.QtWidgets import QComboBox, QLabel
 
 from app.services.ruleset_options import (
@@ -64,7 +65,7 @@ def sync_ruleset_choices_for_metadata(
     metadata: Iterable[object],
     explanation: QLabel | None = None,
 ) -> bool:
-    """Disable incompatible choices and deterministically repair selection.
+    """Disable incompatible choices; never repair into an experiment.
 
     The one shared implementation every Designer surface uses to decide
     which Rulesets are offered for a given entrant selection, asking the
@@ -75,8 +76,9 @@ def sync_ruleset_choices_for_metadata(
 
     Selection repair is deterministic: a still-compatible current selection
     is always kept, and an incompatible one is replaced by the first
-    product-preferred compatible option -- never by another incompatible
-    one. Returns whether any compatible Ruleset exists, so a caller can
+    product-preferred stable compatible option. Experimental compatibility
+    requires explicit selection. Returns whether the current choice is
+    compatible, so a caller can
     disable execution instead of letting the engine discover the problem
     after launch.
     """
@@ -94,18 +96,25 @@ def sync_ruleset_choices_for_metadata(
         for index in range(combo.count())
     )
     replacement_id = best_designer_ruleset_for_agents(selected, offered)
-    if replacement_id is not None and not ruleset_supports_agent_metadata(
-        selected_ruleset_id(combo), selected
+    if (
+        replacement_id is not None
+        and replacement_id != BYTEFRAY_RULESET_V6_ALPHA1_ID
+        and not ruleset_supports_agent_metadata(selected_ruleset_id(combo), selected)
     ):
         replacement = combo.findData(replacement_id)
         if replacement >= 0:
             combo.setCurrentIndex(replacement)
 
+    current_compatible = ruleset_supports_agent_metadata(selected_ruleset_id(combo), selected)
     if explanation is not None:
-        if replacement_id is None:
-            explanation.setText(NO_COMPATIBLE_RULESET_EXPLANATION)
+        if not current_compatible:
+            explanation.setText(
+                "Select V6 alpha1 — Experimental sensing explicitly to use this agent."
+                if replacement_id == BYTEFRAY_RULESET_V6_ALPHA1_ID
+                else NO_COMPATIBLE_RULESET_EXPLANATION
+            )
             explanation.setVisible(True)
         else:
             explanation.setText("")
             explanation.setVisible(False)
-    return replacement_id is not None
+    return current_compatible

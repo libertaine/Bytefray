@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from battle_engine.rules import BYTEFRAY_RULESET_ID
+from battle_engine.rules import BYTEFRAY_RULESET_ID, BYTEFRAY_RULESET_V6_ALPHA1_ID
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ID,
     BYTEFRAY_RULESET_V4_ID,
@@ -24,13 +24,13 @@ from app.services.ruleset_options import (
 )
 
 
-def test_product_options_only_include_stable_v4() -> None:
+def test_product_options_include_explicit_alpha_without_research() -> None:
     for options in (
         DESIGNER_RULESET_OPTIONS,
-        SIMPLE_RULESET_OPTIONS,
-        EVALUATION_RULESET_OPTIONS,
     ):
-        assert [option.ruleset_id for option in options] == [BYTEFRAY_RULESET_V4_ID]
+        assert [option.ruleset_id for option in options] == [BYTEFRAY_RULESET_V4_ID, BYTEFRAY_RULESET_V6_ALPHA1_ID]
+    assert [option.ruleset_id for option in EVALUATION_RULESET_OPTIONS] == [BYTEFRAY_RULESET_V4_ID]
+    assert [option.ruleset_id for option in SIMPLE_RULESET_OPTIONS] == [BYTEFRAY_RULESET_V4_ID]
     assert best_designer_ruleset_for_agents(({"kind": "python", "api_version": 1},)) is None
     assert best_designer_ruleset_for_agents(({"kind": "python", "api_version": 2},)) == (
         BYTEFRAY_RULESET_V4_ID
@@ -110,7 +110,7 @@ def test_designer_compatibility_always_agrees_with_engine_policy(
     ("metadata", "compatible_ids"),
     [
         (_API_V1, set()),
-        (_API_V2, {BYTEFRAY_RULESET_V4_ID}),
+        (_API_V2, {BYTEFRAY_RULESET_V4_ID, BYTEFRAY_RULESET_V6_ALPHA1_ID}),
         (_VM, set()),
         # A Python agent declaring no API version cannot run under any
         # Ruleset -- the loader rejects it too -- so no surface may offer one.

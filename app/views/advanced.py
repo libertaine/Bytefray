@@ -385,6 +385,10 @@ class AdvancedPanel(QWidget):
         # ---- Results ----
         results = QWidget()
         rv = QVBoxLayout(results)
+        self.resultRevisionLabel = QLabel("No completed match yet.")
+        self.resultRevisionLabel.setWordWrap(True)
+        self._recorded_result_available = False
+        rv.addWidget(self.resultRevisionLabel)
         self.table = QTableWidget(0, 2)
         self.table.setHorizontalHeaderLabels(["Field", "Value"])
         self.table.horizontalHeader().setStretchLastSection(True)
@@ -421,6 +425,13 @@ class AdvancedPanel(QWidget):
             combo.currentIndexChanged.connect(self._on_agent_selection_changed)
         for schema_form in (self.schemaA, self.schemaB, self.schemaC):
             schema_form.changed.connect(self._update_run_enabled)
+            schema_form.changed.connect(self._mark_earlier_result)
+        for combo in (self.ruleset, self.agentA, self.agentB, self.agentC):
+            combo.currentIndexChanged.connect(self._mark_earlier_result)
+        for editor in (self.editorA, self.editorB, self.editorC):
+            editor.text.textChanged.connect(self._mark_earlier_result)
+        for spinbox in self.findChildren(QSpinBox) + self.findChildren(QDoubleSpinBox):
+            spinbox.valueChanged.connect(self._mark_earlier_result)
         self._sync_parameter_surfaces()
 
     @property
@@ -432,6 +443,14 @@ class AdvancedPanel(QWidget):
     def setAgents(self, rows: list[AgentRow]) -> None:
         self._all_rows = list(rows)
         self._refilter_agents()
+        self._mark_earlier_result()
+
+    def _mark_earlier_result(self, _value=None) -> None:
+        if self._recorded_result_available:
+            self.resultRevisionLabel.setText(
+                "Earlier revision/settings: the completed result and Open Replay use "
+                "the recorded match. Current edits apply to the next run."
+            )
 
     def _on_ruleset_changed(self, _index: int) -> None:
         self._refilter_agents()
@@ -712,6 +731,10 @@ class AdvancedPanel(QWidget):
             ("result", result.result_path),
             ("replay", result.replay_path or "not available"),
         ]
+        self._recorded_result_available = True
+        self.resultRevisionLabel.setText(
+            "Completed match — recorded revision/settings. Open Replay uses this result."
+        )
         for entrant in result.entrants:
             status = "alive" if entrant.alive else "eliminated"
             values.append(

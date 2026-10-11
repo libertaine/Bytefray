@@ -60,6 +60,7 @@ from battle_engine.evaluation_planning import build_matrix
 from battle_engine.evaluation_service import EvaluationService
 from battle_engine.launchers import build_agents_command, build_tournament_command
 from battle_engine.result_model import read_result
+from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
 from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
 
 from app.services.agent_catalog import AgentRow
@@ -329,7 +330,7 @@ def match_artifact_paths(replay_path: Path) -> tuple[Path, Path]:
 # with an about-to-run match's own configured Ruleset). Neither alpha can
 # launch a new Designer match at all any longer, so their membership here
 # was dead.
-DESIGNER_AUTO_TRACE_RULESET_IDS: frozenset[str] = frozenset({BYTEFRAY_RULESET_V4_ID})
+DESIGNER_AUTO_TRACE_RULESET_IDS: frozenset[str] = frozenset({BYTEFRAY_RULESET_V4_ID, BYTEFRAY_RULESET_V6_ALPHA1_ID})
 
 
 def designer_trace_path(replay_path: Path, ruleset_id: str) -> Path | None:

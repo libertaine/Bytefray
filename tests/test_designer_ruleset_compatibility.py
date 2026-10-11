@@ -264,7 +264,7 @@ def test_simple_offers_current_gameplay_only_and_not_the_historical_v4_alphas():
     ("api_version", "expected_offered"),
     [
         (1, set()),
-        (2, ALL_V4_IDENTITIES),
+        (2, ALL_V4_IDENTITIES | {"bytefray-rules-6-alpha1"}),
     ],
 )
 def test_development_offers_only_rulesets_the_selected_agent_can_run(
@@ -320,7 +320,7 @@ def test_development_reapplies_compatibility_when_the_selection_changes():
 
         panel.selectAgent("proc")
         assert panel.selected_ruleset_id() == BYTEFRAY_RULESET_V4_ID
-        assert _offered(panel.rulesetCombo) == ALL_V4_IDENTITIES
+        assert _offered(panel.rulesetCombo) == ALL_V4_IDENTITIES | {"bytefray-rules-6-alpha1"}
     finally:
         panel.deleteLater()
 

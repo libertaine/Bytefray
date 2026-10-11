@@ -11,6 +11,7 @@ but rejecting rather than skipping an existing destination.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import shutil
@@ -43,6 +44,7 @@ DEFAULT_TEMPLATE = "blank"
 TEMPLATE_DIRECTORIES = {
     "blank": "agent_template_v2",
     "annotated": "agent_template_v2_annotated",
+    "window_scout": "starter_agents/v6_window_scout",
 }
 
 # The Agent API generation a scaffold produces when the author does not ask
@@ -227,6 +229,14 @@ def create_agent(
             source = template_dir / filename
             with (temp_dir / filename).open("xb") as output, source.open("rb") as input_file:
                 shutil.copyfileobj(input_file, output)
+        if template == "window_scout":
+            # A personal copy has its own visible/discovery identity. The
+            # bundled teaching revision and its bytes remain untouched.
+            manifest_path = temp_dir / "agent.yaml"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["name"] = agent_id
+            manifest["display"] = f"{agent_id} (Window Scout copy)"
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     except BaseException:
         shutil.rmtree(temp_dir, ignore_errors=True)
         raise

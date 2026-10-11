@@ -10,7 +10,7 @@ from subprocess import Popen
 from typing import Any
 
 from battle_engine.launchers import build_match_command, build_replay_command
-from battle_engine.rules import BYTEFRAY_RULESET_V4_ID
+from battle_engine.rules import BYTEFRAY_RULESET_V4_ID, BYTEFRAY_RULESET_V6_ALPHA1_ID
 
 from app.services.osutil import DefaultPaths, pythonpath_separator
 
@@ -74,6 +74,8 @@ def build_engine_command(
     if cfg.c_type:
         arguments.extend(("--c-type", cfg.c_type))
     arguments.extend(("--ruleset", cfg.ruleset_id))
+    if cfg.ruleset_id == BYTEFRAY_RULESET_V6_ALPHA1_ID:
+        arguments.extend(("--trace", str(paths.replay_path.with_name("trace.jsonl"))))
     for flag, value in (
         ("--alive-w", cfg.alive_w),
         ("--kill-w", cfg.kill_w),

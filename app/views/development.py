@@ -79,6 +79,7 @@ _MAX_SPINBOX_INT = 2_147_483_647
 _TEMPLATE_LABELS = {
     "blank": "Blank",
     "annotated": "Annotated Example (commented)",
+    "window_scout": "Window Scout — V6 experimental sensing (personal copy)",
 }
 
 
@@ -199,6 +200,7 @@ class AgentDevelopmentPanel(QWidget):
     openTestReplayRequested = Signal()
     inspectTraceRequested = Signal()
     evaluateRequested = Signal()
+    sourceRevisionChanged = Signal(str)
 
     def __init__(self, catalog=None) -> None:  # catalog kept for parity with other panels
         super().__init__()
@@ -365,9 +367,21 @@ class AgentDevelopmentPanel(QWidget):
         populate_ruleset_combo(self.rulesetCombo)
         self.rulesetCombo.setToolTip(RULESET_DESCRIPTION)
         self.rulesetCombo.setAccessibleName("Development test ruleset")
+        self.rulesetCombo.setAccessibleDescription(RULESET_DESCRIPTION)
         ruleset_row.addWidget(self.rulesetLabel)
         ruleset_row.addWidget(self.rulesetCombo, 1)
         test_layout.addLayout(ruleset_row)
+        self.rulesetExplanation = QLabel()
+        self.rulesetExplanation.setWordWrap(True)
+        test_layout.addWidget(self.rulesetExplanation)
+        workflow_hint = QLabel(
+            "For Window Scout: create a personal copy with New Agent, explicitly select "
+            "V6 alpha1 here, and Validate. Edit search interval and movement step in "
+            "Advanced, select V6 alpha1 there, then Run and Open Replay. "
+            "Development Test runs a full match using manifest defaults."
+        )
+        workflow_hint.setWordWrap(True)
+        test_layout.addWidget(workflow_hint)
 
         self.btnTest = QPushButton("Test")
         self.btnTest.setEnabled(False)
@@ -446,6 +460,7 @@ class AgentDevelopmentPanel(QWidget):
         # participates in Ruleset compatibility exactly like the tested
         # agent does.
         self.opponentCombo.currentIndexChanged.connect(self._on_opponent_changed)
+        self.rulesetCombo.currentIndexChanged.connect(self._on_ruleset_changed)
 
         self.opponentCombo.addItem("Reference", None)
         self._update_enablement()
@@ -575,8 +590,18 @@ class AgentDevelopmentPanel(QWidget):
         row = self.selectedAgentRow()
         agents_root = self._catalog.agents_dir() if self._catalog is not None else None
         source = load_agent_source(row, agents_root=agents_root)
+        changed = (
+            source.python_text != self.pythonSource.toPlainText()
+            or source.manifest_text != self.manifestSource.toPlainText()
+        )
         self.pythonSource.setPlainText(source.python_text)
         self.manifestSource.setPlainText(source.manifest_text)
+        if changed and row is not None and _agent_row_id(row) == self._current_agent_id:
+            self.sourceRevisionChanged.emit(_agent_row_id(row))
+        if changed and row is not None and _agent_row_id(row) == self._current_agent_id and (
+            self._last_validation is not None or self._last_test is not None
+        ):
+            self.invalidateAgentState(_agent_row_id(row), "On-disk source revision changed.")
 
     def invalidateAgentState(self, agent_id: str, reason: str) -> None:
         """Clear cached evidence when the selected agent's source changes."""
@@ -600,6 +625,7 @@ class AgentDevelopmentPanel(QWidget):
         self.testStatusLabel.setText(
             f"Source changed for '{row.name}': previous development-test results were cleared."
         )
+        self.sourceRevisionChanged.emit(agent_id)
 
     def setStatus(self, message: str) -> None:
         """Used by the New Agent creation-success message (Phase 4a)."""
@@ -813,7 +839,7 @@ class AgentDevelopmentPanel(QWidget):
 
         rows = [row for row in (self.selectedAgentRow(), self._opponent_row()) if row is not None]
         self._has_compatible_ruleset = sync_ruleset_choices_for_metadata(
-            self.rulesetCombo, [agent_row_metadata(row) for row in rows]
+            self.rulesetCombo, [agent_row_metadata(row) for row in rows], self.rulesetExplanation
         )
 
     def _update_enablement(self) -> None:
@@ -850,6 +876,12 @@ class AgentDevelopmentPanel(QWidget):
             self.testStatusLabel.setText("No agent selected.")
 
     def _on_opponent_changed(self, _index: int | None = None) -> None:
+        self._sync_ruleset()
+        self._update_enablement()
+
+    def _on_ruleset_changed(self, _index: int | None = None) -> None:
+        self._last_validation = None
+        self.statusLabel.setText("Ruleset changed; validate again under the explicitly selected Ruleset.")
         self._sync_ruleset()
         self._update_enablement()
 

@@ -115,6 +115,8 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="--renderer pygame only: initial entrant perspective ('broadcast' or entrant ID like 'A')",
     )
+    p.add_argument("--result", type=Path, default=None, help="Alpha1: associated result.json (auto-detected beside replay)")
+    p.add_argument("--demo", type=Path, default=None, help="Alpha1: optional demonstration sidecar (auto-detected beside replay)")
     p.add_argument(
         "--director",
         action="store_true",
@@ -259,6 +261,43 @@ def _run_interactive_with_session(
         candidate = replay_path.with_name("trace.jsonl")
         if candidate.is_file():
             trace_path = candidate
+
+    from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
+
+    if session.header is not None and session.header.ruleset_id == BYTEFRAY_RULESET_V6_ALPHA1_ID:
+        from battle_client.sensing_presentation import load_sensing_presentation
+
+        def companion(explicit: Path | None, name: str) -> Path | None:
+            if explicit is not None:
+                return explicit.expanduser().resolve()
+            candidate = replay_path.with_name(name)
+            return candidate if candidate.is_file() else None
+
+        presentation, reason = load_sensing_presentation(
+            session, replay_path, trace_path,
+            result=companion(args.result, "result.json"),
+            demo=companion(args.demo, "demo.json"), interval=tick_interval,
+        )
+        if reason:
+            print(f"[battle_client] {reason}", file=sys.stderr)
+        if presentation is not None and args.perspective not in {None, "A", "broadcast", "omniscient"}:
+            print("[battle_client] Requested perspective unavailable; showing Agent A delivered information.", file=sys.stderr)
+        try:
+            renderer.run(
+                session, tick_interval=tick_interval, start_tick=args.start_tick,
+                start_paused=args.paused, initial_speed=args.speed,
+                sensing_presentation=presentation, sensing_fallback_reason=reason,
+                initial_perspective=args.perspective,
+            )
+        except RendererDependencyError as exc:
+            print(f"[battle_client] dependency error: {exc}", file=sys.stderr)
+            return 2
+        except KeyboardInterrupt:
+            pass
+        except Exception:
+            print("[battle_client] Sensing replay could not be displayed.", file=sys.stderr)
+            return 1
+        return 0
 
     perspective_manager = None
     if trace_path is not None:
