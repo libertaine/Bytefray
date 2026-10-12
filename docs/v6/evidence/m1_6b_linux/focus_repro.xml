@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.109" timestamp="2026-10-11T19:28:00.071099-04:00"><testcase classname="tests.test_v5_replay_history_browser" name="test_keyboard_navigation_action_tab_order_and_filter_focus" time="0.828"><failure message="AssertionError: assert {'Copy Seed', 'Open Replay'} &lt;= set()&#10;  &#10;  Extra items in the left set:&#10;  'Copy Seed'&#10;  'Open Replay'">history_env = &lt;test_v5_replay_history_browser.history_env.&lt;locals&gt;.Env object at 0x7a00b26a0c20&gt;
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7a00b2f662c0&gt;
+
+    @pytest.mark.gui
+    def test_keyboard_navigation_action_tab_order_and_filter_focus(history_env, monkeypatch):
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+
+        window = _opened(history_env)
+        window.table.selectRow(0)
+        window.table.setFocus()
+        QTest.keyClick(window.table, Qt.Key_Down)
+        assert window._selected_location == "loc_0001"
+        reached = set()
+        for _ in range(50):
+            focus = history_env.app.focusWidget()
+            if focus is not None:
+                reached.add(focus.accessibleName())
+            QTest.keyClick(window, Qt.Key_Tab)
+&gt;       assert {"Open Replay", "Copy Seed"} &lt;= reached
+E       AssertionError: assert {'Copy Seed', 'Open Replay'} &lt;= set()
+E
+E         Extra items in the left set:
+E         'Copy Seed'
+E         'Open Replay'
+
+tests/test_v5_replay_history_browser.py:1813: AssertionError</failure></testcase></testsuite></testsuites>

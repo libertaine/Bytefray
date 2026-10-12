@@ -1,0 +1,88 @@
+pygame-ce 2.5.8 (SDL 2.32.10, Python 3.14.4)
+teaching_1000 {'match_id': 'match_1971f1d14781a6e8edd4dc06', 'result_id': 'result_a7040f4fc273e87273736dc2', 'winner': 'tie', 'steps': [{'name': 'incomplete_info_before_sensing', 'status': 'VERIFIED', 'tick': 1}, {'name': 'legal_sense_request', 'status': 'VERIFIED', 'tick': 1}, {'name': 'one_action_sensing_cost', 'status': 'VERIFIED', 'tick': 1}, {'name': 'historical_sample_captured', 'status': 'VERIFIED', 'tick': 1}, {'name': 'anonymous_sample_delivered', 'status': 'VERIFIED', 'tick': 1}, {'name': 'legal_move_informed', 'status': 'VERIFIED', 'tick': 1}, {'name': 'optional_write_supported', 'status': 'VERIFIED', 'tick': 1}], 'states': 32989}
+teaching_1000_repeat {'match_id': 'match_1971f1d14781a6e8edd4dc06', 'result_id': 'result_a7040f4fc273e87273736dc2', 'winner': 'tie', 'steps': [{'name': 'incomplete_info_before_sensing', 'status': 'VERIFIED', 'tick': 1}, {'name': 'legal_sense_request', 'status': 'VERIFIED', 'tick': 1}, {'name': 'one_action_sensing_cost', 'status': 'VERIFIED', 'tick': 1}, {'name': 'historical_sample_captured', 'status': 'VERIFIED', 'tick': 1}, {'name': 'anonymous_sample_delivered', 'status': 'VERIFIED', 'tick': 1}, {'name': 'legal_move_informed', 'status': 'VERIFIED', 'tick': 1}, {'name': 'optional_write_supported', 'status': 'VERIFIED', 'tick': 1}], 'states': 32989}
+teaching_windows_equivalent {'match_id': 'match_ea7839ea9e34e1282e8ab494', 'result_id': 'result_feb7ef27a99b89a4ec883add', 'winner': 'tie', 'steps': [{'name': 'incomplete_info_before_sensing', 'status': 'VERIFIED', 'tick': 1}, {'name': 'legal_sense_request', 'status': 'VERIFIED', 'tick': 1}, {'name': 'one_action_sensing_cost', 'status': 'VERIFIED', 'tick': 1}, {'name': 'historical_sample_captured', 'status': 'VERIFIED', 'tick': 1}, {'name': 'anonymous_sample_delivered', 'status': 'VERIFIED', 'tick': 1}, {'name': 'legal_move_informed', 'status': 'VERIFIED', 'tick': 1}, {'name': 'optional_write_supported', 'status': 'VERIFIED', 'tick': 1}], 'states': 3289}
+determinism {'replay_lines': 1003, 'trace_records': 16000, 'replay_sha256': 'dbe67aa534e23f055c0a43287bbed5fae9878b5c2139bd1df207d4a3dbfbf80f', 'logical_trace_differences': 0}
+[Negative Case 1] Missing trace: safe fallback to omniscient verified.
+[Negative Case 2] Corrupt trace: safe fallback to omniscient verified.
+[Negative Case 3] Invalid sidecar: factual replay preserved without false teaching claim.
+[Negative Case 4] Capability mismatch: SENSE correctly rejected on ruleset v4.
+[Verification 5] Window Scout confirmed compatible under bytefray-rules-6-alpha1.
+artifact_fallback_and_preflight {'passed': True}
+teaching_viewer_launched {'pid': 18123, 'window': 6291465, 'argv': ['<qualified-source>/client/src/battle_client/cli.py', '--replay', '<qualification-root>/teaching_windows_equivalent/replay.jsonl', '--renderer', 'pygame', '--paused']}
+command: windowfocus
+command: key
+command: windowfocus
+command: key
+command: windowfocus
+command: key
+command: windowfocus
+command: key
+command: windowfocus
+command: key
+command: windowfocus
+command: key
+command: windowfocus
+command: key
+command: windowfocus
+command: key
+command: windowfocus
+command: key
+command: windowfocus
+command: key
+command: windowfocus
+command: key
+play_pause_speed_and_rewind {'paused_index': 7, 'increased_speed': 2.0, 'restored_speed': 1.0}
+command: windowfocus
+command: key
+command: mousemove
+command: click
+mouse_seek {'index': 850, 'tick': 50}
+command: windowfocus
+command: key
+command: windowfocus
+command: key
+command: windowfocus
+command: key
+command: windowfocus
+command: key
+command: windowsize
+command: windowfocus
+command: key
+seek_restart_views_resize_terminal {'terminal': 'Recorded end: winner None; tick_limit', 'size': [950, 680]}
+command: windowfocus
+command: key
+viewer_clean_exit {'pid': 18123, 'exit_code': 0}
+designer_stable_rejection {'status': "Last validation: Invalid\nStage: load\nCode: agent_capability_unsupported\nError: Ruleset 'bytefray-rules-4' does not provide required capabilities: sense. Select an explicitly compatible Ruleset.\nDetail: AgentCapabilityMismatchError"}
+designer_alpha_validation {'status': 'Last validation: Valid\nAPI: 2\nDry-run action: SENSE operand=91'}
+designer_match_1 {'result_path': '<qualification-root>/designer-data/runs/_designer/20261011-232550-c54a1d33/result.json', 'result_id': 'result_228415a9fd518026efac41c4', 'parameters': {'move_step': 32, 'search_interval': 2}}
+command: windowfocus
+command: key
+command: windowfocus
+command: key
+designer_reopened_correct_match {'pid': 19135, 'argv': ['<qualified-source>/client/src/battle_client/cli.py', '--replay', '<qualification-root>/designer-data/runs/_designer/20261011-232550-c54a1d33/replay.jsonl', '--renderer', 'pygame', '--tick-delay', '0.02', '--trace', '<qualification-root>/designer-data/runs/_designer/20261011-232550-c54a1d33/trace.jsonl']}
+command: windowfocus
+command: key
+pygame-ce 2.5.8 (SDL 2.32.10, Python 3.14.4)
+designer_viewer_clean_exit {'pid': 19135, 'exit_code': 0}
+earlier_revision_label {'label': 'Earlier revision/settings: the completed result and Open Replay use the recorded match. Current edits apply to the next run.'}
+command: windowfocus
+command: key
+command: windowfocus
+command: key
+designer_reopened_correct_match {'pid': 19176, 'argv': ['<qualified-source>/client/src/battle_client/cli.py', '--replay', '<qualification-root>/designer-data/runs/_designer/20261011-232550-c54a1d33/replay.jsonl', '--renderer', 'pygame', '--tick-delay', '0.02', '--trace', '<qualification-root>/designer-data/runs/_designer/20261011-232550-c54a1d33/trace.jsonl']}
+command: windowfocus
+command: key
+pygame-ce 2.5.8 (SDL 2.32.10, Python 3.14.4)
+designer_viewer_clean_exit {'pid': 19176, 'exit_code': 0}
+designer_match_2 {'result_path': '<qualification-root>/designer-data/runs/_designer/20261011-232553-01ec477f/result.json', 'result_id': 'result_3f97e20f697ac0d1e82bd346', 'parameters': {'move_step': 16, 'search_interval': 3}, 'first_match_unchanged': True}
+command: windowfocus
+command: key
+command: windowfocus
+command: key
+designer_reopened_correct_match {'pid': 19224, 'argv': ['<qualified-source>/client/src/battle_client/cli.py', '--replay', '<qualification-root>/designer-data/runs/_designer/20261011-232553-01ec477f/replay.jsonl', '--renderer', 'pygame', '--tick-delay', '0.02', '--trace', '<qualification-root>/designer-data/runs/_designer/20261011-232553-01ec477f/trace.jsonl']}
+command: windowfocus
+command: key
+pygame-ce 2.5.8 (SDL 2.32.10, Python 3.14.4)
+designer_viewer_clean_exit {'pid': 19224, 'exit_code': 0}
+designer_clean_close {'visible': False}

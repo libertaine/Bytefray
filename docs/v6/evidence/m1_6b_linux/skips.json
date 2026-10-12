@@ -1,0 +1,46 @@
+[
+  {
+    "node": "engine.tests.test_agent_revisions::test_junction_detected_without_path_is_junction_attribute",
+    "reason": "Windows-only: exercises real NTFS junction detection."
+  },
+  {
+    "node": "engine.tests.test_agent_revisions::test_archive_refuses_case_insensitive_collision_never_reports_archived_true",
+    "reason": "Store filesystem is case-sensitive; this collision cannot occur here."
+  },
+  {
+    "node": "engine.tests.test_frozen_bytecode_exclusion::test_frozen_payload_contains_no_python_bytecode",
+    "reason": "set BYTEFRAY_FROZEN_EXE to a built executable to inspect its payload"
+  },
+  {
+    "node": "engine.tests.test_frozen_scaffold_resources::test_frozen_executable_creates_every_supported_variant[api2-annotated]",
+    "reason": "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+  },
+  {
+    "node": "engine.tests.test_frozen_scaffold_resources::test_frozen_executable_creates_every_supported_variant[api2-blank]",
+    "reason": "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+  },
+  {
+    "node": "engine.tests.test_frozen_scaffold_resources::test_frozen_executable_creates_every_supported_variant[api2-window_scout]",
+    "reason": "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+  },
+  {
+    "node": "engine.tests.test_frozen_scaffold_resources::test_frozen_executable_bundles_every_supported_template_directory",
+    "reason": "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+  },
+  {
+    "node": "engine.tests.test_frozen_scaffold_resources::test_frozen_smoke_is_not_silently_satisfied_by_the_source_tree",
+    "reason": "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+  },
+  {
+    "node": "engine.tests.test_paths::test_regular_windows_install_uses_local_app_data",
+    "reason": "Windows installed-wheel policy"
+  },
+  {
+    "node": "engine.tests.test_process_containment::test_bind_child_to_parent_lifetime_without_handle_is_null_binding",
+    "reason": "Windows Job Object behavior"
+  },
+  {
+    "node": "engine.tests.test_process_containment::test_bind_child_to_parent_lifetime_returns_working_binding",
+    "reason": "Windows Job Object behavior"
+  }
+]

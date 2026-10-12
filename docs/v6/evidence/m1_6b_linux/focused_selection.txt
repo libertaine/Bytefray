@@ -1,0 +1,7 @@
+engine/tests/test_v6_alpha_m1_policy_capabilities.py
+engine/tests/test_v6_alpha_m1_2_window_scout.py
+engine/tests/test_v6_alpha_m1_3_sensing_playback.py
+client/tests/test_v6_alpha_sensing.py
+client/tests/test_v6_alpha_sensing_adversarial.py
+client/tests/test_v6_alpha_m1_5.py
+client/tests/test_v6_alpha_m1_5_adversarial.py

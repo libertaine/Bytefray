@@ -1,0 +1,182 @@
+[
+  {
+    "path": "frames/01_designer_default.png",
+    "sha256": "3905749600cc5773904d06e26e7667ddea18d8d4db49da833dfb23c86d23b6f0",
+    "bytes": 69513,
+    "origin": "Successful native witness; Qt QWidget.grab for Designer or QGuiApplication.primaryScreen().grabWindow for live SDL X11 window",
+    "privacy": "approved: visually inspected; no private paths or credentials",
+    "capture_method": "QWidget.grab().save",
+    "executed_witness_sha256": "b986824822df8b8a1ccb52c2d43d8697a78d474f8b6beea49e753bc292e9ab18",
+    "successful_native_command": "additional_commands.json: runs.native"
+  },
+  {
+    "path": "frames/02_capability_rejection.png",
+    "sha256": "30d2f186457d9ad92f6e50a9d2c4b7b6f7aec243e32f86378ac659bdb090e93c",
+    "bytes": 102577,
+    "origin": "Successful native witness; Qt QWidget.grab for Designer or QGuiApplication.primaryScreen().grabWindow for live SDL X11 window",
+    "privacy": "approved: visually inspected; no private paths or credentials",
+    "capture_method": "QWidget.grab().save",
+    "executed_witness_sha256": "b986824822df8b8a1ccb52c2d43d8697a78d474f8b6beea49e753bc292e9ab18",
+    "successful_native_command": "additional_commands.json: runs.native"
+  },
+  {
+    "path": "frames/03_parameters.png",
+    "sha256": "55b6eef1730f9573ba04727bf659685849c8f3b246689f4f2bf1b1b6f9b49fd7",
+    "bytes": 75532,
+    "origin": "Successful native witness; Qt QWidget.grab for Designer or QGuiApplication.primaryScreen().grabWindow for live SDL X11 window",
+    "privacy": "approved: visually inspected; no private paths or credentials",
+    "capture_method": "QWidget.grab().save",
+    "executed_witness_sha256": "b986824822df8b8a1ccb52c2d43d8697a78d474f8b6beea49e753bc292e9ab18",
+    "successful_native_command": "additional_commands.json: runs.native"
+  },
+  {
+    "path": "frames/04_validation.png",
+    "sha256": "c377f6e9582dce811cc361e7f89301cb8be5fddfd9f4a0842a5d298e7c2f7247",
+    "bytes": 99110,
+    "origin": "Successful native witness; Qt QWidget.grab for Designer or QGuiApplication.primaryScreen().grabWindow for live SDL X11 window",
+    "privacy": "approved: visually inspected; no private paths or credentials",
+    "capture_method": "QWidget.grab().save",
+    "executed_witness_sha256": "b986824822df8b8a1ccb52c2d43d8697a78d474f8b6beea49e753bc292e9ab18",
+    "successful_native_command": "additional_commands.json: runs.native"
+  },
+  {
+    "path": "frames/05_first_result.png",
+    "sha256": "1366283ab8b91787d1ca469f913bc59ffa75f20691096c1a3981e1d23711592f",
+    "bytes": 126857,
+    "origin": "Successful native witness; Qt QWidget.grab for Designer or QGuiApplication.primaryScreen().grabWindow for live SDL X11 window",
+    "privacy": "local-only: absolute temporary match paths visible",
+    "capture_method": "QWidget.grab().save",
+    "executed_witness_sha256": "b986824822df8b8a1ccb52c2d43d8697a78d474f8b6beea49e753bc292e9ab18",
+    "successful_native_command": "additional_commands.json: runs.native"
+  },
+  {
+    "path": "frames/06_designer_replay_26.png",
+    "sha256": "302cda7a7c72ee3b80ba862781105d42202916597dd447bb83bc25e6c2d2ca96",
+    "bytes": 50331,
+    "origin": "Successful native witness; Qt QWidget.grab for Designer or QGuiApplication.primaryScreen().grabWindow for live SDL X11 window",
+    "privacy": "approved: visually inspected; no private paths or credentials",
+    "capture_method": "QGuiApplication.primaryScreen().grabWindow(native_x11_id).save",
+    "executed_witness_sha256": "b986824822df8b8a1ccb52c2d43d8697a78d474f8b6beea49e753bc292e9ab18",
+    "successful_native_command": "additional_commands.json: runs.native"
+  },
+  {
+    "path": "frames/06_designer_replay_29.png",
+    "sha256": "302cda7a7c72ee3b80ba862781105d42202916597dd447bb83bc25e6c2d2ca96",
+    "bytes": 50331,
+    "origin": "Successful native witness; Qt QWidget.grab for Designer or QGuiApplication.primaryScreen().grabWindow for live SDL X11 window",
+    "privacy": "approved: visually inspected; no private paths or credentials",
+    "capture_method": "QGuiApplication.primaryScreen().grabWindow(native_x11_id).save",
+    "executed_witness_sha256": "b986824822df8b8a1ccb52c2d43d8697a78d474f8b6beea49e753bc292e9ab18",
+    "successful_native_command": "additional_commands.json: runs.native"
+  },
+  {
+    "path": "frames/06_designer_replay_32.png",
+    "sha256": "302cda7a7c72ee3b80ba862781105d42202916597dd447bb83bc25e6c2d2ca96",
+    "bytes": 50331,
+    "origin": "Successful native witness; Qt QWidget.grab for Designer or QGuiApplication.primaryScreen().grabWindow for live SDL X11 window",
+    "privacy": "approved: visually inspected; no private paths or credentials",
+    "capture_method": "QGuiApplication.primaryScreen().grabWindow(native_x11_id).save",
+    "executed_witness_sha256": "b986824822df8b8a1ccb52c2d43d8697a78d474f8b6beea49e753bc292e9ab18",
+    "successful_native_command": "additional_commands.json: runs.native"
+  },
+  {
+    "path": "frames/07_second_result.png",
+    "sha256": "5f2d047ababd37c44d7f3f9b156a8778af824c821c317468e59a8513b78a3025",
+    "bytes": 128356,
+    "origin": "Successful native witness; Qt QWidget.grab for Designer or QGuiApplication.primaryScreen().grabWindow for live SDL X11 window",
+    "privacy": "local-only: absolute temporary match paths visible",
+    "capture_method": "QWidget.grab().save",
+    "executed_witness_sha256": "b986824822df8b8a1ccb52c2d43d8697a78d474f8b6beea49e753bc292e9ab18",
+    "successful_native_command": "additional_commands.json: runs.native"
+  },
+  {
+    "path": "frames/A_unknown.png",
+    "sha256": "9acf59671d76f6e478f9483e5227974040eb5dc1f27586dd087a8ec1f7a74cfc",
+    "bytes": 45871,
+    "origin": "Successful native witness; Qt QWidget.grab for Designer or QGuiApplication.primaryScreen().grabWindow for live SDL X11 window",
+    "privacy": "approved: visually inspected; no private paths or credentials",
+    "capture_method": "QGuiApplication.primaryScreen().grabWindow(native_x11_id).save",
+    "executed_witness_sha256": "b986824822df8b8a1ccb52c2d43d8697a78d474f8b6beea49e753bc292e9ab18",
+    "successful_native_command": "additional_commands.json: runs.native"
+  },
+  {
+    "path": "frames/B_observation_unknown.png",
+    "sha256": "473218b1499ec667ff31a012cfdcb51f73b2b0af8e4823537b5f91706decaeb6",
+    "bytes": 50313,
+    "origin": "Successful native witness; Qt QWidget.grab for Designer or QGuiApplication.primaryScreen().grabWindow for live SDL X11 window",
+    "privacy": "approved: visually inspected; no private paths or credentials",
+    "capture_method": "QGuiApplication.primaryScreen().grabWindow(native_x11_id).save",
+    "executed_witness_sha256": "b986824822df8b8a1ccb52c2d43d8697a78d474f8b6beea49e753bc292e9ab18",
+    "successful_native_command": "additional_commands.json: runs.native"
+  },
+  {
+    "path": "frames/C_sense_cost_pending.png",
+    "sha256": "c662e209d8930e2a72187068df1a459f6edb88332966062a5929f76fec3fd1c4",
+    "bytes": 56474,
+    "origin": "Successful native witness; Qt QWidget.grab for Designer or QGuiApplication.primaryScreen().grabWindow for live SDL X11 window",
+    "privacy": "approved: visually inspected; no private paths or credentials",
+    "capture_method": "QGuiApplication.primaryScreen().grabWindow(native_x11_id).save",
+    "executed_witness_sha256": "b986824822df8b8a1ccb52c2d43d8697a78d474f8b6beea49e753bc292e9ab18",
+    "successful_native_command": "additional_commands.json: runs.native"
+  },
+  {
+    "path": "frames/D_delayed_receipt.png",
+    "sha256": "991785a9b096cb1b33e1c2bb3b5e006d4f926ef898a39fce249519022839a70e",
+    "bytes": 77771,
+    "origin": "Successful native witness; Qt QWidget.grab for Designer or QGuiApplication.primaryScreen().grabWindow for live SDL X11 window",
+    "privacy": "approved: visually inspected; no private paths or credentials",
+    "capture_method": "QGuiApplication.primaryScreen().grabWindow(native_x11_id).save",
+    "executed_witness_sha256": "b986824822df8b8a1ccb52c2d43d8697a78d474f8b6beea49e753bc292e9ab18",
+    "successful_native_command": "additional_commands.json: runs.native"
+  },
+  {
+    "path": "frames/E_move.png",
+    "sha256": "dfbce787f3f894e2c717d6ad030d56c3eee206ba86dc1fbe0a21fc8026dc3f3d",
+    "bytes": 77748,
+    "origin": "Successful native witness; Qt QWidget.grab for Designer or QGuiApplication.primaryScreen().grabWindow for live SDL X11 window",
+    "privacy": "approved: visually inspected; no private paths or credentials",
+    "capture_method": "QGuiApplication.primaryScreen().grabWindow(native_x11_id).save",
+    "executed_witness_sha256": "b986824822df8b8a1ccb52c2d43d8697a78d474f8b6beea49e753bc292e9ab18",
+    "successful_native_command": "additional_commands.json: runs.native"
+  },
+  {
+    "path": "frames/F_write.png",
+    "sha256": "fafbb2ad01c640f3f6093894e3e4ae7ebf650ef02c5f46853065be40584401a5",
+    "bytes": 76964,
+    "origin": "Successful native witness; Qt QWidget.grab for Designer or QGuiApplication.primaryScreen().grabWindow for live SDL X11 window",
+    "privacy": "approved: visually inspected; no private paths or credentials",
+    "capture_method": "QGuiApplication.primaryScreen().grabWindow(native_x11_id).save",
+    "executed_witness_sha256": "b986824822df8b8a1ccb52c2d43d8697a78d474f8b6beea49e753bc292e9ab18",
+    "successful_native_command": "additional_commands.json: runs.native"
+  },
+  {
+    "path": "frames/G_historical_age.png",
+    "sha256": "27f8b40da6cb8043f9435b1e921861f167f014388a5a17d83c98c2f4749bf295",
+    "bytes": 77849,
+    "origin": "Successful native witness; Qt QWidget.grab for Designer or QGuiApplication.primaryScreen().grabWindow for live SDL X11 window",
+    "privacy": "approved: visually inspected; no private paths or credentials",
+    "capture_method": "QGuiApplication.primaryScreen().grabWindow(native_x11_id).save",
+    "executed_witness_sha256": "b986824822df8b8a1ccb52c2d43d8697a78d474f8b6beea49e753bc292e9ab18",
+    "successful_native_command": "additional_commands.json: runs.native"
+  },
+  {
+    "path": "frames/H_omniscient.png",
+    "sha256": "336cc62100428ca26b575745727f3acb12d7bc9725ab2a7daa8051d408dcabe1",
+    "bytes": 35083,
+    "origin": "Successful native witness; Qt QWidget.grab for Designer or QGuiApplication.primaryScreen().grabWindow for live SDL X11 window",
+    "privacy": "approved: visually inspected; no private paths or credentials",
+    "capture_method": "QGuiApplication.primaryScreen().grabWindow(native_x11_id).save",
+    "executed_witness_sha256": "b986824822df8b8a1ccb52c2d43d8697a78d474f8b6beea49e753bc292e9ab18",
+    "successful_native_command": "additional_commands.json: runs.native"
+  },
+  {
+    "path": "frames/I_terminal.png",
+    "sha256": "25fd00af7bac9174c1425b57384e88dfcd999fb60839d3d0e706d19029a45842",
+    "bytes": 65735,
+    "origin": "Successful native witness; Qt QWidget.grab for Designer or QGuiApplication.primaryScreen().grabWindow for live SDL X11 window",
+    "privacy": "approved: visually inspected; no private paths or credentials",
+    "capture_method": "QGuiApplication.primaryScreen().grabWindow(native_x11_id).save",
+    "executed_witness_sha256": "b986824822df8b8a1ccb52c2d43d8697a78d474f8b6beea49e753bc292e9ab18",
+    "successful_native_command": "additional_commands.json: runs.native"
+  }
+]

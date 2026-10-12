@@ -1,0 +1,90 @@
+{
+  "reviewer": "primary agent; separate adversarial self-review pass, no independent human or subagent review claimed",
+  "baseline_archive": true,
+  "test_inventory": {
+    "regression_cases": 3218,
+    "regression_windows_node_difference": {
+      "raw_linux_only": [
+        "engine/tests/test_launchers.py::test_missing_packaged_executable_has_clear_error[<lambda>-bytefray0]",
+        "engine/tests/test_launchers.py::test_missing_packaged_executable_has_clear_error[<lambda>-bytefray1]",
+        "engine/tests/test_launchers.py::test_missing_packaged_executable_has_clear_error[<lambda>-bytefray-replay-viewer]"
+      ],
+      "raw_windows_only": [
+        "engine/tests/test_launchers.py::test_missing_packaged_executable_has_clear_error[<lambda>-bytefray-replay-viewer.exe]",
+        "engine/tests/test_launchers.py::test_missing_packaged_executable_has_clear_error[<lambda>-bytefray.exe0]",
+        "engine/tests/test_launchers.py::test_missing_packaged_executable_has_clear_error[<lambda>-bytefray.exe1]"
+      ],
+      "after_platform_executable_suffix_normalization": 0
+    },
+    "supplemental_cases": 328,
+    "supplemental_windows_node_difference": 0,
+    "regression_supplement_overlap": 0,
+    "all_seven_windows_client_gui_cases_in_linux_gui_selection": true
+  },
+  "raw_trace_record_types": {
+    "header": 1,
+    "reset": 2,
+    "declaration": 2,
+    "decision_v2": 15994,
+    "binding": 1
+  },
+  "sdl_transition_checks": {
+    "before_request_contacts": [],
+    "pending_contacts": [],
+    "delivered_contacts": [
+      {
+        "address": 91,
+        "age_ticks": 0,
+        "age_callbacks": 1
+      }
+    ],
+    "post_move_anchor": [
+      64
+    ],
+    "aged_contact": [
+      {
+        "address": 91,
+        "age_ticks": 9,
+        "age_callbacks": 79
+      }
+    ],
+    "teaching_viewer_exit": 0,
+    "designer_viewer_exit_codes": [
+      0,
+      0,
+      0
+    ]
+  },
+  "limits": [
+    "Original full Windows replay/trace bytes are absent from the published closure packet; no record-by-record cross-platform comparison is claimed.",
+    "Private Windows study/backup inventories were not present in this Linux checkout and were not copied, read or modified.",
+    "Native Linux Xvfb execution was exercised; no human interactive desktop or Wayland UX qualification."
+  ],
+  "nonblocking_findings": [
+    {
+      "id": "L1",
+      "finding": "Bare Xvfb has no desktop window manager to activate the keyboard-test window.",
+      "reproduction": "focus_repro.xml: 1 failed; no QApplication.focusWidget.",
+      "resolution_evidence": "focus_assisted.xml: unchanged test 1 passed after real xdotool windowfocus; no assertions or production functions replaced.",
+      "proposal": "Explicitly activate/wait for a test window or supply a focus-managing X11 environment in a separately reviewed test-only change.",
+      "status": "RESOLVED qualification-environment issue; native X11 activation supplied missing focus"
+    },
+    {
+      "id": "L2",
+      "finding": "Historical-sample footer overlaps lower right-side history text at 1100x750.",
+      "reproduction": "D_delayed_receipt.png and G_historical_age.png; draw_entrant renders right history through y595 then paints a full-width footer at y500.",
+      "proposal": "Bound the footer width to the arena panel or reserve a separate footer row; retain filtered SensingView input and add a GUI layout check in separately authorized repair.",
+      "severity": "Usability limitation requiring follow-up; nonblocking for M1",
+      "platform_comparison": "Windows footer and scan text nearly abut; Linux Courier font creates visible glyph superposition in shared layout",
+      "affected_rows": {
+        "D": "Scan positive: center 91 +/- 27; anonymous",
+        "G": "addresses (); process main; sampled t10 callback"
+      }
+    }
+  ],
+  "accepted_source_changes": 0,
+  "authority_events": 0,
+  "research_controllers_executed": 0,
+  "new_G_consumption": 0,
+  "final_disposition": "M1-6B LINUX \u2014 FORMALLY CLOSED; PASS"
+}

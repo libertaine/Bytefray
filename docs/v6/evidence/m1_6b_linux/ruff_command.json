@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "<qualification-root>/venv/bin/python",
+    "-m",
+    "ruff",
+    "check",
+    "."
+  ],
+  "cwd": "<qualified-source>",
+  "exit_code": 0,
+  "seconds": 0.7082552789997862
+}
