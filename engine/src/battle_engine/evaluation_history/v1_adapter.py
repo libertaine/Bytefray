@@ -32,8 +32,11 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from battle_engine.agent_evaluation import all_subject_aggregates, compare_candidate_baseline
 from battle_engine.agent_test import OPPONENT_SLOT, TESTED_AGENT_SLOT
+from battle_engine.evaluation_analysis import (
+    all_subject_aggregates,
+    compare_candidate_baseline,
+)
 from battle_engine.evaluation_analysis import analyze as analyze_evaluation
 from battle_engine.result_model import ResultEnvelope, read_result
 

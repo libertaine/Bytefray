@@ -29,10 +29,7 @@ from battle_engine.replay import (
     iter_replay,
     write_replay,
 )
-from battle_engine.ruleset_policy import (
-    BYTEFRAY_RULESET_V4_ALPHA1_ID,
-    BYTEFRAY_RULESET_V4_ID,
-)
+from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
 from battle_engine.starters import ensure_starter_agents
 
 
@@ -64,7 +61,7 @@ def _request(
     starts: tuple[int, int] = (0, 32),
     timeout: float | None = None,
     seed: int = 17,
-    ruleset_id: str = BYTEFRAY_RULESET_V4_ALPHA1_ID,
+    ruleset_id: str = BYTEFRAY_RULESET_V4_ID,
 ) -> MatchRequest:
     specs = tuple(resolve_agent(root, name) for name in names)
     entrants = tuple(
@@ -625,7 +622,7 @@ def test_v4_direct_cli_bootstraps_starters_and_product_paths_use_production_runt
                 "--b-start",
                 "32",
                 "--ruleset",
-                BYTEFRAY_RULESET_V4_ALPHA1_ID,
+                BYTEFRAY_RULESET_V4_ID,
                 "--arena",
                 "64",
                 "--quota",
@@ -657,7 +654,7 @@ def test_v4_direct_cli_bootstraps_starters_and_product_paths_use_production_runt
         ticks=1,
         timeout=5.0,
         trace=False,
-        ruleset_id=BYTEFRAY_RULESET_V4_ALPHA1_ID,
+        ruleset_id=BYTEFRAY_RULESET_V4_ID,
         arena_size=64,
     )
     assert isinstance(test_outcome, DevelopmentTestOutcome)
@@ -675,14 +672,23 @@ def test_v4_direct_cli_bootstraps_starters_and_product_paths_use_production_runt
             ticks=1,
             data_root=tmp_path,
             both_orientations=False,
-            ruleset_id=BYTEFRAY_RULESET_V4_ALPHA1_ID,
-            arena_size=64,
+            ruleset_id=BYTEFRAY_RULESET_V4_ID,
+            # Stable v4's evaluation methodology pins arena_size to its own
+            # standard (512 cells, research report Sec H.1 item 3) --
+            # unlike alpha1 (v2-style methodology, arbitrary arena size),
+            # an explicit non-standard --arena-size is rejected. Omit it
+            # here so the standard methodology default applies.
             instr_per_tick=8,
         )
     )
-    assert len(evaluation.cells) == 3
+    # Stable v4's seeded-placement methodology produces one cell per
+    # orientation (no discrete placement_id enumeration, unlike alpha1's
+    # v2-style methodology, which produced 3 -- one per standard
+    # placement); with both_orientations=False and one opponent/seed, that
+    # is exactly one cell.
+    assert len(evaluation.cells) == 1
     assert all(cell.status == "completed" for cell in evaluation.cells)
     assert all(
-        cell.rules_compatibility_id == BYTEFRAY_RULESET_V4_ALPHA1_ID
+        cell.rules_compatibility_id == BYTEFRAY_RULESET_V4_ID
         for cell in evaluation.cells
     )

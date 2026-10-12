@@ -7,53 +7,60 @@ import sys
 from pathlib import Path
 
 import pytest
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction
 from battle_engine.agent_scaffold import create_agent as scaffold_create_agent
 from battle_engine.agent_validation import (
     VALIDATION_AGENT_ID,
     AgentValidationFailedError,
     ValidationResult,
     build_validation_context,
-    build_validation_observation,
     main,
     validate_agent,
 )
-from battle_engine.agent_validation import validate_action as agent_validation_validate_action
 from battle_engine.agents import resolve_agent
 from battle_engine.config import Config
 from battle_engine.match_service import MatchEntrant
-from battle_engine.python_runtime import (
-    PythonEntrantController,
-    PythonEntrantInitializationError,
-)
-from battle_engine.python_runtime import validate_action as python_runtime_validate_action
-from battle_engine.telemetry import JSONLSink
+from battle_engine.process_runtime import ProcessMatchController
+from battle_engine.python_runtime import PythonEntrantInitializationError
 
 ROOT = Path(__file__).resolve().parents[2]
 
+# V6 Phase 2B.12 retired Agent API v1 execution
+# (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md): every
+# fixture agent in this file is now Agent API v2 (reset/declare_processes/
+# act), and ``_write_agent``'s default manifest declares ``api_version: 2``
+# to match ``agent_scaffold.DEFAULT_API_VERSION``'s own new default. A
+# dedicated test below (``test_api_v1_agent_is_rejected_before_any_code_runs``)
+# pins the new Stage-2 rejection of an Agent API v1 agent explicitly.
 VALID_SOURCE = """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 
 class Agent:
     def reset(self, context):
         self.context = context
 
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
     def act(self, observation):
-        return AgentAction(ActionKind.NOP)
+        return AgentAction(ActionKindV2.READ, 0)
 
 def create_agent():
     return Agent()
 """
 
 INVALID_ACTION_SOURCE = """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 
 class Agent:
     def reset(self, context):
         pass
 
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
     def act(self, observation):
-        return AgentAction(ActionKind.SET_A, "not-an-int")
+        return AgentAction(ActionKindV2.WRITE, "not-an-int", 1)
 
 def create_agent():
     return Agent()
@@ -64,6 +71,9 @@ class Agent:
     def reset(self, context):
         raise RuntimeError("reset boom")
 
+    def declare_processes(self):
+        return []
+
     def act(self, observation):
         return None
 
@@ -72,34 +82,34 @@ def create_agent():
 """
 
 SPY_SOURCE = """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 
 class Agent:
     def reset(self, context):
         self.seen_context = context
 
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
     def act(self, observation):
         self.seen_observation = observation
-        return AgentAction(ActionKind.NOP)
+        return AgentAction(ActionKindV2.READ, 0)
 
 def create_agent():
     return Agent()
 """
 
-VALID_V2_SOURCE = """
-from battle_engine.agent_api import ActionKindV2, AgentAction, ObservationV2, ProcessDeclaration
+# Retained verbatim: Agent API v1 is inspectable/discoverable but no longer
+# validatable (validate_agent rejects it at Stage 2) or executable.
+V1_SOURCE = """
+from battle_engine.agent_api import ActionKind, AgentAction
 
 class Agent:
     def reset(self, context):
-        self.context = context
-
-    def declare_processes(self):
-        return [ProcessDeclaration("scout", 8, 1.0)]
+        pass
 
     def act(self, observation):
-        if not isinstance(observation, ObservationV2):
-            raise TypeError("expected ObservationV2")
-        return AgentAction(ActionKindV2.MOVE, 1)
+        return AgentAction(ActionKind.NOP)
 
 def create_agent():
     return Agent()
@@ -117,7 +127,7 @@ def _write_agent(
     directory.mkdir(parents=True)
     values: dict[str, object] = {
         "kind": "python",
-        "api_version": 1,
+        "api_version": 2,
         "entrypoint": "agent.py:create_agent",
         "version": "1.0",
     }
@@ -148,18 +158,30 @@ def _run(*args: str, cwd: Path = ROOT, env: dict[str, str] | None = None):
 def test_agent_api_v2_validation_consumes_declarations_and_observation_v2(
     tmp_path: Path, timeout: float | None
 ) -> None:
-    _write_agent(
-        tmp_path,
-        "v2_agent",
-        manifest={"api_version": 2},
-        source=VALID_V2_SOURCE,
-    )
+    _write_agent(tmp_path, "v2_agent", source=VALID_SOURCE)
 
     result = validate_agent("v2_agent", data_root=tmp_path, timeout=timeout)
 
     assert result.api_version == 2
-    assert result.dry_run_action.kind.value == "move"
-    assert result.dry_run_action.operand == 1
+    assert result.dry_run_action.kind.value == "read"
+    assert result.dry_run_action.operand == 0
+
+
+def test_api_v1_agent_is_rejected_before_any_code_runs(tmp_path: Path) -> None:
+    """V6 Phase 2B.12 retired Agent API v1 execution
+    (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md): a dry run
+    genuinely executes the agent's reset()/act(), so validating a v1 agent
+    would be running code no Ruleset can execute for real. Rejected at
+    Stage 2 (discovery), before ``load_python_agent`` ever imports it.
+    """
+
+    _write_agent(tmp_path, "v1_agent", manifest={"api_version": 1}, source=V1_SOURCE)
+
+    with pytest.raises(AgentValidationFailedError) as caught:
+        validate_agent("v1_agent", data_root=tmp_path)
+
+    assert caught.value.diagnostic.code == "agent_api_version_unsupported"
+    assert caught.value.diagnostic.stage == "discovery"
 
 
 # --------------------------------------------------------------------------
@@ -174,9 +196,9 @@ def test_scaffolded_agent_validates_successfully(tmp_path):
 
     assert isinstance(result, ValidationResult)
     assert result.agent_id == "example"
-    assert result.api_version == 1
-    assert result.dry_run_action.kind == ActionKind.WRITE
-    assert result.dry_run_action.operand in range(256)
+    assert result.api_version == 2
+    assert result.dry_run_action.kind == ActionKindV2.WRITE
+    assert result.dry_run_action.operand == 0
     assert result.dry_run_action.value == 0xA5
 
 
@@ -185,8 +207,8 @@ def test_custom_valid_agent_validates(tmp_path):
 
     result = validate_agent("example", data_root=tmp_path)
 
-    assert result.api_version == 1
-    assert result.dry_run_action == AgentAction(ActionKind.NOP)
+    assert result.api_version == 2
+    assert result.dry_run_action == AgentAction(ActionKindV2.READ, 0)
 
 
 def test_dry_run_result_is_deterministic(tmp_path):
@@ -203,7 +225,7 @@ def test_validation_context_uses_real_match_slot_identity_not_discovery_id(tmp_p
     matches only ever pass the slot letter ("A") to an agent's own
     reset()/act(), never its discovery id -- see docs/specs/
     agent_validation.md §7. A distinctively-named agent proves the
-    discovery id is not leaking into MatchContext/Observation.agent_id.
+    discovery id is not leaking into MatchContextV2/ObservationV2.agent_id.
     """
 
     _write_agent(tmp_path, "totally_distinct_discovery_id", source=SPY_SOURCE)
@@ -212,10 +234,8 @@ def test_validation_context_uses_real_match_slot_identity_not_discovery_id(tmp_p
 
     assert result.agent_id == "totally_distinct_discovery_id"
     assert VALIDATION_AGENT_ID == "A"
-    context = build_validation_context(1)
-    observation = build_validation_observation()
+    context = build_validation_context(2)
     assert context.agent_id == "A"
-    assert observation.agent_id == "A"
     assert context.agent_id != "totally_distinct_discovery_id"
 
 
@@ -281,7 +301,10 @@ def test_unsupported_api_version(tmp_path):
         validate_agent("example", data_root=tmp_path)
 
     assert caught.value.diagnostic.code == "agent_api_version_unsupported"
-    assert caught.value.diagnostic.stage == "load"
+    # V6 Phase 2B.12 rejects any non-2 declared version at Stage 2
+    # (discovery), before this file's own load-stage guard would have
+    # fired for a version SUPPORTED_AGENT_API_VERSIONS never contained.
+    assert caught.value.diagnostic.stage == "discovery"
 
 
 def test_missing_source_file(tmp_path):
@@ -368,8 +391,10 @@ def test_act_exception(tmp_path):
         tmp_path,
         "example",
         source=(
+            "from battle_engine.agent_api import ProcessDeclaration\n"
             "class Agent:\n"
             "    def reset(self, context): pass\n"
+            "    def declare_processes(self): return [ProcessDeclaration('main', 1, 1.0)]\n"
             "    def act(self, observation): raise ValueError('act boom')\n"
             "def create_agent(): return Agent()\n"
         ),
@@ -387,15 +412,16 @@ def test_act_exception(tmp_path):
     [
         "return object()",
         "return AgentAction('future')",
-        "return AgentAction(ActionKind.WRITE, 'bad', 1)",
-        "return AgentAction(ActionKind.SET_A, 1, 2)",
+        "return AgentAction(ActionKindV2.WRITE, 'bad', 1)",
+        "return AgentAction(ActionKindV2.READ, 1, 2)",
     ],
 )
 def test_invalid_returned_action(tmp_path, body):
     source = (
-        "from battle_engine.agent_api import ActionKind, AgentAction\n"
+        "from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration\n"
         "class Agent:\n"
         "    def reset(self, context): pass\n"
+        "    def declare_processes(self): return [ProcessDeclaration('main', 1, 1.0)]\n"
         f"    def act(self, observation): {body}\n"
         "def create_agent(): return Agent()\n"
     )
@@ -413,33 +439,6 @@ def test_invalid_returned_action(tmp_path, body):
 # --------------------------------------------------------------------------
 
 
-def test_action_validator_is_the_literal_runtime_function():
-    """Proves the act-dry-run step calls the literal production validator,
-    not a reimplementation."""
-
-    assert agent_validation_validate_action is python_runtime_validate_action
-
-
-def test_invalid_action_diagnostic_matches_real_match_exactly(tmp_path):
-    _write_agent(tmp_path, "example", source=INVALID_ACTION_SOURCE)
-
-    validation_diagnostic = None
-    try:
-        validate_agent("example", data_root=tmp_path)
-    except AgentValidationFailedError as exc:
-        validation_diagnostic = exc.diagnostic
-    assert validation_diagnostic is not None
-
-    spec = resolve_agent(tmp_path, "example")
-    entrant = MatchEntrant.python("A", "example", 0, spec)
-    controller = PythonEntrantController(Config(), (entrant,), 1)
-    controller.run(JSONLSink(str(tmp_path / "replay.jsonl")), verbose=False)
-    real_diagnostic = controller.states[0].diagnostic
-
-    assert real_diagnostic is not None
-    assert real_diagnostic == validation_diagnostic
-
-
 def test_reset_failure_diagnostic_matches_real_match_exactly(tmp_path):
     _write_agent(tmp_path, "example", source=BROKEN_RESET_SOURCE)
 
@@ -453,7 +452,9 @@ def test_reset_failure_diagnostic_matches_real_match_exactly(tmp_path):
     spec = resolve_agent(tmp_path, "example")
     entrant = MatchEntrant.python("A", "example", 0, spec)
     with pytest.raises(PythonEntrantInitializationError) as caught:
-        PythonEntrantController(Config(), (entrant,), 1)
+        ProcessMatchController.from_python_entrants(
+            Config(arena_size=64, instr_per_tick=8), (entrant,), 1
+        )
     real_diagnostic = caught.value.diagnostic
 
     assert real_diagnostic == validation_diagnostic
@@ -485,8 +486,10 @@ def test_supervised_act_timeout_is_reported(tmp_path):
         tmp_path,
         "hangy",
         source=(
+            "from battle_engine.agent_api import ProcessDeclaration\n"
             "class Agent:\n"
             "    def reset(self, context): pass\n"
+            "    def declare_processes(self): return [ProcessDeclaration('main', 1, 1.0)]\n"
             "    def act(self, observation):\n"
             "        while True:\n"
             "            pass\n"
@@ -512,6 +515,7 @@ def test_supervised_reset_timeout_is_reported(tmp_path):
             "    def reset(self, context):\n"
             "        while True:\n"
             "            pass\n"
+            "    def declare_processes(self): return []\n"
             "    def act(self, observation): return None\n"
             "def create_agent(): return Agent()\n"
         ),
@@ -561,8 +565,10 @@ def test_cli_default_is_supervised_and_reports_timeout(tmp_path, monkeypatch, ca
         tmp_path,
         "hangy",
         source=(
+            "from battle_engine.agent_api import ProcessDeclaration\n"
             "class Agent:\n"
             "    def reset(self, context): pass\n"
+            "    def declare_processes(self): return [ProcessDeclaration('main', 1, 1.0)]\n"
             "    def act(self, observation):\n"
             "        while True:\n"
             "            pass\n"
@@ -651,7 +657,7 @@ def test_cli_success_output_and_exit_code(tmp_path, monkeypatch, capsys):
     lines = captured.out.strip().splitlines()
     assert lines[0] == "agent: example"
     assert lines[1] == "status: valid"
-    assert lines[2] == "api_version: 1"
+    assert lines[2] == "api_version: 2"
     assert lines[3].startswith("dry_run_action: WRITE operand=")
 
 

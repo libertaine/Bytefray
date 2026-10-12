@@ -12,7 +12,7 @@ from battle_engine.agent_trace import (
 from battle_engine.agents import resolve_agent
 from battle_engine.config import Config, Weights
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
-from battle_engine.ruleset_policy import RULESET_V4_ALPHA1
+from battle_engine.ruleset_policy import RULESET_V4
 
 
 def _write_agent(tmp_path: Path, name: str, source: str) -> None:
@@ -72,7 +72,7 @@ def create_agent() -> AgentV2:
         ),
         max_ticks=10,
         replay_path=replay_a_path,
-        ruleset_id=RULESET_V4_ALPHA1.ruleset_id,
+        ruleset_id=RULESET_V4.ruleset_id,
     )
     svc = NativeMatchService()
     result_a = svc.run(req_a)
@@ -89,7 +89,7 @@ def create_agent() -> AgentV2:
         max_ticks=10,
         replay_path=replay_b_path,
         trace_path=trace_path,
-        ruleset_id=RULESET_V4_ALPHA1.ruleset_id,
+        ruleset_id=RULESET_V4.ruleset_id,
     )
     result_b = svc.run(req_b)
 
@@ -186,7 +186,7 @@ def create_agent() -> AgentV2:
         max_ticks=3,
         replay_path=replay_path,
         trace_path=trace_path,
-        ruleset_id=RULESET_V4_ALPHA1.ruleset_id,
+        ruleset_id=RULESET_V4.ruleset_id,
     )
     NativeMatchService().run(request)
 

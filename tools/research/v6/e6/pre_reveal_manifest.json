@@ -1,0 +1,81 @@
+{
+  "controls_executed_at": "0d8b63888c36fa7b6e1c0decb26811e3513e656f",
+  "d6_record_present": false,
+  "execution_matrix_identity": "v6-e6-exec-v1-62b88ba3ddb4",
+  "fields": {
+    "C-E6/F1": {
+      "cells": 2304,
+      "experiment_result.json": "977c9804e18ab62e323e2cfd18eb36b4a9088a42a2459ac9763afbb10fc25c9e",
+      "provenance.json": "c0350a34e383a45eb79a97f183b5f0192a42f8eda366166b4440d2e2c9dd99b3",
+      "traces/summaries.jsonl": "5c301d167d02a1b21dd994ea57797fb778358f4c23d3b7fa7828765d33389521",
+      "traces/trace_index.json": "9f102bab6ee8717a4211e43298dbd12aac8f0a43de7f069a9dae3b507b0cd0cc"
+    },
+    "C-E6/F2": {
+      "cells": 576,
+      "experiment_result.json": "24d831415d176057e89ecd44866793aabc50523f81bf91903557f93ab51c93a9",
+      "provenance.json": "5974716fc2cd0bf0c4dc845cbd2e75471aa73898ea84987ebc31f611de33b4a7",
+      "traces/summaries.jsonl": "8fe3320839ca1dc0db86383c9e871924a8cb88de772fc1642faeb10cbae63589",
+      "traces/trace_index.json": "92e1fa26a1ab0f2d2212f11d3320ad0762d1a4815b465ce2d6792cb90e4dc38a"
+    },
+    "C-E6L/F1": {
+      "cells": 2304,
+      "experiment_result.json": "6ce570c1932639fb24064c8462405f0e0247e6719e9051d348844e99e6c20bad",
+      "provenance.json": "22d15ef0c932069bb584a1e6a88cd2dd366b60a4cea8590b0e534c1b4dbd123b",
+      "traces/summaries.jsonl": "8a0a5682c91dfe326b8b86f3e7c1e382663f54bc309ecc285c4e1f24fc9797cf",
+      "traces/trace_index.json": "45d6e397c4efecc0b340c815b926916ae425ec056a098b78acb16bc9fda80ecc"
+    },
+    "C-E6L/F2": {
+      "cells": 576,
+      "experiment_result.json": "ee5d9729b843d67f0968dbd66895c205d5521707f821b75a76b08aa79b348036",
+      "provenance.json": "7d020565a81de617a3f81ff41e2f398b7b5288775b750af9d65dd8675ca9959c",
+      "traces/summaries.jsonl": "73ec235866e0bc06961f9d0cddb35b133060fea5f75fb4e8482f9e8363b77767",
+      "traces/trace_index.json": "c50b7c68db784a2d3ce0ef276151801988a2789ff75082890bc73d92bd9b96b8"
+    },
+    "T-E6/F1": {
+      "cells": 2304,
+      "experiment_result.json": "033d9817685274aaa1f68bbd21a93e0b361a51a274cfcc89d1bc8d34a416fc6c",
+      "provenance.json": "72563855d2e966b764659e2755c6a256b6a56ac9e9d3cb9e48c2e6ac14d402b9",
+      "traces/summaries.jsonl": "b6821b2ad8f48f75207b7c9fb6dcd83a119ee3fa0c86c085616a10b196ada622",
+      "traces/trace_index.json": "9cda29afebe3090ff08e3c9699e05d8a881cfb47becef887943c7e489a3c7e73"
+    },
+    "T-E6/F2": {
+      "cells": 576,
+      "experiment_result.json": "23ed57df9d693c5fbf75189a3041d2e5d9a92ced18bcf0f7a1641259d7cba648",
+      "provenance.json": "920839e3fdc2cae3ae9a0105e8236dda81e7e3445791926cf4fea69d9aaeaee3",
+      "traces/summaries.jsonl": "38da2df4b97555b452cc4bfe061aa82ec90c66a9a578f41b148b8d18a1d3e882",
+      "traces/trace_index.json": "4911c44a68b613914f9d8b63fef7d375674037e35d8cbaeea3d9a5d3c2ec65c8"
+    },
+    "T-E6L/F1": {
+      "cells": 2304,
+      "experiment_result.json": "21ddc2172ea4a7baabb118a6adf93028201b61b0d99602ca3478d645f18cbdfc",
+      "provenance.json": "2d65bb3c40d39193dd5b6b67eeb93a992dfffdccd6894db0e3d43212fa5625a0",
+      "traces/summaries.jsonl": "3c7ba2788f8f97fcfe20bb5b2b5ad58b9a685345bb1262e148457b1ec4c86e43",
+      "traces/trace_index.json": "0f9ac2ea1036bb0dae0e4c0c717030a2045bbc57925daa2e1e3ea1226045e2bf"
+    },
+    "T-E6L/F2": {
+      "cells": 576,
+      "experiment_result.json": "806615ae541de88931da6e10254f85f6c73a80387a8656cabfa38118594e2a00",
+      "provenance.json": "0bcc3ec497eac2c5b9476a35fdaac80a7b7a15f7d6528fd5f62916a1bf334119",
+      "traces/summaries.jsonl": "a443fb65ea78137ecaa8e0f9912759c39cde50bc86c9b509d05697f1487566ca",
+      "traces/trace_index.json": "0db1d1ef5abdeac6e630575a2f538810504d3549cc3dd95e5a83df79344bb546"
+    }
+  },
+  "freeze_id": "v6-e6-freeze-v2-275057e27725",
+  "interpretation_record_present": false,
+  "matrix_root": "runs/research_v6_e6/v6-e6-matrix-v2-7de29a4a6954",
+  "records": {
+    "checkpoint_b_supplementary.json": "4a5c3b94f02a761dcf81cfd7eee46e8bdc1cb8947c8287186e1b565f9ca98b7a",
+    "control_against_control_readings.json": "7c6ad0d6964fc452dfcaf8068f9887f297ace6673555bdcca272593f05ceda83",
+    "e6_analysis.json": "eb5c49ef34deb5e18ef51a445f72440e71af11f60d16a8b79520b6a1b017bb51",
+    "qualification.json": "89f448e0b2b6b4878eea3248804afd8b6e8c1ba47094d6ebb567dae5cd6cacd1",
+    "trace_size.json": "008fefaf6ca80ab54d1df47a73139f42440980d9e8d21d18669865c710879167",
+    "treatment_gates_T-E6.json": "1893923fa07eebf69fbc12e654d0d1be731c64c37473606a27d36795122b4f48",
+    "treatment_gates_T-E6L.json": "0dd9cc4d7eea1ff210befc27a87719442d125c8d9ca6e127719d49c529b9c409",
+    "treatment_supplementary.json": "dcac3f9fa439f3add5a473a575e896062816d6ece5aafe847e544a184dc84500"
+  },
+  "schema": "bytefray.v6.e6.pre_reveal_manifest",
+  "seed_commitment": "61e292f6f9dcd951ccc6d8eaf5dc77a41c04c6c4865246ca3b5e5bac5c0e1c83",
+  "status": "All 11,520 cells executed; E6-D D-1..D-5 and D-7 PASS; frozen analysis complete. Seeds NOT revealed; D-6, the interpretation and the disposition not yet run.",
+  "structural_matrix_id": "v6-e6-matrix-v2-7de29a4a6954",
+  "treatment_executed_at": "69495572cff3960c37b8cbce7124127b4d1cca13"
+}

@@ -1,0 +1,45 @@
+ M engine/tests/test_v6_e9_v2_gate8_seal06.py
+ M engine/tests/test_v6_e9_v2_independent_gate8_seal06.py
+ M tools/research/v6/e9/v2/authority.py
+ M tools/research/v6/e9/v2/inventory.py
+ M tools/research/v6/e9/v2/private_verification.py
+ M tools/research/v6/e9/v2/records.py
+?? docs/research/v6/e9_amended_freeze_review_02.zip
+?? docs/research/v6/e9_amended_freeze_review_02.zip.sha256
+?? engine/tests/test_v6_e9_v2_gate8_seal07.py
+?? engine/tests/test_v6_e9_v2_independent_gate8_seal07.py
+?? tools/research/v6/e9/e9-v2-seal07-baseline-conflict-reproduction-20261007-01.json
+?? tools/research/v6/e9/e9-v2-seal07-dev-ruff-20261007-01.json
+?? tools/research/v6/e9/e9-v2-seal07-dev-ruff-20261007-03.json
+?? tools/research/v6/e9/e9-v2-seal07-focused-implementer-20261007-01.json
+?? tools/research/v6/e9/e9-v2-seal07-focused-implementer-20261007-02.json
+?? tools/research/v6/e9/e9-v2-seal07-focused-independent-tests-20261007-01.json
+?? tools/research/v6/e9/e9-v2-seal07-implementer-20261007-01.json
+?? tools/research/v6/e9/e9-v2-seal07-independent-author-development-27.json
+?? tools/research/v6/e9/e9-v2-seal07-independent-author-development-28.json
+?? tools/research/v6/e9/e9-v2-seal07-native-posix-candidate28.json
+?? tools/research/v6/e9/e9-v2-seal07-native-posix-candidate29.json
+?? tools/research/v6/e9/e9-v2-seal07-native-posix-development-20261007-01.json
+?? tools/research/v6/e9/e9-v2-seal07-native-symlinks-candidate29.json
+?? tools/research/v6/e9/e9-v2-seal07-static-mypy-client-20261007-01.json
+?? tools/research/v6/e9/e9-v2-seal07-static-mypy-engine-20261007-01.json
+?? tools/research/v6/e9/e9-v2-seal07-static-ruff-20261007-01.json
+?? tools/research/v6/e9/seal07_independent_author_20261007_01/
+?? tools/research/v6/e9/v2_implementation_manifest_attempt_25.json
+?? tools/research/v6/e9/v2_implementation_manifest_attempt_26.json
+?? tools/research/v6/e9/v2_implementation_manifest_attempt_27.json
+?? tools/research/v6/e9/v2_implementation_manifest_attempt_28.json
+?? tools/research/v6/e9/v2_implementation_manifest_attempt_29.json
+?? tools/research/v6/e9/v2_qualification_manifest_attempt_25.json
+?? tools/research/v6/e9/v2_qualification_manifest_attempt_26.json
+?? tools/research/v6/e9/v2_qualification_manifest_attempt_27.json
+?? tools/research/v6/e9/v2_qualification_manifest_attempt_28.json
+?? tools/research/v6/e9/v2_qualification_manifest_attempt_29.json
+?? tools/research/v6/e9/v2_seal07_baseline_verification_01.json
+?? tools/research/v6/e9/v2_seal07_cycle_report_01.json
+?? tools/research/v6/e9/v2_seal07_cycle_report_01.md
+?? tools/research/v6/e9/v2_seal07_git_status_final_01.txt
+?? tools/research/v6/e9/v2_seal07_implementer_legacy_diff_01.txt
+?? tools/research/v6/e9/v2_seal07_independent_author_transcript_attestation_01.json
+?? tools/research/v6/e9/v2_seal07_legacy_boundary_verification_01.json
+?? tools/research/v6/e9/v2_seal07_tooling_attempt_history_01.json

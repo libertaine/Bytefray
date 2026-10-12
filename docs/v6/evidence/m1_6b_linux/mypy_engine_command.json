@@ -1,0 +1,11 @@
+{
+  "argv": [
+    "<qualification-root>/venv/bin/python",
+    "-m",
+    "mypy",
+    "engine/src/battle_engine"
+  ],
+  "cwd": "<qualified-source>",
+  "exit_code": 0,
+  "seconds": 5.405648689999907
+}

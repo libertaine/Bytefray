@@ -1,0 +1,268 @@
+{
+  "D8_10": false,
+  "H8_interpretation": false,
+  "analysis_freeze": {
+    "identity": "v6-e8-analysis-v1-52e09e5fb422",
+    "identity_digest": "52e09e5fb422e7f90f912b4ceccf40b137286d2915e5e2a14ec76eb89288b106",
+    "record_sha256": "6cbdcb6e72fade96a2f0c7354a5c5afccb1d7258185771d9e1a15d079bf3b27c"
+  },
+  "bound_treatment_traces": 8448,
+  "boundary": "blinded treatment execution and integrity; pre-reveal",
+  "checkpoint_b_commit": "9d4f2820901cf7ed734a4cda7d73b8c5efefcc01",
+  "checkpoint_b_record_sha256": "2972150c18351728417bd355f4ef6fd76b01779e086ddca82a437eabf990da4f",
+  "completed_treatment_cells": 8448,
+  "conditions": {
+    "T8": "bytefray-rules-6-research-sensing-active-w27",
+    "T8L": "bytefray-rules-6-research-disruption-slot1-sensing-active-w27"
+  },
+  "control_qualification": {
+    "control_corpus_manifest_sha256": "adcb7e48e939ad097a84ca6033343cbd633c3607b5821dfdf782e674740696c1",
+    "record_sha256": "559cc4b04f9408b663cda4ed83420e12f9bac840d1e46643200aa20a2f3b0afe",
+    "seat_strata": {
+      "computed_on": "C8",
+      "definition_changed": false,
+      "neutral": 53,
+      "non_neutral": 13
+    },
+    "status": "PASS"
+  },
+  "disposition": false,
+  "engine_source": {
+    "files": 116,
+    "path": "engine/src",
+    "sha256": "9323307c4131105a30c94cad16845468937571657b6d354827a26cfbfcff2676"
+  },
+  "execution_matrix_identity": "v6-e8-exec-v1-34a254752449",
+  "exploratory_analysis": false,
+  "family_freeze": {
+    "identity": "v6-e8-family-v1-981fc8b12beb",
+    "record_sha256": "4ec253d4b84469cdb90b91d68b2236310ecd0bb8e0f5c8f63a19e709cc3afbeb"
+  },
+  "fields": [
+    {
+      "artifact_sha256": {
+        "experiment_result": "5cc157269063d3b89b48ccda4066f4c8999c5ad2ac6c0a11c79497abcca9e2b7",
+        "provenance": "68ab194355934f067d97f12da6e4968e09611d5c8c6899f7a281d66f76c13526",
+        "summaries": "9cedea9cae0dae78f30d948cf730628352c2e2533ab720af2f0300769eb2f6a5",
+        "telemetry": "9d4a0043fb9743aa04b3b4f625fed0fe879a96e444ffc50ad22a425ab0ab7c25",
+        "trace_index": "500b6b8e981bfee5ede19ed8e3ae09fc7accd99e02f66e623385e8798ba061c6"
+      },
+      "bound_traces": 3520,
+      "completed_cells": 3520,
+      "condition": "T8",
+      "field": "F1",
+      "files": 17670,
+      "registered_cells": 3520
+    },
+    {
+      "artifact_sha256": {
+        "experiment_result": "870f5aa5a39bebcdb2d3d61da27514271eb1a0ef4edd040e593618e421accdfb",
+        "provenance": "990dad32d76f950b5e57bf03d4103e7bdbd07416f7ab27f1aeec2f01a0a7c541",
+        "summaries": "764880ed8e32b7df73b2459fc2faae23df84813062bf328ed0aee23a2723d33d",
+        "telemetry": "8e99ab335ece998ddca41ee1459ad7e3f57c362d91eba07259ec22e013b67d81",
+        "trace_index": "0ac870dd274e6ed7eaf1d9309d445fc49780fe80e8b35d4cd5b33eed2f8e93f1"
+      },
+      "bound_traces": 704,
+      "completed_cells": 704,
+      "condition": "T8",
+      "field": "F2",
+      "files": 3646,
+      "registered_cells": 704
+    },
+    {
+      "artifact_sha256": {
+        "experiment_result": "0cb41360ecb020a1e53204a9d0608e1c7bf7fca8f42e12a692c1533e546e57d1",
+        "provenance": "05c14a0f41050851ce4889c8436cf34b27a4dd794d0bc50df3d9acd5bf381999",
+        "summaries": "72dde57d8da1373eb3be5f49f195598abd4ec5dca69527f8dfa88ac8b04f083f",
+        "telemetry": "7c3c06f2851abb6dcfcfa50845a9c27a3bdd80c2a01a1e60914daf39bf364298",
+        "trace_index": "d4631bb6f7d1ea06bc08afcd224cc0e3f515a37849376b34c20f0502c9015e95"
+      },
+      "bound_traces": 3520,
+      "completed_cells": 3520,
+      "condition": "T8L",
+      "field": "F1",
+      "files": 17670,
+      "registered_cells": 3520
+    },
+    {
+      "artifact_sha256": {
+        "experiment_result": "5652c41e3d7f2600ca9b6f4887216b64543a265f829632a0c6a4d2ac6daae710",
+        "provenance": "65fd0e3857b77fe92c6a6fbdae37d15fd8766ff50d4d9520631f2c74e6b0bc52",
+        "summaries": "3c5264d18c37a21ec9235e058710ef16a6790f388b07a768eea79f0baca4228b",
+        "telemetry": "991f2c5a8e0fad9acc7f3a15e5be3314292e364fda6810bb9cbb68306ab67f54",
+        "trace_index": "cbd97337d1cb40d1e816dc0c0d057b37ea3a32334518ee2e0d32e1713c19edaa"
+      },
+      "bound_traces": 704,
+      "completed_cells": 704,
+      "condition": "T8L",
+      "field": "F2",
+      "files": 3646,
+      "registered_cells": 704
+    }
+  ],
+  "final_E8_D_status": "PENDING D8-10; no final status issued",
+  "final_registered_analysis": false,
+  "integrity_status": "PASS",
+  "preregistration_freeze": {
+    "identity": "v6-e8-prereg-v4-0166cdc0b37a",
+    "record_sha256": "bf4a409a782f1d3ae08dc4b26b710b37fb8d3e14c6fb76a6904adb9519de31ea"
+  },
+  "public_leakage": {
+    "candidate_paths_checked": 1186,
+    "files_checked": 1186,
+    "final_staged_scan_required": true,
+    "matches_outside_private_corpus": 0,
+    "seed_bearing_path_patterns": 709632,
+    "seed_count": 32,
+    "status": "PASS"
+  },
+  "qualified_tooling_commit": "6d3930a",
+  "recorded_at_utc": "2026-10-01T21:02:02.585952Z",
+  "registered_treatment_cells": 8448,
+  "seed_commitment": {
+    "execution_matrix_identity": "v6-e8-exec-v1-34a254752449",
+    "generated_at_utc": "2026-10-01T14:45:36.433931Z",
+    "seed_commitment": "94a58a002b0e44a14b2e7a41d03b8007484079ead7973618d3d09bce01046dc9",
+    "tool_commit": "0a2e723d5770d9f0c736a8cf81daf2dc03547616"
+  },
+  "seed_reveal": false,
+  "source_commit": "9d4f2820901cf7ed734a4cda7d73b8c5efefcc01",
+  "source_verification": {
+    "clean_execution_tree": true,
+    "compatibility_pre_match_gate": "PASS",
+    "engine_and_tooling_unchanged": true
+  },
+  "stop_boundary": "Review this committed pre-reveal boundary before authorizing seed reveal or final registered analysis.",
+  "structural_digest": "e0d322b597da298686c7a392a7ae495a96ea6a5428b5fb47f15138fa3af26fc7",
+  "structural_matrix_identity": "v6-e8-matrix-v1-e0d322b597da",
+  "treatment_corpus": {
+    "files": 42634,
+    "manifest_encoding": "UTF-8 JSONL; POSIX paths relative to matrix corpus root; path-sorted; keys sorted; compact separators; ensure_ascii=False; trailing LF; raw-byte file SHA-256",
+    "manifest_sha256": "84ab2f9729401cf06ef60ca6e1b07045c9b9aae51c1a7497972bb3527bb061e6",
+    "raw_bytes": 3981048565
+  },
+  "treatment_gate_records": {
+    "T8": {
+      "gates": {
+        "D8-1": {
+          "checked": 4224,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-11": {
+          "checked": 352,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-12": {
+          "checked": 4224,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-13": {
+          "checked": 4224,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-14": {
+          "checked": 4224,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-15": {
+          "checked": 4224,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-2": {
+          "checked": 4224,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-3": {
+          "checked": 576,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-4": {
+          "checked": 4224,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-5": {
+          "checked": 4224,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-8": {
+          "checked": 4224,
+          "failures": 0,
+          "status": "PASS"
+        }
+      },
+      "record_sha256": "37cc766596eed8878fcb98ea5def36dfb876868bc5ab11e6f8acec9d5452888b",
+      "status": "PASS"
+    },
+    "T8L": {
+      "gates": {
+        "D8-1": {
+          "checked": 4224,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-11": {
+          "checked": 352,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-12": {
+          "checked": 4224,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-13": {
+          "checked": 4224,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-14": {
+          "checked": 4224,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-15": {
+          "checked": 4224,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-2": {
+          "checked": 4224,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-3": {
+          "checked": 576,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-4": {
+          "checked": 4224,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-5": {
+          "checked": 4224,
+          "failures": 0,
+          "status": "PASS"
+        },
+        "D8-8": {
+          "checked": 4224,
+          "failures": 0,
+          "status": "PASS"
+        }
+      },
+      "record_sha256": "17cdfb5b2a8f44f57e5e4bbb0e4c0cc106c07faac35166eadb3e8c2f8f8af1c8",
+      "status": "PASS"
+    }
+  }
+}

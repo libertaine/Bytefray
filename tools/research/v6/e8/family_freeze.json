@@ -1,0 +1,1247 @@
+{
+  "schema": "bytefray.v6.e8.family_freeze",
+  "version": 1,
+  "identity": "v6-e8-family-v1-981fc8b12beb",
+  "digest": "981fc8b12beb399e139289b5b56b29c0b75fba967fe2267c19f7d654c95ac841",
+  "body": {
+    "experiment": "E8",
+    "phase": "I8-4",
+    "tooling_commit": "2ba2487",
+    "implementation_commits": {
+      "I8-1": [
+        "3f3f709",
+        "2cfd4e8"
+      ],
+      "I8-2": [
+        "e170895",
+        "230fe71"
+      ],
+      "I8-3": [
+        "4b58d27",
+        "621c95d"
+      ]
+    },
+    "preregistration_freeze": {
+      "identity": "v6-e8-prereg-v4-0166cdc0b37a",
+      "record": "tools/research/v6/e8/preregistration_freeze_v4.json",
+      "record_sha256": "bf4a409a782f1d3ae08dc4b26b710b37fb8d3e14c6fb76a6904adb9519de31ea"
+    },
+    "structural_matrix": {
+      "identity": "v6-e8-matrix-v1-e0d322b597da",
+      "digest": "e0d322b597da298686c7a392a7ae495a96ea6a5428b5fb47f15138fa3af26fc7",
+      "matches_per_condition": 4224,
+      "matches_total": 16896
+    },
+    "ruleset_identifiers": {
+      "C8": {
+        "ruleset_id": "bytefray-rules-6-research-sensing-r32",
+        "registered_as_provisional": false
+      },
+      "T8": {
+        "ruleset_id": "bytefray-rules-6-research-sensing-active-w27",
+        "registered_as_provisional": true
+      },
+      "C8L": {
+        "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+        "registered_as_provisional": false
+      },
+      "T8L": {
+        "ruleset_id": "bytefray-rules-6-research-disruption-slot1-sensing-active-w27",
+        "registered_as_provisional": true
+      }
+    },
+    "policy_source": {
+      "sha256": [
+        "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc"
+      ],
+      "packages": 22
+    },
+    "packages": {
+      "e8_q01": {
+        "member": "GREED8",
+        "role": "primary",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "8d7a8fc1cfb12bb71d110d788f1b110fae61892cf504328ed8366720a0d648bf"
+      },
+      "e8_q02": {
+        "member": "EVADE8",
+        "role": "twin",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "b6393122adf50a41f4cbaa9073da57fcd8e657bc931db5b01db8b90d6f508ea5"
+      },
+      "e8_q03": {
+        "member": "REACQ8",
+        "role": "twin",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "901a95a3d73a31780571e27a40b4875c524594b22c9bc0d24f5270b80bbf90cc"
+      },
+      "e8_q04": {
+        "member": "STEALTH8",
+        "role": "primary",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "c22146d78cc720968e5b87ae9222f4b326c1458eed3b27b69c749982af634966"
+      },
+      "e8_q05": {
+        "member": "PACED8",
+        "role": "twin",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "466b31b979690864655fe661711c45ca8d34ab45e7415086c8a605fe4102efdd"
+      },
+      "e8_q06": {
+        "member": "GREED8",
+        "role": "twin",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "a400dfa857323108898196db5a7640bb6f0496d42c2c984f90d4e7104e8b8f77"
+      },
+      "e8_q07": {
+        "member": "SPLIT8",
+        "role": "primary",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "23786dc4c37732dca32a029a525be77b08939812fe1626253d29a547b13fcc73"
+      },
+      "e8_q08": {
+        "member": "LURK8",
+        "role": "primary",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "75051b5d099141a5bb5599d0506ab0318e445585ebca986495c3b3771e7bb258"
+      },
+      "e8_q09": {
+        "member": "PACED8",
+        "role": "primary",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "f5fb0d38db17a9cba25bf6cb37d0c7af0c42d74aee5d1ce8a2998884e49a1d39"
+      },
+      "e8_q10": {
+        "member": "RUSH8",
+        "role": "twin",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "aac083e743ab1ee5c87d6e95268fdfd2d64bf9b3210bff6443d9daad5165900f"
+      },
+      "e8_q11": {
+        "member": "LURK8",
+        "role": "twin",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "89e80fa84087a04b04846a2ca6f5dce4d4d1200edc5a334983f922fe1af8c82c"
+      },
+      "e8_q12": {
+        "member": "STRESS8",
+        "role": "twin",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "79dd6b097221074ab71e02acc526cf28b0b35a8edfa5852703689bc2a984c0d2"
+      },
+      "e8_q13": {
+        "member": "GUARD8",
+        "role": "primary",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "b1349fff8839aa2a4e43ea885398084e1c523e89d8238ec923183afe49687089"
+      },
+      "e8_q14": {
+        "member": "ADAPT8",
+        "role": "twin",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "86108b6e36d4170f17f0758b3c9757a90eb24e84c96e9fffb784f6c0e834d710"
+      },
+      "e8_q15": {
+        "member": "EVADE8",
+        "role": "primary",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "2adcf3b053c83e44721ab33657e5d27af0831f4baef3733a038a993191e40c1e"
+      },
+      "e8_q16": {
+        "member": "ADAPT8",
+        "role": "primary",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "09e1cec4105eef1d40bb2054d4c8e6b6915cf5ff40ed7b6ca646360595694e7b"
+      },
+      "e8_q17": {
+        "member": "SPLIT8",
+        "role": "twin",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "fc0dda270fb9e37f879fca73d864b7accf6dddb92a68b2b52e85c340990c6ce7"
+      },
+      "e8_q18": {
+        "member": "GUARD8",
+        "role": "twin",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "2ec5a67c613ad3b91ca7c0d2b39575c34cb2178d94c6bbef8d3548d00a943a41"
+      },
+      "e8_q19": {
+        "member": "REACQ8",
+        "role": "primary",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "1ca1281075367794fe1aa1f2f185a62eb464d581b6a2461b83fa5bc325435124"
+      },
+      "e8_q20": {
+        "member": "STEALTH8",
+        "role": "twin",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "cc686db8b7e7fb8724ac6482bee87ca13e8e74da4da8b3fcab0d0207ba3e5bb7"
+      },
+      "e8_q21": {
+        "member": "RUSH8",
+        "role": "primary",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "901f0713a6190c249834d48e39c9c9974b98a97096430d882e0c5cc766536777"
+      },
+      "e8_q22": {
+        "member": "STRESS8",
+        "role": "primary",
+        "agent_py_sha256": "369323136a4307198b2a734379ad5789fe3d19b29307329bda7016e9039cf8bc",
+        "agent_yaml_sha256": "298a4e437112ba8051bd654cbfb63d44a24b79cc91c334715cd1a83924de40d0"
+      }
+    },
+    "parameters": {
+      "registered_encoding": [
+        [
+          "reacquire",
+          null,
+          "none"
+        ],
+        [
+          "stress",
+          null,
+          false
+        ]
+      ],
+      "members": {
+        "RUSH8": {
+          "acquire": "spatial-fast",
+          "reacquire": "once",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "REACQ8": {
+          "acquire": "spatial-fast",
+          "reacquire": "repeat",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "PACED8": {
+          "acquire": "spatial-paced",
+          "reacquire": "once",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "STEALTH8": {
+          "acquire": "ownership",
+          "reacquire": "once",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "LURK8": {
+          "acquire": "none",
+          "reacquire": "none",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "SPLIT8": {
+          "acquire": "spatial-fast",
+          "reacquire": "once",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 2,
+          "stress": false
+        },
+        "GUARD8": {
+          "acquire": "spatial-fast",
+          "reacquire": "once",
+          "posture": "guard",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "EVADE8": {
+          "acquire": "spatial-fast",
+          "reacquire": "once",
+          "posture": "guard",
+          "evade": "on-hit",
+          "processes": 1,
+          "stress": false
+        },
+        "GREED8": {
+          "acquire": "none",
+          "reacquire": "none",
+          "posture": "paint",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "ADAPT8": {
+          "acquire": "spatial-fast",
+          "reacquire": "adaptive",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "STRESS8": {
+          "acquire": "none",
+          "reacquire": "none",
+          "posture": "guard",
+          "evade": "off",
+          "processes": 1,
+          "stress": true
+        }
+      },
+      "resolved_from_manifests": {
+        "e8_q01": {
+          "acquire": "none",
+          "reacquire": "none",
+          "posture": "paint",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "e8_q02": {
+          "acquire": "spatial-fast",
+          "reacquire": "once",
+          "posture": "guard",
+          "evade": "on-hit",
+          "processes": 1,
+          "stress": false
+        },
+        "e8_q03": {
+          "acquire": "spatial-fast",
+          "reacquire": "repeat",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "e8_q04": {
+          "acquire": "ownership",
+          "reacquire": "once",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "e8_q05": {
+          "acquire": "spatial-paced",
+          "reacquire": "once",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "e8_q06": {
+          "acquire": "none",
+          "reacquire": "none",
+          "posture": "paint",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "e8_q07": {
+          "acquire": "spatial-fast",
+          "reacquire": "once",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 2,
+          "stress": false
+        },
+        "e8_q08": {
+          "acquire": "none",
+          "reacquire": "none",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "e8_q09": {
+          "acquire": "spatial-paced",
+          "reacquire": "once",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "e8_q10": {
+          "acquire": "spatial-fast",
+          "reacquire": "once",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "e8_q11": {
+          "acquire": "none",
+          "reacquire": "none",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "e8_q12": {
+          "acquire": "none",
+          "reacquire": "none",
+          "posture": "guard",
+          "evade": "off",
+          "processes": 1,
+          "stress": true
+        },
+        "e8_q13": {
+          "acquire": "spatial-fast",
+          "reacquire": "once",
+          "posture": "guard",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "e8_q14": {
+          "acquire": "spatial-fast",
+          "reacquire": "adaptive",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "e8_q15": {
+          "acquire": "spatial-fast",
+          "reacquire": "once",
+          "posture": "guard",
+          "evade": "on-hit",
+          "processes": 1,
+          "stress": false
+        },
+        "e8_q16": {
+          "acquire": "spatial-fast",
+          "reacquire": "adaptive",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "e8_q17": {
+          "acquire": "spatial-fast",
+          "reacquire": "once",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 2,
+          "stress": false
+        },
+        "e8_q18": {
+          "acquire": "spatial-fast",
+          "reacquire": "once",
+          "posture": "guard",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "e8_q19": {
+          "acquire": "spatial-fast",
+          "reacquire": "repeat",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "e8_q20": {
+          "acquire": "ownership",
+          "reacquire": "once",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "e8_q21": {
+          "acquire": "spatial-fast",
+          "reacquire": "once",
+          "posture": "attack",
+          "evade": "off",
+          "processes": 1,
+          "stress": false
+        },
+        "e8_q22": {
+          "acquire": "none",
+          "reacquire": "none",
+          "posture": "guard",
+          "evade": "off",
+          "processes": 1,
+          "stress": true
+        }
+      }
+    },
+    "declarations": {
+      "e8_q01": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ],
+      "e8_q02": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ],
+      "e8_q03": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ],
+      "e8_q04": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ],
+      "e8_q05": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ],
+      "e8_q06": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ],
+      "e8_q07": [
+        [
+          "sensor",
+          256,
+          0.25
+        ],
+        [
+          "striker",
+          256,
+          0.75
+        ]
+      ],
+      "e8_q08": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ],
+      "e8_q09": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ],
+      "e8_q10": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ],
+      "e8_q11": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ],
+      "e8_q12": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ],
+      "e8_q13": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ],
+      "e8_q14": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ],
+      "e8_q15": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ],
+      "e8_q16": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ],
+      "e8_q17": [
+        [
+          "sensor",
+          256,
+          0.25
+        ],
+        [
+          "striker",
+          256,
+          0.75
+        ]
+      ],
+      "e8_q18": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ],
+      "e8_q19": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ],
+      "e8_q20": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ],
+      "e8_q21": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ],
+      "e8_q22": [
+        [
+          "main",
+          256,
+          1.0
+        ]
+      ]
+    },
+    "sets": {
+      "pi": [
+        "RUSH8",
+        "REACQ8",
+        "PACED8",
+        "STEALTH8",
+        "LURK8",
+        "SPLIT8",
+        "GUARD8",
+        "EVADE8",
+        "GREED8",
+        "ADAPT8",
+        "STRESS8"
+      ],
+      "pi_f": [
+        "RUSH8",
+        "REACQ8",
+        "PACED8",
+        "STEALTH8",
+        "LURK8",
+        "SPLIT8",
+        "GUARD8",
+        "EVADE8",
+        "GREED8",
+        "STRESS8"
+      ],
+      "a8": [
+        "RUSH8",
+        "REACQ8",
+        "PACED8",
+        "STEALTH8",
+        "LURK8"
+      ],
+      "phase_sensitive": [
+        "PACED8",
+        "EVADE8",
+        "ADAPT8",
+        "STRESS8"
+      ]
+    },
+    "census": {
+      "primary": [
+        "EVADE8"
+      ],
+      "twin": [
+        "EVADE8"
+      ],
+      "prediction": [
+        "EVADE8"
+      ]
+    },
+    "compatibility": {
+      "static_classes": {
+        "e8_q01": "context-gated",
+        "e8_q02": "context-gated",
+        "e8_q03": "context-gated",
+        "e8_q04": "context-gated",
+        "e8_q05": "context-gated",
+        "e8_q06": "context-gated",
+        "e8_q07": "context-gated",
+        "e8_q08": "context-gated",
+        "e8_q09": "context-gated",
+        "e8_q10": "context-gated",
+        "e8_q11": "context-gated",
+        "e8_q12": "context-gated",
+        "e8_q13": "context-gated",
+        "e8_q14": "context-gated",
+        "e8_q15": "context-gated",
+        "e8_q16": "context-gated",
+        "e8_q17": "context-gated",
+        "e8_q18": "context-gated",
+        "e8_q19": "context-gated",
+        "e8_q20": "context-gated",
+        "e8_q21": "context-gated",
+        "e8_q22": "context-gated"
+      },
+      "d8_9_violations": {},
+      "accepted": {
+        "context-gated": [
+          "bytefray-rules-6-research-disruption-slot1-sensing-active-w27",
+          "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+          "bytefray-rules-6-research-sensing-active-w27",
+          "bytefray-rules-6-research-sensing-r32"
+        ],
+        "ungated": [
+          "bytefray-rules-6-research-disruption-slot1-sensing-active-w27",
+          "bytefray-rules-6-research-sensing-active-w27"
+        ]
+      },
+      "condition_rulesets": {
+        "C8": "bytefray-rules-6-research-sensing-r32",
+        "T8": "bytefray-rules-6-research-sensing-active-w27",
+        "C8L": "bytefray-rules-6-research-disruption-slot1-sensing-r32",
+        "T8L": "bytefray-rules-6-research-disruption-slot1-sensing-active-w27"
+      },
+      "compatible_conditions": [
+        "C8",
+        "T8",
+        "C8L",
+        "T8L"
+      ]
+    },
+    "invariants": [
+      {
+        "id": "RNG-1",
+        "source": "plan P8-1",
+        "statement": "At reset every package draws exactly two values from context.rng, in this order: sigma = (-1, 1)[rng.randrange(2)], then the paint side = rng.randrange(2). Nothing else.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family.py::test_reset_draws_exactly_sigma_then_the_paint_side"
+        ]
+      },
+      {
+        "id": "RNG-2",
+        "source": "plan P8-2; PR8 Sec 2.5",
+        "statement": "During play, tau = (-1, 1)[rng.randrange(2)] is drawn once, when a re-acquisition search starts, in both modes.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family_policy.py::test_verification_then_the_second_and_third_windows_precede_the_posture_steps",
+          "engine/tests/test_v6_e8_family_policy.py::test_the_passive_search_moves_toward_each_center_and_is_exhausted_at_the_last"
+        ]
+      },
+      {
+        "id": "RNG-3",
+        "source": "plan P8-2; PR8 R-11",
+        "statement": "At each evasion, sigma_e = (-1, 1)[rng.randrange(2)], then m = rng.randint(8, 64), drawn fresh for every evasion.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family_policy.py::test_evade8_draws_fresh_for_every_evasion_and_repeats_on_every_hit",
+          "engine/tests/test_v6_e8_family_engine.py::test_evade8_evades_exactly_on_every_inferred_hit_with_fresh_draws"
+        ]
+      },
+      {
+        "id": "RNG-4",
+        "source": "PR8 Sec 3.3 and D8-3; PR6 Sec 3.2",
+        "statement": "One policy source and one fixed draw order: a member's primary and twin packages consume the stream identically and act identically, and no draw is made outside RNG-1 to RNG-3.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family.py::test_primary_and_twin_packages_draw_and_act_identically",
+          "engine/tests/test_v6_e8_family_engine.py::test_primary_and_twin_packages_play_identically"
+        ]
+      },
+      {
+        "id": "RNG-5",
+        "source": "PR8 D8-9; PR6 D-5",
+        "statement": "No package reads context.seed: randomness reaches the policy only through context.rng.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family.py::test_every_package_passes_the_discipline_gate",
+          "engine/tests/test_v6_e8_family.py::test_the_gate_fails_every_planted_negative_control"
+        ]
+      },
+      {
+        "id": "BEH-1",
+        "source": "plan Sec 5.1",
+        "statement": "Every process declares reach arena // 2. SPLIT8 declares a sensor (share 1/4) and a striker (share 3/4); every other member one process, share 1.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family.py::test_declarations",
+          "engine/tests/test_v6_e8_family.py::test_split8s_registered_sensor_and_shares_are_the_sources"
+        ]
+      },
+      {
+        "id": "BEH-2",
+        "source": "PR8 Sec 3.2 and D8-9",
+        "statement": "No member returns SENSE when sensing_window is None.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family.py::test_no_member_ever_returns_sense_without_a_sensing_window",
+          "engine/tests/test_v6_e8_family.py::test_the_sense_helper_refuses_without_a_window"
+        ]
+      },
+      {
+        "id": "BEH-3",
+        "source": "PR8 Sec 3.5, E-1",
+        "statement": "Under active, only an inferred hit moves an anchor: EVADE8's evasion is the family's only MOVE.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family.py::test_under_active_only_an_inferred_hit_moves_an_anchor"
+        ]
+      },
+      {
+        "id": "BEH-4",
+        "source": "PR8 Sec 2.5 and 3.2; judgment call 1",
+        "statement": "Discovery senses c_k = own_core_base + sigma(91 + 55k), k = 0..6, stops at the first result with an enemy anchor, and restarts at c_0 after seven empty results. Each later return to nothing known is a new episode that restarts at c_0. PACED8 acquires on odd callback indexes only. Under passive, acquisition is E6's MOVE 64 * sigma sweep.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family_policy.py::test_the_seven_discovery_windows_tile_the_registered_arc",
+          "engine/tests/test_v6_e8_family_policy.py::test_active_discovery_senses_c0_to_c6_then_restarts_at_c0",
+          "engine/tests/test_v6_e8_family_policy.py::test_discovery_stops_at_the_first_result_with_an_enemy_anchor",
+          "engine/tests/test_v6_e8_family_policy.py::test_a_later_discovery_traversal_starts_again_at_c0",
+          "engine/tests/test_v6_e8_family_policy.py::test_paced_acquisition_only_on_odd_callback_indexes",
+          "engine/tests/test_v6_e8_family_policy.py::test_passive_spatial_fast_is_e6s_full_stride_sweep",
+          "engine/tests/test_v6_e8_family_engine.py::test_active_discovery_senses_the_registered_centers_until_the_first_find",
+          "engine/tests/test_v6_e8_family_engine.py::test_passive_discovery_is_the_full_stride_sweep_until_something_is_visible"
+        ]
+      },
+      {
+        "id": "BEH-5",
+        "source": "PR8 Sec 3.2; judgment call 2",
+        "statement": "First discovery happens on the callback that delivers the SENSE result, never on the one that issued it. If that is the entrant's first callback of a tick, repeat and adaptive members verify there (under active, a SENSE centered on the lowest known address); otherwise verification waits for the next tick's first callback. once members never verify.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family_fixed_details.py::test_a_first_discovery_delivered_at_a_ticks_first_callback_is_verified_there",
+          "engine/tests/test_v6_e8_family_fixed_details.py::test_the_delivery_callback_picks_the_lowest_of_several_found",
+          "engine/tests/test_v6_e8_family_fixed_details.py::test_adapt8s_discovery_result_is_not_a_verification_observation",
+          "engine/tests/test_v6_e8_family_fixed_details.py::test_a_once_member_does_not_verify_at_the_delivery_callback",
+          "engine/tests/test_v6_e8_family_fixed_details.py::test_a_first_discovery_delivered_at_a_later_callback_waits_for_the_next_tick",
+          "engine/tests/test_v6_e8_family_fixed_details.py::test_engine_a_first_discovery_delivered_at_tick_twos_first_callback"
+        ]
+      },
+      {
+        "id": "BEH-6",
+        "source": "PR8 Sec 2.5 and 3.2, KU-1 to KU-9",
+        "statement": "Knowledge: under passive the known set is the current visible set; under active, remembered SENSE results updated only inside the sensed window; missing addresses are serviced in ascending order and replaced by the nearest returned address, the lower on a tie; a refused SENSE changes nothing.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family_policy.py::test_ku2_every_returned_address_becomes_known",
+          "engine/tests/test_v6_e8_family_policy.py::test_ku1_ku3_ku4_only_the_sensed_window_is_updated",
+          "engine/tests/test_v6_e8_family_policy.py::test_ku7_a_missing_address_is_replaced_by_the_nearest_returned_one",
+          "engine/tests/test_v6_e8_family_policy.py::test_ku7_a_tie_goes_to_the_lower_address",
+          "engine/tests/test_v6_e8_family_policy.py::test_ku6_missing_addresses_are_serviced_in_ascending_order",
+          "engine/tests/test_v6_e8_family_policy.py::test_ku8_ku9_verification_centers_on_the_lowest_numeric_address",
+          "engine/tests/test_v6_e8_family_policy.py::test_ku5_passive_tracked_addresses_absent_from_view_become_missing",
+          "engine/tests/test_v6_e8_family_policy.py::test_ku5_ku7_passive_a_vanished_anchor_is_replaced_by_a_visible_one",
+          "engine/tests/test_v6_e8_family_policy.py::test_a_refused_sense_changes_nothing",
+          "engine/tests/test_v6_e8_family_policy.py::test_passive_knowledge_is_only_the_current_visible_set",
+          "engine/tests/test_v6_e8_family_policy.py::test_active_knowledge_persists_until_a_sense_replaces_it"
+        ]
+      },
+      {
+        "id": "BEH-7",
+        "source": "PR8 Sec 3.2, Revision 3 (K-1)",
+        "statement": "Initial acquisition ends once the entrant confirms the enemy core; SPLIT8's sensor never moves again after confirmation, and its striker never moves.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family_policy.py::test_split8s_sensor_sweeps_while_the_core_is_unconfirmed_and_nothing_is_visible",
+          "engine/tests/test_v6_e8_family_policy.py::test_split8s_sensor_never_moves_again_once_its_entrant_confirms_the_core",
+          "engine/tests/test_v6_e8_family_policy.py::test_split8s_striker_never_moves_or_acquires",
+          "engine/tests/test_v6_e8_family_policy.py::test_split8s_sensor_under_active_stops_sensing_once_anything_is_known",
+          "engine/tests/test_v6_e8_family_policy.py::test_attack_members_never_reach_acquisition_once_the_core_is_confirmed",
+          "engine/tests/test_v6_e8_family_engine.py::test_k1_split8s_sensor_never_moves_once_its_entrant_confirms_the_core"
+        ]
+      },
+      {
+        "id": "BEH-8",
+        "source": "PR8 Sec 3.2, the registered channel difference (K-4)",
+        "statement": "Under passive, GUARD8 and EVADE8 resume sweeping when they lose sight; under active, a remembered anchor is never re-sensed by a once member.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family_policy.py::test_k4_passive_guard_members_resume_sweeping_when_they_lose_sight",
+          "engine/tests/test_v6_e8_family_policy.py::test_k4_active_guard_members_never_re_sense_a_remembered_anchor",
+          "engine/tests/test_v6_e8_family_policy.py::test_k4_evade8_sweeps_after_its_own_evasion_under_passive",
+          "engine/tests/test_v6_e8_family_engine.py::test_k4_guard_members_resweep_on_lost_sight_only_under_passive"
+        ]
+      },
+      {
+        "id": "BEH-9",
+        "source": "PR8 Sec 3.2, RP-1 to RP-7",
+        "statement": "A re-acquisition search in progress takes precedence over the posture steps until replacement or exhaustion, continues on a later tick's first offer, and never overrides a member-level step. Under active its windows are a, a + 46 tau, a - 46 tau; under passive it MOVEs toward them, at most 64 per MOVE.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family_policy.py::test_verification_then_the_second_and_third_windows_precede_the_posture_steps",
+          "engine/tests/test_v6_e8_family_policy.py::test_the_search_ends_on_replacement_by_the_second_window",
+          "engine/tests/test_v6_e8_family_policy.py::test_rp2_a_search_continues_on_the_first_offer_of_a_later_tick",
+          "engine/tests/test_v6_e8_family_policy.py::test_the_search_takes_precedence_over_core_writes",
+          "engine/tests/test_v6_e8_family_policy.py::test_rp5_a_pending_evasion_keeps_its_priority_over_a_search",
+          "engine/tests/test_v6_e8_family_policy.py::test_a_once_member_neither_verifies_nor_searches",
+          "engine/tests/test_v6_e8_family_policy.py::test_the_passive_search_moves_toward_each_center_and_is_exhausted_at_the_last",
+          "engine/tests/test_v6_e8_family_policy.py::test_the_passive_search_ends_on_the_first_visible_anchor",
+          "engine/tests/test_v6_e8_family_engine.py::test_rp2_reacq8s_search_reaches_its_third_window",
+          "engine/tests/test_v6_e8_family_engine.py::test_reacq8s_search_is_exhausted_after_its_third_empty_window",
+          "engine/tests/test_v6_e8_family_engine.py::test_passive_reacq8_moves_toward_the_registered_centers"
+        ]
+      },
+      {
+        "id": "BEH-10",
+        "source": "PR8 Sec 3.2 and R-8; judgment call 3",
+        "statement": "ADAPT8 switches to once at the second consecutive verification observation confirming its selected address a, the lowest known (active) or tracked (passive) address. An unobserved tick neither advances nor resets the count; a found missing at any callback resets it; another known address found missing does not, unless it is a.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family_policy.py::test_adapt8_active_switches_at_the_second_consecutive_confirmation",
+          "engine/tests/test_v6_e8_family_policy.py::test_adapt8_active_an_unobserved_tick_neither_advances_nor_resets_the_count",
+          "engine/tests/test_v6_e8_family_policy.py::test_adapt8_active_a_verification_delivered_after_suppression_still_counts",
+          "engine/tests/test_v6_e8_family_policy.py::test_adapt8_active_an_observed_relocation_resets_the_count",
+          "engine/tests/test_v6_e8_family_policy.py::test_adapt8_active_a_first_callback_during_a_search_is_not_a_verification",
+          "engine/tests/test_v6_e8_family_policy.py::test_adapt8_passive_the_first_offer_of_a_tick_is_the_observation",
+          "engine/tests/test_v6_e8_family_policy.py::test_adapt8_passive_a_relocation_at_any_callback_resets_and_unobserved_ticks_do_nothing",
+          "engine/tests/test_v6_e8_family_policy.py::test_adapt8_passive_before_its_switch_searches_like_reacq8",
+          "engine/tests/test_v6_e8_adapt8_freeze.py::test_adapt8_freeze",
+          "engine/tests/test_v6_e8_adapt8_freeze.py::test_the_freeze_matrix_covers_every_registered_case",
+          "engine/tests/test_v6_e8_family_fixed_details.py::test_adapt8_active_another_known_anchor_missing_does_not_reset_the_count",
+          "engine/tests/test_v6_e8_family_fixed_details.py::test_adapt8_active_the_selected_anchor_missing_resets_the_count",
+          "engine/tests/test_v6_e8_family_fixed_details.py::test_adapt8_active_a_higher_anchor_that_becomes_a_is_then_the_one_counted",
+          "engine/tests/test_v6_e8_family_fixed_details.py::test_adapt8_passive_another_tracked_anchor_vanishing_does_not_reset_the_count",
+          "engine/tests/test_v6_e8_family_fixed_details.py::test_adapt8_passive_the_selected_anchor_vanishing_resets_the_count"
+        ]
+      },
+      {
+        "id": "BEH-11",
+        "source": "PR8 Sec 3.2; plan P8-5",
+        "statement": "EVADE8 infers a hit at its first callback of a tick if a whole tick passed without a callback or it received fewer than 8 callbacks in its most recent tick with any; never at its first callback of the match. It evades on every inferred hit.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family_policy.py::test_evade8_never_infers_a_hit_at_its_first_callback_of_the_match",
+          "engine/tests/test_v6_e8_family_policy.py::test_evade8_infers_a_hit_from_a_tick_without_a_callback",
+          "engine/tests/test_v6_e8_family_policy.py::test_evade8_infers_a_hit_from_fewer_than_eight_callbacks",
+          "engine/tests/test_v6_e8_family_policy.py::test_evade8_infers_nothing_after_a_full_tick",
+          "engine/tests/test_v6_e8_family_engine.py::test_evade8_evades_exactly_on_every_inferred_hit_with_fresh_draws"
+        ]
+      },
+      {
+        "id": "BEH-12",
+        "source": "PR8 Sec 3.2; plan P8-6",
+        "statement": "STRESS8 READs own-core cell (t - 1) mod 8 at callback index 1 of each tick and repairs a damaged cell with the core beacon at its next action, without moving the guard cursor; the check's result reaches the same tick's second callback under both parents.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family_policy.py::test_stress8_checks_own_core_cell_t_minus_1_mod_8_at_each_first_callback",
+          "engine/tests/test_v6_e8_family_policy.py::test_stress8_repairs_a_damaged_checked_cell_with_the_core_beacon_next",
+          "engine/tests/test_v6_e8_family_policy.py::test_stress8_drops_a_stale_obligation_at_a_new_ticks_first_callback",
+          "engine/tests/test_v6_e8_family_policy.py::test_stress8_a_tick_without_a_callback_skips_its_cell",
+          "engine/tests/test_v6_e8_family_policy.py::test_stress8_disrupts_a_known_anchor_after_its_check",
+          "engine/tests/test_v6_e8_family_engine.py::test_stress8_checks_its_core_cell_each_tick_and_repairs_damage_with_the_beacon",
+          "engine/tests/test_v6_e8_family_engine.py::test_p8_6_the_checks_result_always_reaches_the_same_ticks_second_callback"
+        ]
+      },
+      {
+        "id": "BEH-13",
+        "source": "PR8 CQ8-2",
+        "statement": "Under the controls RUSH8 and REACQ8 act identically until REACQ8's first re-acquisition trigger, and GUARD8 and EVADE8 until EVADE8's first inferred hit.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family_policy.py::test_cq8_2_rush8_and_reacq8_agree_until_the_first_trigger",
+          "engine/tests/test_v6_e8_family_policy.py::test_guard8_and_evade8_agree_until_the_first_inferred_hit",
+          "engine/tests/test_v6_e8_family_engine.py::test_cq8_2_rush8_and_reacq8_are_identical_until_reacq8s_first_trigger",
+          "engine/tests/test_v6_e8_family_engine.py::test_cq8_2_guard8_and_evade8_are_identical_until_the_first_inferred_hit"
+        ]
+      },
+      {
+        "id": "BEH-14",
+        "source": "PR8 D8-3",
+        "statement": "Without information LURK8 and GREED8 act identically, and members without acquisition never move or sense.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family_policy.py::test_lurk8_and_greed8_act_identically_without_information",
+          "engine/tests/test_v6_e8_family_policy.py::test_members_without_acquisition_never_move_or_sense",
+          "engine/tests/test_v6_e8_family_engine.py::test_d8_3_lurk8_and_greed8_records_are_identical_under_the_treatments"
+        ]
+      },
+      {
+        "id": "BEH-15",
+        "source": "PR8 Sec 3.2; E6-A1 C-1 to C-3",
+        "statement": "E6's posture, verification-READ, core-cursor and adoption semantics, as corrected by E6-A1, are carried over unchanged; under C8 and C8L, RUSH8, PACED8, STEALTH8, LURK8 and GREED8 reproduce E6's members decision for decision.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family_policy.py::test_e6_a_single_far_anchor_at_seat_as_tick_one_first_callback_is_adopted",
+          "engine/tests/test_v6_e8_family_policy.py::test_e6_seat_b_and_later_callbacks_never_adopt",
+          "engine/tests/test_v6_e8_family_policy.py::test_e6_verification_grows_the_run_down_and_up_and_confirms_eight",
+          "engine/tests/test_v6_e8_family_policy.py::test_e6_an_overwritten_anchor_on_core_cell_0_stands_in_for_it",
+          "engine/tests/test_v6_e8_family_policy.py::test_e6_the_core_cursor_rotates_the_omitted_cell_across_ticks",
+          "engine/tests/test_v6_e8_family_policy.py::test_e6_guard_disrupts_on_sight_and_otherwise_repairs_cyclically_across_ticks",
+          "engine/tests/test_v6_e8_family_policy.py::test_e6_paint_writes_outward_alternating_sides_and_covers_504_cells",
+          "engine/tests/test_v6_e8_family_policy.py::test_e6_the_read_search_probes_the_whole_arc_in_order_and_never_moves",
+          "engine/tests/test_v6_e8_family_engine.py::test_under_the_controls_the_attack_and_paint_members_are_e6s"
+        ]
+      },
+      {
+        "id": "BEH-16",
+        "source": "fixed detail 14",
+        "statement": "A package given no parameters, which only a validation dry run produces, behaves as GREED8.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family_fixed_details.py::test_a_package_without_parameters_behaves_as_greed8"
+        ]
+      },
+      {
+        "id": "BEH-17",
+        "source": "PR8 Sec 13 (A1 containment) and D8-14",
+        "statement": "Every member plays legally under all four conditions; a context-gated package is refused before the match off C8, T8, C8L and T8L; an ungated SENSE package plays only under T8 and T8L.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family_engine.py::test_every_member_plays_legally_and_contained",
+          "engine/tests/test_v6_e8_family_engine.py::test_a_family_package_is_refused_before_any_match_off_the_four_conditions",
+          "engine/tests/test_v6_e8_family_engine.py::test_an_ungated_sense_package_plays_only_under_the_treatments",
+          "engine/tests/test_v6_e8_family.py::test_the_static_classes",
+          "engine/tests/test_v6_e8_family.py::test_the_accept_reject_matrix_over_every_registered_ruleset",
+          "engine/tests/test_v6_e8_family.py::test_require_compatible_refuses_before_the_match"
+        ]
+      },
+      {
+        "id": "BEH-18",
+        "source": "PR8 Sec 6.3 (decisive-tick parity)",
+        "statement": "Seat A moves first on tick 1 under every E8 condition.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_family_engine.py::test_seat_a_moves_first_on_tick_one_under_every_e8_condition"
+        ]
+      },
+      {
+        "id": "ENG-1",
+        "source": "PR8 Sec 2.3 and 2.4",
+        "statement": "SENSE's window is inclusive at 27 and covers 55 cells across the wrap; its result is the ascending, distinct tuple of other live entrants' anchors; it costs one offer and changes nothing in the match.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_sensing_semantics.py::test_the_window_is_inclusive_at_exactly_27",
+          "engine/tests/test_v6_e8_sensing_semantics.py::test_the_window_covers_exactly_55_cells",
+          "engine/tests/test_v6_e8_sensing_semantics.py::test_distance_is_circular_across_the_wrap",
+          "engine/tests/test_v6_e8_sensing_semantics.py::test_the_result_is_ascending_and_distinct_with_co_located_anchors_once",
+          "engine/tests/test_v6_e8_sensing_semantics.py::test_only_other_live_entrants_are_sensed",
+          "engine/tests/test_v6_e8_sensing_semantics.py::test_one_sense_is_one_offer",
+          "engine/tests/test_v6_e8_sensing_semantics.py::test_sense_changes_nothing_in_the_match",
+          "engine/tests/test_v6_e8_sensing_semantics.py::test_the_sensed_entrant_learns_nothing",
+          "engine/tests/test_v6_e8_sensing_semantics.py::test_under_active_the_passive_visible_set_is_empty"
+        ]
+      },
+      {
+        "id": "ENG-2",
+        "source": "PR8 Sec 10, the delivery tests",
+        "statement": "A SENSE result is delivered at the acting process's next callback, after suppression included; with no later callback, the authoritative record stands.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_sensing_semantics.py::test_delivery_at_the_next_offer_in_the_same_chunk",
+          "engine/tests/test_v6_e8_sensing_semantics.py::test_delivery_at_the_next_tick",
+          "engine/tests/test_v6_e8_sensing_semantics.py::test_delivery_survives_suppression_for_the_rest_of_the_tick",
+          "engine/tests/test_v6_e8_sensing_semantics.py::test_no_later_callback_when_the_entrant_is_eliminated",
+          "engine/tests/test_v6_e8_sensing_semantics.py::test_no_later_callback_at_the_tick_limit",
+          "engine/tests/test_v6_e8_sensing_semantics.py::test_delivery_is_per_process"
+        ]
+      },
+      {
+        "id": "ENG-3",
+        "source": "PR8 Sec 10, presence and serialization (Revisions 4 and 5)",
+        "statement": "The E8 trace fields are present exactly where registered, absent and null are distinct, and a non-SENSE or control record's bytes are unchanged.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_sensing_semantics.py::test_a_control_trace_carries_no_e8_field",
+          "engine/tests/test_v6_e8_sensing_semantics.py::test_an_out_of_reach_sense_is_an_ordinary_refusal_with_explicit_nulls",
+          "engine/tests/test_v6_e8_sensing_semantics.py::test_the_serialized_bytes_of_a_non_sense_record_are_unchanged_by_the_new_fields",
+          "engine/tests/test_v6_e8_sensing_context.py::test_every_registered_ruleset_delivers_its_own_window"
+        ]
+      },
+      {
+        "id": "ENG-4",
+        "source": "PR8 D8-6",
+        "statement": "C8 and C8L reproduce their pre-E8 parent goldens byte for byte.",
+        "pinned_by": [
+          "engine/tests/test_v6_e8_parent_byte_identity.py::test_parent_reproduces_its_pre_e8_golden"
+        ]
+      }
+    ],
+    "qualification": {
+      "engine/tests/test_v6_e8_parent_byte_identity.py": {
+        "phase": "I8-1",
+        "sha256": "60f561191ad4fdfb6c26f528e51739df6e75a1243ebea289d62c7cf48ce69f3d",
+        "collected": 99
+      },
+      "engine/tests/_e8_sensing_harness.py": {
+        "phase": "I8-2",
+        "sha256": "7a8efa866ca1eb45a3aa4821e89a238db02908cd01cf5e268dfdd06185c3c05a",
+        "collected": null
+      },
+      "engine/tests/test_v6_e8_sensing_semantics.py": {
+        "phase": "I8-2",
+        "sha256": "1eb8a89156bb74b5618b3e647acea3bcb4b5bac355c686365de466ba072ebfcb",
+        "collected": 58
+      },
+      "engine/tests/test_ruleset_v6_research_sensing_active.py": {
+        "phase": "I8-2",
+        "sha256": "752ae036f5ce20fd851a2bbd47a6747a2ac3864cbd22e821cf195d51cd1f25df",
+        "collected": 68
+      },
+      "engine/tests/test_v6_e8_sensing_context.py": {
+        "phase": "I8-2",
+        "sha256": "dd01f105c17eb257b382b5c80be694a62012414af83269a1870ae68662a7500d",
+        "collected": 42
+      },
+      "engine/tests/_e8_family_harness.py": {
+        "phase": "I8-3",
+        "sha256": "7c09ad8dda600d8a6dce8d1333962e47d19d0940712e6d984f5cf6b430bf28f9",
+        "collected": null
+      },
+      "engine/tests/_e8_family_engine_harness.py": {
+        "phase": "I8-3",
+        "sha256": "7659f7f2d4f3fc77db3b57f333b6962c28955e7625936620c517042f1bf94389",
+        "collected": null
+      },
+      "engine/tests/test_v6_e8_family.py": {
+        "phase": "I8-3",
+        "sha256": "f33c0ec7f07e6fd888ecd2186372bde6b2fcc0a15ebc7f4722a9a3df1339f00b",
+        "collected": 174
+      },
+      "engine/tests/test_v6_e8_family_policy.py": {
+        "phase": "I8-3",
+        "sha256": "fbe56ca938907ddc4a1d1105288ec5ef987e9adfef37115095b1fe3320a790ce",
+        "collected": 106
+      },
+      "engine/tests/test_v6_e8_family_engine.py": {
+        "phase": "I8-3",
+        "sha256": "52d11c505e0abdb60f44eb84122008356925c3be009b7ce5852aa7af15c41bac",
+        "collected": 330
+      },
+      "engine/tests/test_v6_e8_adapt8_freeze.py": {
+        "phase": "I8-3",
+        "sha256": "096eecb88e8650dd2dc17e38c7a60ea6fe690cf618dafc416507b04e839fec1b",
+        "collected": 145
+      },
+      "engine/tests/test_v6_e8_family_fixed_details.py": {
+        "phase": "I8-4",
+        "sha256": "81785b7677918065e9077c1ff4bffd70cc0daf885e042f221534a6cdc81b9a1c",
+        "collected": 27
+      },
+      "engine/tests/test_v6_e8_matrix.py": {
+        "phase": "I8-4",
+        "sha256": "970bdc2f1d030aeb39439be26be997e012188fbc161bfb5ef270692a8b647ee3",
+        "collected": 14
+      }
+    },
+    "files": {
+      "tools/research/v6/e8/family.py": "5ea79eba26b5e27781cfddd692c95c199334817801a5c1bf68068c4952f2c156",
+      "tools/research/v6/e8/discipline.py": "56b23cfce3d95c89098caea38f865f57e0c33f2540e72f7b4e5a6a4f3e7dbbdc",
+      "tools/research/v6/e8/compatibility.py": "12d7c60cc76e0be435c0a139c93af804a6d269e2175e40d923cb66c80018868d",
+      "tools/research/v6/e8/family_fingerprints.json": "26690d14cafd8a345520578aa2f4eb54f29579459ff1472a740fdbbfc5927595",
+      "tools/research/v6/e8/fixtures/README.md": "22ba8190065d0d0a13d487154eb9f3ed47b902c6f5f14b03ec1b34288ce574f8",
+      "tools/research/v6/e8/matrix.py": "02ab656e6b68e370cf04a912e313e247098878c7a0e14f5dea09d149a2f43c25",
+      "tools/research/v6/e8/family_freeze.py": "7f23ef55825f5318395352c4250238c3fd34c83f170060f035fd89d1721d2210",
+      "tools/research/v6/e8/parent_goldens.py": "b508025640a4e33d72bd819b5edf185fb10fcd922a8cc52becfc3a81ce1ba89a",
+      "tools/research/v6/e8/parent_goldens.json": "2a323f2c643793cc92767a14b42517514de326e61e09c73056ceafed18e201fd"
+    },
+    "engine_source": {
+      "path": "engine/src",
+      "files": 116,
+      "sha256": "9323307c4131105a30c94cad16845468937571657b6d354827a26cfbfcff2676"
+    },
+    "implementation_notes": [
+      {
+        "id": "N8-1",
+        "date": "2026-09-30",
+        "phase": "I8-2",
+        "text": "The arena check ProcessMatchController._sensing_window_problem (2 x 27 < arena_size) is defensive validation introduced by I8-2. It is not a registered mechanic and not an E8 finding, and it applies only under sensing_mode = \"active\". E8 runs at arena 512, so no registered cell is affected. The pre-registration is not reopened for it."
+      },
+      {
+        "id": "N8-2",
+        "date": "2026-09-30",
+        "phase": "I8-2",
+        "text": "A forfeit record keeps previous_sense_anchors: the reflection was delivered before the action failed."
+      },
+      {
+        "id": "N8-3",
+        "date": "2026-09-30",
+        "phase": "I8-2",
+        "text": "Under T8 and T8L, detection_radius = 32 is still delivered but is inert. sensing_window is the authoritative indicator of active sensing."
+      },
+      {
+        "id": "N8-4",
+        "date": "2026-09-30",
+        "phase": "I8-2",
+        "text": "Hand-built test entrants get a separate controller rejection of an unavailable SENSE."
+      },
+      {
+        "id": "N8-5",
+        "date": "2026-09-30",
+        "phase": "I8-3",
+        "approved": "judgment call 1",
+        "text": "Each return to nothing known, with discovery required, is a new discovery episode: its traversal restarts at c_0, and no cursor is carried over from an earlier, exhausted episode."
+      },
+      {
+        "id": "N8-6",
+        "date": "2026-09-30",
+        "phase": "I8-3",
+        "approved": "judgment call 2",
+        "text": "\"After first discovery\" includes the discovering callback, which is the callback on which the prior SENSE result is delivered to the agent through previous_sense_anchors, not the callback that issued the SENSE. When that delivery callback is the entrant's first callback of a tick, a repeat or adaptive member verifies there; under active, the verification is a SENSE centered on the lowest known address (PR8 Sec 3.2, KU-8). At any other delivery callback the posture steps apply."
+      },
+      {
+        "id": "N8-7",
+        "date": "2026-09-30",
+        "phase": "I8-3",
+        "approved": "judgment call 3",
+        "text": "ADAPT8 tracks the lowest selected address a. Its quiet count is about the persistence of that selected anchor: another SPLIT8 anchor moving does not reset it unless it becomes the selected a. This scope is to be stated when ADAPT8 is interpreted against SPLIT8. The family is not changed."
+      },
+      {
+        "id": "N8-8",
+        "date": "2026-09-30",
+        "phase": "I8-3",
+        "approved": "P8-6 finding",
+        "text": "P8-6's same-chunk rationale applies to whole-tick disruption but not universally to λ=1. Qualification establishes the intended same-tick result-delivery behavior under both parents, so no registered family behavior changes."
+      },
+      {
+        "id": "N8-9",
+        "date": "2026-09-30",
+        "phase": "I8-3",
+        "text": "tools/research/v6/e8/__init__.py still describes the package as it stood at I8-0. The pre-registration freeze pins it, so it is left untouched. Its wording is stale descriptive text, not family semantics."
+      },
+      {
+        "id": "N8-10",
+        "date": "2026-09-30",
+        "phase": "I8-3",
+        "approved": "accepted without action",
+        "text": "A possible EVADE8 start-up effect (a scripted evader whose first evasion came after ADAPT8's second verification let ADAPT8 switch at tick 3) remains unprobed against EVADE8. The frozen experiment may discover it. Neither EVADE8 nor ADAPT8 is tuned around it."
+      },
+      {
+        "id": "N8-11",
+        "date": "2026-09-30",
+        "phase": "I8-3",
+        "approved": "accepted without action",
+        "text": "A passive searcher whose first center is an anchor's last address can park on the opponent's core cell 0. That is a consequence of the registered chase geometry, not something to repair."
+      },
+      {
+        "id": "N8-12",
+        "date": "2026-09-30",
+        "phase": "I8-3",
+        "approved": "accepted without action",
+        "text": "A disruption after the victim's last offer of a tick costs nothing, and under T8L a search started by a verification does not carry into another tick. Both follow from the parent scheduler and disruption semantics."
+      },
+      {
+        "id": "N8-13",
+        "date": "2026-09-30",
+        "phase": "I8-3",
+        "text": "The pre-match compatibility gate is compatibility.require_compatible. Calling it before every matrix match is owed by the I8-5 runner (run_e8.py)."
+      },
+      {
+        "id": "N8-14",
+        "date": "2026-10-01",
+        "phase": "I8-4",
+        "text": "The fixtures README says each fixed detail is pinned by a test. At the family freeze, judgment call 2's first-of-tick delivery case, judgment call 3's two-anchor case and fixed detail 14 had no test of their own. test_v6_e8_family_fixed_details.py pins them. The policy source is unchanged."
+      }
+    ],
+    "exposure": {
+      "seeds": "none exist",
+      "matrix_cells": "none run",
+      "family_vs_family_matches": "none played"
+    }
+  }
+}

@@ -1,8 +1,10 @@
 # Bytefray Agent Authoring Guide
 
-Bytefray supports built-in and blob entrants in the native VM, Python agents in
-homogeneous Python-versus-Python matches, and Redcode warriors through the
-separate pMARS backend. Mixed Python/VM matches are not yet supported.
+Bytefray supports built-in and blob entrants in the native VM, and Python
+agents in homogeneous Python-versus-Python matches. Mixed Python/VM matches
+are not yet supported. V6 has retired Redcode/pMARS execution entirely;
+releases up to and including v5.0.0 supported Redcode warriors through a
+separate pMARS backend.
 
 ## Agent forms
 
@@ -11,7 +13,6 @@ separate pMARS backend. Mixed Python/VM matches are not yet supported.
 | Built-in | Assembled into mutable native VM bytecode. |
 | Blob | Loaded directly as native VM bytecode. |
 | Python | Loaded through Agent API v1 (Ruleset v1/v2) or Agent API v2 (Ruleset v4) and run against another compatible Python agent. |
-| Redcode | Passed to the separate pMARS backend. |
 
 User agents live under the configured writable data root in
 `agents/<discovery-name>/`. The directory name is the CLI discovery ID.
@@ -104,7 +105,7 @@ error: Failed importing Python agent source ...: SyntaxError: ...
 ```
 
 Validation is currently supported for Python (`kind: python`) agents
-only; a built-in, blob, Redcode, or unknown agent ID reports a clear
+only; a built-in, blob, or unknown agent ID reports a clear
 unsupported/unknown result rather than a misleading pass. See
 [AGENT_API_V2.md](AGENT_API_V2.md) and [AGENT_API_V1.md](AGENT_API_V1.md)
 for the full contracts this checks. By default, `bytefray agents validate`
@@ -142,9 +143,10 @@ study the packaged `v5_*` and `v4_*` agents, which implement `reset(context)`,
 `declare_processes()`, and `act(observation)` as specified in
 [AGENT_API_V2.md](AGENT_API_V2.md). Omitting `--ruleset` resolves
 automatically to `bytefray-rules-4`, the stable v4 gameplay contract, from
-your agent's own declared `api_version: 2`; pass an explicit
-`--ruleset bytefray-rules-4-alpha1` or `bytefray-rules-4-alpha2` only to
-reproduce an earlier prerelease match. API-v1 and API-v2 entrants cannot be
+your agent's own declared `api_version: 2` — the only Ruleset any process
+agent can be run under (`bytefray-rules-4-alpha1`/`bytefray-rules-4-alpha2`
+were retired from executable registration by V6 Phase 2B.10 Scope B; see
+[COMPATIBILITY.md](COMPATIBILITY.md)). API-v1 and API-v2 entrants cannot be
 mixed in one match.
 
 ## Learning from the bundled agents
@@ -606,5 +608,6 @@ security boundary. Run only agents you trust.
 
 The native built-ins are `runner`, `writer`, `bomber`, `flooder`, `spiral`, and
 `seeker`; their exact VM behavior is documented in [RULES.md](RULES.md). A blob
-agent supplies `model.blob`. Redcode uses `bytefray run --mode redcode94` and does
-not participate in Agent API scheduling.
+agent supplies `model.blob`. Redcode agents did not participate in Agent API
+scheduling and are no longer executable in V6 (see [RULES.md](RULES.md)'s
+"Redcode/pMARS — not Ruleset v1 (historical)").

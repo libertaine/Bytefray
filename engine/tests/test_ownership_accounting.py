@@ -1,12 +1,18 @@
-"""Authoritative incremental VM ownership-count invariants."""
+"""Authoritative incremental VM/arena ownership-count invariants.
+
+V6 Phase 2B.12 (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md)
+removed ``VM.load_code`` (VM code placement) and ``python_runtime.
+apply_action``/``PythonEntrantState`` (Agent API v1 execution) alongside
+VM/blob and Agent API v1 execution. The subject this file actually tests --
+``VM._wr8``'s ownership-count bookkeeping, the shared arena primitive
+``process_runtime.ProcessMatchController`` (the retained control's runtime)
+still uses -- is unaffected and stays covered directly through ``_wr8``.
+"""
 
 from __future__ import annotations
 
 from collections import Counter
 
-from battle_engine.agent_api import ActionKind, AgentAction
-from battle_engine.instructions import NOP
-from battle_engine.python_runtime import PythonEntrantState, apply_action
 from battle_engine.vm import VM
 
 
@@ -40,21 +46,6 @@ def test_wrapped_writes_overwrites_same_owner_and_unowned_transitions():
     assert vm.ownership_counts == {}
 
 
-def test_wrapped_and_overlapping_code_loads_keep_counts_exact():
-    vm = VM(5)
-    vm.load_code(3, bytes((1, 2, 3, 4)), "A")
-    _assert_consistent(vm)
-    assert vm.ownership_counts == {"A": 4}
-
-    vm.load_code(0, bytes((8, 9, 10)), "B")
-    _assert_consistent(vm)
-    assert vm.ownership_counts == {"A": 2, "B": 3}
-
-    vm.load_code(4, bytes((NOP,) * 7), "C")
-    _assert_consistent(vm)
-    assert vm.ownership_counts == {"C": 5}
-
-
 def test_every_mutation_in_sequence_matches_full_recomputation():
     vm = VM(17)
     operations = [
@@ -71,12 +62,3 @@ def test_every_mutation_in_sequence_matches_full_recomputation():
     for value, (address, owner) in enumerate(operations):
         vm._wr8(address, value, owner)
         _assert_consistent(vm)
-
-
-def test_python_agent_api_write_uses_the_same_authoritative_boundary():
-    vm = VM(8)
-    state = PythonEntrantState("A", "Alpha", loaded=None, rng=None)  # type: ignore[arg-type]
-    apply_action(AgentAction(ActionKind.WRITE, -1, 0xAB), state, vm)
-    _assert_consistent(vm)
-    assert vm.writer[7] == "A"
-    assert vm.ownership_counts == {"A": 1}

@@ -19,6 +19,17 @@ supervised (timeout-bounded) match delivered ``{}`` to the agent even when
 was non-empty. Fixed by passing ``parameters=entrant.parameters`` through,
 mirroring what ``process_runtime.py``'s own worker branch already did.
 
+V6 Phase 2B.12 (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md)
+deleted ``SupervisedPythonEntrantController`` outright along with the rest
+of Agent API v1 execution. This file's own reachability analysis (see
+``TestSupervisedRuntimeParameterForwarding``'s remaining test docstrings)
+had already established that controller had no live Agent-API-v2 gameplay
+support -- even a bare NOP from a declared-v2 agent crashed its worker --
+so removing its two direct-construction unit tests below loses no genuine
+FIND-02 coverage: the actually-reachable supervised path for a real,
+schema-enabled agent is ``process_runtime.ProcessMatchController``'s worker
+branch, which the remaining tests in this class already exercise.
+
 See docs/research/v5/V5_POST_RELEASE_H1_PARAMETER_CONSISTENCY.md for the
 full investigation, root-cause analysis, and reachability notes.
 """
@@ -28,7 +39,6 @@ from pathlib import Path
 
 import pytest
 from _hang_safety import hang_safety_timeout
-from battle_engine.agent_evaluation import _expected_cell_match_id
 from battle_engine.agent_parameters import (
     EMPTY_PARAMETER_SCHEMA,
     resolve_entrant_parameters,
@@ -38,8 +48,8 @@ from battle_engine.agent_test import test_agent as run_development_test
 from battle_engine.agent_test import test_agents as run_group_development_test
 from battle_engine.agents import resolve_agent
 from battle_engine.config import Config
+from battle_engine.evaluation_artifact import expected_cell_match_id
 from battle_engine.match_service import MatchEntrant
-from battle_engine.supervised_runtime import SupervisedPythonEntrantController
 from battle_engine.tournament_cli import _resolve_entrant as resolve_tournament_entrant
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -269,7 +279,7 @@ class TestAgentTestEntrantResolution:
 
 
 class TestAgentEvaluationExpectedMatchIdMirrorsAgentTest:
-    """The most important FIND-01 regression: `_expected_cell_match_id` must
+    """The most important FIND-01 regression: `expected_cell_match_id` must
     never drift from what `agent_test.test_agent` (the real per-cell
     executor) actually produces, or every schema-enabled resumed cell would
     register a false `resumed_result_mismatch`.
@@ -289,7 +299,7 @@ class TestAgentEvaluationExpectedMatchIdMirrorsAgentTest:
         )
         spec_a = resolve_agent(REPO_ROOT, SCHEMA_STARTER)
         spec_b = resolve_agent(REPO_ROOT, OTHER_SCHEMA_STARTER)
-        expected = _expected_cell_match_id(
+        expected = expected_cell_match_id(
             subject_spec=spec_a,
             subject_id=SCHEMA_STARTER,
             opponent_spec=spec_b,
@@ -308,129 +318,8 @@ class TestAgentEvaluationExpectedMatchIdMirrorsAgentTest:
 # FIND-02: supervised runtime parameter delivery
 # ---------------------------------------------------------------------------
 
-_PROBE_AGENT_YAML = json.dumps(
-    {
-        "kind": "python",
-        "api_version": 2,
-        "entrypoint": "agent.py:create_agent",
-        "version": "1.0",
-    }
-)
-
-
-def _write_probe_agent(root: Path, name: str, output_path: Path) -> None:
-    """A minimal Agent API v2 agent that records what its own ``reset()``
-    actually received on ``MatchContextV2.parameters`` -- the exact
-    delivery boundary FIND-02 is about.
-
-    Never calls ``act()`` beyond a bare v1-vocabulary ``NOP``:
-    ``SupervisedPythonEntrantController``'s tick loop is a pre-existing,
-    unmodified-by-H1 Agent-API-v1-shaped loop (it never calls
-    ``declare_processes`` and, confirmed separately, crashes its worker
-    with ``agent_worker_exited`` the moment a declared-v2 agent's
-    ``act()`` is invoked at all -- even to return a bare NOP). That is a
-    pre-existing structural fact about this controller's real-v2-gameplay
-    support, unrelated to FIND-02's "forward parameters into reset" scope,
-    so these tests stay at the ``reset()`` boundary and never call
-    ``controller.run(...)``.
-    """
-
-    directory = root / "agents" / name
-    directory.mkdir(parents=True)
-    (directory / "agent.yaml").write_text(_PROBE_AGENT_YAML, encoding="utf-8")
-    (directory / "agent.py").write_text(
-        f'''
-import json
-from pathlib import Path
-from battle_engine.agent_api import ProcessDeclaration
-
-OUTPUT_PATH = Path(r"{output_path}")
-
-class ParamProbeAgent:
-    def reset(self, context):
-        OUTPUT_PATH.write_text(json.dumps(dict(context.parameters)))
-
-    def declare_processes(self):
-        return [ProcessDeclaration(id="p", reach=1, share=1.0)]
-
-    def act(self, observation):
-        raise AssertionError("act() must never be called by these reset-boundary tests")
-
-def create_agent():
-    return ParamProbeAgent()
-''',
-        encoding="utf-8",
-    )
-
-
-def _passive_v1_entrant(root: Path, name: str, start: int) -> MatchEntrant:
-    directory = root / "agents" / name
-    directory.mkdir(parents=True)
-    (directory / "agent.yaml").write_text(
-        json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
-        ),
-        encoding="utf-8",
-    )
-    (directory / "agent.py").write_text(
-        """
-from battle_engine.agent_api import ActionKind, AgentAction
-class Agent:
-    def reset(self, context): pass
-    def act(self, observation): return AgentAction(ActionKind.NOP)
-def create_agent(): return Agent()
-""",
-        encoding="utf-8",
-    )
-    spec = resolve_agent(root, name)
-    return MatchEntrant.python(name, name, start, spec)
-
 
 class TestSupervisedRuntimeParameterForwarding:
-    def test_schema_default_parameters_reach_the_worker(self, tmp_path: Path) -> None:
-        output_path = tmp_path / "probe_output.json"
-        _write_probe_agent(tmp_path, "probe", output_path)
-        spec = resolve_agent(tmp_path, "probe")
-        entrant = MatchEntrant.python(
-            "A", "probe", 0, spec, {"inspections_per_tick": 4}
-        )
-        passive = _passive_v1_entrant(tmp_path, "passive", 32)
-
-        controller = None
-        with hang_safety_timeout(30):
-            try:
-                controller = SupervisedPythonEntrantController(
-                    Config(seed=1337), (entrant, passive), max_ticks=1, agent_call_timeout=10.0
-                )
-            finally:
-                if controller is not None:
-                    controller._close_all_handles()
-
-        delivered = json.loads(output_path.read_text())
-        assert delivered == {"inspections_per_tick": 4}
-
-    def test_explicit_override_parameters_reach_the_worker(self, tmp_path: Path) -> None:
-        output_path = tmp_path / "probe_output.json"
-        _write_probe_agent(tmp_path, "probe", output_path)
-        spec = resolve_agent(tmp_path, "probe")
-        entrant = MatchEntrant.python(
-            "A", "probe", 0, spec, {"inspections_per_tick": 0, "extra": "value"}
-        )
-        passive = _passive_v1_entrant(tmp_path, "passive", 32)
-
-        controller = None
-        with hang_safety_timeout(30):
-            try:
-                controller = SupervisedPythonEntrantController(
-                    Config(seed=1337), (entrant, passive), max_ticks=1, agent_call_timeout=10.0
-                )
-            finally:
-                if controller is not None:
-                    controller._close_all_handles()
-
-        delivered = json.loads(output_path.read_text())
-        assert delivered == {"inspections_per_tick": 0, "extra": "value"}
-
     def test_direct_and_supervised_v4_worker_agree_and_respond_to_overrides(
         self, tmp_path: Path
     ) -> None:

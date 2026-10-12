@@ -1,0 +1,32 @@
+{
+  "accepted_engine_executions": 3,
+  "accepted_regression_runs": {
+    "focused": 0,
+    "regression": 0,
+    "supplemental": 0
+  },
+  "retained_nonacceptance_attempts": [
+    {
+      "attempt": "sandbox Xvfb feasibility",
+      "outcome": "Qt abort: could not connect to X11; resolved with approved execution outside sandbox."
+    },
+    {
+      "attempt": "archive under /tmp",
+      "outcome": "Focused: 136 passed, 1 failed, 4 GUI deselected; known test location assumption violated by allowed temporary-root policy. Broad follow-on interrupted (130). Product bytes unchanged."
+    },
+    {
+      "attempt": "nested pytest temp without parent",
+      "outcome": "Focused: 9 passed, 128 setup errors, 4 GUI deselected. Broad/GUI follow-ons interrupted; missing parent corrected."
+    },
+    {
+      "attempt": "native fresh-root fallback",
+      "outcome": "Teaching matches passed; named starter preflight failed because fresh root was not bootstrapped. Initialized bundled starters before resuming."
+    },
+    {
+      "attempt": "native SDL resize",
+      "outcome": "Controls through perspective switching and resize passed; subsequent X11 stimulus used replaced window ID. Rediscovered live window before continuing."
+    }
+  ],
+  "raw_evidence_directory": "<repository>/work/m1_6b_linux/evidence",
+  "reruns_are_not_additional_unique_coverage": true
+}

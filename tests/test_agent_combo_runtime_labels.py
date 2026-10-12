@@ -25,20 +25,20 @@ def _make_app():
     return QApplication.instance() or QApplication([])
 
 
-def _row(name: str, kind: str):
+def _row(name: str, kind: str, *, api_version: int = 2):
     from app.services.agent_catalog import AgentRow
 
     meta = {"name": name, "kind": kind}
     if kind == "python":
-        meta["api_version"] = 1
+        meta["api_version"] = api_version
     return AgentRow(name, f"/agents/{name}", None, meta)
 
 
 def _rows():
     return [
-        _row("claimer", "python"),
-        _row("runner", "vm"),
-        _row("hunter", "python"),
+        _row("alpha", "python"),
+        _row("vm_agent", "vm"),
+        _row("beta", "python"),
     ]
 
 
@@ -58,10 +58,10 @@ def test_combo_shows_runtime_labels_but_stores_undecorated_identifier():
     populate_agent_combo(combo, _rows())
 
     texts = [combo.itemText(i) for i in range(combo.count())]
-    assert texts == ["claimer [Python]", "runner [VM]", "hunter [Python]"]
+    assert texts == ["alpha [Python]", "vm_agent [VM]", "beta [Python]"]
 
     combo.setCurrentIndex(1)
-    assert selected_agent_name(combo) == "runner"  # never "runner [VM]"
+    assert selected_agent_name(combo) == "vm_agent"  # never the decorated label
 
 
 @pytest.mark.gui
@@ -75,25 +75,19 @@ def test_combo_and_match_launch_use_discovery_ids_for_duplicate_display_names():
             "Friendly",
             "/agents/alpha_id",
             None,
-            {"display": "Friendly", "kind": "python", "api_version": 1},
+            {"display": "Friendly", "kind": "python", "api_version": 2},
             agent_id="alpha_id",
         ),
         AgentRow(
             "Friendly",
             "/agents/beta_id",
             None,
-            {"display": "Friendly", "kind": "python", "api_version": 1},
+            {"display": "Friendly", "kind": "python", "api_version": 2},
             agent_id="beta_id",
         ),
     ]
     panel = SimplePanel(catalog=None)
     panel.setAgents(rows)
-    # V5 Alpha 1 Phase 1: Simple's fresh default is now the stable v4
-    # Ruleset, which these Agent API v1 rows are not compatible with --
-    # select v2 explicitly, since this test is about duplicate-display-name
-    # identifier resolution, not the fresh Ruleset default.
-    panel.ruleset.setCurrentIndex(panel.ruleset.findData("bytefray-rules-2"))
-
     assert [panel.agentA.itemText(i) for i in range(2)] == [
         "Friendly [Python] (alpha_id)",
         "Friendly [Python] (beta_id)",
@@ -119,15 +113,15 @@ def test_selecting_python_a_disables_vm_b_entries():
     populate_agent_combo(combo_a, _rows())
     populate_agent_combo(combo_b, _rows())
 
-    combo_a.setCurrentIndex(0)  # claimer [Python]
+    combo_a.setCurrentIndex(0)  # alpha [Python]
     sync_compatible_b_choices(combo_a, combo_b)
 
     model = combo_b.model()
     enabled_by_text = {combo_b.itemText(i): model.item(i).isEnabled() for i in range(combo_b.count())}
     assert enabled_by_text == {
-        "claimer [Python]": True,
-        "runner [VM]": False,
-        "hunter [Python]": True,
+        "alpha [Python]": True,
+        "vm_agent [VM]": False,
+        "beta [Python]": True,
     }
 
 
@@ -142,15 +136,15 @@ def test_selecting_vm_a_disables_python_b_entries():
     populate_agent_combo(combo_a, _rows())
     populate_agent_combo(combo_b, _rows())
 
-    combo_a.setCurrentIndex(1)  # runner [VM]
+    combo_a.setCurrentIndex(1)  # vm_agent [VM]
     sync_compatible_b_choices(combo_a, combo_b)
 
     model = combo_b.model()
     enabled_by_text = {combo_b.itemText(i): model.item(i).isEnabled() for i in range(combo_b.count())}
     assert enabled_by_text == {
-        "claimer [Python]": False,
-        "runner [VM]": True,
-        "hunter [Python]": False,
+        "alpha [Python]": False,
+        "vm_agent [VM]": True,
+        "beta [Python]": False,
     }
 
 
@@ -169,23 +163,23 @@ def test_changing_a_repairs_an_incompatible_current_b_selection():
     populate_agent_combo(combo_a, _rows())
     populate_agent_combo(combo_b, _rows())
 
-    # Both start on claimer (compatible); now flip A to the VM agent.
+    # Both start on alpha (compatible); now flip A to the VM agent.
     combo_a.setCurrentIndex(0)
     combo_b.setCurrentIndex(0)
     sync_compatible_b_choices(combo_a, combo_b)
-    assert selected_agent_name(combo_b) == "claimer"  # untouched; still compatible
+    assert selected_agent_name(combo_b) == "alpha"  # untouched; still compatible
 
-    combo_a.setCurrentIndex(1)  # runner [VM]
+    combo_a.setCurrentIndex(1)  # vm_agent [VM]
     sync_compatible_b_choices(combo_a, combo_b)
     # Only one VM agent exists in this catalog -- self-match is the only
     # compatible choice, and is allowed (task Sec 8 item 4).
-    assert selected_agent_name(combo_b) == "runner"
+    assert selected_agent_name(combo_b) == "vm_agent"
 
-    combo_a.setCurrentIndex(0)  # back to claimer [Python]
+    combo_a.setCurrentIndex(0)  # back to alpha [Python]
     sync_compatible_b_choices(combo_a, combo_b)
-    # Repaired B was VM; two Python agents exist (claimer, hunter) so the
+    # Repaired B was VM; two Python agents exist (alpha, beta) so the
     # repair must prefer the one different from A (Sec 8 item 3).
-    assert selected_agent_name(combo_b) == "hunter"
+    assert selected_agent_name(combo_b) == "beta"
 
 
 @pytest.mark.gui
@@ -197,16 +191,16 @@ def test_selection_preserved_by_identifier_across_repopulation():
 
     combo = QComboBox()
     populate_agent_combo(combo, _rows())
-    combo.setCurrentIndex(2)  # hunter
-    assert selected_agent_name(combo) == "hunter"
+    combo.setCurrentIndex(2)  # beta
+    assert selected_agent_name(combo) == "beta"
 
     # Re-populate with the exact same catalog (a "Refresh Agents" click).
     populate_agent_combo(combo, _rows())
-    assert selected_agent_name(combo) == "hunter"
+    assert selected_agent_name(combo) == "beta"
 
     # Now the previously selected agent is gone -- falls back to the first entry.
-    populate_agent_combo(combo, [_row("claimer", "python"), _row("runner", "vm")])
-    assert selected_agent_name(combo) == "claimer"
+    populate_agent_combo(combo, [_row("alpha", "python"), _row("vm_agent", "vm")])
+    assert selected_agent_name(combo) == "alpha"
 
 
 @pytest.mark.gui
@@ -242,38 +236,33 @@ def test_simple_panel_filters_from_ruleset_and_emits_real_identifiers():
 
     panel = SimplePanel(catalog=None)
     panel.setAgents(_rows())
-    # V5 Alpha 1 Phase 1: Simple's fresh default is now the stable v4
-    # Ruleset, which these Agent API v1 rows are not compatible with --
-    # select v2 explicitly, since this test is about agent filtering and
-    # real-identifier emission, not the fresh Ruleset default.
-    panel.ruleset.setCurrentIndex(panel.ruleset.findData("bytefray-rules-2"))
-    panel.agentA.setCurrentIndex(0)  # claimer [Python]
+    panel.agentA.setCurrentIndex(0)  # alpha [Python]
 
     assert panel.ruleset.findData("bytefray-rules-1") == -1
     assert [panel.agentB.itemData(i) for i in range(panel.agentB.count())] == [
-        "claimer",
-        "hunter",
+        "alpha",
+        "beta",
     ]
 
     captured = []
     panel.runRequested.connect(captured.append)
-    panel.agentB.setCurrentIndex(panel.agentB.findData("hunter"))
+    panel.agentB.setCurrentIndex(panel.agentB.findData("beta"))
     panel._emit_run()
 
     assert len(captured) == 1
-    assert captured[0].a_type == "claimer"
-    assert captured[0].b_type == "hunter"
-    assert captured[0].ruleset_id == "bytefray-rules-2"
+    assert captured[0].a_type == "alpha"
+    assert captured[0].b_type == "beta"
+    assert captured[0].ruleset_id == "bytefray-rules-4"
 
 
 @pytest.mark.gui
-def test_simple_ruleset_change_filters_api_generation_and_repairs_deterministically():
+def test_simple_filters_retired_agents_and_preserves_current_selection():
     _make_app()
     from app.services.agent_catalog import AgentRow
     from app.views.simple import SimplePanel
 
     rows = [
-        _row("legacy_a", "python"),
+        _row("legacy_a", "python", api_version=1),
         _row("vm_agent", "vm"),
         AgentRow(
             "Process A",
@@ -289,37 +278,20 @@ def test_simple_ruleset_change_filters_api_generation_and_repairs_deterministica
             {"kind": "python", "api_version": 2},
             agent_id="process_b",
         ),
-        _row("legacy_b", "python"),
+        _row("legacy_b", "python", api_version=1),
     ]
     panel = SimplePanel(catalog=None)
     panel.setAgents(rows)
-    # V5 Alpha 1 Phase 1: Simple's fresh default is now the stable v4
-    # Ruleset; this test is about switching between Rulesets and repairing
-    # the selection deterministically, not about which Ruleset is the fresh
-    # default (covered separately), so it starts from an explicit v2
-    # selection like the rest of the switch sequence below.
-    panel.ruleset.setCurrentIndex(panel.ruleset.findData("bytefray-rules-2"))
-    assert [panel.agentA.itemData(i) for i in range(panel.agentA.count())] == [
-        "legacy_a",
-        "legacy_b",
-    ]
-    assert panel.agentA.currentData() == "legacy_a"
-    assert panel.agentB.currentData() == "legacy_b"
-
-    panel.agentA.setCurrentIndex(panel.agentA.findData("legacy_b"))
-    panel.setAgents(rows)
-    assert panel.agentA.currentData() == "legacy_b"
-
-    # Simple offers current gameplay only, so its Agent API v2 choice is the
-    # permanent stable v4 identity (v4.0.0-rc1 Phase 2); alpha2/alpha1 stay
-    # selectable from Advanced/Development.
-    panel.ruleset.setCurrentIndex(panel.ruleset.findData("bytefray-rules-4"))
     assert [panel.agentA.itemData(i) for i in range(panel.agentA.count())] == [
         "process_a",
         "process_b",
     ]
     assert panel.agentA.currentData() == "process_a"
     assert panel.agentB.currentData() == "process_b"
+
+    panel.agentA.setCurrentIndex(panel.agentA.findData("process_b"))
+    panel.setAgents(rows)
+    assert panel.agentA.currentData() == "process_b"
 
 
 @pytest.mark.gui
@@ -328,18 +300,13 @@ def test_simple_one_agent_allows_self_match_and_empty_state_prevents_launch():
     from app.views.simple import SimplePanel
 
     panel = SimplePanel(catalog=None)
-    panel.setAgents([_row("only_v1", "python")])
-    # V5 Alpha 1 Phase 1: Simple's fresh default is now the stable v4
-    # Ruleset, which this Agent API v1 row is not compatible with -- select
-    # v2 explicitly, since this test is about self-match/empty-state
-    # behavior, not the fresh Ruleset default.
-    panel.ruleset.setCurrentIndex(panel.ruleset.findData("bytefray-rules-2"))
-    assert panel.agentA.currentData() == panel.agentB.currentData() == "only_v1"
+    panel.setAgents([_row("only_current", "python")])
+    assert panel.agentA.currentData() == panel.agentB.currentData() == "only_current"
     assert panel.btnRun.isEnabled()
 
     captured = []
     panel.runRequested.connect(captured.append)
-    panel.ruleset.setCurrentIndex(panel.ruleset.findData("bytefray-rules-4-alpha1"))
+    panel.setAgents([_row("retired", "python", api_version=1), _row("vm_agent", "vm")])
     assert panel.agentA.itemText(0) == "(none found)"
     assert panel.agentB.itemText(0) == "(none found)"
     assert not panel.btnRun.isEnabled()
@@ -352,45 +319,26 @@ def test_simple_one_agent_allows_self_match_and_empty_state_prevents_launch():
 
 @pytest.mark.gui
 def test_advanced_panel_matches_simple_panel_behavior(tmp_path):
-    """Phase 2: Advanced now filters Agent A/B by the selected Ruleset first
-    (UX-15/UX-16), exactly like Simple. Ruleset v1 is the one identity whose
-    Ruleset-compatible roster still spans both runtime kinds, so it is the
-    one case where the pre-existing ``sync_compatible_b_choices`` kind
-    restriction (mixed VM/Python matches remain rejected by
-    ``validate_homogeneous`` at launch) still has anything to disable."""
+    """Advanced applies the same stable-v4/API-v2 filter as Simple."""
 
     _make_app()
-    from app.services.ruleset_options import VM_RULESET_EXPLANATION
     from app.views.advanced import AdvancedPanel
 
     panel = AdvancedPanel(catalog=None, data_root=tmp_path)
     panel.setAgents(_rows())
-    panel.ruleset.setCurrentIndex(panel.ruleset.findData("bytefray-rules-1"))
 
     texts = [panel.agentA.itemText(i) for i in range(panel.agentA.count())]
-    assert texts == ["claimer [Python]", "runner [VM]", "hunter [Python]"]
-
-    panel.agentA.setCurrentIndex(1)  # runner [VM]
-
-    model = panel.agentB.model()
-    assert model.item(0).isEnabled() is False  # claimer [Python]
-    assert model.item(1).isEnabled() is True  # runner [VM]
-    assert model.item(2).isEnabled() is False  # hunter [Python]
+    assert texts == ["alpha [Python]", "beta [Python]"]
 
     captured = []
     panel.runRequested.connect(captured.append)
+    panel.agentB.setCurrentIndex(panel.agentB.findData("beta"))
     panel._emit_run()
 
     assert len(captured) == 1
-    assert captured[0].a_type == "runner"
-    assert captured[0].b_type == "runner"  # self-match: the only compatible B
-    assert captured[0].ruleset_id == "bytefray-rules-1"
-    # v3.0.0-alpha2 replaced "Ruleset v1 is required for VM/blob matches."
-    # with copy that also states the converse (v2 is Python-only), so a
-    # reader learns the whole compatibility rule rather than half of it.
-    # Asserted against the shared constant, not a duplicated literal.
-    assert panel.rulesetExplanation.text() == VM_RULESET_EXPLANATION
-    assert "Ruleset v1 only" in panel.rulesetExplanation.text()
+    assert captured[0].a_type == "alpha"
+    assert captured[0].b_type == "beta"
+    assert captured[0].ruleset_id == "bytefray-rules-4"
 
 
 # ---------------------------------------------------------------------------
@@ -400,44 +348,24 @@ def test_advanced_panel_matches_simple_panel_behavior(tmp_path):
 
 @pytest.mark.gui
 def test_simple_and_advanced_now_expose_the_same_ruleset_filtered_roster(tmp_path):
-    """Before Phase 2, Simple filtered Agent A/B by the selected Ruleset
-    while Advanced showed the full discovered catalog regardless of
-    Ruleset -- the exact backward "Agents -> Ruleset" model this phase
-    corrects (see the Phase 2 task's background section). Both tabs must
-    now expose the same effective compatible roster for an Agent-API-v1
-    Ruleset (UX-19); Advanced additionally offers Ruleset v1, under which it
-    also lists the VM/blob agent Simple never offers a Ruleset for."""
+    """Both match panels expose the same sole current execution roster."""
 
     _make_app()
     from app.views.advanced import AdvancedPanel
     from app.views.simple import SimplePanel
 
-    rows = _rows()  # claimer [Python], runner [VM], hunter [Python]
+    rows = _rows()
     simple = SimplePanel(catalog=None)
     advanced = AdvancedPanel(catalog=None, data_root=tmp_path)
 
     simple.setAgents(rows)
-    # V5 Alpha 1 Phase 1: both panels' fresh default is now the stable v4
-    # Ruleset, which these Agent API v1/VM rows are not compatible with --
-    # select v2 explicitly on Simple too (Advanced already does, below),
-    # since this test is about the two tabs' rosters agreeing under a given
-    # Ruleset, not the fresh Ruleset default.
-    simple.ruleset.setCurrentIndex(simple.ruleset.findData("bytefray-rules-2"))
     assert [simple.agentA.itemData(i) for i in range(simple.agentA.count())] == [
-        "claimer",
-        "hunter",
+        "alpha",
+        "beta",
     ]
 
     advanced.setAgents(rows)
-    advanced.ruleset.setCurrentIndex(advanced.ruleset.findData("bytefray-rules-2"))
     assert [advanced.agentA.itemData(i) for i in range(advanced.agentA.count())] == [
-        "claimer",
-        "hunter",
-    ]
-
-    advanced.ruleset.setCurrentIndex(advanced.ruleset.findData("bytefray-rules-1"))
-    assert [advanced.agentA.itemData(i) for i in range(advanced.agentA.count())] == [
-        "claimer",
-        "runner",
-        "hunter",
+        "alpha",
+        "beta",
     ]

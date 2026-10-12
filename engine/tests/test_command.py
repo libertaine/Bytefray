@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 from battle_engine import command
-from battle_engine.agent_trace import read_trace
+from battle_engine.agent_trace import read_trace_v2
 from battle_engine.starters import STARTER_AGENT_NAMES
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -102,9 +102,9 @@ def test_successful_headless_match_invocation(tmp_path):
         "--seed",
         "17",
         "--a-type",
-        "writer",
+        "v4_claimer",
         "--b-type",
-        "runner",
+        "v4_scout",
         "--b-start",
         "64",
         "--replay",
@@ -136,9 +136,9 @@ def _run_with_root(data_root: Path, cwd: Path, *arguments: str):
 
 @pytest.mark.parametrize(
     ("agents", "matches"),
-    [(["runner", "writer"], 1), (["runner", "writer", "seeker"], 3)],
+    [(["v4_claimer", "v4_scout"], 1), (["v4_claimer", "v4_scout", "v4_local_defender"], 3)],
 )
-def test_tournament_cli_vm_round_robin_and_output(tmp_path, agents, matches):
+def test_tournament_cli_current_round_robin_and_output(tmp_path, agents, matches):
     output = tmp_path / "tournament"
     result = _run_with_root(
         tmp_path / "data",
@@ -167,8 +167,8 @@ def test_tournament_cli_multi_round_resume_has_stable_ids(tmp_path):
     output = tmp_path / "resume"
     arguments = (
         "tournament",
-        "runner",
-        "writer",
+        "v4_claimer",
+        "v4_scout",
         "--rounds",
         "2",
         "--ticks",
@@ -194,10 +194,10 @@ def test_tournament_cli_multi_round_resume_has_stable_ids(tmp_path):
     assert len(after["matches"]) == 2
 
 
-def test_tournament_cli_python_division_and_mixed_rejection(tmp_path):
+def test_tournament_cli_python_division_and_retired_starter_rejection(tmp_path):
     data_root = tmp_path / "data"
-    _write_cli_python_agent(data_root, "py_one", "AgentAction(ActionKind.NOP)")
-    _write_cli_python_agent(data_root, "py_two", "AgentAction(ActionKind.NOP)")
+    _write_cli_python_agent(data_root, "py_one", "AgentAction(ActionKindV2.READ, 0)")
+    _write_cli_python_agent(data_root, "py_two", "AgentAction(ActionKindV2.READ, 0)")
     python_output = tmp_path / "python"
     success = _run_with_root(
         data_root,
@@ -213,23 +213,23 @@ def test_tournament_cli_python_division_and_mixed_rejection(tmp_path):
         str(python_output),
         "--quiet",
     )
-    mixed_output = tmp_path / "mixed"
-    mixed = _run_with_root(
+    retired_output = tmp_path / "retired"
+    retired = _run_with_root(
         data_root,
         tmp_path,
         "tournament",
         "py_one",
         "runner",
         "--output",
-        str(mixed_output),
+        str(retired_output),
     )
 
     assert success.returncode == 0, success.stderr
     assert json.loads((python_output / "tournament.json").read_text())["division"] == "python"
-    assert mixed.returncode == 2
-    assert "mixed groups are unsupported" in mixed.stderr
-    assert "Traceback" not in mixed.stdout + mixed.stderr
-    assert not mixed_output.exists()
+    assert retired.returncode == 2
+    assert "not a discovered Python agent" in retired.stderr
+    assert "Traceback" not in retired.stdout + retired.stderr
+    assert not retired_output.exists()
 
 
 def test_single_match_output_names_canonical_and_compatibility_artifacts(tmp_path):
@@ -257,7 +257,7 @@ def _write_cli_python_agent(root: Path, name: str, action: str) -> None:
         json.dumps(
             {
                 "kind": "python",
-                "api_version": 1,
+                "api_version": 2,
                 "entrypoint": "agent.py:create_agent",
                 "name": name,
                 "version": "1.0",
@@ -267,9 +267,10 @@ def _write_cli_python_agent(root: Path, name: str, action: str) -> None:
     )
     (directory / "agent.py").write_text(
         f"""
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
     def reset(self, context): pass
+    def declare_processes(self): return [ProcessDeclaration("main", 16, 1.0)]
     def act(self, observation): return {action}
 def create_agent(): return Agent()
 """,
@@ -281,10 +282,10 @@ def test_cli_runs_python_vs_python_match(tmp_path):
     data_root = tmp_path / "data"
     replay = tmp_path / "python-match" / "replay.jsonl"
     _write_cli_python_agent(
-        data_root, "py_writer", "AgentAction(ActionKind.WRITE, 11, 77)"
+        data_root, "py_writer", "AgentAction(ActionKindV2.WRITE, 11, 77)"
     )
     _write_cli_python_agent(
-        data_root, "py_passive", "AgentAction(ActionKind.NOP)"
+        data_root, "py_passive", "AgentAction(ActionKindV2.READ, 0)"
     )
     env = dict(os.environ, BYTEFRAY_ROOT=str(data_root))
     env["PYTHONPATH"] = os.pathsep.join(
@@ -304,7 +305,7 @@ def test_cli_runs_python_vs_python_match(tmp_path):
             "--ticks",
             "2",
             "--quota",
-            "2",
+            "8",
             "--arena",
             "64",
             "--replay",
@@ -322,7 +323,7 @@ def test_cli_runs_python_vs_python_match(tmp_path):
     assert replay.is_file()
     summary = json.loads(replay.with_name("summary.json").read_text())
     assert summary["agents"] == {"A": "py_writer", "B": "py_passive"}
-    assert summary["agent_stats"]["A"]["mem_writes"] == 4
+    assert summary["agent_stats"]["A"]["mem_writes"] == 16
 
 
 def test_cli_trace_flag_writes_artifact_without_changing_match_identity(tmp_path):
@@ -333,9 +334,9 @@ def test_cli_trace_flag_writes_artifact_without_changing_match_identity(tmp_path
     """
     data_root = tmp_path / "data"
     _write_cli_python_agent(
-        data_root, "py_writer", "AgentAction(ActionKind.WRITE, 11, 77)"
+        data_root, "py_writer", "AgentAction(ActionKindV2.WRITE, 11, 77)"
     )
-    _write_cli_python_agent(data_root, "py_passive", "AgentAction(ActionKind.NOP)")
+    _write_cli_python_agent(data_root, "py_passive", "AgentAction(ActionKindV2.READ, 0)")
     env = dict(os.environ, BYTEFRAY_ROOT=str(data_root))
     env["PYTHONPATH"] = os.pathsep.join(
         [str(ROOT / "engine" / "src"), str(ROOT / "client" / "src"), str(ROOT)]
@@ -356,7 +357,7 @@ def test_cli_trace_flag_writes_artifact_without_changing_match_identity(tmp_path
                 "--ticks",
                 "2",
                 "--quota",
-                "2",
+                "8",
                 "--arena",
                 "64",
                 "--seed",
@@ -381,7 +382,7 @@ def test_cli_trace_flag_writes_artifact_without_changing_match_identity(tmp_path
 
     # E: a real trace artifact was produced through the existing trace reader.
     assert trace_path.is_file()
-    document = read_trace(trace_path)
+    document = read_trace_v2(trace_path)
     assert document.decisions
 
     # Omitting --trace must never produce a trace artifact alongside the run.
@@ -412,11 +413,11 @@ def test_cli_trace_flag_writes_artifact_without_changing_match_identity(tmp_path
     assert replay_without_trace.read_bytes() == replay_with_trace.read_bytes()
 
 
-def test_cli_rejects_mixed_vm_python_without_traceback(tmp_path):
+def test_cli_rejects_retired_vm_starter_without_traceback(tmp_path):
     data_root = tmp_path / "data"
     replay = tmp_path / "mixed" / "replay.jsonl"
     _write_cli_python_agent(
-        data_root, "py_passive", "AgentAction(ActionKind.NOP)"
+        data_root, "py_passive", "AgentAction(ActionKindV2.READ, 0)"
     )
     env = dict(os.environ, BYTEFRAY_ROOT=str(data_root))
     env["PYTHONPATH"] = os.pathsep.join(
@@ -447,7 +448,7 @@ def test_cli_rejects_mixed_vm_python_without_traceback(tmp_path):
     )
 
     assert result.returncode == 2
-    assert "Mixed VM/Python matches are not supported" in result.stderr
+    assert "Unknown agent 'runner'" in result.stderr
     assert "Traceback" not in result.stderr
     assert not replay.exists()
 
@@ -457,7 +458,7 @@ def test_cli_python_act_failure_is_structured_without_traceback(tmp_path):
     replay = tmp_path / "failure" / "replay.jsonl"
     _write_cli_python_agent(data_root, "broken", "(_ for _ in ()).throw(RuntimeError('boom'))")
     _write_cli_python_agent(
-        data_root, "py_passive", "AgentAction(ActionKind.NOP)"
+        data_root, "py_passive", "AgentAction(ActionKindV2.READ, 0)"
     )
     env = dict(os.environ, BYTEFRAY_ROOT=str(data_root))
     env["PYTHONPATH"] = os.pathsep.join(
@@ -512,8 +513,9 @@ def test_agents_command_initializes_starters_idempotently(tmp_path):
     assert first.returncode == 0, first.stderr
     manifests = sorted(path.parent.name for path in (data_root / "agents").glob("*/agent.yaml"))
     assert manifests == sorted(STARTER_AGENT_NAMES)
-    runner = data_root / "agents" / "runner" / "agent.yaml"
-    runner.write_text('{"name": "runner", "user_note": "keep"}\n', encoding="utf-8")
+    customized = data_root / "agents" / "v4_claimer" / "agent.py"
+    marker = "\n# user customization: keep\n"
+    customized.write_text(customized.read_text(encoding="utf-8") + marker, encoding="utf-8")
 
     second = subprocess.run(
         [sys.executable, "-m", "battle_engine", "agents"],
@@ -524,10 +526,10 @@ def test_agents_command_initializes_starters_idempotently(tmp_path):
         check=False,
     )
     assert second.returncode == 0, second.stderr
-    assert runner.read_text(encoding="utf-8") == '{"name": "runner", "user_note": "keep"}\n'
+    assert customized.read_text(encoding="utf-8").endswith(marker)
 
 
-def test_quota_and_fractional_scores_reach_replay_and_summary(tmp_path):
+def test_fixed_v4_quota_and_fractional_scores_reach_replay_and_summary(tmp_path):
     replay = tmp_path / "fractional" / "replay.jsonl"
     result = _run(
         "run",
@@ -536,7 +538,7 @@ def test_quota_and_fractional_scores_reach_replay_and_summary(tmp_path):
         "--arena",
         "128",
         "--quota",
-        "3",
+        "8",
         "--alive-w",
         "0.25",
         "--kill-w",
@@ -544,9 +546,9 @@ def test_quota_and_fractional_scores_reach_replay_and_summary(tmp_path):
         "--territory-w",
         "0",
         "--a-type",
-        "writer",
+        "v4_claimer",
         "--b-type",
-        "runner",
+        "v4_scout",
         "--b-start",
         "64",
         "--replay",
@@ -557,7 +559,7 @@ def test_quota_and_fractional_scores_reach_replay_and_summary(tmp_path):
     assert result.returncode == 0, result.stderr
 
     records = [json.loads(line) for line in replay.read_text().splitlines()]
-    assert records[0]["config"]["instr_per_tick"] == 3
+    assert records[0]["config"]["instr_per_tick"] == 8
     # records[1] is the tick-0 initial-state snapshot; tick 1 is records[2].
     assert records[2]["score"] == {"A": 0.25, "B": 0.25}
 

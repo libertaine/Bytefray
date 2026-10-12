@@ -35,7 +35,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     subcommands = parser.add_subparsers(dest="command")
     subcommands.add_parser(
-        "run", add_help=False, help="run a native Bytefray or pMARS match"
+        "run", add_help=False, help="run a native Bytefray match"
     )
     subcommands.add_parser(
         "tournament", add_help=False, help="run or resume a native round-robin tournament"
@@ -96,7 +96,7 @@ def _agents(argv: list[str]) -> int:
 
         return test_main(argv[1:])
     if argv and argv[0] == "evaluate":
-        from battle_engine.agent_evaluation import main as evaluate_main
+        from battle_engine.evaluation_cli import main as evaluate_main
 
         return evaluate_main(argv[1:])
     if argv and argv[0] == "evaluations":

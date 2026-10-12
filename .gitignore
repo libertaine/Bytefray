@@ -21,10 +21,28 @@ venv/
 
 # Project artifacts
 runs/
-agents_build/
 agent_revisions/
 *.blob
 *.jsonl
+# V6 Phase 2B.9: frozen historical-readability fixture replays for retired
+# rulesets (bytefray-rules-2-alpha1/-alpha11), committed deliberately --
+# see client/tests/test_replay_status.py's module docstring.
+!client/tests/fixtures/replay_status/*.jsonl
+# V6 Phase 2B.10 Scope B: frozen historical-immutability fixture replays for
+# retired rulesets (bytefray-rules-4-alpha1/-alpha2), committed deliberately --
+# see engine/tests/test_v4_historical_immutability.py's module docstring.
+!engine/tests/fixtures/v4_historical_immutability/*.jsonl
+# V6 Phase 2B.12: one real schema-6 Ruleset-2 group-evaluation cell is kept
+# byte-for-byte so the historical adapter/deep-verifier remains covered after
+# new group evaluation execution is retired.
+!engine/tests/fixtures/v6_scope_c_group_evaluation/**/*.jsonl
+# V6 Phase 2B.10 Scope B: a frozen real bytefray-rules-4-alpha1 replay+trace
+# pair, committed deliberately because stable bytefray-rules-4 structurally
+# cannot reproduce this fixture's precondition (it is not a member of
+# VULNERABLE_CORE_RULESET_IDS, so get_entrant_statuses().core is always None
+# for it) -- see client/tests/test_perspective_card_knowledge.py's module
+# docstring.
+!client/tests/fixtures/perspective_card_knowledge/*.jsonl
 
 # Derived, disposable application cache. In a source checkout the data root is
 # the repository itself, so the rebuildable Replay History SQLite index lands
@@ -64,3 +82,17 @@ engine/src/battle_engine/cli.py.*
 /*.spec
 .idea/
 .env
+
+# V6 E9 private historical-provenance evidence, kept out of this public
+# repository deliberately and shared privately with reviewers. The packets
+# carry redacted agent session-log excerpts; the handoff builder embeds a
+# private local session-log path and stays byte-identical to the
+# source_sha256_raw bound in tools/research/v6/e9/historical_provenance_handoff.json.
+# The public reports record the archive names and raw SHA-256 values.
+/docs/research/v6/e9_historical_provenance_01.zip
+/docs/research/v6/e9_historical_provenance_01.zip.sha256
+/docs/research/v6/e9_historical_provenance_02.zip
+/docs/research/v6/e9_historical_provenance_02.zip.sha256
+/docs/research/v6/e9_historical_provenance_03.zip
+/docs/research/v6/e9_historical_provenance_03.zip.sha256
+/tools/research/v6/e9/provenance_handoff.py

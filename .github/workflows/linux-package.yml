@@ -2,26 +2,12 @@ name: Linux Package (Ubuntu 24.04 release baseline)
 
 # RC2 Phase 2B: the official Linux frozen-release build baseline. Deliberately
 # pinned to ubuntu-24.04 (not ubuntu-latest) -- see
-# docs/research/v4/V4_RC2_LINUX_SELF_CONTAINED_PROTOTYPE.md section J for why
+# docs/archive/v4/V4_RC2_LINUX_SELF_CONTAINED_PROTOTYPE.md section J for why
 # the prototype build (Ubuntu 26.04) is too new a glibc baseline to publish.
 # This workflow exercises the same tools/build_linux.sh a real release build
 # uses -- it does not reimplement a second, CI-only build path.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - v4-rc2-development
-    paths:
-      - ".github/workflows/linux-package.yml"
-      - "tools/build_linux.sh"
-      - "tools/bytefray.spec"
-      - "tools/bytefray_cli.spec"
-      - "tools/agent_designer.spec"
-      - "tools/replay_viewer.spec"
-      - "pyproject.toml"
-      - "engine/src/**"
-      - "client/src/**"
-      - "app/**"
 
 jobs:
   linux-package:
@@ -155,7 +141,7 @@ jobs:
           REPLAY_PATH="$ISO_ROOT/match.replay"
 
           # Reference configuration qualified on Windows (Phase 1B) and the
-          # Ubuntu 26.04 prototype (see docs/research/v4/
+          # Ubuntu 26.04 prototype (see docs/archive/v4/
           # V4_RC2_WINDOWS_PYGAME_CE_PACKAGED_QUALIFICATION.md section J and
           # V4_RC2_LINUX_SELF_CONTAINED_PROTOTYPE.md section G): winner=A,
           # A=16.0, B=10.0, ticks=11, termination=last_agent_standing.

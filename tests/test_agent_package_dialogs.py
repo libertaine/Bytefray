@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-NOP_ACTION = "AgentAction(ActionKind.NOP)"
+DEFAULT_ACTION = "AgentAction(ActionKindV2.MOVE, 1)"
 
 
 def _make_app():
@@ -36,7 +36,7 @@ def _make_app():
 def _write_python_agent(
     root: Path,
     name: str,
-    action: str = NOP_ACTION,
+    action: str = DEFAULT_ACTION,
     variant: str = "",
     *,
     display: str | None = None,
@@ -45,7 +45,7 @@ def _write_python_agent(
     directory.mkdir(parents=True)
     manifest = {
         "kind": "python",
-        "api_version": 1,
+        "api_version": 2,
         "entrypoint": "agent.py:create_agent",
         "version": "1.0",
     }
@@ -58,9 +58,10 @@ def _write_python_agent(
     (directory / "agent.py").write_text(
         f"""
 # {variant}
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
     def reset(self, context): pass
+    def declare_processes(self): return [ProcessDeclaration("p", 1, 1.0)]
     def act(self, observation): return {action}
 def create_agent(): return Agent()
 """,

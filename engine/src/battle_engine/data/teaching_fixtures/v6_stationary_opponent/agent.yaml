@@ -1,0 +1,9 @@
+{
+  "name": "v6_stationary_opponent",
+  "display": "V6 Stationary Opponent (Teaching Fixture)",
+  "description": "Stationary teaching opponent that legally reads its own core at every callback.",
+  "kind": "python",
+  "api_version": 2,
+  "entrypoint": "agent.py:create_agent",
+  "version": "1.0.0"
+}

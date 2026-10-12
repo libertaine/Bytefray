@@ -26,14 +26,17 @@ from battle_engine.evaluation_worker import (
 )
 
 NOP_SOURCE = """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 
 class Agent:
     def reset(self, context):
         pass
 
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
     def act(self, observation):
-        return AgentAction(ActionKind.NOP)
+        return AgentAction(ActionKindV2.READ, 0)
 
 def create_agent():
     return Agent()
@@ -45,7 +48,7 @@ def _write_agent(root: Path, name: str, source: str = NOP_SOURCE) -> None:
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
@@ -60,6 +63,10 @@ def _cell(tmp_path: Path, schedule_id: str = "sched-1") -> EvaluationCell:
         opponent_id="opponent",
         seed=1,
         artifact_dir=tmp_path / "matches" / schedule_id,
+        rules_compatibility_id="bytefray-rules-4",
+        placement_id="test-fixed",
+        subject_start=0,
+        opponent_start=32,
     )
 
 
@@ -216,10 +223,14 @@ def test_worker_exit_mid_cell_is_reported_as_exited(tmp_path: Path):
         "opponent",
         source="""
 import os
+from battle_engine.agent_api import AgentAction, ProcessDeclaration
 
 class Agent:
     def reset(self, context):
         pass
+
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
 
     def act(self, observation):
         os._exit(1)

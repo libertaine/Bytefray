@@ -1,0 +1,40 @@
+{
+  "name": "v6_window_scout",
+  "display": "V6 Window Scout (Starter)",
+  "description": "V6 teaching starter: demonstrates active sensing, delayed anonymous receipt, and informed movement.",
+  "kind": "python",
+  "api_version": 2,
+  "entrypoint": "agent.py:create_agent",
+  "version": "1.0.0",
+  "capabilities": {
+    "version": 1,
+    "required": [
+      "sense"
+    ]
+  },
+  "parameters": {
+    "search_interval": {
+      "type": "integer",
+      "default": 4,
+      "minimum": 1,
+      "maximum": 16,
+      "description": "Cadence of active search scans in eligible callbacks. 4 scans once every 4 callbacks."
+    },
+    "move_step": {
+      "type": "integer",
+      "default": 64,
+      "minimum": 1,
+      "maximum": 64,
+      "description": "Maximum step size when moving toward a received contact."
+    }
+  },
+  "presets": {
+    "standard": {
+      "description": "The declared default: scans every 4 callbacks, moves up to 64 cells.",
+      "values": {
+        "search_interval": 4,
+        "move_step": 64
+      }
+    }
+  }
+}

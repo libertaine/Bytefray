@@ -20,7 +20,7 @@ from battle_engine.agent_trace import read_trace_v2
 from battle_engine.agents import resolve_agent
 from battle_engine.config import Config, Weights
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
-from battle_engine.ruleset_policy import RULESET_V4_ALPHA1, RULESET_V4_ALPHA2
+from battle_engine.ruleset_policy import RULESET_V4
 from battle_engine.spectator_derivation import (
     PairBindingError,
     SpectatorEventKind,
@@ -271,7 +271,7 @@ def _run_match(
     max_ticks: int = 12,
     seed: int = 11,
     trace: bool = True,
-    ruleset_id: str = RULESET_V4_ALPHA1.ruleset_id,
+    ruleset_id: str = RULESET_V4.ruleset_id,
 ):
     for _entrant_id, agent_name, source, _start in entrants:
         _write_agent(root, agent_name, source)
@@ -619,7 +619,7 @@ def test_sibling_process_callback_does_not_deliver_pending_read_feedback(
         ),
         max_ticks=1,
         seed=37,
-        ruleset_id=RULESET_V4_ALPHA2.ruleset_id,
+        ruleset_id=RULESET_V4.ruleset_id,
     )
     assert trace is not None
     projection = analyze_perspective(replay, trace, "A")

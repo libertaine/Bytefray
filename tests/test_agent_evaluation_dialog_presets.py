@@ -33,20 +33,28 @@ def _make_app():
     return QApplication.instance() or QApplication([])
 
 
-def _write_python_agent(root: Path, name: str, action: str = "AgentAction(ActionKind.NOP)") -> None:
+def _write_python_agent(
+    root: Path, name: str, action: str = "AgentAction(ActionKindV2.MOVE, 1)"
+) -> None:
     directory = root / "agents" / name
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {
+                "kind": "python",
+                "api_version": 2,
+                "entrypoint": "agent.py:create_agent",
+                "version": "1.0",
+            }
         ),
         encoding="utf-8",
     )
     (directory / "agent.py").write_text(
         f"""
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
     def reset(self, context): pass
+    def declare_processes(self): return [ProcessDeclaration("p", 1, 1.0)]
     def act(self, observation): return {action}
 def create_agent(): return Agent()
 """,
@@ -263,8 +271,18 @@ def test_designer_evaluate_discovers_and_launches_with_selected_preset(monkeypat
     try:
         designer.development.setAgents(
             [
-                AgentRow(name="candidate", path="agents/candidate", blob_path=None, meta={"kind": "python"}),
-                AgentRow(name="opponent", path="agents/opponent", blob_path=None, meta={"kind": "python"}),
+                AgentRow(
+                    name="candidate",
+                    path="agents/candidate",
+                    blob_path=None,
+                    meta={"kind": "python", "api_version": 2},
+                ),
+                AgentRow(
+                    name="opponent",
+                    path="agents/opponent",
+                    blob_path=None,
+                    meta={"kind": "python", "api_version": 2},
+                ),
             ]
         )
         designer.development.selectAgent("candidate")
@@ -336,8 +354,18 @@ def test_designer_evaluate_with_invalid_preset_on_disk_still_opens(monkeypatch, 
     try:
         designer.development.setAgents(
             [
-                AgentRow(name="candidate", path="agents/candidate", blob_path=None, meta={"kind": "python"}),
-                AgentRow(name="opponent", path="agents/opponent", blob_path=None, meta={"kind": "python"}),
+                AgentRow(
+                    name="candidate",
+                    path="agents/candidate",
+                    blob_path=None,
+                    meta={"kind": "python", "api_version": 2},
+                ),
+                AgentRow(
+                    name="opponent",
+                    path="agents/opponent",
+                    blob_path=None,
+                    meta={"kind": "python", "api_version": 2},
+                ),
             ]
         )
         designer.development.selectAgent("candidate")
@@ -371,11 +399,11 @@ def test_designer_evaluate_with_invalid_preset_on_disk_still_opens(monkeypatch, 
 
 
 @pytest.mark.gui
-def test_pairwise_ruleset_defaults_to_v2_and_group_stays_v2_only(tmp_path):
-    """Both modes now state their Ruleset; only pairwise is selectable."""
+def test_pairwise_defaults_to_stable_v4_and_group_is_retired(tmp_path):
+    """Pairwise uses stable v4; group mode is visibly non-runnable."""
 
     _make_app()
-    from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V2_ID, BYTEFRAY_RULESET_V4_ID
+    from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
 
     from app.services.designer_workflows import EVALUATION_MODE_GROUP
     from app.views.evaluation import EvaluationDialog
@@ -397,25 +425,22 @@ def test_pairwise_ruleset_defaults_to_v2_and_group_stays_v2_only(tmp_path):
 
         index = dialog.modeCombo.findData(EVALUATION_MODE_GROUP)
         dialog.modeCombo.setCurrentIndex(index)
-        # Group mode swaps the selector for the fixed v2-only statement.
+        # Historical group artifacts remain readable, but new group
+        # evaluation execution is retired.
         assert not dialog.pairwiseRulesetCombo.isVisibleTo(dialog)
         assert dialog.rulesetValue.isVisibleTo(dialog)
-        assert BYTEFRAY_RULESET_V2_ID in dialog.rulesetValue.text()
+        assert "retired" in dialog.rulesetValue.text().lower()
+        assert not dialog.runButton.isEnabled()
     finally:
         dialog.deleteLater()
 
 
 @pytest.mark.gui
-def test_preset_ruleset_is_surfaced_into_the_selector(tmp_path):
-    """A preset's own Ruleset must be shown, not silently overridden.
-
-    The launch path always sends ``--ruleset`` explicitly now, and an
-    explicit CLI ``--ruleset`` outranks a preset's own ``ruleset`` field, so
-    the dialog has to adopt the preset's value for it to survive.
-    """
+def test_retired_preset_ruleset_is_rejected_before_the_dialog(tmp_path):
+    """A historical preset cannot restore a retired execution choice."""
 
     _make_app()
-    from battle_engine.evaluation_presets import load_preset
+    from battle_engine.evaluation_presets import EvaluationPresetError, load_preset
     from battle_engine.rules import BYTEFRAY_RULESET_ID
 
     _write_preset(
@@ -423,19 +448,8 @@ def test_preset_ruleset_is_surfaced_into_the_selector(tmp_path):
         "v1compat",
         {"opponents": ["opponent"], "seeds": [1], "ruleset": BYTEFRAY_RULESET_ID},
     )
-    from app.views.evaluation import EvaluationDialog
-
-    dialog = EvaluationDialog(
-        [("Candidate", "candidate"), ("Opponent", "opponent")],
-        default_candidate="candidate",
-        default_output=tmp_path / "out",
-        presets={"v1compat": load_preset(tmp_path, "v1compat")},
-    )
-    try:
-        dialog.presetCombo.setCurrentIndex(dialog.presetCombo.findData("v1compat"))
-        assert dialog.pairwise_ruleset_id() == BYTEFRAY_RULESET_ID
-    finally:
-        dialog.deleteLater()
+    with pytest.raises(EvaluationPresetError, match="ruleset.*bytefray-rules-4"):
+        load_preset(tmp_path, "v1compat")
 
 
 @pytest.mark.gui
@@ -469,7 +483,7 @@ def test_designer_sends_the_dialogs_pairwise_ruleset(monkeypatch, tmp_path):
     """End-to-end: the selection reaches the launched argv."""
 
     _make_app()
-    from battle_engine.rules import BYTEFRAY_RULESET_ID
+    from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
 
     from app.agent_designer import AgentDesigner
     from app.services.agent_catalog import AgentRow
@@ -480,8 +494,18 @@ def test_designer_sends_the_dialogs_pairwise_ruleset(monkeypatch, tmp_path):
     try:
         designer.development.setAgents(
             [
-                AgentRow(name="candidate", path="agents/candidate", blob_path=None, meta={"kind": "python"}),
-                AgentRow(name="opponent", path="agents/opponent", blob_path=None, meta={"kind": "python"}),
+                AgentRow(
+                    name="candidate",
+                    path="agents/candidate",
+                    blob_path=None,
+                    meta={"kind": "python", "api_version": 2},
+                ),
+                AgentRow(
+                    name="opponent",
+                    path="agents/opponent",
+                    blob_path=None,
+                    meta={"kind": "python", "api_version": 2},
+                ),
             ]
         )
         designer.development.selectAgent("candidate")
@@ -521,7 +545,7 @@ def test_designer_sends_the_dialogs_pairwise_ruleset(monkeypatch, tmp_path):
                 return None
 
             def pairwise_ruleset_id(self):
-                return BYTEFRAY_RULESET_ID
+                return BYTEFRAY_RULESET_V4_ID
 
         monkeypatch.setattr("app.agent_designer.EvaluationDialog", _AcceptingDialog)
 
@@ -540,6 +564,6 @@ def test_designer_sends_the_dialogs_pairwise_ruleset(monkeypatch, tmp_path):
         designer._on_evaluate()
 
         command = launched[0]
-        assert command[command.index("--ruleset") + 1] == BYTEFRAY_RULESET_ID
+        assert command[command.index("--ruleset") + 1] == BYTEFRAY_RULESET_V4_ID
     finally:
         designer.deleteLater()

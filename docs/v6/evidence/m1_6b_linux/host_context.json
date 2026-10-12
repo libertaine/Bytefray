@@ -1,0 +1,40 @@
+{
+  "qualification_context": "outside tool process sandbox",
+  "virtualization": {
+    "all": {
+      "stdout": "none",
+      "exit_code": 1
+    },
+    "--vm": {
+      "stdout": "none",
+      "exit_code": 1
+    },
+    "--container": {
+      "stdout": "none",
+      "exit_code": 1
+    }
+  },
+  "pid1": "systemd",
+  "pid1_cgroup": "0::/init.scope",
+  "hardware_product": "HP Pavilion Notebook",
+  "kernel": "7.0.0-38-generic",
+  "architecture": "x86_64",
+  "host_x11_display": {
+    "display": ":0",
+    "exit_code": 0,
+    "summary": [
+      "name of display:    :0",
+      "version number:    11.0",
+      "vendor string:    The X.Org Foundation",
+      "vendor release number:    12401010",
+      "X.Org version: 24.1.10",
+      "maximum request size:  16777212 bytes",
+      "motion buffer size:  256",
+      "bitmap unit, bit order, padding:    32, LSBFirst, 32",
+      "image byte order:    LSBFirst",
+      "number of supported pixmap formats:    7"
+    ]
+  },
+  "host_wayland_advertised": "wayland-0",
+  "human_desktop_interaction_exercised": false
+}

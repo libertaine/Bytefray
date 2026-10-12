@@ -23,8 +23,6 @@ import os
 
 import pytest
 
-BYTEFRAY_RULESET_ID = "bytefray-rules-1"
-BYTEFRAY_RULESET_V2_ID = "bytefray-rules-2"
 BYTEFRAY_RULESET_V4_ID = "bytefray-rules-4"
 
 
@@ -49,17 +47,7 @@ def _panel(tmp_path, rows):
     from app.views.advanced import AdvancedPanel
 
     panel = AdvancedPanel(catalog=None, data_root=tmp_path)
-    # V5 Alpha 1 Phase 1: Advanced's fresh-session Ruleset default changed
-    # from v2 to the stable v4 identity, which this module's Agent API v1
-    # ("legacy"/"x_id"/...) rows are not compatible with. This suite is
-    # about roster add/remove/order mechanics under a Python Agent API v1
-    # roster, not about which Ruleset a fresh panel starts on (that is
-    # covered by engine/tests/test_designer_ruleset_options.py and
-    # tests/test_v5_alpha1_phase1_corrective_cleanup.py) -- so every caller
-    # explicitly pins v2 here, exactly as the callers that already did this
-    # individually before this helper existed.
     panel.setAgents(rows)
-    panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
     return panel
 
 
@@ -67,11 +55,11 @@ def _panel(tmp_path, rows):
 def test_default_roster_is_exactly_two_agents(tmp_path):
     """UX-29/Tests item 1: on construction, only the minimum roster exists."""
     _make_app()
-    panel = _panel(tmp_path, [_row("legacy", "python", 1), _row("legacy2", "python", 1)])
+    panel = _panel(tmp_path, [_row("alpha", "python", 2), _row("beta", "python", 2)])
     try:
         assert panel.roster_size == 2
-        assert panel.agentA.currentData() == "legacy"
-        assert panel.agentB.currentData() == "legacy2"
+        assert panel.agentA.currentData() == "alpha"
+        assert panel.agentB.currentData() == "beta"
         assert not panel.agentC.isVisibleTo(panel)
         assert not panel.btnRemoveAgentC.isVisibleTo(panel)
         # editorC lives on the (currently inactive) Agent Params tab page,
@@ -92,10 +80,9 @@ def test_add_agent_grows_roster_with_compatible_deterministic_default(tmp_path):
     _make_app()
     panel = _panel(
         tmp_path,
-        [_row("legacy", "python", 1), _row("legacy2", "python", 1), _row("legacy3", "python", 1)],
+        [_row("alpha", "python", 2), _row("beta", "python", 2), _row("gamma", "python", 2)],
     )
     try:
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
         a_before, b_before = panel.agentA.currentData(), panel.agentB.currentData()
 
         panel.btnAddAgent.click()
@@ -105,7 +92,7 @@ def test_add_agent_grows_roster_with_compatible_deterministic_default(tmp_path):
         assert panel.agentB.currentData() == b_before
         assert panel.agentC.currentData() not in (None, a_before, b_before)
         listed_c = {panel.agentC.itemData(i) for i in range(panel.agentC.count())}
-        assert listed_c == {"legacy", "legacy2", "legacy3"}
+        assert listed_c == {"alpha", "beta", "gamma"}
         assert not panel.btnAddAgent.isVisibleTo(panel)  # max reached
         assert panel.agentC.isVisibleTo(panel)
         assert panel.btnRemoveAgentC.isVisibleTo(panel)
@@ -119,7 +106,7 @@ def test_remove_agent_shrinks_roster_and_preserves_ab(tmp_path):
     """UX-31: removing Agent C returns to the minimum roster, restores the
     Add control, and never touches Agent A/B's selections."""
     _make_app()
-    panel = _panel(tmp_path, [_row("legacy", "python", 1), _row("legacy2", "python", 1)])
+    panel = _panel(tmp_path, [_row("alpha", "python", 2), _row("beta", "python", 2)])
     try:
         panel.btnAddAgent.click()
         assert panel.roster_size == 3
@@ -137,7 +124,7 @@ def test_remove_agent_shrinks_roster_and_preserves_ab(tmp_path):
         # Adding again afterward must still produce a sane, populated slot.
         panel.btnAddAgent.click()
         assert panel.roster_size == 3
-        assert panel.agentC.currentData() in ("legacy", "legacy2")
+        assert panel.agentC.currentData() in ("alpha", "beta")
     finally:
         panel.deleteLater()
 
@@ -148,7 +135,7 @@ def test_add_agent_is_unavailable_once_maximum_reached(tmp_path):
     maximum (3) and clicking it again (defensively) does not create a
     fourth slot."""
     _make_app()
-    panel = _panel(tmp_path, [_row("legacy", "python", 1), _row("legacy2", "python", 1)])
+    panel = _panel(tmp_path, [_row("alpha", "python", 2), _row("beta", "python", 2)])
     try:
         panel.btnAddAgent.click()
         assert panel.roster_size == 3
@@ -172,48 +159,33 @@ def test_every_roster_slot_is_ruleset_filtered(tmp_path):
         ],
     )
     try:
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_ID))
         panel.btnAddAgent.click()
         listed_c = {panel.agentC.itemData(i) for i in range(panel.agentC.count())}
-        assert listed_c == {"legacy", "vm_agent"}  # v1 excludes the API-v2 agent
-
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
-        listed_c = {panel.agentC.itemData(i) for i in range(panel.agentC.count())}
-        assert listed_c == {"legacy"}  # v2 is Python-only
+        assert listed_c == {"proc"}
     finally:
         panel.deleteLater()
 
 
 @pytest.mark.gui
-def test_ruleset_change_with_three_entrants_preserves_compatible_replaces_rest(tmp_path):
-    """Ruleset-change contract (Sec "Ruleset changes with a multi-agent
-    roster"): a compatible selection survives; an incompatible one is
-    replaced deterministically; no roster-size change occurs (Advanced's
-    ceiling is CLI-derived, not per-Ruleset)."""
+def test_catalog_refresh_with_three_entrants_preserves_current_selections(tmp_path):
+    """Retired catalog entries never disturb a selected current roster."""
     _make_app()
-    panel = _panel(
-        tmp_path,
-        [
-            _row("legacy", "python", 1),
-            _row("legacy2", "python", 1),
-            _row("proc", "python", 2),
-            _row("proc2", "python", 2),
-            _row("proc3", "python", 2),
-        ],
-    )
+    rows = [
+        _row("legacy", "python", 1),
+        _row("legacy2", "python", 1),
+        _row("proc", "python", 2),
+        _row("proc2", "python", 2),
+        _row("proc3", "python", 2),
+    ]
+    panel = _panel(tmp_path, rows)
     try:
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
-        panel.agentA.setCurrentIndex(panel.agentA.findData("legacy"))
-        panel.agentB.setCurrentIndex(panel.agentB.findData("legacy2"))
+        panel.agentA.setCurrentIndex(panel.agentA.findData("proc"))
+        panel.agentB.setCurrentIndex(panel.agentB.findData("proc2"))
         panel.btnAddAgent.click()
-        panel.agentC.setCurrentIndex(panel.agentC.findData("legacy"))  # explicit duplicate of A
+        panel.agentC.setCurrentIndex(panel.agentC.findData("proc3"))
+        panel.setAgents(rows)
 
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
-
-        # None of legacy/legacy2/legacy (Agent API v1) survive into v4
-        # (Agent API v2 only); all three slots deterministically fall
-        # through to the eligible v4 roster in its catalog order.
-        assert panel.roster_size == 3  # ceiling unchanged by the Ruleset switch
+        assert panel.roster_size == 3
         assert panel.agentA.currentData() == "proc"
         assert panel.agentB.currentData() == "proc2"
         assert panel.agentC.currentData() == "proc3"
@@ -223,31 +195,18 @@ def test_ruleset_change_with_three_entrants_preserves_compatible_replaces_rest(t
 
 
 @pytest.mark.gui
-def test_runtime_kind_homogeneity_applies_to_agent_c_too(tmp_path):
-    """Extends the Phase 2 Agent-B-compatible-with-Agent-A rule to every
-    roster slot, not just the pair -- reuses the existing
-    ``sync_compatible_b_choices`` helper against Agent A a second time
-    rather than inventing separate pairwise GUI logic."""
+def test_retired_runtime_kinds_are_filtered_from_agent_c_too(tmp_path):
+    """Every dynamic roster slot applies the stable-v4 execution boundary."""
     _make_app()
     panel = _panel(
         tmp_path,
-        [_row("claimer", "python", 1), _row("runner", "vm"), _row("hunter", "python", 1)],
+        [_row("alpha", "python", 2), _row("vm_agent", "vm"), _row("beta", "python", 2)],
     )
     try:
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_ID))
         panel.btnAddAgent.click()
-        panel.agentA.setCurrentIndex(panel.agentA.findData("claimer"))  # Python
-
-        model = panel.agentC.model()
-        enabled = {panel.agentC.itemData(i): model.item(i).isEnabled() for i in range(panel.agentC.count())}
-        assert enabled == {"claimer": True, "runner": False, "hunter": True}
-        assert panel.agentC.currentData() != "runner"
-
-        panel.agentA.setCurrentIndex(panel.agentA.findData("runner"))  # VM
-        model = panel.agentC.model()
-        enabled = {panel.agentC.itemData(i): model.item(i).isEnabled() for i in range(panel.agentC.count())}
-        assert enabled == {"claimer": False, "runner": True, "hunter": False}
-        assert panel.agentC.currentData() == "runner"  # repaired to the only compatible choice
+        listed = {panel.agentC.itemData(i) for i in range(panel.agentC.count())}
+        assert listed == {"alpha", "beta"}
+        assert panel.agentC.currentData() != "vm_agent"
     finally:
         panel.deleteLater()
 
@@ -261,9 +220,9 @@ def test_emit_run_preserves_roster_order_and_underlying_identifiers(tmp_path):
     from app.services.agent_catalog import AgentRow
 
     rows = [
-        AgentRow("Explorer", "/agents/x_id", None, {"name": "x_id", "kind": "python", "api_version": 1}, agent_id="x_id"),
-        AgentRow("Quorum", "/agents/y_id", None, {"name": "y_id", "kind": "python", "api_version": 1}, agent_id="y_id"),
-        AgentRow("Concentrated Attacker", "/agents/z_id", None, {"name": "z_id", "kind": "python", "api_version": 1}, agent_id="z_id"),
+        AgentRow("Explorer", "/agents/x_id", None, {"name": "x_id", "kind": "python", "api_version": 2}, agent_id="x_id"),
+        AgentRow("Quorum", "/agents/y_id", None, {"name": "y_id", "kind": "python", "api_version": 2}, agent_id="y_id"),
+        AgentRow("Concentrated Attacker", "/agents/z_id", None, {"name": "z_id", "kind": "python", "api_version": 2}, agent_id="z_id"),
     ]
     panel = _panel(tmp_path, rows)
     try:
@@ -291,7 +250,7 @@ def test_emit_run_omits_c_fields_when_agent_c_not_added(tmp_path):
     """A RunConfig built from the default 2-agent roster must not carry a
     stale/ghost third entrant."""
     _make_app()
-    panel = _panel(tmp_path, [_row("legacy", "python", 1), _row("legacy2", "python", 1)])
+    panel = _panel(tmp_path, [_row("alpha", "python", 2), _row("beta", "python", 2)])
     try:
         captured = []
         panel.runRequested.connect(captured.append)
@@ -313,7 +272,7 @@ def test_agent_c_params_do_not_mutate_agent_ab_params(tmp_path):
     import json
 
     _make_app()
-    panel = _panel(tmp_path, [_row("legacy", "python", 1), _row("legacy2", "python", 1)])
+    panel = _panel(tmp_path, [_row("alpha", "python", 2), _row("beta", "python", 2)])
     try:
         panel.editorA.text.setPlainText(json.dumps({"a": 1}))
         panel.editorB.text.setPlainText(json.dumps({"b": 2}))
@@ -348,13 +307,12 @@ def test_empty_catalog_disables_run_regardless_of_roster_size(tmp_path):
     agents") applies uniformly: it never crashes, and Run stays disabled,
     whether or not Agent C had been added."""
     _make_app()
-    panel = _panel(tmp_path, [_row("legacy", "python", 1)])
+    panel = _panel(tmp_path, [_row("current", "python", 2)])
     try:
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
         panel.btnAddAgent.click()
         assert panel.btnRun.isEnabled()  # one compatible agent: duplicates are legal
 
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
+        panel.setAgents([_row("retired", "python", 1)])
         assert not panel.btnRun.isEnabled()
         assert panel.agentC.itemText(0) == "(none found)"
     finally:
@@ -403,9 +361,8 @@ def test_designer_forwards_three_agent_roster_into_the_launched_command(monkeypa
     captured = _capture_match_launch(monkeypatch, designer)
 
     panel = designer.advanced
-    panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
-    panel.agentA.setCurrentIndex(panel.agentA.findData("adaptive"))
-    panel.agentB.setCurrentIndex(panel.agentB.findData("hunter"))
+    panel.agentA.setCurrentIndex(panel.agentA.findData("v4_claimer"))
+    panel.agentB.setCurrentIndex(panel.agentB.findData("v4_scout"))
     panel.btnAddAgent.click()
     import json as _json
 
@@ -413,8 +370,8 @@ def test_designer_forwards_three_agent_roster_into_the_launched_command(monkeypa
     panel._emit_run()
 
     assert captured["started"] is True
-    assert _argument_value(captured["command"], "--a-type") == "adaptive"
-    assert _argument_value(captured["command"], "--b-type") == "hunter"
+    assert _argument_value(captured["command"], "--a-type") == "v4_claimer"
+    assert _argument_value(captured["command"], "--b-type") == "v4_scout"
     assert _argument_value(captured["command"], "--c-type") == panel.agentC.currentData()
     assert captured["env"].value("BYTEFRAY_AGENT_C_PARAMS_JSON") == _json.dumps({"aggression": 0.5})
     assert "could not resolve agents" not in panel.log.toPlainText()
@@ -428,12 +385,7 @@ def test_simple_stays_two_agent_and_gains_only_the_advanced_hint(tmp_path):
 
     panel = SimplePanel(catalog=None)
     try:
-        panel.setAgents([_row("legacy", "python", 1), _row("legacy2", "python", 1)])
-        # V5 Alpha 1 Phase 1: Simple's fresh-session default is now the
-        # stable v4 Ruleset, which these Agent API v1 rows are not
-        # compatible with -- select v2 explicitly, since this test is about
-        # the 2-agent-only structural behavior, not the fresh default.
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
+        panel.setAgents([_row("alpha", "python", 2), _row("beta", "python", 2)])
         assert not hasattr(panel, "agentC")
         assert not hasattr(panel, "btnAddAgent")
         assert "Advanced" in panel.multiAgentHint.text()
@@ -441,8 +393,8 @@ def test_simple_stays_two_agent_and_gains_only_the_advanced_hint(tmp_path):
 
         captured = []
         panel.runRequested.connect(captured.append)
-        panel.agentA.setCurrentIndex(panel.agentA.findData("legacy"))
-        panel.agentB.setCurrentIndex(panel.agentB.findData("legacy2"))
+        panel.agentA.setCurrentIndex(panel.agentA.findData("alpha"))
+        panel.agentB.setCurrentIndex(panel.agentB.findData("beta"))
         panel._emit_run()
         cfg = captured[0]
         assert not hasattr(cfg, "c_type") or cfg.c_type is None

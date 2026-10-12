@@ -7,11 +7,17 @@ from battle_engine import cli, match_service
 
 
 def _match_arguments(replay: str | Path | None = None) -> list[str]:
+    # V6 Phase 2B.12 retired the "writer"/"runner" VM builtins. The
+    # v4_claimer/v4_scout replacements are
+    # real, discovered Agent API v2 starters that ``cli.main`` bootstraps
+    # into the data root automatically via ``ensure_starter_agents`` --
+    # they are also this flag's own current defaults, kept explicit here
+    # for clarity.
     arguments = [
         "--ticks", "2",
         "--arena", "128",
-        "--a-type", "writer",
-        "--b-type", "runner",
+        "--a-type", "v4_claimer",
+        "--b-type", "v4_scout",
         "--b-start", "64",
         "--quiet",
     ]
@@ -76,11 +82,15 @@ def test_controlled_match_failure_removes_replay_and_stale_summary(
     replay.write_text("old replay\n", encoding="utf-8")
     summary.write_text("old summary\n", encoding="utf-8")
 
-    def fail_run(self, max_ticks=10000, verbose=True):
-        del self, max_ticks, verbose
+    def fail_run(request, replay_path, summary_path, trace_writer, ruleset_policy):
+        del request, replay_path, summary_path, trace_writer, ruleset_policy
         raise RuntimeError("controlled match failure")
 
-    monkeypatch.setattr(match_service.Kernel, "run", fail_run)
+    # Patched below NativeMatchService.run's own stale-artifact removal
+    # (``_remove_python_artifacts``, called before this) so that step still
+    # runs and this test's premise -- a failure *during* match execution
+    # still leaves no stale replay/summary behind -- is exercised for real.
+    monkeypatch.setattr(match_service, "_run_v4_process_match", fail_run)
 
     with pytest.raises(RuntimeError, match="controlled match failure"):
         cli.main(_match_arguments(replay))

@@ -114,6 +114,7 @@ from battle_client.replay_status import (
     get_entrant_statuses,
     resolve_match_ruleset_label,
 )
+from battle_client.sensing_presentation import SensingPresentation
 from battle_client.session import ReplaySession, ReplayState
 
 FLASH_TTL = 6
@@ -771,7 +772,7 @@ def dispatch_key(
     pygame_module: Any,
     key: int,
     mods: int,
-    controller: PlaybackController,
+    controller: PlaybackController | SensingPresentation,
 ) -> KeyAction:
     """Apply one keypress to ``controller`` and report any renderer-local
     (non-controller) action the caller should also perform.
@@ -1063,11 +1064,34 @@ class PygameRenderer:
         initial_director_enabled: bool = False,
         fight_night_manager: FightNightManager | None = None,
         initial_fight_night_enabled: bool = False,
+        sensing_presentation: SensingPresentation | None = None,
+        sensing_fallback_reason: str = "",
     ) -> None:
         """Open an interactive window and play ``session`` until the user
         quits. Blocks until then. Raises ``RendererDependencyError`` if
         Pygame is not installed.
         """
+        if sensing_presentation is not None:
+            from battle_client.renderers.sensing_renderer import SensingReplayRenderer
+
+            SensingReplayRenderer().run(
+                sensing_presentation, start_tick=start_tick, start_paused=start_paused,
+                initial_speed=initial_speed, initial_perspective=initial_perspective,
+            )
+            return
+        from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
+
+        if session.header is not None and session.header.ruleset_id == BYTEFRAY_RULESET_V6_ALPHA1_ID:
+            # Direct callers without verified sensing evidence get the same
+            # explicit canonical fallback. Passive projection is not an alpha
+            # knowledge boundary, even if a caller supplied such a manager.
+            sensing_fallback_reason = sensing_fallback_reason or (
+                "Omniscient — replay only. Verified exchange unavailable; delivered perspective disabled."
+            )
+            perspective_manager = None
+            director_manager = None
+            fight_night_manager = None
+        self._sensing_fallback_reason = sensing_fallback_reason
         try:
             import pygame
         except ImportError as exc:
@@ -1819,6 +1843,8 @@ class PygameRenderer:
         self._draw_fight_night(controller, statuses)
         self._draw_capture_callout(controller, statuses)
         self._draw_footer(controller)
+        if getattr(self, "_sensing_fallback_reason", ""):
+            self.screen.blit(self.hud_font.render(self._sensing_fallback_reason, True, (255, 255, 255)), (8, 8))
 
     def _draw_core_destruction_effects(self, current_tick: int) -> None:
         """Draw active core flashes, rings, fixed rays, and afterglow.

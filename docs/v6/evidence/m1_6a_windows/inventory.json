@@ -1,0 +1,958 @@
+{
+  "earlier_estimate": 4124,
+  "broad_selected_cases": 3218,
+  "broad_module_counts": {
+    "_legacy/tests/test_smoke.py": 2,
+    "client/tests/test_analysis.py": 34,
+    "client/tests/test_canonical_reader.py": 2,
+    "client/tests/test_director.py": 9,
+    "client/tests/test_fight_night.py": 22,
+    "client/tests/test_headless_characterization.py": 3,
+    "client/tests/test_hud_layout.py": 111,
+    "client/tests/test_perspective.py": 12,
+    "client/tests/test_perspective_card_knowledge.py": 12,
+    "client/tests/test_playback_controller.py": 45,
+    "client/tests/test_pygame_renderer.py": 157,
+    "client/tests/test_replay_picker.py": 11,
+    "client/tests/test_replay_player_lifecycle.py": 7,
+    "client/tests/test_replay_session.py": 49,
+    "client/tests/test_replay_status.py": 21,
+    "client/tests/test_replay_viewer_empty_state.py": 9,
+    "client/tests/test_v6_alpha_m1_5.py": 11,
+    "client/tests/test_v6_alpha_m1_5_adversarial.py": 6,
+    "client/tests/test_v6_alpha_sensing.py": 21,
+    "client/tests/test_v6_alpha_sensing_adversarial.py": 8,
+    "engine/tests/test_agent_api.py": 24,
+    "engine/tests/test_agent_evaluation.py": 66,
+    "engine/tests/test_agent_evaluation_behavior.py": 6,
+    "engine/tests/test_agent_evaluation_compatibility.py": 54,
+    "engine/tests/test_agent_evaluation_orientation.py": 28,
+    "engine/tests/test_agent_evaluation_parallel.py": 15,
+    "engine/tests/test_agent_evaluation_presets.py": 21,
+    "engine/tests/test_agent_evaluation_revision_capture.py": 13,
+    "engine/tests/test_agent_evaluation_v2.py": 44,
+    "engine/tests/test_agent_evaluation_v4.py": 31,
+    "engine/tests/test_agent_inspect.py": 11,
+    "engine/tests/test_agent_package.py": 90,
+    "engine/tests/test_agent_package_cli.py": 13,
+    "engine/tests/test_agent_revision_lifecycle.py": 1,
+    "engine/tests/test_agent_revisions.py": 53,
+    "engine/tests/test_agent_revisions_cli.py": 16,
+    "engine/tests/test_agent_scaffold.py": 51,
+    "engine/tests/test_agent_test.py": 52,
+    "engine/tests/test_agent_trace.py": 17,
+    "engine/tests/test_agent_validation.py": 44,
+    "engine/tests/test_agent_worker.py": 16,
+    "engine/tests/test_agent_workflows.py": 29,
+    "engine/tests/test_check_wheel.py": 14,
+    "engine/tests/test_cli_agent_listing.py": 5,
+    "engine/tests/test_cli_characterization.py": 13,
+    "engine/tests/test_command.py": 31,
+    "engine/tests/test_designer_ruleset_options.py": 29,
+    "engine/tests/test_designer_third_entrant_command.py": 9,
+    "engine/tests/test_designer_workflows.py": 18,
+    "engine/tests/test_entrant_identity.py": 5,
+    "engine/tests/test_evaluation_alignment_reporting.py": 4,
+    "engine/tests/test_evaluation_analysis.py": 45,
+    "engine/tests/test_evaluation_artifact.py": 42,
+    "engine/tests/test_evaluation_behavior.py": 26,
+    "engine/tests/test_evaluation_capture.py": 13,
+    "engine/tests/test_evaluation_cell_execution.py": 19,
+    "engine/tests/test_evaluation_group_analysis.py": 29,
+    "engine/tests/test_evaluation_history.py": 53,
+    "engine/tests/test_evaluation_history_behavior.py": 9,
+    "engine/tests/test_evaluation_history_cli.py": 30,
+    "engine/tests/test_evaluation_history_comparison.py": 47,
+    "engine/tests/test_evaluation_history_revisions.py": 11,
+    "engine/tests/test_evaluation_history_verification.py": 32,
+    "engine/tests/test_evaluation_history_workflows.py": 19,
+    "engine/tests/test_evaluation_identity_contract.py": 11,
+    "engine/tests/test_evaluation_planning_matrix_equivalence.py": 25,
+    "engine/tests/test_evaluation_presets.py": 52,
+    "engine/tests/test_evaluation_v2_methodology_pure_functions.py": 4,
+    "engine/tests/test_evaluation_worker.py": 13,
+    "engine/tests/test_extracted_components.py": 2,
+    "engine/tests/test_frozen_bytecode_exclusion.py": 62,
+    "engine/tests/test_frozen_scaffold_resources.py": 13,
+    "engine/tests/test_install_docs_consistency.py": 1,
+    "engine/tests/test_launchers.py": 19,
+    "engine/tests/test_match_services.py": 2,
+    "engine/tests/test_native_match_service.py": 6,
+    "engine/tests/test_output_paths.py": 7,
+    "engine/tests/test_ownership_accounting.py": 2,
+    "engine/tests/test_paths.py": 25,
+    "engine/tests/test_process_containment.py": 7,
+    "engine/tests/test_replay_contract.py": 15,
+    "engine/tests/test_replay_dependency_metadata.py": 2,
+    "engine/tests/test_replay_history.py": 89,
+    "engine/tests/test_replay_history_concurrency.py": 20,
+    "engine/tests/test_replay_integrity.py": 16,
+    "engine/tests/test_replay_newline_canonicalization.py": 5,
+    "engine/tests/test_replay_reconstruction.py": 16,
+    "engine/tests/test_result_model.py": 22,
+    "engine/tests/test_rules.py": 6,
+    "engine/tests/test_ruleset_agent_compatibility.py": 28,
+    "engine/tests/test_ruleset_persistence.py": 19,
+    "engine/tests/test_ruleset_policy.py": 42,
+    "engine/tests/test_scheduler.py": 8,
+    "engine/tests/test_scheduler_partial_overrides.py": 4,
+    "engine/tests/test_spectator_aggregation.py": 11,
+    "engine/tests/test_spectator_analyzer.py": 28,
+    "engine/tests/test_starter_agents.py": 15,
+    "engine/tests/test_starter_directory_validity.py": 18,
+    "engine/tests/test_tournament_results.py": 20,
+    "engine/tests/test_tournament_service.py": 31,
+    "engine/tests/test_v3_phase6_defense_episode.py": 15,
+    "engine/tests/test_v4_alpha2_placement.py": 61,
+    "engine/tests/test_v4_alpha2_scheduler.py": 18,
+    "engine/tests/test_v4_exploit_characterization.py": 1,
+    "engine/tests/test_v4_historical_immutability.py": 5,
+    "engine/tests/test_v4_interleaved_scheduler.py": 14,
+    "engine/tests/test_v4_k1_capture_byte_identity.py": 17,
+    "engine/tests/test_v4_process_semantics.py": 5,
+    "engine/tests/test_v4_production_integration.py": 24,
+    "engine/tests/test_v4_quorum_advanced_example.py": 11,
+    "engine/tests/test_v4_r3_spatial.py": 1,
+    "engine/tests/test_v4_runtime_default_ruleset.py": 10,
+    "engine/tests/test_v4_spectator_derivation.py": 36,
+    "engine/tests/test_v4_spectator_director.py": 13,
+    "engine/tests/test_v4_spectator_fight_night.py": 19,
+    "engine/tests/test_v4_spectator_multi_entrant.py": 7,
+    "engine/tests/test_v4_spectator_perspective.py": 23,
+    "engine/tests/test_v4_stable_ruleset_equivalence.py": 27,
+    "engine/tests/test_v4_trace_equivalence.py": 2,
+    "engine/tests/test_v5_agent_parameters.py": 124,
+    "engine/tests/test_v5_alpha1_phase_b_engine_hygiene.py": 9,
+    "engine/tests/test_v5_alpha1_phase_e_designer_services.py": 25,
+    "engine/tests/test_v5_alpha1_phase_e_starter_refresh.py": 29,
+    "engine/tests/test_v5_post_release_h1_parameter_consistency.py": 17,
+    "engine/tests/test_v5_replay_history_presentation.py": 74,
+    "engine/tests/test_v5_starter_agents.py": 54,
+    "engine/tests/test_v6_alpha_m1_2_window_scout.py": 19,
+    "engine/tests/test_v6_alpha_m1_3_sensing_playback.py": 30,
+    "engine/tests/test_v6_alpha_m1_policy_capabilities.py": 42,
+    "engine/tests/test_v6_native_match_provenance.py": 2,
+    "engine/tests/test_v6_phase2b10_scope_b_v4_alpha_retirement.py": 16,
+    "engine/tests/test_v6_phase2b9_scope_a_retirement.py": 19,
+    "engine/tests/test_v6_phase4e_territory_scoring.py": 7,
+    "engine/tests/test_windows_packaging_spec.py": 26
+  },
+  "difference_module_counts": {
+    "engine/tests/test_e2_capture_hold_semantics.py": 26,
+    "engine/tests/test_e3_slot_limited_disruption_semantics.py": 73,
+    "engine/tests/test_e4_mirrored_pass_order_semantics.py": 94,
+    "engine/tests/test_e5_anchor_placement_semantics.py": 44,
+    "engine/tests/test_e6_context_detection_radius.py": 45,
+    "engine/tests/test_e6_priced_sensing_semantics.py": 46,
+    "engine/tests/test_ruleset_v6_research_anchor_before_core.py": 84,
+    "engine/tests/test_ruleset_v6_research_capture_hold.py": 37,
+    "engine/tests/test_ruleset_v6_research_disruption_slot.py": 57,
+    "engine/tests/test_ruleset_v6_research_mirrored_passes.py": 80,
+    "engine/tests/test_ruleset_v6_research_scale.py": 47,
+    "engine/tests/test_ruleset_v6_research_scale_move.py": 35,
+    "engine/tests/test_ruleset_v6_research_scale_move_proportional.py": 28,
+    "engine/tests/test_ruleset_v6_research_sensing.py": 82,
+    "engine/tests/test_ruleset_v6_research_sensing_active.py": 69,
+    "engine/tests/test_v5_research_analyzer.py": 7,
+    "engine/tests/test_v5_research_r1_metrics.py": 2,
+    "engine/tests/test_v5_research_r3_agents.py": 9,
+    "engine/tests/test_v5_research_r3_metrics.py": 6,
+    "engine/tests/test_v5_research_r4_agents.py": 26,
+    "engine/tests/test_v5_research_r4_population.py": 9
+  },
+  "difference": 906,
+  "excluded_engine_modules": {
+    "engine/tests/test_e2_capture_hold_semantics.py": {
+      "prior_current_case_count": 26,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_e3_slot_limited_disruption_semantics.py": {
+      "prior_current_case_count": 73,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_e4_mirrored_pass_order_semantics.py": {
+      "prior_current_case_count": 94,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_e5_anchor_placement_semantics.py": {
+      "prior_current_case_count": 44,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_e6_context_detection_radius.py": {
+      "prior_current_case_count": 45,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 32,
+      "classification": "mixed inventory and compatibility; required cases supplemented"
+    },
+    "engine/tests/test_e6_priced_sensing_semantics.py": {
+      "prior_current_case_count": 46,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_ruleset_v6_research_anchor_before_core.py": {
+      "prior_current_case_count": 84,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 5,
+      "classification": "mixed inventory and compatibility; required cases supplemented"
+    },
+    "engine/tests/test_ruleset_v6_research_capture_hold.py": {
+      "prior_current_case_count": 37,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 4,
+      "classification": "mixed inventory and compatibility; required cases supplemented"
+    },
+    "engine/tests/test_ruleset_v6_research_disruption_slot.py": {
+      "prior_current_case_count": 57,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 5,
+      "classification": "mixed inventory and compatibility; required cases supplemented"
+    },
+    "engine/tests/test_ruleset_v6_research_mirrored_passes.py": {
+      "prior_current_case_count": 80,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 6,
+      "classification": "mixed inventory and compatibility; required cases supplemented"
+    },
+    "engine/tests/test_ruleset_v6_research_scale.py": {
+      "prior_current_case_count": 47,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 1,
+      "classification": "mixed inventory and compatibility; required cases supplemented"
+    },
+    "engine/tests/test_ruleset_v6_research_scale_move.py": {
+      "prior_current_case_count": 35,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 1,
+      "classification": "mixed inventory and compatibility; required cases supplemented"
+    },
+    "engine/tests/test_ruleset_v6_research_scale_move_proportional.py": {
+      "prior_current_case_count": 28,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 1,
+      "classification": "mixed inventory and compatibility; required cases supplemented"
+    },
+    "engine/tests/test_ruleset_v6_research_sensing.py": {
+      "prior_current_case_count": 82,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 5,
+      "classification": "mixed inventory and compatibility; required cases supplemented"
+    },
+    "engine/tests/test_ruleset_v6_research_sensing_active.py": {
+      "prior_current_case_count": 69,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 23,
+      "classification": "mixed inventory and compatibility; required cases supplemented"
+    },
+    "engine/tests/test_v5_research_analyzer.py": {
+      "prior_current_case_count": 7,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v5_research_r1_metrics.py": {
+      "prior_current_case_count": 2,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v5_research_r3_agents.py": {
+      "prior_current_case_count": 9,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v5_research_r3_metrics.py": {
+      "prior_current_case_count": 6,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v5_research_r4_agents.py": {
+      "prior_current_case_count": 26,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v5_research_r4_population.py": {
+      "prior_current_case_count": 9,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e2_analysis_freeze.py": {
+      "prior_current_case_count": 10,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e2_analysis_pipeline.py": {
+      "prior_current_case_count": 3,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e2_capture_analyzer.py": {
+      "prior_current_case_count": 20,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e2_fixtures.py": {
+      "prior_current_case_count": 30,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e2_harness_analysis.py": {
+      "prior_current_case_count": 21,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e2_matrix.py": {
+      "prior_current_case_count": 34,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e3_action_parity.py": {
+      "prior_current_case_count": 16,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e3_analysis.py": {
+      "prior_current_case_count": 18,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e3_d9_gate.py": {
+      "prior_current_case_count": 5,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e3_fixtures.py": {
+      "prior_current_case_count": 10,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e3_freeze.py": {
+      "prior_current_case_count": 8,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e3_matrix.py": {
+      "prior_current_case_count": 43,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e3_parent_byte_identity.py": {
+      "prior_current_case_count": 92,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e3_pipeline.py": {
+      "prior_current_case_count": 13,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e4_analysis.py": {
+      "prior_current_case_count": 42,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e4_cell_metrics.py": {
+      "prior_current_case_count": 11,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e4_freeze.py": {
+      "prior_current_case_count": 10,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e4_gates.py": {
+      "prior_current_case_count": 17,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e4_matrix.py": {
+      "prior_current_case_count": 53,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e4_parent_byte_identity.py": {
+      "prior_current_case_count": 98,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e4_pipeline.py": {
+      "prior_current_case_count": 9,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e4_preregistration_v2.py": {
+      "prior_current_case_count": 31,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e4_preregistration_v3.py": {
+      "prior_current_case_count": 35,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e5_analysis.py": {
+      "prior_current_case_count": 113,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e5_cell_metrics.py": {
+      "prior_current_case_count": 12,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e5_freeze.py": {
+      "prior_current_case_count": 10,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e5_gates.py": {
+      "prior_current_case_count": 27,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e5_instrument_guards.py": {
+      "prior_current_case_count": 8,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e5_matrix.py": {
+      "prior_current_case_count": 15,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e5_mutation_guards.py": {
+      "prior_current_case_count": 25,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e5_parent_byte_identity.py": {
+      "prior_current_case_count": 98,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e6_analysis.py": {
+      "prior_current_case_count": 50,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e6_audit.py": {
+      "prior_current_case_count": 22,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e6_audit_lockout.py": {
+      "prior_current_case_count": 16,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e6_describe.py": {
+      "prior_current_case_count": 2,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e6_family.py": {
+      "prior_current_case_count": 326,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e6_freeze.py": {
+      "prior_current_case_count": 13,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e6_gates.py": {
+      "prior_current_case_count": 41,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e6_matrix.py": {
+      "prior_current_case_count": 20,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e6_parent_byte_identity.py": {
+      "prior_current_case_count": 86,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e6_runner.py": {
+      "prior_current_case_count": 14,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e6_traces.py": {
+      "prior_current_case_count": 26,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e8_adapt8_freeze.py": {
+      "prior_current_case_count": 145,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e8_analysis.py": {
+      "prior_current_case_count": 26,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e8_analysis_freeze.py": {
+      "prior_current_case_count": 7,
+      "historical_partition_count": 4,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e8_decision.py": {
+      "prior_current_case_count": 65,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e8_family.py": {
+      "prior_current_case_count": 175,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 20,
+      "classification": "mixed inventory and compatibility; required cases supplemented"
+    },
+    "engine/tests/test_v6_e8_family_engine.py": {
+      "prior_current_case_count": 330,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e8_family_fixed_details.py": {
+      "prior_current_case_count": 27,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e8_family_freeze.py": {
+      "prior_current_case_count": 17,
+      "historical_partition_count": 1,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e8_family_policy.py": {
+      "prior_current_case_count": 106,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e8_gates.py": {
+      "prior_current_case_count": 47,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e8_matrix.py": {
+      "prior_current_case_count": 14,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e8_parent_byte_identity.py": {
+      "prior_current_case_count": 99,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 99,
+      "classification": "mixed inventory and compatibility; required cases supplemented"
+    },
+    "engine/tests/test_v6_e8_preregistration.py": {
+      "prior_current_case_count": 93,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e8_preregistration_freeze.py": {
+      "prior_current_case_count": 15,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e8_runner.py": {
+      "prior_current_case_count": 28,
+      "historical_partition_count": 3,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e8_seed_protocol.py": {
+      "prior_current_case_count": 21,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e8_sensing_context.py": {
+      "prior_current_case_count": 44,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 44,
+      "classification": "mixed inventory and compatibility; required cases supplemented"
+    },
+    "engine/tests/test_v6_e8_sensing_semantics.py": {
+      "prior_current_case_count": 58,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 58,
+      "classification": "mixed inventory and compatibility; required cases supplemented"
+    },
+    "engine/tests/test_v6_e8_traces.py": {
+      "prior_current_case_count": 24,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 24,
+      "classification": "mixed inventory and compatibility; required cases supplemented"
+    },
+    "engine/tests/test_v6_e9_engine.py": {
+      "prior_current_case_count": 26,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_historical_inventory.py": {
+      "prior_current_case_count": 7,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_historical_scope_verifier.py": {
+      "prior_current_case_count": 19,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_instrument_analysis.py": {
+      "prior_current_case_count": 19,
+      "historical_partition_count": 3,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_instrument_behavior.py": {
+      "prior_current_case_count": 7,
+      "historical_partition_count": 1,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_instrument_constraints.py": {
+      "prior_current_case_count": 0,
+      "historical_partition_count": 4,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_instrument_recovery.py": {
+      "prior_current_case_count": 26,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_instrument_runner.py": {
+      "prior_current_case_count": 3,
+      "historical_partition_count": 6,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_policy.py": {
+      "prior_current_case_count": 20,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_selectors.py": {
+      "prior_current_case_count": 7,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_targeted_recovery_verifier.py": {
+      "prior_current_case_count": 13,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_dispatch.py": {
+      "prior_current_case_count": 1,
+      "historical_partition_count": 1,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_gate8_producer.py": {
+      "prior_current_case_count": 44,
+      "historical_partition_count": 1,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_gate8_publication.py": {
+      "prior_current_case_count": 75,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_gate8_seal06.py": {
+      "prior_current_case_count": 55,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_gate8_seal07.py": {
+      "prior_current_case_count": 64,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_gate8_seal08.py": {
+      "prior_current_case_count": 59,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_authority.py": {
+      "prior_current_case_count": 37,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_bindings.py": {
+      "prior_current_case_count": 7,
+      "historical_partition_count": 2,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_consumers.py": {
+      "prior_current_case_count": 94,
+      "historical_partition_count": 7,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_dispatch.py": {
+      "prior_current_case_count": 10,
+      "historical_partition_count": 2,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_gate8_producer.py": {
+      "prior_current_case_count": 44,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_gate8_publication.py": {
+      "prior_current_case_count": 18,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_gate8_seal06.py": {
+      "prior_current_case_count": 58,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_gate8_seal07.py": {
+      "prior_current_case_count": 296,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_gate8_seal08.py": {
+      "prior_current_case_count": 42,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_generation.py": {
+      "prior_current_case_count": 5,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_integrity.py": {
+      "prior_current_case_count": 102,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_inventory.py": {
+      "prior_current_case_count": 26,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_materialization.py": {
+      "prior_current_case_count": 48,
+      "historical_partition_count": 1,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_prefix_cancellation.py": {
+      "prior_current_case_count": 9,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_private.py": {
+      "prior_current_case_count": 27,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_renewal.py": {
+      "prior_current_case_count": 19,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_reporting.py": {
+      "prior_current_case_count": 47,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_scientific.py": {
+      "prior_current_case_count": 10,
+      "historical_partition_count": 17,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_serialization.py": {
+      "prior_current_case_count": 55,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_independent_vectors.py": {
+      "prior_current_case_count": 12,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_lifecycle.py": {
+      "prior_current_case_count": 7,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_records.py": {
+      "prior_current_case_count": 13,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_e9_v2_scientific.py": {
+      "prior_current_case_count": 4,
+      "historical_partition_count": 19,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    },
+    "engine/tests/test_v6_experiment_harness.py": {
+      "prior_current_case_count": 6,
+      "historical_partition_count": 0,
+      "supplemental_current_case_count": 0,
+      "classification": "research or experiment; outside Windows product campaign"
+    }
+  },
+  "supplemental_module_counts": {
+    "engine/tests/test_e6_context_detection_radius.py": 32,
+    "engine/tests/test_ruleset_v6_research_anchor_before_core.py": 5,
+    "engine/tests/test_ruleset_v6_research_capture_hold.py": 4,
+    "engine/tests/test_ruleset_v6_research_disruption_slot.py": 5,
+    "engine/tests/test_ruleset_v6_research_mirrored_passes.py": 6,
+    "engine/tests/test_ruleset_v6_research_scale.py": 1,
+    "engine/tests/test_ruleset_v6_research_scale_move.py": 1,
+    "engine/tests/test_ruleset_v6_research_scale_move_proportional.py": 1,
+    "engine/tests/test_ruleset_v6_research_sensing.py": 5,
+    "engine/tests/test_ruleset_v6_research_sensing_active.py": 23,
+    "engine/tests/test_v6_e8_family.py": 20,
+    "engine/tests/test_v6_e8_parent_byte_identity.py": 99,
+    "engine/tests/test_v6_e8_sensing_context.py": 44,
+    "engine/tests/test_v6_e8_sensing_semantics.py": 58,
+    "engine/tests/test_v6_e8_traces.py": 24
+  },
+  "skips": {
+    "engine/tests/test_agent_evaluation_revision_capture.py::test_evaluation_captures_symlink_cycle_as_revision_omissions": "Windows symlink privilege unavailable",
+    "engine/tests/test_agent_package.py::test_export_preflights_large_internal_file_symlink_before_reading_target": "Windows symlink privilege unavailable",
+    "engine/tests/test_agent_package.py::test_export_rejects_nonportable_live_payload_name_before_read": "NTFS colon names are alternate data streams",
+    "engine/tests/test_agent_revisions.py::test_symlink_cycle_is_reported_as_deterministic_omissions": "Windows symlink privilege unavailable",
+    "engine/tests/test_agent_revisions.py::test_external_file_symlink_is_reported_not_silently_dropped": "Windows symlink privilege unavailable",
+    "engine/tests/test_agent_revisions.py::test_internal_file_symlink_is_dereferenced_and_included": "Windows symlink privilege unavailable",
+    "engine/tests/test_agent_revisions.py::test_broken_symlink_is_reported_not_a_file": "Windows symlink privilege unavailable",
+    "engine/tests/test_agent_revisions.py::test_completeness_and_fingerprint_reflect_omissions": "Windows symlink privilege unavailable",
+    "engine/tests/test_agent_revisions.py::test_verify_revision_accounts_for_recorded_omissions": "Windows symlink privilege unavailable",
+    "engine/tests/test_evaluation_history_verification.py::test_resolve_contained_path_rejects_symlink_escape": "Windows symlink privilege unavailable",
+    "engine/tests/test_evaluation_history_verification.py::test_verify_cell_rejects_symlink_escape_replay_filename": "Windows symlink privilege unavailable",
+    "engine/tests/test_frozen_bytecode_exclusion.py::test_frozen_payload_contains_no_python_bytecode": "BYTEFRAY_FROZEN_EXE unset; frozen executable qualification deferred",
+    "engine/tests/test_frozen_scaffold_resources.py::test_frozen_executable_creates_every_supported_variant[api2-annotated]": "BYTEFRAY_FROZEN_EXE unset; frozen executable qualification deferred",
+    "engine/tests/test_frozen_scaffold_resources.py::test_frozen_executable_creates_every_supported_variant[api2-blank]": "BYTEFRAY_FROZEN_EXE unset; frozen executable qualification deferred",
+    "engine/tests/test_frozen_scaffold_resources.py::test_frozen_executable_creates_every_supported_variant[api2-window_scout]": "BYTEFRAY_FROZEN_EXE unset; frozen executable qualification deferred",
+    "engine/tests/test_frozen_scaffold_resources.py::test_frozen_executable_bundles_every_supported_template_directory": "BYTEFRAY_FROZEN_EXE unset; frozen executable qualification deferred",
+    "engine/tests/test_frozen_scaffold_resources.py::test_frozen_smoke_is_not_silently_satisfied_by_the_source_tree": "BYTEFRAY_FROZEN_EXE unset; frozen executable qualification deferred",
+    "engine/tests/test_launchers.py::test_source_commands_do_not_resolve_a_symlinked_interpreter": "POSIX symlink semantics only",
+    "engine/tests/test_replay_integrity.py::test_replay_symlink_escape_is_rejected_where_supported": "Windows symlink privilege unavailable"
+  },
+  "gui_cases": [
+    "client/tests/test_linux_pygame_smoke.py::test_pygame_renders_replay_and_exits_on_quit",
+    "client/tests/test_linux_pygame_smoke.py::test_pygame_step_and_seek_advance_a_real_replay",
+    "client/tests/test_replay_viewer_empty_state.py::test_empty_state_real_window_opens_and_closes_on_quit",
+    "client/tests/test_v6_alpha_m1_5.py::test_pygame_surface_events_navigation_switching_and_rewind",
+    "client/tests/test_v6_alpha_m1_5.py::test_real_sdl_sensing_loop_with_queued_interaction",
+    "client/tests/test_v6_alpha_m1_5_adversarial.py::test_direct_alpha_fallback_clears_untrusted_legacy_managers",
+    "client/tests/test_v6_alpha_m1_5_adversarial.py::test_scroll_reaches_recorded_histories_and_rewind_removes_future_receipts"
+  ],
+  "historical_partition": {
+    "baseline_junit_passed": 71,
+    "separate_guard_case": [
+      "engine/tests/test_v6_e9_v2_gate8_producer.py::test_w12_producer_is_real_only_with_no_entropy_reference_or_mode_switch"
+    ],
+    "guard_case_pass_evidence": "M1-1 adopted Disposition 03: separate existing plugin process, 1 passed"
+  }
+}

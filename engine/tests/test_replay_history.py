@@ -210,6 +210,167 @@ def _row_for(service: ReplayHistoryService, relative: str) -> Any:
 # ---------------------------------------------------------------------------
 
 
+SEED_BOUNDARIES = (
+    -(2**63), 2**63 - 1, -(2**63) - 1, 2**63, 2**64 - 1,
+    2**64 - 2, -(2**128), 2**128, -1, 0, 4242,
+)
+
+
+@pytest.mark.parametrize("seed", SEED_BOUNDARIES)
+@pytest.mark.parametrize("replay_only", [False, True])
+def test_seed_roundtrip_rebuild_reopen_and_exact_filter(
+    tree: Path, seed: int, replay_only: bool
+) -> None:
+    runs = tree / "runs"
+    # Adjacent values above 2**53 catch accidental conversion to REAL.
+    for name, value in (("target", seed), ("neighbor", seed + 1), ("ordinary", 42)):
+        directory = runs / name
+        directory.mkdir()
+        payload = _result_payload(seed=value)
+        if replay_only:
+            (directory / "replay.jsonl").write_text(_replay_header_line(payload), encoding="utf-8")
+        else:
+            _write_run(runs, name, seed=value)
+    before = _snapshot(runs)
+
+    def check(service: ReplayHistoryService) -> None:
+        assert service.count() == 3
+        query = HistoryQuery(seed=seed)
+        assert service.count(query) == 1
+        rows = _all_rows(service, query)
+        assert len(rows) == 1
+        assert type(rows[0].seed) is int
+        assert rows[0].seed == seed
+        detail = service.fetch_detail(rows[0].location_id)
+        assert detail is not None
+        assert type(detail.occurrence.seed) is int
+        assert detail.occurrence.seed == seed
+        assert detail.occurrence.relative_directory == "target"
+        assert service.count(HistoryQuery(seed=seed + 2)) == 0
+        assert service._index.connection.execute(
+            "SELECT seed, typeof(seed) FROM occurrence WHERE location_id = ?",
+            (rows[0].location_id,),
+        ).fetchone() == (str(seed), "text")
+
+    with _service(tree) as service:
+        assert service.refresh().committed
+        check(service)
+        assert service.refresh().unchanged == 3
+        assert service.rebuild().committed
+        check(service)
+    with _service(tree) as service:
+        assert not service.cache_report.rebuild_required
+        check(service)
+    assert _snapshot(runs) == before
+
+
+@pytest.mark.parametrize("seed", [None, True, False, "42", "invalid", 1.5, [], {}])
+def test_null_and_invalid_seeds_remain_absent(tree: Path, seed: Any) -> None:
+    _write_run(tree / "runs", "invalid-seed", seed=seed)
+    _write_run(tree / "runs", "ordinary", seed=42)
+    with _service(tree) as service:
+        service.refresh()
+        row = _row_for(service, "invalid-seed")
+        assert row.seed is None
+        assert service.fetch_detail(row.location_id).occurrence.seed is None
+        assert service._index.connection.execute(
+            "SELECT seed, typeof(seed) FROM occurrence WHERE location_id = ?", (row.location_id,)
+        ).fetchone() == (None, "null")
+        assert service.count(HistoryQuery(seed=42)) == 1
+        assert service.count() == 2
+
+
+def test_missing_seed_remains_absent(tree: Path) -> None:
+    directory = tree / "runs" / "absent-seed"
+    directory.mkdir()
+    payload = _result_payload(replay_filename=None)
+    del payload["reproducibility"]["seed"]
+    (directory / "result.json").write_text(json.dumps(payload), encoding="utf-8")
+    with _service(tree) as service:
+        service.refresh()
+        row = service.fetch_page().rows[0]
+        assert row.seed is None
+        assert service.fetch_detail(row.location_id).occurrence.seed is None
+
+
+def test_large_seed_incremental_add_update_and_failed_refresh_rollback(
+    tree: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runs = tree / "runs"
+    occurrence = "11111111-2222-3333-4444-555555555555"
+    _write_run(runs, "old", seed=42, occurrence_id=occurrence)
+    with _service(tree) as service:
+        service.refresh()
+        generation = service.generation
+        _write_run(runs, "new", seed=2**64 - 1)
+        _write_run(runs, "old", seed=-(2**63) - 1, occurrence_id=occurrence)
+        before = _snapshot(runs)
+        original = service._finish_generation
+
+        def fail(generation: int) -> None:
+            # Rows have been written; failure must roll back rows and metadata.
+            original(generation)
+            assert service.count(HistoryQuery(seed=2**64 - 1)) == 1
+            raise RuntimeError("controlled large-seed refresh failure")
+
+        with monkeypatch.context() as patch:
+            patch.setattr(service, "_finish_generation", fail)
+            with pytest.raises(RuntimeError, match="controlled large-seed"):
+                service.refresh()
+        assert service.generation == generation
+        assert service.count() == service.count(HistoryQuery(seed=42)) == 1
+        assert service.count(HistoryQuery(seed=2**64 - 1)) == 0
+        summary = service.refresh()
+        assert summary.committed
+        assert summary.added == summary.updated == 1
+        assert service.count() == 2
+        assert _row_for(service, "old").seed == -(2**63) - 1
+        assert _row_for(service, "new").seed == 2**64 - 1
+        assert _snapshot(runs) == before
+
+
+def test_v1_integer_seed_cache_rebuilds_through_normal_version_recovery(
+    tree: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from battle_engine.replay_history import index
+
+    _write_run(tree / "runs", "ordinary", seed=42)
+    # Construct the previous INTEGER-affinity cache using its normal lifecycle.
+    with monkeypatch.context() as patch:
+        patch.setattr(index, "CACHE_SCHEMA_VERSION", 1)
+        patch.setattr(index, "_SCHEMA_STATEMENTS", tuple(
+            statement.replace("seed                          TEXT", "seed                          INTEGER")
+            for statement in index._SCHEMA_STATEMENTS
+        ))
+        with _service(tree) as service:
+            service.refresh()
+            cache = Path(service.cache_report.path)
+            identity = service._identity
+            assert service._index.connection.execute(
+                "SELECT seed, typeof(seed) FROM occurrence"
+            ).fetchone() == (42, "integer")
+    _write_run(tree / "runs", "large", seed=2**64 - 1)
+    before = _snapshot(tree / "runs")
+    # Query owners cannot relabel/recover a cache; maintenance must prepare it.
+    with pytest.raises(ValueError, match="maintenance owner"):
+        HistoryIndex.open_read_only(cache, root_identity=identity)
+    with _service(tree) as service:
+        assert service.cache_report.rebuild_required
+        assert service.cache_report.rebuild_reason == "cache_schema_version_mismatch"
+        assert service.generation == 0
+        assert service.refresh().committed
+        columns = {row[1]: row[2] for row in service._index.connection.execute(
+            "PRAGMA table_info(occurrence)"
+        )}
+        assert columns["seed"] == "TEXT"
+        assert service.count() == 2
+        assert service.count(HistoryQuery(seed=2**64 - 1)) == 1
+    with _service(tree) as service:
+        assert not service.cache_report.rebuild_required
+        assert _row_for(service, "large").seed == 2**64 - 1
+    assert _snapshot(tree / "runs") == before
+
+
 def test_headless_import_never_pulls_in_qt_or_pygame() -> None:
     before = {name for name in sys.modules if "PySide6" in name or name == "pygame"}
     import battle_engine.replay_history
@@ -1162,6 +1323,129 @@ def test_date_range_filters_and_excludes_unknown_dates(populated: Any) -> None:
     assert populated.count(HistoryQuery(end=datetime(2020, 1, 1, tzinfo=timezone.utc))) == 0
 
 
+
+@pytest.fixture()
+def timestamp_index(tree: Path) -> Iterator[tuple[HistoryIndex, dict[str, tuple[int, bool]]]]:
+    """Synthetic nanosecond edges, including rows a datetime cannot express."""
+    from dataclasses import replace
+
+    _write_run(tree / "runs", "source", seed=2**64 - 1)
+    scanner = ArtifactScanner(tree / "runs")
+    source = scanner.normalize(next(scanner.iter_candidates()))
+    stamps = (
+        -(2**63), -(2**63) + 1, -9_223_372_036_854_775_000,
+        -1001, -1000, -1, 0, 1,
+        1_700_000_000_123_455_999, 1_700_000_000_123_456_000,
+        1_700_000_000_123_456_001, 9_223_372_036_854_775_000,
+        2**63 - 2, 2**63 - 1,
+    )
+    occurrences = [
+        replace(
+            source, location_id=f"loc_edge_{i}", relative_directory=f"edge-{i}",
+            effective_timestamp_ns=stamp, timestamp_known=True,
+        )
+        for i, stamp in enumerate(stamps)
+    ]
+    occurrences.append(replace(
+        source, location_id="loc_unknown", relative_directory="unknown",
+        effective_timestamp_ns=0, effective_timestamp=None, timestamp_known=False,
+        timestamp_confidence=TimestampConfidence.UNKNOWN,
+    ))
+    expected = {
+        occurrence.location_id: (occurrence.effective_timestamp_ns, occurrence.timestamp_known)
+        for occurrence in occurrences
+    }
+    index = HistoryIndex.open(tree / "edges.sqlite3", root_identity="isolated-edges")
+    try:
+        with index.write_transaction():
+            index.write_occurrences(occurrences, generation=1)
+        yield index, expected
+    finally:
+        index.close()
+
+
+_DATE_FILTER_CASES = (
+    (None, None),
+    ("1600-01-01", None), (None, "1600-01-01"),
+    ("2500-01-01", None), (None, "2500-01-01"),
+    ("1600-01-01", "2500-01-01"), ("2500-01-01", "1600-01-01"),
+    ("0001-01-01T00:00:00+14:00", "9999-12-31T23:59:59.999999-12:00"),
+    ("1677-09-21T00:12:43.145224", None),
+    (None, "1677-09-21T00:12:43.145224"),
+    ("1677-09-21T00:12:43.145225", None),
+    (None, "1677-09-21T00:12:43.145225"),
+    ("2262-04-11T23:47:16.854775", None),
+    (None, "2262-04-11T23:47:16.854775"),
+    ("2262-04-11T23:47:16.854776", None),
+    (None, "2262-04-11T23:47:16.854776"),
+    ("2023-11-14T22:13:20.123456", "2023-11-14T22:13:20.123456"),
+    ("2023-11-15T03:43:20.123456+05:30", "2023-11-14T18:13:20.123456-04:00"),
+    ("1969-12-31T23:59:59.999999", "1970-01-01"),
+    ("1970-01-01", "1970-01-01"),
+    ("2026-01-01", "2025-01-01"),
+)
+
+
+@pytest.mark.parametrize(("start_text", "end_text"), _DATE_FILTER_CASES)
+def test_date_filter_exact_inclusive_nanoseconds_and_int64_edges(
+    timestamp_index: Any, start_text: str | None, end_text: str | None,
+) -> None:
+    index, stamps = timestamp_index
+    start = None if start_text is None else datetime.fromisoformat(start_text)
+    end = None if end_text is None else datetime.fromisoformat(end_text)
+
+    def epoch_us(value: datetime | None) -> int | None:
+        if value is None:
+            return None
+        aware = value if value.tzinfo is not None else value.replace(tzinfo=timezone.utc)
+        return (aware - datetime(1970, 1, 1, tzinfo=timezone.utc)) // timedelta(microseconds=1)
+
+    lower, upper = epoch_us(start), epoch_us(end)
+    expected = {
+        key for key, (stamp, known) in stamps.items()
+        if ((start is None and end is None) or known)
+        and (lower is None or stamp >= lower * 1000)
+        and (upper is None or stamp <= upper * 1000)
+    }
+    # Exercise count, first page, keyset continuation and combined large-seed filters.
+    for query in (
+        HistoryQuery(start=start, end=end),
+        HistoryQuery(
+            start=start, end=end, seed=2**64 - 1, entrant_text="alpha",
+            ruleset_ids=["bytefray-rules-4"], replay_states=[ReplayState.AVAILABLE],
+        ),
+    ):
+        assert index.count(query) == len(expected)
+        found = set()
+        cursor = None
+        while True:
+            page = index.fetch_page(query, cursor=cursor, limit=3)
+            found.update(row.location_id for row in page.rows)
+            if not page.has_more:
+                break
+            cursor = page.next_cursor
+        assert found == expected
+    assert index.count(HistoryQuery(start=start, end=end, seed=2**64 - 2)) == 0
+    assert index.count() == len(stamps)
+    assert CACHE_SCHEMA_VERSION == 2
+
+
+
+@pytest.mark.parametrize("bound", (-(2**63), 2**63 - 1))
+@pytest.mark.parametrize("side", ("start", "end"))
+def test_date_filter_exact_int64_endpoint_predicates(timestamp_index, monkeypatch, bound, side):
+    """Exercise exact SQL endpoints, which datetime's microseconds cannot encode."""
+    index, stamps = timestamp_index
+    monkeypatch.setattr("battle_engine.replay_history.index._epoch_ns", lambda _value: bound)
+    query = HistoryQuery(**{side: datetime(1970, 1, 1, tzinfo=timezone.utc)})
+    expected = {
+        key for key, (stamp, known) in stamps.items()
+        if known and (stamp >= bound if side == "start" else stamp <= bound)
+    }
+    assert index.count(query) == len(expected)
+    assert {row.location_id for row in index.fetch_page(query).rows} == expected
+
+
 def test_exact_seed_filter(populated: Any) -> None:
     assert populated.count(HistoryQuery(seed=22)) == 1
     assert populated.count(HistoryQuery(seed=999)) == 0
@@ -1313,23 +1597,65 @@ def test_index_open_rejects_nothing_but_still_reports_size(tree: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
+_REAL_MATCH_PASSIVE_SOURCE = """
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
+
+class Agent:
+    def reset(self, context):
+        self.arena_size = context.arena_size
+
+    def declare_processes(self):
+        return [ProcessDeclaration(id="main", reach=self.arena_size - 1, share=1.0)]
+
+    def act(self, observation):
+        return AgentAction(ActionKindV2.READ, observation.self_anchor)
+
+def create_agent():
+    return Agent()
+"""
+
+
+def _ensure_real_match_agent(agents_root: Path, name: str) -> None:
+    directory = agents_root / "agents" / name
+    if directory.exists():
+        return
+    directory.mkdir(parents=True)
+    (directory / "agent.yaml").write_text(
+        json.dumps(
+            {
+                "kind": "python",
+                "api_version": 2,
+                "entrypoint": "agent.py:create_agent",
+                "name": name,
+                "version": "1.0",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (directory / "agent.py").write_text(_REAL_MATCH_PASSIVE_SOURCE, encoding="utf-8")
+
+
 def _run_real_match(destination: Path, *, seed: int = 73) -> None:
     """Produce genuine current artifacts through the production writer."""
 
-    from battle_engine.builtins import build_agent
+    from battle_engine.agents import resolve_agent
     from battle_engine.config import Config, Weights
     from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
 
+    agents_root = destination.parents[2] / "fixture_agents"
+    _ensure_real_match_agent(agents_root, "a")
+    _ensure_real_match_agent(agents_root, "b")
+
     config = Config(
         arena_size=128,
-        instr_per_tick=4,
+        instr_per_tick=8,
         seed=seed,
         win_mode="score_fallback",
         weights=Weights(alive=0.25, kill=3.5, territory=0.5, territory_bucket=16),
     )
     entrants = (
-        MatchEntrant("A", "writer", 0, build_agent("writer", 0, offset=80, byte=0x99)),
-        MatchEntrant("B", "runner", 64, build_agent("runner", 64)),
+        MatchEntrant.python("A", "v4_scout", 0, resolve_agent(agents_root, "a")),
+        MatchEntrant.python("B", "v5_region_attacker", 64, resolve_agent(agents_root, "b")),
     )
     destination.mkdir(parents=True, exist_ok=True)
     NativeMatchService().run(

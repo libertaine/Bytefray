@@ -1,0 +1,9 @@
+{
+  "display": ":101",
+  "platform": "xcb",
+  "window": 2097159,
+  "active": true,
+  "focus_before": "None",
+  "focus_after": "<PySide6.QtWidgets.QLineEdit(0x1a4c4010) at 0x7d2644244140>",
+  "stimulus": "xdotool windowfocus --sync"
+}

@@ -10,9 +10,12 @@ every cell).
 
 Every evaluation here runs through the real ``EvaluationService``/CLI
 ``main()`` against real, minimal Python agents -- never a hand-built
-``EvaluationCell``/artifact -- so a claim like "the schedule has 16 cells"
-or "the CLI resolves omitted --ruleset to alpha2" is evidence from an
-actual execution, not merely a plausible-looking assertion. See
+``EvaluationCell``/artifact -- so schedule and Ruleset-resolution claims are
+evidence from actual execution. The F.6 lifecycle tests that specifically
+need a tool-failure cell inject an ``AgentTestError`` at the service's
+``test_agent`` seam; current API-v2 agents still pass normal preflight, while
+the deterministic injected failure exercises the production checkpoint and
+exit-code paths without relying on a retired API-v1 entrant. See
 test_evaluation_history_comparison.py for the (deliberately different, and
 separately justified) hand-built-fixture convention used for comparison.py,
 a pure function over already-adapted data.
@@ -23,6 +26,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import battle_engine.evaluation_cell_execution as cell_execution_module
 import pytest
 from battle_engine.agent_evaluation import (
     IDENTITY_VERSION_V4,
@@ -40,10 +44,11 @@ from battle_engine.agent_evaluation import (
     resolve_v4_seed_geometry,
 )
 from battle_engine.agent_evaluation import main as evaluate_main
+from battle_engine.agent_test import AgentTestError
 from battle_engine.evaluation_history.discovery import adapt_any
 from battle_engine.evaluation_history.models import FieldConfidence
 from battle_engine.evaluation_history.verification import verify_summary
-from battle_engine.rules import BYTEFRAY_RULESET_ID
+from battle_engine.python_runtime import RuntimeDiagnostic
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ID,
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
@@ -123,10 +128,32 @@ def _v4_request(tmp_path: Path, **overrides) -> EvaluationRequest:
         "output_dir": tmp_path / "eval-out",
         "ticks": 5,
         "data_root": tmp_path,
-        "ruleset_id": BYTEFRAY_RULESET_V4_ALPHA2_ID,
+        "ruleset_id": BYTEFRAY_RULESET_V4_ID,
     }
     defaults.update(overrides)
     return EvaluationRequest(**defaults)
+
+
+def _inject_agent_test_failure(monkeypatch, *failing_agent_ids: str):
+    """Make cells involving selected current agents fail at the tool seam."""
+
+    original = cell_execution_module.test_agent
+    failing = frozenset(failing_agent_ids)
+
+    def _test_agent(agent_id: str, *args, **kwargs):
+        participants = {agent_id, kwargs.get("opponent")}
+        if failing.intersection(participants):
+            raise AgentTestError(
+                RuntimeDiagnostic(
+                    code="agent_test_internal_error",
+                    stage="internal",
+                    message="Injected deterministic agent-test infrastructure failure.",
+                )
+            )
+        return original(agent_id, *args, **kwargs)
+
+    monkeypatch.setattr(cell_execution_module, "test_agent", _test_agent)
+    return original
 
 
 # ---------------------------------------------------------------------------
@@ -198,7 +225,7 @@ def test_placement_reconstructs_exactly_from_seed_via_the_production_seam(tmp_pa
     result = EvaluationService().run(request)
     for cell in result.cells:
         seat_a, seat_b = resolve_v4_seed_geometry(
-            BYTEFRAY_RULESET_V4_ALPHA2_ID, STANDARD_V4_ARENA_SIZE, cell.seed
+            BYTEFRAY_RULESET_V4_ID, STANDARD_V4_ARENA_SIZE, cell.seed
         )
         if cell.orientation == ORIENTATION_OPPONENT_FIRST:
             seat_a, seat_b = seat_b, seat_a
@@ -208,9 +235,22 @@ def test_placement_reconstructs_exactly_from_seed_via_the_production_seam(tmp_pa
 def test_pinned_seed_vectors_match_the_research_report(tmp_path: Path):
     """Cross-validates resolve_v4_seed_geometry against the exact pinned
     vector the research report's own reproduction cites (Sec C.1): seed 3
-    at arena 512 resolves to (495, 387)."""
+    at arena 512 resolves to (495, 387).
 
-    assert resolve_v4_seed_geometry(BYTEFRAY_RULESET_V4_ALPHA2_ID, 512, 3) == (495, 387)
+    Uses stable ``bytefray-rules-4`` rather than the retired
+    ``bytefray-rules-4-alpha2`` this test originally pinned against:
+    ``resolve_v4_seed_geometry`` (like ``placement.core_placement_mode``,
+    T-4) resolves its Ruleset's ``core_placement`` mode through the
+    executable registry and fails *safe* to the masked ``"zero"`` default
+    for an unregistered id -- not merely inert, but silently wrong (a
+    seed-3 query returns ``(0, 0)`` instead of raising) -- so this pinned
+    vector can only be reproduced against a still-registered identity.
+    Alpha2's and the stable identity's seeded placement are byte-identical
+    by construction (placement's domain-separation payload is a fixed
+    constant, not the ruleset id -- V6 Phase 2B.8 audit Sec E.1/J), so the
+    pinned vector itself is unchanged."""
+
+    assert resolve_v4_seed_geometry(BYTEFRAY_RULESET_V4_ID, 512, 3) == (495, 387)
 
 
 def test_arena_defaults_to_512_when_omitted(tmp_path: Path):
@@ -296,21 +336,17 @@ def test_worker_count_does_not_change_schedule_or_outcome(tmp_path: Path):
 # ---------------------------------------------------------------------------
 
 
-def test_all_cells_failed_is_not_reported_as_finished(tmp_path: Path):
-    """A genuine `status="failed"` cell (not merely an init-failure
-    *outcome*, which is a legitimately scored "completed" result) -- an
-    Agent API v1 candidate paired against Agent API v2 opponents under an
-    explicit --ruleset bytefray-rules-4-alpha2 is rejected by the Ruleset's
-    own runtime-compatibility check before any match executes, exactly the
-    ruleset_agent_unsupported failure mode F.6 itself reproduced."""
+def test_all_cells_failed_is_not_reported_as_finished(tmp_path: Path, monkeypatch):
+    """Tool failures are terminal cells, never a successful evaluation."""
 
-    _write_api_v1_agent(tmp_path, "candidate")
+    _write_api_v2_agent(tmp_path, "candidate")
     _write_api_v2_agent(tmp_path, "opponent")
+    _inject_agent_test_failure(monkeypatch, "candidate", "opponent")
     request = _v4_request(tmp_path, seeds=(1, 2))
     result = EvaluationService().run(request)
     assert result.cells
     assert all(cell.status == "failed" for cell in result.cells)
-    assert all(cell.error_code == "ruleset_agent_unsupported" for cell in result.cells)
+    assert all(cell.error_code == "agent_test_internal_error" for cell in result.cells)
 
     data = json.loads(result.state_path.read_text(encoding="utf-8"))
     assert data["lifecycle_state"] == LIFECYCLE_STATE_FINISHED_WITH_FAILURES
@@ -318,13 +354,12 @@ def test_all_cells_failed_is_not_reported_as_finished(tmp_path: Path):
     assert data["matrix_size"] == len(data["cells"])
 
 
-def test_partial_failure_is_not_reported_as_finished(tmp_path: Path):
+def test_partial_failure_is_not_reported_as_finished(tmp_path: Path, monkeypatch):
     _write_api_v2_agent(tmp_path, "candidate")
     _write_api_v2_agent(tmp_path, "opp_ok")
-    _write_api_v1_agent(tmp_path, "opp_incompatible")
-    request = _v4_request(
-        tmp_path, opponent_ids=("opp_ok", "opp_incompatible"), seeds=(1,)
-    )
+    _write_api_v2_agent(tmp_path, "opp_failed")
+    _inject_agent_test_failure(monkeypatch, "opp_failed")
+    request = _v4_request(tmp_path, opponent_ids=("opp_ok", "opp_failed"), seeds=(1,))
     result = EvaluationService().run(request)
 
     statuses = {
@@ -332,7 +367,7 @@ def test_partial_failure_is_not_reported_as_finished(tmp_path: Path):
         for cell in result.cells
     }
     assert statuses["opp_ok"] == {"completed"}
-    assert statuses["opp_incompatible"] == {"failed"}
+    assert statuses["opp_failed"] == {"failed"}
 
     data = json.loads(result.state_path.read_text(encoding="utf-8"))
     assert data["lifecycle_state"] == LIFECYCLE_STATE_FINISHED_WITH_FAILURES
@@ -351,16 +386,21 @@ def test_all_cells_succeeding_is_reported_as_finished(tmp_path: Path):
     assert data["complete"] is True
 
 
-def test_resume_never_converts_historical_failed_cells_into_success(tmp_path: Path):
-    _write_api_v1_agent(tmp_path, "candidate")
+def test_resume_never_converts_historical_failed_cells_into_success(
+    tmp_path: Path, monkeypatch
+):
+    _write_api_v2_agent(tmp_path, "candidate")
     _write_api_v2_agent(tmp_path, "opponent")
+    original_test_agent = _inject_agent_test_failure(monkeypatch, "candidate", "opponent")
     request = _v4_request(tmp_path, seeds=(1,))
     first = EvaluationService().run(request)
     first_data = json.loads(first.state_path.read_text(encoding="utf-8"))
     assert first_data["lifecycle_state"] == LIFECYCLE_STATE_FINISHED_WITH_FAILURES
 
     # A bare resume (default resume=True, retry_failures=False): nothing new
-    # is scheduled, since the failed cell is already terminally resolved.
+    # is scheduled, since the failed cell is already terminally resolved. Restore
+    # normal execution first so an accidental retry would turn the cells green.
+    monkeypatch.setattr(cell_execution_module, "test_agent", original_test_agent)
     resumed = EvaluationService().run(request)
     resumed_data = json.loads(resumed.state_path.read_text(encoding="utf-8"))
     assert all(cell.status == "failed" for cell in resumed.cells)
@@ -411,11 +451,8 @@ def test_cli_exit_code_reflects_real_cell_outcome(tmp_path: Path, monkeypatch, c
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
     _write_api_v2_agent(tmp_path, "candidate")
     _write_api_v2_agent(tmp_path, "opponent")
-    # An Agent API v1 agent, incompatible with the explicit --ruleset
-    # bytefray-rules-4-alpha2 below -- fails every cell with a genuine
-    # status="failed"/ruleset_agent_unsupported, exactly F.6's own failure
-    # mode, rather than a hand-built/simulated one.
-    _write_api_v1_agent(tmp_path, "broken")
+    _write_api_v2_agent(tmp_path, "broken")
+    _inject_agent_test_failure(monkeypatch, "broken")
 
     ok_exit = evaluate_main(
         [
@@ -423,7 +460,7 @@ def test_cli_exit_code_reflects_real_cell_outcome(tmp_path: Path, monkeypatch, c
             "--opponents",
             "opponent",
             "--ruleset",
-            BYTEFRAY_RULESET_V4_ALPHA2_ID,
+            BYTEFRAY_RULESET_V4_ID,
             "--seeds",
             "1",
             "--ticks",
@@ -441,7 +478,7 @@ def test_cli_exit_code_reflects_real_cell_outcome(tmp_path: Path, monkeypatch, c
             "--opponents",
             "broken",
             "--ruleset",
-            BYTEFRAY_RULESET_V4_ALPHA2_ID,
+            BYTEFRAY_RULESET_V4_ID,
             "--seeds",
             "1",
             "--ticks",
@@ -462,7 +499,9 @@ def test_cli_exit_code_reflects_real_cell_outcome(tmp_path: Path, monkeypatch, c
 # ---------------------------------------------------------------------------
 
 
-def test_omitted_ruleset_with_api_v1_roster_resolves_to_ruleset_2(tmp_path: Path, monkeypatch):
+def test_omitted_ruleset_with_api_v1_roster_is_rejected_before_artifact(
+    tmp_path: Path, monkeypatch
+):
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
     _write_api_v1_agent(tmp_path, "candidate")
     _write_api_v1_agent(tmp_path, "opponent")
@@ -480,10 +519,8 @@ def test_omitted_ruleset_with_api_v1_roster_resolves_to_ruleset_2(tmp_path: Path
             "--quiet",
         ]
     )
-    assert exit_code == 0
-    data = json.loads((tmp_path / "out" / "evaluation.json").read_text(encoding="utf-8"))
-    assert data["rules_compatibility_id"] == BYTEFRAY_RULESET_V2_ID
-    assert all(cell["status"] == "completed" for cell in data["cells"])
+    assert exit_code == 2
+    assert not (tmp_path / "out" / "evaluation.json").exists()
 
 
 def test_omitted_ruleset_with_api_v2_roster_resolves_to_stable_v4(tmp_path: Path, monkeypatch):
@@ -552,72 +589,44 @@ def test_explicit_stable_v4_ruleset_matches_the_omitted_default(tmp_path: Path, 
     assert data["schema_version"] == SCHEMA_VERSION_V4 == 7
 
 
-def test_explicit_alpha2_ruleset_uses_the_stable_v4_methodology_under_its_own_identity(
-    tmp_path: Path, monkeypatch
+@pytest.mark.parametrize(
+    "ruleset_id", [BYTEFRAY_RULESET_V4_ALPHA1_ID, BYTEFRAY_RULESET_V4_ALPHA2_ID]
+)
+def test_explicit_retired_v4_alpha_ruleset_is_rejected_by_the_evaluation_cli(
+    tmp_path: Path, monkeypatch, ruleset_id: str
 ):
-    """alpha2 keeps the schema-7 v4-seeded methodology it was qualified
-    under in Phase 1 -- Phase 2's promotion changes which Ruleset an
-    *omitted* selection reaches, never alpha2's own explicit behavior, and
-    an alpha2 artifact stays honestly self-attributed as alpha2, never
-    silently rewritten to the stable identity."""
+    """V6 Phase 2B.10 Scope B retired both v4 alphas from executable
+    registration. Before retirement, an explicit ``--ruleset`` selection of
+    either kept its own historical, honestly-self-attributed evaluation
+    methodology (alpha1: schema 5, ``ruleset_v2_standard_placements``;
+    alpha2: schema 7, ``ruleset_v4_seeded_placements`` -- the same
+    methodology stable ``bytefray-rules-4`` now uses). Neither identity can
+    create a new evaluation artifact any longer; this CLI must fail
+    closed, and never silently substitute the stable identity's
+    methodology for either (T-12)."""
 
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
     _write_api_v2_agent(tmp_path, "candidate")
     _write_api_v2_agent(tmp_path, "opponent")
-    exit_code = evaluate_main(
-        [
-            "candidate",
-            "--opponents",
-            "opponent",
-            "--ruleset",
-            BYTEFRAY_RULESET_V4_ALPHA2_ID,
-            "--seeds",
-            "1",
-            "--ticks",
-            "5",
-            "--output",
-            str(tmp_path / "out"),
-            "--quiet",
-        ]
-    )
-    assert exit_code == 0
-    data = json.loads((tmp_path / "out" / "evaluation.json").read_text(encoding="utf-8"))
-    assert data["rules_compatibility_id"] == BYTEFRAY_RULESET_V4_ALPHA2_ID
-    assert data["arena_alignment_mode"] == "ruleset_v4_seeded_placements"
-    assert data["schema_version"] == SCHEMA_VERSION_V4 == 7
-
-
-def test_explicit_alpha1_ruleset_keeps_its_historical_fixed_placement_methodology(
-    tmp_path: Path, monkeypatch
-):
-    """alpha1 must not be silently reinterpreted as the new v4 methodology
-    merely because it shares an Agent API generation with alpha2."""
-
-    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
-    _write_api_v2_agent(tmp_path, "candidate")
-    _write_api_v2_agent(tmp_path, "opponent")
-    exit_code = evaluate_main(
-        [
-            "candidate",
-            "--opponents",
-            "opponent",
-            "--ruleset",
-            BYTEFRAY_RULESET_V4_ALPHA1_ID,
-            "--seeds",
-            "1",
-            "--ticks",
-            "5",
-            "--output",
-            str(tmp_path / "out"),
-            "--quiet",
-        ]
-    )
-    assert exit_code == 0
-    data = json.loads((tmp_path / "out" / "evaluation.json").read_text(encoding="utf-8"))
-    assert data["rules_compatibility_id"] == BYTEFRAY_RULESET_V4_ALPHA1_ID
-    assert data["arena_alignment_mode"] == "ruleset_v2_standard_placements"
-    assert data["schema_version"] == 5
-    assert {cell["placement_id"] for cell in data["cells"]} == {"opposed", "quarter", "opposed-shifted"}
+    with pytest.raises(SystemExit) as caught:
+        evaluate_main(
+            [
+                "candidate",
+                "--opponents",
+                "opponent",
+                "--ruleset",
+                ruleset_id,
+                "--seeds",
+                "1",
+                "--ticks",
+                "5",
+                "--output",
+                str(tmp_path / "out"),
+                "--quiet",
+            ]
+        )
+    assert caught.value.code == 2
+    assert not (tmp_path / "out" / "evaluation.json").exists()
 
 
 def test_omitted_ruleset_with_incompatible_mixed_roster_fails_closed(tmp_path: Path, monkeypatch):
@@ -661,7 +670,7 @@ def test_schema_7_round_trips_through_evaluation_history(tmp_path: Path):
     assert summary.schema.schema_version == SCHEMA_VERSION_V4 == 7
     assert summary.schema.supported is True
     assert summary.arena_alignment_mode.value == "ruleset_v4_seeded_placements"
-    assert summary.rules_compatibility_id.value == BYTEFRAY_RULESET_V4_ALPHA2_ID
+    assert summary.rules_compatibility_id.value == BYTEFRAY_RULESET_V4_ID
     assert summary.health.codes and summary.health.codes[0].value == "healthy"
 
     for cell in summary.cells:
@@ -813,47 +822,27 @@ def test_rendered_summary_reports_v4_seeded_placements_for_stable_v4(
     assert "Arena alignment: fixed" not in console_out
 
 
-def test_rendered_summary_reports_v4_seeded_placements_for_alpha2(
-    tmp_path: Path, monkeypatch, capsys
+@pytest.mark.parametrize("ruleset_id", ("bytefray-rules-1", "bytefray-rules-2"))
+def test_evaluation_cli_rejects_retired_v1_and_v2_rulesets_without_artifact(
+    tmp_path: Path, monkeypatch, ruleset_id: str
 ):
-    """Alpha2 shares the defect and the fix -- the console summary is a
-    property of the resolved methodology, not of which of the two
-    v4-methodology identities is executing."""
-
     _write_api_v2_agent(tmp_path, "candidate")
     _write_api_v2_agent(tmp_path, "opponent")
-    console_out, data = _run_and_capture_console(
-        tmp_path, monkeypatch, capsys, ruleset_id=BYTEFRAY_RULESET_V4_ALPHA2_ID, output_name="out"
-    )
+    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
 
-    assert data["arena_alignment_mode"] == "ruleset_v4_seeded_placements"
-    assert "Arena alignment: ruleset_v4_seeded_placements" in console_out
-    assert "Arena alignment: fixed" not in console_out
+    with pytest.raises(SystemExit) as caught:
+        evaluate_main(
+            [
+                "candidate",
+                "--opponents",
+                "opponent",
+                "--ruleset",
+                ruleset_id,
+                "--output",
+                str(tmp_path / "out"),
+                "--quiet",
+            ]
+        )
 
-
-def test_rendered_summary_for_historical_v1_and_v2_is_unaffected(
-    tmp_path: Path, monkeypatch, capsys
-):
-    """The fix threads a third argument through three call sites shared by
-    every Ruleset's summary rendering -- confirm it changed nothing for the
-    two identities that do not use the v4 methodology. Ruleset v1 keeps its
-    own historical "fixed" label; Ruleset v2 keeps its own distinct
-    "ruleset_v2_standard_placements" label (v2.0.0-beta2 Phase 1) -- neither
-    was ever "fixed" for v2, so this does not assert that both report the
-    same text, only that each still reports its own correct, pre-existing
-    one and that it still agrees with the persisted artifact."""
-
-    _write_api_v1_agent(tmp_path, "candidate")
-    _write_api_v1_agent(tmp_path, "opponent")
-
-    v1_console, v1_data = _run_and_capture_console(
-        tmp_path, monkeypatch, capsys, ruleset_id=BYTEFRAY_RULESET_ID, output_name="out-v1"
-    )
-    assert v1_data["arena_alignment_mode"] == "fixed"
-    assert "Arena alignment: fixed" in v1_console
-
-    v2_console, v2_data = _run_and_capture_console(
-        tmp_path, monkeypatch, capsys, ruleset_id=BYTEFRAY_RULESET_V2_ID, output_name="out-v2"
-    )
-    assert v2_data["arena_alignment_mode"] == "ruleset_v2_standard_placements"
-    assert "Arena alignment: ruleset_v2_standard_placements" in v2_console
+    assert caught.value.code == 2
+    assert not (tmp_path / "out" / "evaluation.json").exists()

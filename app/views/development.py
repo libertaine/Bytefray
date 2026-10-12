@@ -79,6 +79,7 @@ _MAX_SPINBOX_INT = 2_147_483_647
 _TEMPLATE_LABELS = {
     "blank": "Blank",
     "annotated": "Annotated Example (commented)",
+    "window_scout": "Window Scout — V6 experimental sensing (personal copy)",
 }
 
 
@@ -184,12 +185,10 @@ class NewAgentDialog(QDialog):
 class AgentDevelopmentPanel(QWidget):
     """Agent Development tab: catalog selection, New Agent, Open Folder, Validate.
 
-    Only ``kind: python`` agents are shown -- v0.4 authoring (create,
-    validate, development-test) applies to Agent API v1 Python agents only,
-    and ``Open Agent Folder``/``Validate`` must only ever be available for a
-    real, user-owned Python agent directory (never a VM built-in/starter or
-    the internal reference opponent, which is never discoverable through
-    the catalog at all).
+    Only ``kind: python`` agents are shown. Creation emits Agent API v2;
+    discovery and validation may still identify an older package so the UI
+    can report its incompatibility, but development-test and evaluation are
+    enabled only when the current Ruleset supports the selection.
     """
 
     refreshAgentsRequested = Signal()
@@ -201,6 +200,7 @@ class AgentDevelopmentPanel(QWidget):
     openTestReplayRequested = Signal()
     inspectTraceRequested = Signal()
     evaluateRequested = Signal()
+    sourceRevisionChanged = Signal(str)
 
     def __init__(self, catalog=None) -> None:  # catalog kept for parity with other panels
         super().__init__()
@@ -355,17 +355,11 @@ class AgentDevelopmentPanel(QWidget):
         options_row.addWidget(self.timeoutSpin)
         test_layout.addLayout(options_row)
 
-        # Ruleset is an explicit, visible choice here, never an inherited
-        # CLI default. Before v3.0.0-alpha2 this tab passed no --ruleset at
-        # all, so every development test silently resolved `bytefray agents
-        # test`'s own backward-compatible Ruleset-v1 default while the
-        # Simple/Advanced match tabs beside it defaulted to v2. Agent
-        # Development is Bytefray v3's primary Python-authoring workflow, so
-        # it now defaults to the current gameplay Ruleset and says which one
-        # it used. This tab filters to Python agents only (see
-        # _is_python_agent), and Python entrants are valid under both
-        # identities, so no entrant-kind gating is needed on this selector --
-        # unlike Simple/Advanced, whose combos also carry VM agents.
+        # Ruleset is explicit and visible rather than inherited from a CLI
+        # default. Stable bytefray-rules-4 is the sole offered identity.
+        # Historical Python rows may remain visible for inspection, but the
+        # compatibility synchronizer leaves them with no executable choice
+        # and disables Test.
         ruleset_row = QHBoxLayout()
         self.rulesetLabel = QLabel("Ruleset")
         self.rulesetCombo = QComboBox()
@@ -373,9 +367,21 @@ class AgentDevelopmentPanel(QWidget):
         populate_ruleset_combo(self.rulesetCombo)
         self.rulesetCombo.setToolTip(RULESET_DESCRIPTION)
         self.rulesetCombo.setAccessibleName("Development test ruleset")
+        self.rulesetCombo.setAccessibleDescription(RULESET_DESCRIPTION)
         ruleset_row.addWidget(self.rulesetLabel)
         ruleset_row.addWidget(self.rulesetCombo, 1)
         test_layout.addLayout(ruleset_row)
+        self.rulesetExplanation = QLabel()
+        self.rulesetExplanation.setWordWrap(True)
+        test_layout.addWidget(self.rulesetExplanation)
+        workflow_hint = QLabel(
+            "For Window Scout: create a personal copy with New Agent, explicitly select "
+            "V6 alpha1 here, and Validate. Edit search interval and movement step in "
+            "Advanced, select V6 alpha1 there, then Run and Open Replay. "
+            "Development Test runs a full match using manifest defaults."
+        )
+        workflow_hint.setWordWrap(True)
+        test_layout.addWidget(workflow_hint)
 
         self.btnTest = QPushButton("Test")
         self.btnTest.setEnabled(False)
@@ -454,6 +460,7 @@ class AgentDevelopmentPanel(QWidget):
         # participates in Ruleset compatibility exactly like the tested
         # agent does.
         self.opponentCombo.currentIndexChanged.connect(self._on_opponent_changed)
+        self.rulesetCombo.currentIndexChanged.connect(self._on_ruleset_changed)
 
         self.opponentCombo.addItem("Reference", None)
         self._update_enablement()
@@ -528,8 +535,8 @@ class AgentDevelopmentPanel(QWidget):
         """The Ruleset identity to pass explicitly to ``bytefray agents test``.
 
         Always a concrete identity, never ``None``: this tab must not let the
-        CLI's own backward-compatible default decide which Ruleset a
-        development test ran under.
+        CLI's omitted-selection resolver decide which Ruleset a development
+        test ran under.
         """
         return selected_ruleset_id(self.rulesetCombo)
 
@@ -583,8 +590,18 @@ class AgentDevelopmentPanel(QWidget):
         row = self.selectedAgentRow()
         agents_root = self._catalog.agents_dir() if self._catalog is not None else None
         source = load_agent_source(row, agents_root=agents_root)
+        changed = (
+            source.python_text != self.pythonSource.toPlainText()
+            or source.manifest_text != self.manifestSource.toPlainText()
+        )
         self.pythonSource.setPlainText(source.python_text)
         self.manifestSource.setPlainText(source.manifest_text)
+        if changed and row is not None and _agent_row_id(row) == self._current_agent_id:
+            self.sourceRevisionChanged.emit(_agent_row_id(row))
+        if changed and row is not None and _agent_row_id(row) == self._current_agent_id and (
+            self._last_validation is not None or self._last_test is not None
+        ):
+            self.invalidateAgentState(_agent_row_id(row), "On-disk source revision changed.")
 
     def invalidateAgentState(self, agent_id: str, reason: str) -> None:
         """Clear cached evidence when the selected agent's source changes."""
@@ -608,6 +625,7 @@ class AgentDevelopmentPanel(QWidget):
         self.testStatusLabel.setText(
             f"Source changed for '{row.name}': previous development-test results were cleared."
         )
+        self.sourceRevisionChanged.emit(agent_id)
 
     def setStatus(self, message: str) -> None:
         """Used by the New Agent creation-success message (Phase 4a)."""
@@ -799,10 +817,9 @@ class AgentDevelopmentPanel(QWidget):
     def _opponent_row(self) -> AgentRow | None:
         """The explicitly selected opponent's row, or ``None`` for Reference.
 
-        The internal reference opponent deliberately imposes no Ruleset
-        constraint: ``agents test`` supplies whichever Agent API generation
-        the resolved Ruleset needs, so it can never be the incompatible
-        entrant.
+        The internal reference opponent deliberately imposes no additional
+        Ruleset constraint: ``agents test`` supplies the current Agent API
+        v2 reference opponent.
         """
 
         opponent_id = self.selected_opponent_id()
@@ -815,15 +832,14 @@ class AgentDevelopmentPanel(QWidget):
     def _sync_ruleset(self) -> None:
         """Offer only Rulesets compatible with the selected entrants.
 
-        Only the *Ruleset* choices narrow here -- the agent catalog itself
-        keeps listing every discovered Python agent, so this tab stays
-        usable for historical Agent API v1 agents and current Agent API v2
-        ones alike.
+        Only the *Ruleset* choices narrow here. The catalog may still show a
+        discovered historical package for inspection/validation, but no
+        executable Ruleset is offered for incompatible metadata.
         """
 
         rows = [row for row in (self.selectedAgentRow(), self._opponent_row()) if row is not None]
         self._has_compatible_ruleset = sync_ruleset_choices_for_metadata(
-            self.rulesetCombo, [agent_row_metadata(row) for row in rows]
+            self.rulesetCombo, [agent_row_metadata(row) for row in rows], self.rulesetExplanation
         )
 
     def _update_enablement(self) -> None:
@@ -860,6 +876,12 @@ class AgentDevelopmentPanel(QWidget):
             self.testStatusLabel.setText("No agent selected.")
 
     def _on_opponent_changed(self, _index: int | None = None) -> None:
+        self._sync_ruleset()
+        self._update_enablement()
+
+    def _on_ruleset_changed(self, _index: int | None = None) -> None:
+        self._last_validation = None
+        self.statusLabel.setText("Ruleset changed; validate again under the explicitly selected Ruleset.")
         self._sync_ruleset()
         self._update_enablement()
 

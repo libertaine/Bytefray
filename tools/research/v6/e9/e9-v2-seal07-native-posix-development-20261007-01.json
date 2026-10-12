@@ -1,0 +1,25 @@
+{
+  "attempt_id": "e9-v2-seal07-native-posix-development-20261007-01",
+  "owner": "implementer",
+  "kind": "bounded-native-posix-program",
+  "source": "engine/tests/test_v6_e9_v2_gate8_seal07.py",
+  "source_sha256_raw": "5965089a9106da1aff2e5055d734248d647f2706c94d13fcc5c6c128d90842ca",
+  "records_sha256_raw": "ad4260c896a84cb794a53be4b50c1087b333a17a70c9c8e88e3f65f1d587cab5",
+  "runtime": "Ubuntu WSL Python 3.12.3",
+  "exit_code": 0,
+  "native_special_objects": {
+    "directory": "UNAVAILABLE before open",
+    "socket": "UNAVAILABLE before open",
+    "device": "UNAVAILABLE before open",
+    "fifo": "UNAVAILABLE before open"
+  },
+  "regular_symlink": "PASS",
+  "hardlink_no_overwrite_publication": "PASS",
+  "directory_fsync": "PASS on WSL Linux filesystem",
+  "physical_power_loss_claim": false,
+  "real_E9_entropy_draws": 0,
+  "operational_actions": 0,
+  "development_only": true,
+  "retained_root": "/tmp/bytefray-seal07-native-20261007-01",
+  "execution": "LOCKED"
+}

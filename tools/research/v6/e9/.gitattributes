@@ -1,0 +1,8 @@
+# Preserve the exact raw bytes of retained Seal-07 evidence at checkpoint.
+# These six existing CRLF records must not be normalized on add/checkout.
+e9-v2-seal07-native-posix-candidate28.json -text
+e9-v2-seal07-native-posix-candidate29.json -text
+e9-v2-seal07-native-posix-development-20261007-01.json -text
+e9-v2-seal07-native-symlinks-candidate29.json -text
+v2_seal07_baseline_verification_01.json -text
+v2_seal07_independent_author_transcript_attestation_01.json -text

@@ -15,11 +15,11 @@ import hashlib
 import json
 from pathlib import Path
 
-from battle_engine.agent_evaluation import EvaluationCell, _resumed_cell_mismatch
+from battle_engine.agent_evaluation import EvaluationCell
 from battle_engine.agent_test import OPPONENT_SLOT, TESTED_AGENT_SLOT
 from battle_engine.agents import resolve_agent
-from battle_engine.builtins import build_agent
 from battle_engine.config import Config
+from battle_engine.evaluation_artifact import resumed_cell_mismatch
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
 from battle_engine.replay import (
     MatchConfiguration,
@@ -37,7 +37,7 @@ from battle_engine.result_model import (
     resolve_result_ruleset,
     write_json_atomic,
 )
-from battle_engine.rules import BYTEFRAY_RULESET_ID, RulesetProvenance
+from battle_engine.rules import BYTEFRAY_RULESET_ID, BYTEFRAY_RULESET_V4_ID, RulesetProvenance
 
 FIXTURES = Path(__file__).parent / "fixtures" / "replay"
 
@@ -214,40 +214,23 @@ def test_replay_header_round_trips_ruleset_id():
 
 
 # ---------------------------------------------------------------------------
-# End-to-end native writer coverage (VM and Python)
+# End-to-end native writer coverage (Python; VM execution retired by V6
+# Phase 2B.12 -- docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md)
 # ---------------------------------------------------------------------------
 
 
-def test_native_vm_match_records_ruleset_id_in_result_and_replay(tmp_path):
-    config = Config(arena_size=128, instr_per_tick=4, seed=7)
-    entrants = (
-        MatchEntrant("A", "writer", 0, build_agent("writer", 0, offset=48, byte=0x11)),
-        MatchEntrant("B", "runner", 64, build_agent("runner", 64)),
-    )
-    replay_path = tmp_path / "replay.jsonl"
-    result = NativeMatchService().run(
-        MatchRequest(config=config, entrants=entrants, max_ticks=20, replay_path=replay_path, verbose=False)
-    )
-
-    envelope = read_result(result.result_path)
-    assert envelope.ruleset_id == BYTEFRAY_RULESET_ID
-    assert resolve_result_ruleset(envelope) == RulesetProvenance(BYTEFRAY_RULESET_ID, "recorded")
-
-    header = next(record for record in iter_replay(result.replay_path) if isinstance(record, ReplayHeader))
-    assert header.ruleset_id == BYTEFRAY_RULESET_ID
-    assert header.runtime_kind == "vm"
-    assert resolve_replay_ruleset(header) == RulesetProvenance(BYTEFRAY_RULESET_ID, "recorded")
-
-
 _PASSIVE_PYTHON_SOURCE = """
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 
 class Agent:
     def reset(self, context):
-        pass
+        self.arena_size = context.arena_size
+
+    def declare_processes(self):
+        return [ProcessDeclaration(id="main", reach=self.arena_size - 1, share=1.0)]
 
     def act(self, observation):
-        return AgentAction(ActionKind.HALT)
+        return AgentAction(ActionKindV2.READ, observation.self_anchor)
 
 def create_agent():
     return Agent()
@@ -261,7 +244,7 @@ def _python_spec(root: Path, name: str):
         json.dumps(
             {
                 "kind": "python",
-                "api_version": 1,
+                "api_version": 2,
                 "entrypoint": "agent.py:create_agent",
                 "name": name,
                 "display": name.title(),
@@ -275,7 +258,10 @@ def _python_spec(root: Path, name: str):
 
 
 def test_native_python_match_records_ruleset_id_in_result_and_replay(tmp_path):
-    config = Config(arena_size=128, instr_per_tick=4, seed=11)
+    # Bytefray Ruleset v4 fixes the entrant action quota at Q=8 (V6 Phase
+    # 2B.9); this is now the only executable Ruleset, so its ID -- not the
+    # retired bytefray-rules-1 -- is what a live match records.
+    config = Config(arena_size=128, instr_per_tick=8, seed=11)
     entrants = (
         MatchEntrant.python("A", "alpha", 0, _python_spec(tmp_path, "alpha")),
         MatchEntrant.python("B", "beta", 32, _python_spec(tmp_path, "beta")),
@@ -286,17 +272,18 @@ def test_native_python_match_records_ruleset_id_in_result_and_replay(tmp_path):
     )
 
     envelope = read_result(result.result_path)
-    assert envelope.ruleset_id == BYTEFRAY_RULESET_ID
-    assert resolve_result_ruleset(envelope) == RulesetProvenance(BYTEFRAY_RULESET_ID, "recorded")
+    assert envelope.ruleset_id == BYTEFRAY_RULESET_V4_ID
+    assert resolve_result_ruleset(envelope) == RulesetProvenance(BYTEFRAY_RULESET_V4_ID, "recorded")
 
     header = next(record for record in iter_replay(result.replay_path) if isinstance(record, ReplayHeader))
-    assert header.ruleset_id == BYTEFRAY_RULESET_ID
+    assert header.ruleset_id == BYTEFRAY_RULESET_V4_ID
     assert header.runtime_kind == "python"
-    assert resolve_replay_ruleset(header) == RulesetProvenance(BYTEFRAY_RULESET_ID, "recorded")
+    assert resolve_replay_ruleset(header) == RulesetProvenance(BYTEFRAY_RULESET_V4_ID, "recorded")
 
 
 # ---------------------------------------------------------------------------
-# Cross-artifact consistency: evaluation resume (agent_evaluation._resumed_cell_mismatch)
+# Cross-artifact consistency: evaluation resume
+# (evaluation_artifact.resumed_cell_mismatch)
 # ---------------------------------------------------------------------------
 
 
@@ -337,7 +324,7 @@ def test_resumed_cell_mismatch_detects_ruleset_id_divergence(tmp_path):
         replay=ReplayReference("r", digest, "replay.jsonl"),
         ruleset_id="corrupted-ruleset-id",
     )
-    reason = _resumed_cell_mismatch(envelope, _cell(tmp_path), "match_x")
+    reason = resumed_cell_mismatch(envelope, _cell(tmp_path), "match_x")
     assert reason is not None and "ruleset_id" in reason
 
 
@@ -367,7 +354,7 @@ def test_resumed_cell_mismatch_accepts_matching_ruleset_id(tmp_path):
         replay=ReplayReference("r", digest, "replay.jsonl"),
         ruleset_id=BYTEFRAY_RULESET_ID,
     )
-    assert _resumed_cell_mismatch(envelope, _cell(tmp_path), "match_x") is None
+    assert resumed_cell_mismatch(envelope, _cell(tmp_path), "match_x") is None
 
 
 def test_resumed_cell_mismatch_accepts_historical_pair_both_missing(tmp_path):
@@ -393,4 +380,4 @@ def test_resumed_cell_mismatch_accepts_historical_pair_both_missing(tmp_path):
         reproducibility={"seed": 5},
         replay=ReplayReference("r", digest, "replay.jsonl"),
     )
-    assert _resumed_cell_mismatch(envelope, _cell(tmp_path), "match_x") is None
+    assert resumed_cell_mismatch(envelope, _cell(tmp_path), "match_x") is None

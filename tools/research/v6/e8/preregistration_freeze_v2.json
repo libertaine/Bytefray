@@ -1,0 +1,68 @@
+{
+  "schema": "bytefray.v6.e8.preregistration_freeze",
+  "version": 2,
+  "identity": "v6-e8-prereg-v2-e478f519c070",
+  "digest": "e478f519c070e54fb664b442a675d89cb5b035426b299cad8777a114781182dd",
+  "body": {
+    "experiment": "E8",
+    "phase": "I8-0",
+    "preregistration": {
+      "document": "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md",
+      "revision": 3,
+      "registration_commit": "00fb420",
+      "sha256": "a822bd15d9be8f968facb2f7b9c7e228d0e59b65ce34b790ae2a9e3538583a5a",
+      "historical": [
+        {
+          "revision": 1,
+          "commit": "28925fd",
+          "document_sha256": "6d50dae648dbdb0def2bcb94644e0705b4d62d4e818f7288190df4f8fac4efbb",
+          "standing": "historical provenance"
+        },
+        {
+          "revision": 2,
+          "commit": "090d11e",
+          "document_sha256": "0c6d0b741a4584ac10bc5f2aa3837bbc83213b8a608352d86949bdf809737286",
+          "standing": "historical provenance"
+        }
+      ]
+    },
+    "transcription": {
+      "path": "tools/research/v6/e8/preregistration.json",
+      "sha256": "71bc9363721bb8ebc934a52223721fc9bfaeb7ae3c3626f65bfb2cb2187ed6af"
+    },
+    "tooling_commit": "8b03ed3",
+    "files": {
+      "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md": "a822bd15d9be8f968facb2f7b9c7e228d0e59b65ce34b790ae2a9e3538583a5a",
+      "tools/research/v6/e8/preregistration.json": "71bc9363721bb8ebc934a52223721fc9bfaeb7ae3c3626f65bfb2cb2187ed6af",
+      "tools/research/v6/e8/__init__.py": "79f87eada1142cc2c4d095d7caf905b9c56d0e55f3b829dbb0ee7f3f14d24035",
+      "tools/research/v6/e8/preregistration.py": "0625c37868c1fc18a07ebfb1cb1029c073a9d39bf512aac2655f25cc7df72429",
+      "tools/research/v6/e8/decision.py": "6c84e368395e5455b5053d28ececb86a6098f59d2a125d8574439338daf8d1d1",
+      "engine/tests/test_v6_e8_preregistration.py": "17a196eca0859f9abe8ca2d5d8b97e5d684669bdf90f41a6d06cb7791262b504",
+      "engine/tests/test_v6_e8_decision.py": "e7d72a0d27650cede9222252d723f7c855d9d964f98fcd325bfc1f4626b7240b",
+      "docs/research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_IMPLEMENTATION_PLAN.md": "78807f1e3a4f29ad79bd6fea98cfe29a8e97cf35828002fec8be390ccbde5804"
+    },
+    "registered_draws": {
+      "resamples": 1000,
+      "draws_per_resample": 32,
+      "rng": "random.Random(42)",
+      "sha256": "933a603c671ed0ecf4afc4cad390ec8f4dde019d47bebf9ec4e774a6c2d273d5"
+    },
+    "census_prediction": [
+      "EVADE8"
+    ],
+    "supersedes": {
+      "identity": "v6-e8-prereg-v1-116c9ed83400",
+      "digest": "116c9ed834009132f42463a0cc1bc210e9c8c132b687bdb3ec081a2365ddeac8",
+      "record": "tools/research/v6/e8/preregistration_freeze.json",
+      "record_sha256": "c0895fe81dea8ca87f03647478f9a751aef844bc5ebbc32e5be46a90df901430",
+      "pinned": "pre-registration revision 2, at tooling commit eda8be5",
+      "reason": "pre-registration revision 3 corrected when initial acquisition ends, before any exposure"
+    },
+    "later_identities": {
+      "structural_matrix": "v6-e8-matrix-v1-<12 hex>, at I8-4",
+      "analysis": "v6-e8-analysis-v1-<12 hex>, at I8-5",
+      "execution": "v6-e8-exec-v1-<12 hex>, at I8-6"
+    },
+    "seeds": "none exist"
+  }
+}

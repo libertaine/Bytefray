@@ -46,11 +46,8 @@ def _argument_value(command: list[str], flag: str) -> str:
 @pytest.mark.parametrize(
     ("panel_name", "agent_a", "agent_b", "ruleset_id"),
     [
-        # V5 Alpha 1 Phase 1: Simple's fresh default is now the stable v4
-        # Ruleset; "adaptive"/"hunter" are Agent API v1, so v2 must be
-        # selected explicitly for them to appear in Agent A/B at all.
-        ("simple", "adaptive", "hunter", "bytefray-rules-2"),
-        ("advanced", "runner", "writer", "bytefray-rules-1"),
+        ("simple", "v4_claimer", "v4_scout", "bytefray-rules-4"),
+        ("advanced", "v5_scout_striker", "v5_region_attacker", "bytefray-rules-4"),
     ],
 )
 def test_designer_panels_launch_starter_agents_by_discovery_id(
@@ -69,13 +66,7 @@ def test_designer_panels_launch_starter_agents_by_discovery_id(
     captured = _capture_match_launch(monkeypatch, designer)
     panel = getattr(designer, panel_name)
 
-    if ruleset_id is not None:
-        # Advanced (Phase 2): its VM/blob starter agents ("runner"/"writer")
-        # only appear once Ruleset v1 -- the one identity that supports
-        # them -- is selected, mirroring the intended Ruleset-first UX
-        # (selecting the Ruleset no longer happens as a side effect of
-        # picking an agent).
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(ruleset_id))
+    panel.ruleset.setCurrentIndex(panel.ruleset.findData(ruleset_id))
 
     panel.agentA.setCurrentIndex(panel.agentA.findData(agent_a))
     panel.agentB.setCurrentIndex(panel.agentB.findData(agent_b))
@@ -85,8 +76,7 @@ def test_designer_panels_launch_starter_agents_by_discovery_id(
     assert captured["label"] == "RunMatch"
     assert _argument_value(captured["command"], "--a-type") == agent_a
     assert _argument_value(captured["command"], "--b-type") == agent_b
-    expected_ruleset = "bytefray-rules-2" if agent_a == "adaptive" else "bytefray-rules-1"
-    assert _argument_value(captured["command"], "--ruleset") == expected_ruleset
+    assert _argument_value(captured["command"], "--ruleset") == ruleset_id
     assert "could not resolve agents" not in panel.log.toPlainText()
     designer.deleteLater()
 
@@ -112,7 +102,7 @@ def test_designer_resolves_duplicate_displays_by_id_and_allows_self_match(monkey
                 "name": agent_id,
                 "display": "Friendly",
                 "kind": "python",
-                "api_version": 1,
+                "api_version": 2,
             },
             agent_id=agent_id,
         )
@@ -125,13 +115,6 @@ def test_designer_resolves_duplicate_displays_by_id_and_allows_self_match(monkey
     assert designer._resolve_agent_row(rows, "Friendly") is None
     assert designer._resolve_agent_row(rows[:1], "Friendly") is rows[0]
 
-    # V5 Alpha 1 Phase 1: Simple's fresh default is now the stable v4
-    # Ruleset, which these Agent API v1 rows are not compatible with --
-    # select v2 explicitly, since this test is about duplicate-display-name
-    # resolution, not the fresh Ruleset default.
-    designer.simple.ruleset.setCurrentIndex(
-        designer.simple.ruleset.findData("bytefray-rules-2")
-    )
     designer.simple.agentA.setCurrentIndex(designer.simple.agentA.findData("beta_id"))
     designer.simple.agentB.setCurrentIndex(designer.simple.agentB.findData("beta_id"))
     designer.simple._emit_run()
@@ -406,8 +389,8 @@ def test_advanced_run_exports_agent_params_json_to_child_env(monkeypatch, tmp_pa
     monkeypatch.setattr(designer, "_start_process", _fake_start_process)
 
     cfg = RunConfig(
-        a_type="Runner (Starter)",
-        b_type="Writer (Starter)",
+        a_type="v4_claimer",
+        b_type="v4_scout",
         arena=256,
         ticks=100,
         a_params={"byte": 7, "stride": 3},
@@ -424,34 +407,16 @@ def test_advanced_run_exports_agent_params_json_to_child_env(monkeypatch, tmp_pa
 
 @pytest.mark.gui
 @pytest.mark.parametrize("run_method", ["_on_simple_run", "_on_advanced_run"])
-@pytest.mark.parametrize(
-    ("ruleset_id", "agent_a", "agent_b", "expects_trace"),
-    [
-        pytest.param(
-            "bytefray-rules-4-alpha1", "v4_claimer", "v4_scout", True, id="v4-alpha1"
-        ),
-        pytest.param(
-            "bytefray-rules-4-alpha2", "v4_claimer", "v4_scout", True, id="v4-alpha2"
-        ),
-        pytest.param(
-            "bytefray-rules-4", "v4_claimer", "v4_scout", True, id="v4-stable"
-        ),
-        pytest.param("bytefray-rules-1", "runner", "writer", False, id="v1"),
-        pytest.param("bytefray-rules-2", "adaptive", "hunter", False, id="v2"),
-    ],
-)
 def test_designer_run_requests_trace_only_for_v4_rulesets(
-    monkeypatch, tmp_path, run_method, ruleset_id, agent_a, agent_b, expects_trace
+    monkeypatch, tmp_path, run_method
 ):
-    """Simple and Advanced must follow the same v4-only automatic-trace policy.
+    """Both match panels request trace output for the sole current Ruleset.
 
-    Every v4 identity's Designer matches (alpha1, alpha2, and the permanent
-    stable identity as of v4.0.0-rc1 Phase 2) request
+    The permanent stable v4 identity's Designer matches request
     ``--trace <run-dir>/trace.jsonl`` alongside ``--replay`` so the Alpha3
     spectator suite (Perspective Cam, Spectator Director, Fight Night) is
-    naturally available after "Open Replay". Historical Ruleset v1/v2
-    matches must keep their existing artifact set (no ``--trace``)
-    unchanged.
+    naturally available after "Open Replay". Retired Rulesets have no live
+    Designer launch path in Phase 2B.12.
     """
     pytest.importorskip("PySide6")
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -466,18 +431,19 @@ def test_designer_run_requests_trace_only_for_v4_rulesets(
     captured = _capture_match_launch(monkeypatch, designer)
 
     cfg = RunConfig(
-        a_type=agent_a, b_type=agent_b, ruleset_id=ruleset_id, arena=64, ticks=10
+        a_type="v4_claimer",
+        b_type="v4_scout",
+        ruleset_id="bytefray-rules-4",
+        arena=64,
+        ticks=10,
     )
     getattr(designer, run_method)(cfg)
 
     assert captured["started"] is True
     command = captured["command"]
     replay_value = _argument_value(command, "--replay")
-    if expects_trace:
-        trace_value = _argument_value(command, "--trace")
-        assert os.path.dirname(trace_value) == os.path.dirname(replay_value)
-        assert os.path.basename(trace_value) == "trace.jsonl"
-    else:
-        assert "--trace" not in command
+    trace_value = _argument_value(command, "--trace")
+    assert os.path.dirname(trace_value) == os.path.dirname(replay_value)
+    assert os.path.basename(trace_value) == "trace.jsonl"
 
     designer.deleteLater()

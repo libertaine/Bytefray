@@ -52,9 +52,9 @@ def _expected_starter_files(data_root: Path) -> set[Path]:
 def _write_synthetic_roster(resources_root: Path, *, malformed: frozenset[str] = frozenset()) -> None:
     """A minimal, disposable stand-in for the real bundled starter tree.
 
-    Every real starter name (:data:`STARTER_AGENT_NAMES`) gets a
-    manifest-only ``agent.yaml`` -- valid unless its name is in
-    ``malformed``, which gets unparsable JSON instead. Used to exercise
+    Every real starter name (:data:`STARTER_AGENT_NAMES`) gets a valid Python
+    agent (manifest and agent.py) -- unless its name is in ``malformed``,
+    which gets unparsable JSON in ``agent.yaml`` instead. Used to exercise
     per-starter fault isolation (Phase 3 M2) without ever touching the real
     starter resource tree.
     """
@@ -63,10 +63,30 @@ def _write_synthetic_roster(resources_root: Path, *, malformed: frozenset[str] =
     for name in STARTER_AGENT_NAMES:
         agent_dir = base / name
         agent_dir.mkdir(parents=True)
-        agent_dir.joinpath("agent.yaml").write_text(
-            "not json" if name in malformed else json.dumps({"name": name}),
-            encoding="utf-8",
-        )
+        if name in malformed:
+            agent_dir.joinpath("agent.yaml").write_text("not json", encoding="utf-8")
+        else:
+            agent_dir.joinpath("agent.yaml").write_text(
+                json.dumps(
+                    {
+                        "name": name,
+                        "kind": "python",
+                        "api_version": 2,
+                        "entrypoint": "agent.py:create_agent",
+                        "version": "1.0",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            agent_dir.joinpath("agent.py").write_text(
+                "from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration\n"
+                "class Agent:\n"
+                "    def reset(self, context): self.arena_size = context.arena_size\n"
+                "    def declare_processes(self): return [ProcessDeclaration(id='main', reach=self.arena_size - 1, share=1.0)]\n"
+                "    def act(self, obs): return AgentAction(ActionKindV2.MOVE, operand=0)\n"
+                "def create_agent(): return Agent()\n",
+                encoding="utf-8",
+            )
 
 
 def test_empty_data_root_receives_all_starters_and_creates_agents_directory(tmp_path):
@@ -82,7 +102,7 @@ def test_empty_data_root_receives_all_starters_and_creates_agents_directory(tmp_
 
 def test_existing_starter_and_custom_files_are_never_modified(tmp_path):
     data_root = tmp_path / "data"
-    existing = data_root / "agents" / "runner" / "agent.yaml"
+    existing = data_root / "agents" / "v5_region_attacker" / "agent.yaml"
     custom = data_root / "agents" / "my_custom_agent" / "notes.txt"
     existing.parent.mkdir(parents=True)
     custom.parent.mkdir(parents=True)
@@ -171,21 +191,21 @@ def test_malformed_starter_is_isolated_valid_starters_still_install(tmp_path):
     installed -- for a single bad manifest anywhere in the roster."""
 
     resources = tmp_path / "resources"
-    _write_synthetic_roster(resources, malformed=frozenset({"runner"}))
+    _write_synthetic_roster(resources, malformed=frozenset({"v5_region_attacker"}))
 
     result = ensure_starter_agents(resource_root=resources, data_root=tmp_path / "data")
 
     installed_names = {path.parent.name for path in result.installed}
-    assert installed_names == set(STARTER_AGENT_NAMES) - {"runner"}
-    assert not (tmp_path / "data" / "agents" / "runner").exists()
+    assert installed_names == set(STARTER_AGENT_NAMES) - {"v5_region_attacker"}
+    assert not (tmp_path / "data" / "agents" / "v5_region_attacker").exists()
     assert len(result.errors) == 1
-    assert result.errors[0].name == "runner"
+    assert result.errors[0].name == "v5_region_attacker"
     assert "malformed manifest" in result.errors[0].message
 
 
 def test_existing_unrelated_agent_untouched_when_a_starter_is_malformed(tmp_path):
     resources = tmp_path / "resources"
-    _write_synthetic_roster(resources, malformed=frozenset({"runner"}))
+    _write_synthetic_roster(resources, malformed=frozenset({"v5_region_attacker"}))
     data_root = tmp_path / "data"
     custom = data_root / "agents" / "my_custom_agent" / "notes.txt"
     custom.parent.mkdir(parents=True)
@@ -202,13 +222,13 @@ def test_requesting_malformed_starter_after_partial_bootstrap_fails_clearly(tmp_
     name does -- fail-closed, never a silent fallback."""
 
     resources = tmp_path / "resources"
-    _write_synthetic_roster(resources, malformed=frozenset({"runner"}))
+    _write_synthetic_roster(resources, malformed=frozenset({"v5_region_attacker"}))
     data_root = tmp_path / "data"
 
     ensure_starter_agents(resource_root=resources, data_root=data_root)
 
-    with pytest.raises(SystemExit, match="Unknown agent 'runner'"):
-        resolve_agent(data_root, "runner")
+    with pytest.raises(SystemExit, match="Unknown agent 'v5_region_attacker'"):
+        resolve_agent(data_root, "v5_region_attacker")
 
 
 def test_unrelated_match_proceeds_despite_unused_malformed_starter(monkeypatch, tmp_path, capsys):
@@ -224,8 +244,8 @@ def test_unrelated_match_proceeds_despite_unused_malformed_starter(monkeypatch, 
 
     result = cli.main(
         [
-            "--a-type", "seeker",
-            "--b-type", "writer",
+            "--a-type", "v4_claimer",
+            "--b-type", "v5_dual_team",
             "--ticks", "2",
             "--replay", str(data_root / "runs" / "unrelated-match.jsonl"),
             "--quiet",
@@ -252,7 +272,7 @@ def test_agents_list_warns_but_does_not_fail_on_malformed_starter(monkeypatch, t
     assert result == 0
     captured = capsys.readouterr()
     assert "v4_scout" in captured.err
-    assert "runner" in captured.out
+    assert "v5_region_attacker" in captured.out
 
 
 def test_tournament_proceeds_despite_unused_malformed_starter(monkeypatch, tmp_path, capsys):
@@ -268,10 +288,10 @@ def test_tournament_proceeds_despite_unused_malformed_starter(monkeypatch, tmp_p
 
     result = tournament_cli.main(
         [
-            "seeker", "writer",
+            "v4_claimer", "v5_dual_team",
             "--rounds", "1",
             "--ticks", "3",
-            "--quota", "2",
+            "--quota", "8",
             "--quiet",
         ]
     )
@@ -300,8 +320,8 @@ def test_manifest_only_starters_run_with_existing_builtin_implementations(
 
     result = cli.main(
         [
-            "--a-type", "seeker",
-            "--b-type", "writer",
+            "--a-type", "v4_claimer",
+            "--b-type", "v5_dual_team",
             "--ticks", "2",
             "--replay", str(tmp_path / "runs" / "starter-match.jsonl"),
             "--quiet",

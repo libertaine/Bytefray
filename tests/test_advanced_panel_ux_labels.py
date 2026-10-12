@@ -28,7 +28,7 @@ def _make_app():
     return QApplication.instance() or QApplication([])
 
 
-def _row(agent_id: str, kind: str = "python", api_version: int | None = 1):
+def _row(agent_id: str, kind: str = "python", api_version: int | None = 2):
     from app.services.agent_catalog import AgentRow
 
     meta: dict[str, object] = {"name": agent_id, "kind": kind}
@@ -81,11 +81,6 @@ def test_simple_panel_run_still_produces_same_run_config_shape():
     panel = SimplePanel(catalog=None)
     try:
         panel.setAgents([_row("alpha"), _row("beta")])
-        # V5 Alpha 1 Phase 1: Simple's fresh default is now the stable v4
-        # Ruleset, which these Agent API v1 rows are not compatible with --
-        # select v2 explicitly, since this test is about RunConfig shape,
-        # not the fresh Ruleset default.
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData("bytefray-rules-2"))
         captured = []
         panel.runRequested.connect(captured.append)
         panel.gridSize.setCurrentText("Large (1024)")

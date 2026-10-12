@@ -21,14 +21,14 @@ import pytest
 from battle_engine.agent_evaluation import (
     EvaluationRequest,
     EvaluationService,
-    _parser,
     agent_identity,
 )
 from battle_engine.agent_evaluation import (
     main as evaluate_main,
 )
+from battle_engine.evaluation_cli import _parser
 
-NOP_ACTION = "AgentAction(ActionKind.NOP)"
+NOP_ACTION = "AgentAction(ActionKindV2.READ, 0)"
 
 
 def _write_agent(root: Path, name: str, act_body: str) -> Path:
@@ -36,14 +36,15 @@ def _write_agent(root: Path, name: str, act_body: str) -> Path:
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {"kind": "python", "api_version": 2, "entrypoint": "agent.py:create_agent", "version": "1.0"}
         ),
         encoding="utf-8",
     )
     (directory / "agent.py").write_text(
         f"""
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
+    def declare_processes(self): return [ProcessDeclaration("main", 1, 1.0)]
     def reset(self, context): pass
     def act(self, observation):
 {act_body}
@@ -238,6 +239,105 @@ def test_worker_crash_marks_cell_failed_and_others_continue_without_hanging(tmp_
     assert data["complete"] is False
 
 
+def _write_counting_poison_agent(root: Path, name: str, counter_path: Path) -> Path:
+    # Same unconditional-crash shape as `_write_poison_agent`, but first
+    # appends one byte to `counter_path` -- an external, subprocess-durable
+    # side channel proving exactly how many times this agent was actually
+    # started and run, independent of anything the coordinator itself
+    # reports.
+    return _write_agent(
+        root,
+        name,
+        (
+            f"        with open(r'{counter_path}', 'a', encoding='utf-8') as fh:\n"
+            "            fh.write('x')\n"
+            "        import os\n"
+            "        os._exit(1)\n"
+        ),
+    )
+
+
+def test_failed_cell_receives_exactly_one_retry_before_terminal_worker_exited(tmp_path: Path):
+    """V6 research-integrity hardening, Part D (worker death
+    characterization): a cell whose worker dies gets exactly one retry on a
+    remaining live worker, never zero and never more than one -- and a
+    second failure on that retry becomes the terminal
+    ``evaluation_worker_exited`` status, not a further retry attempt.
+
+    ``workers=2`` with exactly one poison cell and one ok cell: worker A
+    (running the poison agent) dies immediately; worker B is still alive
+    and, once it finishes its own cell, is the only worker available to run
+    the retry -- so the retry is deterministic, not a race between multiple
+    idle workers. The poison agent's own crash counter proves the retry
+    happened exactly once: two invocations total (the original attempt plus
+    the single retry the coordinator's policy grants), never one (no retry
+    attempted) and never three or more (retried repeatedly).
+    """
+
+    _write_nop_agent(tmp_path, "candidate")
+    counter_path = tmp_path / "poison_invocations.txt"
+    _write_counting_poison_agent(tmp_path, "opp_poison", counter_path)
+    _write_nop_agent(tmp_path, "opp_ok")
+
+    request = _request(
+        tmp_path, opponent_ids=("opp_poison", "opp_ok"), seeds=(1,), workers=2
+    )
+    result = EvaluationService().run(request)
+    data = _load(result.state_path)
+    by_opponent = {c["opponent_id"]: c for c in data["cells"]}
+
+    assert by_opponent["opp_poison"]["status"] == "failed"
+    assert by_opponent["opp_poison"]["error_code"] == "evaluation_worker_exited"
+    assert by_opponent["opp_ok"]["status"] == "completed"
+    assert counter_path.read_text(encoding="utf-8") == "xx"
+
+
+def test_all_workers_dying_drains_stranded_cells_and_terminates_without_hanging(
+    tmp_path: Path,
+):
+    """V6 research-integrity hardening, Part D: every worker becoming
+    unavailable must still let the coordinator terminate (not hang), and
+    every cell -- whether it was actively in flight or still sitting
+    unstarted in the pending queue when the last worker died -- must be
+    recorded as failed, never silently dropped, with persisted cell
+    ordering still matching canonical matrix order regardless of the
+    wall-clock order in which failures were processed.
+
+    Four poison opponents, two workers: both workers die on their very
+    first assignment, so -- unlike ``test_failed_cell_receives_exactly_
+    one_retry_before_terminal_worker_exited`` above, where a retry *does*
+    get to run on a still-live worker -- no retry here ever finds a live
+    worker to execute on. Every cell therefore resolves through either the
+    "zero live workers remain" terminal path or the stranded-queue drain
+    path, and this implementation gives both the same
+    ``evaluation_worker_unavailable`` code (never ``evaluation_worker_
+    exited``, which requires a retry to have actually been attempted and
+    failed again).
+    """
+
+    _write_nop_agent(tmp_path, "candidate")
+    opponents = ("opp_poison_1", "opp_poison_2", "opp_poison_3", "opp_poison_4")
+    for name in opponents:
+        _write_poison_agent(tmp_path, name)
+
+    request = _request(tmp_path, opponent_ids=opponents, seeds=(1,), workers=2)
+    # As with the single-worker-crash test above: completing at all (no
+    # hang) is itself part of what this proves.
+    result = EvaluationService().run(request)
+    data = _load(result.state_path)
+
+    assert len(data["cells"]) == 4
+    for cell in data["cells"]:
+        assert cell["status"] == "failed"
+        assert cell["error_code"] == "evaluation_worker_unavailable"
+    # Canonical matrix (declared opponent) order, independent of which two
+    # cells happened to be in flight when both workers died and which order
+    # their failures were processed in.
+    assert [c["opponent_id"] for c in data["cells"]] == list(opponents)
+    assert data["lifecycle_state"] == "finished_with_failures"
+    assert data["complete"] is False
+
+
 # ---------------------------------------------------------------------------
 # Source drift under concurrency
 # ---------------------------------------------------------------------------
@@ -382,7 +482,7 @@ def test_workers_flag_parses_and_threads_through_cli(matrix_agents: Path, monkey
             str(matrix_agents / "cli-out"),
             "--quiet",
             "--ruleset",
-            "bytefray-rules-1",
+            "bytefray-rules-4",
         ]
     )
     assert exit_code == 0

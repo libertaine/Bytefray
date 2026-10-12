@@ -6,9 +6,13 @@ agent that can actually win. It is written to be read in order the first
 time and used as a reference afterwards.
 
 Agent API v2 is the stable Python contract for the permanent
-`bytefray-rules-4` identity and, unchanged, for the two v4 prerelease
-identities that preceded it (`bytefray-rules-4-alpha1` and
-`bytefray-rules-4-alpha2`). It is separate from
+`bytefray-rules-4` identity — the only Ruleset any process agent can be
+run under today. The two v4 prerelease identities that used it before
+promotion, `bytefray-rules-4-alpha1` and `bytefray-rules-4-alpha2`, were
+retired from executable registration by V6 Phase 2B.10 Scope B; their
+historical artifacts remain fully readable (see
+[COMPATIBILITY.md](COMPATIBILITY.md)'s "Retired from execution / still
+recognised" table). Agent API v2 is separate from
 [Agent API v1](AGENT_API_V1.md), which remains the contract for Ruleset
 v1/v2 Python entrants. No field, action kind, or semantic below changed at
 promotion — see [COMPATIBILITY.md](COMPATIBILITY.md)'s "Ruleset v4" section
@@ -116,6 +120,8 @@ Handed to `reset` once.
 | `tick_limit` | The tick the match stops at if nobody has been eliminated. |
 | `rng` | A `random.Random` seeded deterministically for you. |
 | `parameters` | Your resolved parameters — see [§M](#m-parameters-and-presets). Empty unless you declared some. |
+| `detection_radius` | `None` under every product Ruleset. Only the explicit-only V6 E6 research Rulesets set it (to `32`; see [V6_E6_PRICED_SENSING_PREREGISTRATION.md](research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md)). There, `visible_enemy_anchor_addresses` covers only `min(reach, detection_radius)` cells around each of your processes. `READ` and `WRITE` still reach your full declared reach. Additive, like `parameters`: not an API version change. |
+| `sensing_window` | `None` under every product Ruleset. Only the explicit-only V6 E8 research Rulesets set it (to `27`; see [V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md](research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md)). There, `visible_enemy_anchor_addresses` is always empty and the research-only `SENSE` action is available instead ([§F](#research-only-extension-sense)). Additive: not an API version change. |
 
 **Use `context.rng`, never `random.random()` or `time`.** The engine derives
 that generator from the match seed so the same match replays identically.
@@ -193,7 +199,7 @@ A gap between these is how you infer that you were disrupted; there is no
 
 | Field | Meaning |
 | --- | --- |
-| `visible_enemy_anchor_addresses` | Sorted, unique addresses of enemy process anchors currently within the reach of **any** eligible process of yours. |
+| `visible_enemy_anchor_addresses` | Sorted, unique addresses of enemy process anchors currently within the reach of **any** eligible process of yours (within `min(reach, detection_radius)` when `context.detection_radius` is set). |
 
 **Feedback from your last action**
 
@@ -202,6 +208,7 @@ A gap between these is how you infer that you were disrupted; there is no
 | `previous_action_applied` | Whether it took effect. |
 | `previous_read_value` | The byte your last `READ` returned. |
 | `previous_read_owner` | The entrant that last wrote that cell, or `None`. |
+| `previous_sense_anchors` | Research-only. After an applied `SENSE`, the sorted tuple it returned (possibly empty); otherwise `None`. Always `None` under a product Ruleset. |
 
 ### The information boundary
 
@@ -237,6 +244,25 @@ common first bug. Compute an absolute target, then either write it or
 subtract your anchor to move toward it.
 
 A `value` on a non-`WRITE` action is invalid, as are v1-only action kinds.
+
+### Research-only extension: `SENSE`
+
+`ActionKindV2.SENSE` is **not a product feature**. It exists only for the V6
+E8 research experiment
+([V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md](research/v6/V6_E8_ACTIVE_SPATIAL_SENSING_PREREGISTRATION.md),
+§2.3 and §13), and only two explicit-only research Rulesets accept it. Under
+every other Ruleset, product Rulesets included, returning it is an invalid
+action and forfeits the entrant, exactly like any other invalid action. So an
+agent must check `context.sensing_window is not None` before returning it.
+`agents validate` belongs to no Ruleset, and refuses it too.
+
+Where it is accepted, `SENSE` takes one absolute target address and no
+`value`, and costs one action, exactly like a `READ`. Its reach is checked as
+a `READ`'s is. If applied, it reports every live enemy anchor within circular
+distance `sensing_window` (inclusive) of the target, at your process's next
+callback, in `previous_sense_anchors`. It changes nothing in the match, and
+the sensed entrant is not told. `AGENT_API_VERSION` stays `2`: this is a
+Ruleset-gated research extension, not a new API generation.
 
 **Rejection costs you the action.** An out-of-reach write is not retried and
 not refunded — it consumes one of your eight actions for the tick and
@@ -294,7 +320,7 @@ which is where a worker is standing, not where the core is.
 This is not hypothetical. It is what five of the six original `v4_*`
 starters did, and it is why matches used to time out at 60% with a 1.77%
 conversion rate. The V5 research program (Phases R1–R4, under
-`docs/research/v5/`) tried changing the *engine* twice before establishing
+`docs/archive/v5/`) tried changing the *engine* twice before establishing
 that the mechanics were never the problem: a plain region sweep captures
 cores in tens of ticks under completely unmodified `bytefray-rules-4`.
 

@@ -24,11 +24,14 @@ from battle_engine.agent_evaluation import (
     ORIENTATION_CANDIDATE_FIRST,
     ORIENTATION_MODE_BOTH,
     ORIENTATION_OPPONENT_FIRST,
-    methodology_lines,
     seat_label,
 )
 from battle_engine.evaluation_analysis import EvaluationAnalysis, EvidenceState
 from battle_engine.evaluation_behavior import BehaviorAnalysis
+
+# V6 Phase 3K: the shared methodology-disclosure text is owned by
+# ``evaluation_cli`` -- reached directly rather than through the CLI facade.
+from battle_engine.evaluation_cli import methodology_lines
 from battle_engine.evaluation_presets import ORIENTATION_BOTH as PRESET_ORIENTATION_BOTH
 from battle_engine.evaluation_presets import EvaluationPreset
 from PySide6.QtCore import Qt, Signal
@@ -178,14 +181,19 @@ class EvaluationDialog(QDialog):
         self.baselineLabel.setBuddy(self.baselineCombo)
         form.addRow(self.baselineLabel, self.baselineCombo)
 
-        # Group evaluation is Ruleset-v2-only by construction, so it shows a
-        # fixed label. Pairwise gets a real selector: before v3.0.0-alpha2 it
-        # passed no --ruleset at all and silently inherited `bytefray agents
-        # evaluate`'s backward-compatible v1 methodology without disclosing
-        # it, while group mode beside it announced v2. Both modes now state
-        # their Ruleset, and pairwise defaults to the current gameplay one.
+        # Group evaluation was Ruleset-v2-only by construction, so it shows a
+        # fixed label. V6 Phase 2B.12 retired bytefray-rules-2 (and Agent API
+        # v1/VM execution generally); multi-entrant evaluation's methodology
+        # was defined specifically for that Ruleset's gameplay and was not
+        # redesigned for the retained bytefray-rules-4 control (see
+        # docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md), so
+        # group mode can no longer produce a new evaluation artifact --
+        # `_update_group_preview` already surfaces
+        # `EvaluationService`'s own clean rejection and disables Run; this
+        # label states that plainly rather than naming a retired Ruleset as
+        # if selecting it would help.
         self.rulesetLabel = QLabel("Ruleset")
-        self.rulesetValue = QLabel("bytefray-rules-2 (required for group evaluation)")
+        self.rulesetValue = QLabel("Group evaluation is retired (V6 Phase 2B.12)")
         self.rulesetValue.setAccessibleName("Group evaluation ruleset")
         form.addRow(self.rulesetLabel, self.rulesetValue)
 
@@ -452,7 +460,7 @@ class EvaluationDialog(QDialog):
     def pairwise_ruleset_id(self) -> str:
         """The Ruleset to pass explicitly for a pairwise evaluation.
 
-        Group mode ignores this: it is Ruleset-v2-only by construction.
+        Group-mode creation is retired; historical group artifacts remain readable.
         """
         return selected_ruleset_id(self.pairwiseRulesetCombo)
 

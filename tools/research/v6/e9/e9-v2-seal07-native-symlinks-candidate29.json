@@ -1,0 +1,31 @@
+{
+  "attempt_id": "e9-v2-seal07-native-symlinks-candidate29",
+  "owner": "implementer",
+  "kind": "guarded-native-posix-pytest",
+  "counts": {
+    "errors": 0,
+    "failed": 0,
+    "collected": 2,
+    "skipped": 0,
+    "deselected": 326,
+    "passed": 2
+  },
+  "exit_code": 0,
+  "implementation_manifest_sha256_raw": "5db1bf647b0c65c4e1d83d376000befdb0647b37b20d4ded95925d3d8f2297cf",
+  "qualification_manifest_sha256_raw": "66b2682fcba6959ab6899525de80d5fa6f952020c503f7ab927d884535a53ca8",
+  "source_bytes_unchanged_during_attempt": true,
+  "modules": [
+    "engine/tests/test_v6_e9_v2_gate8_seal07.py",
+    "engine/tests/test_v6_e9_v2_independent_gate8_seal07.py"
+  ],
+  "filter": "regular_reader_never_caches_type_and_preserves_regular_symlinks or symlink_to_regular_target_and_read_observer",
+  "retained_artifact_digests": {
+    "results.xml": "1d2a746fa913498057c786640fec5f835d13ca3a8dbb3975d6b73acba5dfb84b",
+    "stdout.log": "737e94367efc2417eda9cc42b5fdc515083d49441ae875089a123a40d59f87ea",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "execution": "LOCKED",
+  "real_E9_entropy_draws": 0,
+  "operational_actions": 0,
+  "note": "Actual native POSIX cases on WSL Linux/Python3.12; separate coverage of Windows skips, not full suite or physical-power-loss proof."
+}

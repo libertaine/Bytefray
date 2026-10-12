@@ -1224,15 +1224,16 @@ def test_copy_seed_enabled_for_a_concrete_seed_including_zero(history_env) -> No
 
 
 @pytest.mark.gui
-def test_copy_seed_copies_the_exact_integer_and_gives_feedback(history_env) -> None:
+@pytest.mark.parametrize("seed", [184293, -(2**63), 2**63 - 1, -(2**63) - 1, 2**63, 2**64 - 1])
+def test_copy_seed_copies_the_exact_integer_and_gives_feedback(history_env, seed) -> None:
     from PySide6.QtGui import QGuiApplication
 
-    _FakeService.corpus[0] = _row(0, seed=184293)
+    _FakeService.corpus[0] = _row(0, seed=seed)
     window = _opened(history_env)
     _select(window, "loc_0000")
     window.copySeedButton.click()
-    assert QGuiApplication.clipboard().text() == "184293"
-    assert "184293" in window.clipboardStatusLabel.text()
+    assert QGuiApplication.clipboard().text() == str(seed)
+    assert window.clipboardStatusLabel.text() == f"Seed {seed} copied"
 
 
 @pytest.mark.gui

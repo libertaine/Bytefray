@@ -1,4 +1,18 @@
-"""Tournament Results/History presentation, derived from real ``TournamentService`` runs."""
+"""Tournament Results/History presentation, derived from real ``TournamentService`` runs.
+
+V6 Phase 2B.12 (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md)
+retired VM/blob execution: this file's real subject is the presentation
+layer (``app.services.tournament_results``), not the VM builtins it used
+to drive ``TournamentService`` with. The three bundled VM starters
+(``runner``/``writer``/``seeker``, whose relative strength under Ruleset 1
+gave a deterministic 2-0 winner and a tied last place) are replaced with
+three small Agent API v2 fixtures engineered for the identical deterministic
+shape under the retained control: one agent survives every tick
+(``_SURVIVOR_SOURCE``) and two immediately forfeit on their first action
+(``_FORFEIT_SOURCE``), so the survivor wins both its matches and the two
+forfeiters tie each other for last -- verified directly against a real
+tournament run, not assumed.
+"""
 
 from __future__ import annotations
 
@@ -7,9 +21,8 @@ import os
 from pathlib import Path
 
 import pytest
-from battle_engine.builtins import build_agent
+from battle_engine.agents import resolve_agent
 from battle_engine.config import Config
-from battle_engine.core import NOP, enc
 from battle_engine.match_service import MatchEntrant, NativeMatchService
 from battle_engine.result_model import read_result
 from battle_engine.tournament_service import (
@@ -41,6 +54,51 @@ from app.services.tournament_results import (
 
 ARENA = 512
 
+_SURVIVOR_SOURCE = """
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
+
+class Agent:
+    def reset(self, context):
+        pass
+
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
+    def act(self, observation):
+        return AgentAction(ActionKindV2.READ, observation.self_anchor)
+
+def create_agent():
+    return Agent()
+"""
+
+# Raises on its very first act() call, forfeiting immediately -- a real,
+# reproducible loss under bytefray-rules-4's alive-ticks/score-based winner
+# resolution, mirroring what a VM `runner`/`writer` builtin used to lose to
+# `seeker` by. Deliberately distinct from a HALT: this exercises the same
+# "user code forfeits" path every real agent failure takes.
+_FORFEIT_SOURCE = """
+from battle_engine.agent_api import ProcessDeclaration
+
+class Agent:
+    def reset(self, context):
+        pass
+
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
+    def act(self, observation):
+        raise RuntimeError("always forfeits")
+
+def create_agent():
+    return Agent()
+"""
+
+_FIXTURE_SOURCES = {
+    "survivor": _SURVIVOR_SOURCE,
+    "forfeit_a": _FORFEIT_SOURCE,
+    "forfeit_b": _FORFEIT_SOURCE,
+}
+
 
 class _Abort(BaseException):
     """Escapes TournamentService's per-match ``except Exception``, like a killed process."""
@@ -59,18 +117,45 @@ class _FailSecondMatch:
         return self._real.run(request)
 
 
-def _builtin_entrants(*names: str) -> tuple[MatchEntrant, ...]:
+def _write_fixture_agents(data_root: Path) -> None:
+    for name, source in _FIXTURE_SOURCES.items():
+        directory = data_root / "agents" / name
+        if directory.exists():
+            continue
+        directory.mkdir(parents=True)
+        (directory / "agent.yaml").write_text(
+            json.dumps(
+                {
+                    "kind": "python",
+                    "api_version": 2,
+                    "entrypoint": "agent.py:create_agent",
+                    "name": name,
+                    "display": name.replace("_", " ").title(),
+                    "version": "1.0",
+                }
+            ),
+            encoding="utf-8",
+        )
+        (directory / "agent.py").write_text(source, encoding="utf-8")
+
+
+def _python_entrants(data_root: Path, *names: str) -> tuple[MatchEntrant, ...]:
+    _write_fixture_agents(data_root)
     spacing = ARENA // len(names)
     return tuple(
-        MatchEntrant(name, f"{name.title()} Bot", index * spacing, build_agent(name, index * spacing))
+        MatchEntrant.python(
+            name, name.replace("_", " ").title() + " Bot", index * spacing,
+            resolve_agent(data_root, name),
+        )
         for index, name in enumerate(names)
     )
 
 
-def _request(output_dir: Path, **changes) -> TournamentRequest:
+def _request(output_dir: Path, *, data_root: Path | None = None, **changes) -> TournamentRequest:
+    root = data_root or output_dir
     values = {
-        "entrants": _builtin_entrants("runner", "writer", "seeker"),
-        "config": Config(arena_size=ARENA, instr_per_tick=4),
+        "entrants": _python_entrants(root, "survivor", "forfeit_a", "forfeit_b"),
+        "config": Config(arena_size=ARENA, instr_per_tick=8),
         "rounds": 1,
         "max_ticks": 120,
         "output_dir": output_dir,
@@ -83,9 +168,9 @@ def _request(output_dir: Path, **changes) -> TournamentRequest:
 def test_finished_tournament_presents_canonical_winner_standings_and_matches(tmp_path):
     service_result = TournamentService().run(_request(tmp_path))
     assert [(row.agent_id, row.wins) for row in service_result.standings] == [
-        ("seeker", 2),
-        ("runner", 0),
-        ("writer", 0),
+        ("survivor", 2),
+        ("forfeit_a", 0),
+        ("forfeit_b", 0),
     ]
 
     results = read_tournament_results(tmp_path)
@@ -99,11 +184,15 @@ def test_finished_tournament_presents_canonical_winner_standings_and_matches(tmp
         (row.agent_id, row.played, row.wins, row.losses, row.ties, row.score_total)
         for row in service_result.standings
     ]
-    assert [row.name for row in results.standings] == ["Seeker Bot", "Runner Bot", "Writer Bot"]
-    assert [row.name for row in results.leaders] == ["Seeker Bot"]
-    assert headline_text(results) == "Winner: Seeker Bot"
+    assert [row.name for row in results.standings] == [
+        "Survivor Bot",
+        "Forfeit A Bot",
+        "Forfeit B Bot",
+    ]
+    assert [row.name for row in results.leaders] == ["Survivor Bot"]
+    assert headline_text(results) == "Winner: Survivor Bot"
     assert status_text(results) == "Complete: 3 of 3 matches completed."
-    assert results.ruleset_ids == ("bytefray-rules-1",)
+    assert results.ruleset_ids == ("bytefray-rules-4",)
     assert [
         (row.number, row.round_number, row.entrant_ids, row.seed, row.status)
         for row in results.matches
@@ -118,35 +207,40 @@ def test_finished_tournament_presents_canonical_winner_standings_and_matches(tmp
         assert row.replay_sha256 == envelope.replay.sha256
         assert check_match_replay(row) == REPLAY_READY
     assert [match_result_text(row) for row in results.matches] == [
+        "Survivor Bot won",
+        "Survivor Bot won",
         "Tie",
-        "Seeker Bot won",
-        "Seeker Bot won",
     ]
 
 
 def test_entrants_level_on_wins_and_score_share_a_rank(tmp_path):
     service_result = TournamentService().run(_request(tmp_path))
-    runner, writer = service_result.standings[1], service_result.standings[2]
-    assert (runner.wins, runner.score_total) == (writer.wins, writer.score_total)
+    forfeit_a, forfeit_b = service_result.standings[1], service_result.standings[2]
+    assert (forfeit_a.wins, forfeit_a.score_total) == (forfeit_b.wins, forfeit_b.score_total)
 
     results = read_tournament_results(tmp_path)
 
     assert [(row.rank, row.agent_id) for row in results.standings] == [
-        (1, "seeker"),
-        (2, "runner"),
-        (2, "writer"),
+        (1, "survivor"),
+        (2, "forfeit_a"),
+        (2, "forfeit_b"),
     ]
 
 
 def test_top_tie_is_reported_as_a_tie_not_resolved_by_agent_id(tmp_path):
+    _write_fixture_agents(tmp_path)
     entrants = tuple(
-        MatchEntrant(chr(65 + index), f"Agent {index}", index * 32, enc(NOP)) for index in range(3)
+        MatchEntrant.python(
+            f"survivor_{index}", f"Agent {index}", index * (ARENA // 3),
+            resolve_agent(tmp_path, "survivor"),
+        )
+        for index in range(3)
     )
     service_result = TournamentService().run(
         _request(
             tmp_path,
             entrants=entrants,
-            config=Config(arena_size=128, instr_per_tick=1),
+            config=Config(arena_size=ARENA, instr_per_tick=8),
             max_ticks=2,
         )
     )
@@ -173,12 +267,12 @@ def test_failed_match_is_listed_and_the_top_standing_is_called_a_leader(tmp_path
     assert results.finished
     assert results.not_completed_count == 1
     failed = results.matches[1]
-    assert failed.entrant_ids == ("runner", "seeker")
+    assert failed.entrant_ids == ("survivor", "forfeit_b")
     assert match_result_text(failed) == "Failed"
     assert failed.error_message == "backend broke"
     assert failed.replay_path is None
     assert failed.replay_unavailable_reason == NOT_COMPLETED_REPLAY_TEXT
-    assert headline_text(results) == "Leader: Seeker Bot"
+    assert headline_text(results) == "Leader: Survivor Bot"
     assert status_text(results) == (
         "Finished, but 1 of 3 matches did not complete. Standings count completed matches only."
     )
@@ -233,7 +327,7 @@ def test_missing_and_changed_replays_are_detected_before_opening(tmp_path):
     reread = read_tournament_results(tmp_path).matches
     assert reread[1].replay_path is None
     assert reread[1].replay_unavailable_reason == "The replay file is missing."
-    assert reread[1].winner == "seeker"
+    assert reread[1].winner == "survivor"
     assert [replay_column_text(row) for row in reread] == [
         "Available",
         "Replay unavailable",
@@ -308,7 +402,7 @@ _VALID_HEADER = {"schema": "battle2.tournament", "schema_version": 1}
                 {
                     **_VALID_HEADER,
                     "tournament_id": "t",
-                    "division": "vm",
+                    "division": "python",
                     "matches": "oops",
                     "standings": [],
                 }
@@ -320,7 +414,7 @@ _VALID_HEADER = {"schema": "battle2.tournament", "schema_version": 1}
                 {
                     **_VALID_HEADER,
                     "tournament_id": "t",
-                    "division": "vm",
+                    "division": "python",
                     "matches": [{"status": "completed"}],
                     "standings": [],
                 }
@@ -341,9 +435,11 @@ def test_tournament_history_lists_saved_tournaments_newest_first(tmp_path):
     data_root = tmp_path / "data"
     assert discover_tournaments(data_root) == ()
     root = tournaments_root(data_root)
-    TournamentService().run(_request(root / "older"))
+    TournamentService().run(_request(root / "older", data_root=data_root))
     with pytest.raises(_Abort):
-        TournamentService(_FailSecondMatch(_Abort())).run(_request(root / "stopped"))
+        TournamentService(_FailSecondMatch(_Abort())).run(
+            _request(root / "stopped", data_root=data_root)
+        )
     (root / "not-a-tournament").mkdir()
     (root / "damaged").mkdir()
     (root / "damaged" / "tournament.json").write_text("{", encoding="utf-8")
@@ -358,15 +454,15 @@ def test_tournament_history_lists_saved_tournaments_newest_first(tmp_path):
     assert "could not be read" in damaged.error
     assert history_status_text(damaged) == "Unreadable"
     assert (stopped.finished, stopped.match_count, stopped.completed_count) == (False, 1, 1)
-    assert stopped.entrant_ids == ("runner", "writer")
+    assert stopped.entrant_ids == ("survivor", "forfeit_a")
     assert stopped.leader_ids == ()
     assert history_status_text(stopped) == "Did not finish"
     assert history_top_standing_text(stopped) == "—"
     assert (older.finished, older.match_count, older.completed_count) == (True, 3, 3)
-    assert older.entrant_ids == ("seeker", "runner", "writer")
-    assert older.leader_ids == ("seeker",)
+    assert older.entrant_ids == ("survivor", "forfeit_a", "forfeit_b")
+    assert older.leader_ids == ("survivor",)
     assert history_status_text(older) == "Complete"
-    assert history_top_standing_text(older) == "seeker"
+    assert history_top_standing_text(older) == "survivor"
 
 
 def test_state_signature_changes_only_when_the_service_writes_state(tmp_path):

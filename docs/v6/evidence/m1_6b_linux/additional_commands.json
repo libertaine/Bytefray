@@ -1,0 +1,88 @@
+{
+  "common": {
+    "cwd": "<qualified-source>",
+    "interpreter": "<qualification-root>/venv/bin/python",
+    "environment": {
+      "QT_QPA_PLATFORM": "xcb",
+      "SDL_VIDEODRIVER": "x11",
+      "SDL_AUDIODRIVER": "dummy",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONPATH": "<qualified-source>/engine/src:<qualified-source>/client/src:<qualified-source>"
+    }
+  },
+  "runs": {
+    "gui": {
+      "xvfb": [
+        "xvfb-run",
+        "-a",
+        "-s",
+        "-screen 0 1440x1000x24"
+      ],
+      "pytest": [
+        "client/tests",
+        "tests",
+        "-m",
+        "gui",
+        "--basetemp=.pytest-tmp/linux-gui-final",
+        "--junitxml=<qualification-root>/evidence/final/gui.xml"
+      ],
+      "exit_code": 1
+    },
+    "focus_repro": {
+      "xvfb": [
+        "xvfb-run",
+        "-a"
+      ],
+      "pytest": [
+        "tests/test_v5_replay_history_browser.py::test_keyboard_navigation_action_tab_order_and_filter_focus",
+        "-m",
+        "gui",
+        "--basetemp=.pytest-tmp/focus-repro",
+        "--junitxml=<qualification-root>/evidence/final/focus_repro.xml"
+      ],
+      "exit_code": 1
+    },
+    "focus_assisted": {
+      "xvfb": [
+        "xvfb-run",
+        "-a"
+      ],
+      "pytest": [
+        "tests/test_v5_replay_history_browser.py::test_keyboard_navigation_action_tab_order_and_filter_focus",
+        "-m",
+        "gui",
+        "-p",
+        "linux_focus_plugin",
+        "--basetemp=.pytest-tmp/focus-assisted",
+        "--junitxml=<qualification-root>/evidence/final/focus_assisted.xml"
+      ],
+      "extra_pythonpath": "<qualification-root>",
+      "exit_code": 0
+    },
+    "native": {
+      "xvfb": [
+        "xvfb-run",
+        "-a",
+        "-s",
+        "-screen 0 1440x1000x24"
+      ],
+      "script": [
+        "<qualification-root>/native.py",
+        "--resume-engine"
+      ],
+      "extra_pythonpath": "<qualification-root>/observer",
+      "exit_code": 0
+    },
+    "final_repository_ruff": {
+      "cwd": "<repository>",
+      "argv": [
+        "<qualification-root>/venv/bin/python",
+        "-m",
+        "ruff",
+        "check",
+        "."
+      ],
+      "exit_code": 0
+    }
+  }
+}

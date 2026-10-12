@@ -1,0 +1,64 @@
+{
+  "control_qualification": {
+    "status": "PENDING"
+  },
+  "freeze_digest": "428033032ce2e3165b89e76a49ecf23f64a6aa38945113e3c316d7e62d6d8968",
+  "freeze_id": "v6-e6-freeze-v1-428033032ce2",
+  "identity": {
+    "e6_analysis_version": 1,
+    "e6_gates_version": 1,
+    "e6_rederive_version": 1,
+    "e6_telemetry_version": 1,
+    "e6_trace_index_version": 1,
+    "freeze_version": 1,
+    "match_generation_path": "engine/src",
+    "match_generation_tree": "691f6666fd14446cd966c0ce879aaa7c1a7eadaf",
+    "matches_total": 11520,
+    "parent_freeze": {
+      "commit": "ddf0eda",
+      "matches": 84,
+      "path": "engine/tests/test_v6_e6_parent_byte_identity.py"
+    },
+    "preregistration_sha256": "e1ccc1cc7ef2f3b193019590984b9f34fafb0b7e176b1f4ebb8387d0566ee5f4",
+    "reused_e5_freeze_id": "v6-e5-freeze-v1-5ba12be258c8",
+    "structural_digest": "cd040eac42ef6554f3d6c0faf4a7fbe83dd963d416cfad8e7f9c4aa8630f13a6",
+    "structural_matrix_id": "v6-e6-matrix-v1-cd040eac42ef",
+    "tooling_sha256": {
+      "tools/research/v6/e2/capture_analyzer.py": "b818f53e32ba160fb55386cddccd555812def9dc7c54434923c7451fa2c18f86",
+      "tools/research/v6/e2/matrix.py": "bd8ca2a88f2945c5bf3d544ec5a59cf9293bd11b78e1548a2e443c787a131449",
+      "tools/research/v6/e3/action_parity.py": "86b1a557e3a31db157ba2bd8805ef3636f892f2c7e5f9468d0982961d4c4f211",
+      "tools/research/v6/e3/analyze_e3.py": "a8d0911939da5b9b9dcc554657168f6cb36800064043498ef8eaf49bd0610330",
+      "tools/research/v6/e3/gates.py": "0910fb541e9fd4a538d74a6abdcff8515ab4ddc3165ac960ce968c939d2cd9a9",
+      "tools/research/v6/e3/matrix.py": "bdbb33dcf9b4c399eeb42179af0b7f12118b2cb051aa93dd1156844772e737bb",
+      "tools/research/v6/e4/analyze_e4.py": "c891abe0a879f62b0265f5f38f46bd0a1214a860994f06977f05ca3bfaeb2ab1",
+      "tools/research/v6/e4/cell_metrics.py": "cbfe64242113badca6c797dcc2897dea89c88dfdb0040e7a6105f21e03e43e0b",
+      "tools/research/v6/e4/gates.py": "0ea1a03f696530467ee8a3a576712433b433c92ac362799fc168a58dca7fc969",
+      "tools/research/v6/e4/matrix.py": "3ecd80ee234d8dd91ad7b986acc105905c64bcbf2ac10e37aa107a4eab00d583",
+      "tools/research/v6/e5/analysis_freeze.py": "14ff3d23bd3cc82eb5bfb70631f94d53a3f87a14428e9a488050083bc63475b2",
+      "tools/research/v6/e6/analysis_freeze.py": "baf84098e49ed996d3886109da43eff2067a155922493dd6dd91f2b388423679",
+      "tools/research/v6/e6/analyze_e6.py": "f9c3473649f7bf2fd18827f24a9af775f47f44d7b6c083acf27536a9e8ef906f",
+      "tools/research/v6/e6/describe.py": "c76b659d6133a897a1e4653a76456820a0feb7e246d58b0da63c928ad6be42ec",
+      "tools/research/v6/e6/discipline.py": "ac15881282d3f177aef7473fa6204385dd451cc791c9f7adaa275ead3f304985",
+      "tools/research/v6/e6/family.py": "ae584af5b052f1d8cd7dbd0be0c7ef7f0d0a924ffb54a138e5cacd323ecbbbd3",
+      "tools/research/v6/e6/family_fingerprints.json": "d72ede4cdb4cd68bcfa7e16fbd9014f343c123d0c0b0acd38e84c00716e96402",
+      "tools/research/v6/e6/gates.py": "b74203ed627d11c25b7022c57d6584e96b5d46c1c6b3c9c2309c54dabfe895d9",
+      "tools/research/v6/e6/interpretation.py": "a8ce142e0857a54f8dea1ca67f38868991c097e92b739c07df145526bfb73d34",
+      "tools/research/v6/e6/matrix.py": "e23e528b1f9c7a5305ed5654a5511bee59c88f327eca7c449ec6a2a1447f3f31",
+      "tools/research/v6/e6/payoff.py": "6c482a673d9d796928e85bf80b410fd98faf8c8d1d413170d7e8617a9f191c3c",
+      "tools/research/v6/e6/preregistration.json": "e1ccc1cc7ef2f3b193019590984b9f34fafb0b7e176b1f4ebb8387d0566ee5f4",
+      "tools/research/v6/e6/preregistration.py": "bfe2f065cda6a8f3402031b18bdf63685f0fda06338ec2c1d002e3785faa702d",
+      "tools/research/v6/e6/rederive.py": "c6e6706d219678e43ff3d2c2db4f611854c670d5acba71cdb6d52aa3673ce4df",
+      "tools/research/v6/e6/run_e6.py": "d1beca1dc01f8b736d2c00d65504e3a16079db558a3450e3121b415cede37055",
+      "tools/research/v6/e6/seeds.py": "4a7fdb27da6d21da6fbe0d6f5b2ca2ba8d84c5efd9ccd6f123b979ba292da30c",
+      "tools/research/v6/e6/telemetry.py": "2c6768e644e442d7731ff8abfc028894a7bfcd136be235fdbed30f86f6dbac5c",
+      "tools/research/v6/e6/traces.py": "9c2d75ac3c04b85057302383155052ccb3d75e0dc1d3342840ec597f72811f19",
+      "tools/research/v6/experiment_harness.py": "e137c02df84f1aa20d1097472bb3885820e4a27ddbd2849fa7b1be73980e0254"
+    },
+    "tooling_source_sha": "5f933811408550507c13a7a5b869d9bb946ba076"
+  },
+  "schema": "bytefray.v6.e6.analysis_freeze",
+  "seed_commitment": {
+    "status": "PENDING"
+  },
+  "status": "frozen before any E6 seed or matrix cell exists"
+}

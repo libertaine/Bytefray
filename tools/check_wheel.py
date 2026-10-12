@@ -13,28 +13,8 @@ EXPECTED_FILES = {
     "app/__init__.py",
     "battle_client/__init__.py",
     "battle_engine/__init__.py",
-    "battle_engine/data/starter_agents/runner/agent.yaml",
-    "battle_engine/data/starter_agents/seeker/agent.yaml",
-    "battle_engine/data/starter_agents/spiral/agent.yaml",
-    "battle_engine/data/starter_agents/writer/agent.yaml",
-    # Python (Agent API v1) starter agents added in v0.6.1 -- each ships
-    # both a manifest and a source file, unlike the manifest-only native
-    # VM starters above.
-    "battle_engine/data/starter_agents/claimer/agent.yaml",
-    "battle_engine/data/starter_agents/claimer/agent.py",
-    "battle_engine/data/starter_agents/strider/agent.yaml",
-    "battle_engine/data/starter_agents/strider/agent.py",
-    "battle_engine/data/starter_agents/hunter/agent.yaml",
-    "battle_engine/data/starter_agents/hunter/agent.py",
-    "battle_engine/data/starter_agents/wanderer/agent.yaml",
-    "battle_engine/data/starter_agents/wanderer/agent.py",
-    "battle_engine/data/starter_agents/adaptive/agent.yaml",
-    "battle_engine/data/starter_agents/adaptive/agent.py",
-    "battle_engine/data/starter_agents/raider/agent.yaml",
-    "battle_engine/data/starter_agents/raider/agent.py",
-    "battle_engine/data/starter_agents/sentinel/agent.yaml",
-    "battle_engine/data/starter_agents/sentinel/agent.py",
-    # Agent API v2 / Ruleset v4 alpha1 starter population.
+    # The only executable starter population: Agent API v2 agents for the
+    # stable Ruleset 4 runtime.
     "battle_engine/data/starter_agents/v4_claimer/agent.yaml",
     "battle_engine/data/starter_agents/v4_claimer/agent.py",
     "battle_engine/data/starter_agents/v4_concentrated_attacker/agent.yaml",
@@ -56,23 +36,57 @@ EXPECTED_FILES = {
     "battle_engine/data/starter_agents/v5_core_defender/agent.py",
     "battle_engine/data/starter_agents/v5_dual_team/agent.yaml",
     "battle_engine/data/starter_agents/v5_dual_team/agent.py",
-    "battle_engine/data/agent_template/agent.yaml",
-    "battle_engine/data/agent_template/agent.py",
-    "battle_engine/data/agent_template_annotated/agent.yaml",
-    "battle_engine/data/agent_template_annotated/agent.py",
     "battle_engine/data/agent_template_v2/agent.yaml",
     "battle_engine/data/agent_template_v2/agent.py",
     "battle_engine/data/agent_template_v2_annotated/agent.yaml",
     "battle_engine/data/agent_template_v2_annotated/agent.py",
     "app/assets/branding/bytefray-icon.png",
 }
+
+# Phase 2B.12 removes these execution resources from distributable payloads,
+# rather than merely unregistering them at runtime.
+FORBIDDEN_FILES = {
+    "battle_engine/builtins/__init__.py",
+    "battle_engine/builtins/registry.py",
+    "battle_engine/instructions.py",
+    "battle_engine/match.py",
+    "battle_engine/reference_agents.py",
+    "battle_engine/data/agent_template/agent.py",
+    "battle_engine/data/agent_template/agent.yaml",
+    "battle_engine/data/agent_template_annotated/agent.py",
+    "battle_engine/data/agent_template_annotated/agent.yaml",
+}
+FORBIDDEN_PREFIXES = (
+    "battle_engine/data/benchmarks/",
+    "battle_engine/data/reference_agents/",
+    "battle_engine/data/v3_closeout_agents/",
+    "battle_engine/data/v3_phase7_agents/",
+)
+FORBIDDEN_STARTER_IDS = frozenset(
+    {
+        "adaptive",
+        "claimer",
+        "hunter",
+        "raider",
+        "runner",
+        "seeker",
+        "sentinel",
+        "spiral",
+        "strider",
+        "wanderer",
+        "writer",
+    }
+)
 EXPECTED_SCRIPTS = {
     "bytefray": "battle_engine.command:main",
     "bytefray-cli": "battle_engine.cli:main",
     "bytefray-agent-designer": "app.agent_designer:main",
     "bytefray-replay-viewer": "app.replay_viewer:main",
 }
-ALLOWED_PMARS_PATHS = {"battle_engine/pmars.py"}
+# V6 retired the pMARS integration entirely (docs/research/v6's Phase 2B.6
+# retirement report); this guard is kept permanently as a negative
+# anti-regression check now that nothing is allow-listed.
+ALLOWED_PMARS_PATHS: frozenset[str] = frozenset()
 
 
 def _wheel_version(wheel: Path) -> str:
@@ -90,6 +104,22 @@ def validate_wheel(wheel: Path) -> None:
         missing_files = sorted(EXPECTED_FILES - names)
         if missing_files:
             raise ValueError(f"Wheel is missing expected files: {missing_files}")
+
+        forbidden_files = sorted(
+            name
+            for name in names
+            if name in FORBIDDEN_FILES
+            or name.startswith(FORBIDDEN_PREFIXES)
+            or (
+                name.startswith("battle_engine/data/starter_agents/")
+                and name.split("/", 4)[3] in FORBIDDEN_STARTER_IDS
+            )
+        )
+        if forbidden_files:
+            raise ValueError(
+                "Wheel contains retired execution resources: "
+                f"{forbidden_files}"
+            )
 
         unexpected_pmars = sorted(
             name

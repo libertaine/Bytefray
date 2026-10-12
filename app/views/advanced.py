@@ -34,14 +34,10 @@ from app.services.designer_workflows import (
 )
 from app.services.engine import RunConfig
 from app.services.osutil import get_default_paths
-from app.services.ruleset_options import (
-    VM_RULESET_EXPLANATION,
-    agent_row_supported_by_ruleset,
-)
+from app.services.ruleset_options import agent_row_supported_by_ruleset
 from app.widgets.agent_combo import (
     repopulate_additional_agent_combo,
     repopulate_paired_agent_combos,
-    selected_agent_kind,
     selected_agent_name,
     sync_compatible_b_choices,
 )
@@ -346,10 +342,8 @@ class AdvancedPanel(QWidget):
         # Two surfaces per slot, exactly one visible at a time (V5 Alpha 1
         # Phase E1): generated controls for an agent that declares a schema,
         # and the pre-existing free-form JSON editor for one that does not.
-        # The legacy editor is kept rather than replaced -- Agent API v1
-        # agents, VM/blob agents and any un-migrated v2 agent still use it,
-        # and forcing them through a schema they never declared would break a
-        # working path.
+        # The free-form editor remains the fallback for current API-v2 agents
+        # that do not declare a parameter schema.
         self.schemaA = AgentParameterForm("Agent A Parameters")
         self.schemaB = AgentParameterForm("Agent B Parameters")
         self.schemaC = AgentParameterForm("Agent C Parameters")
@@ -391,6 +385,10 @@ class AdvancedPanel(QWidget):
         # ---- Results ----
         results = QWidget()
         rv = QVBoxLayout(results)
+        self.resultRevisionLabel = QLabel("No completed match yet.")
+        self.resultRevisionLabel.setWordWrap(True)
+        self._recorded_result_available = False
+        rv.addWidget(self.resultRevisionLabel)
         self.table = QTableWidget(0, 2)
         self.table.setHorizontalHeaderLabels(["Field", "Value"])
         self.table.horizontalHeader().setStretchLastSection(True)
@@ -427,6 +425,13 @@ class AdvancedPanel(QWidget):
             combo.currentIndexChanged.connect(self._on_agent_selection_changed)
         for schema_form in (self.schemaA, self.schemaB, self.schemaC):
             schema_form.changed.connect(self._update_run_enabled)
+            schema_form.changed.connect(self._mark_earlier_result)
+        for combo in (self.ruleset, self.agentA, self.agentB, self.agentC):
+            combo.currentIndexChanged.connect(self._mark_earlier_result)
+        for editor in (self.editorA, self.editorB, self.editorC):
+            editor.text.textChanged.connect(self._mark_earlier_result)
+        for spinbox in self.findChildren(QSpinBox) + self.findChildren(QDoubleSpinBox):
+            spinbox.valueChanged.connect(self._mark_earlier_result)
         self._sync_parameter_surfaces()
 
     @property
@@ -438,6 +443,14 @@ class AdvancedPanel(QWidget):
     def setAgents(self, rows: list[AgentRow]) -> None:
         self._all_rows = list(rows)
         self._refilter_agents()
+        self._mark_earlier_result()
+
+    def _mark_earlier_result(self, _value=None) -> None:
+        if self._recorded_result_available:
+            self.resultRevisionLabel.setText(
+                "Earlier revision/settings: the completed result and Open Replay use "
+                "the recorded match. Current edits apply to the next run."
+            )
 
     def _on_ruleset_changed(self, _index: int) -> None:
         self._refilter_agents()
@@ -481,8 +494,7 @@ class AdvancedPanel(QWidget):
         """Point each slot at the right parameter surface for its agent.
 
         A slot shows generated controls when its agent declares a schema and
-        the pre-existing free-form JSON editor when it does not, so a legacy
-        or Agent API v1 agent keeps exactly the surface it always had.
+        the pre-existing free-form JSON editor when it does not.
 
         The form is only re-targeted when the *agent* changed. Repopulating
         the combos (a Ruleset change, a catalog refresh) re-enters here with
@@ -541,15 +553,9 @@ class AdvancedPanel(QWidget):
         C (UX-32/UX-33), when present, is refiltered from the identical
         ``eligible`` roster via ``repopulate_additional_agent_combo``, so
         it can never offer a Ruleset-incompatible choice the same way
-        Agent A/B cannot. ``sync_compatible_b_choices`` still applies the
-        pre-existing runtime-kind restriction against Agent A for every
-        slot: Ruleset v1 is the one identity that admits both Python and
-        VM/blob agents, which still may not be mixed in the same match
-        (``validate_homogeneous`` at launch), so that check is layered on
-        top rather than replaced -- and generalizes to Agent C by simply
-        calling the same pairwise helper against Agent A a second time,
-        since "all entrants share Agent A's kind" is transitively "every
-        entrant is compatible with Agent A".
+        Agent A/B cannot. ``sync_compatible_b_choices`` remains a
+        defense-in-depth catalog filter and generalizes to Agent C by
+        applying the same helper against Agent A.
 
         Duplicate *agents* across slots remain a legal, unrestricted
         choice (only per-slot entrant identity must be unique, which the
@@ -593,15 +599,11 @@ class AdvancedPanel(QWidget):
                 "Create or import a compatible agent, then refresh."
             )
             return
-        kinds = [selected_agent_kind(self.agentA), selected_agent_kind(self.agentB)]
-        if self._agent_c_visible:
-            kinds.append(selected_agent_kind(self.agentC))
-        if "vm" in kinds:
-            # Only Ruleset v1 offers both kinds; explains why some Agent
-            # B/C entries are grayed out when a VM/blob agent is selected.
-            self.rulesetExplanation.setText(VM_RULESET_EXPLANATION)
-        else:
-            self.rulesetExplanation.clear()
+        # V6 Phase 2B.12 retired Agent API v1 and VM/blob execution: the
+        # combos above are already filtered to bytefray-rules-4-compatible
+        # rows only, so no selected agent's kind can ever disagree with the
+        # single offered Ruleset -- there is nothing left to explain here.
+        self.rulesetExplanation.clear()
 
     # ---- Phase 4 dynamic roster (UX-29/UX-30/UX-31) ----
     def _set_agent_c_visible(self, visible: bool) -> None:
@@ -729,6 +731,10 @@ class AdvancedPanel(QWidget):
             ("result", result.result_path),
             ("replay", result.replay_path or "not available"),
         ]
+        self._recorded_result_available = True
+        self.resultRevisionLabel.setText(
+            "Completed match — recorded revision/settings. Open Replay uses this result."
+        )
         for entrant in result.entrants:
             status = "alive" if entrant.alive else "eliminated"
             values.append(

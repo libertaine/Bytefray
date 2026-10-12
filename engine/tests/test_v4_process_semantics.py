@@ -23,7 +23,27 @@ from battle_engine.process_runtime import (
     ProcessMatchController,
     ProcessRole,
 )
-from battle_engine.ruleset_policy import RULESET_V4_ALPHA1
+from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ALPHA1_ID, RulesetPolicy
+
+# V6 Phase 2B.10 Scope B removed the named RULESET_V4_ALPHA1 object from
+# ruleset_policy.py's executable registry (not merely deregistered it --
+# see docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md), so it
+# can no longer be imported. Reconstructed exactly as that module's own
+# retirement comment documents it (frozen, never to change).
+# ProcessMatchController accepts a RulesetPolicy object directly, via the
+# ruleset_policy= keyword below, and never consults the executable
+# registry to get one -- alpha1's registration status is irrelevant to
+# what this characterization actually exercises.
+RULESET_V4_ALPHA1 = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V4_ALPHA1_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seat_spread",
+    process_selection="priority",
+)
 
 
 def test_process_entrant_action_quota_invariant() -> None:

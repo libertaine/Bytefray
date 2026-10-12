@@ -30,7 +30,11 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Sequence
 
-from battle_engine.ruleset_policy import UnknownRulesetError, resolve_ruleset_policy
+from battle_engine.ruleset_policy import (
+    BYTEFRAY_RULESET_V4_ID,
+    UnknownRulesetError,
+    resolve_ruleset_policy,
+)
 
 # v4 alpha2's minimum circular separation between any two entrant core
 # base addresses, in cells. 64 is exactly the value the Phase 4 controlled
@@ -253,15 +257,25 @@ def seeded_seat_starts(
 def core_placement_mode(ruleset_id: str | None) -> str:
     """The placement mode ``ruleset_id`` declares, failing safe to ``"zero"``.
 
-    ``None`` (no Ruleset selected) and any unregistered identity keep the
-    historical literal-``0`` default rather than raising: this module has
-    never been the place an unknown Ruleset is rejected, and
+    V6 Phase 2B.12 (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md)
+    retired Ruleset v1, the identity ``None`` used to mean here ("no Ruleset
+    selected" was always v1's own zero-default placement, T-N-1-class trap):
+    an omitted Ruleset now resolves to the retained control
+    ``BYTEFRAY_RULESET_V4_ID`` everywhere else in the engine (``_resolve_
+    ruleset_id``, ``resolve_omitted_ruleset_id``), so it must resolve to
+    that Ruleset's own ``"seeded"`` placement here too -- never silently
+    back to the address-``0`` collision every entrant's vulnerable core
+    would otherwise share (exactly the defect ``core_placement_mode``
+    exists to prevent; see this module's own docstring). Any *other*
+    unregistered identity (a typo, a retired non-omitted id) still keeps
+    the historical literal-``0`` fallback rather than raising: this module
+    has never been the place an unknown Ruleset is rejected, and
     ``resolve_ruleset_policy``'s own fail-closed error already fires later,
     from ``NativeMatchService``, before any entrant executes.
     """
 
     if ruleset_id is None:
-        return "zero"
+        ruleset_id = BYTEFRAY_RULESET_V4_ID
     try:
         return resolve_ruleset_policy(ruleset_id).core_placement
     except UnknownRulesetError:

@@ -35,20 +35,28 @@ def _make_app():
     return QApplication.instance() or QApplication([])
 
 
-def _write_python_agent(root: Path, name: str, action: str = "AgentAction(ActionKind.NOP)") -> None:
+def _write_python_agent(
+    root: Path, name: str, action: str = "AgentAction(ActionKindV2.MOVE, 1)"
+) -> None:
     directory = root / "agents" / name
     directory.mkdir(parents=True)
     (directory / "agent.yaml").write_text(
         json.dumps(
-            {"kind": "python", "api_version": 1, "entrypoint": "agent.py:create_agent", "version": "1.0"}
+            {
+                "kind": "python",
+                "api_version": 2,
+                "entrypoint": "agent.py:create_agent",
+                "version": "1.0",
+            }
         ),
         encoding="utf-8",
     )
     (directory / "agent.py").write_text(
         f"""
-from battle_engine.agent_api import ActionKind, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 class Agent:
     def reset(self, context): pass
+    def declare_processes(self): return [ProcessDeclaration("p", 1, 1.0)]
     def act(self, observation): return {action}
 def create_agent(): return Agent()
 """,
@@ -123,7 +131,7 @@ def test_evaluate_button_enablement_mirrors_test_and_validate():
             name="candidate",
             path="agents/candidate",
             blob_path=None,
-            meta={"kind": "python", "api_version": 1},
+            meta={"kind": "python", "api_version": 2},
         )
         panel.setAgents([row])
         panel.selectAgent("candidate")
@@ -146,8 +154,20 @@ def test_python_agent_names_reflects_catalog():
     panel = AgentDevelopmentPanel()
     try:
         rows = [
-            AgentRow(name="A", path="agents/a", blob_path=None, meta={"kind": "python"}, agent_id="a"),
-            AgentRow(name="B", path="agents/b", blob_path=None, meta={"kind": "python"}, agent_id="b"),
+            AgentRow(
+                name="A",
+                path="agents/a",
+                blob_path=None,
+                meta={"kind": "python", "api_version": 2},
+                agent_id="a",
+            ),
+            AgentRow(
+                name="B",
+                path="agents/b",
+                blob_path=None,
+                meta={"kind": "python", "api_version": 2},
+                agent_id="b",
+            ),
             AgentRow(name="vm", path="agents/vm", blob_path=None, meta={"kind": "builtin"}, agent_id="vm"),
         ]
         panel.setAgents(rows)
@@ -172,7 +192,7 @@ def test_python_agent_names_returns_discovery_id_when_display_name_differs():
                 name="My Fancy Candidate",
                 path="agents/candidate_dir",
                 blob_path=None,
-                meta={"kind": "python"},
+                meta={"kind": "python", "api_version": 2},
                 agent_id="candidate_dir",
             ),
         ]
@@ -279,8 +299,18 @@ def test_designer_evaluate_command_includes_single_orientation_flag_only_when_un
     try:
         designer.development.setAgents(
             [
-                AgentRow(name="candidate", path="agents/candidate", blob_path=None, meta={"kind": "python"}),
-                AgentRow(name="opponent", path="agents/opponent", blob_path=None, meta={"kind": "python"}),
+                AgentRow(
+                    name="candidate",
+                    path="agents/candidate",
+                    blob_path=None,
+                    meta={"kind": "python", "api_version": 2},
+                ),
+                AgentRow(
+                    name="opponent",
+                    path="agents/opponent",
+                    blob_path=None,
+                    meta={"kind": "python", "api_version": 2},
+                ),
             ]
         )
         designer.development.selectAgent("candidate")
@@ -388,8 +418,18 @@ def test_designer_evaluate_command_includes_workers_flag_only_when_non_default(
     try:
         designer.development.setAgents(
             [
-                AgentRow(name="candidate", path="agents/candidate", blob_path=None, meta={"kind": "python"}),
-                AgentRow(name="opponent", path="agents/opponent", blob_path=None, meta={"kind": "python"}),
+                AgentRow(
+                    name="candidate",
+                    path="agents/candidate",
+                    blob_path=None,
+                    meta={"kind": "python", "api_version": 2},
+                ),
+                AgentRow(
+                    name="opponent",
+                    path="agents/opponent",
+                    blob_path=None,
+                    meta={"kind": "python", "api_version": 2},
+                ),
             ]
         )
         designer.development.selectAgent("candidate")
@@ -495,7 +535,7 @@ def test_results_dialog_shows_orientation_methodology_and_per_cell_orientation(t
 
         header_label = dialog.findChildren(QLabel)[0]
         assert "Entrant orientation: both" in header_label.text()
-        assert "Arena alignment: fixed" in header_label.text()
+        assert "Arena alignment: ruleset_v4_seeded_placements" in header_label.text()
 
         labels = [dialog.resultsList.item(i).text() for i in range(dialog.resultsList.count())]
         assert any("orientation=candidate_first" in label for label in labels)
@@ -808,29 +848,23 @@ def test_results_dialog_visual_panel_shows_win_rate_and_behavior_without_baselin
 
 
 @pytest.mark.gui
-def test_results_dialog_visual_panel_shows_capture_for_v2_ruleset(tmp_path):
-    """v3.0 Phase 3: capture/core evidence (previously computed but never
-    shown in any GUI surface) now renders as visual bars for a v2-ruleset
-    run, even when zero actual captures occurred (0% is still real
-    evidence, not absence of it).
-    """
-
-    from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V2_ID
+def test_results_dialog_omits_retired_capture_visuals_for_current_ruleset(tmp_path):
+    """Stable v4 does not invent retired Ruleset-2 capture evidence."""
 
     _make_app()
     from app.services.designer_workflows import read_evaluation_presentation
     from app.views.evaluation import EvaluationResultsDialog
     from app.widgets.evaluation_visuals import ProportionBar
 
-    state_path = _run_real_evaluation(tmp_path, baseline=True, ruleset_id=BYTEFRAY_RULESET_V2_ID)
+    state_path = _run_real_evaluation(tmp_path, baseline=True)
     presentation = read_evaluation_presentation(state_path)
-    assert presentation.capture is not None
+    assert presentation.capture is None
 
     dialog = EvaluationResultsDialog(presentation)
     try:
         captions = [bar.data.caption for bar in dialog.findChildren(ProportionBar)]
-        assert any("captured" in caption for caption in captions)
-        assert any("caused" in caption for caption in captions)
+        assert not any("captured" in caption for caption in captions)
+        assert not any("caused" in caption for caption in captions)
     finally:
         dialog.deleteLater()
 
@@ -904,8 +938,18 @@ def test_designer_evaluate_launches_process_on_accept(monkeypatch, tmp_path):
     try:
         designer.development.setAgents(
             [
-                AgentRow(name="candidate", path="agents/candidate", blob_path=None, meta={"kind": "python"}),
-                AgentRow(name="opponent", path="agents/opponent", blob_path=None, meta={"kind": "python"}),
+                AgentRow(
+                    name="candidate",
+                    path="agents/candidate",
+                    blob_path=None,
+                    meta={"kind": "python", "api_version": 2},
+                ),
+                AgentRow(
+                    name="opponent",
+                    path="agents/opponent",
+                    blob_path=None,
+                    meta={"kind": "python", "api_version": 2},
+                ),
             ]
         )
         designer.development.selectAgent("candidate")
@@ -982,7 +1026,14 @@ def test_designer_evaluate_shows_warning_on_invalid_request(monkeypatch, tmp_pat
     designer = AgentDesigner()
     try:
         designer.development.setAgents(
-            [AgentRow(name="candidate", path="agents/candidate", blob_path=None, meta={"kind": "python"})]
+            [
+                AgentRow(
+                    name="candidate",
+                    path="agents/candidate",
+                    blob_path=None,
+                    meta={"kind": "python", "api_version": 2},
+                )
+            ]
         )
         designer.development.selectAgent("candidate")
 
@@ -1143,7 +1194,7 @@ def test_designer_evaluate_uses_discovery_id_not_display_name_when_they_differ(m
                 {
                     "display": display_name,
                     "kind": "python",
-                    "api_version": 1,
+                    "api_version": 2,
                     "entrypoint": "agent.py:create_agent",
                     "version": "1.0",
                 }
@@ -1151,10 +1202,11 @@ def test_designer_evaluate_uses_discovery_id_not_display_name_when_they_differ(m
             encoding="utf-8",
         )
         (directory / "agent.py").write_text(
-            "from battle_engine.agent_api import ActionKind, AgentAction\n"
+            "from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration\n"
             "class Agent:\n"
             "    def reset(self, context): pass\n"
-            "    def act(self, observation): return AgentAction(ActionKind.NOP)\n"
+            "    def declare_processes(self): return [ProcessDeclaration('p', 1, 1.0)]\n"
+            "    def act(self, observation): return AgentAction(ActionKindV2.MOVE, 1)\n"
             "def create_agent(): return Agent()\n",
             encoding="utf-8",
         )

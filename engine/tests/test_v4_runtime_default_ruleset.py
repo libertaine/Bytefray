@@ -19,10 +19,27 @@ specifically: a V5 experiment that omitted the policy would measure itself
 against alpha1 rather than against the released control.
 
 This module locks the corrected contract. Note what it deliberately does
-*not* do: it changes no Ruleset's behaviour. ``RULESET_V4_ALPHA1``,
-``RULESET_V4_ALPHA2`` and ``RULESET_V4`` are untouched, and the "historical
-semantics still reproduce" tests below prove it. Only *which already-existing
-policy an omitted selection receives* has changed.
+*not* do: it changes no Ruleset's behaviour. ``RULESET_V4`` is untouched,
+and the frozen alpha1/alpha2 field values reconstructed below (see
+``_FROZEN_ALPHA1_POLICY``/``_FROZEN_ALPHA2_POLICY``) still reproduce their
+"historical semantics still reproduce" tests exactly as they did before.
+Only *which already-existing policy an omitted selection receives* has
+changed.
+
+**V6 Phase 2B.10 Scope B note.** ``ProcessMatchController`` accepts a
+``RulesetPolicy`` object directly and never consults the executable
+registry (``resolve_ruleset_policy``) to get one -- every test below
+constructs or receives a policy object, it never resolves one by ID. That
+makes this file's tests genuinely independent of alpha1/alpha2's
+executable-registration status, which V6 Phase 2B.10 Scope B retired
+(docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md). What did
+change is that the named ``RULESET_V4_ALPHA1``/``RULESET_V4_ALPHA2``
+objects were removed from ``ruleset_policy.py`` entirely (not merely
+deregistered), so they can no longer be imported; this file reconstructs
+their exact frozen field values locally instead (still traceable to
+``ruleset_policy.py``'s own retirement-comment, which documents the same
+values), keeping every assertion below just as meaningful as before
+retirement.
 """
 
 import inspect
@@ -38,11 +55,34 @@ from battle_engine.process_runtime import (
     ProcessRole,
 )
 from battle_engine.ruleset_policy import (
+    BYTEFRAY_RULESET_V4_ALPHA1_ID,
+    BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
     RULESET_V4,
-    RULESET_V4_ALPHA1,
-    RULESET_V4_ALPHA2,
     RulesetPolicy,
+)
+
+# Reconstructed exactly as ``ruleset_policy.py``'s own retirement comment
+# documents them (frozen, never to change) -- see this module's docstring.
+_FROZEN_ALPHA1_POLICY = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V4_ALPHA1_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seat_spread",
+    process_selection="priority",
+)
+_FROZEN_ALPHA2_POLICY = RulesetPolicy(
+    ruleset_id=BYTEFRAY_RULESET_V4_ALPHA2_ID,
+    supported_runtime_kinds=frozenset({"python"}),
+    supported_python_api_versions=frozenset({2}),
+    scheduler_mode="chunked",
+    scheduler_chunk_size=2,
+    scheduler_rotate_start=True,
+    core_placement="seeded",
+    process_selection="round_robin",
 )
 
 # ``ProcessMatchController`` reads exactly one of the two gameplay fields that
@@ -158,7 +198,7 @@ def test_from_python_entrants_omitted_policy_default_is_stable_v4() -> None:
 
     assert default is RULESET_V4
     assert default.ruleset_id == BYTEFRAY_RULESET_V4_ID
-    assert default is not RULESET_V4_ALPHA1
+    assert default.process_selection != _FROZEN_ALPHA1_POLICY.process_selection
 
 
 def test_omitted_policy_executes_stable_v4_gameplay_not_alpha1() -> None:
@@ -180,38 +220,45 @@ def test_omitted_policy_executes_stable_v4_gameplay_not_alpha1() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_explicit_alpha1_still_executes_alpha1_semantics() -> None:
-    """Naming alpha1 still reproduces its frozen declaration-order priority."""
+def test_explicit_alpha1_policy_still_executes_alpha1_semantics() -> None:
+    """Naming alpha1's frozen policy object directly still reproduces its
+    declaration-order priority (V6 Phase 2B.10 Scope B retired alpha1's
+    executable *registration*, i.e. resolving it by ID string -- passing
+    its policy object directly to ``ProcessMatchController`` was always,
+    and remains, a separate, unaffected code path)."""
 
-    assert RULESET_V4_ALPHA1.process_selection == "priority"
-    assert RULESET_V4_ALPHA1.core_placement == "seat_spread"
-    assert _intra_entrant_order(RULESET_V4_ALPHA1) == _ALPHA1_PRIORITY_ORDER
+    assert _FROZEN_ALPHA1_POLICY.process_selection == "priority"
+    assert _FROZEN_ALPHA1_POLICY.core_placement == "seat_spread"
+    assert _intra_entrant_order(_FROZEN_ALPHA1_POLICY) == _ALPHA1_PRIORITY_ORDER
 
 
-def test_explicit_alpha2_still_executes_alpha2_semantics() -> None:
-    """Naming alpha2 still reproduces its round-robin rotation."""
+def test_explicit_alpha2_policy_still_executes_alpha2_semantics() -> None:
+    """Naming alpha2's frozen policy object directly still reproduces its
+    round-robin rotation (same unaffected-code-path reasoning as alpha1
+    above)."""
 
-    assert RULESET_V4_ALPHA2.process_selection == "round_robin"
-    assert RULESET_V4_ALPHA2.core_placement == "seeded"
-    assert _intra_entrant_order(RULESET_V4_ALPHA2) == _STABLE_V4_ROUND_ROBIN_ORDER
+    assert _FROZEN_ALPHA2_POLICY.process_selection == "round_robin"
+    assert _FROZEN_ALPHA2_POLICY.core_placement == "seeded"
+    assert _intra_entrant_order(_FROZEN_ALPHA2_POLICY) == _STABLE_V4_ROUND_ROBIN_ORDER
 
 
 @pytest.mark.parametrize(
     ("policy", "expected"),
     [
-        (RULESET_V4_ALPHA1, _ALPHA1_PRIORITY_ORDER),
-        (RULESET_V4_ALPHA2, _STABLE_V4_ROUND_ROBIN_ORDER),
+        (_FROZEN_ALPHA1_POLICY, _ALPHA1_PRIORITY_ORDER),
+        (_FROZEN_ALPHA2_POLICY, _STABLE_V4_ROUND_ROBIN_ORDER),
         (RULESET_V4, _STABLE_V4_ROUND_ROBIN_ORDER),
     ],
 )
 def test_every_v4_identity_keeps_its_own_execution_order(
     policy: RulesetPolicy, expected: list[tuple[str, str]]
 ) -> None:
-    """Each v4 identity stays explicitly selectable and behaviourally itself.
+    """Each v4 identity's policy object stays behaviourally itself.
 
     Guards the direction the default fix must never leak in: correcting an
-    omitted selection must not make alpha1 unreachable, nor make it execute as
-    anything other than alpha1.
+    omitted selection must not change what a policy object -- alpha1's,
+    alpha2's, or the stable control's -- executes as when passed
+    explicitly.
     """
 
     assert _intra_entrant_order(policy) == expected
@@ -226,6 +273,6 @@ def test_alpha1_and_stable_v4_remain_behaviourally_distinguishable() -> None:
 
     assert _ALPHA1_PRIORITY_ORDER != _STABLE_V4_ROUND_ROBIN_ORDER
     assert (
-        RULESET_V4_ALPHA1.process_selection != RULESET_V4.process_selection
-        or RULESET_V4_ALPHA1.core_placement != RULESET_V4.core_placement
+        _FROZEN_ALPHA1_POLICY.process_selection != RULESET_V4.process_selection
+        or _FROZEN_ALPHA1_POLICY.core_placement != RULESET_V4.core_placement
     )

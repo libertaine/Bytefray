@@ -7,8 +7,9 @@ Python runtime as currently implemented, but organizes that description
 around one question: *what exactly does `bytefray-rules-1` mean, and what
 kind of change would require a new Ruleset identity?*
 
-It is not a description of Redcode/pMARS (see "Implementation details"
-below), and it does not define Ruleset v2 or any later ruleset — see
+It is not a description of the retired, historical Redcode/pMARS execution
+path (see "Implementation details" below), and it does not define Ruleset
+v2 or any later ruleset — see
 [RULES_V2.md](RULES_V2.md) for the beta `bytefray-rules-2` contract
 introduced in `v2.0.0-beta1`, and
 [FUTURE_PLANS.md](FUTURE_PLANS.md)'s "Future simulation / combat research"
@@ -42,7 +43,7 @@ are easy to conflate under the single word "rules":
 | **Configuration values** | The specific numbers one match uses for Ruleset-defined fields (arena size, weights, tick limit, seed). | `battle_engine.config.Config`/`Weights`; not separately versioned — see "Configuration values are not Ruleset identity" below. |
 | **Agent API semantics** | The Python agent programming contract: loading, lifecycle, `Observation`/`AgentAction`, and the deterministic RNG derivation. | [AGENT_API_V1.md](AGENT_API_V1.md); identified by `AGENT_API_VERSION`. |
 | **Evaluation methodology** | How `agents evaluate` measures agents: entrant orientation coverage, arena-alignment disclosure, matrix construction. | `docs/specs/evaluation_history.md`, `docs/specs/agent_evaluation.md`; identified by `bytefray.evaluation`'s schema/identity versions and methodology fields, independent of gameplay. |
-| **Implementation details** | Reference built-in program behavior, pMARS/Redcode interop — real, but not gameplay rules and not part of `bytefray-rules-1`. | This document's "Implementation details" section. |
+| **Implementation details** | Reference built-in program behavior, historical pMARS/Redcode interop (retired in V6) — real history, but not gameplay rules and not part of `bytefray-rules-1`. | This document's "Implementation details" section. |
 
 The rest of this document covers Ruleset semantics (shared, then
 VM-specific, then Python-specific), then configuration exclusions, then a
@@ -272,8 +273,8 @@ own that byte, not necessarily whichever agent's action was responsible.
 The native VM is deterministic for a given configuration, bytecode, entry
 addresses, spawn order, and tick limit; replay emission follows
 deterministic scheduling and state iteration. This does not extend to
-wall-clock GUI rendering or pMARS, which are outside this determinism
-statement.
+wall-clock GUI rendering or the retired, historical pMARS execution path,
+which are outside this determinism statement.
 
 ---
 
@@ -372,8 +373,8 @@ value, does not.
   alignment disclosure, and matrix construction are properties of
   `bytefray agents evaluate`, not of the game itself. See
   `docs/specs/evaluation_history.md` and `docs/specs/agent_evaluation.md`.
-- **Redcode/pMARS** — see "Implementation details" below; pMARS matches do
-  not execute under Ruleset v1 at all.
+- **Redcode/pMARS** — retired in V6 (see "Implementation details" below);
+  historical pMARS matches never executed under Ruleset v1 at all.
 - **Mixed VM/Python matches, security sandboxing, and replication** — not
   implemented; see [FUTURE_PLANS.md](FUTURE_PLANS.md) for research-stage
   ideas that could eventually require a still-later ruleset. **Corruptible
@@ -481,13 +482,14 @@ Runner, Writer, Seeker, and Spiral in a writable data root; a starter
 manifest selects its same-named built-in implementation and does not
 contain executable Python code.
 
-### Redcode/pMARS — not Ruleset v1
+### Redcode/pMARS — not Ruleset v1 (historical)
 
-`bytefray run --mode redcode94` invokes a separate pMARS process. Its core
-size, cycles, processes, warrior length, minimum distance, rounds, failure
-handling, and result parsing are pMARS-backend concerns, not part of
-Ruleset v1. Redcode does not execute BATTLE VM opcodes, use BATTLE
-registers, participate in native scheduling, use `BYTEFRAY_RULESET_ID`, or
-currently produce a native BATTLE replay. It produces a normalized summary
-on success. No Redcode/pMARS artifact is, or should be described as, using
-Bytefray Ruleset v1.
+V6 has retired Redcode/pMARS execution entirely; `bytefray run` no longer
+accepts a `--mode` selector or invokes pMARS. This section documents why
+*historical* `redcode94` result artifacts, produced by releases up to and
+including v5.0.0, were never a Ruleset v1 artifact and remain correctly
+read that way today. Redcode's separate pMARS process never executed
+BATTLE VM opcodes, used BATTLE registers, participated in native
+scheduling, used `BYTEFRAY_RULESET_ID`, or produced a native BATTLE
+replay; it produced a normalized summary on success. No Redcode/pMARS
+artifact is, or should be described as, having used Bytefray Ruleset v1.

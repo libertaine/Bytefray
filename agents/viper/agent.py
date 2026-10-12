@@ -51,10 +51,10 @@ verdict or issues a fresh one:
     contested cell is repaired the very next time ``sentinel`` is scheduled
     after the check that found it, not on a fixed timer.
 
-Why Agent API v2 / Ruleset v4 alpha1 (``bytefray-rules-4-alpha1``), and what
-that costs relative to an Agent API v1 design: v4 alpha1's Python-runtime
-process loop reuses the exact same core-capture kill rule Ruleset v2
-defined (``battle_engine.process_runtime`` calls
+Why Agent API v2 / Ruleset v4 alpha1 (``bytefray-rules-4-alpha1``)
+originally, and what that cost relative to an Agent API v1 design: v4
+alpha1's Python-runtime process loop reuses the exact same core-capture
+kill rule Ruleset v2 defined (``battle_engine.process_runtime`` calls
 ``python_runtime.apply_core_capture`` every tick, unconditionally), so
 "vulnerable core" and "kill-lock until elimination" are still real, live
 mechanics here -- but the *Agent API* built around v4 alpha1 is a genuinely
@@ -71,20 +71,22 @@ development-tested against the Agent API v1 ``claimer`` starter -- use a v2
 opponent instead, e.g.::
 
     bytefray agents validate viper
-    bytefray agents test viper --opponent v4_claimer --ruleset bytefray-rules-4-alpha1
+    bytefray agents test viper --opponent v4_claimer --ruleset bytefray-rules-4
 
-(``--ruleset`` must be explicit here to reach alpha1 specifically: an
-omitted ``--ruleset`` for this all-Agent-API-v2 roster resolves to the
-permanent ``bytefray-rules-4`` instead (``v4.0.0-rc1`` Phase 2) -- gameplay-
-identical to alpha2, not alpha1, so a bare command reaches different
-seed-derived placement and round-robin process selection than the fixed
-evenly-spaced/priority-order semantics this design's own commentary above
-assumes. Viper's own target-acquisition logic makes no placement
-assumption of its own -- it acquires targets from
-``visible_enemy_anchor_addresses``, exactly like the alpha2-adapted
-``hydra_alpha2``/``nemesis_alpha2`` -- so nothing here would actually break
-under stable v4 or alpha2; the explicit alpha1 selection is this agent's
-own documented historical showcase choice, not a functional requirement.)
+``bytefray-rules-4-alpha1`` was retired from executable registration by V6
+Phase 2B.10 Scope B
+(docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md): an explicit
+``--ruleset bytefray-rules-4-alpha1`` selection, once this agent's own
+documented historical showcase choice, is no longer available at all, and
+the example above now names the permanent ``bytefray-rules-4`` instead.
+This was always a showcase choice, not a functional requirement: Viper's
+own target-acquisition logic makes no placement assumption of its own --
+it acquires targets from ``visible_enemy_anchor_addresses``, exactly like
+the alpha2-adapted ``hydra_alpha2``/``nemesis_alpha2`` -- so nothing here
+actually depends on alpha1's fixed evenly-spaced/priority-order semantics
+that the design commentary above describes; Viper runs unchanged under
+stable ``bytefray-rules-4``, which is gameplay-identical to what
+``bytefray-rules-4-alpha2`` used to run.
 
 Not a claim of optimal strategy: permanently committing to the first
 sighted address means Viper cannot recover from ever mis-timing that first
@@ -108,7 +110,7 @@ from battle_engine.agent_api import (
     ProcessDeclaration,
 )
 
-CORE_SIZE_HINT = 8  # own_core_size is fixed at 8 under bytefray-rules-4-alpha1 today
+CORE_SIZE_HINT = 8  # own_core_size is fixed at 8 under bytefray-rules-4, unchanged from alpha1
 
 EXPANSION_STRIDE = 13  # Phase 0: default coprime MOVE stride
 ASSAULT_WINDOW = 16  # width of the Phase 2 kill-lock band (> CORE_SIZE_HINT)

@@ -1,0 +1,326 @@
+**Lead disposition for S7-DEV-B1 and S7-DEV-F1**
+
+Candidate 29 and all retained evidence remain preserved exactly as they are.
+
+Candidate 29 is not a Seal and must not be rewritten or relabeled.
+
+No operational authorization is granted by this decision.
+
+# 1. S7-DEV-B1 — RESOLVE BY EXPLICIT APPEND-ONLY SUPERSESSION
+
+Do **not** restore the old `.gitattributes` bytes.
+
+Do **not** modify or regenerate:
+
+`v2_inherited_preservation_manifest_01.json`
+
+That manifest remains an immutable historical statement of the tracked-file bytes at adoption time.
+
+The mismatch is instead dispositioned as an explicitly authorized **post-adoption repository-metadata change**.
+
+The relevant facts are accepted:
+
+- adoption-time `.gitattributes` pin:
+
+`d26332b37bbcac74a5e369317df33cbbecd4042f4ca6867770e38a54307bfd86`
+
+- current committed `.gitattributes`:
+
+`97128feeef25cbe98af6770173d09a809b1c0f626ec2a5ac558236aaf4b99555`
+
+- current bytes equal the blob at checkpoint commit:
+
+`e035def989dfc5e26ae3eb2c9ccfd16aed54b66c`
+
+- the prior value equals the blob at parent:
+
+`2dd8f69c5c6feb5f3a7d8fc0eb81b0c06802dee2`
+
+- the change was the deliberate checkpoint addition of narrow `.gitattributes` rules preserving hash-bound CRLF bytes;
+- 1202/1203 inherited preservation pins still match;
+- `.gitattributes` is the only mismatch.
+
+This does **not** invalidate the original preservation manifest.
+
+It establishes that its `.gitattributes` entry was subsequently superseded by an explicitly recorded repository-metadata change.
+
+## Required new record
+
+Create a new write-once preservation-supersession record.
+
+Use the established naming convention; a name such as:
+
+`v2_inherited_preservation_supersession_01.json`
+
+is appropriate.
+
+Its readable Markdown mirror may also be created.
+
+The record must bind at least:
+
+- the original inherited-preservation manifest;
+- the original `.gitattributes` hash;
+- the parent commit containing those bytes;
+- the new `.gitattributes` hash;
+- checkpoint commit `e035def989dfc5e26ae3eb2c9ccfd16aed54b66c`;
+- the exact `.gitattributes` diff or a digest-bound representation of that diff;
+- the checkpoint record/context that explains why the change was made;
+- Scope 03;
+- Disposition 04;
+- this lead ruling.
+
+Its semantics must be narrow:
+
+**only `.gitattributes` is superseded.**
+
+It must not create a general-purpose mechanism by which arbitrary inherited pins can later be ignored.
+
+The original manifest remains authoritative for every other path.
+
+---
+
+# 2. Qualification-scope amendment for B1 — AUTHORIZED
+
+Because the existing unchanged qualification test enforces the original snapshot literally, a new append-only record by itself cannot make the complete qualification suite pass.
+
+Authorize a narrow amendment to Scope 03 covering exactly:
+
+`engine/tests/test_v6_e9_v2_independent_bindings.py::test_separate_adoption_attestation_exact_review_and_unchanged_body`
+
+No other part of that module is authorized to change.
+
+Create a write-once Scope-03 amendment/qualification exception record rather than editing Scope 03 itself.
+
+The amendment must bind:
+
+- Scope 03 unchanged;
+- the new preservation-supersession record;
+- the Seal-06 baseline;
+- the exact Seal-06/current bytes of the qualification test before modification;
+- the exact permitted test function;
+- the reason the old assertion is no longer sufficient.
+
+## Required new test semantics
+
+Do **not** weaken the test into "ignore `.gitattributes`."
+
+Instead, the updated test must prove all of the following:
+
+- the original inherited-preservation manifest itself remains unchanged;
+- its original `.gitattributes` pin is exactly the historical adoption value;
+- that historical value corresponds to the recorded pre-checkpoint commit/blob;
+- the current `.gitattributes` bytes exactly match the single authorized superseding hash;
+- the current bytes correspond to checkpoint commit `e035def...`;
+- the supersession record itself verifies;
+- every inherited pin other than `.gitattributes` still matches the original manifest;
+- no second unrecorded inherited mismatch is tolerated.
+
+A future `.gitattributes` change must therefore fail unless separately dispositioned.
+
+Do not implement a generic exception list that automatically trusts future records.
+
+Because this is an independent qualification/bindings test, its edit must be made or independently reviewed by an appropriate fresh independent-author context and that provenance must be retained.
+
+---
+
+# 3. S7-DEV-F1 — FIX AUTHORIZED
+
+Once the B1 supersession and qualification amendment are frozen, authorize the typed-unavailability correction within the already permitted Seal-07 implementation boundary.
+
+The interpretation is:
+
+**Yes. An `Unavailable` raised while `registered_producers` reads another-G registry entry, the G record, or an event file counts as producer-registry unavailability for the F1 ordering rule.**
+
+This preserves the effective Seal-06 behavior previously represented by `OSError`.
+
+Registry unavailability must not short-circuit evaluation before a separately available first-raw marker is checked for positive mismatch evidence.
+
+The required precedence is:
+
+- present marker with wrong bytes/hash/identity → `FAILED_VERIFICATION`;
+- otherwise producer-registry unavailable plus no positive marker mismatch → `UNAVAILABLE`;
+- marker itself unavailable, with no positive registry/marker mismatch evidence → `UNAVAILABLE`;
+- any other existing positive mismatch evidence retains its frozen failure classification.
+
+The implementation should capture/defer the typed registry-unavailability condition long enough to perform the marker check required by the frozen F1 precedence rule.
+
+Do not broadly convert arbitrary `Unavailable` exceptions into deferred conditions.
+
+Limit the correction to the explicitly mapped producer-registry reads involved in this ordering.
+
+---
+
+# 4. F1 regression coverage — BOTH AUTHORS REQUIRED
+
+Add an implementer regression case demonstrating the combined condition:
+
+- producer registry read is unavailable through the new typed `Unavailable` path;
+- first-raw marker is present but mismatched;
+- result is `FAILED_VERIFICATION`, not `UNAVAILABLE`.
+
+Also test the corresponding non-mismatch case:
+
+- registry unavailable;
+- marker valid/present;
+- result follows the existing `UNAVAILABLE` rule.
+
+An independently authored regression is also required because this is a correction to a frozen precedence property, not merely internal implementation cleanup.
+
+Resume the retained independent-author context if that can be done without compromising the established separation.
+
+If that context cannot be resumed reliably, use a fresh independent author supplied with the governing scope/disposition requirements and not the implementer's new test implementation.
+
+Preserve provenance.
+
+---
+
+# 5. Candidate numbering
+
+Candidate 29 remains preserved as:
+
+- technically useful evidence;
+- unsealed;
+- not independently qualified;
+- superseded as a prospective final candidate.
+
+Do not modify candidate-29 manifests.
+
+After:
+
+1. the B1 supersession record exists;
+2. the narrow Scope-03 qualification amendment is frozen;
+3. the bindings-test edit is independently made/reviewed;
+4. S7-DEV-F1 is corrected;
+5. the new F1 regression coverage is complete;
+
+generate a fresh candidate manifest pair.
+
+Use the next repository-consistent attempt number, expected to be **candidate 30** if no intervening candidate is created.
+
+Any later source/test change requires another candidate number.
+
+---
+
+# 6. Revalidation after candidate 30
+
+Do not reuse candidate-29 validation as candidate-30 qualification.
+
+Candidate-29 results remain historical supporting evidence.
+
+Candidate 30 must receive fresh validation against its exact manifest pair.
+
+At minimum rerun:
+
+- the inherited-preservation/bindings tests;
+- targeted S7-DEV-F1 precedence cases;
+- Seal-07 implementer-focused tests;
+- Seal-07 independent-focused tests;
+- the native POSIX/WSL supplemental cases applicable to the final candidate;
+- Ruff;
+- mypy engine;
+- mypy client;
+- the entire applicable 27-module V2 synthetic qualification suite.
+
+The complete V2 suite must finish and produce complete counts.
+
+No interrupted run counts as PASS.
+
+If all required validation passes, proceed with the previously authorized sealing process:
+
+- final manifests byte-identical to the successful candidate pair;
+- Seal 07 created write-once;
+- no source/test changes after sealing;
+- fresh independent reproduction;
+- all new findings recorded without post-seal fixes.
+
+---
+
+# 7. Historical claims
+
+The new supersession must preserve this distinction:
+
+The adoption-time preservation manifest correctly recorded the repository at adoption.
+
+Later, checkpoint commit `e035def...` intentionally changed `.gitattributes` for repository byte-preservation purposes.
+
+Therefore the historical claim becomes:
+
+**all adoption-time inherited pins remain unchanged except the one explicitly authorized and cryptographically recorded post-adoption `.gitattributes` supersession.**
+
+Do not rewrite history to claim `.gitattributes` never changed.
+
+Do not characterize this as an unexplained integrity failure once the supersession record has been created and verified.
+
+---
+
+# 8. Authorization sequence
+
+You are authorized to proceed in this order:
+
+1. Create and verify the write-once inherited-preservation supersession record and readable mirror.
+2. Create and verify the narrow Scope-03 qualification amendment covering only the identified bindings test.
+3. Have the authorized independent context make/review that exact test change.
+4. Implement the S7-DEV-F1 correction inside the existing Seal-07 implementation boundary.
+5. Add implementer and independent combined-precedence regression coverage.
+6. Generate the next candidate manifests.
+7. Perform complete candidate validation.
+8. If and only if all required validation passes, create Seal 07.
+9. Perform fresh independent reproduction.
+10. Return all findings for lead disposition.
+
+No additional lead stop is required between these steps unless:
+
+- the supersession cannot be represented without modifying the original preservation manifest;
+- the bindings test requires changes outside the single authorized function;
+- S7-DEV-F1 cannot be fixed inside the existing implementation boundary;
+- another frozen invariant fails;
+- another source/test change outside the authorized amended boundary becomes necessary.
+
+---
+
+# 9. Still prohibited
+
+Nothing here authorizes:
+
+- REAL entropy;
+- operational generation;
+- operational W;
+- salt creation;
+- native matches;
+- operational publication;
+- Q;
+- Gate 7;
+- operational O/V/A/R/B;
+- real-study stale-lock clearance;
+- commit or push during the active Seal-07 qualification cycle.
+
+Execution remains **LOCKED**.
+
+Gate-8 operational acceptance remains **NOT ESTABLISHED**.
+
+Requirement C remains **NOT ESTABLISHED**.
+
+Q remains absent.
+
+---
+
+# Return package
+
+If Seal-07 reproduction completes, return:
+
+- preservation-supersession identity and hashes;
+- Scope-03 amendment identity and hashes;
+- exact bindings-test diff;
+- S7-DEV-F1 implementation diff;
+- implementer and independent regression provenance;
+- new candidate manifest identities;
+- complete validation results;
+- Seal-07 identity/hash;
+- final instrument identity;
+- independent reproduction result;
+- all new findings;
+- final manifested-byte rehash;
+- git status;
+- explicit confirmation that no operational E9 work occurred.
+
+If another genuine frozen-boundary conflict occurs first, stop and return that conflict without improvising a workaround.

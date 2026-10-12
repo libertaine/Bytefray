@@ -24,6 +24,7 @@ from battle_engine.evaluation_analysis import (
     PairedDirection,
     SampleState,
     analyze,
+    compare_candidate_baseline,
     exact_two_sided_binomial_p_value,
     paired_evidence_from_entries,
     paired_evidence_from_verdicts,
@@ -461,8 +462,6 @@ def test_orientation_candidate_by_orientation_rate_estimates_available_without_b
 
 def test_paired_evidence_from_verdicts_matches_entries_equivalent():
     entries_cells = _paired_cells([("win", "loss"), ("loss", "win"), ("win", "win")])
-    from battle_engine.agent_evaluation import compare_candidate_baseline
-
     entries = compare_candidate_baseline(entries_cells)
     from_entries = paired_evidence_from_entries("x", entries)
     from_verdicts = paired_evidence_from_verdicts("x", [e.classification for e in entries])

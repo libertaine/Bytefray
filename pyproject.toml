@@ -13,7 +13,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [{ name = "Rod Satterfield" }]
-keywords = ["corewar", "pmars", "ai-agents", "pygame", "simulation"]
+keywords = ["corewar", "ai-agents", "pygame", "simulation"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
@@ -37,7 +37,7 @@ replay = [
   # wheels for newer CPython on Linux (see docs/LINUX_INSTALL.md), which
   # forces a source build against SDL2 development headers most installs
   # don't have. 2.5.8 is the first pygame-ce version qualified against this
-  # renderer (RC2 pygame-ce/Python 3.14 migration); see docs/research/v4
+  # renderer (RC2 pygame-ce/Python 3.14 migration); see docs/archive/v4
   # for the qualification record.
   "pygame-ce>=2.5.8",
 ]
@@ -82,8 +82,10 @@ Issues = "https://github.com/libertaine/Bytefray/issues"
 # -------------------- setuptools config --------------------
 
 [tool.setuptools]
-# Include non-Python files (see [tool.setuptools.package-data] below)
-include-package-data = true
+# Ship only the explicitly enumerated runtime resources below. Research-only
+# Agent API v1 packages remain tracked in the repository but must not enter a
+# wheel/sdist through setuptools' automatic data-file discovery.
+include-package-data = false
 
 # Discover packages from BOTH trees.
 [tool.setuptools.packages.find]
@@ -95,9 +97,9 @@ battle_engine = "engine/src/battle_engine"
 battle_client = "client/src/battle_client"
 app = "app"
 
-# Only package-local runtime data belongs here. Repository-level agents are user
-# data discovered at runtime; pMARS binaries and third-party licenses are release
-# inputs and are deliberately not folded into the Python wheel.
+# Only package-local runtime data belongs here. Repository-level agents are
+# user data discovered at runtime and are deliberately not folded into the
+# Python wheel.
 [tool.setuptools.package-data]
 app = [
   "assets/**/*",
@@ -105,7 +107,10 @@ app = [
   "sounds/**/*",
 ]
 battle_engine = [
-  "data/**/*",
+  "data/agent_template_v2/*",
+  "data/agent_template_v2_annotated/*",
+  "data/starter_agents/v4_*/*",
+  "data/starter_agents/v5_*/*",
 ]
 
 # Runtime imports can create bytecode beneath package-data agent directories.
@@ -118,13 +123,6 @@ battle_engine = [
   "__pycache__/*",
   "**/__pycache__/*",
 ]
-
-# If you prefer installing external, non-package files to a known location, you can
-# instead use data-files (commented out here; enable if you want to place files
-# outside the package, e.g., share/bytefray). Many projects stick to package-data.
-# [tool.setuptools.data-files]
-# "share/bytefray/warriors" = ["warriors/*"]
-# "share/bytefray/licenses" = ["third_party_licenses/*"]
 
 # -------------------- Ruff --------------------
 [tool.ruff]
@@ -139,6 +137,7 @@ extend-exclude = [
   "_legacy/main.py",
   "_legacy/renderers.py",
   "_legacy/agents_tooling",
+  "tools/research/v6/fixtures/agents",
 ]
 
 [tool.ruff.lint]

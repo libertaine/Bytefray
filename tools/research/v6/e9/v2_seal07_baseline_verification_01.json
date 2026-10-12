@@ -1,0 +1,26 @@
+{
+  "schema": "bytefray.v6.e9.seal07_baseline",
+  "branch": "v6-research",
+  "starting_head": "e035def989dfc5e26ae3eb2c9ccfd16aed54b66c",
+  "upstream_head": "e035def989dfc5e26ae3eb2c9ccfd16aed54b66c",
+  "live_remote_head": "e035def989dfc5e26ae3eb2c9ccfd16aed54b66c",
+  "ahead": 0,
+  "behind": 0,
+  "tracked_index_clean": true,
+  "tracked_worktree_clean": true,
+  "scope_identity": "v6-e9-v2-gate8-scope-0233e8825a6a",
+  "scope_body_sha256": "0233e8825a6abbef1b76f8eaf4144146f370277fb827fdcd3ccec69077a12f6f",
+  "scope_raw_sha256": "75343cf20cde42796a8ad10405cd475360e6c4e90ef8915add59243114143f98",
+  "scope_bound_inputs_verified": 32,
+  "seal06_manifested_files_verified": 325,
+  "implementation_files": 293,
+  "qualification_files": 32,
+  "seal07_edits_present": false,
+  "execution": "LOCKED",
+  "operational_authorization_exercised": false,
+  "no_commits_or_pushes": true,
+  "preserved_untracked": [
+    "docs/research/v6/e9_amended_freeze_review_02.zip",
+    "docs/research/v6/e9_amended_freeze_review_02.zip.sha256"
+  ]
+}

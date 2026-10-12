@@ -458,17 +458,6 @@ packaged-application confirmation.
 Record the result (date, machine, Windows/Linux, pass/fail per step) here
 or in the PR/issue tracking the release this checklist gates.
 
-## pMARS / Redcode integration
-
-1. Optionally set `PMARS_CMD` to one pMARS executable path. Windows packaged
-   CLI artifacts otherwise use their bundled `pmars/windows/pmars.exe`.
-2. Run `bytefray-cli --mode redcode94 --red-a <warrior-a> --red-b <warrior-b>`.
-3. Confirm pMARS launches, the reported winner agrees with its output, and the
-   version 2 `summary.json` records parameters and return code.
-
-The automated suite mocks process edge cases. Windows release validation also
-uses the bundled executable to cover its real output and platform behavior.
-
 ## Windows packaging and installation
 
 1. On a clean supported Windows host, run `pwsh tools/build_win.ps1`. Confirm it
@@ -486,8 +475,8 @@ uses the bundled executable to cover its real output and platform behavior.
 5. Confirm Start Menu/PATH choices, `%ProgramData%` locations, bundled resources,
    uninstall behavior, and operation from a path containing spaces.
 6. Confirm all four executable trees exist and both CLI executables provide help.
-7. Initialize starters, run native and bundled-pMARS matches, and verify no data
-   is written beneath Program Files.
+7. Initialize starters, run native matches, and verify no data is written
+   beneath Program Files.
 8. Close all application processes, uninstall, and confirm program files and
    shortcuts are removed while user data is preserved.
 9. Reinstall and repeat the CLI and GUI startup checks.

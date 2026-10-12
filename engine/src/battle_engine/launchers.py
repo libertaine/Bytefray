@@ -100,10 +100,7 @@ def build_designer_match_arguments(
     a_type: object,
     b_type: object,
     ruleset_id: object,
-    a_blob: object | None = None,
-    b_blob: object | None = None,
     c_type: object | None = None,
-    c_blob: object | None = None,
     alive_w: object | None = None,
     kill_w: object | None = None,
     territory_w: object | None = None,
@@ -112,8 +109,8 @@ def build_designer_match_arguments(
 ) -> list[str]:
     """Build Designer match options without importing a GUI toolkit.
 
-    ``c_type``/``c_blob`` are optional and forward to the CLI's existing
-    ``--c-type``/``--c-blob`` third-entrant flags (``cli.py``'s ``run``
+    ``c_type`` is optional and forwards to the CLI's existing
+    ``--c-type`` third-entrant flag (``cli.py``'s ``run``
     subcommand has supported a third slot since before this parameter
     existed); omitting ``c_type`` produces byte-identical output to a
     caller that has never heard of it, so this is additive for every
@@ -128,9 +125,6 @@ def build_designer_match_arguments(
     if c_type:
         arguments.extend(("--c-type", str(c_type)))
     arguments.extend(("--ruleset", str(ruleset_id)))
-    for flag, value in (("--a-blob", a_blob), ("--b-blob", b_blob), ("--c-blob", c_blob)):
-        if value:
-            arguments.extend((flag, str(value)))
     optional = (
         ("--alive-w", alive_w),
         ("--kill-w", kill_w),

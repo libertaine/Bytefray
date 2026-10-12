@@ -29,15 +29,16 @@ from battle_engine.agent_revisions_cli import main as revisions_main
 from battle_engine.agent_validation import validate_agent
 from battle_engine.evaluation_history import adapt_any
 
-ORIGINAL_ACTION = "AgentAction(ActionKind.NOP)"
-EDITED_ACTION = "AgentAction(ActionKind.NOP)"  # behavior unchanged; only a comment differs
+ORIGINAL_ACTION = "AgentAction(ActionKindV2.READ, 0)"
+EDITED_ACTION = "AgentAction(ActionKindV2.READ, 0)"  # behavior unchanged; only a comment differs
 
 
 def _agent_source(action: str, marker: str) -> str:
     return (
-        "from battle_engine.agent_api import ActionKind, AgentAction\n"
+        "from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration\n"
         "class Agent:\n"
         "    def reset(self, context): pass\n"
+        "    def declare_processes(self): return [ProcessDeclaration('main', 1, 1.0)]\n"
         f"    def act(self, observation): return {action}\n"
         "def create_agent(): return Agent()\n"
         f"# {marker}\n"
@@ -51,7 +52,7 @@ def _write_python_agent(root: Path, name: str, marker: str = "original") -> Path
         json.dumps(
             {
                 "kind": "python",
-                "api_version": 1,
+                "api_version": 2,
                 "entrypoint": "agent.py:create_agent",
                 "version": "1.0",
             }
@@ -141,4 +142,4 @@ def test_evaluate_edit_inspect_restore_lifecycle(
     # without raising is the success signal.
     validation = validate_agent("restored-candidate", data_root=tmp_path)
     assert validation.agent_id == "restored-candidate"
-    assert validation.api_version == 1
+    assert validation.api_version == 2

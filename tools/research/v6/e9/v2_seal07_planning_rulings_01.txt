@@ -1,0 +1,220 @@
+**Seal-07 remaining planning rulings**
+
+Planning Revision 02 is accepted as the working basis for the Seal-07 scope.
+
+The proposed eight-file boundary is acceptable in principle:
+
+**Implementation**
+- `tools/research/v6/e9/v2/records.py`
+- `tools/research/v6/e9/v2/authority.py`
+- `tools/research/v6/e9/v2/inventory.py`
+- `tools/research/v6/e9/v2/private_verification.py`
+
+**Qualification**
+- one new implementer Seal-07 module;
+- one new independently authored Seal-07 module;
+- precisely enumerated edits to the two existing Seal-06 modules that directly conflict with the new crash-recovery semantics.
+
+No implementation is authorized yet.
+
+The four remaining items are ruled as follows.
+
+## 1. Power-loss publication guarantees — REQUIRE CRASH-SAFE DURABLE PUBLICATION, NOT A HARDWARE GUARANTEE
+
+Seal 07 does not need to claim survival against every possible storage-controller or filesystem failure.
+
+It **does** need to guarantee that Bytefray's publication sequence does not intentionally expose a partially written canonical record as though it were complete.
+
+For durable write-once records participating in the F2 recovery path:
+
+- construct the complete canonical bytes before publication;
+- write them to a distinct temporary/staging destination in the same durable location/filesystem where practical;
+- flush the file contents before publication;
+- publish into the canonical destination using the strongest atomic replacement/rename primitive compatible with the existing write-once semantics;
+- once the canonical destination exists, never overwrite it;
+- where the platform/filesystem supports directory metadata flushing, use it if the existing project abstraction can do so without introducing an unbounded cross-platform dependency;
+- if the platform cannot provide a meaningful directory flush primitive, record that limitation rather than pretending full physical-power-loss durability is guaranteed.
+
+The scientific guarantee is therefore:
+
+**after restart, the canonical path must be either absent or contain a complete canonical record; Bytefray must not intentionally leave a half-record at the canonical path.**
+
+Do not claim immunity to arbitrary hardware, filesystem, controller, or OS corruption outside that model.
+
+This applies to the Seal-07 crash-consistency records identified in Revision 02, including PASS and verification-result publication where those records participate in recovery.
+
+## 2. Concurrent replacement threat boundary — OUTSIDE ADVERSARIAL THREAT MODEL, BUT DETECT ORDINARY RACES
+
+Do not expand Seal 07 into protection against an attacker with arbitrary concurrent filesystem write access.
+
+The threat model for this revision may assume no hostile actor is deliberately replacing paths between validation and open.
+
+However, the implementation must still defend against ordinary filesystem races where practical:
+
+- reject unsupported non-regular objects before potentially blocking reads;
+- re-check the opened object/type or identity where the implementation already has enough information to do so;
+- validate bytes/digests after reading;
+- fail closed if the object actually consumed does not match the expected retained identity.
+
+A check/open race caused by an adversary with arbitrary filesystem mutation capability remains a documented residual.
+
+Do not claim that the pre-check + `Path.open` design prevents malicious TOCTOU replacement.
+
+This residual is acceptable for Seal 07 because arbitrary hostile filesystem write access is outside the current E9 evidence model.
+
+## 3. Legacy torn destinations — DO NOT AUTO-REPAIR AMBIGUOUS PRE-SEAL ARTIFACTS
+
+Distinguish two cases.
+
+### A. Torn artifact created under the new Seal-07 publication/recovery protocol
+
+Recover according to the newly qualified crash-recovery rules.
+
+If the retained state proves that:
+
+- the same scientific inputs are being used;
+- the canonical intended bytes can be re-derived exactly;
+- no disqualifying authority event intervened;
+- no contradictory terminal outcome exists;
+
+then exact recovery may complete the missing durable transition without rewriting scientific material.
+
+### B. Legacy torn or malformed destination whose provenance cannot be established under the Seal-07 recovery protocol
+
+Do **not** infer that it was merely an interrupted write.
+
+Do not delete it, overwrite it, or automatically convert it into a valid record.
+
+Treat it as a non-operational legacy/ambiguous state requiring separate disposition.
+
+Seal 07 should not create a migration/repair mechanism for arbitrary old malformed evidence.
+
+Qualification may create controlled torn artifacts representing the exact newly authorized crash points, because their provenance is known by the test.
+
+This keeps the recovery rule narrow: **recover known interrupted transitions, not unexplained damaged history.**
+
+## 4. Additional sealed-test changes — APPROVED ONLY FOR THE ENUMERATED DIRECT CONFLICTS
+
+Authorize the additional existing-test edits identified in Planning Revision 02 **only where the old assertion directly encodes behavior superseded by these Seal-07 rulings**.
+
+For every such edit:
+
+- enumerate the exact module, case/test id and affected branch in the scope;
+- preserve its Seal-06 bytes through the existing Seal-06 manifests/evidence;
+- state which new ruling makes the old expectation invalid;
+- change no neighboring behavior merely for convenience.
+
+For independently authored tests, the corresponding edit must be made by a new independent test-author context.
+
+New Seal-07 modules should carry the expanded crash-consistency matrix rather than repeatedly rewriting older sealed modules.
+
+Before scope freeze, perform one final targeted search for assertions covering:
+- W complete / PASS absent;
+- torn PASS;
+- torn verification-result record;
+- retained-W/evidence interruption;
+- non-regular durable paths;
+- stale lock behavior.
+
+If additional conflicts are found, include those exact cases in the scope now.
+
+If none are found, record that the targeted sweep found no additional conflicts.
+
+---
+
+# Eight-file boundary
+
+The proposed eight-file boundary is approved **provided Revision 02 demonstrates why each implementation file is necessary**:
+
+### `records.py`
+Only crash-safe/write-once record-publication behavior required by the authorized recovery design.
+
+Do not redesign general serialization or unrelated record formats.
+
+### `authority.py`
+Only:
+- safe handling of durable regular-file reads needed to close S6-IQ-F1;
+- minimal crash-safe record operations needed by the Seal-07 path if Revision 02 proves they belong here.
+
+Do not add automatic stale-lock deletion.
+
+### `inventory.py`
+Only if the mapped durable-read or crash-recovery path genuinely traverses inventory artifacts under the operational W sequence.
+
+If the final scope cannot cite the exact F1/F2 dependency requiring an `inventory.py` change, remove it from the boundary before freezing.
+
+### `private_verification.py`
+F1/F2 operational producer and recovery behavior.
+
+No unrelated Gate-8 cleanup.
+
+---
+
+# Stale lock remains manual
+
+The previous ruling remains unchanged.
+
+A crash-created `exclusive.lock` may require manually authorized clearance after proving the owning process is dead and preserving the lock evidence.
+
+Seal 07 does not implement automatic stale-lock recovery.
+
+Synthetic tests may model this operational prerequisite, but operational lock deletion remains separately controlled.
+
+---
+
+# F2 exact recovery rule remains
+
+For a known interrupted transition where canonical W exists and PASS is missing:
+
+- do not delete or rewrite W;
+- require exact same instrument and scientific inputs;
+- require no intervening authority event, including HOLD;
+- rerun complete verification;
+- re-derive canonical W;
+- require exact byte equality to retained W;
+- require no contradictory terminal outcome;
+- complete only the missing durable continuation/PASS state.
+
+If an authority event intervened, the exact recovery path is unavailable.
+
+That condition is **non-terminal by itself**; do not manufacture a scientific failure solely because exact continuation can no longer be completed.
+
+The study remains blocked pending a separate disposition.
+
+---
+
+# Authorization
+
+You are now authorized to:
+
+1. incorporate these rulings into Planning Revision 02 or a new immutable planning revision according to the existing documentation convention;
+2. perform the final targeted sealed-test conflict sweep;
+3. write the **write-once Seal-07 scope record** once the exact eight-file boundary and test exceptions are fully enumerated;
+4. create its readable mirror;
+5. verify all bound inputs and all Seal-06 manifested bytes before and after writing.
+
+Do **not** begin Seal-07 implementation yet.
+
+Return with:
+
+- Seal-07 scope identity;
+- body SHA-256;
+- raw SHA-256;
+- bound-input verification;
+- exact eight-file boundary;
+- exact list of existing sealed test cases allowed to change;
+- confirmation that each of the four implementation files has a mapped F1/F2 necessity;
+- result of the final conflict sweep;
+- confirmation that all Seal-06 bytes remained unchanged.
+
+Current status remains:
+
+- Seal 06: **PASS WITH FINDINGS**
+- S6-IQ-F1: **Seal-07 required**
+- S6-IQ-F2: **Seal-07 operational blocker**
+- S6-IQ-F3–F5: **record only**
+- Gate-8 operational acceptance: **NOT ESTABLISHED**
+- Execution: **LOCKED**
+- Requirement C: **NOT ESTABLISHED**
+- Q: **absent**
+- operational W / REAL entropy / generation / salt / publication / Gate 7: **not authorized**

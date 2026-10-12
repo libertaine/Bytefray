@@ -1,0 +1,514 @@
+{
+  "schema": "bytefray.v6.e3.preregistration",
+  "schema_version": 1,
+  "status": "frozen before any T-E3 or T-E3K1 matrix data exists",
+  "authority": "docs/research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_DESIGN_REVIEW.md Sec J (populations, hypotheses, interpretation), Sec K (metrics), Sec L (matrix), Sec M (statistical and evidence rules), Sec N (qualification, freeze and hard stops)",
+  "rule": "Hypothesis statements, criteria, refutations, probe priors, the population definitions, the metric definitions, the interpretation table, the threshold rationale, the evidence rules and the hard stops are copied verbatim from the design review; only markdown emphasis and code formatting are removed, and wording, symbols and numbers are unchanged. The operationalizations below fix, before any treatment data exists, only what the review leaves unspecified; each says what it adds. No threshold was derived from probe, corpus or control outcomes, and none may be re-tuned after treatment data exists.",
+  "arms": {
+    "primary": {
+      "control": "C-E2",
+      "treatment": "T-E3",
+      "note": "D0-D9 are evaluated on the primary arm."
+    },
+    "companion": {
+      "control": "C-RS",
+      "treatment": "T-E3K1",
+      "note": "O-COMPANION."
+    }
+  },
+  "populations": {
+    "note": "Populations are defined in C-E2 before any treatment data exists.",
+    "exposed": "Exposed: cells with at least one tick in which a live entrant lost an offer.",
+    "stalemate": "Stalemate: C-E2 tick-limit cells containing a recovery; this should reproduce the 610 F1 + 64 F2.",
+    "operationalizations": [
+      "O-POPULATION-FIELDS",
+      "O-EXPOSED",
+      "O-STALEMATE",
+      "O-POPULATION-FREEZE"
+    ]
+  },
+  "metrics": {
+    "PM-1": "PM-1: two-sided parity dependence. Per match, FMS = the share of ticks where core balance (A own-core minus B own-core) changed and the change favored that tick's first mover. PD = |2·FMS − 1|, with the sign reported separately. Scored only with ≥ 10 swing ticks. Otherwise the cell is reported as \"not scoreable\", never dropped. FMS is defined even when cores never reach zero.",
+    "PM-2": "PM-2: E2 capture phase-lock. The frozen analyzer's definition, read two-sided, with an explicit category \"no zero-core ticks\". Under λ = 1 the canonical stalemate has none, so the E2 metric would otherwise simply vanish.",
+    "PM-3": "PM-3: paired outcome transitions, cell by cell C → T, over {A win, B win, tick-limit tie, mutual elimination}.",
+    "PM-4": "PM-4: SDI and mirror seat bias, paired, at 1000 and 1001 ticks.",
+    "MC-1": "MC-1: executed actions per live entrant per tick (cpu_used): the second mover's mean, the exclusive-tick share (must be 0 under T) and the G.4 bound.",
+    "MC-2": "MC-2: Action Denial Fraction = (Q − executed) / Q, for entrants alive at tick end with no forfeit in that tick. This is exactly \"lost to disruption\" for positive-share agents (proof in §C). Cross-check: Σ executed = result.json statistics.cpu_total.",
+    "manipulation_checks_note": "Manipulation checks (a gate, not findings, because they hold by construction)",
+    "secondary": "Secondary. Tick-limit share, recovery rate, completions, zero-core winner rate, decisive-tick distribution, agent seat records, and seat-conditioned Bradley–Terry (subordinate).",
+    "operationalizations": [
+      "O-FMS",
+      "O-PHASE-LOCK",
+      "O-OUTCOME-CLASS",
+      "O-MIRROR-PARITY",
+      "O-MC"
+    ]
+  },
+  "definitions": {
+    "sdi": "Retained unchanged from E2 (preregistration O-SDI-UNIT): for an ordered pair and seed, 1 if the Seat-A entrant wins in both orientations, or the Seat-B entrant wins in both; otherwise 0. The pairing's SDI is the mean over its distinct seed-level trajectories (the pair of the two orientations' trajectory keys).",
+    "mirror_seat_bias": "Retained unchanged from E2: Seat-A win rate minus Seat-B win rate in a mirror cell.",
+    "trajectory_key": "Retained unchanged from E2 (O-TRAJECTORY): experiment_harness.trajectory_key.",
+    "distinct_transition": "The pair (C trajectory key, T trajectory key) of one matched cell (Sec M rule 1)."
+  },
+  "hypotheses": [
+    {
+      "id": "D0",
+      "statement": "No structural change",
+      "supported_if": "Outcome class unchanged in ≥ 0.90 of exposed cells and D2 refuted",
+      "refuted_if": "< 0.90",
+      "probe_prior": "Fails",
+      "criterion": {
+        "population": "exposed",
+        "fields": [
+          "F1",
+          "F2",
+          "F4"
+        ],
+        "unchanged_share_min": 0.9,
+        "requires": {
+          "D2": "refuted"
+        }
+      },
+      "operationalizations": [
+        "O-UNIT",
+        "O-POPULATION-FIELDS",
+        "O-OUTCOME-CLASS",
+        "O-STATUS"
+      ]
+    },
+    {
+      "id": "D1",
+      "statement": "Parity lock decreases",
+      "supported_if": "Median two-sided PD ≤ 0.5 in the stalemate population",
+      "refuted_if": "Median PD ≥ 0.9",
+      "probe_prior": "Fails",
+      "criterion": {
+        "population": "stalemate",
+        "median_pd_max": 0.5,
+        "refuted_median_pd_min": 0.9
+      },
+      "operationalizations": [
+        "O-FMS",
+        "O-PARITY-MEDIANS",
+        "O-STATUS"
+      ]
+    },
+    {
+      "id": "D2",
+      "statement": "Seat determination decreases",
+      "supported_if": "At least half of the C-E2 seat-determined units (3 F1 pairings + probe, sniper and guarded-painter mirrors) fall below SDI 0.9, no new unit reaches it, and 1000 and 1001 agree",
+      "refuted_if": "None falls",
+      "probe_prior": "Supported",
+      "criterion": {
+        "sdi_seat_determined": 0.9,
+        "fall_share_min": 0.5,
+        "units": [
+          {
+            "field": "F1",
+            "pairing": [
+              "v4_probe",
+              "e2_sniper"
+            ]
+          },
+          {
+            "field": "F1",
+            "pairing": [
+              "v4_probe",
+              "e2_spread_sniper"
+            ]
+          },
+          {
+            "field": "F1",
+            "pairing": [
+              "e2_sniper",
+              "e2_spread_sniper"
+            ]
+          },
+          {
+            "field": "F2",
+            "pairing": [
+              "v4_probe",
+              "v4_probe_twin"
+            ]
+          },
+          {
+            "field": "F2",
+            "pairing": [
+              "e2_sniper",
+              "e2_sniper_twin"
+            ]
+          },
+          {
+            "field": "F2",
+            "pairing": [
+              "e2_guarded_painter",
+              "e2_guarded_painter_twin"
+            ]
+          }
+        ],
+        "new_unit_universe": [
+          "F1 pairings",
+          "F2 mirrors"
+        ],
+        "parity_agreement": {
+          "at_1000": "F2",
+          "at_1001": "F2-P",
+          "mirrors": "all ten"
+        }
+      },
+      "operationalizations": [
+        "O-D2",
+        "O-MIRROR-PARITY",
+        "O-STATUS"
+      ]
+    },
+    {
+      "id": "D3",
+      "statement": "Defense no longer needs disrupt-first",
+      "supported_if": "At least half of the repair guard's C-E2 capture losses to {probe, sniper, spread sniper, counter} become non-losses",
+      "refuted_if": "None do",
+      "probe_prior": "Supported, via G.5",
+      "criterion": {
+        "field": "F1",
+        "defender": "e2_repair_guard",
+        "attackers": [
+          "v4_probe",
+          "e2_sniper",
+          "e2_spread_sniper",
+          "e2_counter"
+        ],
+        "non_loss_share_min": 0.5
+      },
+      "operationalizations": [
+        "O-D3",
+        "O-UNIT",
+        "O-STATUS"
+      ]
+    },
+    {
+      "id": "D4",
+      "statement": "First-mover control persists",
+      "supported_if": "Median first-mover swing share ≥ 0.9 and D2 refuted",
+      "refuted_if": "Median ≤ 0.5",
+      "probe_prior": "Fails",
+      "criterion": {
+        "population": "stalemate",
+        "median_fms_min": 0.9,
+        "requires": {
+          "D2": "refuted"
+        },
+        "refuted_median_fms_max": 0.5
+      },
+      "operationalizations": [
+        "O-FMS",
+        "O-PARITY-MEDIANS",
+        "O-STATUS"
+      ]
+    },
+    {
+      "id": "D5",
+      "statement": "Location/process-count exploit",
+      "supported_if": "Spread agents' win-or-draw rate against the 8 stacked agents rises ≥ 0.10 in both seat tables",
+      "refuted_if": "Falls",
+      "probe_prior": "Fails",
+      "criterion": {
+        "field": "F1",
+        "spread": [
+          "e2_spread_sniper",
+          "e2_spread_defender"
+        ],
+        "stacked": [
+          "v4_probe",
+          "e2_sniper",
+          "e2_repair_guard",
+          "e2_disrupt_guard",
+          "e2_min_guard",
+          "e2_greedy_painter",
+          "e2_guarded_painter",
+          "e2_counter"
+        ],
+        "rise_min": 0.1,
+        "seat_tables": [
+          "seat_a",
+          "seat_b"
+        ]
+      },
+      "operationalizations": [
+        "O-D5",
+        "O-UNIT",
+        "O-STATUS"
+      ]
+    },
+    {
+      "id": "D6",
+      "statement": "Re-disruption recreates control",
+      "supported_if": "The jam sniper decisively beats a repair, disrupt or min guard in both seats",
+      "refuted_if": "No such win",
+      "probe_prior": "Fails",
+      "criterion": {
+        "field": "F4",
+        "jammer": "e3_jam_sniper",
+        "guards": [
+          "e2_repair_guard",
+          "e2_disrupt_guard",
+          "e2_min_guard"
+        ],
+        "decisive_win_share_greater_than": 0.5,
+        "seat_tables": [
+          "seat_a",
+          "seat_b"
+        ]
+      },
+      "operationalizations": [
+        "O-D6",
+        "O-UNIT",
+        "O-STATUS"
+      ]
+    },
+    {
+      "id": "D7",
+      "statement": "Draw-ification",
+      "supported_if": "Tick-limit share in exposed F1 rises ≥ 0.10 absolute",
+      "refuted_if": "Rises < 0.10 or falls",
+      "probe_prior": "Likely",
+      "criterion": {
+        "population": "exposed",
+        "fields": [
+          "F1"
+        ],
+        "rise_min": 0.1
+      },
+      "operationalizations": [
+        "O-UNIT",
+        "O-STATUS"
+      ]
+    },
+    {
+      "id": "D8",
+      "statement": "Last-mover inversion",
+      "supported_if": "Median PD ≥ 0.9 and median first-mover share ≤ 0.1",
+      "refuted_if": "Median PD ≤ 0.5",
+      "probe_prior": "Supported",
+      "criterion": {
+        "population": "stalemate",
+        "median_pd_min": 0.9,
+        "median_fms_max": 0.1,
+        "refuted_median_pd_max": 0.5
+      },
+      "operationalizations": [
+        "O-FMS",
+        "O-PARITY-MEDIANS",
+        "O-STATUS"
+      ]
+    },
+    {
+      "id": "D9",
+      "statement": "Hold × order immunity",
+      "supported_if": "T-E3: 0 completions against repair and disrupt guards (a theorem, so also a stop check); T-E3K1: > 0",
+      "refuted_if": "T-E3K1 also 0",
+      "probe_prior": "Supported by analysis",
+      "criterion": {
+        "victims": [
+          "e2_repair_guard",
+          "e2_repair_guard_twin",
+          "e2_disrupt_guard",
+          "e2_disrupt_guard_twin"
+        ],
+        "fields": [
+          "F1",
+          "F2",
+          "F2-P",
+          "F4"
+        ],
+        "t_e3_completions_max": 0,
+        "t_e3k1_completions_min": 1,
+        "t_e3_violation_is_hard_stop": true
+      },
+      "operationalizations": [
+        "O-D9",
+        "O-STATUS"
+      ]
+    }
+  ],
+  "interpretation": [
+    {
+      "result": "D1 ∧ D2",
+      "conclusion": "Whole-tick disruption is load-bearing for scheduler-locked play"
+    },
+    {
+      "result": "D2 ∧ D8",
+      "conclusion": "Load-bearing for first-mover outcome determination, but parity control persists through the last position. The next study is in-tick order or the evaluation instant, which needs a scope decision."
+    },
+    {
+      "result": "(D4 ∨ D8) ∧ ¬D2",
+      "conclusion": "Not load-bearing; the disruption line closes"
+    },
+    {
+      "result": "D7",
+      "conclusion": "Recorded as a pathology whatever else holds"
+    }
+  ],
+  "clean_negative": "A clean negative is reachable.",
+  "threshold_rationale": [
+    "0.9 for SDI is kept for comparability with E2.",
+    "The PD bands are symmetric and interpretable: 0.9 means at most 5% of swings go against the dominant parity.",
+    "The 0.10 absolute bands are practical-significance floors.",
+    "Per your standing rule that discovery and test stay separate, none of these thresholds was derived from probe or corpus outcomes."
+  ],
+  "evidence_rules": [
+    "Paired cell transitions are primary. The unit is the distinct transition (C key, T key). Rate claims need n_distinct ≥ 8; everything else is a labelled deterministic characterization.",
+    "Denominators are the exposed or stalemate populations, never all cells.",
+    "Parity metrics are two-sided, with direction reported.",
+    "Bradley–Terry residuals are secondary. A residual counts only if all of these hold: n_distinct ≥ 8, the bootstrap CI excludes 0, |R| ≥ 1/8, and the same pairing's C-E2 residual (same frozen code) does not also count. 1/8 is the resolution of the smallest eligible pairing, so the value comes from the eligibility rule, not from E2's data. Pairings where one side wins every distinct trajectory are reported as dominance, not as residual evidence.",
+    "Seat conditioning, SDI, mirror bias and n_distinct labels are retained. The pooled table is subordinate.",
+    "Every hypothesis metric is computed on the control too, pre-registered this time rather than supplementary.",
+    "Mirror claims must agree between 1000 and 1001 ticks. If they disagree, the claim is reported as tick-limit-parity dependent."
+  ],
+  "statistics": {
+    "min_distinct_for_rate_claim": 8,
+    "residual": {
+      "bootstrap_resamples": 1000,
+      "bootstrap_seed": 42,
+      "interval": 0.95,
+      "abs_residual_min": 0.125,
+      "control_must_not_count": true,
+      "dominance_is_not_residual_evidence": true
+    },
+    "tick_limit_parity_label": "TICK_LIMIT_PARITY_DEPENDENT",
+    "not_scoreable_label": "NOT_SCOREABLE",
+    "no_zero_core_label": "NO_ZERO_CORE_TICKS",
+    "fms_min_swings": 10
+  },
+  "hard_stops": [
+    "A frozen V4, K = 1 or E2 golden fails, or the new E2 identity digests fail.",
+    "Parent reproduction mismatch.",
+    "Fixture fingerprint drift.",
+    "The one-field-difference test fails, or any request override is not None.",
+    "Any T replay violates G.4, or any live entrant has a zero-action tick.",
+    "The prefix check fails: T and C replays must be identical up to C's first hit tick, and the 64 hit-free F2 cells must be identical entirely.",
+    "Σ cpu_used ≠ statistics.cpu_total.",
+    "A capture-analyzer disagreement.",
+    "A D9 violation in T-E3. It is a theorem, so a violation means the implementation is wrong.",
+    "The source manifest changes, or the tree is dirty, during execution.",
+    "An analyzer defect after treatment exposure. Stop interpretation; do not re-freeze under the same identity."
+  ],
+  "roles": {
+    "note": "Read off the fixtures' documented behaviour before any result exists (E2 preregistration agent_roles; E3 fixture README).",
+    "spread": [
+      "e2_spread_sniper",
+      "e2_spread_defender"
+    ],
+    "stacked": [
+      "v4_probe",
+      "e2_sniper",
+      "e2_repair_guard",
+      "e2_disrupt_guard",
+      "e2_min_guard",
+      "e2_greedy_painter",
+      "e2_guarded_painter",
+      "e2_counter"
+    ],
+    "d9_guards": [
+      "e2_repair_guard",
+      "e2_disrupt_guard"
+    ],
+    "jammer": "e3_jam_sniper"
+  },
+  "operationalizations": [
+    {
+      "id": "O-POPULATION-FIELDS",
+      "kind": "clarification (the review names the populations, not their fields)",
+      "text": "The exposed and stalemate populations are taken over the standard fields F1, F2 and F4, each at the 1000-tick limit and each cell once. F2-P exists only for the tick-limit parity check (Sec M rule 7); its exposed, stalemate and hit-free cells are frozen and reported as their own stratum and are never pooled into a population denominator, so no mirror counts twice. A hypothesis whose criterion names a field (D7: F1) uses that field's part of the population. The review's expected stalemate count (610 F1 + 64 F2) is checked against the frozen population, never imposed on it."
+    },
+    {
+      "id": "O-EXPOSED",
+      "kind": "clarification",
+      "text": "A live entrant in a tick is one offered actions in it (alive at the end of the previous tick) that did not forfeit during it. It lost an offer if it executed fewer than Q = 8 actions (replay cpu_used). By the review's Sec C proof, for the matrix agents (every process share positive) that is exactly an offer lost to disruption. An entrant captured at the end of the tick was live during it, so its lost offers count."
+    },
+    {
+      "id": "O-STALEMATE",
+      "kind": "clarification",
+      "text": "A C-E2 cell whose termination reason is tick_limit and in which some entrant has at least one recovery, as counted by the frozen capture analyzer (version 2)."
+    },
+    {
+      "id": "O-POPULATION-FREEZE",
+      "kind": "procedure",
+      "text": "The exposed, stalemate and hit-free cell identities of C-E2 (and, by the same rules, of C-RS for the companion arm) are computed from the new control corpus after it passes parent reproduction, written to a committed record with its SHA-256, and recomputed from the control corpus before any treatment may run. They are never recomputed from treatment data. A cell identity is subject|opponent|seed|orientation within its field."
+    },
+    {
+      "id": "O-UNIT",
+      "kind": "clarification (Sec J names cell denominators, Sec M rule 1 the distinct-transition unit)",
+      "text": "Every criterion value that is a share or a count of cells uses the named population's (or named cell set's) cells as the denominator (Sec M rule 2). Each value carries n_distinct, the number of distinct (C key, T key) transitions behind it (Sec M rule 1). A value resting on fewer than 8 distinct transitions is a deterministic characterization, labelled as such, and is never described as a rate or as n independent observations. The distinct-transition-weighted value is reported alongside, descriptive only. D3, D5 and D6 use the cell sets their statements name, restricted to exposed cells (Sec M rule 2); any excluded cell is counted and reported."
+    },
+    {
+      "id": "O-OUTCOME-CLASS",
+      "kind": "clarification",
+      "text": "PM-3 classes: A win (Seat A wins, decisively or on score at the tick limit), B win (likewise for Seat B), tick-limit tie (a tie at the tick limit), mutual elimination (a tie before the tick limit, all_agents_dead). A cell with no match outcome is class other and is reported. 'Outcome class unchanged' means the same class under C and T in the matched cell (same pairing, seed, orientation and field)."
+    },
+    {
+      "id": "O-FMS",
+      "kind": "clarification",
+      "text": "Core balance b(t) = Seat A's owned own-core cells minus Seat B's at the end of tick t, rebuilt from the replay's tick-0 seeding and memory diffs (cross-checked against capture analyzer v2), with b(0) after seeding. Tick t is a swing tick if both entrants are alive at the end of t and b(t) != b(t-1). The tick's first mover is seat (t-1) mod 2 (the Ruleset's chunked scheduler with start rotation). A swing favours the first mover when b moves in its direction. FMS = favouring swings / swing ticks, scored only with at least 10 swing ticks; otherwise NOT_SCOREABLE, counted and reported for every population and never dropped. PD = |2 FMS - 1|. Direction: neutral_weak if PD <= 0.5; first_mover_dominated or last_mover_dominated if PD >= 0.9 (FMS above or below 0.5); first_mover_leaning or last_mover_leaning in between. The bands are the review's own D1/D8 thresholds."
+    },
+    {
+      "id": "O-PARITY-MEDIANS",
+      "kind": "clarification (D1 names the stalemate population; D4 and D8 name none)",
+      "text": "D1, D4 and D8 are criteria on the same parity metric and use the same population: the treatment cells of the frozen stalemate population. Each median is the cell-weighted median over the population's scoreable treatment cells, reported with the number of scoreable and NOT_SCOREABLE cells and with n_distinct. The median over distinct (C key, T key, FMS) rows is reported alongside, descriptive only. The same medians over the exposed population are reported as secondary readings."
+    },
+    {
+      "id": "O-PHASE-LOCK",
+      "kind": "clarification",
+      "text": "PM-2 per entrant from capture analyzer v2, unchanged: an entrant with no zero-core evaluation is category NO_ZERO_CORE_TICKS -- never phase-lock 0 and never dropped -- and one with at least one is PHASE_LOCK_AVAILABLE with PL (share of zero-core evaluations on opponent-first ticks), the two-sided reading |2 PL - 1|, and direction opponent_first, own_first or balanced. Population summaries report both category counts."
+    },
+    {
+      "id": "O-MIRROR-PARITY",
+      "kind": "clarification",
+      "text": "A mirror's claim at one tick limit is its seat-determination status: seat-determined (SDI >= 0.9) with its favoured seat, or not seat-determined. The claims at 1000 (F2) and 1001 (F2-P) agree when both are not seat-determined, or both are seat-determined with the same favoured seat. A mirror whose claims disagree is labelled TICK_LIMIT_PARITY_DEPENDENT and is never reported as a robust seat effect. Mirror seat bias is reported at both limits."
+    },
+    {
+      "id": "O-MC",
+      "kind": "clarification",
+      "text": "MC-1 is per live entrant per tick: nominal offers Q, executed actions (cpu_used), and first- or second-mover status; the exclusive-tick share is the share of ticks with both entrants alive at the end in which one executed 0 actions; the G.4 bound applies to entrant-ticks alive throughout without a forfeit (>= 5 as first mover, >= 4 as second). MC-2 is reported per mover role, per entrant, and per pairing. The sum of cpu_used must equal result.json statistics.cpu_total in every replay of every condition. Under either treatment, zero-action live ticks, exclusive ticks and G.4 violations must all be 0; these are manipulation checks and hard stops, never findings."
+    },
+    {
+      "id": "O-D2",
+      "kind": "clarification",
+      "text": "The six C-E2 seat-determined units are named in the criterion; the control is checked to reproduce exactly them before treatment, and any difference is reported, not absorbed. A unit falls if its T-E3 SDI is below 0.9. 'No new unit reaches it': no F1 pairing or F2 mirror with C-E2 SDI below 0.9 has T-E3 SDI >= 0.9 (F4 units are reported as their own stratum). '1000 and 1001 agree': under T-E3, every F2 mirror's claim (O-MIRROR-PARITY) is the same at 1000 and 1001. Supported needs all three; refuted if none of the six units falls; otherwise neither."
+    },
+    {
+      "id": "O-D3",
+      "kind": "clarification",
+      "text": "The repair guard's C-E2 capture losses are the F1 cells in which e2_repair_guard is core-captured (entrant termination core_captured) by one of v4_probe, e2_sniper, e2_spread_sniper or e2_counter. A non-loss is a T-E3 result in the same cell in which the repair guard does not lose (win or tie). Supported if non-losses >= half of those cells; refuted if there are none; otherwise neither."
+    },
+    {
+      "id": "O-D5",
+      "kind": "clarification",
+      "text": "Seat table: the spread agent's seat. Win-or-draw rate = (spread-agent wins + ties) / cells, pooled over both spread agents against all 8 stacked agents in F1, separately with the spread agent in Seat A and in Seat B, under C-E2 and under T-E3. Supported if the rate rises by >= 0.10 in both seat tables; refuted if it falls in both; otherwise neither. Per-agent rates are reported, descriptive."
+    },
+    {
+      "id": "O-D6",
+      "kind": "clarification",
+      "text": "In F4, for each guard G in {e2_repair_guard, e2_disrupt_guard, e2_min_guard} and each seat of the jam sniper, 'decisively beats' means the jam sniper wins more than half of those cells before the tick limit. Supported if, for at least one G, that holds in both seats. Refuted if the jam sniper has no decisive win against any of the three guards in either seat. Otherwise neither."
+    },
+    {
+      "id": "O-D9",
+      "kind": "clarification",
+      "text": "A completion is a capture completion from capture analyzer v2 (cross-checked against the engine). Victims are the repair and disrupt guards and their twins. T-E3 is checked over every cell of every field (F1, F2, F2-P, F4); any completion against those victims is a hard stop before any interpretation. T-E3K1 is counted over the same cells."
+    },
+    {
+      "id": "O-RESIDUAL",
+      "kind": "procedure (Sec M rule 4 on top of E2 O-H2-SIGNIFICANCE)",
+      "text": "Per F1 seat table (candidate_first cells = Seat A table, opponent_first = Seat B), the E2 procedure: a convergent seat-conditioned Bradley-Terry fit on distinct trajectories and 95% percentile intervals from 1000 stratified bootstrap resamples of distinct trajectories (seed 42). A residual counts only if its pairing has n_distinct >= 8 in that table, its interval excludes 0, |R| >= 1/8, the pairing is not a dominance pairing (one entrant wins every distinct trajectory), and the same pairing's C-E2 residual under the same code does not count by those same rules. The C-E2 counting set is computed and frozen with the populations, before treatment."
+    },
+    {
+      "id": "O-COMPANION",
+      "kind": "clarification (Sec F)",
+      "text": "D0-D8 verdicts are read from the primary arm (C-E2 -> T-E3). The identical metric suite is computed for the companion arm (C-RS -> T-E3K1), with its populations defined from C-RS by the same rules before treatment, and reported as the lambda-only deconfounder for stalemate persistence (whether it is attributable to lambda or to lambda x K); a companion value never replaces a primary verdict. D9 uses both arms."
+    },
+    {
+      "id": "O-STATUS",
+      "kind": "clarification",
+      "text": "Each criterion is evaluated to SUPPORTED, REFUTED or NEITHER from the frozen values, with its evidence label. Verdicts are then read under the interpretation table and Sec M; no single threshold crossing on a deterministic characterization is described as a rate result."
+    }
+  ]
+}

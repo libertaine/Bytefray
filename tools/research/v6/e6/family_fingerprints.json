@@ -1,0 +1,110 @@
+{
+  "e6_q01": {
+    "agent_py_sha256": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent_yaml_sha256": "9c2207c855a753cfc3c85a021a0e85817bbab1c0efad59c3da0339ab30dae1ca",
+    "member": "PACED",
+    "role": "primary"
+  },
+  "e6_q02": {
+    "agent_py_sha256": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent_yaml_sha256": "f231ea64f7e067a56a5ddc1571463bbc27d4b4c37da2406e671e245870639bd1",
+    "member": "EVADER",
+    "role": "primary"
+  },
+  "e6_q03": {
+    "agent_py_sha256": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent_yaml_sha256": "0284c7bc986b74d4f459a209117e3093ff2abb6642cc4d24dc7857ca02b6c9ed",
+    "member": "GREED",
+    "role": "primary"
+  },
+  "e6_q04": {
+    "agent_py_sha256": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent_yaml_sha256": "7ed9b7f9d26fdf25bade31c1a9cf11a962a87e60a2803d176b44463388a4c96b",
+    "member": "GREED",
+    "role": "twin"
+  },
+  "e6_q05": {
+    "agent_py_sha256": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent_yaml_sha256": "735d53cad8f93339506ea5a297365bb501d0f6b53ec1e8fdee86e29401e0bf11",
+    "member": "SPLIT",
+    "role": "twin"
+  },
+  "e6_q06": {
+    "agent_py_sha256": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent_yaml_sha256": "d23592f3fab03dccb361c9879c495139a6ba389380200cf00b5b008be0ac31a2",
+    "member": "ADAPT",
+    "role": "primary"
+  },
+  "e6_q07": {
+    "agent_py_sha256": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent_yaml_sha256": "628943e7fc33c6e9115cc0ab59e7e09e4fe3957f28222e889e8d63accb266f65",
+    "member": "STEALTH",
+    "role": "primary"
+  },
+  "e6_q08": {
+    "agent_py_sha256": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent_yaml_sha256": "d8ccc63f463c533798ad0b0192b4ab5ca9d6ba7f6f3b15ed51b85d39a690ee73",
+    "member": "GUARD",
+    "role": "twin"
+  },
+  "e6_q09": {
+    "agent_py_sha256": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent_yaml_sha256": "7fdcc26035c9b02c396c38267b9f04bb3e25b54310a9dca4e8961b84ec802145",
+    "member": "PACED",
+    "role": "twin"
+  },
+  "e6_q10": {
+    "agent_py_sha256": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent_yaml_sha256": "d0e04f969d19f91c3dfd5847fa92ab2a1e5b9185dc883ec81364484b05f0b756",
+    "member": "RUSH",
+    "role": "primary"
+  },
+  "e6_q11": {
+    "agent_py_sha256": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent_yaml_sha256": "b1ed7c892a9259a82e8916cae47899411b801e735ef4c3c0a8dafd65279a05a0",
+    "member": "GUARD",
+    "role": "primary"
+  },
+  "e6_q12": {
+    "agent_py_sha256": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent_yaml_sha256": "f26de5a60e61d60680b0281ce5d3f205144e202c1eeba6b0cf41bd8683b2a030",
+    "member": "STEALTH",
+    "role": "twin"
+  },
+  "e6_q13": {
+    "agent_py_sha256": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent_yaml_sha256": "db22b4c7c8a1641b9a0d7bdfef3f14e847d6a93625d797c51c906e4b9fe23794",
+    "member": "ADAPT",
+    "role": "twin"
+  },
+  "e6_q14": {
+    "agent_py_sha256": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent_yaml_sha256": "b2d5dcd49aa707ff827cb27ac5064ef5b8ae7383b839e636f8b99095d9b19149",
+    "member": "LURK",
+    "role": "twin"
+  },
+  "e6_q15": {
+    "agent_py_sha256": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent_yaml_sha256": "7a61667c39a327d6fef229013610806477dfa565ee442fb6ffee48b00bad6612",
+    "member": "EVADER",
+    "role": "twin"
+  },
+  "e6_q16": {
+    "agent_py_sha256": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent_yaml_sha256": "79bdb50c86fd47ccc1ce97c26a687b7bc5ab7a4c9d92aea79435be8106068145",
+    "member": "RUSH",
+    "role": "twin"
+  },
+  "e6_q17": {
+    "agent_py_sha256": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent_yaml_sha256": "07c7407b5274425660eb13ed62dc49e565e8277a1f44c68fb3810d48188ab610",
+    "member": "SPLIT",
+    "role": "primary"
+  },
+  "e6_q18": {
+    "agent_py_sha256": "5374092e8c419a01071782cf5383ea481f8d62097acab8adb7064dad20ff3b63",
+    "agent_yaml_sha256": "e7528ca80847a8cb01b9fb9419dc1d76730c08e2b6729214fdaefc96849c4611",
+    "member": "LURK",
+    "role": "primary"
+  }
+}

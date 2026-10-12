@@ -1,0 +1,268 @@
+{
+  "baseline": "5d6fc19e2b84805e0453da2c851f1ab0d7804f2f",
+  "verification": "Retained evidence inspection and read-only hashing; no test or match reruns",
+  "archive_files_verified": 1668,
+  "historical_raw_pins_verified": 329,
+  "original_packet_members_verified": 66,
+  "campaigns": {
+    "focused": {
+      "passed": 137,
+      "skipped": 0,
+      "failed": 0,
+      "errors": 0,
+      "junit_time": "6.280"
+    },
+    "regression": {
+      "passed": 3207,
+      "skipped": 11,
+      "failed": 0,
+      "errors": 0,
+      "junit_time": "265.133"
+    },
+    "supplemental": {
+      "passed": 328,
+      "skipped": 0,
+      "failed": 0,
+      "errors": 0,
+      "junit_time": "114.224"
+    },
+    "gui": {
+      "passed": 507,
+      "skipped": 1,
+      "failed": 1,
+      "errors": 0,
+      "junit_time": "160.911"
+    },
+    "focus_repro": {
+      "passed": 0,
+      "skipped": 0,
+      "failed": 1,
+      "errors": 0,
+      "junit_time": "1.109"
+    },
+    "focus_assisted": {
+      "passed": 1,
+      "skipped": 0,
+      "failed": 0,
+      "errors": 0,
+      "junit_time": "1.797"
+    }
+  },
+  "overlap": {
+    "focused_with_regression": 137,
+    "regression_with_supplemental": 0,
+    "gui_reproductions": "same single node; never added as unique tests"
+  },
+  "artifact_members_verified": 22,
+  "artifact_associations": [
+    {
+      "execution": "teaching_1000",
+      "match_id": "match_1971f1d14781a6e8edd4dc06",
+      "result_id": "result_a7040f4fc273e87273736dc2",
+      "replay_sha256": "dbe67aa534e23f055c0a43287bbed5fae9878b5c2139bd1df207d4a3dbfbf80f",
+      "trace_sha256": "692083b04c04ad550b6ed32cb6ea56c0f4bda2c4f0a779e6e1eda3164349e3af",
+      "result_sha256": "b5bf38dc56faea3444e4a6ffdbc7229462e8b7e7e57cbf78205899357e4d698a",
+      "trace_binding": {
+        "entrant_identities": [
+          "A",
+          "B"
+        ],
+        "match_id": "match_1971f1d14781a6e8edd4dc06",
+        "record_type": "binding",
+        "replay_sha256": "dbe67aa534e23f055c0a43287bbed5fae9878b5c2139bd1df207d4a3dbfbf80f",
+        "ruleset_id": "bytefray-rules-6-alpha1"
+      },
+      "replay_lines": 1003,
+      "trace_records": 16000,
+      "winner": "tie",
+      "ticks": 1000,
+      "source_capture": [
+        {
+          "agent_id": "A",
+          "capture_complete": true,
+          "drift_detected": false,
+          "full_tree_digest": "5fd0363de9e2eb18c154bacd93228611a082cf6563195b6b88f73288476b4e53",
+          "loaded_final_fingerprint": "97f780db83cfe9bb611013aac780de91e68182174af4a4da81cea675b327e12c",
+          "loaded_initial_fingerprint": "97f780db83cfe9bb611013aac780de91e68182174af4a4da81cea675b327e12c",
+          "name": "v6_window_scout",
+          "parameters": {
+            "move_step": 64,
+            "search_interval": 4
+          },
+          "python_subset_fingerprint": "97f780db83cfe9bb611013aac780de91e68182174af4a4da81cea675b327e12c",
+          "revision_id": "agent-revision_5fd0363de9e2eb18c154bacd93228611a082cf6563195b6b88f73288476b4e53",
+          "start": 0
+        },
+        {
+          "agent_id": "B",
+          "capture_complete": true,
+          "drift_detected": false,
+          "full_tree_digest": "4f97f59305e729827f57ba6c0d47ebcc982b971cd91c5bf7b6ab43576f0fec45",
+          "loaded_final_fingerprint": "43abe9c1bf45c53e985d5960671c0f3d8fe1746cd741e0a93141919a84501c64",
+          "loaded_initial_fingerprint": "43abe9c1bf45c53e985d5960671c0f3d8fe1746cd741e0a93141919a84501c64",
+          "name": "v6_stationary_opponent",
+          "parameters": {},
+          "python_subset_fingerprint": "43abe9c1bf45c53e985d5960671c0f3d8fe1746cd741e0a93141919a84501c64",
+          "revision_id": "agent-revision_4f97f59305e729827f57ba6c0d47ebcc982b971cd91c5bf7b6ab43576f0fec45",
+          "start": 91
+        }
+      ]
+    },
+    {
+      "execution": "teaching_1000_repeat",
+      "match_id": "match_1971f1d14781a6e8edd4dc06",
+      "result_id": "result_a7040f4fc273e87273736dc2",
+      "replay_sha256": "dbe67aa534e23f055c0a43287bbed5fae9878b5c2139bd1df207d4a3dbfbf80f",
+      "trace_sha256": "1d675faea464a067f05aa098e8cde622893240e0cb9d40ae9950c56210240243",
+      "result_sha256": "9c16bdb1a84307668734426c73e7ae1ed17545f2f9c434a94f3ff6b72ef59e70",
+      "trace_binding": {
+        "entrant_identities": [
+          "A",
+          "B"
+        ],
+        "match_id": "match_1971f1d14781a6e8edd4dc06",
+        "record_type": "binding",
+        "replay_sha256": "dbe67aa534e23f055c0a43287bbed5fae9878b5c2139bd1df207d4a3dbfbf80f",
+        "ruleset_id": "bytefray-rules-6-alpha1"
+      },
+      "replay_lines": 1003,
+      "trace_records": 16000,
+      "winner": "tie",
+      "ticks": 1000,
+      "source_capture": [
+        {
+          "agent_id": "A",
+          "capture_complete": true,
+          "drift_detected": false,
+          "full_tree_digest": "5fd0363de9e2eb18c154bacd93228611a082cf6563195b6b88f73288476b4e53",
+          "loaded_final_fingerprint": "97f780db83cfe9bb611013aac780de91e68182174af4a4da81cea675b327e12c",
+          "loaded_initial_fingerprint": "97f780db83cfe9bb611013aac780de91e68182174af4a4da81cea675b327e12c",
+          "name": "v6_window_scout",
+          "parameters": {
+            "move_step": 64,
+            "search_interval": 4
+          },
+          "python_subset_fingerprint": "97f780db83cfe9bb611013aac780de91e68182174af4a4da81cea675b327e12c",
+          "revision_id": "agent-revision_5fd0363de9e2eb18c154bacd93228611a082cf6563195b6b88f73288476b4e53",
+          "start": 0
+        },
+        {
+          "agent_id": "B",
+          "capture_complete": true,
+          "drift_detected": false,
+          "full_tree_digest": "4f97f59305e729827f57ba6c0d47ebcc982b971cd91c5bf7b6ab43576f0fec45",
+          "loaded_final_fingerprint": "43abe9c1bf45c53e985d5960671c0f3d8fe1746cd741e0a93141919a84501c64",
+          "loaded_initial_fingerprint": "43abe9c1bf45c53e985d5960671c0f3d8fe1746cd741e0a93141919a84501c64",
+          "name": "v6_stationary_opponent",
+          "parameters": {},
+          "python_subset_fingerprint": "43abe9c1bf45c53e985d5960671c0f3d8fe1746cd741e0a93141919a84501c64",
+          "revision_id": "agent-revision_4f97f59305e729827f57ba6c0d47ebcc982b971cd91c5bf7b6ab43576f0fec45",
+          "start": 91
+        }
+      ]
+    },
+    {
+      "execution": "teaching_windows_equivalent",
+      "match_id": "match_ea7839ea9e34e1282e8ab494",
+      "result_id": "result_feb7ef27a99b89a4ec883add",
+      "replay_sha256": "1db71147aba5adbdf2b99c0fe33f3418bee6477eed7d3dc66d9c7409613352a8",
+      "trace_sha256": "49353ab10ac34cb797f97360ae95ebaa86f0d53f75e7245ab68f813c14be643b",
+      "result_sha256": "c527157faf1d137a78ee242679877278145ba1f4b47bae233427d7247061a54f",
+      "trace_binding": {
+        "entrant_identities": [
+          "A",
+          "B"
+        ],
+        "match_id": "match_ea7839ea9e34e1282e8ab494",
+        "record_type": "binding",
+        "replay_sha256": "1db71147aba5adbdf2b99c0fe33f3418bee6477eed7d3dc66d9c7409613352a8",
+        "ruleset_id": "bytefray-rules-6-alpha1"
+      },
+      "replay_lines": 103,
+      "trace_records": 1600,
+      "winner": "tie",
+      "ticks": 100,
+      "source_capture": [
+        {
+          "agent_id": "A",
+          "capture_complete": true,
+          "drift_detected": false,
+          "full_tree_digest": "5fd0363de9e2eb18c154bacd93228611a082cf6563195b6b88f73288476b4e53",
+          "loaded_final_fingerprint": "97f780db83cfe9bb611013aac780de91e68182174af4a4da81cea675b327e12c",
+          "loaded_initial_fingerprint": "97f780db83cfe9bb611013aac780de91e68182174af4a4da81cea675b327e12c",
+          "name": "v6_window_scout",
+          "parameters": {
+            "move_step": 64,
+            "search_interval": 4
+          },
+          "python_subset_fingerprint": "97f780db83cfe9bb611013aac780de91e68182174af4a4da81cea675b327e12c",
+          "revision_id": "agent-revision_5fd0363de9e2eb18c154bacd93228611a082cf6563195b6b88f73288476b4e53",
+          "start": 0
+        },
+        {
+          "agent_id": "B",
+          "capture_complete": true,
+          "drift_detected": false,
+          "full_tree_digest": "4f97f59305e729827f57ba6c0d47ebcc982b971cd91c5bf7b6ab43576f0fec45",
+          "loaded_final_fingerprint": "43abe9c1bf45c53e985d5960671c0f3d8fe1746cd741e0a93141919a84501c64",
+          "loaded_initial_fingerprint": "43abe9c1bf45c53e985d5960671c0f3d8fe1746cd741e0a93141919a84501c64",
+          "name": "v6_stationary_opponent",
+          "parameters": {},
+          "python_subset_fingerprint": "43abe9c1bf45c53e985d5960671c0f3d8fe1746cd741e0a93141919a84501c64",
+          "revision_id": "agent-revision_4f97f59305e729827f57ba6c0d47ebcc982b971cd91c5bf7b6ab43576f0fec45",
+          "start": 91
+        }
+      ]
+    },
+    {
+      "execution": "designer_match_1",
+      "match_id": "match_a4e382404bc8e5682dad6293",
+      "result_id": "result_228415a9fd518026efac41c4",
+      "replay_sha256": "4c79cecf4ea2eb4b306b0e7076787438fb88214142751f929edff1866e54cc49",
+      "trace_sha256": "53fbef6a5949dff10b031986743ae0630b3474ca45fe6466759b80dd8e88d27c",
+      "result_sha256": "4be6045693e0227e084676f44becd892b19959bf90a59f8512f15b6c1410f6ed",
+      "trace_binding": {
+        "entrant_identities": [
+          "A",
+          "B"
+        ],
+        "match_id": "match_a4e382404bc8e5682dad6293",
+        "record_type": "binding",
+        "replay_sha256": "4c79cecf4ea2eb4b306b0e7076787438fb88214142751f929edff1866e54cc49",
+        "ruleset_id": "bytefray-rules-6-alpha1"
+      },
+      "replay_lines": 8,
+      "trace_records": 86,
+      "winner": "tie",
+      "ticks": 5
+    },
+    {
+      "execution": "designer_match_2",
+      "match_id": "match_515f68c49a1883baf8af1654",
+      "result_id": "result_3f97e20f697ac0d1e82bd346",
+      "replay_sha256": "fcdd0d4cf8fa7b7b28638721433453911643aa8ecfe7cdef79719756e01c7c87",
+      "trace_sha256": "ebdd3c05a1fbd06b63b95f37fa62e4be3cefd6a1ef6ef8bda53f36c17efd4f43",
+      "result_sha256": "661677891f8b93de444dc2dc86a4e84d46abff4f053832dbdf6e4404f44e8bd2",
+      "trace_binding": {
+        "entrant_identities": [
+          "A",
+          "B"
+        ],
+        "match_id": "match_515f68c49a1883baf8af1654",
+        "record_type": "binding",
+        "replay_sha256": "fcdd0d4cf8fa7b7b28638721433453911643aa8ecfe7cdef79719756e01c7c87",
+        "ruleset_id": "bytefray-rules-6-alpha1"
+      },
+      "replay_lines": 8,
+      "trace_records": 86,
+      "winner": "tie",
+      "ticks": 5
+    }
+  ],
+  "deterministic_replay_equal": true,
+  "logical_trace_records_equal": 16000,
+  "focus_test": "tests/test_v5_replay_history_browser.py::test_keyboard_navigation_action_tab_order_and_filter_focus",
+  "accepted_product_source_changes": 0,
+  "windows_evidence_changes": 0,
+  "research_execution": 0
+}
