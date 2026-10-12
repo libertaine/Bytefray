@@ -43,6 +43,7 @@ from __future__ import annotations
 
 import threading
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -61,13 +62,17 @@ from battle_engine.replay_history import (
 )
 from PySide6.QtCore import (
     QAbstractTableModel,
+    QDate,
+    QDateTime,
     QEvent,
     QEventLoop,
     QModelIndex,
     QObject,
     Qt,
     QThread,
+    QTime,
     QTimer,
+    QTimeZone,
     Signal,
     Slot,
 )
@@ -150,6 +155,29 @@ from app.services.replay_history_presentation import (
 #: 250-400 ms band Phase 7C specified and is comfortably longer than the
 #: 66 ms worst-case backend query, so ordinary typing produces one request.
 FILTER_DEBOUNCE_MS = 300
+
+
+def _local_date_bound(date: QDate, *, end: bool) -> datetime:
+    """Adapt a Qt local date without the platform C-runtime year limits."""
+
+    if not date.isValid():
+        raise ValueError("Invalid history filter date.")
+    try:
+        return day_bounds(date.year(), date.month(), date.day())[1 if end else 0]
+    except (OSError, OverflowError):
+        # Windows rejects otherwise valid calendar years outside its C-runtime
+        # range. Qt resolves those local offsets without timestamp conversion.
+        pass
+    clock = QTime(23, 59, 59, 999) if end else QTime(0, 0)
+    local = QDateTime(date, clock, QTimeZone.systemTimeZone())
+    if not local.isValid():
+        raise ValueError("History filter date could not be resolved in the system timezone.")
+    zone = timezone(timedelta(seconds=local.offsetFromUtc()))
+    return datetime(
+        date.year(), date.month(), date.day(),
+        23 if end else 0, 59 if end else 0, 59 if end else 0,
+        999_999 if end else 0, tzinfo=zone,
+    )
 
 #: Progress callbacks arrive every 1,000 scanned artifacts. Coalescing them to
 #: one repaint per interval keeps a long rebuild from spending the GUI thread
@@ -1274,7 +1302,14 @@ class ReplayHistoryWindow(QDialog):
     @Slot()
     def _applyFilters(self) -> None:
         self._debounce.stop()
-        filters = self._currentFilters()
+        try:
+            filters = self._currentFilters()
+        except ValueError as exc:
+            # Reject invalid calendar input without issuing a broader query or
+            # silently presenting the previous rows as the requested range.
+            self._status_note = f"History could not be updated — {exc}"
+            self.statusLabel.setText(self._status_note)
+            return
         if filters == self._filters and self._initial_query_sent:
             return
         self._filters = filters
@@ -1290,10 +1325,10 @@ class ReplayHistoryWindow(QDialog):
         start = end = None
         if self.fromCheck.isChecked():
             date = self.fromDate.date()
-            start = day_bounds(date.year(), date.month(), date.day())[0]
+            start = _local_date_bound(date, end=False)
         if self.toCheck.isChecked():
             date = self.toDate.date()
-            end = day_bounds(date.year(), date.month(), date.day())[1]
+            end = _local_date_bound(date, end=True)
         return HistoryFilterState(
             entrant_text=self.searchEdit.text(),
             ruleset_value=str(self.rulesetCombo.currentData() or RULESET_FILTER_ANY),

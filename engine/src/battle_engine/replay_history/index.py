@@ -1156,7 +1156,14 @@ def _occurrence_from_row(
 
 def _epoch_ns(value: datetime) -> int:
     moment = value if value.tzinfo is not None else value.replace(tzinfo=timezone.utc)
-    return int(moment.timestamp() * 1_000_000_000)
+    # Integer timedelta arithmetic preserves microseconds, including before
+    # the epoch, without floating-point rounding or platform timestamp limits.
+    delta = moment - datetime(1970, 1, 1, tzinfo=timezone.utc)
+    return (delta.days * 86_400 + delta.seconds) * 1_000_000_000 + delta.microseconds * 1000
+
+
+_SQLITE_INT64_MIN = -(2**63)
+_SQLITE_INT64_MAX = 2**63 - 1
 
 
 def _filter_clauses(query: HistoryQuery) -> tuple[list[str], list[Any]]:
@@ -1205,11 +1212,21 @@ def _filter_clauses(query: HistoryQuery) -> tuple[list[str], list[Any]]:
         # usable timestamp is excluded only while a range is active.
         clauses.append("timestamp_known = 1")
     if query.start is not None:
-        clauses.append("effective_timestamp_ns >= ?")
-        params.append(_epoch_ns(query.start))
+        lower = _epoch_ns(query.start)
+        if lower > _SQLITE_INT64_MAX:
+            clauses.append("0")
+        elif lower >= _SQLITE_INT64_MIN:
+            clauses.append("effective_timestamp_ns >= ?")
+            params.append(lower)
+        # A lower bound below every stored integer imposes no further limit.
     if query.end is not None:
-        clauses.append("effective_timestamp_ns <= ?")
-        params.append(_epoch_ns(query.end))
+        upper = _epoch_ns(query.end)
+        if upper < _SQLITE_INT64_MIN:
+            clauses.append("0")
+        elif upper <= _SQLITE_INT64_MAX:
+            clauses.append("effective_timestamp_ns <= ?")
+            params.append(upper)
+        # An upper bound above every stored integer imposes no further limit.
 
     if query.seed is not None:
         clauses.append("seed = ?")

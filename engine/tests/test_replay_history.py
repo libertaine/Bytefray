@@ -1323,6 +1323,129 @@ def test_date_range_filters_and_excludes_unknown_dates(populated: Any) -> None:
     assert populated.count(HistoryQuery(end=datetime(2020, 1, 1, tzinfo=timezone.utc))) == 0
 
 
+
+@pytest.fixture()
+def timestamp_index(tree: Path) -> Iterator[tuple[HistoryIndex, dict[str, tuple[int, bool]]]]:
+    """Synthetic nanosecond edges, including rows a datetime cannot express."""
+    from dataclasses import replace
+
+    _write_run(tree / "runs", "source", seed=2**64 - 1)
+    scanner = ArtifactScanner(tree / "runs")
+    source = scanner.normalize(next(scanner.iter_candidates()))
+    stamps = (
+        -(2**63), -(2**63) + 1, -9_223_372_036_854_775_000,
+        -1001, -1000, -1, 0, 1,
+        1_700_000_000_123_455_999, 1_700_000_000_123_456_000,
+        1_700_000_000_123_456_001, 9_223_372_036_854_775_000,
+        2**63 - 2, 2**63 - 1,
+    )
+    occurrences = [
+        replace(
+            source, location_id=f"loc_edge_{i}", relative_directory=f"edge-{i}",
+            effective_timestamp_ns=stamp, timestamp_known=True,
+        )
+        for i, stamp in enumerate(stamps)
+    ]
+    occurrences.append(replace(
+        source, location_id="loc_unknown", relative_directory="unknown",
+        effective_timestamp_ns=0, effective_timestamp=None, timestamp_known=False,
+        timestamp_confidence=TimestampConfidence.UNKNOWN,
+    ))
+    expected = {
+        occurrence.location_id: (occurrence.effective_timestamp_ns, occurrence.timestamp_known)
+        for occurrence in occurrences
+    }
+    index = HistoryIndex.open(tree / "edges.sqlite3", root_identity="isolated-edges")
+    try:
+        with index.write_transaction():
+            index.write_occurrences(occurrences, generation=1)
+        yield index, expected
+    finally:
+        index.close()
+
+
+_DATE_FILTER_CASES = (
+    (None, None),
+    ("1600-01-01", None), (None, "1600-01-01"),
+    ("2500-01-01", None), (None, "2500-01-01"),
+    ("1600-01-01", "2500-01-01"), ("2500-01-01", "1600-01-01"),
+    ("0001-01-01T00:00:00+14:00", "9999-12-31T23:59:59.999999-12:00"),
+    ("1677-09-21T00:12:43.145224", None),
+    (None, "1677-09-21T00:12:43.145224"),
+    ("1677-09-21T00:12:43.145225", None),
+    (None, "1677-09-21T00:12:43.145225"),
+    ("2262-04-11T23:47:16.854775", None),
+    (None, "2262-04-11T23:47:16.854775"),
+    ("2262-04-11T23:47:16.854776", None),
+    (None, "2262-04-11T23:47:16.854776"),
+    ("2023-11-14T22:13:20.123456", "2023-11-14T22:13:20.123456"),
+    ("2023-11-15T03:43:20.123456+05:30", "2023-11-14T18:13:20.123456-04:00"),
+    ("1969-12-31T23:59:59.999999", "1970-01-01"),
+    ("1970-01-01", "1970-01-01"),
+    ("2026-01-01", "2025-01-01"),
+)
+
+
+@pytest.mark.parametrize(("start_text", "end_text"), _DATE_FILTER_CASES)
+def test_date_filter_exact_inclusive_nanoseconds_and_int64_edges(
+    timestamp_index: Any, start_text: str | None, end_text: str | None,
+) -> None:
+    index, stamps = timestamp_index
+    start = None if start_text is None else datetime.fromisoformat(start_text)
+    end = None if end_text is None else datetime.fromisoformat(end_text)
+
+    def epoch_us(value: datetime | None) -> int | None:
+        if value is None:
+            return None
+        aware = value if value.tzinfo is not None else value.replace(tzinfo=timezone.utc)
+        return (aware - datetime(1970, 1, 1, tzinfo=timezone.utc)) // timedelta(microseconds=1)
+
+    lower, upper = epoch_us(start), epoch_us(end)
+    expected = {
+        key for key, (stamp, known) in stamps.items()
+        if ((start is None and end is None) or known)
+        and (lower is None or stamp >= lower * 1000)
+        and (upper is None or stamp <= upper * 1000)
+    }
+    # Exercise count, first page, keyset continuation and combined large-seed filters.
+    for query in (
+        HistoryQuery(start=start, end=end),
+        HistoryQuery(
+            start=start, end=end, seed=2**64 - 1, entrant_text="alpha",
+            ruleset_ids=["bytefray-rules-4"], replay_states=[ReplayState.AVAILABLE],
+        ),
+    ):
+        assert index.count(query) == len(expected)
+        found = set()
+        cursor = None
+        while True:
+            page = index.fetch_page(query, cursor=cursor, limit=3)
+            found.update(row.location_id for row in page.rows)
+            if not page.has_more:
+                break
+            cursor = page.next_cursor
+        assert found == expected
+    assert index.count(HistoryQuery(start=start, end=end, seed=2**64 - 2)) == 0
+    assert index.count() == len(stamps)
+    assert CACHE_SCHEMA_VERSION == 2
+
+
+
+@pytest.mark.parametrize("bound", (-(2**63), 2**63 - 1))
+@pytest.mark.parametrize("side", ("start", "end"))
+def test_date_filter_exact_int64_endpoint_predicates(timestamp_index, monkeypatch, bound, side):
+    """Exercise exact SQL endpoints, which datetime's microseconds cannot encode."""
+    index, stamps = timestamp_index
+    monkeypatch.setattr("battle_engine.replay_history.index._epoch_ns", lambda _value: bound)
+    query = HistoryQuery(**{side: datetime(1970, 1, 1, tzinfo=timezone.utc)})
+    expected = {
+        key for key, (stamp, known) in stamps.items()
+        if known and (stamp >= bound if side == "start" else stamp <= bound)
+    }
+    assert index.count(query) == len(expected)
+    assert {row.location_id for row in index.fetch_page(query).rows} == expected
+
+
 def test_exact_seed_filter(populated: Any) -> None:
     assert populated.count(HistoryQuery(seed=22)) == 1
     assert populated.count(HistoryQuery(seed=999)) == 0

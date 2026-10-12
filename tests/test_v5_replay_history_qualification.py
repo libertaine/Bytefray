@@ -75,6 +75,152 @@ def test_large_seed_history_refresh_filter_and_clipboard_through_browser(browser
     assert _snapshot(runs) == before
 
 
+
+@pytest.mark.parametrize(
+    ("start_day", "end_day", "matches"),
+    (
+        ((1752, 9, 14), None, 2),
+        (None, (1752, 9, 14), 0),
+        ((2026, 9, 11), (2026, 9, 11), 2),
+        ((2262, 4, 12), None, 0),
+        (None, (2262, 4, 11), 2),
+        ((2500, 1, 1), None, 0),
+        (None, (2500, 1, 1), 2),
+        ((9999, 12, 31), None, 0),
+        (None, (9999, 12, 31), 2),
+        ((2500, 1, 1), (1752, 9, 14), 0),
+    ),
+)
+def test_date_filter_range_through_real_history_window(
+    browser, tmp_path, start_day, end_day, matches,
+):
+    from PySide6.QtCore import QDate
+    from PySide6.QtGui import QGuiApplication
+
+    runs = tmp_path / "runs"
+    _write_run(runs, "ordinary", seed=42)
+    _write_run(runs, "large", seed=2**64 - 1)
+    before = _snapshot(runs)
+    make, until = browser
+    window = make()
+    until(lambda: window._reader_ready and not window._refreshing and window._total == 2)
+    errors = []
+    pages = []
+    window._reader.failed.connect(errors.append)
+    window._reader.pageReady.connect(pages.append)
+    prior = window._generation
+    for day, date_widget, checkbox in (
+        (start_day, window.fromDate, window.fromCheck),
+        (end_day, window.toDate, window.toCheck),
+    ):
+        if day is not None:
+            date_widget.setDate(QDate(*day))
+            assert date_widget.date() == QDate(*day)
+            checkbox.setChecked(True)
+    until(lambda: window._generation > prior and bool(pages)
+          and pages[-1].generation == window._generation
+          and window._total == pages[-1].total
+          and window.model.loadedCount == len(pages[-1].rows))
+    assert not errors
+    assert window._total == matches
+    assert window.model.loadedCount == matches
+
+    # Date filtering composes with exact large-seed matching and clipboard behavior.
+    window.seedEdit.setText(str(2**64 - 1))
+    prior = window._generation
+    until(lambda: window._generation > prior and pages[-1].generation == window._generation
+          and window._total == pages[-1].total)
+    assert window._total == (1 if matches else 0)
+    if matches:
+        window.table.selectRow(0)
+        until(lambda: window.copySeedButton.isEnabled())
+        window.copySeedButton.click()
+        assert QGuiApplication.clipboard().text() == str(2**64 - 1)
+    window.clearFilters()
+    until(lambda: pages[-1].generation == window._generation and window._total == 2)
+    assert not errors
+    assert _snapshot(runs) == before
+
+
+@pytest.mark.parametrize("day", ((2026, 3, 8), (2026, 11, 1), (2026, 9, 11)))
+def test_designer_date_bounds_preserve_ordinary_local_day(browser, tmp_path, day):
+    from PySide6.QtCore import QDate
+
+    from app.services.replay_history_presentation import day_bounds
+
+    _write_run(tmp_path / "runs", "ordinary")
+    make, until = browser
+    window = make()
+    until(lambda: window._reader_ready and not window._refreshing)
+    window.fromDate.setDate(QDate(*day))
+    window.toDate.setDate(QDate(*day))
+    window.fromCheck.setChecked(True)
+    window.toCheck.setChecked(True)
+    filters = window._currentFilters()
+    assert (filters.start_date, filters.end_date) == day_bounds(*day)
+
+
+
+@pytest.mark.parametrize("date_parts", (None, (2026, 2, 29)))
+def test_designer_date_bound_rejects_invalid_calendar_dates(date_parts):
+    from PySide6.QtCore import QDate
+
+    from app.views.replay_history import _local_date_bound
+
+    date = QDate() if date_parts is None else QDate(*date_parts)
+    with pytest.raises(ValueError, match="Invalid history filter date"):
+        _local_date_bound(date, end=False)
+    with pytest.raises(ValueError, match="Invalid history filter date"):
+        _local_date_bound(date, end=True)
+
+
+def test_designer_date_bound_rejects_unresolved_qt_calendar(monkeypatch):
+    from PySide6.QtCore import QDate, QDateTime
+
+    from app.views import replay_history as view
+
+    def unsupported_day(*_args):
+        raise OSError("isolated Windows calendar conversion failure")
+
+    monkeypatch.setattr(view, "day_bounds", unsupported_day)
+    monkeypatch.setattr(view, "QDateTime", lambda *_args: QDateTime())
+    for end in (False, True):
+        with pytest.raises(ValueError, match="could not be resolved"):
+            view._local_date_bound(QDate(9999, 12, 31), end=end)
+
+
+
+def test_designer_rejected_calendar_keeps_query_and_reports_error(browser, tmp_path, monkeypatch):
+    from PySide6.QtCore import QDate, QDateTime
+
+    from app.views import replay_history as view
+
+    _write_run(tmp_path / "runs", "ordinary")
+    make, until = browser
+    window = make()
+    until(lambda: window._reader_ready and not window._refreshing and window._total == 1)
+    prior_query = window._query
+    requests = []
+    window.pageRequested.connect(lambda *args: requests.append(args))
+
+    def unsupported_day(*_args):
+        raise OSError("isolated Windows calendar conversion failure")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(view, "day_bounds", unsupported_day)
+        patch.setattr(view, "QDateTime", lambda *_args: QDateTime())
+        window.fromDate.setDate(QDate(9999, 12, 31))
+        window.fromCheck.setChecked(True)
+        assert "could not be resolved" in window.statusLabel.text()
+        assert window._query == prior_query
+        assert not requests
+        assert window._total == 1
+    # The same valid date resolves and filters normally once calendar conversion works.
+    window._applyFilters()
+    until(lambda: window._total == 0)
+    assert requests
+
+
 def mixed_corpus(root: Path):
     runs = root / "runs"
     _run_real_match(runs / "healthy")
