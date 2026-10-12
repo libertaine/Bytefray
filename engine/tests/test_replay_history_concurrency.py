@@ -58,8 +58,10 @@ def test_read_only_service_rejects_maintenance_and_sql_writes(tmp_path):
 
 @pytest.mark.parametrize("outcome", ["commit", "rollback", "cancel"])
 @pytest.mark.parametrize("maintenance", ["reconcile", "rebuild"])
-def test_real_maintenance_keeps_concurrent_reader_usable(tmp_path, outcome, maintenance):
-    _write_run(tmp_path / "runs", "old", seed=1)
+@pytest.mark.parametrize("seeds", [(1, 2), (-(2**63) - 1, 2**64 - 1)])
+def test_real_maintenance_keeps_concurrent_reader_usable(tmp_path, outcome, maintenance, seeds):
+    old_seed, new_seed = seeds
+    _write_run(tmp_path / "runs", "old", seed=old_seed)
     entered, release = threading.Event(), threading.Event()
     with ThreadPoolExecutor(1) as writes, ThreadPoolExecutor(1) as reads:
         writer = writes.submit(_open, tmp_path).result()
@@ -71,7 +73,7 @@ def test_real_maintenance_keeps_concurrent_reader_usable(tmp_path, outcome, main
             assert writer_owner[0] != reader_owner[0] != threading.get_ident()
             assert writer_owner[1] != reader_owner[1]
             assert writes.submit(lambda: writer._index.connection.execute("PRAGMA journal_mode").fetchone()).result() == ("wal",)
-            _write_run(tmp_path / "runs", "new", seed=2)
+            _write_run(tmp_path / "runs", "new", seed=new_seed)
             original = writer._finish_generation
 
             def finish(generation):
@@ -90,8 +92,10 @@ def test_real_maintenance_keeps_concurrent_reader_usable(tmp_path, outcome, main
             def query():
                 page, count = reader.fetch_page_with_count()
                 assert count == len(page.rows) == 1
-                assert reader.fetch_detail(page.rows[0].location_id).occurrence.seed == 1
-                assert reader.count(HistoryQuery(seed=2)) == 0
+                assert page.rows[0].seed == old_seed
+                assert reader.fetch_detail(page.rows[0].location_id).occurrence.seed == old_seed
+                assert reader.count(HistoryQuery(seed=old_seed)) == 1
+                assert reader.count(HistoryQuery(seed=new_seed)) == 0
                 assert reader.ruleset_facets()
                 return reader.resolve_replay(page.rows[0].location_id)
 
@@ -105,9 +109,14 @@ def test_real_maintenance_keeps_concurrent_reader_usable(tmp_path, outcome, main
             else:
                 assert refresh.result(timeout=5).committed == (outcome == "commit")
             assert reads.submit(reader.count).result() == (2 if outcome == "commit" else 1)
+            assert reads.submit(reader.count, HistoryQuery(seed=new_seed)).result() == (
+                1 if outcome == "commit" else 0
+            )
             writer._finish_generation = original
             assert writes.submit(writer.refresh).result().committed
             assert reads.submit(reader.count).result() == 2
+            page = reads.submit(reader.fetch_page, HistoryQuery(seed=new_seed)).result()
+            assert page.rows[0].seed == new_seed
         finally:
             release.set()
             reads.submit(reader.close).result()

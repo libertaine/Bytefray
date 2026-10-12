@@ -51,6 +51,30 @@ def browser(tmp_path):
     application.processEvents()
 
 
+def test_large_seed_history_refresh_filter_and_clipboard_through_browser(browser, tmp_path):
+    from PySide6.QtGui import QGuiApplication
+
+    runs = tmp_path / "runs"
+    seeds = (42, -(2**63), 2**63 - 1, -(2**63) - 1, 2**63, 2**64 - 1)
+    for index, seed in enumerate(seeds):
+        _write_run(runs, f"seed-{index}", seed=seed)
+    before = _snapshot(runs)
+    make, until = browser
+    window = make()
+    until(lambda: window._reader_ready and not window._refreshing and window.model.loadedCount == 6)
+    assert {row.seed for row in window.model._rows} == set(seeds)
+    position = next(i for i, row in enumerate(window.model._rows) if row.seed == 2**64 - 1)
+    window.table.selectRow(position)
+    until(lambda: window.copySeedButton.isEnabled())
+    window.copySeedButton.click()
+    assert QGuiApplication.clipboard().text() == str(2**64 - 1)
+    window.seedEdit.setText(str(2**64 - 1))
+    until(lambda: window.model.loadedCount == 1 and window.model._rows[0].seed == 2**64 - 1)
+    window.refresh()
+    until(lambda: not window._refreshing and window.model.loadedCount == 1)
+    assert _snapshot(runs) == before
+
+
 def mixed_corpus(root: Path):
     runs = root / "runs"
     _run_real_match(runs / "healthy")

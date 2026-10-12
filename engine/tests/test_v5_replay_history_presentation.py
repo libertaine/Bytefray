@@ -840,6 +840,27 @@ def test_copy_seed_enabled_requires_a_concrete_seed() -> None:
     assert rp.copy_seed_enabled(None) is False
 
 
+@pytest.mark.parametrize("seed", [-(2**63), 2**63 - 1, -(2**63) - 1, 2**63, 2**64 - 1, 0, 4242])
+def test_large_seed_readback_filter_and_copy_presentation(tree: Path, seed: int) -> None:
+    _write_run(tree / "runs", "large-seed", seed=seed)
+    with _service(tree) as service:
+        summary = service.refresh()
+        assert summary.committed
+        assert rp.describe_refresh(summary) == "History rebuilt — 1 match indexed."
+        row = service.fetch_page().rows[0]
+        assert type(row.seed) is int
+        assert rp.format_seed(row) == str(seed)
+        assert rp.copy_seed_enabled(row.seed)
+        assert rp.describe_seed_copied(row.seed) == f"Seed {seed} copied"
+        state = rp.HistoryFilterState(seed_text=str(seed))
+        assert state.seed_is_valid
+        assert service.count(state.to_query()) == 1
+        detail = service.fetch_detail(row.location_id)
+        assert detail is not None
+        fields = [field for section in rp.build_detail_sections(detail) for field in section.fields]
+        assert next(field.value for field in fields if field.label == "Seed") == str(seed)
+
+
 def test_seed_copied_text_names_the_exact_seed() -> None:
     assert rp.describe_seed_copied(184293) == "Seed 184293 copied"
     assert rp.describe_seed_copied(0) == "Seed 0 copied"

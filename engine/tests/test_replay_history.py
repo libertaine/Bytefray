@@ -210,6 +210,167 @@ def _row_for(service: ReplayHistoryService, relative: str) -> Any:
 # ---------------------------------------------------------------------------
 
 
+SEED_BOUNDARIES = (
+    -(2**63), 2**63 - 1, -(2**63) - 1, 2**63, 2**64 - 1,
+    2**64 - 2, -(2**128), 2**128, -1, 0, 4242,
+)
+
+
+@pytest.mark.parametrize("seed", SEED_BOUNDARIES)
+@pytest.mark.parametrize("replay_only", [False, True])
+def test_seed_roundtrip_rebuild_reopen_and_exact_filter(
+    tree: Path, seed: int, replay_only: bool
+) -> None:
+    runs = tree / "runs"
+    # Adjacent values above 2**53 catch accidental conversion to REAL.
+    for name, value in (("target", seed), ("neighbor", seed + 1), ("ordinary", 42)):
+        directory = runs / name
+        directory.mkdir()
+        payload = _result_payload(seed=value)
+        if replay_only:
+            (directory / "replay.jsonl").write_text(_replay_header_line(payload), encoding="utf-8")
+        else:
+            _write_run(runs, name, seed=value)
+    before = _snapshot(runs)
+
+    def check(service: ReplayHistoryService) -> None:
+        assert service.count() == 3
+        query = HistoryQuery(seed=seed)
+        assert service.count(query) == 1
+        rows = _all_rows(service, query)
+        assert len(rows) == 1
+        assert type(rows[0].seed) is int
+        assert rows[0].seed == seed
+        detail = service.fetch_detail(rows[0].location_id)
+        assert detail is not None
+        assert type(detail.occurrence.seed) is int
+        assert detail.occurrence.seed == seed
+        assert detail.occurrence.relative_directory == "target"
+        assert service.count(HistoryQuery(seed=seed + 2)) == 0
+        assert service._index.connection.execute(
+            "SELECT seed, typeof(seed) FROM occurrence WHERE location_id = ?",
+            (rows[0].location_id,),
+        ).fetchone() == (str(seed), "text")
+
+    with _service(tree) as service:
+        assert service.refresh().committed
+        check(service)
+        assert service.refresh().unchanged == 3
+        assert service.rebuild().committed
+        check(service)
+    with _service(tree) as service:
+        assert not service.cache_report.rebuild_required
+        check(service)
+    assert _snapshot(runs) == before
+
+
+@pytest.mark.parametrize("seed", [None, True, False, "42", "invalid", 1.5, [], {}])
+def test_null_and_invalid_seeds_remain_absent(tree: Path, seed: Any) -> None:
+    _write_run(tree / "runs", "invalid-seed", seed=seed)
+    _write_run(tree / "runs", "ordinary", seed=42)
+    with _service(tree) as service:
+        service.refresh()
+        row = _row_for(service, "invalid-seed")
+        assert row.seed is None
+        assert service.fetch_detail(row.location_id).occurrence.seed is None
+        assert service._index.connection.execute(
+            "SELECT seed, typeof(seed) FROM occurrence WHERE location_id = ?", (row.location_id,)
+        ).fetchone() == (None, "null")
+        assert service.count(HistoryQuery(seed=42)) == 1
+        assert service.count() == 2
+
+
+def test_missing_seed_remains_absent(tree: Path) -> None:
+    directory = tree / "runs" / "absent-seed"
+    directory.mkdir()
+    payload = _result_payload(replay_filename=None)
+    del payload["reproducibility"]["seed"]
+    (directory / "result.json").write_text(json.dumps(payload), encoding="utf-8")
+    with _service(tree) as service:
+        service.refresh()
+        row = service.fetch_page().rows[0]
+        assert row.seed is None
+        assert service.fetch_detail(row.location_id).occurrence.seed is None
+
+
+def test_large_seed_incremental_add_update_and_failed_refresh_rollback(
+    tree: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runs = tree / "runs"
+    occurrence = "11111111-2222-3333-4444-555555555555"
+    _write_run(runs, "old", seed=42, occurrence_id=occurrence)
+    with _service(tree) as service:
+        service.refresh()
+        generation = service.generation
+        _write_run(runs, "new", seed=2**64 - 1)
+        _write_run(runs, "old", seed=-(2**63) - 1, occurrence_id=occurrence)
+        before = _snapshot(runs)
+        original = service._finish_generation
+
+        def fail(generation: int) -> None:
+            # Rows have been written; failure must roll back rows and metadata.
+            original(generation)
+            assert service.count(HistoryQuery(seed=2**64 - 1)) == 1
+            raise RuntimeError("controlled large-seed refresh failure")
+
+        with monkeypatch.context() as patch:
+            patch.setattr(service, "_finish_generation", fail)
+            with pytest.raises(RuntimeError, match="controlled large-seed"):
+                service.refresh()
+        assert service.generation == generation
+        assert service.count() == service.count(HistoryQuery(seed=42)) == 1
+        assert service.count(HistoryQuery(seed=2**64 - 1)) == 0
+        summary = service.refresh()
+        assert summary.committed
+        assert summary.added == summary.updated == 1
+        assert service.count() == 2
+        assert _row_for(service, "old").seed == -(2**63) - 1
+        assert _row_for(service, "new").seed == 2**64 - 1
+        assert _snapshot(runs) == before
+
+
+def test_v1_integer_seed_cache_rebuilds_through_normal_version_recovery(
+    tree: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from battle_engine.replay_history import index
+
+    _write_run(tree / "runs", "ordinary", seed=42)
+    # Construct the previous INTEGER-affinity cache using its normal lifecycle.
+    with monkeypatch.context() as patch:
+        patch.setattr(index, "CACHE_SCHEMA_VERSION", 1)
+        patch.setattr(index, "_SCHEMA_STATEMENTS", tuple(
+            statement.replace("seed                          TEXT", "seed                          INTEGER")
+            for statement in index._SCHEMA_STATEMENTS
+        ))
+        with _service(tree) as service:
+            service.refresh()
+            cache = Path(service.cache_report.path)
+            identity = service._identity
+            assert service._index.connection.execute(
+                "SELECT seed, typeof(seed) FROM occurrence"
+            ).fetchone() == (42, "integer")
+    _write_run(tree / "runs", "large", seed=2**64 - 1)
+    before = _snapshot(tree / "runs")
+    # Query owners cannot relabel/recover a cache; maintenance must prepare it.
+    with pytest.raises(ValueError, match="maintenance owner"):
+        HistoryIndex.open_read_only(cache, root_identity=identity)
+    with _service(tree) as service:
+        assert service.cache_report.rebuild_required
+        assert service.cache_report.rebuild_reason == "cache_schema_version_mismatch"
+        assert service.generation == 0
+        assert service.refresh().committed
+        columns = {row[1]: row[2] for row in service._index.connection.execute(
+            "PRAGMA table_info(occurrence)"
+        )}
+        assert columns["seed"] == "TEXT"
+        assert service.count() == 2
+        assert service.count(HistoryQuery(seed=2**64 - 1)) == 1
+    with _service(tree) as service:
+        assert not service.cache_report.rebuild_required
+        assert _row_for(service, "large").seed == 2**64 - 1
+    assert _snapshot(tree / "runs") == before
+
+
 def test_headless_import_never_pulls_in_qt_or_pygame() -> None:
     before = {name for name in sys.modules if "PySide6" in name or name == "pygame"}
     import battle_engine.replay_history

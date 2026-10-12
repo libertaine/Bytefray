@@ -50,7 +50,7 @@ from .query import (
 # schema version, the replay schema version, and the Bytefray product version:
 # every column here is a derived projection that may evolve on its own
 # schedule. A mismatch drops and rebuilds -- there is no user data to migrate.
-CACHE_SCHEMA_VERSION = 1
+CACHE_SCHEMA_VERSION = 2
 
 # Bumped when the *interpretation* of artifacts or the shape of the cached
 # projection changes without changing the table definitions. A product-version
@@ -159,7 +159,7 @@ _SCHEMA_STATEMENTS: tuple[str, ...] = (
         ticks                         INTEGER,
         ruleset_id                    TEXT,
         ruleset_confidence            TEXT NOT NULL,
-        seed                          INTEGER,
+        seed                          TEXT,
         mode                          TEXT,
         configuration_json            TEXT,
         workflow                      TEXT NOT NULL,
@@ -1004,7 +1004,9 @@ def _occurrence_row(
         occurrence.ticks,
         occurrence.ruleset_id,
         occurrence.ruleset_confidence,
-        occurrence.seed,
+        # Seeds are arbitrary Python integers, beyond SQLite's signed int64.
+        # TEXT affinity preserves the canonical decimal without REAL coercion.
+        None if occurrence.seed is None else str(occurrence.seed),
         occurrence.mode,
         _json_or_none(occurrence.configuration),
         occurrence.workflow.value,
@@ -1066,7 +1068,7 @@ def _history_row(row: Sequence[Any]) -> HistoryRow:
         outcome_state=OutcomeState(row[12]),
         ruleset_id=row[13],
         ruleset_confidence=str(row[14]),
-        seed=row[15],
+        seed=None if row[15] is None else int(row[15]),
         workflow=WorkflowSource(row[16]),
         durable_location=bool(row[17]),
         duplicate_occurrence_location=bool(row[18]),
@@ -1112,7 +1114,7 @@ def _occurrence_from_row(
         entrants=entrants,
         ruleset_id=values["ruleset_id"],
         ruleset_confidence=str(values["ruleset_confidence"]),
-        seed=values["seed"],
+        seed=None if values["seed"] is None else int(values["seed"]),
         mode=values["mode"],
         configuration=_mapping_from_json(values["configuration_json"]),
         workflow=WorkflowSource(values["workflow"]),
@@ -1211,7 +1213,7 @@ def _filter_clauses(query: HistoryQuery) -> tuple[list[str], list[Any]]:
 
     if query.seed is not None:
         clauses.append("seed = ?")
-        params.append(int(query.seed))
+        params.append(str(int(query.seed)))
 
     if query.workflows is not None:
         values = [workflow.value for workflow in query.workflows]
