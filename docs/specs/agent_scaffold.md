@@ -1,5 +1,26 @@
 # agent_scaffold
 
+## V6 M2-2 bounded extension (2026-10-15)
+
+The accepted M2 Scope Revision 03 §3 extends the existing API-v2 scaffold with
+`--template watchful_keeper`, mapped to `starter_agents/v6_watchful_keeper`.
+Existing `blank`, `annotated` and `window_scout` choices/defaults remain.
+New Agent labels it **Watchful Keeper — personal copy**. Creation uses the same
+exclusive temporary-sibling/rename and containment checks; existing destinations
+and invalid IDs are refused. Only manifest `name` and `display` change. Source,
+capabilities v1, parameters and presets equal the bundled revision.
+
+The copy requires explicit `bytefray-rules-6-alpha1` selection for validation
+and execution. Selecting it does not change the stable V4 default. Parameters
+use the canonical schema/resolver: `scan_interval` integer 2..16 (default 4),
+`perimeter_offset` integer 0..128 (default 27). Development Validate is a dry
+run; Development Test is a full match using manifest defaults. Edited parameters
+run in Advanced; earlier output retains its source/settings and replay binding.
+Roaming Reacquirer remains a separately authorized later slice.
+
+The original Phase 1 specification below is historical; this addendum describes
+only the accepted Keeper extension to the current API-v2 implementation.
+
 **Module:** `engine/src/battle_engine/agent_scaffold.py` (new)
 **Purpose:** `bytefray agents create <agent-id>` — create the minimum
 filesystem structure for a valid, discoverable Agent API v1 Python agent

@@ -1,0 +1,346 @@
+--- entry/engine/src/battle_engine/agent_test.py
++++ corrected/engine/src/battle_engine/agent_test.py
+@@ -58,6 +58,7 @@
+     RuntimeDiagnostic,
+ )
+ from battle_engine.results import WINNER_TIE_SENTINEL
++from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
+ from battle_engine.ruleset_policy import (
+     BYTEFRAY_RULESET_V4_ID,
+     NoCompatibleRulesetError,
+@@ -1028,13 +1029,14 @@
+     )
+     parser.add_argument(
+         "--ruleset",
+-        choices=[BYTEFRAY_RULESET_V4_ID],
++        choices=[BYTEFRAY_RULESET_V4_ID, BYTEFRAY_RULESET_V6_ALPHA1_ID],
+         default=None,
+         help=(
+-            f"gameplay Ruleset identity. {BYTEFRAY_RULESET_V4_ID} is the "
+-            "only Ruleset Agent API v2 (process) agents can run under, and "
+-            "is selected automatically when this flag is omitted -- agents "
+-            "test entrants are always Python. Affects gameplay semantics "
++            f"gameplay Ruleset identity. Stable {BYTEFRAY_RULESET_V4_ID} is "
++            "selected when this flag is omitted. Experimental "
++            f"{BYTEFRAY_RULESET_V6_ALPHA1_ID} requires explicit selection. "
++            "Entrants must be compatible Agent API v2 Python agents. "
++            "Affects gameplay semantics "
+             "and is recorded in the match's result/replay artifacts."
+         ),
+     )
+@@ -1050,9 +1052,9 @@
+     # keep test_agent()'s own unsupervised default unless they opt in.
+     effective_timeout = DEFAULT_AGENT_TIMEOUT if args.timeout is None else args.timeout
+     # Omitted selection is resolved from entrant metadata at the CLI boundary.
+-    # Scope C leaves one executable combination -- Agent API v2 Python under
+-    # stable bytefray-rules-4 -- while incompatible historical metadata fails
+-    # closed before test_agent() can create a run directory.
++    # Omission retains stable bytefray-rules-4; experimental Alpha 1 requires
++    # explicit selection. Incompatible historical metadata fails closed
++    # before test_agent() can create a run directory.
+     #
+     # The default reference opponent is deliberately not part of this
+     # roster: _reference_opponent_spec is the fixed current API-v2 reference,
+--- entry/engine/tests/test_agent_test.py
++++ corrected/engine/tests/test_agent_test.py
+@@ -21,6 +21,7 @@
+ from battle_engine.match_service import MatchRequest, NativeMatchService
+ from battle_engine.replay import iter_replay
+ from battle_engine.result_model import verify_result_replay
++from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID as ALPHA
+ 
+ ROOT = Path(__file__).resolve().parents[2]
+ 
+@@ -833,22 +834,170 @@
+     assert "invalid choice" in capsys.readouterr().err
+ 
+ 
+-def test_cli_help_lists_only_the_retained_control_ruleset(capsys):
+-    """V6 Phase 2B.12 (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md)
+-    retired bytefray-rules-1/-2 execution alongside every v4-alpha identity
+-    (already gone as of Phase 2B.9/2B.10): only bytefray-rules-4 remains as
+-    a selectable ``--ruleset`` choice."""
++def test_cli_help_lists_stable_default_and_explicit_alpha1_only(capsys):
++    """Product choices exclude retired and internal research identities."""
+     with pytest.raises(SystemExit):
+         main(["--help"])
+     out = capsys.readouterr().out
+     assert "--ruleset" in out
+     assert "bytefray-rules-4" in out
++    assert ALPHA in out
++    assert "requires explicit selection" in " ".join(out.split())
++    assert "research" not in out
+     assert "bytefray-rules-1" not in out
+     assert "bytefray-rules-2" not in out
+     assert "bytefray-rules-4-alpha1" not in out
+     assert "bytefray-rules-4-alpha2" not in out
+     assert "bytefray-rules-2-alpha1" not in out
+     assert "bytefray-rules-3-alpha1" not in out
++
++
++@pytest.mark.parametrize("template,opponent", [
++    ("watchful_keeper", False), ("window_scout", False), ("watchful_keeper", True),
++])
++def test_cli_explicit_alpha1_supervised_personal_copy(tmp_path, template, opponent):
++    """Real command/worker route, full default budget or legitimate termination."""
++    scaffold_create_agent("personal", template=template, data_root=tmp_path, resource_root=ROOT)
++    args = ["personal"]
++    if opponent:
++        scaffold_create_agent("ordinary", data_root=tmp_path, resource_root=ROOT)
++        args = ["ordinary", "--opponent", "personal"]
++    completed = _run("agents", "test", *args, "--ruleset", ALPHA,
++                     env=dict(os.environ, BYTEFRAY_ROOT=str(tmp_path)))
++    assert completed.returncode == 0, completed.stderr
++    assert completed.stderr == ""
++    assert f"ruleset: {ALPHA}" in completed.stdout
++    assert "agent_test_internal_error" not in completed.stdout
++    result_path, = (tmp_path / "runs").rglob("result.json")
++    result = json.loads(result_path.read_text())
++    replay = result_path.with_name("replay.jsonl")
++    assert verify_result_replay(result_path)
++    header = json.loads(replay.read_text().splitlines()[0])
++    trace = [json.loads(line) for line in result_path.with_name("trace.jsonl").read_text().splitlines()]
++    assert result["ruleset_id"] == header["ruleset_id"] == ALPHA
++    assert result["schema_version"] == 2 and header["schema_version"] == 4
++    assert trace[0]["schema_version"] == 2 and trace[0]["supervised"] is True
++    assert trace[0]["agent_call_timeout"] == 5.0
++    assert all(entrant["diagnostic"] is None for entrant in result["entrants"])
++    personal = result["entrants"][1 if opponent else 0]
++    assert personal["name"] == "personal"
++    expected = ({"scan_interval": 4, "perimeter_offset": 27} if template == "watchful_keeper"
++                else {"search_interval": 4, "move_step": 64})
++    assert personal["metadata"]["parameters"] == expected
++    assert result["ticks"] == 200 or result["termination_reason"] == "last_agent_standing"
++
++
++@pytest.mark.parametrize("explicit", [False, True])
++def test_cli_stable_default_artifact_identity(tmp_path, explicit):
++    scaffold_create_agent("ordinary", data_root=tmp_path, resource_root=ROOT)
++    args = ["--ruleset", "bytefray-rules-4"] if explicit else []
++    completed = _run("agents", "test", "ordinary", "--ticks", "5", *args,
++                     env=dict(os.environ, BYTEFRAY_ROOT=str(tmp_path)))
++    assert completed.returncode == 0, completed.stderr
++    assert "ruleset: bytefray-rules-4" in completed.stdout
++    result_path, = (tmp_path / "runs").rglob("result.json")
++    replay = result_path.with_name("replay.jsonl")
++    assert verify_result_replay(result_path)
++    assert json.loads(result_path.read_text())["ruleset_id"] == "bytefray-rules-4"
++    assert json.loads(replay.read_text().splitlines()[0])["ruleset_id"] == "bytefray-rules-4"
++
++
++def _preflight_sentinels(root, directory):
++    """Both import and reset would leave independent evidence if preflight leaked."""
++    imported, reset = root / "imported", root / "reset"
++    (directory / "agent.py").write_text(
++        f"from pathlib import Path\nPath({str(imported)!r}).touch()\n"
++        f"class Agent:\n    def reset(self, context): Path({str(reset)!r}).touch()\n"
++        "def create_agent(): return Agent()\n", encoding="utf-8")
++    return imported, reset
++
++
++@pytest.mark.parametrize("opponent", [False, True])
++@pytest.mark.parametrize("explicit", [False, True])
++def test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts(
++    tmp_path, monkeypatch, capsys, opponent, explicit,
++):
++    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
++    scaffold_create_agent("sensor", template="watchful_keeper", data_root=tmp_path, resource_root=ROOT)
++    scaffold_create_agent("ordinary", data_root=tmp_path, resource_root=ROOT)
++    sentinels = [_preflight_sentinels(tmp_path, tmp_path / "agents" / name)
++                 for name in ("sensor", "ordinary")]
++    args = ["ordinary", "--opponent", "sensor"] if opponent else ["sensor", "--opponent", "ordinary"]
++    if explicit:
++        args += ["--ruleset", "bytefray-rules-4"]
++    assert main(args) == 2
++    captured = capsys.readouterr()
++    assert "code: agent_capability_unsupported" in captured.err
++    assert "agent_manifest_invalid" not in captured.err
++    assert not any(p.exists() for pair in sentinels for p in pair)
++    assert not (tmp_path / "runs").exists()
++
++
++@pytest.mark.parametrize("opponent", [False, True])
++@pytest.mark.parametrize("block", [
++    {"version": 2, "required": ["sense"]}, {"version": 1, "required": ["unknown"]},
++    {"version": 1, "required": ["sense", "sense"]}, ["sense"],
++])
++def test_cli_alpha1_malformed_capabilities_precede_execution(tmp_path, monkeypatch, capsys, opponent, block):
++    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
++    scaffold_create_agent("ordinary", data_root=tmp_path, resource_root=ROOT)
++    directory = _write_python_agent(tmp_path, "malformed", "None")
++    manifest = json.loads((directory / "agent.yaml").read_text())
++    (directory / "agent.yaml").write_text(json.dumps({**manifest, "capabilities": block}))
++    sentinels = [_preflight_sentinels(tmp_path, tmp_path / "agents" / name)
++                 for name in ("ordinary", "malformed")]
++    args = ["ordinary", "--opponent", "malformed"] if opponent else ["malformed", "--opponent", "ordinary"]
++    assert main([*args, "--ruleset", ALPHA]) == 2
++    captured = capsys.readouterr()
++    assert "code: agent_manifest_invalid" in captured.err
++    assert "agent_capability_unsupported" not in captured.err
++    assert not any(p.exists() for pair in sentinels for p in pair)
++    assert not (tmp_path / "runs").exists()
++
++
++@pytest.mark.parametrize("opponent", [False, True])
++@pytest.mark.parametrize("metadata,code", [
++    ({"kind": "python", "api_version": 1}, "agent_api_version_unsupported"),
++    ({"kind": "vm", "api_version": 2}, "agent_manifest_invalid"),
++    ({"kind": "blob", "api_version": 2}, "agent_kind_unsupported"),
++    ({"kind": "python", "api_version": 99}, "agent_api_version_unsupported"),
++])
++def test_cli_alpha1_rejects_incompatible_entrant_metadata(tmp_path, monkeypatch, capsys, opponent, metadata, code):
++    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
++    scaffold_create_agent("ordinary", data_root=tmp_path, resource_root=ROOT)
++    directory = _write_python_agent(tmp_path, "invalid", "None")
++    manifest = json.loads((directory / "agent.yaml").read_text())
++    (directory / "agent.yaml").write_text(json.dumps({**manifest, **metadata}))
++    sentinels = [_preflight_sentinels(tmp_path, tmp_path / "agents" / name)
++                 for name in ("ordinary", "invalid")]
++    args = ["ordinary", "--opponent", "invalid"] if opponent else ["invalid", "--opponent", "ordinary"]
++    assert main([*args, "--ruleset", ALPHA]) == 2
++    assert f"code: {code}" in capsys.readouterr().err
++    assert not any(p.exists() for pair in sentinels for p in pair)
++    assert not (tmp_path / "runs").exists()
++
++
++@pytest.mark.parametrize("ruleset", [
++    "bytefray-rules-99", "bytefray-rules-1", "bytefray-rules-2",
++    "bytefray-rules-2-alpha1", "bytefray-rules-3-alpha1", "bytefray-rules-4-alpha1",
++    "bytefray-rules-4-alpha2", "bytefray-rules-6-research-sensing-active-w27",
++])
++def test_cli_rejects_nonproduct_rulesets_before_discovery(tmp_path, monkeypatch, capsys, ruleset):
++    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
++    with pytest.raises(SystemExit) as caught:
++        main(["absent", "--ruleset", ruleset])
++    assert caught.value.code == 2
++    assert "invalid choice" in capsys.readouterr().err
++    assert not (tmp_path / "runs").exists()
++
++
++def test_cli_ruleset_choices_are_exact_and_omission_is_stable():
++    from battle_engine.agent_test import _parser
++
++    parser = _parser()
++    action, = [action for action in parser._actions if action.dest == "ruleset"]
++    assert action.choices == ["bytefray-rules-4", ALPHA]
++    assert parser.parse_args(["ordinary"]).ruleset is None
+ 
+ 
+ def test_cli_help_exits_zero_and_mentions_flags():
+--- entry/tests/test_v6_alpha_m1_5_designer.py
++++ corrected/tests/test_v6_alpha_m1_5_designer.py
+@@ -20,6 +20,33 @@
+         time.sleep(.01)
+     app.processEvents()
+     assert designer._proc is not None and designer._proc.state() == QProcess.NotRunning, "native product subprocess did not finish"
++
++
++def _assert_default_development_artifacts(development, parameters):
++    import json
++
++    from battle_engine.result_model import read_result, verify_result_replay
++
++    assert "Complete" in development.testStatusLabel.text()
++    path = development.last_test_result_path()
++    assert path is not None
++    replay = development.last_test_replay_path()
++    trace = development.last_test_trace_path()
++    assert replay == path.with_name("replay.jsonl")
++    assert trace == path.with_name("trace.jsonl") and trace.is_file()
++    assert verify_result_replay(path)
++    result = read_result(path)
++    assert result.ruleset_id == development.selected_ruleset_id() == "bytefray-rules-6-alpha1"
++    assert result.entrants[0]["metadata"]["parameters"] == parameters
++    assert all(entrant["diagnostic"] is None for entrant in result.entrants)
++    body = json.loads(path.read_text())
++    assert body["status"] == "completed"
++    assert body["ticks"] == 200 or body["termination_reason"] == "last_agent_standing"
++    header = json.loads(replay.read_text().splitlines()[0])
++    assert header["ruleset_id"] == result.ruleset_id and header["schema_version"] == 4
++    trace_header = json.loads(trace.read_text().splitlines()[0])
++    assert trace_header["supervised"] and trace_header["schema_version"] == 2
++    return path, replay
+ 
+ 
+ @pytest.mark.skipif(sys.platform != "win32", reason="bounded native Windows Qt smoke")
+@@ -240,10 +267,79 @@
+         designer.tabs.setCurrentWidget(development)
+         QTest.mouseClick(development.btnTest, Qt.LeftButton)
+         _wait(app, designer)
+-        assert "Complete" in development.testStatusLabel.text()
++        test_path, test_replay = _assert_default_development_artifacts(
++            development, {"scan_interval": 4, "perimeter_offset": 27},
++        )
++        assert test_path != path
++        designer._on_open_test_replay()
++        assert launched[-1] == test_replay
++        assert designer._last_result_path == path and path.is_file()
++        designer._on_open_replay()
++        assert launched[-1] == path.with_name("replay.jsonl")
++        assert result.entrants[index]["metadata"]["parameters"] == {"scan_interval": 3, "perimeter_offset": 64}
++        labels = "\n".join(label.text() for label in advanced.findChildren(QLabel)).lower()
++        assert "earlier" in labels and "settings" in labels
++        assert designer.grab().save(str(tmp_path / f"keeper_{seat}_test.png"))
+     finally:
+         designer.close()
+         designer.deleteLater()
+         dialog.deleteLater()
+         duplicate.deleteLater()
+         app.processEvents()
++
++
++def test_scout_native_manifest_default_development_test(tmp_path, monkeypatch):
++    """Explicit Alpha 1 uses the real QProcess CLI, independently of Advanced edits."""
++    pytest.importorskip("PySide6")
++    from PySide6.QtCore import Qt
++    from PySide6.QtTest import QTest
++    from PySide6.QtWidgets import QApplication, QDialogButtonBox
++
++    from app.agent_designer import AgentDesigner
++    from app.views.development import NewAgentDialog
++
++    monkeypatch.setenv("QT_QPA_PLATFORM", "windows" if sys.platform == "win32" else "xcb")
++    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
++    monkeypatch.setenv("BYTEFRAY_AGENTS_DIR", str(tmp_path / "agents"))
++    app = QApplication.instance() or QApplication([])
++    assert app.platformName() == ("windows" if sys.platform == "win32" else "xcb")
++    dialog = NewAgentDialog(tmp_path)
++    dialog.show()
++    dialog.agentId.setText("personal_scout")
++    dialog.templateCombo.setCurrentIndex(dialog.templateCombo.findData("window_scout"))
++    QTest.mouseClick(dialog.findChild(QDialogButtonBox).button(QDialogButtonBox.Ok), Qt.LeftButton)
++    assert dialog.result is not None
++    designer = AgentDesigner()
++    designer.show()
++    try:
++        development = designer.development
++        designer.tabs.setCurrentWidget(development)
++        development.selectAgent("personal_scout")
++        assert development.selected_ruleset_id() == "bytefray-rules-4"
++        assert not development.btnTest.isEnabled()
++        development.rulesetCombo.setCurrentIndex(development.rulesetCombo.findData("bytefray-rules-6-alpha1"))
++        QTest.mouseClick(development.btnValidate, Qt.LeftButton)
++        _wait(app, designer)
++        assert "Last validation: Valid" in development.statusLabel.text()
++        advanced = designer.advanced
++        designer.tabs.setCurrentWidget(advanced)
++        advanced.ruleset.setCurrentIndex(advanced.ruleset.findData("bytefray-rules-6-alpha1"))
++        advanced.agentA.setCurrentIndex(advanced.agentA.findData("personal_scout"))
++        advanced.schemaA._controls["search_interval"].setValue(2)
++        advanced.schemaA._controls["move_step"].setValue(32)
++        launched = []
++        monkeypatch.setattr("app.agent_designer.open_pygame_client_direct", lambda root, replay: launched.append(replay))
++        designer.tabs.setCurrentWidget(development)
++        QTest.mouseClick(development.btnTest, Qt.LeftButton)
++        _wait(app, designer)
++        _, replay = _assert_default_development_artifacts(development, {"search_interval": 4, "move_step": 64})
++        designer._on_open_test_replay()
++        assert launched == [replay]
++        assert advanced.schemaA._controls["search_interval"].value() == 2
++        assert advanced.schemaA._controls["move_step"].value() == 32
++        assert designer.grab().save(str(tmp_path / "scout_test.png"))
++    finally:
++        designer.close()
++        designer.deleteLater()
++        dialog.deleteLater()
++        app.processEvents()

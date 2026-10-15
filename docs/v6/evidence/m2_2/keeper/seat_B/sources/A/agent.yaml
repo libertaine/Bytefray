@@ -1,0 +1,8 @@
+{
+  "name": "v6_encroaching_opponent",
+  "display": "Declared encroaching teaching fixture (internal)",
+  "kind": "python",
+  "api_version": 2,
+  "entrypoint": "agent.py:create_agent",
+  "version": "1.0.0"
+}

@@ -1,0 +1,70 @@
+{
+  "artifacts": {
+    "replay": {
+      "filename": "replay.jsonl",
+      "sha256": "dbbbd070c7950ec47cc56daac0aee83ce2fa20f4031eb6c5f187df9746c4021a"
+    },
+    "result": {
+      "filename": "result.json",
+      "sha256": "9651832882d856533e611e8d0f09defdc851f9a1b27d8c6b1fb642aa32e53e17"
+    },
+    "trace": {
+      "filename": "trace.jsonl",
+      "sha256": "288a3126e0084875653f0e147bf5c1b359f31a009a0b842769beaee97cd8ae39"
+    }
+  },
+  "completed_at": "2026-10-15T13:45:37.549344Z",
+  "config": {
+    "action_budget": 8,
+    "arena_size": 512,
+    "max_ticks": 100,
+    "seed": 0
+  },
+  "declared_product_fixture": true,
+  "engine": {
+    "agent_api_version": 2,
+    "project_name": "Bytefray",
+    "python_version": "3.13.7",
+    "replay_schema_version": 4,
+    "result_schema_version": 2,
+    "version": "5.0.0"
+  },
+  "entrants": [
+    {
+      "agent_id": "A",
+      "capture_complete": true,
+      "drift_detected": false,
+      "full_tree_digest": "7c37cbf8723b5988c6377393ba718cc0ba1112b8c822c6e3a9bdd8c2975363c0",
+      "loaded_final_fingerprint": "d511e4f42812e6fd42ac0075054a3318fe8c14d3840021dc327707f0a9ae71f1",
+      "loaded_initial_fingerprint": "d511e4f42812e6fd42ac0075054a3318fe8c14d3840021dc327707f0a9ae71f1",
+      "name": "v6_encroaching_opponent",
+      "parameters": {},
+      "python_subset_fingerprint": "d511e4f42812e6fd42ac0075054a3318fe8c14d3840021dc327707f0a9ae71f1",
+      "revision_id": "agent-revision_7c37cbf8723b5988c6377393ba718cc0ba1112b8c822c6e3a9bdd8c2975363c0",
+      "start": 91
+    },
+    {
+      "agent_id": "B",
+      "capture_complete": true,
+      "drift_detected": false,
+      "full_tree_digest": "9d6b0b0ec20a0c05e56f50e1716c6ad0fa442cd9e8e8d6fca07012a2bd8448d5",
+      "loaded_final_fingerprint": "7a307043c4ba4b9c760450b382b1839950b20afc98ebe6984a994a91798c4553",
+      "loaded_initial_fingerprint": "7a307043c4ba4b9c760450b382b1839950b20afc98ebe6984a994a91798c4553",
+      "name": "v6_watchful_keeper",
+      "parameters": {
+        "perimeter_offset": 27,
+        "scan_interval": 4
+      },
+      "python_subset_fingerprint": "7a307043c4ba4b9c760450b382b1839950b20afc98ebe6984a994a91798c4553",
+      "revision_id": "agent-revision_9d6b0b0ec20a0c05e56f50e1716c6ad0fa442cd9e8e8d6fca07012a2bd8448d5",
+      "start": 0
+    }
+  ],
+  "match_id": "match_d3c0288bf634e01feb9c90b7",
+  "provenance": "product_teaching_demo",
+  "result_id": "result_277708f442812131e698b4ae",
+  "ruleset_id": "bytefray-rules-6-alpha1",
+  "schema": "bytefray.sensing_demo",
+  "schema_version": 1,
+  "status": "unverified"
+}

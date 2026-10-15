@@ -361,6 +361,24 @@ and tells you which phase stalled. Pass `--no-trace` to skip writing
 
 ## Using the Agent Designer (GUI)
 
+Watchful Keeper is an experimental V6 sensing starter. Create a personal copy
+with **New Agent → Watchful Keeper — personal copy**, or
+`bytefray agents create my_keeper --template watchful_keeper`. Select
+`bytefray-rules-6-alpha1` explicitly before Validate or a match; the starter
+choice leaves the stable V4 default in place. The copy preserves bundled source,
+capabilities and presets and cannot overwrite an existing agent.
+
+Keeper stays at its observed own core. A delivered READ showing non-own
+ownership supports one same-cell `0x4b` repair attempt. A delivered positive
+SENSE sample supports one legal defensive WRITE to its smallest reachable
+address. Old coordinates are historical; a WRITE is no hit or victory report.
+Otherwise it inspects eight modular core cells and considers a scan on its own
+callback cadence. In Advanced, edit integer `scan_interval` (2..16, default 4)
+and `perimeter_offset` (0..128, default 27). Validate is a supervised dry run;
+Development Test executes a full match with manifest defaults. Use Advanced for
+edited-parameter full matches and Open Replay for their associated result.
+Changed settings/source label retained earlier output without rewriting it.
+
 The same create → validate → test → replay loop is also available from the
 PySide6 Agent Designer's **Agent Development** tab (`bytefray-agent-designer`
 or `bytefray design`), without touching a terminal:

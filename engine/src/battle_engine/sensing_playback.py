@@ -16,7 +16,7 @@ import hashlib
 import json
 import sys
 from collections.abc import Sequence
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -28,6 +28,7 @@ from battle_engine.agent_trace import (
     TraceFormatError,
     read_trace_v2,
 )
+from battle_engine.config import Config
 from battle_engine.paths import contained_path
 from battle_engine.python_runtime import core_addresses
 from battle_engine.replay import (
@@ -1617,6 +1618,207 @@ def verify_demonstration(demo_dir_or_file: Path | str) -> SensingPlayback:
         raise ExchangeReconstructionError(f"Demonstration verification failed: {details}")
 
     return playback
+
+
+@dataclass(frozen=True)
+class KeeperScenarioVerification:
+    """Internal K1 result; never serialized into the Scout demo-v1 contract."""
+
+    artifact_consistent: bool
+    reconstruction_valid: bool
+    source_capture_valid: bool
+    is_complete: bool
+    repair_points: tuple[tuple[int, int], ...]
+    defensive_points: tuple[tuple[int, int], ...]
+    findings: tuple[str, ...]
+
+
+def evaluate_keeper_policy(
+    facts: tuple[SensingExchangeFact, ...], *, keeper_id: str
+) -> tuple[tuple[tuple[int, int], ...], tuple[tuple[int, int], ...]]:
+    """Check K1 decisions independently of the executed agent implementation.
+
+    The scenario has fixed own core 0, reach 128 and default parameters. READ
+    receipts are checked against the world at the preceding READ, rather than
+    trusting an owner string or the world at receipt time.
+    """
+    previous: SensingExchangeFact | None = None
+    observation: SensingExchangeFact | None = None
+    cursor = 0
+    callbacks = 0
+    repairs: list[tuple[int, int]] = []
+    defenses: list[tuple[int, int]] = []
+    for fact in facts:
+        if fact.actor_id != keeper_id:
+            continue
+        if fact.phase == ExchangePhase.OBSERVATION:
+            observation = fact
+            continue
+        if fact.phase != ExchangePhase.ACTION:
+            continue
+        callbacks += 1
+        if observation is None or observation.decision_index != fact.decision_index:
+            raise ExchangeReconstructionError("Keeper action lacks its delivered observation")
+        world = observation.world_state
+        if world is None or world.get_anchor(keeper_id, "main") != 0:
+            raise ExchangeReconstructionError("Keeper must remain anchored at its observed core")
+        expected: tuple[str, int, int | None] = ("read", cursor, None)
+        reason = "inspect"
+        if previous is not None and previous.action_kind == "read" and previous.status == "APPLIED":
+            before = previous.world_state
+            address = previous.normalized_address
+            if before is None or address is None:
+                raise ExchangeReconstructionError("Keeper READ lacks a sample world")
+            if (
+                observation.read_value != before.memory[address]
+                or observation.read_owner != before.owners[address]
+                or observation.detail.get("previous_action_applied") is not True
+            ):
+                raise ExchangeReconstructionError("Keeper READ receipt contradicts sampled value/owner")
+            if address in range(8) and observation.read_owner != keeper_id:
+                expected = ("write", address, 0x4B)
+                reason = "repair"
+        if reason == "inspect" and previous is not None and previous.action_kind == "sense":
+            sample = observation.sensed_anchors
+            if sample and observation.detail.get("previous_action_applied") is True:
+                legal = sorted(a for a in sample if circular_distance(0, a, 512) <= 128)
+                if legal:
+                    expected = ("write", legal[0], 0x4B)
+                    reason = "defend"
+        if reason == "inspect" and callbacks % 4 == 0:
+            expected = ("sense", 27, None)
+            reason = "scan"
+        if reason == "inspect":
+            cursor = (cursor + 1) % 8
+        actual = (fact.action_kind, fact.operand, fact.value)
+        if actual != expected or fact.cost != 1 or fact.status != "APPLIED":
+            raise ExchangeReconstructionError(f"Keeper callback {callbacks}: expected {expected}, got {actual}")
+        point = (fact.tick, int(fact.decision_index or 0))
+        if reason == "repair":
+            repairs.append(point)
+        if reason == "defend":
+            defenses.append(point)
+        previous = fact
+    return tuple(repairs), tuple(defenses)
+
+
+def verify_keeper_scenario(
+    demo_dir_or_file: Path | str, *, keeper_seat: str
+) -> KeeperScenarioVerification:
+    """Explicit keeper-K1 choice, approved sources and inputs, independent facts.
+
+    Invalid bindings/source/input claims raise. A consistent incomplete run can
+    be reconstructed and viewed, but cannot earn K1 completion. Optional-sidecar
+    failure does not affect ordinary ``reconstruct_sensing_playback`` callers.
+    """
+    from battle_engine.agent_revisions import (
+        agent_revision_fingerprint,
+        agent_revision_id,
+        local_python_subset_fingerprint,
+        walk_agent_files,
+    )
+    from battle_engine.sensing_demo import resolve_teaching_agent_dir
+    from battle_engine.starters import starter_content_digest
+
+    if keeper_seat not in {"A", "B"}:
+        raise ValueError("keeper_seat must be A or B")
+    artifacts = verify_demonstration_artifacts(demo_dir_or_file)
+    payload, paths = artifacts["payload"], artifacts["paths"]
+    if payload.get("status") != "unverified" or "teaching_exchange" in payload:
+        raise ArtifactIntegrityError("Keeper must not assert Scout demo-v1 teaching success")
+    if payload.get("config") != {"arena_size": 512, "action_budget": 8, "max_ticks": 100, "seed": 0}:
+        raise ArtifactIntegrityError("Keeper requires the approved default inputs")
+    playback = reconstruct_sensing_playback(
+        paths["replay"], paths["trace"], result_path=paths["result"], demo_path=artifacts["demo_path"],
+    )
+    loaded = load_schema4_replay(paths["replay"])
+    envelope = read_result(paths["result"])
+    if (
+        asdict(loaded.header.config) != asdict(Config(arena_size=512, instr_per_tick=8, seed=0))
+        or loaded.header.reproducibility.get("tick_limit") != 100
+        or envelope.reproducibility != loaded.header.reproducibility
+    ):
+        raise ArtifactIntegrityError("Replay/result inputs differ from the approved Keeper profile")
+    names = ("v6_watchful_keeper", "v6_encroaching_opponent")
+    ordered = names if keeper_seat == "A" else names[::-1]
+    # Normalized package pins bind the reviewed candidate on either platform;
+    # full raw tree/fingerprint equality is checked separately against captures.
+    pins = {
+        names[0]: "35b945ad33f34168ea4374dad05fa61fe5b20d08cc15ca2e9af293ebb0c8016e",
+        names[1]: "42763e704cc723e435af2f2822d90ad972c4cbdea8e3ada8322d6b07f8f24456",
+    }
+    captures = payload["entrants"]
+    if len(captures) != 2 or len(loaded.header.entrants) != 2 or len(envelope.entrants) != 2:
+        raise ArtifactIntegrityError("Keeper requires exactly two ordered entrants")
+    for index, (seat, name) in enumerate(zip(("A", "B"), ordered)):
+        capture = captures[index]
+        bundled = resolve_teaching_agent_dir(name)
+        snapshot = contained_path(artifacts["demo_path"].parent, f"sources/{seat}")
+        if snapshot is None or not snapshot.is_dir():
+            raise ArtifactIntegrityError("Keeper executed source snapshot missing or unsafe")
+        walk = walk_agent_files(snapshot)
+        tree = agent_revision_fingerprint(snapshot)
+        subset = local_python_subset_fingerprint(walk)
+        if (
+            not walk.complete or not subset or not tree
+            or starter_content_digest(bundled) != pins[name]
+            or tree != agent_revision_fingerprint(bundled)
+        ):
+            raise ArtifactIntegrityError("Keeper source differs from the approved bundled revision")
+        params = {"scan_interval": 4, "perimeter_offset": 27} if seat == keeper_seat else {}
+        start = 0 if seat == keeper_seat else 91
+        expected_capture = {
+            "agent_id": seat, "name": name, "start": start, "parameters": params,
+            "revision_id": agent_revision_id(tree), "full_tree_digest": tree,
+            "python_subset_fingerprint": subset, "loaded_initial_fingerprint": subset,
+            "loaded_final_fingerprint": subset, "capture_complete": True, "drift_detected": False,
+        }
+        if capture != expected_capture:
+            raise ArtifactIntegrityError("Keeper captured roles, revisions or inputs disagree")
+        for entrant in (loaded.header.entrants[index], envelope.entrants[index]):
+            metadata = entrant.get("metadata", {})
+            if (
+                entrant.get("agent_id") != seat or entrant.get("name") != name
+                or metadata.get("parameters", {}) != params
+                or metadata.get("local_source_fingerprint") != subset
+                or metadata.get("local_source_fingerprint_final") != subset
+                or metadata.get("source_sha256") != _sha256_file(snapshot / "agent.py")
+                or metadata.get("processes") != [{"process_id": "main", "reach": 128, "share": 1.0}]
+            ):
+                raise ArtifactIntegrityError("Keeper executed entrant metadata disagrees with capture")
+        region = next(a.region for a in loaded.ticks[0].agents if a.agent_id == seat)
+        if region is None or region[0] != start:
+            raise ArtifactIntegrityError("Keeper whole-role start was not preserved")
+    document = read_trace_v2(paths["trace"])
+    if document.header.match_seed != 0:
+        raise ArtifactIntegrityError("Keeper reset seed differs")
+    for decision in document.decisions:
+        if not isinstance(decision, DecisionRecordV2):
+            raise ArtifactIntegrityError("Keeper needs v2 decisions")
+        obs = decision.observation
+        if (
+            obs.own_core_base != (0 if decision.agent_id == keeper_seat else 91)
+            or obs.own_core_size != 8 or obs.self_reach != 128 or decision.process_id != "main"
+        ):
+            raise ExchangeReconstructionError("Keeper delivered own-state disagrees with setup")
+    fixture_id = "B" if keeper_seat == "A" else "A"
+    fixture_actions = [f for f in playback.facts if f.actor_id == fixture_id and f.phase == ExchangePhase.ACTION]
+    for ordinal, fact in enumerate(fixture_actions, 1):
+        expected = ("move", -64, None) if ordinal == 1 else (("write", 1, 0x45) if ordinal == 2 else ("read", 91, None))
+        if (fact.action_kind, fact.operand, fact.value) != expected or fact.status != "APPLIED" or fact.cost != 1:
+            raise ExchangeReconstructionError("Encroaching fixture callback schedule differs")
+    repairs, defenses = evaluate_keeper_policy(playback.facts, keeper_id=keeper_seat)
+    complete = (
+        bool(repairs) and bool(defenses) and len(fixture_actions) >= 2
+        and loaded.result.ticks == 100
+        and playback.facts[-1].world_state is not None
+        and playback.facts[-1].world_state.alive_entrants == frozenset({"A", "B"})
+    )
+    return KeeperScenarioVerification(
+        True, True, True, complete, repairs, defenses,
+        ("K1 repair and historical defensive attempts witnessed; no hit or victory claim",) if complete
+        else ("Consistent pair lacks required behavior or completed 100-tick surviving run",),
+    )
 
 
 def main(argv: Sequence[str] | None = None) -> int:

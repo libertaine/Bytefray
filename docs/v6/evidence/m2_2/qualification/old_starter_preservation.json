@@ -1,0 +1,111 @@
+{
+  "old_names": [
+    "v4_claimer",
+    "v4_concentrated_attacker",
+    "v4_defender_scout",
+    "v4_local_defender",
+    "v4_scout",
+    "v4_quorum",
+    "v5_region_attacker",
+    "v5_scout_striker",
+    "v5_core_defender",
+    "v6_window_scout",
+    "v5_dual_team"
+  ],
+  "terminal": "v5_dual_team",
+  "old_digests_equal": true,
+  "old_files": {
+    "engine/src/battle_engine/data/starter_agents/v4_claimer/agent.py": {
+      "length": 881,
+      "sha256": "5084735e7ddf56c89d60e9393971e84e40fda1595b4208c6e35fb41b51ccfc72"
+    },
+    "engine/src/battle_engine/data/starter_agents/v4_claimer/agent.yaml": {
+      "length": 195,
+      "sha256": "f3966a3afedff926953b7eebbbf72cf13f883a659a2e36b2fcb9750837f8db03"
+    },
+    "engine/src/battle_engine/data/starter_agents/v4_concentrated_attacker/agent.py": {
+      "length": 1429,
+      "sha256": "88caf7bd5b35491a62158af63186c0b14a3301e682523f6f9c28e6846a441953"
+    },
+    "engine/src/battle_engine/data/starter_agents/v4_concentrated_attacker/agent.yaml": {
+      "length": 218,
+      "sha256": "5a36a90e259a083d47d8575b5938e49f178598cff33190ba58e9605d71131988"
+    },
+    "engine/src/battle_engine/data/starter_agents/v4_defender_scout/agent.py": {
+      "length": 2330,
+      "sha256": "c96aca167bd7ebccd24da5fbde407ec2cf739c0933e25aa7a5977b986c34a4dc"
+    },
+    "engine/src/battle_engine/data/starter_agents/v4_defender_scout/agent.yaml": {
+      "length": 210,
+      "sha256": "ffa70fee286cd8d8e7caf6a110eeec36e43088d4ff3bb6aa2521228606a1b274"
+    },
+    "engine/src/battle_engine/data/starter_agents/v4_local_defender/agent.py": {
+      "length": 1943,
+      "sha256": "a786b75acaa7a632bb1fe07d9e9e5cbeba9cc71baf8cba222a7e43d5e21500dc"
+    },
+    "engine/src/battle_engine/data/starter_agents/v4_local_defender/agent.yaml": {
+      "length": 204,
+      "sha256": "5cec3870f3e1d8af482b006b8e14fd5c9ce11d51d83c66a3285f586c575682e2"
+    },
+    "engine/src/battle_engine/data/starter_agents/v4_scout/agent.py": {
+      "length": 1084,
+      "sha256": "0ab8bd15ef3b24c07f479112152417b7e14677ccf1951cea725e049bfd41e0e8"
+    },
+    "engine/src/battle_engine/data/starter_agents/v4_scout/agent.yaml": {
+      "length": 183,
+      "sha256": "5d227f8e924ffba036fe6719c441e4810326157b6068f541216f084fa1a9f135"
+    },
+    "engine/src/battle_engine/data/starter_agents/v4_quorum/agent.py": {
+      "length": 17769,
+      "sha256": "4ca749f8ef6a7aa60ccf9ce67dbe8154ec853d88847f62e812c6c5a7e7459cc5"
+    },
+    "engine/src/battle_engine/data/starter_agents/v4_quorum/agent.yaml": {
+      "length": 331,
+      "sha256": "e0f19f2df2be352769a6284e928510387d7f913ab3e28932003bd16d7540be83"
+    },
+    "engine/src/battle_engine/data/starter_agents/v4_quorum/README.md": {
+      "length": 5916,
+      "sha256": "93ae1fcbe45281b78e9b72a1e8be5e85779bae0bc529a352a6361e1feeec2251"
+    },
+    "engine/src/battle_engine/data/starter_agents/v5_region_attacker/agent.py": {
+      "length": 9705,
+      "sha256": "5642f320885db9b5fae1f53a5e7366c1952d83fca87f22ff10b29d9e6c3ea999"
+    },
+    "engine/src/battle_engine/data/starter_agents/v5_region_attacker/agent.yaml": {
+      "length": 1443,
+      "sha256": "5433decda8af586365bc60d8190c32d104bf33b223c6dbb498116fabf106154f"
+    },
+    "engine/src/battle_engine/data/starter_agents/v5_scout_striker/agent.py": {
+      "length": 8989,
+      "sha256": "593fa0324cd4631424ee47ec868a2e77a21761bdfcd6b69ed983c09dde341697"
+    },
+    "engine/src/battle_engine/data/starter_agents/v5_scout_striker/agent.yaml": {
+      "length": 1501,
+      "sha256": "0084b30b7d26b3f570c16f7e114d96033ec4a3024ff8925864a0b62b01b8ed14"
+    },
+    "engine/src/battle_engine/data/starter_agents/v5_core_defender/agent.py": {
+      "length": 8359,
+      "sha256": "7f82fe244ef9b99cebb53f60acd558be71e6606b2634d48c10f6530faa3de719"
+    },
+    "engine/src/battle_engine/data/starter_agents/v5_core_defender/agent.yaml": {
+      "length": 1187,
+      "sha256": "d703f0838e610b077d431ff8eac4e634f90ef2d5b2f8d6b9a2fe1e947f3af0b7"
+    },
+    "engine/src/battle_engine/data/starter_agents/v6_window_scout/agent.py": {
+      "length": 6417,
+      "sha256": "8e6c97c7f0c3ead4f656ca2c0f1b265f3a03c500716591db2311f7abf9a3bdf0"
+    },
+    "engine/src/battle_engine/data/starter_agents/v6_window_scout/agent.yaml": {
+      "length": 1037,
+      "sha256": "017864bdf34657a993419328a169766f07be1d2b99f6e28782f37ee51fa53890"
+    },
+    "engine/src/battle_engine/data/starter_agents/v5_dual_team/agent.py": {
+      "length": 9295,
+      "sha256": "833871d15c894434a06161a26e43843209f311a303f81b06f1dec0cca20c8ecc"
+    },
+    "engine/src/battle_engine/data/starter_agents/v5_dual_team/agent.yaml": {
+      "length": 1076,
+      "sha256": "221f0dbae29c5beaeac9785834bb7e61139a755c3e49f130e76791745a29a391"
+    }
+  }
+}

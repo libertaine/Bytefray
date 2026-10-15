@@ -15,15 +15,15 @@ You write the agents: they maneuver, inspect, and rewrite memory while defending
 
 [`v6-research`](https://github.com/libertaine/Bytefray/tree/v6-research) now contains
 both sealed gameplay research and an implemented **V6 Alpha 1 sensing milestone**.
-The upcoming **Bytefray 5.1** application release is expected to introduce this
+**Bytefray 5.1** is a potential application release that could introduce this
 experimental gameplay and draw attention to the separate
 [Bytefray-Spectator](https://github.com/libertaine/Bytefray-Spectator) companion.
-Final release scope and distribution remain pending.
+Release scope, distribution and release authorization remain pending.
 
 | Name | Current meaning |
 | --- | --- |
 | **Bytefray 5.0.0** | Latest stable application release; downloads below. See the [stable `main` branch](https://github.com/libertaine/Bytefray/tree/main). |
-| **Bytefray 5.1** | Upcoming application release, not yet a published download. |
+| **Bytefray 5.1** | Potential application release; not authorized for release or available as a published download. |
 | **`bytefray-rules-4`** | Permanent stable gameplay and omitted-ruleset default. |
 | **`bytefray-rules-6-alpha1`** | Distinct, explicitly selected experimental ruleset implemented here; bounded M1 acceptance does not establish unrestricted release readiness. |
 | **`v6-research`** | Research and development branch; experiments, probes and instrumentation are not all prospective product features. |
@@ -113,6 +113,11 @@ evidence records zero real entropy calls/attempts and no scientific execution. T
 and [prospective handoff](docs/research/v6/V6_E9_PROSPECTIVE_STUDY_HANDOFF_01.md)
 retain the restrictions. Alpha product work does not unlock E9 or establish C.
 
+The [October 15 project decision](docs/v6/V6_PROJECT_DIRECTION_DECISION_20261015.md)
+accepts the successor-feasibility assessment's **CONDITIONAL DESIGN-ONLY GO**
+recommendation and defers further E9 work. No further successor design,
+implementation or new study is authorized.
+
 ### Adoption and implementation progress
 
 The [Phase 0 decision](docs/v6/V6_ALPHA_M1_PHASE0_DECISION_PACKET_01.md) adopted
@@ -138,12 +143,15 @@ unrestricted public release. Its native automated workflows do not establish a
 human usability study. [M1-5's implementation record](docs/v6/V6_ALPHA_M1_5_IMPLEMENTATION_RECORD_01.md)
 describes the authoring and viewer integration.
 
-**M2 is at proposal stage.** The inspected local Revision 02 scope is unadopted
-and awaiting independent design review; no completed M2 implementation is evidenced.
-Watchful Keeper, Roaming Reacquirer, their defensive/reacquisition scenarios,
-bounded Designer/viewer usability corrections and human evaluation are proposed
-follow-ups. Scope adoption and behavior/infrastructure review precede implementation.
-The local proposal is not a published feature contract.
+**M2 — Alpha 1 Expansion is the active development milestone.** After the
+[design review](docs/v6/V6_ALPHA_M2_DESIGN_REVIEW_02.md), the lead accepted
+[Scope Revision 03](docs/v6/V6_ALPHA_M2_SCOPE_CONTRACT_03.md) with conditions.
+Its **M2-2 Watchful Keeper** slice is technically accepted and CLOSED — PASS WITH
+CONDITIONS ([closure record](docs/v6/V6_ALPHA_M2_2_CLOSURE_01.md)). That
+acceptance covers Windows and Linux WSL2/WSLg X11 only and is not a release
+authorization. Roaming Reacquirer (M2-3), A/B replay and layout usability work,
+and human evaluation remain ahead; M2-3 awaits a separate
+[authorization decision](docs/v6/V6_ALPHA_M2_3_ENTRY_DECISION_01.md).
 
 ## V6 Alpha 1: decisions from delivered information
 
@@ -177,8 +185,10 @@ Designer Advanced/Development; Simple and Evaluation retain stable-V4 scope.
 (`v6_window_scout`) is implemented and registered. Its teaching fixture shows
 **incomplete knowledge → SENSE → delayed anonymous receipt → informed MOVE → WRITE**,
 then resumed scouting. The stationary opponent is an internal fixture, not a
-competitive starter. Watchful Keeper's defensive checks and Roaming Reacquirer's
-contact-loss/search/reacquisition lessons remain proposed M2 work.
+competitive starter. Watchful Keeper (`v6_watchful_keeper`) adds the defensive
+lesson — delivered READ ownership supports a repair attempt and an anonymous
+SENSE receipt supports one defensive WRITE — and is accepted as M2-2. Roaming
+Reacquirer's contact-loss/search/reacquisition lesson remains planned M2-3 work.
 
 Reach has **no direct resource or quota cost** in Alpha 1. Window Scout deliberately
 uses reach 128 to make movement and search legible; legal unrestricted circular
@@ -268,9 +278,9 @@ experiences; no bundled installer or integrated launch workflow is committed.
 
 ### Current development direction
 
-Bytefray 5.0.0 remains the stable application on V4. The planned 5.1 release would
+Bytefray 5.0.0 remains the stable application on V4. A potential 5.1 release could
 bring explicitly experimental Alpha 1 gameplay to a wider audience once the
-remaining product and release decisions are resolved. Near-term proposals focus
+remaining product and release decisions are resolved. M2 development focuses
 on contrasting teaching agents, parameter-first authoring and human comprehension
 of delayed/stale knowledge. Continued research can investigate adaptation and
 competitive interaction separately; Alpha 1 and Spectator do not settle those
@@ -729,7 +739,7 @@ Bytefray's codebase emphasizes strict reproducibility, version isolation, and ar
 Bytefray maintains independent, versioned compatibility axes across releases, rulesets, and schemas (see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)).
 
 Bytefray 5.0.0 uses permanent Ruleset 4 and introduces no Ruleset 5. This branch
-also implements experimental `bytefray-rules-6-alpha1` for the planned 5.1
+also implements experimental `bytefray-rules-6-alpha1` for a potential 5.1
 application release; its identity is independent of the application version.
 
 ### Active Gameplay Ruleset: `bytefray-rules-4`
@@ -770,11 +780,11 @@ Mechanics such as fixed process rosters and circular core sizes are ruleset-spec
   * Standard OS-level accessibility support across Designer workflows.
 
 ### Future Gameplay Research
-The implemented sensing milestone and proposed M2 teaching work are described
+The implemented sensing milestone and M2 teaching work are described
 above. Future research into adaptation, action allocation, spatial commitment
 and combat timing remains separate from stable release promises. E9 execution
 remains locked; no new experiment or competitive-balance conclusion follows
-from the upcoming 5.1 positioning.
+from potential 5.1 positioning.
 
 ---
 

@@ -1,0 +1,106 @@
+{
+  "README.md": {
+    "length": 52994,
+    "sha256": "a272442333219cd881396804059ff0a7860561930f3d4ec870838e481d5c8153"
+  },
+  "app/views/development.py": {
+    "length": 40975,
+    "sha256": "cc4acde9db7a3243fdf9fa1e3eb8443c3c82bfc8f44446116e43479c241f2bf7"
+  },
+  "docs/AGENT_AUTHORING.md": {
+    "length": 29532,
+    "sha256": "00b73ce5c124cb94a510962b554fea7c68c29fb8ed342097767be820c4d4cdd2"
+  },
+  "docs/ROADMAP.md": {
+    "length": 119407,
+    "sha256": "de163cf07f3dd71acbe8b6575e0c7c0aa973b5671974940a22e5dea16498fa4e"
+  },
+  "docs/specs/agent_scaffold.md": {
+    "length": 48008,
+    "sha256": "b75b84235f5be02e122634eb8372e20d3344b0dfffd0c75e6ef5f6cb313f36d6"
+  },
+  "docs/v6/V6_ALPHA_M2_1_PREPARATION_RECORD_01.md": {
+    "length": 12158,
+    "sha256": "77f62e865743b5198fdcb79fa0f9d094aeea23ca4746d87f59ae1cac43856b3b"
+  },
+  "docs/v6/V6_ALPHA_M2_2A_BLOCKER_INVESTIGATION_01.md": {
+    "length": 26392,
+    "sha256": "a399e04c3b205863c142582170e0113872ab0efcfe1527957f5e7e76f2039d90"
+  },
+  "docs/v6/V6_ALPHA_M2_2_IMPLEMENTATION_RECORD_01.md": {
+    "length": 22360,
+    "sha256": "aed01ba58bc97875768a89b7e38160b048af89c59ea1a24aa32595cef0a0e97b"
+  },
+  "docs/v6/V6_ALPHA_M2_CHECKPOINT_B_01.md": {
+    "length": 22023,
+    "sha256": "29e3883ab6a28995f1f105e9fb15f4e8091f0847930d38f2b1381a36d019f786"
+  },
+  "docs/v6/V6_ALPHA_M2_DESIGN_REVIEW_02.md": {
+    "length": 24973,
+    "sha256": "7588d127a66e024b55ba28c867f35aa88e6aeb96655dcd7b7de75a99d8c4897b"
+  },
+  "docs/v6/V6_ALPHA_M2_SCOPE_CONTRACT_03.md": {
+    "length": 37938,
+    "sha256": "1b3e507a2593919ed64d43cad0d5ce673e734333529db1e936d5880b4a916eba"
+  },
+  "docs/v6/V6_PROJECT_DIRECTION_DECISION_20261015.md": {
+    "length": 4384,
+    "sha256": "27312ede9a8b41aad9692bc1bce429dd0f96ae8fd51957c58d85748331686c2c"
+  },
+  "engine/src/battle_engine/agent_scaffold.py": {
+    "length": 12635,
+    "sha256": "2d95789f7ec4105233c6386913d3aa04b5f7e9409ccbb17aeb9c723db467ffab"
+  },
+  "engine/src/battle_engine/agent_test.py": {
+    "length": 42376,
+    "sha256": "d974fad2d1e5d3196c8025163427a85bb460062584e98d670030dc70af48f3ec"
+  },
+  "engine/src/battle_engine/data/starter_agents/v6_watchful_keeper/agent.py": {
+    "length": 3471,
+    "sha256": "9a0dd6febdb7701ffed4537d80d4c5b2ddf57652c002919d9ec0e3d84d533649"
+  },
+  "engine/src/battle_engine/data/starter_agents/v6_watchful_keeper/agent.yaml": {
+    "length": 1030,
+    "sha256": "e52a2467e6e65e9b20aaf84f8578ca13b900c8fa8b91e9af9b6ac20d98bf8496"
+  },
+  "engine/src/battle_engine/data/teaching_fixtures/v6_encroaching_opponent/agent.py": {
+    "length": 772,
+    "sha256": "168d242d692885405a4c08d602b44c4a843ac0915fe55a85bfc4c0420dc268b4"
+  },
+  "engine/src/battle_engine/data/teaching_fixtures/v6_encroaching_opponent/agent.yaml": {
+    "length": 208,
+    "sha256": "e5b7f1734e188e01bd5d86851321b21c613fc632b97ae6b70dea7f596ca2f6dc"
+  },
+  "engine/src/battle_engine/sensing_demo.py": {
+    "length": 36758,
+    "sha256": "012b900326f55ace67e20d7a02c7041261aca78bcb82c979962de5cf8e5e8e73"
+  },
+  "engine/src/battle_engine/sensing_playback.py": {
+    "length": 83037,
+    "sha256": "5e5df0337a8308eefce202465fd86b43a32f50f40dbc0758dcd196015ca06dcb"
+  },
+  "engine/src/battle_engine/starters.py": {
+    "length": 27596,
+    "sha256": "2f4bcf556675a73ceca1191b44e441bb51aa83d5c42b0eb338d9a07c6f4eb856"
+  },
+  "engine/tests/test_agent_scaffold.py": {
+    "length": 21941,
+    "sha256": "4026c8ab72aedffef4d7d8831a3fb0a4067a572f7e34fdffd4ff63a556967190"
+  },
+  "engine/tests/test_agent_test.py": {
+    "length": 46318,
+    "sha256": "bf67aad04d40532dec81e3955e831b4dca3d1b21e5a03343739736b8f659b9e6"
+  },
+  "engine/tests/test_v6_alpha_m1_2_window_scout.py": {
+    "length": 46202,
+    "sha256": "31697bf0cc023505b2c18283dd9b6139b1ce93c008d8aadcbe3c20caa8a83419"
+  },
+  "engine/tests/test_v6_alpha_m2_keeper.py": {
+    "length": 19385,
+    "sha256": "250238ba25c266fc6baa10e44f5460b6342850accec0b289ee44401cc5920727"
+  },
+  "tests/test_v6_alpha_m1_5_designer.py": {
+    "length": 17336,
+    "sha256": "d14df31c99e6747ae41d9651fb28fab89463212e5f84fc26068b00d04ebc8699"
+  }
+}

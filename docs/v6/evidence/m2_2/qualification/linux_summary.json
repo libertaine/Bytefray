@@ -1,0 +1,484 @@
+{
+  "platform": "linux",
+  "campaigns": [
+    {
+      "campaign": "m2_2a_linux_focused",
+      "platform": "Linux (Ubuntu, WSL2)",
+      "recorded_result": "619 passed, 4 GUI deselected",
+      "junit": {
+        "tests": 619,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 326.882,
+        "passed": 619,
+        "timestamp": "2026-10-15T14:50:59.806308+00:00"
+      },
+      "command": [
+        "<checkout>/work/m2_2a_linux_env/bin/python",
+        "-m",
+        "pytest",
+        "engine/tests/test_agent_test.py",
+        "@runs/v6_alpha_m2/m2_2_20261015_review/qualification/m2_2_focused_selection.txt",
+        "--basetemp=<checkout>/.pytest-tmp/m2_2a_linux_focused",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_2a_linux_focused",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/m2_2a_linux_focused.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "returncode": 0,
+      "seconds": 334.17,
+      "local_bodies": {
+        "m2_2a_20261015_correction/m2_2a_linux_focused.xml": "3b4904aa6ef543b4b7381fb8441a8410fe13c256818de5142c75cfecb17dd586",
+        "m2_2a_20261015_correction/m2_2a_linux_focused.log": "9fe5538722495f335a274fc4975871ab1ac31fd750b7524fb6a4436a96513915",
+        "m2_2a_20261015_correction/m2_2a_linux_focused_command.json": "ceeaf9ce265b33bc6f77f9f14dfeaf3ea775632b77f8cfae1bec7a7ead9a66bd"
+      }
+    },
+    {
+      "campaign": "m2_2a_linux_gui_x11",
+      "platform": "Linux (Ubuntu, WSL2, WSLg X11)",
+      "recorded_result": "3 passed (explicit -m gui, Qt xcb)",
+      "junit": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 31.384,
+        "passed": 3,
+        "timestamp": "2026-10-15T14:54:15.040033+00:00"
+      },
+      "command": [
+        "<checkout>/work/m2_2a_linux_env/bin/python",
+        "-m",
+        "pytest",
+        "tests/test_v6_alpha_m1_5_designer.py::test_keeper_native_copy_validate_edit_full_match_reopen",
+        "tests/test_v6_alpha_m1_5_designer.py::test_scout_native_manifest_default_development_test",
+        "-m",
+        "gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_2a_linux_gui_x11",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_2a_linux_gui_x11",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/m2_2a_linux_gui_x11.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "returncode": 0,
+      "seconds": 32.68,
+      "local_bodies": {
+        "m2_2a_20261015_correction/m2_2a_linux_gui_x11.xml": "db4d8f9120214084c086c3a426f1135cf6947f3a04ebc12a8e911202d94d9413",
+        "m2_2a_20261015_correction/m2_2a_linux_gui_x11.log": "14cc1696e428d727955a26caef350110def0a73bf680f63c73f0ade9b7bc7d2d",
+        "m2_2a_20261015_correction/m2_2a_linux_gui_x11_command.json": "a68f5049d55ae2c8d8c9ccc9ad3a2058a370e0ca5f50e0a3c8eeb09697cfad30"
+      }
+    }
+  ],
+  "native_workflows": [
+    {
+      "run": "linux_native_complete_02",
+      "verdict": "PASS",
+      "summary_sha256": "2cac982f5d8f759194baa986db3f195096f13fff7d33379e567e7b4f0d81216c",
+      "summary": {
+        "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+        "executable": "<checkout>/work/m2_2a_linux_env/bin/python",
+        "qt_platform": "xcb",
+        "qt_version": "6.12.0",
+        "qt_font": "DejaVu Sans",
+        "screen": "PySide6.QtCore.QRect(1080, 0, 2560, 1440)",
+        "dependencies": {
+          "PySide6": "6.12.0",
+          "pygame-ce": "2.5.8",
+          "pytest": "9.1.1",
+          "PyYAML": "6.0.3"
+        },
+        "environment": {
+          "DISPLAY": ":0",
+          "WAYLAND_DISPLAY": "wayland-0",
+          "QT_QPA_PLATFORM": "xcb",
+          "SDL_VIDEODRIVER": "x11",
+          "PYTHONPATH": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/observer:<checkout>/engine/src:<checkout>/client/src:<checkout>"
+        },
+        "steps": [
+          {
+            "step": "environment"
+          },
+          {
+            "step": "viewer_first_draw",
+            "tag": "A_advanced",
+            "seconds": 3.3107456559999946,
+            "pid": 395
+          },
+          {
+            "step": "native_external_viewer",
+            "tag": "A_advanced",
+            "pid": 395,
+            "replay": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/linux_native_complete_02/data_A/runs/_designer/20261015-162811-739c09fe/replay.jsonl",
+            "driver": "x11",
+            "font": "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+            "phase_step": true,
+            "reverse": true,
+            "play_pause": true,
+            "speed": true,
+            "views": true,
+            "mouse_seek_index": 850,
+            "scroll_offset": 3,
+            "resize_sizes": [
+              [
+                900,
+                650
+              ],
+              [
+                1000,
+                700
+              ],
+              [
+                1100,
+                750
+              ]
+            ],
+            "exit_code": 0,
+            "input": "XTest via xdotool; explicit windowfocus"
+          },
+          {
+            "step": "test_replay_signal",
+            "tag": "A_test"
+          },
+          {
+            "step": "test_replay_button_clicked",
+            "tag": "A_test"
+          },
+          {
+            "step": "test_replay_click_state",
+            "tag": "A_test",
+            "enabled": true,
+            "down": false,
+            "focus": false
+          },
+          {
+            "step": "viewer_first_draw",
+            "tag": "A_test",
+            "seconds": 30.326847183999988,
+            "pid": 451
+          },
+          {
+            "step": "native_external_viewer",
+            "tag": "A_test",
+            "pid": 451,
+            "replay": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/linux_native_complete_02/data_A/runs/agents_test/personal_keeper/20261015T162825655989-0e70c5e3-vs-reference/replay.jsonl",
+            "driver": "x11",
+            "font": "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+            "phase_step": true,
+            "reverse": true,
+            "play_pause": true,
+            "speed": true,
+            "views": true,
+            "mouse_seek_index": 1698,
+            "scroll_offset": 3,
+            "resize_sizes": [
+              [
+                900,
+                650
+              ],
+              [
+                1000,
+                700
+              ],
+              [
+                1100,
+                750
+              ]
+            ],
+            "exit_code": 0,
+            "input": "XTest via xdotool; explicit windowfocus"
+          },
+          {
+            "step": "authoring_complete",
+            "seat": "A",
+            "advanced_result": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/linux_native_complete_02/data_A/runs/_designer/20261015-162811-739c09fe/result.json",
+            "test_result": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/linux_native_complete_02/data_A/runs/agents_test/personal_keeper/20261015T162825655989-0e70c5e3-vs-reference/result.json",
+            "advanced_parameters": {
+              "scan_interval": 3,
+              "perimeter_offset": 64
+            },
+            "test_parameters": {
+              "scan_interval": 4,
+              "perimeter_offset": 27
+            }
+          },
+          {
+            "step": "viewer_first_draw",
+            "tag": "B_advanced",
+            "seconds": 3.4076474029999986,
+            "pid": 516
+          },
+          {
+            "step": "native_external_viewer",
+            "tag": "B_advanced",
+            "pid": 516,
+            "replay": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/linux_native_complete_02/data_B/runs/_designer/20261015-162928-04ceb63d/replay.jsonl",
+            "driver": "x11",
+            "font": "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+            "phase_step": true,
+            "reverse": true,
+            "play_pause": true,
+            "speed": true,
+            "views": true,
+            "mouse_seek_index": 768,
+            "scroll_offset": 0,
+            "resize_sizes": [
+              [
+                900,
+                650
+              ],
+              [
+                1000,
+                700
+              ],
+              [
+                1100,
+                750
+              ]
+            ],
+            "exit_code": 0,
+            "input": "XTest via xdotool; explicit windowfocus"
+          },
+          {
+            "step": "test_replay_signal",
+            "tag": "B_test"
+          },
+          {
+            "step": "test_replay_button_clicked",
+            "tag": "B_test"
+          },
+          {
+            "step": "test_replay_click_state",
+            "tag": "B_test",
+            "enabled": true,
+            "down": false,
+            "focus": true
+          },
+          {
+            "step": "viewer_first_draw",
+            "tag": "B_test",
+            "seconds": 30.562162365000006,
+            "pid": 572
+          },
+          {
+            "step": "native_external_viewer",
+            "tag": "B_test",
+            "pid": 572,
+            "replay": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/linux_native_complete_02/data_B/runs/agents_test/personal_keeper/20261015T162943037721-47d50bf8-vs-reference/replay.jsonl",
+            "driver": "x11",
+            "font": "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+            "phase_step": true,
+            "reverse": true,
+            "play_pause": true,
+            "speed": true,
+            "views": true,
+            "mouse_seek_index": 1698,
+            "scroll_offset": 3,
+            "resize_sizes": [
+              [
+                900,
+                650
+              ],
+              [
+                1000,
+                700
+              ],
+              [
+                1100,
+                750
+              ]
+            ],
+            "exit_code": 0,
+            "input": "XTest via xdotool; explicit windowfocus"
+          },
+          {
+            "step": "authoring_complete",
+            "seat": "B",
+            "advanced_result": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/linux_native_complete_02/data_B/runs/_designer/20261015-162928-04ceb63d/result.json",
+            "test_result": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/linux_native_complete_02/data_B/runs/agents_test/personal_keeper/20261015T162943037721-47d50bf8-vs-reference/result.json",
+            "advanced_parameters": {
+              "scan_interval": 3,
+              "perimeter_offset": 64
+            },
+            "test_parameters": {
+              "scan_interval": 4,
+              "perimeter_offset": 27
+            }
+          },
+          {
+            "step": "complete",
+            "status": "PASS",
+            "automation": "Technical native interaction; no human-comprehension claim"
+          }
+        ]
+      }
+    },
+    {
+      "run": "linux_end_probe_01",
+      "verdict": "PASS",
+      "summary_sha256": "63039fc2c634b9836ad18251d9ed6ac8cf2e7b29c8b13091bd5d7f08d67c7105",
+      "summary": {
+        "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+        "executable": "<checkout>/work/m2_2a_linux_env/bin/python",
+        "qt_platform": "xcb",
+        "qt_version": "6.12.0",
+        "qt_font": "DejaVu Sans",
+        "screen": "PySide6.QtCore.QRect(1080, 0, 2560, 1440)",
+        "dependencies": {
+          "PySide6": "6.12.0",
+          "pygame-ce": "2.5.8",
+          "pytest": "9.1.1",
+          "PyYAML": "6.0.3"
+        },
+        "environment": {
+          "DISPLAY": ":0",
+          "WAYLAND_DISPLAY": "wayland-0",
+          "QT_QPA_PLATFORM": "xcb",
+          "SDL_VIDEODRIVER": "x11",
+          "PYTHONPATH": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/observer:<checkout>/engine/src:<checkout>/client/src:<checkout>"
+        },
+        "steps": [
+          {
+            "step": "environment",
+            "argv": [
+              "<checkout>/client/src/battle_client/cli.py",
+              "--replay",
+              "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/linux_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150915804501-51ae322e-vs-reference/replay.jsonl",
+              "--renderer",
+              "pygame",
+              "--tick-delay",
+              "0.02",
+              "--trace",
+              "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/linux_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150915804501-51ae322e-vs-reference/trace.jsonl"
+            ]
+          },
+          {
+            "step": "viewer_first_draw",
+            "seconds": 30.374216413000003,
+            "pid": 388
+          },
+          {
+            "step": "before_end",
+            "state_count": 27,
+            "poll": null
+          },
+          {
+            "step": "end_terminal",
+            "seconds": 0.18602885499999644,
+            "index": 3396,
+            "terminal": "Recorded end: winner B; tick_limit"
+          },
+          {
+            "step": "viewer_complete",
+            "exit_code": 0,
+            "scroll_offset": 3,
+            "mouse_seek_index": 1698,
+            "total_seconds": 52.524523601999995
+          }
+        ]
+      }
+    },
+    {
+      "run": "linux_native_complete",
+      "verdict": "INCOMPLETE (condition C1)",
+      "summary_sha256": "ef8c2845397cb51f8298692c24a3acd3853d526942b391504368e75fd95a4ed9",
+      "summary": {
+        "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+        "executable": "<checkout>/work/m2_2a_linux_env/bin/python",
+        "qt_platform": "xcb",
+        "qt_version": "6.12.0",
+        "qt_font": "DejaVu Sans",
+        "screen": "PySide6.QtCore.QRect(1080, 0, 2560, 1440)",
+        "dependencies": {
+          "PySide6": "6.12.0",
+          "pygame-ce": "2.5.8",
+          "pytest": "9.1.1",
+          "PyYAML": "6.0.3"
+        },
+        "environment": {
+          "DISPLAY": ":0",
+          "WAYLAND_DISPLAY": "wayland-0",
+          "QT_QPA_PLATFORM": "xcb",
+          "SDL_VIDEODRIVER": "x11",
+          "PYTHONPATH": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/observer:<checkout>/engine/src:<checkout>/client/src:<checkout>"
+        },
+        "steps": [
+          {
+            "step": "environment"
+          },
+          {
+            "step": "viewer_first_draw",
+            "tag": "A_advanced",
+            "seconds": 3.5756315699999988,
+            "pid": 401
+          },
+          {
+            "step": "native_external_viewer",
+            "tag": "A_advanced",
+            "pid": 401,
+            "replay": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/linux_native_complete/data_A/runs/_designer/20261015-150901-e825fc0c/replay.jsonl",
+            "driver": "x11",
+            "font": "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+            "phase_step": true,
+            "reverse": true,
+            "play_pause": true,
+            "speed": true,
+            "views": true,
+            "mouse_seek_index": 850,
+            "scroll_offset": 3,
+            "resize_sizes": [
+              [
+                900,
+                650
+              ],
+              [
+                1000,
+                700
+              ],
+              [
+                1100,
+                750
+              ]
+            ],
+            "exit_code": 0,
+            "input": "XTest via xdotool; explicit windowfocus"
+          },
+          {
+            "step": "test_replay_signal",
+            "tag": "A_test"
+          },
+          {
+            "step": "test_replay_button_clicked",
+            "tag": "A_test"
+          },
+          {
+            "step": "test_replay_click_state",
+            "tag": "A_test",
+            "enabled": true,
+            "down": false,
+            "focus": false
+          },
+          {
+            "step": "viewer_first_draw",
+            "tag": "A_test",
+            "seconds": 31.834285487000002,
+            "pid": 457
+          }
+        ]
+      }
+    }
+  ],
+  "note": "Counts overlap between campaigns and are not summed. Paths are sanitized; local_bodies and summary_sha256 bind the unmodified local originals."
+}

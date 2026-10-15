@@ -494,7 +494,8 @@ def test_starter_registry_invariants() -> None:
     assert "v6_window_scout" in CURRENT_STARTER_DIGESTS
     # test_v5_alpha1_phase_e_starter_refresh.py invariant
     assert STARTER_AGENT_NAMES[-1] == "v5_dual_team"
-    assert STARTER_AGENT_NAMES[-2] == "v6_window_scout"
+    # M2 Revision03 inserts Keeper after Scout, preserving terminal dual-team.
+    assert STARTER_AGENT_NAMES[-3:] == ("v6_window_scout", "v6_watchful_keeper", "v5_dual_team")
 
 
 def test_sensing_action_cost_and_quota_consumption(tmp_path: Path) -> None:

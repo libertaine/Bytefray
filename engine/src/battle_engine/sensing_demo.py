@@ -737,12 +737,103 @@ def run_sensing_demo(
         )
 
 
+def run_keeper_demo(
+    output_dir: Path | str, *, keeper_seat: str = "A"
+) -> SensingDemoResult:
+    """Run the exact 100-tick K1 fixture; v1 status stays unverified.
+
+    Completion is evaluated separately with ``verify_keeper_scenario``. This
+    entry deliberately accepts no arbitrary sources, parameters or input seeds.
+    """
+    if keeper_seat not in {"A", "B"}:
+        raise ValueError("keeper_seat must be A or B")
+    out = Path(output_dir).expanduser().resolve()
+    allowed = get_resource_root().resolve() / "runs" / "v6_alpha_m2"
+    if not out.is_relative_to(allowed) or out == allowed:
+        raise ValueError("Keeper output must be a fresh subdirectory of runs/v6_alpha_m2")
+    # Resolve containment and reject link traversal, including a redirected
+    # runs root. A fresh exclusive leaf prevents overwriting retained bodies.
+    raw = Path(output_dir).expanduser().absolute()
+    if raw != out or any(p.is_symlink() or getattr(p, "is_junction", lambda: False)() for p in raw.parents):
+        raise ValueError("Keeper output may not traverse links or junctions")
+    if any(p.lower() == "research" or p.lower().startswith(("e9_", "research_")) for p in out.parts):
+        raise ValueError("Keeper output may not use research namespaces")
+    out.mkdir(parents=True, exist_ok=False)
+    names = ("v6_watchful_keeper", "v6_encroaching_opponent")
+    ordered = names if keeper_seat == "A" else names[::-1]
+    captures = []
+    entrants = []
+    for seat, name in zip(("A", "B"), ordered):
+        source = resolve_teaching_agent_dir(name)
+        snapshot = out / "sources" / seat
+        walk = walk_agent_files(source)
+        if not walk.complete:
+            raise ValueError(f"Incomplete bundled source capture: {name}")
+        snapshot.mkdir(parents=True)
+        for entry in walk.entries:
+            target = snapshot / entry.relative_path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(entry.content)
+        digest = agent_revision_fingerprint(snapshot)
+        if digest != agent_revision_fingerprint(source) or not digest:
+            raise ValueError(f"Source changed during capture: {name}")
+        subset = local_python_subset_fingerprint(walk)
+        spec = agent_spec_from_dir(snapshot)
+        if spec is None:
+            raise ValueError(f"Invalid captured agent: {name}")
+        keeper = seat == keeper_seat
+        params = {"scan_interval": 4, "perimeter_offset": 27} if keeper else {}
+        start = 0 if keeper else 91
+        entrants.append(MatchEntrant.python(seat, name, start, spec, parameters=params))
+        captures.append({
+            "agent_id": seat, "name": name, "start": start, "parameters": params,
+            "revision_id": agent_revision_id(digest), "full_tree_digest": digest,
+            "python_subset_fingerprint": subset, "capture_complete": True,
+        })
+    replay, trace, result, demo = (out / n for n in ("replay.jsonl", "trace.jsonl", "result.json", "demo.json"))
+    config = Config(arena_size=512, instr_per_tick=8, seed=0)
+    match = NativeMatchService().run(MatchRequest(
+        config=config, entrants=tuple(entrants), max_ticks=100,
+        replay_path=replay, trace_path=trace, ruleset_id=BYTEFRAY_RULESET_V6_ALPHA1_ID,
+    ))
+    for capture in captures:
+        agent = next(a for a in match.agents if a.agent_id == capture["agent_id"])
+        initial = agent.metadata.get("local_source_fingerprint")
+        final = agent.metadata.get("local_source_fingerprint_final")
+        capture.update({
+            "loaded_initial_fingerprint": initial, "loaded_final_fingerprint": final,
+            "drift_detected": not (initial == final == capture["python_subset_fingerprint"]),
+        })
+    info = get_project_info()
+    write_json_atomic(demo, {
+        "schema": DEMO_SCHEMA, "schema_version": 1, "provenance": DEMO_PROVENANCE,
+        "declared_product_fixture": True, "ruleset_id": BYTEFRAY_RULESET_V6_ALPHA1_ID,
+        "match_id": match.match_id, "result_id": match.result_id,
+        "config": {"arena_size": 512, "action_budget": 8, "max_ticks": 100, "seed": 0},
+        "entrants": captures,
+        "engine": {
+            "project_name": info.project_name, "version": info.version,
+            "python_version": info.python_version, "agent_api_version": info.agent_api_version,
+            "result_schema_version": info.result_schema_version, "replay_schema_version": info.replay_schema_version,
+        },
+        "artifacts": {key: {"filename": path.name, "sha256": _sha256_file(path)}
+                      for key, path in (("replay", replay), ("trace", trace), ("result", result))},
+        "status": "unverified", "completed_at": utc_completed_at(),
+    })
+    return SensingDemoResult(demo, result, replay, trace, match, (), False)
+
+
 def main(argv: list[str] | None = None) -> int:
     """CLI entrypoint for running the bounded teaching demonstration."""
     parser = argparse.ArgumentParser(
         prog="bytefray-sensing-demo",
         description="Run Bytefray V6 Window Scout sensing teaching demonstration.",
     )
+    parser.add_argument(
+        "--scenario", choices=("scout", "keeper-K1"), default="scout",
+        help="Explicit trusted product scenario (default: unchanged Scout).",
+    )
+    parser.add_argument("--keeper-seat", choices=("A", "B"), default="A")
     parser.add_argument(
         "--output-dir",
         default="runs/sensing_demo",
@@ -763,6 +854,17 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        if args.scenario == "keeper-K1":
+            from battle_engine.sensing_playback import verify_keeper_scenario
+
+            if args.ticks != DEFAULT_TICKS or args.seed != DEFAULT_SEED:
+                raise ValueError("Keeper uses fixed 100-tick, seed-0 inputs; omit --ticks/--seed")
+            result = run_keeper_demo(args.output_dir, keeper_seat=args.keeper_seat)
+            verification = verify_keeper_scenario(result.demo_path, keeper_seat=args.keeper_seat)
+            print(f"Keeper artifacts: {result.demo_path}")
+            print(f"keeper-K1 completion: {verification.is_complete}; {verification.findings}")
+            print("demo v1 status: unverified (Scout teaching semantics retained)")
+            return 0 if verification.is_complete else 1
         result = run_sensing_demo(
             args.output_dir,
             ticks=args.ticks,

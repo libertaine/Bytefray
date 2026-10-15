@@ -1,0 +1,495 @@
+{
+  "platform": "windows",
+  "campaigns": [
+    {
+      "campaign": "m2_2a_focused_final",
+      "platform": "Windows",
+      "recorded_result": "619 passed, 4 GUI deselected",
+      "junit": {
+        "tests": 619,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 57.483,
+        "passed": 619,
+        "timestamp": "2026-10-15T10:45:51.065890-04:00"
+      },
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "engine/tests/test_agent_test.py",
+        "@runs/v6_alpha_m2/m2_2_20261015_review/qualification/m2_2_focused_selection.txt",
+        "--basetemp=<checkout>/.pytest-tmp/m2_2a_focused_final",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_2a_focused_final",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/m2_2a_focused_final.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "returncode": 0,
+      "seconds": 57.99,
+      "local_bodies": {
+        "m2_2a_20261015_correction/m2_2a_focused_final.xml": "5ea2ad3c5a9b7ab24dd7f04ba845274610cc51aaa9fc105be1b91f09adb1d0e8",
+        "m2_2a_20261015_correction/m2_2a_focused_final.log": "82cd7f0bc6a63b306873f4e9377e45cf4bbcebedb5ce0334412357dee1f55c72",
+        "m2_2a_20261015_correction/m2_2a_focused_final_command.json": "06f031e02b9a8021cd7b8c11873ea1b4f64c8921951ff41a61590db34827767b"
+      }
+    },
+    {
+      "campaign": "m2_2a_windows_gui_final",
+      "platform": "Windows",
+      "recorded_result": "4 passed (explicit -m gui)",
+      "junit": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 9.562,
+        "passed": 4,
+        "timestamp": "2026-10-15T10:49:19.806099-04:00"
+      },
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_v6_alpha_m1_5_designer.py::test_keeper_native_copy_validate_edit_full_match_reopen",
+        "tests/test_v6_alpha_m1_5_designer.py::test_scout_native_manifest_default_development_test",
+        "tests/test_v6_alpha_m1_5_designer.py::test_native_windows_designer_window_selection_and_parameters",
+        "-m",
+        "gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_2a_windows_gui_final",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_2a_windows_gui_final",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/m2_2a_windows_gui_final.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "returncode": 0,
+      "seconds": 10.02,
+      "local_bodies": {
+        "m2_2a_20261015_correction/m2_2a_windows_gui_final.xml": "30d98cab6ffd2b666c9ce81696f6825c777347f1ca1c0578405c6b60a820c744",
+        "m2_2a_20261015_correction/m2_2a_windows_gui_final.log": "f48f50fec0fb2bec566bb1c2ee27d8448e573d93002ce31c802fe66c66e119ee",
+        "m2_2a_20261015_correction/m2_2a_windows_gui_final_command.json": "279c63192c343f8c8a25b31c93db1fbcfe0cf0f34c8e79566b034d96fa67fc49"
+      }
+    },
+    {
+      "campaign": "m2_2a_m1_gui",
+      "platform": "Windows",
+      "recorded_result": "5 passed (offscreen supplement, -m gui)",
+      "junit": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 3.813,
+        "passed": 5,
+        "timestamp": "2026-10-15T11:02:20.652316-04:00"
+      },
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_v6_alpha_m1_5_designer.py::test_window_scout_copy_validate_edit_run_replay_and_repeat",
+        "tests/test_v6_alpha_m1_5_adversarial_designer.py",
+        "-m",
+        "gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_2a_m1_gui",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_2a_m1_gui",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/m2_2a_m1_gui.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "returncode": 0,
+      "seconds": 4.34,
+      "local_bodies": {
+        "m2_2a_20261015_correction/m2_2a_m1_gui.xml": "d45b9767f1b2732a19d28db89d324d1e94b512e57ab8edd06ca908d45b893728",
+        "m2_2a_20261015_correction/m2_2a_m1_gui.log": "e9b46a143132823292bcaadcad1e8871055710c482a8a643de3e588529e5db65",
+        "m2_2a_20261015_correction/m2_2a_m1_gui_command.json": "b2466e4238077f27b55592eabeadfc25b82de71c8566a55beed5a74ae089dba7"
+      }
+    },
+    {
+      "campaign": "m2_2a_windows_broad",
+      "platform": "Windows",
+      "recorded_result": "3,374 passed, 20 skipped, 5 GUI deselected",
+      "junit": {
+        "tests": 3394,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 20,
+        "time": 315.69,
+        "passed": 3374,
+        "timestamp": "2026-10-15T10:51:58.116567-04:00"
+      },
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "@runs/v6_alpha_m2/m2_2_20261015_review/qualification/m2_2_broad_selection.txt",
+        "--basetemp=<checkout>/.pytest-tmp/m2_2a_windows_broad",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_2a_windows_broad",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/m2_2a_windows_broad.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "returncode": 0,
+      "seconds": 316.59,
+      "local_bodies": {
+        "m2_2a_20261015_correction/m2_2a_windows_broad.xml": "6272c15297312826ebd81473bbac80d166cf1aa50c4250e810f9722f83384513",
+        "m2_2a_20261015_correction/m2_2a_windows_broad.log": "552db702b4ffd3616d981a6c634cf4f91ef8a164d13ed68c142eb8f1b951a07e",
+        "m2_2a_20261015_correction/m2_2a_windows_broad_command.json": "84ce1f79b8518a8421288a2cfc04e37207b64ec36d013c5edce9bc5bd968a111"
+      }
+    },
+    {
+      "campaign": "m2_2a_windows_supplement",
+      "platform": "Windows",
+      "recorded_result": "328 passed",
+      "junit": {
+        "tests": 328,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 97.855,
+        "passed": 328,
+        "timestamp": "2026-10-15T10:58:16.249378-04:00"
+      },
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "@docs/v6/evidence/m1_6a_windows/supplemental_nodes.txt",
+        "--basetemp=<checkout>/.pytest-tmp/m2_2a_windows_supplement",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_2a_windows_supplement",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/m2_2a_windows_supplement.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "returncode": 0,
+      "seconds": 98.54,
+      "local_bodies": {
+        "m2_2a_20261015_correction/m2_2a_windows_supplement.xml": "089ee0ea970b6add1201d2ea61a9e6880601e052663c0f32ab56d7612fe9312c",
+        "m2_2a_20261015_correction/m2_2a_windows_supplement.log": "1dbf9a921f894c873747e7c89ec6ac7d3c3027718945928c62a12170806e0061",
+        "m2_2a_20261015_correction/m2_2a_windows_supplement_command.json": "63ab7c89d6362488ef4cdb65d0803868999c5dc460fb2a4f0ddf78aba6e5560e"
+      }
+    },
+    {
+      "campaign": "m2_2a_ruff",
+      "platform": "Windows",
+      "recorded_result": "PASS",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "."
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "returncode": 0,
+      "seconds": 0.2,
+      "local_bodies": {
+        "m2_2a_20261015_correction/m2_2a_ruff.log": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+        "m2_2a_20261015_correction/m2_2a_ruff_command.json": "19ae73cb08f59b4c7968caa839251b05c43ab97e731caa5a44b4f64e777835e3"
+      }
+    },
+    {
+      "campaign": "m2_2a_mypy_engine",
+      "platform": "Windows",
+      "recorded_result": "PASS, 104 source files",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "mypy",
+        "engine/src/battle_engine",
+        "--cache-dir=.pytest-cache/m2_2a_mypy_engine"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "returncode": 0,
+      "seconds": 16.27,
+      "local_bodies": {
+        "m2_2a_20261015_correction/m2_2a_mypy_engine.log": "858ab8dceca8f18b2bc4df8afab8026e434e47b1f9a20a10f857f0d9f1d3505b",
+        "m2_2a_20261015_correction/m2_2a_mypy_engine_command.json": "94b8ce012ee55bb248e33dae401dca0faf002472778776ffe0faaca30929f6bd"
+      }
+    },
+    {
+      "campaign": "m2_2a_mypy_client",
+      "platform": "Windows",
+      "recorded_result": "PASS, 19 source files",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "mypy",
+        "client/src/battle_client",
+        "--cache-dir=.pytest-cache/m2_2a_mypy_client"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "returncode": 0,
+      "seconds": 8.53,
+      "local_bodies": {
+        "m2_2a_20261015_correction/m2_2a_mypy_client.log": "6b17fb6a37a46097878dda7d24d47ea3abd7a26d94efdbf8f17ad1c639872d16",
+        "m2_2a_20261015_correction/m2_2a_mypy_client_command.json": "45253d9606580d49211e2f4a7f3c1f1b05cb69c9b95b309d8e6adcf53e27e162"
+      }
+    }
+  ],
+  "native_workflows": [
+    {
+      "run": "windows_native_complete",
+      "verdict": "PASS",
+      "summary_sha256": "004f7195b7dd4573a97e3f80467e5946da9acae890dc4bed71a197dcb8624b3c",
+      "summary": {
+        "platform": "Windows-11-10.0.26120-SP0",
+        "machine": "AMD64",
+        "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+        "executable": "<checkout>/.venv/Scripts/python.exe",
+        "qt_platform": "windows",
+        "qt_version": "6.11.2",
+        "qt_font": "Segoe UI",
+        "screen": "PySide6.QtCore.QRect(0, 0, 2048, 1152)",
+        "dependencies": {
+          "PySide6": "6.11.2",
+          "pygame-ce": "2.5.8",
+          "pytest": "9.1.1",
+          "PyYAML": "6.0.3"
+        },
+        "environment": {
+          "DISPLAY": null,
+          "WAYLAND_DISPLAY": null,
+          "QT_QPA_PLATFORM": "windows",
+          "SDL_VIDEODRIVER": "windows",
+          "PYTHONPATH": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/observer;<checkout>/engine/src;<checkout>/client/src;<checkout>"
+        },
+        "steps": [
+          {
+            "step": "environment"
+          },
+          {
+            "step": "viewer_first_draw",
+            "tag": "A_advanced",
+            "seconds": 3.1695403000339866,
+            "pid": 64308
+          },
+          {
+            "step": "native_external_viewer",
+            "tag": "A_advanced",
+            "pid": 64308,
+            "replay": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/_designer/20261015-150838-0787abb8/replay.jsonl",
+            "driver": "windows",
+            "font": "<windows-fonts>/consola.ttf",
+            "phase_step": true,
+            "reverse": true,
+            "play_pause": true,
+            "speed": true,
+            "views": true,
+            "mouse_seek_index": 852,
+            "scroll_offset": 3,
+            "resize_sizes": [
+              [
+                900,
+                650
+              ],
+              [
+                1000,
+                700
+              ],
+              [
+                1100,
+                750
+              ]
+            ],
+            "exit_code": 0,
+            "input": "Win32 window messages"
+          },
+          {
+            "step": "test_replay_signal",
+            "tag": "A_test"
+          },
+          {
+            "step": "test_replay_button_clicked",
+            "tag": "A_test"
+          },
+          {
+            "step": "test_replay_click_state",
+            "tag": "A_test",
+            "enabled": true,
+            "down": false,
+            "focus": true
+          },
+          {
+            "step": "viewer_first_draw",
+            "tag": "A_test",
+            "seconds": 39.97151539998595,
+            "pid": 16240
+          },
+          {
+            "step": "native_external_viewer",
+            "tag": "A_test",
+            "pid": 16240,
+            "replay": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/replay.jsonl",
+            "driver": "windows",
+            "font": "<windows-fonts>/consola.ttf",
+            "phase_step": true,
+            "reverse": true,
+            "play_pause": true,
+            "speed": true,
+            "views": true,
+            "mouse_seek_index": 2387,
+            "scroll_offset": 3,
+            "resize_sizes": [
+              [
+                900,
+                650
+              ],
+              [
+                1000,
+                700
+              ],
+              [
+                1100,
+                750
+              ]
+            ],
+            "exit_code": 0,
+            "input": "Win32 window messages"
+          },
+          {
+            "step": "authoring_complete",
+            "seat": "A",
+            "advanced_result": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/_designer/20261015-150838-0787abb8/result.json",
+            "test_result": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/result.json",
+            "advanced_parameters": {
+              "scan_interval": 3,
+              "perimeter_offset": 64
+            },
+            "test_parameters": {
+              "scan_interval": 4,
+              "perimeter_offset": 27
+            }
+          },
+          {
+            "step": "viewer_first_draw",
+            "tag": "B_advanced",
+            "seconds": 3.7105829000938684,
+            "pid": 66032
+          },
+          {
+            "step": "native_external_viewer",
+            "tag": "B_advanced",
+            "pid": 66032,
+            "replay": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_B/runs/_designer/20261015-151006-c5a3e5df/replay.jsonl",
+            "driver": "windows",
+            "font": "<windows-fonts>/consola.ttf",
+            "phase_step": true,
+            "reverse": true,
+            "play_pause": true,
+            "speed": true,
+            "views": true,
+            "mouse_seek_index": 769,
+            "scroll_offset": 0,
+            "resize_sizes": [
+              [
+                900,
+                650
+              ],
+              [
+                1000,
+                700
+              ],
+              [
+                1100,
+                750
+              ]
+            ],
+            "exit_code": 0,
+            "input": "Win32 window messages"
+          },
+          {
+            "step": "test_replay_signal",
+            "tag": "B_test"
+          },
+          {
+            "step": "test_replay_button_clicked",
+            "tag": "B_test"
+          },
+          {
+            "step": "test_replay_click_state",
+            "tag": "B_test",
+            "enabled": true,
+            "down": false,
+            "focus": true
+          },
+          {
+            "step": "viewer_first_draw",
+            "tag": "B_test",
+            "seconds": 41.945672199944966,
+            "pid": 53236
+          },
+          {
+            "step": "native_external_viewer",
+            "tag": "B_test",
+            "pid": 53236,
+            "replay": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_B/runs/agents_test/personal_keeper/20261015T151020326850-253865f1-vs-reference/replay.jsonl",
+            "driver": "windows",
+            "font": "<windows-fonts>/consola.ttf",
+            "phase_step": true,
+            "reverse": true,
+            "play_pause": true,
+            "speed": true,
+            "views": true,
+            "mouse_seek_index": 2387,
+            "scroll_offset": 3,
+            "resize_sizes": [
+              [
+                900,
+                650
+              ],
+              [
+                1000,
+                700
+              ],
+              [
+                1100,
+                750
+              ]
+            ],
+            "exit_code": 0,
+            "input": "Win32 window messages"
+          },
+          {
+            "step": "authoring_complete",
+            "seat": "B",
+            "advanced_result": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_B/runs/_designer/20261015-151006-c5a3e5df/result.json",
+            "test_result": "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_B/runs/agents_test/personal_keeper/20261015T151020326850-253865f1-vs-reference/result.json",
+            "advanced_parameters": {
+              "scan_interval": 3,
+              "perimeter_offset": 64
+            },
+            "test_parameters": {
+              "scan_interval": 4,
+              "perimeter_offset": 27
+            }
+          },
+          {
+            "step": "complete",
+            "status": "PASS",
+            "automation": "Technical native interaction; no human-comprehension claim"
+          }
+        ]
+      }
+    }
+  ],
+  "note": "Counts overlap between campaigns and are not summed. Paths are sanitized; local_bodies and summary_sha256 bind the unmodified local originals."
+}

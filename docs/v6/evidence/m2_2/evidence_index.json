@@ -1,0 +1,354 @@
+{
+  "schema": "bytefray.v6.m2_2.curated_evidence_index",
+  "schema_version": 1,
+  "closure": "docs/v6/V6_ALPHA_M2_2_CLOSURE_01.md",
+  "baseline": {
+    "head": "f79a74be1d486f042d260bea672305b9abb27aa5",
+    "tree": "d4f2c73cbd3965762e61316567537e173503ff8a"
+  },
+  "local_root": {
+    "path": "runs/v6_alpha_m2/",
+    "files": 1115,
+    "bytes": 208029705,
+    "published": false
+  },
+  "files": [
+    {
+      "path": ".gitattributes",
+      "kind": "generated",
+      "note": "byte preservation for hashed evidence",
+      "bytes": 159,
+      "sha256": "f1350dfbb4555e6a7c103c3096074fbbf63d879d7cc23f3eb2b133ca28088f6f"
+    },
+    {
+      "path": "README.md",
+      "kind": "generated",
+      "note": "curated evidence guide",
+      "bytes": 10062,
+      "sha256": "0d1ebd2d066b4b40028208c19b25be91d4c53e8e0d879aa3966ec112650d72b1"
+    },
+    {
+      "path": "failures/c2_baseline_linux_A_test_terminal.png",
+      "kind": "byte_copy",
+      "origin": "m2_2a_20261015_correction/linux_native_complete_02/A_test_terminal.png",
+      "origin_sha256": "8a7d55148be4f3d9d13b4fed8b183895390cf2c203d29e0ab4504ce7c5365640",
+      "note": "C2 baseline: Linux rendered Pygame surface, Agent A Test replay at terminal state",
+      "bytes": 114030,
+      "sha256": "8a7d55148be4f3d9d13b4fed8b183895390cf2c203d29e0ab4504ce7c5365640"
+    },
+    {
+      "path": "failures/retained_attempts.json",
+      "kind": "generated",
+      "note": "retained failure/limitation ledger",
+      "bytes": 14301,
+      "sha256": "67abef01d38518dd5f25fc868d267d1af3f7afe7ffe352978159fe78de87b2d6"
+    },
+    {
+      "path": "keeper/cross_platform_comparison.json",
+      "kind": "byte_copy",
+      "origin": "m2_2a_20261015_correction/cross_platform_comparison.json",
+      "origin_sha256": "56f3f0b03fed7d2eb80dd9cf87945739a417e6dded579e52da47b6b6b43164d6",
+      "note": "eight Keeper bodies (2 seats x 2 repeats x 2 platforms), raw hashes and logical equality",
+      "bytes": 12738,
+      "sha256": "56f3f0b03fed7d2eb80dd9cf87945739a417e6dded579e52da47b6b6b43164d6"
+    },
+    {
+      "path": "keeper/seat_A/demo.json",
+      "kind": "byte_copy",
+      "origin": "m2_2_20261015_review/keeper/A/1/demo.json",
+      "origin_sha256": "802ea46ade02d4adc267ab9e5ccd16738457e1ed7d472aff48460b4bb0c756ab",
+      "note": "keeper-K1, Keeper in seat A, Windows repeat 1",
+      "bytes": 2552,
+      "sha256": "802ea46ade02d4adc267ab9e5ccd16738457e1ed7d472aff48460b4bb0c756ab"
+    },
+    {
+      "path": "keeper/seat_A/replay.jsonl",
+      "kind": "byte_copy",
+      "origin": "m2_2_20261015_review/keeper/A/1/replay.jsonl",
+      "origin_sha256": "5c1184cff481ce95060d1fcaf2d7fdc05998f3b5e929b50d673fdad23bcaf568",
+      "note": "keeper-K1, Keeper in seat A, Windows repeat 1",
+      "bytes": 81975,
+      "sha256": "5c1184cff481ce95060d1fcaf2d7fdc05998f3b5e929b50d673fdad23bcaf568"
+    },
+    {
+      "path": "keeper/seat_A/result.json",
+      "kind": "byte_copy",
+      "origin": "m2_2_20261015_review/keeper/A/1/result.json",
+      "origin_sha256": "5d26f1138813dc5f57a67ab3bf7d632cecc5eac204de00d3680896852055a42b",
+      "note": "keeper-K1, Keeper in seat A, Windows repeat 1",
+      "bytes": 3768,
+      "sha256": "5d26f1138813dc5f57a67ab3bf7d632cecc5eac204de00d3680896852055a42b"
+    },
+    {
+      "path": "keeper/seat_A/sources/A/agent.py",
+      "kind": "byte_copy",
+      "origin": "m2_2_20261015_review/keeper/A/1/sources/A/agent.py",
+      "origin_sha256": "9a0dd6febdb7701ffed4537d80d4c5b2ddf57652c002919d9ec0e3d84d533649",
+      "note": "keeper-K1, Keeper in seat A, Windows repeat 1",
+      "bytes": 3471,
+      "sha256": "9a0dd6febdb7701ffed4537d80d4c5b2ddf57652c002919d9ec0e3d84d533649"
+    },
+    {
+      "path": "keeper/seat_A/sources/A/agent.yaml",
+      "kind": "byte_copy",
+      "origin": "m2_2_20261015_review/keeper/A/1/sources/A/agent.yaml",
+      "origin_sha256": "e52a2467e6e65e9b20aaf84f8578ca13b900c8fa8b91e9af9b6ac20d98bf8496",
+      "note": "keeper-K1, Keeper in seat A, Windows repeat 1",
+      "bytes": 1030,
+      "sha256": "e52a2467e6e65e9b20aaf84f8578ca13b900c8fa8b91e9af9b6ac20d98bf8496"
+    },
+    {
+      "path": "keeper/seat_A/sources/B/agent.py",
+      "kind": "byte_copy",
+      "origin": "m2_2_20261015_review/keeper/A/1/sources/B/agent.py",
+      "origin_sha256": "168d242d692885405a4c08d602b44c4a843ac0915fe55a85bfc4c0420dc268b4",
+      "note": "keeper-K1, Keeper in seat A, Windows repeat 1",
+      "bytes": 772,
+      "sha256": "168d242d692885405a4c08d602b44c4a843ac0915fe55a85bfc4c0420dc268b4"
+    },
+    {
+      "path": "keeper/seat_A/sources/B/agent.yaml",
+      "kind": "byte_copy",
+      "origin": "m2_2_20261015_review/keeper/A/1/sources/B/agent.yaml",
+      "origin_sha256": "e5b7f1734e188e01bd5d86851321b21c613fc632b97ae6b70dea7f596ca2f6dc",
+      "note": "keeper-K1, Keeper in seat A, Windows repeat 1",
+      "bytes": 208,
+      "sha256": "e5b7f1734e188e01bd5d86851321b21c613fc632b97ae6b70dea7f596ca2f6dc"
+    },
+    {
+      "path": "keeper/seat_A/trace.jsonl",
+      "kind": "byte_copy",
+      "origin": "m2_2_20261015_review/keeper/A/1/trace.jsonl",
+      "origin_sha256": "2923ede5306f1251eb975300951928ca2f909b3cf3527c74675d13b06022dc9b",
+      "note": "keeper-K1, Keeper in seat A, Windows repeat 1",
+      "bytes": 567631,
+      "sha256": "2923ede5306f1251eb975300951928ca2f909b3cf3527c74675d13b06022dc9b"
+    },
+    {
+      "path": "keeper/seat_B/demo.json",
+      "kind": "byte_copy",
+      "origin": "m2_2_20261015_review/keeper/B/1/demo.json",
+      "origin_sha256": "1577ad461c5f0d8cfe8ffc30ca6ed6eb4c4085b14aecedf22be67c65cd1545e0",
+      "note": "keeper-K1, Keeper in seat B, Windows repeat 1",
+      "bytes": 2552,
+      "sha256": "1577ad461c5f0d8cfe8ffc30ca6ed6eb4c4085b14aecedf22be67c65cd1545e0"
+    },
+    {
+      "path": "keeper/seat_B/replay.jsonl",
+      "kind": "byte_copy",
+      "origin": "m2_2_20261015_review/keeper/B/1/replay.jsonl",
+      "origin_sha256": "dbbbd070c7950ec47cc56daac0aee83ce2fa20f4031eb6c5f187df9746c4021a",
+      "note": "keeper-K1, Keeper in seat B, Windows repeat 1",
+      "bytes": 81955,
+      "sha256": "dbbbd070c7950ec47cc56daac0aee83ce2fa20f4031eb6c5f187df9746c4021a"
+    },
+    {
+      "path": "keeper/seat_B/result.json",
+      "kind": "byte_copy",
+      "origin": "m2_2_20261015_review/keeper/B/1/result.json",
+      "origin_sha256": "9651832882d856533e611e8d0f09defdc851f9a1b27d8c6b1fb642aa32e53e17",
+      "note": "keeper-K1, Keeper in seat B, Windows repeat 1",
+      "bytes": 3758,
+      "sha256": "9651832882d856533e611e8d0f09defdc851f9a1b27d8c6b1fb642aa32e53e17"
+    },
+    {
+      "path": "keeper/seat_B/sources/A/agent.py",
+      "kind": "byte_copy",
+      "origin": "m2_2_20261015_review/keeper/B/1/sources/A/agent.py",
+      "origin_sha256": "168d242d692885405a4c08d602b44c4a843ac0915fe55a85bfc4c0420dc268b4",
+      "note": "keeper-K1, Keeper in seat B, Windows repeat 1",
+      "bytes": 772,
+      "sha256": "168d242d692885405a4c08d602b44c4a843ac0915fe55a85bfc4c0420dc268b4"
+    },
+    {
+      "path": "keeper/seat_B/sources/A/agent.yaml",
+      "kind": "byte_copy",
+      "origin": "m2_2_20261015_review/keeper/B/1/sources/A/agent.yaml",
+      "origin_sha256": "e5b7f1734e188e01bd5d86851321b21c613fc632b97ae6b70dea7f596ca2f6dc",
+      "note": "keeper-K1, Keeper in seat B, Windows repeat 1",
+      "bytes": 208,
+      "sha256": "e5b7f1734e188e01bd5d86851321b21c613fc632b97ae6b70dea7f596ca2f6dc"
+    },
+    {
+      "path": "keeper/seat_B/sources/B/agent.py",
+      "kind": "byte_copy",
+      "origin": "m2_2_20261015_review/keeper/B/1/sources/B/agent.py",
+      "origin_sha256": "9a0dd6febdb7701ffed4537d80d4c5b2ddf57652c002919d9ec0e3d84d533649",
+      "note": "keeper-K1, Keeper in seat B, Windows repeat 1",
+      "bytes": 3471,
+      "sha256": "9a0dd6febdb7701ffed4537d80d4c5b2ddf57652c002919d9ec0e3d84d533649"
+    },
+    {
+      "path": "keeper/seat_B/sources/B/agent.yaml",
+      "kind": "byte_copy",
+      "origin": "m2_2_20261015_review/keeper/B/1/sources/B/agent.yaml",
+      "origin_sha256": "e52a2467e6e65e9b20aaf84f8578ca13b900c8fa8b91e9af9b6ac20d98bf8496",
+      "note": "keeper-K1, Keeper in seat B, Windows repeat 1",
+      "bytes": 1030,
+      "sha256": "e52a2467e6e65e9b20aaf84f8578ca13b900c8fa8b91e9af9b6ac20d98bf8496"
+    },
+    {
+      "path": "keeper/seat_B/trace.jsonl",
+      "kind": "byte_copy",
+      "origin": "m2_2_20261015_review/keeper/B/1/trace.jsonl",
+      "origin_sha256": "288a3126e0084875653f0e147bf5c1b359f31a009a0b842769beaee97cd8ae39",
+      "note": "keeper-K1, Keeper in seat B, Windows repeat 1",
+      "bytes": 567620,
+      "sha256": "288a3126e0084875653f0e147bf5c1b359f31a009a0b842769beaee97cd8ae39"
+    },
+    {
+      "path": "qualification/corrected_source_manifest.json",
+      "kind": "byte_copy",
+      "origin": "m2_2a_20261015_correction/corrected_source_manifest.json",
+      "origin_sha256": "68ca897c818b07cdc87c152ae804171a21d24dd1beda3d3860bf7fa54e524d55",
+      "note": "26 entry-file bodies after the M2-2A correction",
+      "bytes": 4197,
+      "sha256": "68ca897c818b07cdc87c152ae804171a21d24dd1beda3d3860bf7fa54e524d55"
+    },
+    {
+      "path": "qualification/correction_only.diff",
+      "kind": "byte_copy",
+      "origin": "m2_2a_20261015_correction/correction_only.diff",
+      "origin_sha256": "e1dba619f986ed2ad196f4ea83fa10557aac976d205be113b1757be287cc2c0b",
+      "note": "exact M2-2A correction diff (3 paths) against preserved entry bodies",
+      "bytes": 18209,
+      "sha256": "e1dba619f986ed2ad196f4ea83fa10557aac976d205be113b1757be287cc2c0b"
+    },
+    {
+      "path": "qualification/historical_pins_publication_check.json",
+      "kind": "generated",
+      "note": "329 pins re-verified at the preserved baseline before publication",
+      "bytes": 459,
+      "sha256": "f42ee481f362e98d7b901fefddf38ebaa492646b3123fc4d11dbd47b90c87b39"
+    },
+    {
+      "path": "qualification/linux_summary.json",
+      "kind": "sanitized_derivative",
+      "note": "linux qualification campaigns and native workflow summaries",
+      "bytes": 16831,
+      "sha256": "e4dab3b5e255caa45baf659dcd4ce3cef27be911e061ca72c0e318ec6bff9437"
+    },
+    {
+      "path": "qualification/m2_2_broad_selection.txt",
+      "kind": "byte_copy",
+      "origin": "m2_2_20261015_review/qualification/m2_2_broad_selection.txt",
+      "origin_sha256": "2009bb380c521ea265f6dd2a86846928d8eca37a3ce326d498b03b325e8ec283",
+      "note": "pytest @-selection file used by the M2-2/M2-2A campaigns",
+      "bytes": 6043,
+      "sha256": "2009bb380c521ea265f6dd2a86846928d8eca37a3ce326d498b03b325e8ec283"
+    },
+    {
+      "path": "qualification/m2_2_focused_selection.txt",
+      "kind": "byte_copy",
+      "origin": "m2_2_20261015_review/qualification/m2_2_focused_selection.txt",
+      "origin_sha256": "a79cd643f1ddc2d2c6ba7857fb9e74764b30b4940476c0e5a58eb6a497a66827",
+      "note": "pytest @-selection file used by the M2-2/M2-2A campaigns",
+      "bytes": 1006,
+      "sha256": "a79cd643f1ddc2d2c6ba7857fb9e74764b30b4940476c0e5a58eb6a497a66827"
+    },
+    {
+      "path": "qualification/old_starter_preservation.json",
+      "kind": "byte_copy",
+      "origin": "m2_2a_20261015_correction/old_starter_preservation.json",
+      "origin_sha256": "47517d3dd225f46b354bcdc2c08ac1ec76a5fa3eb2522c07217f3a2c5988d86a",
+      "note": "old starter names, digests and 23 files unchanged",
+      "bytes": 4861,
+      "sha256": "47517d3dd225f46b354bcdc2c08ac1ec76a5fa3eb2522c07217f3a2c5988d86a"
+    },
+    {
+      "path": "qualification/windows_summary.json",
+      "kind": "sanitized_derivative",
+      "note": "windows qualification campaigns and native workflow summaries",
+      "bytes": 18169,
+      "sha256": "7a074e39123f02638433fe8d70670dd424f8886ac0af548669b9e3da4f5fe5db"
+    }
+  ],
+  "closure_section_6_local_bodies": [
+    {
+      "local": "runs/v6_alpha_m2/m2_2a_20261015_correction/m2_2a_focused_final.xml",
+      "sha256": "5ea2ad3c5a9b7ab24dd7f04ba845274610cc51aaa9fc105be1b91f09adb1d0e8",
+      "published": false
+    },
+    {
+      "local": "runs/v6_alpha_m2/m2_2a_20261015_correction/m2_2a_windows_gui_final.xml",
+      "sha256": "30d98cab6ffd2b666c9ce81696f6825c777347f1ca1c0578405c6b60a820c744",
+      "published": false
+    },
+    {
+      "local": "runs/v6_alpha_m2/m2_2a_20261015_correction/m2_2a_m1_gui.xml",
+      "sha256": "d45b9767f1b2732a19d28db89d324d1e94b512e57ab8edd06ca908d45b893728",
+      "published": false
+    },
+    {
+      "local": "runs/v6_alpha_m2/m2_2a_20261015_correction/m2_2a_windows_broad.xml",
+      "sha256": "6272c15297312826ebd81473bbac80d166cf1aa50c4250e810f9722f83384513",
+      "published": false
+    },
+    {
+      "local": "runs/v6_alpha_m2/m2_2a_20261015_correction/m2_2a_windows_supplement.xml",
+      "sha256": "089ee0ea970b6add1201d2ea61a9e6880601e052663c0f32ab56d7612fe9312c",
+      "published": false
+    },
+    {
+      "local": "runs/v6_alpha_m2/m2_2a_20261015_correction/m2_2a_linux_focused.xml",
+      "sha256": "3b4904aa6ef543b4b7381fb8441a8410fe13c256818de5142c75cfecb17dd586",
+      "published": false
+    },
+    {
+      "local": "runs/v6_alpha_m2/m2_2a_20261015_correction/m2_2a_linux_gui_x11.xml",
+      "sha256": "db4d8f9120214084c086c3a426f1135cf6947f3a04ebc12a8e911202d94d9413",
+      "published": false
+    },
+    {
+      "local": "runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/summary.json",
+      "sha256": "004f7195b7dd4573a97e3f80467e5946da9acae890dc4bed71a197dcb8624b3c",
+      "published": false
+    },
+    {
+      "local": "runs/v6_alpha_m2/m2_2a_20261015_correction/linux_native_complete.log",
+      "sha256": "225954e799ede4d47f5b1244655c7e03e0aa7fd54fd7667287528304ca859d51",
+      "published": false
+    },
+    {
+      "local": "runs/v6_alpha_m2/m2_2a_20261015_correction/linux_end_probe_01.log",
+      "sha256": "e74caeb086788371cc72213801f05bf02e56f42e036aba8032b01f681085cd96",
+      "published": false
+    },
+    {
+      "local": "runs/v6_alpha_m2/m2_2a_20261015_correction/linux_native_complete_02/summary.json",
+      "sha256": "2cac982f5d8f759194baa986db3f195096f13fff7d33379e567e7b4f0d81216c",
+      "published": false
+    },
+    {
+      "local": "runs/v6_alpha_m2/m2_2a_20261015_correction/cross_platform_comparison.json",
+      "sha256": "56f3f0b03fed7d2eb80dd9cf87945739a417e6dded579e52da47b6b6b43164d6",
+      "published": false
+    },
+    {
+      "local": "runs/v6_alpha_m2/m2_2a_20261015_correction/selection_reconciliation.json",
+      "sha256": "4a8586adda779e2bd1c6a7c75354ddaf875512f2580f8fdb7d0b3f7b601fd645",
+      "published": false
+    },
+    {
+      "local": "runs/v6_alpha_m2/m2_2a_20261015_correction/historical_pins.json",
+      "sha256": "b9f84b32d9d6990580fa6113c98eb88cb9123eedd7332953e55d96c1d17d5b31",
+      "published": false
+    },
+    {
+      "local": "runs/v6_alpha_m2/m2_2a_20261015_correction/old_starter_preservation.json",
+      "sha256": "47517d3dd225f46b354bcdc2c08ac1ec76a5fa3eb2522c07217f3a2c5988d86a",
+      "published": false
+    },
+    {
+      "local": "runs/v6_alpha_m2/m2_2a_20261015_correction/corrected_source_manifest.json",
+      "sha256": "68ca897c818b07cdc87c152ae804171a21d24dd1beda3d3860bf7fa54e524d55",
+      "published": false
+    },
+    {
+      "local": "runs/v6_alpha_m2/m2_2a_20261015_correction/resume_readonly_verification.json",
+      "sha256": "9f7f16c59e6f45a2787cf1a4a8ff5feff631e17df3fda81b88d3b9a4701dbeaa",
+      "published": false
+    }
+  ],
+  "note": "Every path in files is relative to this directory; this index is not listed in itself. origin values are identifiers in the git-ignored local root, not links."
+}

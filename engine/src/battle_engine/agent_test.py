@@ -58,6 +58,7 @@ from battle_engine.python_runtime import (
     RuntimeDiagnostic,
 )
 from battle_engine.results import WINNER_TIE_SENTINEL
+from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
     NoCompatibleRulesetError,
@@ -1028,13 +1029,14 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--ruleset",
-        choices=[BYTEFRAY_RULESET_V4_ID],
+        choices=[BYTEFRAY_RULESET_V4_ID, BYTEFRAY_RULESET_V6_ALPHA1_ID],
         default=None,
         help=(
-            f"gameplay Ruleset identity. {BYTEFRAY_RULESET_V4_ID} is the "
-            "only Ruleset Agent API v2 (process) agents can run under, and "
-            "is selected automatically when this flag is omitted -- agents "
-            "test entrants are always Python. Affects gameplay semantics "
+            f"gameplay Ruleset identity. Stable {BYTEFRAY_RULESET_V4_ID} is "
+            "selected when this flag is omitted. Experimental "
+            f"{BYTEFRAY_RULESET_V6_ALPHA1_ID} requires explicit selection. "
+            "Entrants must be compatible Agent API v2 Python agents. "
+            "Affects gameplay semantics "
             "and is recorded in the match's result/replay artifacts."
         ),
     )
@@ -1050,9 +1052,9 @@ def main(argv: list[str] | None = None) -> int:
     # keep test_agent()'s own unsupervised default unless they opt in.
     effective_timeout = DEFAULT_AGENT_TIMEOUT if args.timeout is None else args.timeout
     # Omitted selection is resolved from entrant metadata at the CLI boundary.
-    # Scope C leaves one executable combination -- Agent API v2 Python under
-    # stable bytefray-rules-4 -- while incompatible historical metadata fails
-    # closed before test_agent() can create a run directory.
+    # Omission retains stable bytefray-rules-4; experimental Alpha 1 requires
+    # explicit selection. Incompatible historical metadata fails closed
+    # before test_agent() can create a run directory.
     #
     # The default reference opponent is deliberately not part of this
     # roster: _reference_opponent_spec is the fixed current API-v2 reference,

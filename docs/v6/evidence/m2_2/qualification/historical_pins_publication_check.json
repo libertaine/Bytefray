@@ -1,0 +1,14 @@
+{
+  "checked_for": "M2-2 publication (Phase A)",
+  "baseline_head": "b948540aa9ef34134ff7e3c633c3acfc9f97da96",
+  "result": {
+    "ok": true,
+    "detail": {
+      "pins": 329,
+      "mismatches": [],
+      "preserved_head": "b948540aa9ef34134ff7e3c633c3acfc9f97da96"
+    }
+  },
+  "original_m2_2a_record": "m2_2a_20261015_correction/historical_pins.json",
+  "original_m2_2a_record_sha256": "b9f84b32d9d6990580fa6113c98eb88cb9123eedd7332953e55d96c1d17d5b31"
+}

@@ -1,0 +1,26 @@
+{
+  "name": "v6_watchful_keeper",
+  "display": "V6 Watchful Keeper (Starter)",
+  "description": "Delivered core READ ownership supports repair attempts; anonymous historical SENSE receipts support one defensive WRITE.",
+  "kind": "python",
+  "api_version": 2,
+  "entrypoint": "agent.py:create_agent",
+  "version": "1.0.0",
+  "capabilities": {"version": 1, "required": ["sense"]},
+  "parameters": {
+    "scan_interval": {
+      "type": "integer", "default": 4, "minimum": 2, "maximum": 16,
+      "description": "Consider a perimeter scan every N eligible callbacks, after feedback priorities."
+    },
+    "perimeter_offset": {
+      "type": "integer", "default": 27, "minimum": 0, "maximum": 128,
+      "description": "Forward scan center relative to the observed own core, rechecked against current reach."
+    }
+  },
+  "presets": {
+    "standard": {
+      "description": "Inspect eight core cells and consider SENSE at own core +27 every four callbacks.",
+      "values": {"scan_interval": 4, "perimeter_offset": 27}
+    }
+  }
+}
