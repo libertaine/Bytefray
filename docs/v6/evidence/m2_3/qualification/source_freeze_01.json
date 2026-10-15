@@ -1,0 +1,71 @@
+{
+  "head": "4fd89bbfdc6845815a0df6d4d60eab92cc3a0a94",
+  "staged": [],
+  "paths": {
+    "app/views/development.py": {
+      "bytes": 41061,
+      "sha256": "6e7f261eca0694d051b05aad8c580d07f5753e548d17ceccb2eff350b692fa59"
+    },
+    "docs/AGENT_AUTHORING.md": {
+      "bytes": 30539,
+      "sha256": "5d942ae20ec32e74e9d869ddd220b61a72dd6b486974ff96221819887b93edfa"
+    },
+    "docs/specs/agent_scaffold.md": {
+      "bytes": 48755,
+      "sha256": "573190c173d34d42b3ea87941646ee2cde4afbe07894fc2efec478d87581ecb6"
+    },
+    "engine/src/battle_engine/agent_scaffold.py": {
+      "bytes": 12880,
+      "sha256": "129f9e0016d11fc7c1b8a2ef2773a92a51d21346d8709d199a51f78eccd69ac5"
+    },
+    "engine/src/battle_engine/data/starter_agents/v6_roaming_reacquirer/agent.py": {
+      "bytes": 6421,
+      "sha256": "0181c6800492c51bd8251c4219a3ea32f81a36810197896965d4ec7b4a10efcb"
+    },
+    "engine/src/battle_engine/data/starter_agents/v6_roaming_reacquirer/agent.yaml": {
+      "bytes": 1272,
+      "sha256": "f71d1def1a53a5ed72de5248a12e4e585d285aa4031949805409f86cfbd55ee7"
+    },
+    "engine/src/battle_engine/data/teaching_fixtures/v6_relocating_opponent/agent.py": {
+      "bytes": 748,
+      "sha256": "fafe410879ebb282ca1be329ea266c6c8ca83475e0613b5e661a463b3694c86c"
+    },
+    "engine/src/battle_engine/data/teaching_fixtures/v6_relocating_opponent/agent.yaml": {
+      "bytes": 206,
+      "sha256": "c249143d25f7e8cd20f060e1cff02e3666048d131ca08accbc682aac4f98cd6a"
+    },
+    "engine/src/battle_engine/sensing_demo.py": {
+      "bytes": 42378,
+      "sha256": "37c155516aa674d6fd3df4644158e31457bbae3b6e2eff9d54e8b6309d68f6d0"
+    },
+    "engine/src/battle_engine/sensing_playback.py": {
+      "bytes": 97661,
+      "sha256": "fb9be728602a3f8f425b1c9f46296a57c3bc4d19126458ea377b7ff0ec9990a4"
+    },
+    "engine/src/battle_engine/starters.py": {
+      "bytes": 27722,
+      "sha256": "f0c0bcc0e74afb3a2de1430e5104091f0e9af1858dce89fa1e79a66c2935477c"
+    },
+    "engine/tests/test_agent_scaffold.py": {
+      "bytes": 21978,
+      "sha256": "aab50d22af076cf65919cfc0360054548ad1f8c344cb0f3a1d7c53e7a0dfa150"
+    },
+    "engine/tests/test_agent_test.py": {
+      "bytes": 46567,
+      "sha256": "d5aea1c476edd6e6c0bcaa3dae333f32186840072639c16be38ab4e3f342bf09"
+    },
+    "engine/tests/test_v6_alpha_m1_2_window_scout.py": {
+      "bytes": 46242,
+      "sha256": "201625c27043b2a14b7778a1b5cc70864324c06dc475e59ebf7cd13d2b053999"
+    },
+    "engine/tests/test_v6_alpha_m2_reacquirer.py": {
+      "bytes": 33705,
+      "sha256": "9f420050fa78302d400fe5e5bfcb1b2ecb9c014417606956a2610302f688d0a5"
+    },
+    "tests/test_v6_alpha_m1_5_designer.py": {
+      "bytes": 23414,
+      "sha256": "90bbc78b6996b317b4e303539e63ac7e3b43ee77e03c558c04d70bfa82fa03ad"
+    }
+  },
+  "outside_boundary": []
+}

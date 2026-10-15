@@ -46,6 +46,14 @@ TEMPLATE_DIRECTORIES = {
     "annotated": "agent_template_v2_annotated",
     "window_scout": "starter_agents/v6_window_scout",
     "watchful_keeper": "starter_agents/v6_watchful_keeper",
+    "roaming_reacquirer": "starter_agents/v6_roaming_reacquirer",
+}
+
+# Sensing-starter templates whose personal copy gets its own name/display label.
+_STARTER_COPY_LABELS = {
+    "window_scout": "Window Scout",
+    "watchful_keeper": "Watchful Keeper",
+    "roaming_reacquirer": "Roaming Reacquirer",
 }
 
 # The Agent API generation a scaffold produces when the author does not ask
@@ -230,14 +238,13 @@ def create_agent(
             source = template_dir / filename
             with (temp_dir / filename).open("xb") as output, source.open("rb") as input_file:
                 shutil.copyfileobj(input_file, output)
-        if template in {"window_scout", "watchful_keeper"}:
+        if template in _STARTER_COPY_LABELS:
             # A personal copy has its own visible/discovery identity. The
             # bundled teaching revision and its bytes remain untouched.
             manifest_path = temp_dir / "agent.yaml"
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             manifest["name"] = agent_id
-            label = "Window Scout" if template == "window_scout" else "Watchful Keeper"
-            manifest["display"] = f"{agent_id} ({label} copy)"
+            manifest["display"] = f"{agent_id} ({_STARTER_COPY_LABELS[template]} copy)"
             manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     except BaseException:
         shutil.rmtree(temp_dir, ignore_errors=True)
@@ -281,8 +288,9 @@ def _parser() -> argparse.ArgumentParser:
         help=(
             "starting-point content: 'blank' (default, a minimal skeleton) or "
             "'annotated' (a commented example). Both target the sole supported "
-            "Agent API v2 generation. 'window_scout' and 'watchful_keeper' create "
-            "personal sensing-starter copies requiring explicit bytefray-rules-6-alpha1."
+            "Agent API v2 generation. 'window_scout', 'watchful_keeper' and "
+            "'roaming_reacquirer' create personal sensing-starter copies requiring "
+            "explicit bytefray-rules-6-alpha1."
         ),
     )
     return parser
@@ -302,7 +310,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"api_version: {args.api_version}")
     print(f"manifest: {result.manifest_path}")
     print(f"source: {result.source_path}")
-    selection = " --ruleset bytefray-rules-6-alpha1" if args.template in {"window_scout", "watchful_keeper"} else ""
+    selection = " --ruleset bytefray-rules-6-alpha1" if args.template in _STARTER_COPY_LABELS else ""
     print(f"Run 'bytefray run --a-type {result.agent_id} --b-type <opponent>{selection}' to try it.")
     return 0
 

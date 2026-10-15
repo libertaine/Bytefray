@@ -1,0 +1,272 @@
+{
+  "schema": "bytefray.v6.m2_3.curated_evidence_index",
+  "schema_version": 1,
+  "closure": "docs/v6/V6_ALPHA_M2_3_CLOSURE_01.md",
+  "baseline": {
+    "head": "4fd89bbfdc6845815a0df6d4d60eab92cc3a0a94",
+    "tree": "109cf38b45175fdee1023fd620f0ead70384ad56"
+  },
+  "local_root": {
+    "path": "runs/v6_alpha_m2/m2_3_20261015/",
+    "files": 223,
+    "bytes": 13200641,
+    "published": false
+  },
+  "files": [
+    {
+      "path": ".gitattributes",
+      "kind": "generated",
+      "bytes": 172,
+      "sha256": "7579ea449db64ac429d9f955ee204ab31294ec1290a389707c527c43d1abc232"
+    },
+    {
+      "path": "README.md",
+      "kind": "generated",
+      "bytes": 10754,
+      "sha256": "28296bfecd0cebd36a05dca6bab712d82b950b92fb399085288a7b6ade0f418f"
+    },
+    {
+      "path": "failures/retained_attempts.json",
+      "kind": "generated",
+      "bytes": 8096,
+      "sha256": "350e26102d547aff7d3c841082d3ab6aefd9758df7c719fa1f1a4b366c565675"
+    },
+    {
+      "path": "qualification/historical_pins_publication_check.json",
+      "kind": "generated",
+      "bytes": 368,
+      "sha256": "b7fdd50a53f8a2bdbbb4ef22be48a4ac86d08daba4945e49b6269652d2bf59d2"
+    },
+    {
+      "path": "qualification/linux_summary.json",
+      "kind": "generated",
+      "bytes": 10512,
+      "sha256": "c61eda135cd6bd32b2f11e59056f147e889c57fdb361a685e1b36f940196ee92"
+    },
+    {
+      "path": "qualification/m2_3_broad_selection.txt",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/m2_3_broad_selection.txt",
+      "origin_sha256": "45c0359d63a4a0b495e77b96ad19daf9d058bce1afb609c03c58c3bbe38e528e",
+      "note": "pytest @ selection of the 138-module product campaigns",
+      "bytes": 5950,
+      "sha256": "45c0359d63a4a0b495e77b96ad19daf9d058bce1afb609c03c58c3bbe38e528e"
+    },
+    {
+      "path": "qualification/preservation_02.json",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/preservation_02.json",
+      "origin_sha256": "f49565d48aaa6d30e115e9324deabe62b7162f01aafcd65d5cf87a566067d77b",
+      "note": "preservation audit incl. exact R3-07 diff check and 329 pins",
+      "bytes": 1246,
+      "sha256": "f49565d48aaa6d30e115e9324deabe62b7162f01aafcd65d5cf87a566067d77b"
+    },
+    {
+      "path": "qualification/r3_07_amendment.diff",
+      "kind": "generated",
+      "bytes": 889,
+      "sha256": "9acc4f4b6e38929b4131d4fbcd96fa65a6cb56376d06347f8099e22b373d1694"
+    },
+    {
+      "path": "qualification/selection_ledger_r307_summary.json",
+      "kind": "generated",
+      "bytes": 30059,
+      "sha256": "2c15a9588eb1d50bbe9ed6e8c6f6f82d6abc52e296b41875e2dc477e8c1f64a4"
+    },
+    {
+      "path": "qualification/source_freeze_01.json",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/source_freeze_01.json",
+      "origin_sha256": "d5859e310f008c0db8184bd1f56c2b1645b3e0b143b9ff13c0eee7b66921b39f",
+      "note": "first-pass 16-path source freeze",
+      "bytes": 2874,
+      "sha256": "d5859e310f008c0db8184bd1f56c2b1645b3e0b143b9ff13c0eee7b66921b39f"
+    },
+    {
+      "path": "qualification/source_freeze_02.json",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/source_freeze_02.json",
+      "origin_sha256": "1ac13e17f752d51c64590129cb21ecb87817d637b790cded05f6380dd44a0dd4",
+      "note": "R3-07 source freeze: 16 paths unchanged plus the Keeper test module (record entry predates its final text)",
+      "bytes": 3214,
+      "sha256": "1ac13e17f752d51c64590129cb21ecb87817d637b790cded05f6380dd44a0dd4"
+    },
+    {
+      "path": "qualification/windows_summary.json",
+      "kind": "generated",
+      "bytes": 31606,
+      "sha256": "140a14ac9857792efa3c7c25e49da9b13499bd89e3356e5751951154d5ab23eb"
+    },
+    {
+      "path": "reacquirer/cross_platform_comparison.json",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/cross_platform_comparison.json",
+      "origin_sha256": "692225f4ea3fe7d694cc9fd8a8de567feb6a07563ea8774bf4648941d345c02e",
+      "note": "eight R1 bodies (2 seats x 2 repeats x 2 platforms) plus Linux K1 regression: raw hashes and logical equality",
+      "bytes": 8840,
+      "sha256": "692225f4ea3fe7d694cc9fd8a8de567feb6a07563ea8774bf4648941d345c02e"
+    },
+    {
+      "path": "reacquirer/relocation_check_r307.json",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/relocation_check_r307.json",
+      "origin_sha256": "e4eee99e949eac6349c08ad9da73e9ac321cd9bb4e5aaf5e75cd9e30f1e3f673",
+      "note": "fixture F4 relocation 91->155 at the approved index, no fixture SENSE/WRITE or sensed-anchor delivery, 8 bodies",
+      "bytes": 6588,
+      "sha256": "e4eee99e949eac6349c08ad9da73e9ac321cd9bb4e5aaf5e75cd9e30f1e3f673"
+    },
+    {
+      "path": "reacquirer/scenario_comparison.json",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/scenario_comparison.json",
+      "origin_sha256": "0513fb8e084a064c055f04f65768401d4524dad9c7b87ce47893d6140dc7d7ec",
+      "note": "Windows R1 verdicts and witnesses per run; Windows K1 regression against the published M2-2 bodies",
+      "bytes": 11243,
+      "sha256": "0513fb8e084a064c055f04f65768401d4524dad9c7b87ce47893d6140dc7d7ec"
+    },
+    {
+      "path": "reacquirer/seat_A/demo.json",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/reacquirer/A/1/demo.json",
+      "origin_sha256": "60449d5dd00a6f473d6a3b4e5653fb266d5575daf9e25abf26b8c8bc3dac5eb3",
+      "note": "reacquirer-R1, Reacquirer in seat A, Windows repeat 1",
+      "bytes": 2574,
+      "sha256": "60449d5dd00a6f473d6a3b4e5653fb266d5575daf9e25abf26b8c8bc3dac5eb3"
+    },
+    {
+      "path": "reacquirer/seat_A/replay.jsonl",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/reacquirer/A/1/replay.jsonl",
+      "origin_sha256": "3fa395b1e57cc76120958a600b382a6e47b526411a5267486da3c905bf698faa",
+      "note": "reacquirer-R1, Reacquirer in seat A, Windows repeat 1",
+      "bytes": 71834,
+      "sha256": "3fa395b1e57cc76120958a600b382a6e47b526411a5267486da3c905bf698faa"
+    },
+    {
+      "path": "reacquirer/seat_A/result.json",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/reacquirer/A/1/result.json",
+      "origin_sha256": "527ef3baae57de66ce79bc0c0b5c3ad311498925a59d1c624fc7e77e518c83eb",
+      "note": "reacquirer-R1, Reacquirer in seat A, Windows repeat 1",
+      "bytes": 3782,
+      "sha256": "527ef3baae57de66ce79bc0c0b5c3ad311498925a59d1c624fc7e77e518c83eb"
+    },
+    {
+      "path": "reacquirer/seat_A/sources/A/agent.py",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/reacquirer/A/1/sources/A/agent.py",
+      "origin_sha256": "0181c6800492c51bd8251c4219a3ea32f81a36810197896965d4ec7b4a10efcb",
+      "note": "reacquirer-R1, Reacquirer in seat A, Windows repeat 1",
+      "bytes": 6421,
+      "sha256": "0181c6800492c51bd8251c4219a3ea32f81a36810197896965d4ec7b4a10efcb"
+    },
+    {
+      "path": "reacquirer/seat_A/sources/A/agent.yaml",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/reacquirer/A/1/sources/A/agent.yaml",
+      "origin_sha256": "f71d1def1a53a5ed72de5248a12e4e585d285aa4031949805409f86cfbd55ee7",
+      "note": "reacquirer-R1, Reacquirer in seat A, Windows repeat 1",
+      "bytes": 1272,
+      "sha256": "f71d1def1a53a5ed72de5248a12e4e585d285aa4031949805409f86cfbd55ee7"
+    },
+    {
+      "path": "reacquirer/seat_A/sources/B/agent.py",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/reacquirer/A/1/sources/B/agent.py",
+      "origin_sha256": "fafe410879ebb282ca1be329ea266c6c8ca83475e0613b5e661a463b3694c86c",
+      "note": "reacquirer-R1, Reacquirer in seat A, Windows repeat 1",
+      "bytes": 748,
+      "sha256": "fafe410879ebb282ca1be329ea266c6c8ca83475e0613b5e661a463b3694c86c"
+    },
+    {
+      "path": "reacquirer/seat_A/sources/B/agent.yaml",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/reacquirer/A/1/sources/B/agent.yaml",
+      "origin_sha256": "c249143d25f7e8cd20f060e1cff02e3666048d131ca08accbc682aac4f98cd6a",
+      "note": "reacquirer-R1, Reacquirer in seat A, Windows repeat 1",
+      "bytes": 206,
+      "sha256": "c249143d25f7e8cd20f060e1cff02e3666048d131ca08accbc682aac4f98cd6a"
+    },
+    {
+      "path": "reacquirer/seat_A/trace.jsonl",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/reacquirer/A/1/trace.jsonl",
+      "origin_sha256": "9d5b5af909ad9fcdaf205373855e3289feb53e104db80b617d318ec8fc43c98c",
+      "note": "reacquirer-R1, Reacquirer in seat A, Windows repeat 1",
+      "bytes": 996967,
+      "sha256": "9d5b5af909ad9fcdaf205373855e3289feb53e104db80b617d318ec8fc43c98c"
+    },
+    {
+      "path": "reacquirer/seat_B/demo.json",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/reacquirer/B/1/demo.json",
+      "origin_sha256": "181d2709438ae2d3ceb735b48a585fe597d4bcee9d96f95b6561967e6e136d13",
+      "note": "reacquirer-R1, Reacquirer in seat B, Windows repeat 1",
+      "bytes": 2574,
+      "sha256": "181d2709438ae2d3ceb735b48a585fe597d4bcee9d96f95b6561967e6e136d13"
+    },
+    {
+      "path": "reacquirer/seat_B/replay.jsonl",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/reacquirer/B/1/replay.jsonl",
+      "origin_sha256": "5cf6e3ce4b1bf66a09cb8bcf6ce9fed7b94110621f1bd325f53a9624b16c842c",
+      "note": "reacquirer-R1, Reacquirer in seat B, Windows repeat 1",
+      "bytes": 71834,
+      "sha256": "5cf6e3ce4b1bf66a09cb8bcf6ce9fed7b94110621f1bd325f53a9624b16c842c"
+    },
+    {
+      "path": "reacquirer/seat_B/result.json",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/reacquirer/B/1/result.json",
+      "origin_sha256": "344ae7269e7136b38a70ee9ff234040531a9b246a04a2f47a8d58d354ca55de6",
+      "note": "reacquirer-R1, Reacquirer in seat B, Windows repeat 1",
+      "bytes": 3782,
+      "sha256": "344ae7269e7136b38a70ee9ff234040531a9b246a04a2f47a8d58d354ca55de6"
+    },
+    {
+      "path": "reacquirer/seat_B/sources/A/agent.py",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/reacquirer/B/1/sources/A/agent.py",
+      "origin_sha256": "fafe410879ebb282ca1be329ea266c6c8ca83475e0613b5e661a463b3694c86c",
+      "note": "reacquirer-R1, Reacquirer in seat B, Windows repeat 1",
+      "bytes": 748,
+      "sha256": "fafe410879ebb282ca1be329ea266c6c8ca83475e0613b5e661a463b3694c86c"
+    },
+    {
+      "path": "reacquirer/seat_B/sources/A/agent.yaml",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/reacquirer/B/1/sources/A/agent.yaml",
+      "origin_sha256": "c249143d25f7e8cd20f060e1cff02e3666048d131ca08accbc682aac4f98cd6a",
+      "note": "reacquirer-R1, Reacquirer in seat B, Windows repeat 1",
+      "bytes": 206,
+      "sha256": "c249143d25f7e8cd20f060e1cff02e3666048d131ca08accbc682aac4f98cd6a"
+    },
+    {
+      "path": "reacquirer/seat_B/sources/B/agent.py",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/reacquirer/B/1/sources/B/agent.py",
+      "origin_sha256": "0181c6800492c51bd8251c4219a3ea32f81a36810197896965d4ec7b4a10efcb",
+      "note": "reacquirer-R1, Reacquirer in seat B, Windows repeat 1",
+      "bytes": 6421,
+      "sha256": "0181c6800492c51bd8251c4219a3ea32f81a36810197896965d4ec7b4a10efcb"
+    },
+    {
+      "path": "reacquirer/seat_B/sources/B/agent.yaml",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/reacquirer/B/1/sources/B/agent.yaml",
+      "origin_sha256": "f71d1def1a53a5ed72de5248a12e4e585d285aa4031949805409f86cfbd55ee7",
+      "note": "reacquirer-R1, Reacquirer in seat B, Windows repeat 1",
+      "bytes": 1272,
+      "sha256": "f71d1def1a53a5ed72de5248a12e4e585d285aa4031949805409f86cfbd55ee7"
+    },
+    {
+      "path": "reacquirer/seat_B/trace.jsonl",
+      "kind": "byte_copy",
+      "origin": "m2_3_20261015/reacquirer/B/1/trace.jsonl",
+      "origin_sha256": "f8396db36b1ae778166b0ccfc190dd86e3583bb67139093bed146573ec395c7d",
+      "note": "reacquirer-R1, Reacquirer in seat B, Windows repeat 1",
+      "bytes": 997624,
+      "sha256": "f8396db36b1ae778166b0ccfc190dd86e3583bb67139093bed146573ec395c7d"
+    }
+  ]
+}

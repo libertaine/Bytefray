@@ -81,6 +81,7 @@ _TEMPLATE_LABELS = {
     "annotated": "Annotated Example (commented)",
     "window_scout": "Window Scout — V6 experimental sensing (personal copy)",
     "watchful_keeper": "Watchful Keeper — personal copy",
+    "roaming_reacquirer": "Roaming Reacquirer — personal copy",
 }
 
 
@@ -376,9 +377,9 @@ class AgentDevelopmentPanel(QWidget):
         self.rulesetExplanation.setWordWrap(True)
         test_layout.addWidget(self.rulesetExplanation)
         workflow_hint = QLabel(
-            "For Window Scout or Watchful Keeper: create a personal copy with New Agent, "
-            "explicitly select V6 alpha1 here, and Validate. Edit the agent's parameters in "
-            "Advanced, select V6 alpha1 there, then Run and Open Replay. "
+            "For Window Scout, Watchful Keeper or Roaming Reacquirer: create a personal "
+            "copy with New Agent, explicitly select V6 alpha1 here, and Validate. Edit the "
+            "agent's parameters in Advanced, select V6 alpha1 there, then Run and Open Replay. "
             "Development Test runs a full match using manifest defaults."
         )
         workflow_hint.setWordWrap(True)

@@ -1,0 +1,401 @@
+{
+  "reacquirer": [
+    {
+      "platform": "Windows",
+      "seat": "A",
+      "repeat": 1,
+      "complete": true,
+      "verdicts": {
+        "artifact_consistent": true,
+        "reconstruction_valid": true,
+        "source_capture_valid": true,
+        "scenario_complete": true
+      },
+      "match_id": "match_eba20d70f642a2c4a8a05f2d",
+      "contact": [
+        [
+          1,
+          1
+        ]
+      ],
+      "absence": [
+        [
+          1,
+          9
+        ]
+      ],
+      "reacquisition": [
+        [
+          1,
+          13
+        ]
+      ],
+      "response": [
+        [
+          1,
+          13
+        ]
+      ],
+      "fallback": [],
+      "raw": {
+        "demo.json": {
+          "length": 2574,
+          "sha256": "60449d5dd00a6f473d6a3b4e5653fb266d5575daf9e25abf26b8c8bc3dac5eb3"
+        },
+        "replay.jsonl": {
+          "length": 71834,
+          "sha256": "3fa395b1e57cc76120958a600b382a6e47b526411a5267486da3c905bf698faa"
+        },
+        "result.json": {
+          "length": 3782,
+          "sha256": "527ef3baae57de66ce79bc0c0b5c3ad311498925a59d1c624fc7e77e518c83eb"
+        },
+        "sources/A/agent.py": {
+          "length": 6421,
+          "sha256": "0181c6800492c51bd8251c4219a3ea32f81a36810197896965d4ec7b4a10efcb"
+        },
+        "sources/A/agent.yaml": {
+          "length": 1272,
+          "sha256": "f71d1def1a53a5ed72de5248a12e4e585d285aa4031949805409f86cfbd55ee7"
+        },
+        "sources/B/agent.py": {
+          "length": 748,
+          "sha256": "fafe410879ebb282ca1be329ea266c6c8ca83475e0613b5e661a463b3694c86c"
+        },
+        "sources/B/agent.yaml": {
+          "length": 206,
+          "sha256": "c249143d25f7e8cd20f060e1cff02e3666048d131ca08accbc682aac4f98cd6a"
+        },
+        "trace.jsonl": {
+          "length": 996967,
+          "sha256": "9d5b5af909ad9fcdaf205373855e3289feb53e104db80b617d318ec8fc43c98c"
+        }
+      }
+    },
+    {
+      "platform": "Windows",
+      "seat": "A",
+      "repeat": 2,
+      "complete": true,
+      "verdicts": {
+        "artifact_consistent": true,
+        "reconstruction_valid": true,
+        "source_capture_valid": true,
+        "scenario_complete": true
+      },
+      "match_id": "match_eba20d70f642a2c4a8a05f2d",
+      "contact": [
+        [
+          1,
+          1
+        ]
+      ],
+      "absence": [
+        [
+          1,
+          9
+        ]
+      ],
+      "reacquisition": [
+        [
+          1,
+          13
+        ]
+      ],
+      "response": [
+        [
+          1,
+          13
+        ]
+      ],
+      "fallback": [],
+      "raw": {
+        "demo.json": {
+          "length": 2574,
+          "sha256": "d5260df39040074293abaaccb264c906caf98b37ae5826e3598868d737ef2a90"
+        },
+        "replay.jsonl": {
+          "length": 71834,
+          "sha256": "3fa395b1e57cc76120958a600b382a6e47b526411a5267486da3c905bf698faa"
+        },
+        "result.json": {
+          "length": 3782,
+          "sha256": "74b5b7ed021a2090005f129af9459c7463672752e9666edee4ba21f32488e34f"
+        },
+        "sources/A/agent.py": {
+          "length": 6421,
+          "sha256": "0181c6800492c51bd8251c4219a3ea32f81a36810197896965d4ec7b4a10efcb"
+        },
+        "sources/A/agent.yaml": {
+          "length": 1272,
+          "sha256": "f71d1def1a53a5ed72de5248a12e4e585d285aa4031949805409f86cfbd55ee7"
+        },
+        "sources/B/agent.py": {
+          "length": 748,
+          "sha256": "fafe410879ebb282ca1be329ea266c6c8ca83475e0613b5e661a463b3694c86c"
+        },
+        "sources/B/agent.yaml": {
+          "length": 206,
+          "sha256": "c249143d25f7e8cd20f060e1cff02e3666048d131ca08accbc682aac4f98cd6a"
+        },
+        "trace.jsonl": {
+          "length": 996433,
+          "sha256": "d9fa69540ecac9b002f863977bcbe4df6d50836e3ae21d4375306d641807ad6b"
+        }
+      }
+    },
+    {
+      "platform": "Windows",
+      "seat": "B",
+      "repeat": 1,
+      "complete": true,
+      "verdicts": {
+        "artifact_consistent": true,
+        "reconstruction_valid": true,
+        "source_capture_valid": true,
+        "scenario_complete": true
+      },
+      "match_id": "match_a13192c7e888978c8b67e41d",
+      "contact": [
+        [
+          1,
+          3
+        ]
+      ],
+      "absence": [
+        [
+          1,
+          11
+        ]
+      ],
+      "reacquisition": [
+        [
+          1,
+          15
+        ]
+      ],
+      "response": [
+        [
+          1,
+          15
+        ]
+      ],
+      "fallback": [],
+      "raw": {
+        "demo.json": {
+          "length": 2574,
+          "sha256": "181d2709438ae2d3ceb735b48a585fe597d4bcee9d96f95b6561967e6e136d13"
+        },
+        "replay.jsonl": {
+          "length": 71834,
+          "sha256": "5cf6e3ce4b1bf66a09cb8bcf6ce9fed7b94110621f1bd325f53a9624b16c842c"
+        },
+        "result.json": {
+          "length": 3782,
+          "sha256": "344ae7269e7136b38a70ee9ff234040531a9b246a04a2f47a8d58d354ca55de6"
+        },
+        "sources/A/agent.py": {
+          "length": 748,
+          "sha256": "fafe410879ebb282ca1be329ea266c6c8ca83475e0613b5e661a463b3694c86c"
+        },
+        "sources/A/agent.yaml": {
+          "length": 206,
+          "sha256": "c249143d25f7e8cd20f060e1cff02e3666048d131ca08accbc682aac4f98cd6a"
+        },
+        "sources/B/agent.py": {
+          "length": 6421,
+          "sha256": "0181c6800492c51bd8251c4219a3ea32f81a36810197896965d4ec7b4a10efcb"
+        },
+        "sources/B/agent.yaml": {
+          "length": 1272,
+          "sha256": "f71d1def1a53a5ed72de5248a12e4e585d285aa4031949805409f86cfbd55ee7"
+        },
+        "trace.jsonl": {
+          "length": 997624,
+          "sha256": "f8396db36b1ae778166b0ccfc190dd86e3583bb67139093bed146573ec395c7d"
+        }
+      }
+    },
+    {
+      "platform": "Windows",
+      "seat": "B",
+      "repeat": 2,
+      "complete": true,
+      "verdicts": {
+        "artifact_consistent": true,
+        "reconstruction_valid": true,
+        "source_capture_valid": true,
+        "scenario_complete": true
+      },
+      "match_id": "match_a13192c7e888978c8b67e41d",
+      "contact": [
+        [
+          1,
+          3
+        ]
+      ],
+      "absence": [
+        [
+          1,
+          11
+        ]
+      ],
+      "reacquisition": [
+        [
+          1,
+          15
+        ]
+      ],
+      "response": [
+        [
+          1,
+          15
+        ]
+      ],
+      "fallback": [],
+      "raw": {
+        "demo.json": {
+          "length": 2574,
+          "sha256": "67ca3240cbaa188af8c1aeb6fab1a38ed75b474b783c8826010a36cc60fdeb7b"
+        },
+        "replay.jsonl": {
+          "length": 71834,
+          "sha256": "5cf6e3ce4b1bf66a09cb8bcf6ce9fed7b94110621f1bd325f53a9624b16c842c"
+        },
+        "result.json": {
+          "length": 3782,
+          "sha256": "1b0fd720b25b03d0c6be89ab582bd5bf8d1a02d096a7c7728051931b6f19c6b8"
+        },
+        "sources/A/agent.py": {
+          "length": 748,
+          "sha256": "fafe410879ebb282ca1be329ea266c6c8ca83475e0613b5e661a463b3694c86c"
+        },
+        "sources/A/agent.yaml": {
+          "length": 206,
+          "sha256": "c249143d25f7e8cd20f060e1cff02e3666048d131ca08accbc682aac4f98cd6a"
+        },
+        "sources/B/agent.py": {
+          "length": 6421,
+          "sha256": "0181c6800492c51bd8251c4219a3ea32f81a36810197896965d4ec7b4a10efcb"
+        },
+        "sources/B/agent.yaml": {
+          "length": 1272,
+          "sha256": "f71d1def1a53a5ed72de5248a12e4e585d285aa4031949805409f86cfbd55ee7"
+        },
+        "trace.jsonl": {
+          "length": 997809,
+          "sha256": "97d448f2358f1a5c4a3683070af8301cc82faa6214ce5330cca875815afa14d5"
+        }
+      }
+    }
+  ],
+  "keeper_regression": [
+    {
+      "seat": "A",
+      "complete": true,
+      "repair": [
+        [
+          3,
+          24
+        ]
+      ],
+      "defensive": [
+        [
+          1,
+          8
+        ]
+      ],
+      "replay_bytes_equal_published": true,
+      "logical_equal_published_m2_2_body": true,
+      "raw": {
+        "demo.json": {
+          "length": 2552,
+          "sha256": "d1ede7d9dde52a6e3cdb46b8af06ba6d55feb5cd5c37129d0f20f84a162308ad"
+        },
+        "replay.jsonl": {
+          "length": 81975,
+          "sha256": "5c1184cff481ce95060d1fcaf2d7fdc05998f3b5e929b50d673fdad23bcaf568"
+        },
+        "result.json": {
+          "length": 3768,
+          "sha256": "1832b1b13b35a06d8fbb39307ef85c4f2df1b87e9132d549c3d4b98833c8c3ee"
+        },
+        "sources/A/agent.py": {
+          "length": 3471,
+          "sha256": "9a0dd6febdb7701ffed4537d80d4c5b2ddf57652c002919d9ec0e3d84d533649"
+        },
+        "sources/A/agent.yaml": {
+          "length": 1030,
+          "sha256": "e52a2467e6e65e9b20aaf84f8578ca13b900c8fa8b91e9af9b6ac20d98bf8496"
+        },
+        "sources/B/agent.py": {
+          "length": 772,
+          "sha256": "168d242d692885405a4c08d602b44c4a843ac0915fe55a85bfc4c0420dc268b4"
+        },
+        "sources/B/agent.yaml": {
+          "length": 208,
+          "sha256": "e5b7f1734e188e01bd5d86851321b21c613fc632b97ae6b70dea7f596ca2f6dc"
+        },
+        "trace.jsonl": {
+          "length": 567513,
+          "sha256": "9e588631d0d098e0f190cee11deebc269d6ab94efb6049d4d60dd7fe99577acf"
+        }
+      }
+    },
+    {
+      "seat": "B",
+      "complete": true,
+      "repair": [
+        [
+          1,
+          6
+        ]
+      ],
+      "defensive": [
+        [
+          1,
+          10
+        ]
+      ],
+      "replay_bytes_equal_published": true,
+      "logical_equal_published_m2_2_body": true,
+      "raw": {
+        "demo.json": {
+          "length": 2552,
+          "sha256": "2b1db1c432ee00aa58d34a9585e626c3d0e04bed1f57e46f5189ff96ed325f05"
+        },
+        "replay.jsonl": {
+          "length": 81955,
+          "sha256": "dbbbd070c7950ec47cc56daac0aee83ce2fa20f4031eb6c5f187df9746c4021a"
+        },
+        "result.json": {
+          "length": 3758,
+          "sha256": "d53c5f36b58b7bfbecdfcd95280436d2a0c79656dfacead1ddfe42e67429cc99"
+        },
+        "sources/A/agent.py": {
+          "length": 772,
+          "sha256": "168d242d692885405a4c08d602b44c4a843ac0915fe55a85bfc4c0420dc268b4"
+        },
+        "sources/A/agent.yaml": {
+          "length": 208,
+          "sha256": "e5b7f1734e188e01bd5d86851321b21c613fc632b97ae6b70dea7f596ca2f6dc"
+        },
+        "sources/B/agent.py": {
+          "length": 3471,
+          "sha256": "9a0dd6febdb7701ffed4537d80d4c5b2ddf57652c002919d9ec0e3d84d533649"
+        },
+        "sources/B/agent.yaml": {
+          "length": 1030,
+          "sha256": "e52a2467e6e65e9b20aaf84f8578ca13b900c8fa8b91e9af9b6ac20d98bf8496"
+        },
+        "trace.jsonl": {
+          "length": 567477,
+          "sha256": "14dfda6fa15e3a5e8b0595e2038a6f934f0f0bb10bd089ad39d7dc1caa49182f"
+        }
+      }
+    }
+  ],
+  "status": "PASS",
+  "reacquirer_logical_equal_A": true,
+  "reacquirer_logical_equal_B": true
+}

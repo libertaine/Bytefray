@@ -854,6 +854,7 @@ def test_cli_help_lists_stable_default_and_explicit_alpha1_only(capsys):
 
 @pytest.mark.parametrize("template,opponent", [
     ("watchful_keeper", False), ("window_scout", False), ("watchful_keeper", True),
+    ("roaming_reacquirer", False), ("roaming_reacquirer", True),
 ])
 def test_cli_explicit_alpha1_supervised_personal_copy(tmp_path, template, opponent):
     """Real command/worker route, full default budget or legitimate termination."""
@@ -881,8 +882,11 @@ def test_cli_explicit_alpha1_supervised_personal_copy(tmp_path, template, oppone
     assert all(entrant["diagnostic"] is None for entrant in result["entrants"])
     personal = result["entrants"][1 if opponent else 0]
     assert personal["name"] == "personal"
-    expected = ({"scan_interval": 4, "perimeter_offset": 27} if template == "watchful_keeper"
-                else {"search_interval": 4, "move_step": 64})
+    expected = {
+        "watchful_keeper": {"scan_interval": 4, "perimeter_offset": 27},
+        "window_scout": {"search_interval": 4, "move_step": 64},
+        "roaming_reacquirer": {"search_offset": 91, "move_step": 64, "rescan_wait": 3},
+    }[template]
     assert personal["metadata"]["parameters"] == expected
     assert result["ticks"] == 200 or result["termination_reason"] == "last_agent_standing"
 
@@ -912,13 +916,14 @@ def _preflight_sentinels(root, directory):
     return imported, reset
 
 
+@pytest.mark.parametrize("template", ["watchful_keeper", "roaming_reacquirer"])
 @pytest.mark.parametrize("opponent", [False, True])
 @pytest.mark.parametrize("explicit", [False, True])
 def test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts(
-    tmp_path, monkeypatch, capsys, opponent, explicit,
+    tmp_path, monkeypatch, capsys, opponent, explicit, template,
 ):
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
-    scaffold_create_agent("sensor", template="watchful_keeper", data_root=tmp_path, resource_root=ROOT)
+    scaffold_create_agent("sensor", template=template, data_root=tmp_path, resource_root=ROOT)
     scaffold_create_agent("ordinary", data_root=tmp_path, resource_root=ROOT)
     sentinels = [_preflight_sentinels(tmp_path, tmp_path / "agents" / name)
                  for name in ("sensor", "ordinary")]

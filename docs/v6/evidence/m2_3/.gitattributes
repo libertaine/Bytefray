@@ -1,0 +1,3 @@
+# Preserve raw evidence bytes: demo.json and the comparison files bind SHA-256
+# values of the traces, which are CRLF bodies, so no end-of-line normalization here.
+* -text

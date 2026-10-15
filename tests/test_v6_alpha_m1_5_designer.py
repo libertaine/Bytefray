@@ -288,6 +288,118 @@ def test_keeper_native_copy_validate_edit_full_match_reopen(tmp_path, monkeypatc
         app.processEvents()
 
 
+@pytest.mark.parametrize("seat", ["A", "B"])
+def test_reacquirer_native_copy_validate_edit_full_match_reopen(tmp_path, monkeypatch, seat):
+    """Real Qt widgets/native children for the Roaming Reacquirer personal copy."""
+    pytest.importorskip("PySide6")
+    import json
+
+    from battle_engine.agent_parameters import AgentParameterError, resolve_parameters
+    from battle_engine.agents import agent_spec_from_dir
+    from battle_engine.result_model import read_result
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+    from PySide6.QtWidgets import QApplication, QDialogButtonBox, QLabel
+
+    from app.agent_designer import AgentDesigner
+    from app.views.development import NewAgentDialog
+
+    monkeypatch.setenv("QT_QPA_PLATFORM", "windows" if sys.platform == "win32" else "xcb")
+    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
+    monkeypatch.setenv("BYTEFRAY_AGENTS_DIR", str(tmp_path / "agents"))
+    app = QApplication.instance() or QApplication([])
+    assert app.platformName() == ("windows" if sys.platform == "win32" else "xcb")
+    dialog = NewAgentDialog(tmp_path)
+    dialog.show()
+    dialog.agentId.setText("personal_reacquirer")
+    index = dialog.templateCombo.findData("roaming_reacquirer")
+    assert dialog.templateCombo.itemText(index) == "Roaming Reacquirer — personal copy"
+    dialog.templateCombo.setCurrentIndex(index)
+    QTest.mouseClick(dialog.findChild(QDialogButtonBox).button(QDialogButtonBox.Ok), Qt.LeftButton)
+    assert dialog.result is not None
+    source = tmp_path / "agents/personal_reacquirer/agent.py"
+    manifest = json.loads(source.with_name("agent.yaml").read_text())
+    assert manifest["capabilities"] == {"version": 1, "required": ["sense"]}
+    duplicate = NewAgentDialog(tmp_path)
+    duplicate.agentId.setText("personal_reacquirer")
+    duplicate.templateCombo.setCurrentIndex(duplicate.templateCombo.findData("roaming_reacquirer"))
+    QTest.mouseClick(duplicate.findChild(QDialogButtonBox).button(QDialogButtonBox.Ok), Qt.LeftButton)
+    assert duplicate.result is None
+    edited = {"search_offset": 64, "move_step": 32, "rescan_wait": 2}
+    designer = AgentDesigner()
+    designer.show()
+    try:
+        development = designer.development
+        designer.tabs.setCurrentWidget(development)
+        development.selectAgent("personal_reacquirer")
+        assert development.selected_ruleset_id() == "bytefray-rules-4"
+        QTest.mouseClick(development.btnValidate, Qt.LeftButton)
+        _wait(app, designer)
+        assert "capabilit" in development.statusLabel.text().lower()
+        development.rulesetCombo.setCurrentIndex(development.rulesetCombo.findData("bytefray-rules-6-alpha1"))
+        QTest.mouseClick(development.btnValidate, Qt.LeftButton)
+        _wait(app, designer)
+        assert "Last validation: Valid" in development.statusLabel.text()
+        advanced = designer.advanced
+        designer.tabs.setCurrentWidget(advanced)
+        assert advanced.ruleset.currentData() == "bytefray-rules-4"
+        advanced.ruleset.setCurrentIndex(advanced.ruleset.findData("bytefray-rules-6-alpha1"))
+        advanced.agentA.setCurrentIndex(advanced.agentA.findData("personal_reacquirer" if seat == "A" else "v4_scout"))
+        advanced.agentB.setCurrentIndex(advanced.agentB.findData("personal_reacquirer" if seat == "B" else "v4_scout"))
+        schema = advanced.schemaA if seat == "A" else advanced.schemaB
+        for name, value in edited.items():
+            schema._controls[name].setValue(value)
+        advanced.ticks.setValue(100)
+        QTest.mouseClick(advanced.btnRun, Qt.LeftButton)
+        _wait(app, designer)
+        path = Path(designer._last_result_path)
+        result = read_result(path)
+        index = 0 if seat == "A" else 1
+        assert result.entrants[index]["metadata"]["parameters"] == edited
+        assert json.loads(path.read_text())["status"] == "completed"
+        launched = []
+        monkeypatch.setattr("app.agent_designer.open_pygame_client_direct", lambda root, replay: launched.append(replay))
+        designer._on_open_replay()
+        assert launched == [path.with_name("replay.jsonl")]
+        schema._controls["rescan_wait"].setValue(5)
+        app.processEvents()
+        assert designer._last_result_path == path
+        labels = "\n".join(label.text() for label in advanced.findChildren(QLabel)).lower()
+        assert "earlier" in labels and "settings" in labels
+        with pytest.raises(AgentParameterError):
+            resolve_parameters(agent_spec_from_dir(source.parent).parameter_schema, overrides={"rescan_wait": 9})
+        source.write_bytes(source.read_bytes() + b"\n# Personal revision after match.\n")
+        development.reloadSource()
+        app.processEvents()
+        assert "Last validation: Valid" not in development.statusLabel.text()
+        assert path.is_file()
+        designer._on_open_replay()
+        assert launched[-1] == path.with_name("replay.jsonl")
+        assert designer.grab().save(str(tmp_path / f"reacquirer_{seat}.png"))
+        designer.tabs.setCurrentWidget(development)
+        QTest.mouseClick(development.btnTest, Qt.LeftButton)
+        _wait(app, designer)
+        test_path, test_replay = _assert_default_development_artifacts(
+            development, {"search_offset": 91, "move_step": 64, "rescan_wait": 3},
+        )
+        assert test_path != path
+        designer._on_open_test_replay()
+        assert launched[-1] == test_replay
+        assert designer._last_result_path == path and path.is_file()
+        designer._on_open_replay()
+        assert launched[-1] == path.with_name("replay.jsonl")
+        assert result.entrants[index]["metadata"]["parameters"] == edited
+        labels = "\n".join(label.text() for label in advanced.findChildren(QLabel)).lower()
+        assert "earlier" in labels and "settings" in labels
+        assert designer.grab().save(str(tmp_path / f"reacquirer_{seat}_test.png"))
+    finally:
+        designer.close()
+        designer.deleteLater()
+        dialog.deleteLater()
+        duplicate.deleteLater()
+        app.processEvents()
+
+
 def test_scout_native_manifest_default_development_test(tmp_path, monkeypatch):
     """Explicit Alpha 1 uses the real QProcess CLI, independently of Advanced edits."""
     pytest.importorskip("PySide6")

@@ -1,0 +1,15 @@
+diff --git a/engine/tests/test_v6_alpha_m2_keeper.py b/engine/tests/test_v6_alpha_m2_keeper.py
+index 5d60a2f..e9aec78 100644
+--- a/engine/tests/test_v6_alpha_m2_keeper.py
++++ b/engine/tests/test_v6_alpha_m2_keeper.py
+@@ -172,7 +172,9 @@ def test_personal_copy_manifest_and_source_retention_and_overwrite_refusal(tmp_p
+     with pytest.raises(AgentScaffoldError, match="already exists"):
+         create_agent("my_keeper", data_root=tmp_path, resource_root=ROOT, template="watchful_keeper")
+     assert "v6_encroaching_opponent" not in STARTER_AGENT_NAMES
+-    assert STARTER_AGENT_NAMES[-3:] == ("v6_window_scout", "v6_watchful_keeper", "v5_dual_team")
++    assert STARTER_AGENT_NAMES[-4:] == (
++        "v6_window_scout", "v6_watchful_keeper", "v6_roaming_reacquirer", "v5_dual_team",
++    )
+     assert starter_content_digest(KEEPER) == CURRENT_STARTER_DIGESTS["v6_watchful_keeper"]
+ 
+ 

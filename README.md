@@ -147,11 +147,14 @@ describes the authoring and viewer integration.
 [design review](docs/v6/V6_ALPHA_M2_DESIGN_REVIEW_02.md), the lead accepted
 [Scope Revision 03](docs/v6/V6_ALPHA_M2_SCOPE_CONTRACT_03.md) with conditions.
 Its **M2-2 Watchful Keeper** slice is technically accepted and CLOSED — PASS WITH
-CONDITIONS ([closure record](docs/v6/V6_ALPHA_M2_2_CLOSURE_01.md)). That
-acceptance covers Windows and Linux WSL2/WSLg X11 only and is not a release
-authorization. Roaming Reacquirer (M2-3), A/B replay and layout usability work,
-and human evaluation remain ahead; M2-3 awaits a separate
-[authorization decision](docs/v6/V6_ALPHA_M2_3_ENTRY_DECISION_01.md).
+CONDITIONS ([closure record](docs/v6/V6_ALPHA_M2_2_CLOSURE_01.md)). Its **M2-3
+Roaming Reacquirer** implementation is accepted — PASS WITH CONDITIONS
+([closure record](docs/v6/V6_ALPHA_M2_3_CLOSURE_01.md)). Both acceptances cover
+Windows and Linux WSL2/WSLg X11 only and are not release authorizations. A/B
+replay and layout usability work (M2-4), technical qualification and human
+evaluation remain ahead; M2-4 has a read-only
+[entry review](docs/v6/V6_ALPHA_M2_4_ENTRY_DECISION_01.md) and awaits a separate
+authorization decision.
 
 ## V6 Alpha 1: decisions from delivered information
 
@@ -188,7 +191,10 @@ then resumed scouting. The stationary opponent is an internal fixture, not a
 competitive starter. Watchful Keeper (`v6_watchful_keeper`) adds the defensive
 lesson — delivered READ ownership supports a repair attempt and an anonymous
 SENSE receipt supports one defensive WRITE — and is accepted as M2-2. Roaming
-Reacquirer's contact-loss/search/reacquisition lesson remains planned M2-3 work.
+Reacquirer (`v6_roaming_reacquirer`) adds the reacquisition lesson — a paid
+rescan records only that an old address was absent from a newer sample, and a
+paid MOVE and new SENSE find a new anonymous contact without claiming it is the
+same process — and is accepted as M2-3.
 
 Reach has **no direct resource or quota cost** in Alpha 1. Window Scout deliberately
 uses reach 128 to make movement and search legible; legal unrestricted circular

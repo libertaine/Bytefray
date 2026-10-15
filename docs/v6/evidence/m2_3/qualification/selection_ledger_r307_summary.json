@@ -1,0 +1,541 @@
+{
+  "origin": "m2_3_20261015/selection_ledger_r307.json",
+  "origin_sha256": "15bd9fb15ddccd71f04db179613372432c4a7e7749b9ec14335eacc0a4a5a44f",
+  "sanitization": "checkout prefix -> <checkout>; per-campaign pytest scratch label -> <campaign>",
+  "ledger": {
+    "broad_vs_m2_2a": {
+      "prior": {
+        "file": "m2_2a_windows_broad.xml",
+        "nodes": 3394,
+        "outcomes": {
+          "passed": 3374,
+          "skipped": 20
+        }
+      },
+      "current": {
+        "file": "m2_3_broad_r307.xml",
+        "nodes": 3462,
+        "outcomes": {
+          "passed": 3441,
+          "skipped": 21
+        }
+      },
+      "added_by_module": {
+        "engine.tests.test_agent_test": 10,
+        "engine.tests.test_frozen_scaffold_resources": 3,
+        "engine.tests.test_starter_directory_validity": 1,
+        "engine.tests.test_v6_alpha_m2_reacquirer": 56,
+        "engine.tests.test_windows_packaging_spec": 2
+      },
+      "added": [
+        "engine.tests.test_agent_test::test_cli_explicit_alpha1_supervised_personal_copy[roaming_reacquirer-False]",
+        "engine.tests.test_agent_test::test_cli_explicit_alpha1_supervised_personal_copy[roaming_reacquirer-True]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[False-False-roaming_reacquirer]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[False-False-watchful_keeper]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[False-True-roaming_reacquirer]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[False-True-watchful_keeper]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[True-False-roaming_reacquirer]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[True-False-watchful_keeper]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[True-True-roaming_reacquirer]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[True-True-watchful_keeper]",
+        "engine.tests.test_frozen_scaffold_resources::test_creation_through_the_real_resource_root_is_structurally_usable[api2-roaming_reacquirer]",
+        "engine.tests.test_frozen_scaffold_resources::test_every_supported_template_is_present_in_this_environment[api2-roaming_reacquirer]",
+        "engine.tests.test_frozen_scaffold_resources::test_frozen_executable_creates_every_supported_variant[api2-roaming_reacquirer]",
+        "engine.tests.test_starter_directory_validity::test_every_bundled_starter_is_valid_under_the_same_check[v6_roaming_reacquirer]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_absent_rescan_records_only_absence_and_keeps_other_addresses_as_samples",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_entrant_views_record_absence_and_new_contact_without_identity_claims[A]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_entrant_views_record_absence_and_new_contact_without_identity_claims[B]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_i1_empty_first_search_stays_in_discovery_without_inventing_a_target",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_i2_refused_null_or_absent_rescan_infers_nothing_and_keeps_original_age[False-None]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_i2_refused_null_or_absent_rescan_infers_nothing_and_keeps_original_age[False-sample2]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_i2_refused_null_or_absent_rescan_infers_nothing_and_keeps_original_age[False-sample3]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_i2_refused_null_or_absent_rescan_infers_nothing_and_keeps_original_age[True-None]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_i2_refused_search_after_absence_keeps_that_search_mode",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_i3_fallback_is_counted_once_per_emitting_callback_and_never_a_scan",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_illegal_rescan_center_resumes_search_without_absence",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_in_reach_new_contact_selects_smallest_address_and_writes_once",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_inclusive_parameter_bounds[0-1-1]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_inclusive_parameter_bounds[128-64-8]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_native_both_seats_reproduce_predicted_witnesses[A]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_native_both_seats_reproduce_predicted_witnesses[B]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_native_suppression_delays_same_process_receipt_or_terminal_withholds_it[1]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_native_suppression_delays_same_process_receipt_or_terminal_withholds_it[2]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_nonzero_seeded_start_policy_is_anchor_relative[A]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_nonzero_seeded_start_policy_is_anchor_relative[B]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_parameter_rejection_uses_canonical_schema[params0]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_parameter_rejection_uses_canonical_schema[params1]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_parameter_rejection_uses_canonical_schema[params2]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_parameter_rejection_uses_canonical_schema[params3]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_parameter_rejection_uses_canonical_schema[params4]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_parameter_rejection_uses_canonical_schema[params5]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_parameter_rejection_uses_canonical_schema[params6]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_parameter_rejection_uses_canonical_schema[params7]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_personal_copy_manifest_source_retention_overwrite_and_registration",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_r1_supplied_sequence_is_anchor_relative_one_action_per_callback[0]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_r1_supplied_sequence_is_anchor_relative_one_action_per_callback[133]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_r1_supplied_sequence_is_anchor_relative_one_action_per_callback[509]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_reacquirer_runner_preserves_existing_evidence",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_reacquirer_runner_rejects_unsafe_output_before_source_access[engine/escape]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_reacquirer_runner_rejects_unsafe_output_before_source_access[runs/v6_alpha_m2/e9_private/escape]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_reacquirer_runner_rejects_unsafe_output_before_source_access[runs/v6_alpha_m2/research/escape]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_rescan_with_old_address_records_newer_sample_and_restarts_paid_wait",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_reset_clears_state",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_response_direction_bounds_and_single_write[250-10-10]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_response_direction_bounds_and_single_write[300-64-64]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_response_direction_bounds_and_single_write[320-64-64]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_response_direction_bounds_and_single_write[376-64--64]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_scenario_rejects_false_provenance_and_success[binding]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_scenario_rejects_false_provenance_and_success[claim]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_scenario_rejects_false_provenance_and_success[drift]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_scenario_rejects_false_provenance_and_success[false_success]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_scenario_rejects_false_provenance_and_success[missing_source]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_scenario_rejects_false_provenance_and_success[params]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_scenario_rejects_false_provenance_and_success[source]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_scenario_rejects_false_provenance_and_success[wrong_seat]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_source_audit_uses_only_delivered_observation_and_own_state",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_stable_v4_mismatch_precedes_import_and_artifacts_on_every_route",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_trusted_verifiers_never_award_each_other[A]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_trusted_verifiers_never_award_each_other[B]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_unrelated_feedback_is_never_a_scan_receipt",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_valid_prefix_without_reacquisition_and_tampered_receipt_cannot_complete",
+        "engine.tests.test_windows_packaging_spec::test_every_supported_scaffold_template_reaches_the_frozen_tree[starter_agents/v6_roaming_reacquirer-agent_designer]",
+        "engine.tests.test_windows_packaging_spec::test_every_supported_scaffold_template_reaches_the_frozen_tree[starter_agents/v6_roaming_reacquirer-bytefray]"
+      ],
+      "removed": [
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[False-False]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[False-True]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[True-False]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[True-True]"
+      ],
+      "outcome_changed": {},
+      "new_skips": [
+        [
+          "engine.tests.test_agent_package::test_export_preflights_large_internal_file_symlink_before_reading_target",
+          "file symlinks are unavailable in this environment: [WinError 1314] A required privilege is not held by the client: '.git//large.bin' -> '<checkout>//.pytest-tmp//m2_3_broad_r307//<scratch>//install_a//agents//linked_large//linked.bin'"
+        ],
+        [
+          "engine.tests.test_frozen_scaffold_resources::test_frozen_executable_creates_every_supported_variant[api2-roaming_reacquirer]",
+          "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+        ],
+        [
+          "engine.tests.test_replay_integrity::test_replay_symlink_escape_is_rejected_where_supported",
+          "creating a test symlink is unavailable: [WinError 1314] A required privilege is not held by the client: '<checkout>//.pytest-tmp//m2_3_broad_r307//<scratch>//outside.jsonl' -> '<checkout>//.pytest-tmp//m2_3_broad_r307//<scratch>//match//replay.jsonl'"
+        ]
+      ],
+      "dropped_skips": [
+        [
+          "engine.tests.test_agent_package::test_export_preflights_large_internal_file_symlink_before_reading_target",
+          "file symlinks are unavailable in this environment: [WinError 1314] A required privilege is not held by the client: '.git//large.bin' -> '<checkout>//.pytest-tmp//m2_2a_windows_broad//<scratch>//install_a//agents//linked_large//linked.bin'"
+        ],
+        [
+          "engine.tests.test_replay_integrity::test_replay_symlink_escape_is_rejected_where_supported",
+          "creating a test symlink is unavailable: [WinError 1314] A required privilege is not held by the client: '<checkout>//.pytest-tmp//m2_2a_windows_broad//<scratch>//outside.jsonl' -> '<checkout>//.pytest-tmp//m2_2a_windows_broad//<scratch>//match//replay.jsonl'"
+        ]
+      ],
+      "skips": [
+        [
+          "engine.tests.test_agent_evaluation_revision_capture::test_evaluation_captures_symlink_cycle_as_revision_omissions",
+          "Symlink creation is not permitted in this environment."
+        ],
+        [
+          "engine.tests.test_agent_package::test_export_preflights_large_internal_file_symlink_before_reading_target",
+          "file symlinks are unavailable in this environment: [WinError 1314] A required privilege is not held by the client: '.git//large.bin' -> '<checkout>//.pytest-tmp//m2_3_broad_r307//<scratch>//install_a//agents//linked_large//linked.bin'"
+        ],
+        [
+          "engine.tests.test_agent_package::test_export_rejects_nonportable_live_payload_name_before_read",
+          "NTFS treats colon names as alternate data streams, not enumerable files"
+        ],
+        [
+          "engine.tests.test_agent_revisions::test_broken_symlink_is_reported_not_a_file",
+          "Symlink creation is not permitted in this environment."
+        ],
+        [
+          "engine.tests.test_agent_revisions::test_completeness_and_fingerprint_reflect_omissions",
+          "Symlink creation is not permitted in this environment."
+        ],
+        [
+          "engine.tests.test_agent_revisions::test_external_file_symlink_is_reported_not_silently_dropped",
+          "Symlink creation is not permitted in this environment."
+        ],
+        [
+          "engine.tests.test_agent_revisions::test_internal_file_symlink_is_dereferenced_and_included",
+          "Symlink creation is not permitted in this environment."
+        ],
+        [
+          "engine.tests.test_agent_revisions::test_symlink_cycle_is_reported_as_deterministic_omissions",
+          "Symlink creation is not permitted in this environment."
+        ],
+        [
+          "engine.tests.test_agent_revisions::test_verify_revision_accounts_for_recorded_omissions",
+          "Symlink creation is not permitted in this environment."
+        ],
+        [
+          "engine.tests.test_evaluation_history_verification::test_resolve_contained_path_rejects_symlink_escape",
+          "symlink creation requires elevated privileges on Windows"
+        ],
+        [
+          "engine.tests.test_evaluation_history_verification::test_verify_cell_rejects_symlink_escape_replay_filename",
+          "symlink creation requires elevated privileges on Windows"
+        ],
+        [
+          "engine.tests.test_frozen_bytecode_exclusion::test_frozen_payload_contains_no_python_bytecode",
+          "set BYTEFRAY_FROZEN_EXE to a built executable to inspect its payload"
+        ],
+        [
+          "engine.tests.test_frozen_scaffold_resources::test_frozen_executable_bundles_every_supported_template_directory",
+          "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+        ],
+        [
+          "engine.tests.test_frozen_scaffold_resources::test_frozen_executable_creates_every_supported_variant[api2-annotated]",
+          "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+        ],
+        [
+          "engine.tests.test_frozen_scaffold_resources::test_frozen_executable_creates_every_supported_variant[api2-blank]",
+          "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+        ],
+        [
+          "engine.tests.test_frozen_scaffold_resources::test_frozen_executable_creates_every_supported_variant[api2-roaming_reacquirer]",
+          "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+        ],
+        [
+          "engine.tests.test_frozen_scaffold_resources::test_frozen_executable_creates_every_supported_variant[api2-watchful_keeper]",
+          "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+        ],
+        [
+          "engine.tests.test_frozen_scaffold_resources::test_frozen_executable_creates_every_supported_variant[api2-window_scout]",
+          "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+        ],
+        [
+          "engine.tests.test_frozen_scaffold_resources::test_frozen_smoke_is_not_silently_satisfied_by_the_source_tree",
+          "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+        ],
+        [
+          "engine.tests.test_launchers::test_source_commands_do_not_resolve_a_symlinked_interpreter",
+          "POSIX symlink semantics only"
+        ],
+        [
+          "engine.tests.test_replay_integrity::test_replay_symlink_escape_is_rejected_where_supported",
+          "creating a test symlink is unavailable: [WinError 1314] A required privilege is not held by the client: '<checkout>//.pytest-tmp//m2_3_broad_r307//<scratch>//outside.jsonl' -> '<checkout>//.pytest-tmp//m2_3_broad_r307//<scratch>//match//replay.jsonl'"
+        ]
+      ],
+      "failures": {}
+    },
+    "broad_vs_m2_3_final": {
+      "prior": {
+        "file": "m2_3_broad_final.xml",
+        "nodes": 3462,
+        "outcomes": {
+          "passed": 3440,
+          "skipped": 21,
+          "failure": 1
+        }
+      },
+      "current": {
+        "file": "m2_3_broad_r307.xml",
+        "nodes": 3462,
+        "outcomes": {
+          "passed": 3441,
+          "skipped": 21
+        }
+      },
+      "added_by_module": {},
+      "added": [],
+      "removed": [],
+      "outcome_changed": {
+        "engine.tests.test_v6_alpha_m2_keeper::test_personal_copy_manifest_and_source_retention_and_overwrite_refusal": [
+          "failure",
+          "passed"
+        ]
+      },
+      "new_skips": [
+        [
+          "engine.tests.test_agent_package::test_export_preflights_large_internal_file_symlink_before_reading_target",
+          "file symlinks are unavailable in this environment: [WinError 1314] A required privilege is not held by the client: '.git//large.bin' -> '<checkout>//.pytest-tmp//m2_3_broad_r307//<scratch>//install_a//agents//linked_large//linked.bin'"
+        ],
+        [
+          "engine.tests.test_replay_integrity::test_replay_symlink_escape_is_rejected_where_supported",
+          "creating a test symlink is unavailable: [WinError 1314] A required privilege is not held by the client: '<checkout>//.pytest-tmp//m2_3_broad_r307//<scratch>//outside.jsonl' -> '<checkout>//.pytest-tmp//m2_3_broad_r307//<scratch>//match//replay.jsonl'"
+        ]
+      ],
+      "dropped_skips": [
+        [
+          "engine.tests.test_agent_package::test_export_preflights_large_internal_file_symlink_before_reading_target",
+          "file symlinks are unavailable in this environment: [WinError 1314] A required privilege is not held by the client: '.git//large.bin' -> '<checkout>//.pytest-tmp//m2_3_broad_final//<scratch>//install_a//agents//linked_large//linked.bin'"
+        ],
+        [
+          "engine.tests.test_replay_integrity::test_replay_symlink_escape_is_rejected_where_supported",
+          "creating a test symlink is unavailable: [WinError 1314] A required privilege is not held by the client: '<checkout>//.pytest-tmp//m2_3_broad_final//<scratch>//outside.jsonl' -> '<checkout>//.pytest-tmp//m2_3_broad_final//<scratch>//match//replay.jsonl'"
+        ]
+      ],
+      "skips": [
+        [
+          "engine.tests.test_agent_evaluation_revision_capture::test_evaluation_captures_symlink_cycle_as_revision_omissions",
+          "Symlink creation is not permitted in this environment."
+        ],
+        [
+          "engine.tests.test_agent_package::test_export_preflights_large_internal_file_symlink_before_reading_target",
+          "file symlinks are unavailable in this environment: [WinError 1314] A required privilege is not held by the client: '.git//large.bin' -> '<checkout>//.pytest-tmp//m2_3_broad_r307//<scratch>//install_a//agents//linked_large//linked.bin'"
+        ],
+        [
+          "engine.tests.test_agent_package::test_export_rejects_nonportable_live_payload_name_before_read",
+          "NTFS treats colon names as alternate data streams, not enumerable files"
+        ],
+        [
+          "engine.tests.test_agent_revisions::test_broken_symlink_is_reported_not_a_file",
+          "Symlink creation is not permitted in this environment."
+        ],
+        [
+          "engine.tests.test_agent_revisions::test_completeness_and_fingerprint_reflect_omissions",
+          "Symlink creation is not permitted in this environment."
+        ],
+        [
+          "engine.tests.test_agent_revisions::test_external_file_symlink_is_reported_not_silently_dropped",
+          "Symlink creation is not permitted in this environment."
+        ],
+        [
+          "engine.tests.test_agent_revisions::test_internal_file_symlink_is_dereferenced_and_included",
+          "Symlink creation is not permitted in this environment."
+        ],
+        [
+          "engine.tests.test_agent_revisions::test_symlink_cycle_is_reported_as_deterministic_omissions",
+          "Symlink creation is not permitted in this environment."
+        ],
+        [
+          "engine.tests.test_agent_revisions::test_verify_revision_accounts_for_recorded_omissions",
+          "Symlink creation is not permitted in this environment."
+        ],
+        [
+          "engine.tests.test_evaluation_history_verification::test_resolve_contained_path_rejects_symlink_escape",
+          "symlink creation requires elevated privileges on Windows"
+        ],
+        [
+          "engine.tests.test_evaluation_history_verification::test_verify_cell_rejects_symlink_escape_replay_filename",
+          "symlink creation requires elevated privileges on Windows"
+        ],
+        [
+          "engine.tests.test_frozen_bytecode_exclusion::test_frozen_payload_contains_no_python_bytecode",
+          "set BYTEFRAY_FROZEN_EXE to a built executable to inspect its payload"
+        ],
+        [
+          "engine.tests.test_frozen_scaffold_resources::test_frozen_executable_bundles_every_supported_template_directory",
+          "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+        ],
+        [
+          "engine.tests.test_frozen_scaffold_resources::test_frozen_executable_creates_every_supported_variant[api2-annotated]",
+          "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+        ],
+        [
+          "engine.tests.test_frozen_scaffold_resources::test_frozen_executable_creates_every_supported_variant[api2-blank]",
+          "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+        ],
+        [
+          "engine.tests.test_frozen_scaffold_resources::test_frozen_executable_creates_every_supported_variant[api2-roaming_reacquirer]",
+          "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+        ],
+        [
+          "engine.tests.test_frozen_scaffold_resources::test_frozen_executable_creates_every_supported_variant[api2-watchful_keeper]",
+          "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+        ],
+        [
+          "engine.tests.test_frozen_scaffold_resources::test_frozen_executable_creates_every_supported_variant[api2-window_scout]",
+          "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+        ],
+        [
+          "engine.tests.test_frozen_scaffold_resources::test_frozen_smoke_is_not_silently_satisfied_by_the_source_tree",
+          "set BYTEFRAY_FROZEN_EXE to a built executable to run frozen smokes"
+        ],
+        [
+          "engine.tests.test_launchers::test_source_commands_do_not_resolve_a_symlinked_interpreter",
+          "POSIX symlink semantics only"
+        ],
+        [
+          "engine.tests.test_replay_integrity::test_replay_symlink_escape_is_rejected_where_supported",
+          "creating a test symlink is unavailable: [WinError 1314] A required privilege is not held by the client: '<checkout>//.pytest-tmp//m2_3_broad_r307//<scratch>//outside.jsonl' -> '<checkout>//.pytest-tmp//m2_3_broad_r307//<scratch>//match//replay.jsonl'"
+        ]
+      ],
+      "failures": {}
+    },
+    "focused_vs_m2_2a": {
+      "prior": {
+        "file": "m2_2a_focused_final.xml",
+        "nodes": 619,
+        "outcomes": {
+          "passed": 619
+        }
+      },
+      "current": {
+        "file": "m2_3_focused_r307.xml",
+        "nodes": 626,
+        "outcomes": {
+          "passed": 626
+        }
+      },
+      "added_by_module": {
+        "engine.tests.test_agent_test": 10,
+        "engine.tests.test_starter_directory_validity": 1
+      },
+      "added": [
+        "engine.tests.test_agent_test::test_cli_explicit_alpha1_supervised_personal_copy[roaming_reacquirer-False]",
+        "engine.tests.test_agent_test::test_cli_explicit_alpha1_supervised_personal_copy[roaming_reacquirer-True]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[False-False-roaming_reacquirer]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[False-False-watchful_keeper]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[False-True-roaming_reacquirer]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[False-True-watchful_keeper]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[True-False-roaming_reacquirer]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[True-False-watchful_keeper]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[True-True-roaming_reacquirer]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[True-True-watchful_keeper]",
+        "engine.tests.test_starter_directory_validity::test_every_bundled_starter_is_valid_under_the_same_check[v6_roaming_reacquirer]"
+      ],
+      "removed": [
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[False-False]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[False-True]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[True-False]",
+        "engine.tests.test_agent_test::test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts[True-True]"
+      ],
+      "outcome_changed": {},
+      "new_skips": [],
+      "dropped_skips": [],
+      "skips": [],
+      "failures": {}
+    },
+    "focused_vs_m2_3_final": {
+      "prior": {
+        "file": "m2_3_focused_final.xml",
+        "nodes": 626,
+        "outcomes": {
+          "passed": 625,
+          "failure": 1
+        }
+      },
+      "current": {
+        "file": "m2_3_focused_r307.xml",
+        "nodes": 626,
+        "outcomes": {
+          "passed": 626
+        }
+      },
+      "added_by_module": {},
+      "added": [],
+      "removed": [],
+      "outcome_changed": {
+        "engine.tests.test_v6_alpha_m2_keeper::test_personal_copy_manifest_and_source_retention_and_overwrite_refusal": [
+          "failure",
+          "passed"
+        ]
+      },
+      "new_skips": [],
+      "dropped_skips": [],
+      "skips": [],
+      "failures": {}
+    },
+    "keeper_vs_m2_3_final": {
+      "prior": {
+        "file": "m2_3_keeper_final.xml",
+        "nodes": 48,
+        "outcomes": {
+          "passed": 47,
+          "failure": 1
+        }
+      },
+      "current": {
+        "file": "m2_3_keeper_r307.xml",
+        "nodes": 48,
+        "outcomes": {
+          "passed": 48
+        }
+      },
+      "added_by_module": {},
+      "added": [],
+      "removed": [],
+      "outcome_changed": {
+        "engine.tests.test_v6_alpha_m2_keeper::test_personal_copy_manifest_and_source_retention_and_overwrite_refusal": [
+          "failure",
+          "passed"
+        ]
+      },
+      "new_skips": [],
+      "dropped_skips": [],
+      "skips": [],
+      "failures": {}
+    },
+    "reacquirer_vs_m2_3_final": {
+      "prior": {
+        "file": "m2_3_reacquirer_final.xml",
+        "nodes": 56,
+        "outcomes": {
+          "passed": 56
+        }
+      },
+      "current": {
+        "file": "m2_3_reacquirer_r307.xml",
+        "nodes": 56,
+        "outcomes": {
+          "passed": 56
+        }
+      },
+      "added_by_module": {},
+      "added": [],
+      "removed": [],
+      "outcome_changed": {},
+      "new_skips": [],
+      "dropped_skips": [],
+      "skips": [],
+      "failures": {}
+    },
+    "linux_focused_vs_m2_3_linux": {
+      "prior": {
+        "file": "m2_3_linux_focused.xml",
+        "nodes": 626,
+        "outcomes": {
+          "passed": 625,
+          "failure": 1
+        }
+      },
+      "current": {
+        "file": "m2_3_linux_focused_r307.xml",
+        "nodes": 626,
+        "outcomes": {
+          "passed": 626
+        }
+      },
+      "added_by_module": {},
+      "added": [],
+      "removed": [],
+      "outcome_changed": {
+        "engine.tests.test_v6_alpha_m2_keeper::test_personal_copy_manifest_and_source_retention_and_overwrite_refusal": [
+          "failure",
+          "passed"
+        ]
+      },
+      "new_skips": [],
+      "dropped_skips": [],
+      "skips": [],
+      "failures": {}
+    },
+    "linux_keeper_vs_windows_keeper_r307": {
+      "prior": {
+        "file": "m2_3_keeper_r307.xml",
+        "nodes": 48,
+        "outcomes": {
+          "passed": 48
+        }
+      },
+      "current": {
+        "file": "m2_3_linux_keeper_r307.xml",
+        "nodes": 48,
+        "outcomes": {
+          "passed": 48
+        }
+      },
+      "added_by_module": {},
+      "added": [],
+      "removed": [],
+      "outcome_changed": {},
+      "new_skips": [],
+      "dropped_skips": [],
+      "skips": [],
+      "failures": {}
+    }
+  }
+}

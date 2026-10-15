@@ -1,0 +1,13 @@
+{
+  "checked_for": "M2-3 publication preparation",
+  "baseline_head": "b948540aa9ef34134ff7e3c633c3acfc9f97da96",
+  "result": {
+    "ok": true,
+    "detail": {
+      "pins": 329,
+      "mismatches": []
+    }
+  },
+  "record": "m2_3_closure_20261015/preservation_publication.json",
+  "record_sha256": "f49565d48aaa6d30e115e9324deabe62b7162f01aafcd65d5cf87a566067d77b"
+}

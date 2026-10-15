@@ -379,6 +379,21 @@ Development Test executes a full match with manifest defaults. Use Advanced for
 edited-parameter full matches and Open Replay for their associated result.
 Changed settings/source label retained earlier output without rewriting it.
 
+Roaming Reacquirer is the third experimental V6 sensing starter. Create a copy
+with **New Agent → Roaming Reacquirer — personal copy**, or
+`bytefray agents create my_reacquirer --template roaming_reacquirer`, and select
+`bytefray-rules-6-alpha1` explicitly, as for Keeper. It scans relative to its
+own anchor. A positive receipt is an anonymous historical sample: it holds the
+smallest address and pays `rescan_wait` READs before it rescans that address.
+If an applied rescan omits the address, it records only "absent in a newer
+sample". It then pays a forward MOVE and a new search, and answers a new
+anonymous contact with one `0x52` WRITE when that address is in reach. A new
+contact is never assumed to be the same process. An applied empty search leads
+to another forward MOVE. Refused or missing scan feedback teaches nothing and
+does not refresh older samples. In Advanced, edit integer `search_offset`
+(0..128, default 91), `move_step` (1..64, default 64) and `rescan_wait` (1..8,
+default 3).
+
 The same create → validate → test → replay loop is also available from the
 PySide6 Agent Designer's **Agent Development** tab (`bytefray-agent-designer`
 or `bytefray design`), without touching a terminal:

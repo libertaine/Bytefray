@@ -1,0 +1,405 @@
+{
+  "status": "PASS",
+  "runs": [
+    {
+      "run": "reacquirer/A/1",
+      "first_actions": [
+        [
+          1,
+          2,
+          "read",
+          91
+        ],
+        [
+          1,
+          3,
+          "read",
+          91
+        ],
+        [
+          1,
+          6,
+          "read",
+          91
+        ],
+        [
+          1,
+          7,
+          "move",
+          64
+        ],
+        [
+          1,
+          10,
+          "read",
+          91
+        ],
+        [
+          1,
+          11,
+          "read",
+          91
+        ]
+      ],
+      "single_move": true,
+      "move_index": [
+        1,
+        7
+      ],
+      "anchor_after": 155,
+      "fixture_never_senses_or_writes": true,
+      "fixture_receives_no_sensed_anchors": true,
+      "ok": true
+    },
+    {
+      "run": "reacquirer/A/2",
+      "first_actions": [
+        [
+          1,
+          2,
+          "read",
+          91
+        ],
+        [
+          1,
+          3,
+          "read",
+          91
+        ],
+        [
+          1,
+          6,
+          "read",
+          91
+        ],
+        [
+          1,
+          7,
+          "move",
+          64
+        ],
+        [
+          1,
+          10,
+          "read",
+          91
+        ],
+        [
+          1,
+          11,
+          "read",
+          91
+        ]
+      ],
+      "single_move": true,
+      "move_index": [
+        1,
+        7
+      ],
+      "anchor_after": 155,
+      "fixture_never_senses_or_writes": true,
+      "fixture_receives_no_sensed_anchors": true,
+      "ok": true
+    },
+    {
+      "run": "reacquirer/B/1",
+      "first_actions": [
+        [
+          1,
+          0,
+          "read",
+          91
+        ],
+        [
+          1,
+          1,
+          "read",
+          91
+        ],
+        [
+          1,
+          4,
+          "read",
+          91
+        ],
+        [
+          1,
+          5,
+          "move",
+          64
+        ],
+        [
+          1,
+          8,
+          "read",
+          91
+        ],
+        [
+          1,
+          9,
+          "read",
+          91
+        ]
+      ],
+      "single_move": true,
+      "move_index": [
+        1,
+        5
+      ],
+      "anchor_after": 155,
+      "fixture_never_senses_or_writes": true,
+      "fixture_receives_no_sensed_anchors": true,
+      "ok": true
+    },
+    {
+      "run": "reacquirer/B/2",
+      "first_actions": [
+        [
+          1,
+          0,
+          "read",
+          91
+        ],
+        [
+          1,
+          1,
+          "read",
+          91
+        ],
+        [
+          1,
+          4,
+          "read",
+          91
+        ],
+        [
+          1,
+          5,
+          "move",
+          64
+        ],
+        [
+          1,
+          8,
+          "read",
+          91
+        ],
+        [
+          1,
+          9,
+          "read",
+          91
+        ]
+      ],
+      "single_move": true,
+      "move_index": [
+        1,
+        5
+      ],
+      "anchor_after": 155,
+      "fixture_never_senses_or_writes": true,
+      "fixture_receives_no_sensed_anchors": true,
+      "ok": true
+    },
+    {
+      "run": "linux_reacquirer/A/1",
+      "first_actions": [
+        [
+          1,
+          2,
+          "read",
+          91
+        ],
+        [
+          1,
+          3,
+          "read",
+          91
+        ],
+        [
+          1,
+          6,
+          "read",
+          91
+        ],
+        [
+          1,
+          7,
+          "move",
+          64
+        ],
+        [
+          1,
+          10,
+          "read",
+          91
+        ],
+        [
+          1,
+          11,
+          "read",
+          91
+        ]
+      ],
+      "single_move": true,
+      "move_index": [
+        1,
+        7
+      ],
+      "anchor_after": 155,
+      "fixture_never_senses_or_writes": true,
+      "fixture_receives_no_sensed_anchors": true,
+      "ok": true
+    },
+    {
+      "run": "linux_reacquirer/A/2",
+      "first_actions": [
+        [
+          1,
+          2,
+          "read",
+          91
+        ],
+        [
+          1,
+          3,
+          "read",
+          91
+        ],
+        [
+          1,
+          6,
+          "read",
+          91
+        ],
+        [
+          1,
+          7,
+          "move",
+          64
+        ],
+        [
+          1,
+          10,
+          "read",
+          91
+        ],
+        [
+          1,
+          11,
+          "read",
+          91
+        ]
+      ],
+      "single_move": true,
+      "move_index": [
+        1,
+        7
+      ],
+      "anchor_after": 155,
+      "fixture_never_senses_or_writes": true,
+      "fixture_receives_no_sensed_anchors": true,
+      "ok": true
+    },
+    {
+      "run": "linux_reacquirer/B/1",
+      "first_actions": [
+        [
+          1,
+          0,
+          "read",
+          91
+        ],
+        [
+          1,
+          1,
+          "read",
+          91
+        ],
+        [
+          1,
+          4,
+          "read",
+          91
+        ],
+        [
+          1,
+          5,
+          "move",
+          64
+        ],
+        [
+          1,
+          8,
+          "read",
+          91
+        ],
+        [
+          1,
+          9,
+          "read",
+          91
+        ]
+      ],
+      "single_move": true,
+      "move_index": [
+        1,
+        5
+      ],
+      "anchor_after": 155,
+      "fixture_never_senses_or_writes": true,
+      "fixture_receives_no_sensed_anchors": true,
+      "ok": true
+    },
+    {
+      "run": "linux_reacquirer/B/2",
+      "first_actions": [
+        [
+          1,
+          0,
+          "read",
+          91
+        ],
+        [
+          1,
+          1,
+          "read",
+          91
+        ],
+        [
+          1,
+          4,
+          "read",
+          91
+        ],
+        [
+          1,
+          5,
+          "move",
+          64
+        ],
+        [
+          1,
+          8,
+          "read",
+          91
+        ],
+        [
+          1,
+          9,
+          "read",
+          91
+        ]
+      ],
+      "single_move": true,
+      "move_index": [
+        1,
+        5
+      ],
+      "anchor_after": 155,
+      "fixture_never_senses_or_writes": true,
+      "fixture_receives_no_sensed_anchors": true,
+      "ok": true
+    }
+  ]
+}

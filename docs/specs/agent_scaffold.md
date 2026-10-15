@@ -1,5 +1,18 @@
 # agent_scaffold
 
+## V6 M2-3 bounded extension (2026-10-15)
+
+The same Scope Revision 03 §3 extension adds `--template roaming_reacquirer`,
+mapped to `starter_agents/v6_roaming_reacquirer`. New Agent labels it
+**Roaming Reacquirer — personal copy**. Creation, refusal and manifest rules are
+the same as for Watchful Keeper below: only `name` and `display` change (display
+`<id> (Roaming Reacquirer copy)`), and the bundled bytes are never modified.
+Explicit `bytefray-rules-6-alpha1` selection is required. Parameters use the
+canonical schema/resolver: `search_offset` integer 0..128 (default 91),
+`move_step` integer 1..64 (default 64), `rescan_wait` integer 1..8 (default 3).
+The internal `v6_relocating_opponent` fixture is not a template or catalog
+starter.
+
 ## V6 M2-2 bounded extension (2026-10-15)
 
 The accepted M2 Scope Revision 03 §3 extends the existing API-v2 scaffold with

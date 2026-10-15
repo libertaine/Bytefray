@@ -1,0 +1,250 @@
+{
+  "platform": "linux",
+  "environment": "Ubuntu on WSL2 (kernel 6.6.87.2), Python 3.12.3, user-local env, PySide6 xcb on WSLg DISPLAY=:0",
+  "scripts": {
+    "m2_3_20261015/linux_campaign.sh": "2c0918e440897b1291897ae155a337f9570ff8bc5339ed417ef68a3a4eade700",
+    "m2_3_20261015/linux_campaign_r307.sh": "c3d83e7af92811c80a050b033161c5a29013d7d6cf115dfc01896fabfc21b830"
+  },
+  "campaigns": [
+    {
+      "campaign": "m2_3_linux_reacquirer",
+      "platform": "Linux",
+      "phase": "first pass",
+      "disposition": "final; reused at R3-07",
+      "command": [
+        "<checkout>/work/m2_2a_linux_env/bin/python",
+        "-m",
+        "pytest",
+        "engine/tests/test_v6_alpha_m2_reacquirer.py",
+        "--basetemp=<checkout>/.pytest-tmp/m2_3_linux_reacquirer",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_3_linux_reacquirer",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_3_20261015/m2_3_linux_reacquirer.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 0,
+      "seconds": 28.58,
+      "junit": {
+        "tests": 56,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 26.463,
+        "passed": 56,
+        "timestamp": "2026-10-15T18:14:53.531701+00:00"
+      },
+      "failed_nodes": [],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_linux_reacquirer.xml": "6f52ce707a82262cc02a449372c50f75f2d1dc72d6a6688083fd97d6646c492a",
+        "m2_3_20261015/m2_3_linux_reacquirer.log": "823773ffa853ff60c029efc59b112327c68566ab9144b7356df018aeb7d11eb6",
+        "m2_3_20261015/m2_3_linux_reacquirer_command.json": "168b09dd9769e44888393e7dc5c183544e7d3ed8d9430bc18b9d096f6ff10e32"
+      }
+    },
+    {
+      "campaign": "m2_3_linux_focused",
+      "platform": "Linux",
+      "phase": "first pass",
+      "disposition": "failed, retained (R3-07 conflict)",
+      "command": [
+        "<checkout>/work/m2_2a_linux_env/bin/python",
+        "-m",
+        "pytest",
+        "engine/tests/test_agent_test.py",
+        "@docs/v6/evidence/m2_2/qualification/m2_2_focused_selection.txt",
+        "--basetemp=<checkout>/.pytest-tmp/m2_3_linux_focused",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_3_linux_focused",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_3_20261015/m2_3_linux_focused.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 1,
+      "seconds": 318.82,
+      "junit": {
+        "tests": 626,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "time": 312.313,
+        "passed": 625,
+        "timestamp": "2026-10-15T18:15:23.233698+00:00"
+      },
+      "failed_nodes": [
+        "engine.tests.test_v6_alpha_m2_keeper::test_personal_copy_manifest_and_source_retention_and_overwrite_refusal"
+      ],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_linux_focused.xml": "986c3b2d12ce160cf6f8b7f94d1463af6f2c31bca7e4a887c4f092f176ba5e46",
+        "m2_3_20261015/m2_3_linux_focused.log": "0a5637928fd22bbe1e52e6ab48c02b17e85451303bdc07df1f87f00aef46c718",
+        "m2_3_20261015/m2_3_linux_focused_command.json": "34cc52e0ff7eeefc72a5c765494d5ec2db7a2f541881458957a55efd433b4d44"
+      }
+    },
+    {
+      "campaign": "m2_3_linux_gui_x11",
+      "platform": "Linux",
+      "phase": "first pass",
+      "disposition": "final; reused at R3-07",
+      "command": [
+        "<checkout>/work/m2_2a_linux_env/bin/python",
+        "-m",
+        "pytest",
+        "tests/test_v6_alpha_m1_5_designer.py::test_reacquirer_native_copy_validate_edit_full_match_reopen",
+        "tests/test_v6_alpha_m1_5_designer.py::test_keeper_native_copy_validate_edit_full_match_reopen",
+        "tests/test_v6_alpha_m1_5_designer.py::test_scout_native_manifest_default_development_test",
+        "-m",
+        "gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_3_linux_gui_x11",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_3_linux_gui_x11",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_3_20261015/m2_3_linux_gui_x11.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 0,
+      "seconds": 57.72,
+      "junit": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 55.695,
+        "passed": 5,
+        "timestamp": "2026-10-15T18:21:15.248697+00:00"
+      },
+      "failed_nodes": [],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_linux_gui_x11.xml": "177b0974c27cc08fd81d21a797b44434509ded010b32fb9342df75ca95179702",
+        "m2_3_20261015/m2_3_linux_gui_x11.log": "7f2563c7c9e70a35cba38da0a4a0259aaaf448261593c66ebcd7b221e55dd607",
+        "m2_3_20261015/m2_3_linux_gui_x11_command.json": "3f6153d53dd9be3ec1bd508ee53391482a9a917700058b15fdb10a6360e5a23f"
+      }
+    },
+    {
+      "campaign": "m2_3_linux_keeper_r307",
+      "platform": "Linux",
+      "phase": "R3-07 amendment",
+      "disposition": "final",
+      "command": [
+        "<checkout>/work/m2_2a_linux_env/bin/python",
+        "-m",
+        "pytest",
+        "engine/tests/test_v6_alpha_m2_keeper.py",
+        "--basetemp=<checkout>/.pytest-tmp/m2_3_linux_keeper_r307",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_3_linux_keeper_r307",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_3_20261015/m2_3_linux_keeper_r307.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 0,
+      "seconds": 22.18,
+      "junit": {
+        "tests": 48,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 19.858,
+        "passed": 48,
+        "timestamp": "2026-10-15T19:15:03.144706+00:00"
+      },
+      "failed_nodes": [],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_linux_keeper_r307.xml": "c0c58fde079c2ab4983a923acb939019d37ac835ebbc546898537585026f7102",
+        "m2_3_20261015/m2_3_linux_keeper_r307.log": "23660ca31d303a4888b16489c39910652e466fa6536419da5a422ea1bad1ffdc",
+        "m2_3_20261015/m2_3_linux_keeper_r307_command.json": "6c8530fbda61877d3e1b30625312a56bb09285b82ab8287a2492213ba0772164"
+      }
+    },
+    {
+      "campaign": "m2_3_linux_focused_r307",
+      "platform": "Linux",
+      "phase": "R3-07 amendment",
+      "disposition": "final",
+      "command": [
+        "<checkout>/work/m2_2a_linux_env/bin/python",
+        "-m",
+        "pytest",
+        "engine/tests/test_agent_test.py",
+        "@docs/v6/evidence/m2_2/qualification/m2_2_focused_selection.txt",
+        "--basetemp=<checkout>/.pytest-tmp/m2_3_linux_focused_r307",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_3_linux_focused_r307",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_3_20261015/m2_3_linux_focused_r307.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 0,
+      "seconds": 318.0,
+      "junit": {
+        "tests": 626,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 311.636,
+        "passed": 626,
+        "timestamp": "2026-10-15T19:15:25.433926+00:00"
+      },
+      "failed_nodes": [],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_linux_focused_r307.xml": "d6669cc6e967b8a7a8ab5d1a376a96972a74bbb2327d01a9084a884f0a80da1f",
+        "m2_3_20261015/m2_3_linux_focused_r307.log": "d6fc609e69ebf08ab5a74db43e22cd04299e57b26b9c14261de3e9785f40863f",
+        "m2_3_20261015/m2_3_linux_focused_r307_command.json": "33c51b0b2eee635fceafbc05c6498824449a53b97b53fa48c8900f2c71bf45b9"
+      }
+    }
+  ],
+  "scenario_and_launcher_logs": {
+    "m2_3_20261015/linux_campaign_focused.out": "72fc39645b6297fb9202bf2cd51cf9bb43c23b725fcfb92f12024bd69db33487",
+    "m2_3_20261015/linux_campaign_focused_02.out": "c7da6bb68ee1a74975a78c48c9f55dd362fdc648bc25efba1ba4352fd53112a8",
+    "m2_3_20261015/linux_campaign_gui.out": "de0d52b77691a664fa54b21d3346b2a0d550a18494886d8af95f918cbc642511",
+    "m2_3_20261015/linux_campaign_r307.out": "81cd1eefa40ca2e052ed911953e2ba6fe8289b76e71df3f32ffd4512e22c7cd2",
+    "m2_3_20261015/linux_scenario_keeper_A_1.log": "0c9399b3618d237aacbb90c01663db450d3b7723ae28cf68867741711f125ea7",
+    "m2_3_20261015/linux_scenario_keeper_B_1.log": "2438d09d789407e82126ec225a8020dec2ceb75d4f418742a225c8440b925f8a",
+    "m2_3_20261015/linux_scenario_reacquirer_A_1.log": "0f2d1f0fbf6d55e139be603af0752f4df34521ea6509ec95cc41e73873bad7e5",
+    "m2_3_20261015/linux_scenario_reacquirer_A_2.log": "e7c37522f4ef43f88518906d3fdc94dd0421390dfb380c95a719c3859fd9dcc7",
+    "m2_3_20261015/linux_scenario_reacquirer_B_1.log": "67ec0ff54fc03a63cf0273d3fea51d86be481f2bbf483989767a04afa4f967f7",
+    "m2_3_20261015/linux_scenario_reacquirer_B_2.log": "47f85600350e27535d5c66873c1ceeb8f779c4e693b504c79ffc7d72d0aebcaa"
+  }
+}

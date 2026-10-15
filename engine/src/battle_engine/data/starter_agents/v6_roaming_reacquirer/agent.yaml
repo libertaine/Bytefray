@@ -1,0 +1,30 @@
+{
+  "name": "v6_roaming_reacquirer",
+  "display": "V6 Roaming Reacquirer (Starter)",
+  "description": "Holds an anonymous historical contact, pays to rescan it, records an old address absent from a newer sample, and pays to move and search for a new anonymous contact.",
+  "kind": "python",
+  "api_version": 2,
+  "entrypoint": "agent.py:create_agent",
+  "version": "1.0.0",
+  "capabilities": {"version": 1, "required": ["sense"]},
+  "parameters": {
+    "search_offset": {
+      "type": "integer", "default": 91, "minimum": 0, "maximum": 128,
+      "description": "New-search scan center relative to the current own anchor, rechecked against current reach."
+    },
+    "move_step": {
+      "type": "integer", "default": 64, "minimum": 1, "maximum": 64,
+      "description": "Forward exploration step and maximum contact-response MOVE."
+    },
+    "rescan_wait": {
+      "type": "integer", "default": 3, "minimum": 1, "maximum": 8,
+      "description": "Paid READ actions after a positive receipt before rescanning the remembered address."
+    }
+  },
+  "presets": {
+    "standard": {
+      "description": "Search at own anchor +91, step 64, and wait three paid READs before each rescan.",
+      "values": {"search_offset": 91, "move_step": 64, "rescan_wait": 3}
+    }
+  }
+}

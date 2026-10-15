@@ -1,0 +1,71 @@
+{
+  "artifacts": {
+    "replay": {
+      "filename": "replay.jsonl",
+      "sha256": "3fa395b1e57cc76120958a600b382a6e47b526411a5267486da3c905bf698faa"
+    },
+    "result": {
+      "filename": "result.json",
+      "sha256": "527ef3baae57de66ce79bc0c0b5c3ad311498925a59d1c624fc7e77e518c83eb"
+    },
+    "trace": {
+      "filename": "trace.jsonl",
+      "sha256": "9d5b5af909ad9fcdaf205373855e3289feb53e104db80b617d318ec8fc43c98c"
+    }
+  },
+  "completed_at": "2026-10-15T18:13:10.200133Z",
+  "config": {
+    "action_budget": 8,
+    "arena_size": 512,
+    "max_ticks": 100,
+    "seed": 0
+  },
+  "declared_product_fixture": true,
+  "engine": {
+    "agent_api_version": 2,
+    "project_name": "Bytefray",
+    "python_version": "3.13.7",
+    "replay_schema_version": 4,
+    "result_schema_version": 2,
+    "version": "5.0.0"
+  },
+  "entrants": [
+    {
+      "agent_id": "A",
+      "capture_complete": true,
+      "drift_detected": false,
+      "full_tree_digest": "4e96e499365083bcae2b5eca1c71471c0594e8e638235deaf7dd0403e19282b1",
+      "loaded_final_fingerprint": "ba9dc70260ad96ece4743e25bc18b4429198e59f328ff7b1193c92468c48e371",
+      "loaded_initial_fingerprint": "ba9dc70260ad96ece4743e25bc18b4429198e59f328ff7b1193c92468c48e371",
+      "name": "v6_roaming_reacquirer",
+      "parameters": {
+        "move_step": 64,
+        "rescan_wait": 3,
+        "search_offset": 91
+      },
+      "python_subset_fingerprint": "ba9dc70260ad96ece4743e25bc18b4429198e59f328ff7b1193c92468c48e371",
+      "revision_id": "agent-revision_4e96e499365083bcae2b5eca1c71471c0594e8e638235deaf7dd0403e19282b1",
+      "start": 0
+    },
+    {
+      "agent_id": "B",
+      "capture_complete": true,
+      "drift_detected": false,
+      "full_tree_digest": "62bbfa9b868a780a58a6dd3147154eb6d868a306b6988c8a97e428069239de9d",
+      "loaded_final_fingerprint": "7c218b9acd3cf2628ad75ad95bae09e262069a33ca19f3915c7ea5781490178d",
+      "loaded_initial_fingerprint": "7c218b9acd3cf2628ad75ad95bae09e262069a33ca19f3915c7ea5781490178d",
+      "name": "v6_relocating_opponent",
+      "parameters": {},
+      "python_subset_fingerprint": "7c218b9acd3cf2628ad75ad95bae09e262069a33ca19f3915c7ea5781490178d",
+      "revision_id": "agent-revision_62bbfa9b868a780a58a6dd3147154eb6d868a306b6988c8a97e428069239de9d",
+      "start": 91
+    }
+  ],
+  "match_id": "match_eba20d70f642a2c4a8a05f2d",
+  "provenance": "product_teaching_demo",
+  "result_id": "result_8a179a2867927258e2270443",
+  "ruleset_id": "bytefray-rules-6-alpha1",
+  "schema": "bytefray.sensing_demo",
+  "schema_version": 1,
+  "status": "unverified"
+}

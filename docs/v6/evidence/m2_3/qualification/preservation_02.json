@@ -1,0 +1,60 @@
+{
+  "no_frozen_path_changed": {
+    "ok": true,
+    "detail": []
+  },
+  "unchanged_bodies_sensing_playback": {
+    "ok": true,
+    "detail": []
+  },
+  "unchanged_bodies_sensing_demo": {
+    "ok": true,
+    "detail": []
+  },
+  "old_starter_bytes_and_digests_preserved": {
+    "ok": true,
+    "detail": {
+      "files": [],
+      "digests": []
+    }
+  },
+  "catalog_order_and_terminal_dual_team": {
+    "ok": true,
+    "detail": [
+      "v6_window_scout",
+      "v6_watchful_keeper",
+      "v6_roaming_reacquirer",
+      "v5_dual_team"
+    ]
+  },
+  "keeper_digest_unchanged": {
+    "ok": true,
+    "detail": null
+  },
+  "historical_pins_329": {
+    "ok": true,
+    "detail": {
+      "pins": 329,
+      "mismatches": []
+    }
+  },
+  "head_is_published_m2_2": {
+    "ok": true,
+    "detail": null
+  },
+  "nothing_staged": {
+    "ok": true,
+    "detail": null
+  },
+  "local_v6_research_untouched": {
+    "ok": true,
+    "detail": null
+  },
+  "r3_07_keeper_test_diff_is_catalog_suffix_only": {
+    "ok": true,
+    "detail": {
+      "base_blob": "5d60a2f803ca14e79e4d67f2d1eebf1fc6141c23",
+      "current_sha256": "f61dc39c5707d131c8ca6843fd790dedf5d2a0bf583c2fbe105d490da0ece62a"
+    }
+  }
+}

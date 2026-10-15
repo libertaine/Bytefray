@@ -1,0 +1,854 @@
+{
+  "platform": "windows",
+  "campaigns": [
+    {
+      "campaign": "m2_3_reacquirer_final",
+      "platform": "Windows",
+      "phase": "first pass",
+      "disposition": "final",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "engine/tests/test_v6_alpha_m2_reacquirer.py",
+        "--basetemp=<checkout>/.pytest-tmp/m2_3_reacquirer_final",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_3_reacquirer_final",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_3_20261015/m2_3_reacquirer_final.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 7.64,
+      "junit": {
+        "tests": 56,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 7.121,
+        "passed": 56,
+        "timestamp": "2026-10-15T14:04:18.824518-04:00"
+      },
+      "failed_nodes": [],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_reacquirer_final.xml": "ce6acbe94468b9da6aef77e46152225127f369859f6e884c0b5f7b6e4e05afa9",
+        "m2_3_20261015/m2_3_reacquirer_final.log": "3c8bc46efa9409f601b0f0abdbbc75b67865e18b81db2aa1e69956e68a69117f",
+        "m2_3_20261015/m2_3_reacquirer_final_command.json": "2950eabbc6b21e9693e414dbca19fa36ac4a1a01f3f289b9016c48a98d685884"
+      }
+    },
+    {
+      "campaign": "m2_3_keeper_final",
+      "platform": "Windows",
+      "phase": "first pass",
+      "disposition": "failed, retained (R3-07 conflict)",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "engine/tests/test_v6_alpha_m2_keeper.py",
+        "--basetemp=<checkout>/.pytest-tmp/m2_3_keeper_final",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_3_keeper_final",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_3_20261015/m2_3_keeper_final.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 1,
+      "seconds": 4.7,
+      "junit": {
+        "tests": 48,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "time": 4.22,
+        "passed": 47,
+        "timestamp": "2026-10-15T14:04:26.623963-04:00"
+      },
+      "failed_nodes": [
+        "engine.tests.test_v6_alpha_m2_keeper::test_personal_copy_manifest_and_source_retention_and_overwrite_refusal"
+      ],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_keeper_final.xml": "2e1fae6058262765b293a31aea1f7a9d5fda10301f5fe6cdd9e19dd9ec7705f4",
+        "m2_3_20261015/m2_3_keeper_final.log": "45fe27e124f3dcd8d4c2dacc766f80a790f84d7e6416ec25fdc78a735cc26cdf",
+        "m2_3_20261015/m2_3_keeper_final_command.json": "dca3081f7823f3cc397b54d07ca7508cf67c03cef52f46d71d60e72711fcc18d"
+      }
+    },
+    {
+      "campaign": "m2_3_focused_final",
+      "platform": "Windows",
+      "phase": "first pass",
+      "disposition": "failed, retained (R3-07 conflict)",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "engine/tests/test_agent_test.py",
+        "@docs/v6/evidence/m2_2/qualification/m2_2_focused_selection.txt",
+        "--basetemp=<checkout>/.pytest-tmp/m2_3_focused_final",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_3_focused_final",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_3_20261015/m2_3_focused_final.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 1,
+      "seconds": 60.67,
+      "junit": {
+        "tests": 626,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "time": 60.124,
+        "passed": 625,
+        "timestamp": "2026-10-15T14:04:31.487600-04:00"
+      },
+      "failed_nodes": [
+        "engine.tests.test_v6_alpha_m2_keeper::test_personal_copy_manifest_and_source_retention_and_overwrite_refusal"
+      ],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_focused_final.xml": "6bb9e6c55ad2e9eb4229a1878aa4ca649a2fd10c311dd7684fc2c7fcd2209a04",
+        "m2_3_20261015/m2_3_focused_final.log": "a5e04c8f479869346f1e875b7a1e697a02ae81fdef982c613b0625ddfc660a44",
+        "m2_3_20261015/m2_3_focused_final_command.json": "aba5e7e384607f24b82baf60c5a37732b503ace1f7f9fca227fa167b7d1cd591"
+      }
+    },
+    {
+      "campaign": "m2_3_windows_gui_final",
+      "platform": "Windows",
+      "phase": "first pass",
+      "disposition": "final; reused at R3-07",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_v6_alpha_m1_5_designer.py::test_reacquirer_native_copy_validate_edit_full_match_reopen",
+        "tests/test_v6_alpha_m1_5_designer.py::test_keeper_native_copy_validate_edit_full_match_reopen",
+        "tests/test_v6_alpha_m1_5_designer.py::test_scout_native_manifest_default_development_test",
+        "tests/test_v6_alpha_m1_5_designer.py::test_native_windows_designer_window_selection_and_parameters",
+        "-m",
+        "gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_3_windows_gui_final",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_3_windows_gui_final",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_3_20261015/m2_3_windows_gui_final.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 16.22,
+      "junit": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 15.736,
+        "passed": 6,
+        "timestamp": "2026-10-15T14:05:32.419105-04:00"
+      },
+      "failed_nodes": [],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_windows_gui_final.xml": "13f377a62a4593f4f131b1deaff66514c68d32676b30cb520801558576277187",
+        "m2_3_20261015/m2_3_windows_gui_final.log": "3b7a2a04810da4c110bd6dfc8a80dd1db39b85093a68c08ee93607388119a0e6",
+        "m2_3_20261015/m2_3_windows_gui_final_command.json": "dd0cbf1e752c283d1a7cd49a6cf342e1f8e14c6f7bcd917c00ef1bb7a2953be8"
+      }
+    },
+    {
+      "campaign": "m2_3_broad_final",
+      "platform": "Windows",
+      "phase": "first pass",
+      "disposition": "failed, retained (R3-07 conflict)",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "@runs/v6_alpha_m2/m2_3_20261015/m2_3_broad_selection.txt",
+        "--basetemp=<checkout>/.pytest-tmp/m2_3_broad_final",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_3_broad_final",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_3_20261015/m2_3_broad_final.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 1,
+      "seconds": 302.08,
+      "junit": {
+        "tests": 3462,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 21,
+        "time": 301.269,
+        "passed": 3440,
+        "timestamp": "2026-10-15T14:06:02.556031-04:00"
+      },
+      "failed_nodes": [
+        "engine.tests.test_v6_alpha_m2_keeper::test_personal_copy_manifest_and_source_retention_and_overwrite_refusal"
+      ],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_broad_final.xml": "f19d733343d7ce752aa6f62f799f737a0fdea3777c55a508e87a5dc0200f34c3",
+        "m2_3_20261015/m2_3_broad_final.log": "9bbaf2d9eca97bf8363c80274ced212bfa3968d87c4f4b766b8c55e2521202dc",
+        "m2_3_20261015/m2_3_broad_final_command.json": "6dfb5fb7cd039b0c6143489ce95bd03623e03bbe6f4270c11262efcedcf9e38c"
+      }
+    },
+    {
+      "campaign": "m2_3_supplement_final",
+      "platform": "Windows",
+      "phase": "first pass",
+      "disposition": "final; reused at R3-07",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "@docs/v6/evidence/m1_6a_windows/supplemental_nodes.txt",
+        "--basetemp=<checkout>/.pytest-tmp/m2_3_supplement_final",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_3_supplement_final",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_3_20261015/m2_3_supplement_final.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 85.22,
+      "junit": {
+        "tests": 328,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 84.648,
+        "passed": 328,
+        "timestamp": "2026-10-15T14:11:11.557874-04:00"
+      },
+      "failed_nodes": [],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_supplement_final.xml": "7724d398b55f156746f59a770880c9caec40c381e8881953d8041e3cf00ac0ae",
+        "m2_3_20261015/m2_3_supplement_final.log": "043135a0ec1efab6820168328c0927351b2609002136bd204c6dfaa5c067f277",
+        "m2_3_20261015/m2_3_supplement_final_command.json": "c9b4e025e1fc5c1d2541e49a6a6e8c246ef761a76adc80f8994baf10d7e0c25e"
+      }
+    },
+    {
+      "campaign": "m2_3_ruff_final",
+      "platform": "Windows",
+      "phase": "first pass",
+      "disposition": "final",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "."
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 0.15,
+      "log_tail": [
+        "All checks passed!"
+      ],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_ruff_final.log": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+        "m2_3_20261015/m2_3_ruff_final_command.json": "f392d1ea779f92b5f53cfc80f7bbc70ef516f05e42dd04618aec8138451dab79"
+      }
+    },
+    {
+      "campaign": "m2_3_mypy_engine_final",
+      "platform": "Windows",
+      "phase": "first pass",
+      "disposition": "final",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "mypy",
+        "engine/src/battle_engine",
+        "--cache-dir=.pytest-cache/m2_3_mypy_engine_final"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 12.68,
+      "log_tail": [
+        "Success: no issues found in 106 source files"
+      ],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_mypy_engine_final.log": "1860637a02ad5d8f172ae2c55355729aa92ebafe5233f2d07dcd3fca43dc3ec3",
+        "m2_3_20261015/m2_3_mypy_engine_final_command.json": "671428d45719429030ff3cef0fc41dfc4d317c0d0492f7740d08c5e56c3b1221"
+      }
+    },
+    {
+      "campaign": "m2_3_mypy_client_final",
+      "platform": "Windows",
+      "phase": "first pass",
+      "disposition": "final",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "mypy",
+        "client/src/battle_client",
+        "--cache-dir=.pytest-cache/m2_3_mypy_client_final"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 6.37,
+      "log_tail": [
+        "Success: no issues found in 19 source files"
+      ],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_mypy_client_final.log": "6b17fb6a37a46097878dda7d24d47ea3abd7a26d94efdbf8f17ad1c639872d16",
+        "m2_3_20261015/m2_3_mypy_client_final_command.json": "cf4bef1df65a23ced283bb25e230b1c942b73d885a6a3eb985b0c44aaf43943a"
+      }
+    },
+    {
+      "campaign": "scenario_reacquirer_A_1",
+      "platform": "Windows",
+      "phase": "first pass",
+      "disposition": "final; reused at R3-07",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "battle_engine.sensing_demo",
+        "--scenario",
+        "reacquirer-R1",
+        "--reacquirer-seat",
+        "A",
+        "--output-dir",
+        "runs/v6_alpha_m2/m2_3_20261015/reacquirer/A/1"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 0.59,
+      "log_tail": [
+        "demo v1 status: unverified (Scout teaching semantics retained)"
+      ],
+      "local_bodies": {
+        "m2_3_20261015/scenario_reacquirer_A_1.log": "ab72071b1c0f76ccb86cfe3cf333aadc0037f93f131d638ae2e976203d4d33e4",
+        "m2_3_20261015/scenario_reacquirer_A_1_command.json": "f82cf52697c524316829003c5a7c8b46fa9a826838a42648065356595b453d9d"
+      }
+    },
+    {
+      "campaign": "scenario_reacquirer_A_2",
+      "platform": "Windows",
+      "phase": "first pass",
+      "disposition": "final; reused at R3-07",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "battle_engine.sensing_demo",
+        "--scenario",
+        "reacquirer-R1",
+        "--reacquirer-seat",
+        "A",
+        "--output-dir",
+        "runs/v6_alpha_m2/m2_3_20261015/reacquirer/A/2"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 0.77,
+      "log_tail": [
+        "demo v1 status: unverified (Scout teaching semantics retained)"
+      ],
+      "local_bodies": {
+        "m2_3_20261015/scenario_reacquirer_A_2.log": "53ef335228a0bc8e7f72ffe301049b6b8ad007560494b05a1c1a7044f69d311d",
+        "m2_3_20261015/scenario_reacquirer_A_2_command.json": "a8a1fcdc723301d180b64ec2274e5c4fa8ba18a7872d7f0b26da6469b1e06413"
+      }
+    },
+    {
+      "campaign": "scenario_reacquirer_B_1",
+      "platform": "Windows",
+      "phase": "first pass",
+      "disposition": "final; reused at R3-07",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "battle_engine.sensing_demo",
+        "--scenario",
+        "reacquirer-R1",
+        "--reacquirer-seat",
+        "B",
+        "--output-dir",
+        "runs/v6_alpha_m2/m2_3_20261015/reacquirer/B/1"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 0.7,
+      "log_tail": [
+        "demo v1 status: unverified (Scout teaching semantics retained)"
+      ],
+      "local_bodies": {
+        "m2_3_20261015/scenario_reacquirer_B_1.log": "e506c203ba1fc761ccc72438beb7d5b8df2c92067e604debead86107044aadef",
+        "m2_3_20261015/scenario_reacquirer_B_1_command.json": "1e92ff69800b13fb772e8b46b37f10574224bbdf11ecbd7073197a369b2f80ee"
+      }
+    },
+    {
+      "campaign": "scenario_reacquirer_B_2",
+      "platform": "Windows",
+      "phase": "first pass",
+      "disposition": "final; reused at R3-07",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "battle_engine.sensing_demo",
+        "--scenario",
+        "reacquirer-R1",
+        "--reacquirer-seat",
+        "B",
+        "--output-dir",
+        "runs/v6_alpha_m2/m2_3_20261015/reacquirer/B/2"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 0.72,
+      "log_tail": [
+        "demo v1 status: unverified (Scout teaching semantics retained)"
+      ],
+      "local_bodies": {
+        "m2_3_20261015/scenario_reacquirer_B_2.log": "bb3fe0ba8081599ed50e44cd40f5bd1d6d7d6bb016ab55a90dfefa00b904bb54",
+        "m2_3_20261015/scenario_reacquirer_B_2_command.json": "63505695dd4bf780079273b7367f1ca596eb827af04661e118796c64f042fccc"
+      }
+    },
+    {
+      "campaign": "scenario_keeper_A_1",
+      "platform": "Windows",
+      "phase": "first pass",
+      "disposition": "final; reused at R3-07",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "battle_engine.sensing_demo",
+        "--scenario",
+        "keeper-K1",
+        "--keeper-seat",
+        "A",
+        "--output-dir",
+        "runs/v6_alpha_m2/m2_3_20261015/keeper_regression/A/1"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 0.62,
+      "log_tail": [
+        "demo v1 status: unverified (Scout teaching semantics retained)"
+      ],
+      "local_bodies": {
+        "m2_3_20261015/scenario_keeper_A_1.log": "b6745e051d9239f1617eb93b87218c2189ddc86b79c984859851edfb1825d7ef",
+        "m2_3_20261015/scenario_keeper_A_1_command.json": "2e7ab5aef8e8cf27913b2d2d9591567fde37135e5cdc8a7b02d9f6937bdb279a"
+      }
+    },
+    {
+      "campaign": "scenario_keeper_B_1",
+      "platform": "Windows",
+      "phase": "first pass",
+      "disposition": "final; reused at R3-07",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "battle_engine.sensing_demo",
+        "--scenario",
+        "keeper-K1",
+        "--keeper-seat",
+        "B",
+        "--output-dir",
+        "runs/v6_alpha_m2/m2_3_20261015/keeper_regression/B/1"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 0.63,
+      "log_tail": [
+        "demo v1 status: unverified (Scout teaching semantics retained)"
+      ],
+      "local_bodies": {
+        "m2_3_20261015/scenario_keeper_B_1.log": "8154838dfea4d0a17b11c0d959aebe855be63d7b7786edcd217587d13fd3c7d7",
+        "m2_3_20261015/scenario_keeper_B_1_command.json": "14b931590eaf358fe14246796a30c1e98f9b87d42257fdaecbacb301cf1111fc"
+      }
+    },
+    {
+      "campaign": "m2_3_keeper_r307",
+      "platform": "Windows",
+      "phase": "R3-07 amendment",
+      "disposition": "final",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "engine/tests/test_v6_alpha_m2_keeper.py",
+        "--basetemp=<checkout>/.pytest-tmp/m2_3_keeper_r307",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_3_keeper_r307",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_3_20261015/m2_3_keeper_r307.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 4.28,
+      "junit": {
+        "tests": 48,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 3.857,
+        "passed": 48,
+        "timestamp": "2026-10-15T15:08:30.331287-04:00"
+      },
+      "failed_nodes": [],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_keeper_r307.xml": "783b94b3a58d62dcfec5f33224dc9435aec6560b1c4e29bccf75680a676ef1ec",
+        "m2_3_20261015/m2_3_keeper_r307.log": "8965c9afaf51c546a95378383fe2f7889660c33b9b37e47b98fffbe0e34a535f",
+        "m2_3_20261015/m2_3_keeper_r307_command.json": "5cb359e5747e29d61a25c0d26c458e6c65c3f7d73d47b017659053b591972481"
+      }
+    },
+    {
+      "campaign": "m2_3_reacquirer_r307",
+      "platform": "Windows",
+      "phase": "R3-07 amendment",
+      "disposition": "final",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "engine/tests/test_v6_alpha_m2_reacquirer.py",
+        "--basetemp=<checkout>/.pytest-tmp/m2_3_reacquirer_r307",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_3_reacquirer_r307",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_3_20261015/m2_3_reacquirer_r307.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 6.73,
+      "junit": {
+        "tests": 56,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 6.335,
+        "passed": 56,
+        "timestamp": "2026-10-15T15:08:39.640688-04:00"
+      },
+      "failed_nodes": [],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_reacquirer_r307.xml": "bd86b441f1c2a161933cf30e6e4db4b8c4653ce167199633e8259b158033d8e3",
+        "m2_3_20261015/m2_3_reacquirer_r307.log": "dc9eb8ab992777418a10fe934c4af629abd14bf9b06bc73fecb790c7182478d8",
+        "m2_3_20261015/m2_3_reacquirer_r307_command.json": "e0e22d46c82cebccd770ecab8b52112fcedc5084f22b2a776c26e98846bd4828"
+      }
+    },
+    {
+      "campaign": "m2_3_focused_r307",
+      "platform": "Windows",
+      "phase": "R3-07 amendment",
+      "disposition": "final",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "engine/tests/test_agent_test.py",
+        "@docs/v6/evidence/m2_2/qualification/m2_2_focused_selection.txt",
+        "--basetemp=<checkout>/.pytest-tmp/m2_3_focused_r307",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_3_focused_r307",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_3_20261015/m2_3_focused_r307.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 57.09,
+      "junit": {
+        "tests": 626,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 56.578,
+        "passed": 626,
+        "timestamp": "2026-10-15T15:08:46.544303-04:00"
+      },
+      "failed_nodes": [],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_focused_r307.xml": "8b198d06deaa4cc8cdea5a07432178854f66c82461bd96a28bc460584c6802bd",
+        "m2_3_20261015/m2_3_focused_r307.log": "6132710e85fd36b69b8c840c5be6a141dd64e212bf0b712d2100975e82acaf05",
+        "m2_3_20261015/m2_3_focused_r307_command.json": "174b7bdebd4579559bcfedf1375f1961a07b56e81133e143db1f0983cd452c9e"
+      }
+    },
+    {
+      "campaign": "m2_3_broad_r307",
+      "platform": "Windows",
+      "phase": "R3-07 amendment",
+      "disposition": "final",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "@runs/v6_alpha_m2/m2_3_20261015/m2_3_broad_selection.txt",
+        "--basetemp=<checkout>/.pytest-tmp/m2_3_broad_r307",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_3_broad_r307",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_3_20261015/m2_3_broad_r307.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 300.05,
+      "junit": {
+        "tests": 3462,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 21,
+        "time": 299.24,
+        "passed": 3441,
+        "timestamp": "2026-10-15T15:09:47.534171-04:00"
+      },
+      "failed_nodes": [],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_broad_r307.xml": "cd0d877011735fa080d955fded648edfb6593bb3a5b1566f5a222402c6103ed4",
+        "m2_3_20261015/m2_3_broad_r307.log": "04d6bf18c0deac7babc033e0592733b50d2c427f4d2610de707a93eaa3b8362b",
+        "m2_3_20261015/m2_3_broad_r307_command.json": "d0412156c0712df5f3207d02cd43fbea0ca0f45a2bf8bd7796c79de48f77c4aa"
+      }
+    },
+    {
+      "campaign": "m2_3_ruff_r307",
+      "platform": "Windows",
+      "phase": "R3-07 amendment",
+      "disposition": "final",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "."
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 0.18,
+      "log_tail": [
+        "All checks passed!"
+      ],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_ruff_r307.log": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+        "m2_3_20261015/m2_3_ruff_r307_command.json": "cd59e74bd7a8aa53d9c989aebaa8e601b5533e19c7259a3afad5979578998146"
+      }
+    },
+    {
+      "campaign": "m2_3_mypy_engine_r307",
+      "platform": "Windows",
+      "phase": "R3-07 amendment",
+      "disposition": "final",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "mypy",
+        "engine/src/battle_engine",
+        "--cache-dir=.pytest-cache/m2_3_mypy_engine_r307"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 11.91,
+      "log_tail": [
+        "Success: no issues found in 106 source files"
+      ],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_mypy_engine_r307.log": "1860637a02ad5d8f172ae2c55355729aa92ebafe5233f2d07dcd3fca43dc3ec3",
+        "m2_3_20261015/m2_3_mypy_engine_r307_command.json": "9aff55c3cf301df67119e3dfc728082decf179aa9585c1f46aceddc2dea16180"
+      }
+    },
+    {
+      "campaign": "m2_3_mypy_client_r307",
+      "platform": "Windows",
+      "phase": "R3-07 amendment",
+      "disposition": "final",
+      "command": [
+        "<checkout>/.venv/Scripts/python.exe",
+        "-m",
+        "mypy",
+        "client/src/battle_client",
+        "--cache-dir=.pytest-cache/m2_3_mypy_client_r307"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 6.22,
+      "log_tail": [
+        "Success: no issues found in 19 source files"
+      ],
+      "local_bodies": {
+        "m2_3_20261015/m2_3_mypy_client_r307.log": "6b17fb6a37a46097878dda7d24d47ea3abd7a26d94efdbf8f17ad1c639872d16",
+        "m2_3_20261015/m2_3_mypy_client_r307_command.json": "f040fe6e7f24891b301f817d55d0e01036db123a2d5bcd76092d412d56c5660d"
+      }
+    }
+  ]
+}

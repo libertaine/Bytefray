@@ -1,0 +1,265 @@
+{
+  "junit_bodies": [
+    {
+      "junit": "m2_3_20261015/m2_3_broad_final.xml",
+      "sha256": "f19d733343d7ce752aa6f62f799f737a0fdea3777c55a508e87a5dc0200f34c3",
+      "tests": 3462,
+      "passed": 3440,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 21,
+      "failed_nodes": [
+        "engine.tests.test_v6_alpha_m2_keeper::test_personal_copy_manifest_and_source_retention_and_overwrite_refusal"
+      ]
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_broad_r307.xml",
+      "sha256": "cd0d877011735fa080d955fded648edfb6593bb3a5b1566f5a222402c6103ed4",
+      "tests": 3462,
+      "passed": 3441,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 21,
+      "failed_nodes": []
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_focused_01.xml",
+      "sha256": "5e5f66eb32ad61fe65b923c242a5a55258cd918f56537bd25148666da506c119",
+      "tests": 626,
+      "passed": 625,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [
+        "engine.tests.test_v6_alpha_m2_keeper::test_personal_copy_manifest_and_source_retention_and_overwrite_refusal"
+      ]
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_focused_final.xml",
+      "sha256": "6bb9e6c55ad2e9eb4229a1878aa4ca649a2fd10c311dd7684fc2c7fcd2209a04",
+      "tests": 626,
+      "passed": 625,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [
+        "engine.tests.test_v6_alpha_m2_keeper::test_personal_copy_manifest_and_source_retention_and_overwrite_refusal"
+      ]
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_focused_r307.xml",
+      "sha256": "8b198d06deaa4cc8cdea5a07432178854f66c82461bd96a28bc460584c6802bd",
+      "tests": 626,
+      "passed": 626,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": []
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_keeper_01.xml",
+      "sha256": "081eaa1ee1a2f5f0b5acc5c965212653ba94d9b8264a73c33b1d373a31669445",
+      "tests": 48,
+      "passed": 47,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [
+        "engine.tests.test_v6_alpha_m2_keeper::test_personal_copy_manifest_and_source_retention_and_overwrite_refusal"
+      ]
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_keeper_final.xml",
+      "sha256": "2e1fae6058262765b293a31aea1f7a9d5fda10301f5fe6cdd9e19dd9ec7705f4",
+      "tests": 48,
+      "passed": 47,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [
+        "engine.tests.test_v6_alpha_m2_keeper::test_personal_copy_manifest_and_source_retention_and_overwrite_refusal"
+      ]
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_keeper_r307.xml",
+      "sha256": "783b94b3a58d62dcfec5f33224dc9435aec6560b1c4e29bccf75680a676ef1ec",
+      "tests": 48,
+      "passed": 48,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": []
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_linux_focused.xml",
+      "sha256": "986c3b2d12ce160cf6f8b7f94d1463af6f2c31bca7e4a887c4f092f176ba5e46",
+      "tests": 626,
+      "passed": 625,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [
+        "engine.tests.test_v6_alpha_m2_keeper::test_personal_copy_manifest_and_source_retention_and_overwrite_refusal"
+      ]
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_linux_focused_r307.xml",
+      "sha256": "d6669cc6e967b8a7a8ab5d1a376a96972a74bbb2327d01a9084a884f0a80da1f",
+      "tests": 626,
+      "passed": 626,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": []
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_linux_gui_x11.xml",
+      "sha256": "177b0974c27cc08fd81d21a797b44434509ded010b32fb9342df75ca95179702",
+      "tests": 5,
+      "passed": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": []
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_linux_keeper_r307.xml",
+      "sha256": "c0c58fde079c2ab4983a923acb939019d37ac835ebbc546898537585026f7102",
+      "tests": 48,
+      "passed": 48,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": []
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_linux_reacquirer.xml",
+      "sha256": "6f52ce707a82262cc02a449372c50f75f2d1dc72d6a6688083fd97d6646c492a",
+      "tests": 56,
+      "passed": 56,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": []
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_reacquirer_01.xml",
+      "sha256": "b14090c3f3c21519841f9b777077ce8a9448800e8ff60e1ae837a482e6ad6e68",
+      "tests": 56,
+      "passed": 54,
+      "failures": 2,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_parameter_rejection_uses_canonical_schema[params7]",
+        "engine.tests.test_v6_alpha_m2_reacquirer::test_stable_v4_mismatch_precedes_import_and_artifacts_on_every_route"
+      ]
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_reacquirer_02.xml",
+      "sha256": "d2c9d67ca058722fa2fb9c119889c1fcbaebf9f1fca1937fd0df3dcdcc0aaea7",
+      "tests": 56,
+      "passed": 56,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": []
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_reacquirer_03.xml",
+      "sha256": "148841b10896ebe6f129192cdc2dfdbf797b8602c17e51a66ca4fc8810af5252",
+      "tests": 56,
+      "passed": 56,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": []
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_reacquirer_final.xml",
+      "sha256": "ce6acbe94468b9da6aef77e46152225127f369859f6e884c0b5f7b6e4e05afa9",
+      "tests": 56,
+      "passed": 56,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": []
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_reacquirer_r307.xml",
+      "sha256": "bd86b441f1c2a161933cf30e6e4db4b8c4653ce167199633e8259b158033d8e3",
+      "tests": 56,
+      "passed": 56,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": []
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_supplement_final.xml",
+      "sha256": "7724d398b55f156746f59a770880c9caec40c381e8881953d8041e3cf00ac0ae",
+      "tests": 328,
+      "passed": 328,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": []
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_windows_gui_01.xml",
+      "sha256": "1bebd1fd150442d7627a5c60ae0e55c38b36d4646bd39edc0c56b74bb023a03d",
+      "tests": 6,
+      "passed": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": []
+    },
+    {
+      "junit": "m2_3_20261015/m2_3_windows_gui_final.xml",
+      "sha256": "13f377a62a4593f4f131b1deaff66514c68d32676b30cb520801558576277187",
+      "tests": 6,
+      "passed": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": []
+    }
+  ],
+  "non_junit": [
+    {
+      "attempt": "m2_3_20261015/linux_campaign_focused.out",
+      "sha256": "72fc39645b6297fb9202bf2cd51cf9bb43c23b725fcfb92f12024bd69db33487",
+      "outcome": "launch failure",
+      "classification": "Git Bash path conversion; nothing executed; relaunched as _02"
+    },
+    {
+      "attempt": "first cross_platform_comparison pass",
+      "sha256": null,
+      "outcome": "FAIL (stdout only, overwritten)",
+      "classification": "comparator compared the product_version build label; rerun excludes it, as M2-2A did"
+    },
+    {
+      "attempt": "m2_3_ruff_01",
+      "sha256": "d9375fe2938070b235c9ebca324801339efa0c7dc7b8dab292a5c5eb840813fe",
+      "outcome": "4 findings",
+      "classification": "style findings in new code, fixed before the source freeze"
+    }
+  ],
+  "r3_07_conflict": {
+    "node": "engine.tests.test_v6_alpha_m2_keeper::test_personal_copy_manifest_and_source_retention_and_overwrite_refusal",
+    "failed_in": [
+      "m2_3_keeper_final",
+      "m2_3_focused_final",
+      "m2_3_broad_final",
+      "m2_3_linux_focused"
+    ],
+    "passed_in": [
+      "m2_3_keeper_r307",
+      "m2_3_focused_r307",
+      "m2_3_broad_r307",
+      "m2_3_linux_keeper_r307",
+      "m2_3_linux_focused_r307"
+    ]
+  }
+}

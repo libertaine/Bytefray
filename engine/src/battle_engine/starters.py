@@ -49,6 +49,7 @@ STARTER_AGENT_NAMES = (
     "v5_core_defender",
     "v6_window_scout",
     "v6_watchful_keeper",
+    "v6_roaming_reacquirer",
     "v5_dual_team",
 )
 
@@ -264,6 +265,7 @@ CURRENT_STARTER_DIGESTS: Mapping[str, str] = {
     "v5_core_defender": "f7fcaa52694a77c4f0b96a5d1046f8d282ae48c771a142c66681073d26238dee",
     "v6_window_scout": "9d8a90ff209c2a9f13d5f3615cc67923204a095fdde6de9e183ca4ef8be10ce7",
     "v6_watchful_keeper": "35b945ad33f34168ea4374dad05fa61fe5b20d08cc15ca2e9af293ebb0c8016e",
+    "v6_roaming_reacquirer": "65866988dd2dfdddd9782a8040d932dc84f05cec9b5d6feab3fb6a73c9697f21",
     "v5_dual_team": "9773667d547ec3de0c8ef9e5b17d8f7b7f4271631235742e69aebd9569edf79b",
 }
 

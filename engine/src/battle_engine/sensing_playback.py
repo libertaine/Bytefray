@@ -1821,6 +1821,292 @@ def verify_keeper_scenario(
     )
 
 
+@dataclass(frozen=True)
+class ReacquirerPolicyWitnesses:
+    """Emitted R1 decisions as (tick, zero-based global decision index).
+
+    Each point is a callback whose emitted action matched the independently
+    derived R1 decision; consequences (status, world change) are separate.
+    Fallback callbacks are counted once each and are never success witnesses.
+    """
+
+    contact_points: tuple[tuple[int, int], ...]
+    absence_points: tuple[tuple[int, int], ...]
+    reacquisition_points: tuple[tuple[int, int], ...]
+    response_points: tuple[tuple[int, int], ...]
+    fallback_points: tuple[tuple[int, int], ...]
+
+
+@dataclass(frozen=True)
+class ReacquirerScenarioVerification:
+    """Internal R1 result; never serialized into the Scout demo-v1 contract."""
+
+    artifact_consistent: bool
+    reconstruction_valid: bool
+    source_capture_valid: bool
+    is_complete: bool
+    witnesses: ReacquirerPolicyWitnesses
+    findings: tuple[str, ...]
+
+
+_R1Action = tuple[str, int | None, int | None]
+
+
+class _ReacquirerModel:
+    """Independent R1 model: fixed own core 0, reach 128, arena 512, active
+    sensing and default parameters 91/64/3. It never imports the agent."""
+
+    ARENA, REACH, OFFSET, STEP, RESCAN_WAIT = 512, 128, 91, 64, 3
+
+    def __init__(self) -> None:
+        self.mode = "SEARCH"
+        self.target: int | None = None
+        self.wait = 0
+        self.pending: tuple[str, int] | None = None
+        self.points: dict[str, list[tuple[int, int]]] = {
+            "contact": [], "absence": [], "reacquisition": [], "response": [], "fallback": [],
+        }
+
+    def decide(self, observation: SensingExchangeFact, anchor: int, point: tuple[int, int]) -> _R1Action:
+        request, self.pending = self.pending, None
+        if request is None:
+            if observation.delivery_point is not None:
+                raise ExchangeReconstructionError("Reacquirer receipt delivered without its own SENSE")
+            if self.mode == "HOLD":
+                return self._hold(anchor, point)
+            if self.mode == "RESPONSE":
+                return self._respond(anchor, point)
+            return self._search(anchor, point)
+        purpose, center = request
+        if observation.delivery_point is None:
+            raise ExchangeReconstructionError("Reacquirer SENSE lacks its next-callback feedback")
+        receipt = observation.sensed_anchors
+        if observation.detail.get("previous_action_applied") is not True or receipt is None:
+            if purpose == "rescan":
+                self.mode, self.target = "SEARCH", None
+            return self._search(anchor, point)
+        if purpose == "rescan":
+            if center in receipt:
+                return self._hold(anchor, point, restart=True)
+            self.points["absence"].append(point)
+            self.mode, self.target = "SEARCH_AFTER_ABSENCE", None
+            return ("move", self.STEP, None)
+        if not receipt:
+            return ("move", self.STEP, None)
+        self.target = min(receipt)
+        if self.mode == "SEARCH":
+            self.points["contact"].append(point)
+            return self._hold(anchor, point, restart=True)
+        self.points["reacquisition"].append(point)
+        return self._respond(anchor, point)
+
+    def _in_reach(self, anchor: int, address: int) -> bool:
+        return circular_distance(anchor, address, self.ARENA) <= self.REACH
+
+    def _search(self, anchor: int, point: tuple[int, int]) -> _R1Action:
+        center = (anchor + self.OFFSET) % self.ARENA
+        if self._in_reach(anchor, center):
+            self.pending = ("search", center)
+            return ("sense", center, None)
+        self.points["fallback"].append(point)
+        return ("read", 0, None) if self._in_reach(anchor, 0) else ("move", 0, None)
+
+    def _hold(self, anchor: int, point: tuple[int, int], *, restart: bool = False) -> _R1Action:
+        self.mode = "HOLD"
+        if restart:
+            self.wait = self.RESCAN_WAIT
+        if self.wait > 0:
+            self.wait -= 1
+            return ("read", 0 if self._in_reach(anchor, 0) else anchor, None)
+        if self.target is not None and self._in_reach(anchor, self.target):
+            self.pending = ("rescan", self.target)
+            return ("sense", self.target, None)
+        self.mode, self.target = "SEARCH", None
+        return self._search(anchor, point)
+
+    def _respond(self, anchor: int, point: tuple[int, int]) -> _R1Action:
+        if self.target is None:
+            self.mode = "SEARCH"
+            return self._search(anchor, point)
+        if self._in_reach(anchor, self.target):
+            self.mode, self.wait = "HOLD", self.RESCAN_WAIT
+            self.points["response"].append(point)
+            return ("write", self.target, 0x52)
+        self.mode = "RESPONSE"
+        forward = (self.target - anchor) % self.ARENA
+        backward = self.ARENA - forward
+        size = min(self.STEP, forward, backward)
+        return ("move", size if forward <= backward else -size, None)
+
+
+def evaluate_reacquirer_policy(
+    facts: tuple[SensingExchangeFact, ...], *, reacquirer_id: str
+) -> ReacquirerPolicyWitnesses:
+    """Check R1 decisions independently of the executed agent implementation.
+
+    Receipts come from the reconstructed delivery (refused/absent feedback is
+    not a receipt) and the anchor from the reconstructed world, never from an
+    agent narrative. Every emitted action must match and cost one action.
+    """
+    model = _ReacquirerModel()
+    observation: SensingExchangeFact | None = None
+    for fact in facts:
+        if fact.actor_id != reacquirer_id:
+            continue
+        if fact.phase == ExchangePhase.OBSERVATION:
+            observation = fact
+            continue
+        if fact.phase != ExchangePhase.ACTION:
+            continue
+        if observation is None or observation.decision_index != fact.decision_index:
+            raise ExchangeReconstructionError("Reacquirer action lacks its delivered observation")
+        world = observation.world_state
+        anchor = None if world is None else world.get_anchor(reacquirer_id, "main")
+        if anchor is None:
+            raise ExchangeReconstructionError("Reacquirer action lacks a reconstructed anchor")
+        point = (fact.tick, int(fact.decision_index or 0))
+        expected = model.decide(observation, anchor, point)
+        actual = (fact.action_kind, fact.operand, fact.value)
+        if actual != expected or fact.cost != 1 or fact.status != "APPLIED":
+            raise ExchangeReconstructionError(f"Reacquirer decision {point}: expected {expected}, got {actual}")
+    return ReacquirerPolicyWitnesses(*(tuple(model.points[k]) for k in (
+        "contact", "absence", "reacquisition", "response", "fallback")))
+
+
+def verify_reacquirer_scenario(
+    demo_dir_or_file: Path | str, *, reacquirer_seat: str
+) -> ReacquirerScenarioVerification:
+    """Explicit reacquirer-R1 choice, approved sources and inputs, independent facts.
+
+    Invalid bindings/source/input claims raise. A consistent incomplete run can
+    be reconstructed and viewed, but cannot earn R1 completion. Optional-sidecar
+    failure does not affect ordinary ``reconstruct_sensing_playback`` callers.
+    """
+    from battle_engine.agent_revisions import (
+        agent_revision_fingerprint,
+        agent_revision_id,
+        local_python_subset_fingerprint,
+        walk_agent_files,
+    )
+    from battle_engine.sensing_demo import resolve_teaching_agent_dir
+    from battle_engine.starters import starter_content_digest
+
+    if reacquirer_seat not in {"A", "B"}:
+        raise ValueError("reacquirer_seat must be A or B")
+    artifacts = verify_demonstration_artifacts(demo_dir_or_file)
+    payload, paths = artifacts["payload"], artifacts["paths"]
+    if payload.get("status") != "unverified" or "teaching_exchange" in payload:
+        raise ArtifactIntegrityError("Reacquirer must not assert Scout demo-v1 teaching success")
+    if payload.get("config") != {"arena_size": 512, "action_budget": 8, "max_ticks": 100, "seed": 0}:
+        raise ArtifactIntegrityError("Reacquirer requires the approved default inputs")
+    playback = reconstruct_sensing_playback(
+        paths["replay"], paths["trace"], result_path=paths["result"], demo_path=artifacts["demo_path"],
+    )
+    loaded = load_schema4_replay(paths["replay"])
+    envelope = read_result(paths["result"])
+    if (
+        asdict(loaded.header.config) != asdict(Config(arena_size=512, instr_per_tick=8, seed=0))
+        or loaded.header.reproducibility.get("tick_limit") != 100
+        or envelope.reproducibility != loaded.header.reproducibility
+    ):
+        raise ArtifactIntegrityError("Replay/result inputs differ from the approved Reacquirer profile")
+    names = ("v6_roaming_reacquirer", "v6_relocating_opponent")
+    ordered = names if reacquirer_seat == "A" else names[::-1]
+    # Normalized package pins bind the reviewed candidate on either platform;
+    # full raw tree/fingerprint equality is checked separately against captures.
+    pins = {
+        names[0]: "65866988dd2dfdddd9782a8040d932dc84f05cec9b5d6feab3fb6a73c9697f21",
+        names[1]: "d5331833880756a98ea952b98a6c849c4c04234b46b5271a252bb771339a6ddd",
+    }
+    captures = payload["entrants"]
+    if len(captures) != 2 or len(loaded.header.entrants) != 2 or len(envelope.entrants) != 2:
+        raise ArtifactIntegrityError("Reacquirer requires exactly two ordered entrants")
+    for index, (seat, name) in enumerate(zip(("A", "B"), ordered)):
+        capture = captures[index]
+        bundled = resolve_teaching_agent_dir(name)
+        snapshot = contained_path(artifacts["demo_path"].parent, f"sources/{seat}")
+        if snapshot is None or not snapshot.is_dir():
+            raise ArtifactIntegrityError("Reacquirer executed source snapshot missing or unsafe")
+        walk = walk_agent_files(snapshot)
+        tree = agent_revision_fingerprint(snapshot)
+        subset = local_python_subset_fingerprint(walk)
+        if (
+            not walk.complete or not subset or not tree
+            or starter_content_digest(bundled) != pins[name]
+            or tree != agent_revision_fingerprint(bundled)
+        ):
+            raise ArtifactIntegrityError("Reacquirer source differs from the approved bundled revision")
+        params = {"search_offset": 91, "move_step": 64, "rescan_wait": 3} if seat == reacquirer_seat else {}
+        start = 0 if seat == reacquirer_seat else 91
+        expected_capture = {
+            "agent_id": seat, "name": name, "start": start, "parameters": params,
+            "revision_id": agent_revision_id(tree), "full_tree_digest": tree,
+            "python_subset_fingerprint": subset, "loaded_initial_fingerprint": subset,
+            "loaded_final_fingerprint": subset, "capture_complete": True, "drift_detected": False,
+        }
+        if capture != expected_capture:
+            raise ArtifactIntegrityError("Reacquirer captured roles, revisions or inputs disagree")
+        for entrant in (loaded.header.entrants[index], envelope.entrants[index]):
+            metadata = entrant.get("metadata", {})
+            if (
+                entrant.get("agent_id") != seat or entrant.get("name") != name
+                or metadata.get("parameters", {}) != params
+                or metadata.get("local_source_fingerprint") != subset
+                or metadata.get("local_source_fingerprint_final") != subset
+                or metadata.get("source_sha256") != _sha256_file(snapshot / "agent.py")
+                or metadata.get("processes") != [{"process_id": "main", "reach": 128, "share": 1.0}]
+            ):
+                raise ArtifactIntegrityError("Reacquirer executed entrant metadata disagrees with capture")
+        region = next(a.region for a in loaded.ticks[0].agents if a.agent_id == seat)
+        if region is None or region[0] != start:
+            raise ArtifactIntegrityError("Reacquirer whole-role start was not preserved")
+    document = read_trace_v2(paths["trace"])
+    if document.header.match_seed != 0:
+        raise ArtifactIntegrityError("Reacquirer reset seed differs")
+    for decision in document.decisions:
+        if not isinstance(decision, DecisionRecordV2):
+            raise ArtifactIntegrityError("Reacquirer needs v2 decisions")
+        obs = decision.observation
+        if (
+            obs.own_core_base != (0 if decision.agent_id == reacquirer_seat else 91)
+            or obs.own_core_size != 8 or obs.self_reach != 128 or decision.process_id != "main"
+        ):
+            raise ExchangeReconstructionError("Reacquirer delivered own-state disagrees with setup")
+    fixture_id = "B" if reacquirer_seat == "A" else "A"
+    fixture_actions = [f for f in playback.facts if f.actor_id == fixture_id and f.phase == ExchangePhase.ACTION]
+    for ordinal, fact in enumerate(fixture_actions, 1):
+        expected = ("move", 64, None) if ordinal == 4 else ("read", 91, None)
+        if (fact.action_kind, fact.operand, fact.value) != expected or fact.status != "APPLIED" or fact.cost != 1:
+            raise ExchangeReconstructionError("Relocating fixture callback schedule differs")
+    witnesses = evaluate_reacquirer_policy(playback.facts, reacquirer_id=reacquirer_seat)
+    # Omniscient-only check: the fixture's own fourth callback moved it 91 -> 155
+    # after the first contact receipt and before the rescan that found absence.
+    relocation = fixture_actions[3] if len(fixture_actions) >= 4 else None
+    relocated = (
+        relocation is not None and relocation.world_state is not None
+        and relocation.world_state.get_anchor(fixture_id, "main") == 155
+    )
+    ordered_witnesses = (
+        relocated and relocation is not None
+        and bool(witnesses.contact_points) and bool(witnesses.absence_points)
+        and bool(witnesses.reacquisition_points) and bool(witnesses.response_points)
+        and witnesses.contact_points[0] < (relocation.tick, int(relocation.decision_index or 0))
+        < witnesses.absence_points[0] < witnesses.reacquisition_points[0] <= witnesses.response_points[0]
+    )
+    complete = (
+        ordered_witnesses
+        and loaded.result.ticks == 100
+        and playback.facts[-1].world_state is not None
+        and playback.facts[-1].world_state.alive_entrants == frozenset({"A", "B"})
+    )
+    return ReacquirerScenarioVerification(
+        True, True, True, complete, witnesses,
+        (("R1 contact, applied absent rescan, paid MOVE and SENSE, and new anonymous-contact "
+          "response witnessed; no identity, tracking or victory claim"),) if complete
+        else ("Consistent pair lacks required reacquisition sequence or completed 100-tick surviving run",),
+    )
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """CLI entrypoint for independent demonstration and artifact playback verification."""
     parser = argparse.ArgumentParser(
