@@ -41,6 +41,8 @@ remains the default; the new ruleset's name does not mean an application 6.0 rel
   needs no separate Bytefray or Python installation. There is no standalone
   Spectator executable release or committed 5.1 installer integration.
 
+**See Spectator in action:** [Watch the short Bytefray Spectator showcase on YouTube](https://www.youtube.com/watch?v=bWVifa9iEmw).
+
 Follow [`v6-research`](https://github.com/libertaine/Bytefray/tree/v6-research) for
 the research findings, design decisions and ongoing implementation. That branch
 also contains experiments and development artifacts that may never ship. The
