@@ -34,9 +34,20 @@ worktree with `<preserved-m1_1-baseline>` and the Windows font directory with
 `<windows-fonts>/`. Nothing else is changed. The bodies they summarize remain
 local, bound by the hashes recorded in each summary.
 
-The `.gitattributes` file here disables end-of-line conversion. The Keeper
-bodies use CRLF line endings, and `demo.json` and the comparison file bind those
-raw bytes. LF normalization would break those hashes.
+The `.gitattributes` file here disables end-of-line conversion. Among the
+Keeper bodies, only the two `trace.jsonl` files use CRLF line endings; each
+`demo.json`, `replay.jsonl`, `result.json` and source snapshot uses LF. Of the
+other files, `keeper/cross_platform_comparison.json`,
+`qualification/corrected_source_manifest.json`,
+`qualification/correction_only.diff`,
+`qualification/old_starter_preservation.json` and the two selection files use
+CRLF; the remaining text files use LF. `demo.json` and the comparison file bind the raw trace
+bytes, so end-of-line normalization would break those hashes.
+
+*Erratum (2026-10-15, M2-3 closure preparation):* the published text said that
+"the Keeper bodies use CRLF line endings". Only the traces among those bodies
+do. No evidence file, byte or hash changed; this paragraph and the `README.md`
+entry in `evidence_index.json` are the only edits.
 
 ## Watchful Keeper runs
 

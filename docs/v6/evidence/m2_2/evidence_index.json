@@ -23,9 +23,9 @@
     {
       "path": "README.md",
       "kind": "generated",
-      "note": "curated evidence guide",
-      "bytes": 10062,
-      "sha256": "0d1ebd2d066b4b40028208c19b25be91d4c53e8e0d879aa3966ec112650d72b1"
+      "note": "curated evidence guide; line-ending erratum corrected 2026-10-15 (published bytes 10062, sha256 0d1ebd2d066b4b40028208c19b25be91d4c53e8e0d879aa3966ec112650d72b1)",
+      "bytes": 10743,
+      "sha256": "555e6211230a9386a6d25946cc675ad16f521536cb060932c738fd6c32eaf90a"
     },
     {
       "path": "failures/c2_baseline_linux_A_test_terminal.png",
