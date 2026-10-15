@@ -29,6 +29,7 @@ from battle_engine.agent_trace import (
     read_trace_v2,
 )
 from battle_engine.paths import contained_path
+from battle_engine.python_runtime import core_addresses
 from battle_engine.replay import (
     MemoryDiff,
     TickSnapshot,
@@ -1060,6 +1061,16 @@ def reconstruct_sensing_playback(
         (p.entrant_id, p.process_id): p.anchor for p in tick_0.processes
     }
     alive_entrants: set[str] = {a.agent_id for a in tick_0.agents if a.alive}
+    # Each entrant's fixed core, from its tick-zero region start, for the
+    # end-of-tick core-capture rule (python_runtime.apply_core_capture).
+    core_cells: dict[str, tuple[int, ...]] = {}
+    for a in tick_0.agents:
+        if a.region is None:
+            raise ExchangeReconstructionError(
+                f"Tick 0: entrant {a.agent_id} has no recorded core region"
+            )
+        core_cells[a.agent_id] = core_addresses(a.region[0], arena_size)
+    core_zero_streak: dict[str, int] = {}
     disrupted_processes: set[tuple[str, str]] = {
         (p.entrant_id, p.process_id) for p in tick_0.processes if p.disrupted
     }
@@ -1386,6 +1397,20 @@ def reconstruct_sensing_playback(
                     world_state=act_state,
                 )
             )
+
+        # End-of-tick core capture, after every action of the tick: a live
+        # entrant owning zero of its own core cells at capture_hold_ticks
+        # consecutive evaluations is eliminated. Judged two-phase against the
+        # same end-of-tick board, so the eliminated set is order-independent.
+        captured: list[str] = []
+        for entrant_id in sorted(alive_entrants):
+            if any(owners[address] == entrant_id for address in core_cells[entrant_id]):
+                core_zero_streak[entrant_id] = 0
+                continue
+            core_zero_streak[entrant_id] = core_zero_streak.get(entrant_id, 0) + 1
+            if core_zero_streak[entrant_id] >= policy.capture_hold_ticks:
+                captured.append(entrant_id)
+        alive_entrants.difference_update(captured)
 
         # 3. Tick-end agreement check with canonical replay snapshot
         snapshot = ticks_by_number.get(current_tick)
