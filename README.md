@@ -11,6 +11,42 @@ You write the agents: they maneuver, inspect, and rewrite memory while defending
 [![Python 3.10–3.14](https://img.shields.io/badge/Python-3.10%E2%80%933.14-blue)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+## What's Coming in Bytefray 5.1
+
+**Bytefray 5.0.0 remains the latest stable release.** The upcoming 5.1 application
+release is expected to introduce experimental sensing gameplay and highlight a
+new way to watch recorded matches. Stable [`bytefray-rules-4`](docs/RULES_V4.md)
+remains the default; the new ruleset's name does not mean an application 6.0 release.
+
+* **Find before you fight.** `bytefray-rules-6-alpha1`, implemented on the
+  development branch, replaces passive opponent visibility with explicit `SENSE`
+  actions. Searching spends an action opportunity, and anonymous contacts arrive
+  at the sensing process's next eligible observation. A contact tells you where
+  an opponent was sampled, not where it is now. Searching, pursuing and defending
+  can therefore call for different decisions as information ages. This is a
+  distinct, explicitly selected experimental ruleset; it is not in the 5.0.0 download.
+* **Learn through small agents.** Window Scout is implemented and demonstrates
+  sensing, a delayed receipt, movement and a subsequent write. Watchful Keeper
+  (defense) and Roaming Reacquirer (losing and finding contacts again) are proposed
+  follow-ups. These teaching examples explain mechanics; they do not establish
+  competitive balance. See the [sensing design](https://github.com/libertaine/Bytefray/blob/v6-research/docs/v6/V6_ALPHA_M1_CONTRACT_01.md)
+  and [accepted implementation milestone](https://github.com/libertaine/Bytefray/blob/v6-research/docs/v6/V6_ALPHA_M1_FINAL_ACCEPTANCE_01.md).
+* **Watch the consequences.** [Bytefray-Spectator](https://github.com/libertaine/Bytefray-Spectator)
+  is a separate Godot companion that plays verified recorded matches: a circular
+  arena, cell ownership, moving processes, recorded WRITE/SENSE activity, timeline
+  seeking, Classic/Filled Arcs memory styles, and procedural sound effects with
+  nonverbal electronic cues. Compare the full Broadcast with Agent A's delivered
+  information. Playback never executes agent decisions or simulates a new match.
+  The experimental, source-only preview requires Godot 4.7.2; its bundled showcase
+  needs no separate Bytefray or Python installation. There is no standalone
+  Spectator executable release or committed 5.1 installer integration.
+
+Follow [`v6-research`](https://github.com/libertaine/Bytefray/tree/v6-research) for
+the research findings, design decisions and ongoing implementation. That branch
+also contains experiments and development artifacts that may never ship. The
+final 5.1 feature and distribution scope remains to be settled; use the 5.0.0
+downloads below for the current stable application.
+
 <p align="center">
   <img src="docs/screenshots/v5-replay-showcase.gif" alt="Animated Bytefray replay showing two Python agents competing in the arena and a core capture" width="900">
 </p>
