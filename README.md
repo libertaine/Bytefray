@@ -204,6 +204,9 @@ human observers also need an engaging way to see the consequences. The separate
 explores that presentation layer in **Godot 4 / GDScript**, while Bytefray remains
 the authority for match execution.
 
+**See Spectator in action:** [Watch the short Bytefray Spectator showcase on YouTube](https://www.youtube.com/watch?v=bWVifa9iEmw).
+The video demonstrates the current recorded-match presentation experience.
+
 The existing Pygame viewer supplies general replay/analysis tooling, and the V6
 sensing viewer is a diagnostic teaching tool for exact request/receipt/action
 phases. Spectator adds a focused circular-arena presentation, recorded action
