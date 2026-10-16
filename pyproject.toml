@@ -91,6 +91,15 @@ include-package-data = false
 [tool.setuptools.packages.find]
 where = ["engine/src", "client/src", "."]
 include = ["battle_engine*", "battle_client*", "app*"]
+# Namespace discovery would otherwise pick up the retained research-only
+# Agent API v1 directories below as packages (their agent.py files are
+# modules, so include-package-data = false does not stop them).
+exclude = [
+  "battle_engine.data.benchmarks*",
+  "battle_engine.data.reference_agents*",
+  "battle_engine.data.v3_closeout_agents*",
+  "battle_engine.data.v3_phase7_agents*",
+]
 
 [tool.setuptools.package-dir]
 battle_engine = "engine/src/battle_engine"
