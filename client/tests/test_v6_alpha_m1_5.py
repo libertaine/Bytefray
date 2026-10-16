@@ -170,7 +170,8 @@ def test_pygame_surface_events_navigation_switching_and_rewind(tmp_path):
         presentation.controller.update(100)
         assert presentation.index == 2
         renderer.draw(presentation)
-        renderer.handle_event(pg.event.Event(pg.MOUSEBUTTONDOWN,button=1,pos=(1080,660)),presentation)
+        x, y, width, height = renderer._timeline_rect
+        renderer.handle_event(pg.event.Event(pg.MOUSEBUTTONDOWN,button=1,pos=(x + width, y + height // 2)),presentation)
         assert presentation.at_end
         key(pg.K_HOME)
         assert presentation.terminal_text is None

@@ -384,6 +384,16 @@ class AgentDevelopmentPanel(QWidget):
         )
         workflow_hint.setWordWrap(True)
         test_layout.addWidget(workflow_hint)
+        # M2-4: the same static guide and scenario cards as replay Help (?),
+        # shown outside any replay; it never describes a particular run.
+        self.btnSensingGuide = QPushButton("V6 alpha1 sensing guide…")
+        self.btnSensingGuide.setToolTip(
+            "Static explanation of V6 alpha1 sensing with the Watchful Keeper and "
+            "Roaming Reacquirer scenario cards."
+        )
+        self.btnSensingGuide.setAccessibleName("V6 alpha1 sensing guide")
+        test_layout.addWidget(self.btnSensingGuide)
+        self.sensingGuideDialog: QDialog | None = None
 
         self.btnTest = QPushButton("Test")
         self.btnTest.setEnabled(False)
@@ -457,6 +467,7 @@ class AgentDevelopmentPanel(QWidget):
         self.btnOpenTestReplay.clicked.connect(self.openTestReplayRequested.emit)
         self.btnInspectTrace.clicked.connect(self.inspectTraceRequested.emit)
         self.btnEvaluate.clicked.connect(self.evaluateRequested.emit)
+        self.btnSensingGuide.clicked.connect(self.showSensingGuide)
         self.agentCombo.currentIndexChanged.connect(self._on_combo_changed)
         # An explicitly selected opponent is a real entrant, so it
         # participates in Ruleset compatibility exactly like the tested
@@ -628,6 +639,28 @@ class AgentDevelopmentPanel(QWidget):
             f"Source changed for '{row.name}': previous development-test results were cleared."
         )
         self.sourceRevisionChanged.emit(agent_id)
+
+    def showSensingGuide(self) -> QDialog:
+        """Open the static V6 alpha1 guide and scenario cards in a separate window."""
+        from battle_client.sensing_presentation import sensing_guide_lines
+
+        if self.sensingGuideDialog is None:
+            dialog = QDialog(self)
+            dialog.setWindowTitle("V6 alpha1 sensing guide")
+            layout = QVBoxLayout(dialog)
+            text = QPlainTextEdit()
+            text.setObjectName("sensingGuideText")
+            text.setReadOnly(True)
+            text.setPlainText("\n\n".join(line for line in sensing_guide_lines() if line))
+            layout.addWidget(text)
+            buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+            buttons.rejected.connect(dialog.close)
+            layout.addWidget(buttons)
+            dialog.resize(640, 520)
+            self.sensingGuideDialog = dialog
+        self.sensingGuideDialog.show()
+        self.sensingGuideDialog.raise_()
+        return self.sensingGuideDialog
 
     def setStatus(self, message: str) -> None:
         """Used by the New Agent creation-success message (Phase 4a)."""

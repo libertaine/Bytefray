@@ -1,0 +1,852 @@
+{
+  "platform": "linux",
+  "environment": "Ubuntu on WSL2 (kernel 6.6.87.2), Python 3.12.3, user-local env, PySide6 xcb and SDL x11 on WSLg DISPLAY=:0",
+  "scripts": {
+    "m2_4_20261015/linux_campaign.sh": "40dbb467bfffea153f6ca82081d2ade32ee9ebeaace9d1275a34f1847073a12a",
+    "m2_4_20261015/linux_campaign_02.sh": "db65ea6899b10e275923aa4c01493777a0e4e1da2fa760bf137c1bb74f20209e",
+    "m2_4_20261015/linux_campaign_03.sh": "4c2e641ffc3dba5065986be378e7bab71b99ffcca1b85f270eab9c9a45b97dd3",
+    "m2_4_20261015/linux_campaign_04.sh": "37c92ed999ade86664e5c6f5ef7ede08104a0d61fd337df97450e353746884b3",
+    "m2_4_20261015/linux_campaign_05.sh": "dc179df6e64622490effbcc044f20ccc978f793b0603730708277f28bb0a248c",
+    "m2_4_20261015/linux_dev_05.sh": "d2267b54c34bdb53244d2b3f9a8eabca6e20dd71d61a83eaf62cbdb03bccfd6a"
+  },
+  "script_outputs": {
+    "m2_4_20261015/linux_campaign.out": "65241f270ec5eafb17f818961bcb9064734ff6d2600356b87fff98514faac2dd",
+    "m2_4_20261015/linux_campaign_02.out": "e176be16c5b6caa5b32de53e69e5f0f732da477ad4d2632ca0c02bd0eca41501",
+    "m2_4_20261015/linux_campaign_04.out": "d772e3958e8b9b61197454a439234b9d6cbf92b993bd664bc8c7058cf30c46fd",
+    "m2_4_20261015/linux_campaign_05.out": "b3395cc62f03d0e174a47425abc02fcf2b37c131fab987d4917d42b19af0709c"
+  },
+  "unexecuted_scripts": {
+    "m2_4_20261015/linux_campaign_03.sh": "written for freeze 03 and superseded by freeze 04 before it ran; no _03 Linux campaign, probe or native run exists"
+  },
+  "campaigns": [
+    {
+      "campaign": "m2_4_linux_client_sensing_02",
+      "phase": "freeze 02",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m1_5.py",
+        "client/tests/test_v6_alpha_m1_5_adversarial.py",
+        "client/tests/test_v6_alpha_sensing.py",
+        "client/tests/test_v6_alpha_sensing_adversarial.py",
+        "client/tests/test_v6_alpha_sensing_core_capture.py",
+        "client/tests/test_hud_layout.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_linux_client_sensing_02",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_linux_client_sensing_02",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_linux_client_sensing_02.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 0,
+      "seconds": 20.47,
+      "junit": {
+        "tests": 163,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 17.915,
+        "passed": 163,
+        "timestamp": "2026-10-15T23:51:24.110821+00:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 163 passed in 18.45s ============================="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_linux_client_sensing_02.xml": "fbc943f977a40da8fe4dab0af0a24c80bfc2bb823b38bbc4e4d5d1e23408c3c0",
+        "m2_4_20261015/m2_4_linux_client_sensing_02.log": "8e1172dab13b88f460947fd8fb6b3da9c6f5339388f79f8e4d2b722d346a3981",
+        "m2_4_20261015/m2_4_linux_client_sensing_02_command.json": "146ce951bfaceb598578d26d3ca807083c1a6a3dd62d1be965f4a89a2f499f73"
+      }
+    },
+    {
+      "campaign": "m2_4_linux_client_sensing_04",
+      "phase": "freeze 04",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m1_5.py",
+        "client/tests/test_v6_alpha_m1_5_adversarial.py",
+        "client/tests/test_v6_alpha_sensing.py",
+        "client/tests/test_v6_alpha_sensing_adversarial.py",
+        "client/tests/test_v6_alpha_sensing_core_capture.py",
+        "client/tests/test_hud_layout.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_linux_client_sensing_04",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_linux_client_sensing_04",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_linux_client_sensing_04.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 0,
+      "seconds": 21.04,
+      "junit": {
+        "tests": 163,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 18.399,
+        "passed": 163,
+        "timestamp": "2026-10-16T00:03:20.764476+00:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 163 passed in 19.00s ============================="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_linux_client_sensing_04.xml": "1fdc3589e5026308286ef821f026eacdc9580661cdc8d7fb4f5cde141a15d8e5",
+        "m2_4_20261015/m2_4_linux_client_sensing_04.log": "1debec95fb864b2a182254515c9da4df2ff2af4fc51b71eec9aa7a55f12e04d4",
+        "m2_4_20261015/m2_4_linux_client_sensing_04_command.json": "c4e3a0f8aa56dc51ccf1a609b175a6618b56b4a911d1b2d1434cab165ab6cf09"
+      }
+    },
+    {
+      "campaign": "m2_4_linux_client_sensing_05",
+      "phase": "freeze 05",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m1_5.py",
+        "client/tests/test_v6_alpha_m1_5_adversarial.py",
+        "client/tests/test_v6_alpha_sensing.py",
+        "client/tests/test_v6_alpha_sensing_adversarial.py",
+        "client/tests/test_v6_alpha_sensing_core_capture.py",
+        "client/tests/test_hud_layout.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_linux_client_sensing_05",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_linux_client_sensing_05",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_linux_client_sensing_05.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 0,
+      "seconds": 20.91,
+      "junit": {
+        "tests": 163,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 18.228,
+        "passed": 163,
+        "timestamp": "2026-10-16T00:19:51.146719+00:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 163 passed in 18.74s ============================="
+      ],
+      "disposition": "final",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_linux_client_sensing_05.xml": "42ff63d08b7e2f7945be1ea1fd8ff208be38c3275f087a595da0247fd89eaad1",
+        "m2_4_20261015/m2_4_linux_client_sensing_05.log": "932ac75c5e75e1796f68607f7c5776b0884ff01d4e3449d5002f64ceab212736",
+        "m2_4_20261015/m2_4_linux_client_sensing_05_command.json": "859590b35741ad98229acc4a61b4207ff1ad92b61cc1ec4f8fdae992c8f724d7"
+      }
+    },
+    {
+      "campaign": "m2_4_linux_client_sensing",
+      "phase": "freeze 01",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m1_5.py",
+        "client/tests/test_v6_alpha_m1_5_adversarial.py",
+        "client/tests/test_v6_alpha_sensing.py",
+        "client/tests/test_v6_alpha_sensing_adversarial.py",
+        "client/tests/test_v6_alpha_sensing_core_capture.py",
+        "client/tests/test_hud_layout.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_linux_client_sensing",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_linux_client_sensing",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_linux_client_sensing.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 0,
+      "seconds": 20.77,
+      "junit": {
+        "tests": 163,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 18.031,
+        "passed": 163,
+        "timestamp": "2026-10-15T23:38:37.188546+00:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 163 passed in 18.57s ============================="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_linux_client_sensing.xml": "b76547e822e65dd403845f1ae6e81d02046eb8aaa13fd8f968cf269dbde16296",
+        "m2_4_20261015/m2_4_linux_client_sensing.log": "057c25e29c9c67db81f61927892946f034c0049ea45122383168a34a5ac8b141",
+        "m2_4_20261015/m2_4_linux_client_sensing_command.json": "c701423afc836e93f5b18a7393f8bfa58f45c3210f4b45daf9bb80c6bd428e56"
+      }
+    },
+    {
+      "campaign": "m2_4_linux_designer_guide_04",
+      "phase": "freeze 04",
+      "command": [
+        "pytest",
+        "tests/test_v6_alpha_m1_5_designer.py::test_development_sensing_guide_shows_the_shared_static_cards",
+        "-m",
+        "gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_linux_designer_guide_04",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_linux_designer_guide_04",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_linux_designer_guide_04.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 0,
+      "seconds": 4.21,
+      "junit": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 2.184,
+        "passed": 1,
+        "timestamp": "2026-10-16T00:12:45.177470+00:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================== 1 passed in 2.21s ==============================="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_linux_designer_guide_04.xml": "81a94689df98155110db59489585b2da3c5bfa5019c3ab751bfd5c414e8114e9",
+        "m2_4_20261015/m2_4_linux_designer_guide_04.log": "0246e8dba21aac426683d6887a712a8c0ab45cd493b161a2355d051a9607ea55",
+        "m2_4_20261015/m2_4_linux_designer_guide_04_command.json": "630c31a7e0db298536d1f3feee69e093221a11de3208fb32985fe68dbc5b0de5"
+      }
+    },
+    {
+      "campaign": "m2_4_linux_designer_guide_05",
+      "phase": "freeze 05",
+      "command": [
+        "pytest",
+        "tests/test_v6_alpha_m1_5_designer.py::test_development_sensing_guide_shows_the_shared_static_cards",
+        "-m",
+        "gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_linux_designer_guide_05",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_linux_designer_guide_05",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_linux_designer_guide_05.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 0,
+      "seconds": 4.14,
+      "junit": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 2.133,
+        "passed": 1,
+        "timestamp": "2026-10-16T00:29:12.169323+00:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================== 1 passed in 2.15s ==============================="
+      ],
+      "disposition": "final",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_linux_designer_guide_05.xml": "145654cf2760749fedb0d420285626413deeac0a61043e3d94be9545d281d21f",
+        "m2_4_20261015/m2_4_linux_designer_guide_05.log": "68bdcee0aa0f1caf6efd62d67578af239bc19bdb346194d33d3ca4c97a1efef0",
+        "m2_4_20261015/m2_4_linux_designer_guide_05_command.json": "42f36a8f955643d15f8104ec2be61e7795a20cef1490d0abcf937da046cad4d8"
+      }
+    },
+    {
+      "campaign": "m2_4_linux_designer_guide",
+      "phase": "freeze 01",
+      "command": [
+        "pytest",
+        "tests/test_v6_alpha_m1_5_designer.py::test_development_sensing_guide_shows_the_shared_static_cards",
+        "-m",
+        "gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_linux_designer_guide",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_linux_designer_guide",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_linux_designer_guide.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 0,
+      "seconds": 4.38,
+      "junit": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 2.337,
+        "passed": 1,
+        "timestamp": "2026-10-15T23:38:57.918544+00:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================== 1 passed in 2.36s ==============================="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_linux_designer_guide.xml": "a64ef5d6defcd781d92e0511031f5f34ac451fd03b9107d67869f8af9d617f68",
+        "m2_4_20261015/m2_4_linux_designer_guide.log": "5c80329c51d89cb6898cffdc182ffcfb05de57fc9a01c5cd7812d2a691c4d507",
+        "m2_4_20261015/m2_4_linux_designer_guide_command.json": "cfa099f01dcf29ceeb4146d4334d4f1a131e07c7ce9f6eed945f2f6a4ca9ed3d"
+      }
+    },
+    {
+      "campaign": "m2_4_linux_dev_views_05",
+      "phase": "development",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "client/tests/test_v6_alpha_m1_5.py",
+        "client/tests/test_v6_alpha_m1_5_adversarial.py",
+        "-m",
+        "\"gui",
+        "or",
+        "not",
+        "gui\"",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_linux_dev_views_05",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_linux_dev_views_05",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_linux_dev_views_05.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 4,
+      "seconds": 1.95,
+      "junit": {
+        "tests": 0,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 0.017,
+        "passed": 0,
+        "timestamp": "2026-10-16T00:14:04.067297+00:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================ no tests ran in 0.02s ============================="
+      ],
+      "disposition": "launch failure: -m \"gui or not gui\" was split into separate arguments, nothing was collected; relaunched unchanged as m2_4_linux_dev_views_05b. Not listed in Implementation Record 01 section 9.2",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_linux_dev_views_05.xml": "74bcb19f17fe1fef07f26b8aa2ee89af04767bd39d2da95e8017c5809b344a9e",
+        "m2_4_20261015/m2_4_linux_dev_views_05.log": "69ca3d228e09a1ba5fb88d713fb1adcda07f2a9e4227e3d7881543a43a1201f0",
+        "m2_4_20261015/m2_4_linux_dev_views_05_command.json": "47e60e74129a54377077c1eb3abe6c0db0f8b3031d80646584e8d1473c4d91f2"
+      }
+    },
+    {
+      "campaign": "m2_4_linux_dev_views_05b",
+      "phase": "development",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "client/tests/test_v6_alpha_m1_5.py",
+        "client/tests/test_v6_alpha_m1_5_adversarial.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_linux_dev_views_05b",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_linux_dev_views_05b",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_linux_dev_views_05b.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 0,
+      "seconds": 40.03,
+      "junit": {
+        "tests": 58,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 37.663,
+        "passed": 58,
+        "timestamp": "2026-10-16T00:14:18.256210+00:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 58 passed in 38.04s =============================="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_linux_dev_views_05b.xml": "07c1886a6fa00c3f3e681c45baebc32a7673db2650cadda36229c6362e983e99",
+        "m2_4_20261015/m2_4_linux_dev_views_05b.log": "e512ebf729afabdd4a86178c033fab12cfe53ee35cd4df8f05b65cc347d24af4",
+        "m2_4_20261015/m2_4_linux_dev_views_05b_command.json": "60e82724103d085ca2cb7e5b281b9245052e6a14106b31ee4ef3548fc8cc63d4"
+      }
+    },
+    {
+      "campaign": "m2_4_linux_focused_02",
+      "phase": "freeze 02",
+      "command": [
+        "pytest",
+        "engine/tests/test_agent_test.py",
+        "@docs/v6/evidence/m2_2/qualification/m2_2_focused_selection.txt",
+        "engine/tests/test_v6_alpha_m2_reacquirer.py",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "client/tests/test_hud_layout.py",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_linux_focused_02",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_linux_focused_02",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_linux_focused_02.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 0,
+      "seconds": 381.36,
+      "junit": {
+        "tests": 823,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 374.307,
+        "passed": 823,
+        "timestamp": "2026-10-15T23:51:45.049719+00:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "================ 823 passed, 10 deselected in 379.03s (0:06:19) ================"
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_linux_focused_02.xml": "6c719ab4c93775baceef3c18b3cc1729e00b52a011d03b7fcae2206ec09a75e7",
+        "m2_4_20261015/m2_4_linux_focused_02.log": "6ccdd72531e23d23175b4fd329c348bde6b89a69ea36431489593cf77aabbf57",
+        "m2_4_20261015/m2_4_linux_focused_02_command.json": "3fa964c10fb1d106961ec569154fd06882893e2e1ddc1c84c30c05dba21f198a"
+      }
+    },
+    {
+      "campaign": "m2_4_linux_focused_04",
+      "phase": "freeze 04",
+      "command": [
+        "pytest",
+        "engine/tests/test_agent_test.py",
+        "@docs/v6/evidence/m2_2/qualification/m2_2_focused_selection.txt",
+        "engine/tests/test_v6_alpha_m2_reacquirer.py",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "client/tests/test_hud_layout.py",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_linux_focused_04",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_linux_focused_04",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_linux_focused_04.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 0,
+      "seconds": 390.56,
+      "junit": {
+        "tests": 824,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 383.542,
+        "passed": 824,
+        "timestamp": "2026-10-16T00:03:42.260896+00:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "================ 824 passed, 10 deselected in 388.24s (0:06:28) ================"
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_linux_focused_04.xml": "90df7f711eb4af337f94e24c906f0c2d1a98ac69ed48073471759779b01eafea",
+        "m2_4_20261015/m2_4_linux_focused_04.log": "d3f1a09d48aabc56bf57aa8ae124c0a0ce353e1b7c982a0e5bdf8de4c7f07f64",
+        "m2_4_20261015/m2_4_linux_focused_04_command.json": "bdab971a7b9d7c741a7ff008f9a35a1b989a4100e06307dab7a30a297b2bc69d"
+      }
+    },
+    {
+      "campaign": "m2_4_linux_focused_05",
+      "phase": "freeze 05",
+      "command": [
+        "pytest",
+        "engine/tests/test_agent_test.py",
+        "@docs/v6/evidence/m2_2/qualification/m2_2_focused_selection.txt",
+        "engine/tests/test_v6_alpha_m2_reacquirer.py",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "client/tests/test_hud_layout.py",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_linux_focused_05",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_linux_focused_05",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_linux_focused_05.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 0,
+      "seconds": 389.39,
+      "junit": {
+        "tests": 824,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 382.422,
+        "passed": 824,
+        "timestamp": "2026-10-16T00:20:12.263145+00:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "================ 824 passed, 10 deselected in 387.17s (0:06:27) ================"
+      ],
+      "disposition": "final",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_linux_focused_05.xml": "67dcb9c21e5a415af05221ce67c5d76dba4ff18439fd487fb10c8713cf731126",
+        "m2_4_20261015/m2_4_linux_focused_05.log": "b3e5a729baad36515066d6d3dcac43921c515ae0918933295d055861fe4b50f9",
+        "m2_4_20261015/m2_4_linux_focused_05_command.json": "53e6abe3fb5c09ccf2c7927e91d69cfd19ac5105410b460707b8a8c63920afae"
+      }
+    },
+    {
+      "campaign": "m2_4_linux_focused",
+      "phase": "freeze 01",
+      "command": [
+        "pytest",
+        "engine/tests/test_agent_test.py",
+        "@docs/v6/evidence/m2_2/qualification/m2_2_focused_selection.txt",
+        "engine/tests/test_v6_alpha_m2_reacquirer.py",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "client/tests/test_hud_layout.py",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_linux_focused",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_linux_focused",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_linux_focused.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 0,
+      "seconds": 398.45,
+      "junit": {
+        "tests": 823,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 391.39,
+        "passed": 823,
+        "timestamp": "2026-10-15T23:39:02.855735+00:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "================ 823 passed, 10 deselected in 396.09s (0:06:36) ================"
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_linux_focused.xml": "513b8c6ee395e6acfefb89e7e4bb8f8f27d3bc00fe4720a5e2f4cf04cb13b383",
+        "m2_4_20261015/m2_4_linux_focused.log": "017bf5628d33d906cf46ec138c2f80fd5eadbfb668af1723f6ae261a04fd4ecf",
+        "m2_4_20261015/m2_4_linux_focused_command.json": "232a3ce074556f790e7c677438493623f0c83cbb8cd45d2a447aac911f45868c"
+      }
+    },
+    {
+      "campaign": "m2_4_linux_views_02",
+      "phase": "freeze 02",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_linux_views_02",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_linux_views_02",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_linux_views_02.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 1,
+      "seconds": 32.11,
+      "junit": {
+        "tests": 36,
+        "failures": 3,
+        "errors": 0,
+        "skipped": 0,
+        "time": 29.992,
+        "passed": 33,
+        "timestamp": "2026-10-15T23:50:51.664100+00:00"
+      },
+      "failed_nodes": [
+        "client.tests.test_v6_alpha_m2_4_views::test_long_history_layout_all_sizes_views_and_terminal_state[keeper-A]",
+        "client.tests.test_v6_alpha_m2_4_views::test_long_history_layout_all_sizes_views_and_terminal_state[reacquirer-B]",
+        "client.tests.test_v6_alpha_m2_4_views::test_dense_sample_labels_never_intersect_and_history_keeps_every_fact"
+      ],
+      "log_tail": [
+        "======================== 3 failed, 33 passed in 30.21s ========================="
+      ],
+      "disposition": "product defect (freeze 02): measured text taller than the line pitch on Linux; partially addressed in freeze 04",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_linux_views_02.xml": "d2c4d97de37f113244a6a0366acadb1ce76267ad79b7d2d58db6fcc2f9ccb142",
+        "m2_4_20261015/m2_4_linux_views_02.log": "22e0a8d62464b900c06d70e5f7ef14d275c25a4f33d9fe8ee41427a95f2b7a5d",
+        "m2_4_20261015/m2_4_linux_views_02_command.json": "9e54ee1d37f3118705ef73a72ef8c11966243a36cd97db40c8e62e611690b7ab"
+      }
+    },
+    {
+      "campaign": "m2_4_linux_views_04",
+      "phase": "freeze 04",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_linux_views_04",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_linux_views_04",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_linux_views_04.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 1,
+      "seconds": 29.84,
+      "junit": {
+        "tests": 37,
+        "failures": 3,
+        "errors": 0,
+        "skipped": 0,
+        "time": 27.666,
+        "passed": 34,
+        "timestamp": "2026-10-16T00:02:50.662742+00:00"
+      },
+      "failed_nodes": [
+        "client.tests.test_v6_alpha_m2_4_views::test_long_history_layout_all_sizes_views_and_terminal_state[keeper-A]",
+        "client.tests.test_v6_alpha_m2_4_views::test_long_history_layout_all_sizes_views_and_terminal_state[reacquirer-B]",
+        "client.tests.test_v6_alpha_m2_4_views::test_dense_sample_labels_never_intersect_and_history_keeps_every_fact"
+      ],
+      "log_tail": [
+        "======================== 3 failed, 34 passed in 27.87s ========================="
+      ],
+      "disposition": "product defect (freeze 04): one probe string cannot bound Linux text height; fixed in freeze 05",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_linux_views_04.xml": "9655f6001c04bccab97270f7ea277ad01ae3ca56c3abab70e82d7ab72c687ffd",
+        "m2_4_20261015/m2_4_linux_views_04.log": "79351fd23c20d219c5ced25e03c03f954575c154b8d4ec6f093a24c0de04fab8",
+        "m2_4_20261015/m2_4_linux_views_04_command.json": "13bcd20e3049172963ffa7f2fc454033f20eaf4e0840345c033b97e5e7051997"
+      }
+    },
+    {
+      "campaign": "m2_4_linux_views_05",
+      "phase": "freeze 05",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_linux_views_05",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_linux_views_05",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_linux_views_05.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 0,
+      "seconds": 34.38,
+      "junit": {
+        "tests": 37,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 32.147,
+        "passed": 37,
+        "timestamp": "2026-10-16T00:19:16.420023+00:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 37 passed in 32.36s =============================="
+      ],
+      "disposition": "final",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_linux_views_05.xml": "df46dfecb5f7cedbb943ad2c5c82d3cd8986d5e16d206db4e34abe5ecf8f5f48",
+        "m2_4_20261015/m2_4_linux_views_05.log": "9da003d87c6b6197313ba18f836f496e56ad7f252e35bcb506f7e7252fec12f2",
+        "m2_4_20261015/m2_4_linux_views_05_command.json": "8d95cd4d4f96959420a1ed55410eec554d69f21ae5954ac2e0badb60fc3eb1ea"
+      }
+    },
+    {
+      "campaign": "m2_4_linux_views",
+      "phase": "freeze 01",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_linux_views",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_linux_views",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_linux_views.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src:<checkout>/client/src:<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": "xcb",
+        "SDL_VIDEODRIVER": "x11",
+        "DISPLAY": ":0"
+      },
+      "returncode": 1,
+      "seconds": 32.01,
+      "junit": {
+        "tests": 36,
+        "failures": 3,
+        "errors": 0,
+        "skipped": 0,
+        "time": 29.633,
+        "passed": 33,
+        "timestamp": "2026-10-15T23:38:04.876500+00:00"
+      },
+      "failed_nodes": [
+        "client.tests.test_v6_alpha_m2_4_views::test_long_history_layout_all_sizes_views_and_terminal_state[keeper-A]",
+        "client.tests.test_v6_alpha_m2_4_views::test_long_history_layout_all_sizes_views_and_terminal_state[reacquirer-B]",
+        "client.tests.test_v6_alpha_m2_4_views::test_dense_sample_labels_never_intersect_and_history_keeps_every_fact"
+      ],
+      "log_tail": [
+        "======================== 3 failed, 33 passed in 29.87s ========================="
+      ],
+      "disposition": "product defect (freeze 01): DejaVu Sans Mono caption ran into the history header at 900x650; fixed",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_linux_views.xml": "3ae00a6d975ca614cbead1a4002530a56fa1f50de61e4ad8b7e8912b4c031151",
+        "m2_4_20261015/m2_4_linux_views.log": "bfa93176bf7809154fc6b976c1fec3ae72c284c6a3dd840d8269b62911101dfb",
+        "m2_4_20261015/m2_4_linux_views_command.json": "76e03f0e086691d31baf182d9c3f951e5d987d8e19141bf296686d29ab6636cc"
+      }
+    }
+  ]
+}

@@ -1,0 +1,1999 @@
+{
+  "note": "Supplementary native observations of the real viewer process (not the M2-5 gate, not a human result). Frames are the viewer's own drawn surface saved by the passive observer inside the native process (pygame.image.save of the display surface), not OS compositor screenshots.",
+  "harness": {
+    "native_viewer": "m2_4_20261015/native_viewer.py",
+    "native_viewer_sha256": "70dd34ce9995a76bd0cbce5eea852fad4e438315a791d589dc10e0740d6267f2",
+    "observer": "m2_4_20261015/observer/sitecustomize.py",
+    "observer_sha256": "c953dd74586f9ed199a0114ba59a55bd13feeabf792945c10745aebf25dd9be1"
+  },
+  "c2_input": {
+    "replay_sha256": "98edb90ddda6d5d28b3ff76431d6c1ed9e4b7f792b48144173408fc17d9305de",
+    "trace_sha256": "47268aa8139bf676bbfa050d2c9f7ec21195a0ac047e68cb8e7bc208cbd9c7e9",
+    "result_sha256": "62003072f4280d1ed9a260bf67bdc98a3bed320ed6ee29c5f346b311dde4553f",
+    "published": false
+  },
+  "runs": [
+    {
+      "run": "m2_4_20261015/windows_native_01",
+      "phase": "freeze 01",
+      "outcome": "harness failure, retained: .venv python.exe launcher PID differed from the viewer PID",
+      "platform": "Windows-11-10.0.26120-SP0",
+      "input": "Win32 window messages (PostMessage)",
+      "environment": {
+        "DISPLAY": null,
+        "WAYLAND_DISPLAY": null,
+        "SDL_VIDEODRIVER": "windows",
+        "PYTHONPATH": "<checkout>/runs/v6_alpha_m2/m2_4_20261015/observer;<checkout>/engine/src;<checkout>/client/src;<checkout>"
+      },
+      "steps": [
+        {
+          "step": "environment",
+          "t": 726454.7409424,
+          "argv": [
+            "<checkout>/.venv/Scripts/python.exe",
+            "-m",
+            "battle_client.cli",
+            "--renderer",
+            "pygame",
+            "--replay",
+            "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/replay.jsonl",
+            "--trace",
+            "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/trace.jsonl",
+            "--result",
+            "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/result.json",
+            "--paused"
+          ]
+        },
+        {
+          "step": "killed_after_failure",
+          "t": 726754.7823942,
+          "exit_code": 1
+        }
+      ],
+      "delivered_key_events": null,
+      "viewer_stdout": "",
+      "frames": {},
+      "local_bodies": {
+        "m2_4_20261015/windows_native_01/summary.json": "7dadbcb2663cf60dd2201fb84bbd02f1065abd5cf226d414cac107aca0763f61",
+        "m2_4_20261015/windows_native_01/viewer.out": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "m2_4_20261015/windows_native_01/viewer_states.jsonl": "b2a7158048e70cd07c82157c866860c92d6aa7705fa6cc18bba376bf844fd6d5"
+      }
+    },
+    {
+      "run": "m2_4_20261015/windows_native_02",
+      "phase": "freeze 02",
+      "outcome": "harness/display failure, retained: window could not return to 1100 wide on a portrait 1080x1920 display",
+      "platform": "Windows-11-10.0.26120-SP0",
+      "input": "Win32 window messages (PostMessage)",
+      "environment": {
+        "DISPLAY": null,
+        "WAYLAND_DISPLAY": null,
+        "SDL_VIDEODRIVER": "windows",
+        "PYTHONPATH": "<checkout>/runs/v6_alpha_m2/m2_4_20261015/observer;<checkout>/engine/src;<checkout>/client/src;<checkout>"
+      },
+      "steps": [
+        {
+          "step": "environment",
+          "t": 726994.5738407,
+          "argv": [
+            "<checkout>/.venv/Scripts/python.exe",
+            "-m",
+            "battle_client.cli",
+            "--renderer",
+            "pygame",
+            "--replay",
+            "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/replay.jsonl",
+            "--trace",
+            "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/trace.jsonl",
+            "--result",
+            "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/result.json",
+            "--paused"
+          ]
+        },
+        {
+          "step": "viewer_first_draw",
+          "t": 727100.8750159,
+          "seconds": 106.29979339998681,
+          "launcher_pid": 56168,
+          "viewer_pid": 65248,
+          "driver": "windows",
+          "font": "C:\\Windows\\Fonts\\consola.ttf",
+          "size": [
+            1100,
+            750
+          ],
+          "selected": "A"
+        },
+        {
+          "step": "end_key",
+          "t": 727101.1462273,
+          "terminal": "Recorded end: winner B; tick_limit",
+          "index": 3396
+        },
+        {
+          "step": "number_keys_and_cycle",
+          "t": 727137.4833393,
+          "sequence": [
+            [
+              "3",
+              "B",
+              "Agent B \u2014 delivered information"
+            ],
+            [
+              "1",
+              null,
+              "Omniscient \u2014 full world state"
+            ],
+            [
+              "2",
+              "A",
+              "Agent A \u2014 delivered information"
+            ],
+            [
+              "v",
+              "B",
+              "Agent B \u2014 delivered information"
+            ],
+            [
+              "p",
+              null,
+              "Omniscient \u2014 full world state"
+            ],
+            [
+              "v",
+              "A",
+              "Agent A \u2014 delivered information"
+            ]
+          ]
+        },
+        {
+          "step": "selector_clicks",
+          "t": 727155.8193805,
+          "final": "A"
+        },
+        {
+          "step": "killed_after_failure",
+          "t": 727348.2550812,
+          "exit_code": 1
+        }
+      ],
+      "delivered_key_events": [
+        {
+          "pid": 65248,
+          "key": 1073741901,
+          "mod": 4096
+        },
+        {
+          "pid": 65248,
+          "key": 51,
+          "mod": 4096
+        },
+        {
+          "pid": 65248,
+          "key": 49,
+          "mod": 4096
+        },
+        {
+          "pid": 65248,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 65248,
+          "key": 118,
+          "mod": 4096
+        },
+        {
+          "pid": 65248,
+          "key": 112,
+          "mod": 4096
+        },
+        {
+          "pid": 65248,
+          "key": 118,
+          "mod": 4096
+        },
+        {
+          "pid": 65248,
+          "key": 50,
+          "mod": 4096
+        }
+      ],
+      "viewer_stdout": "",
+      "frames": {
+        "A_terminal_1000.png": {
+          "sha256": "8c99995b863983ad0325219fa818c1e3845aa5ff8a50a16319780b1ad4c29d51",
+          "offscreen_twin": null,
+          "byte_equal_to_offscreen_twin": null
+        },
+        "A_terminal_900.png": {
+          "sha256": "79c86c4aab075d99dfb6b684bec27b4d4e8221742ae21b833c25e337b7004f97",
+          "offscreen_twin": null,
+          "byte_equal_to_offscreen_twin": null
+        }
+      },
+      "local_bodies": {
+        "m2_4_20261015/windows_native_02/A_terminal_1000.png": "8c99995b863983ad0325219fa818c1e3845aa5ff8a50a16319780b1ad4c29d51",
+        "m2_4_20261015/windows_native_02/A_terminal_900.png": "79c86c4aab075d99dfb6b684bec27b4d4e8221742ae21b833c25e337b7004f97",
+        "m2_4_20261015/windows_native_02/summary.json": "2e564412a8d75f2c3da9c4f290a24724159f27c6de29cd59edab6b9f5b942539",
+        "m2_4_20261015/windows_native_02/viewer.out": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "m2_4_20261015/windows_native_02/viewer_states.jsonl": "4b1e37989fe85b8b6233cace626463cfdedb9e9a16d2b76c1ea55b37546f59e8",
+        "m2_4_20261015/windows_native_02/viewer_states.jsonl.keys": "66f475eddfb4080a77f5f47272c7c73475c1fe1c1a5d7d1e9d1b1ad0ba74b49a"
+      }
+    },
+    {
+      "run": "m2_4_20261015/linux_native_01",
+      "phase": "freeze 02",
+      "outcome": "PASS (supplementary)",
+      "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "input": "XTest via xdotool; explicit windowfocus",
+      "environment": {
+        "DISPLAY": ":0",
+        "WAYLAND_DISPLAY": "wayland-0",
+        "SDL_VIDEODRIVER": "x11",
+        "PYTHONPATH": "<checkout>/runs/v6_alpha_m2/m2_4_20261015/observer:<checkout>/engine/src:<checkout>/client/src:<checkout>"
+      },
+      "steps": [
+        {
+          "step": "environment",
+          "t": 466.834902962,
+          "argv": [
+            "<checkout>/work/m2_2a_linux_env/bin/python",
+            "-m",
+            "battle_client.cli",
+            "--renderer",
+            "pygame",
+            "--replay",
+            "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/replay.jsonl",
+            "--trace",
+            "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/trace.jsonl",
+            "--result",
+            "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/result.json",
+            "--paused"
+          ]
+        },
+        {
+          "step": "viewer_first_draw",
+          "t": 526.986517439,
+          "seconds": 60.14978141900002,
+          "launcher_pid": 587,
+          "viewer_pid": 587,
+          "driver": "x11",
+          "font": "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+          "size": [
+            1100,
+            750
+          ],
+          "selected": "A"
+        },
+        {
+          "step": "end_key",
+          "t": 527.209123439,
+          "terminal": "Recorded end: winner B; tick_limit",
+          "index": 3396
+        },
+        {
+          "step": "number_keys_and_cycle",
+          "t": 554.940933087,
+          "sequence": [
+            [
+              "3",
+              "B",
+              "Agent B \u2014 delivered information"
+            ],
+            [
+              "1",
+              null,
+              "Omniscient \u2014 full world state"
+            ],
+            [
+              "2",
+              "A",
+              "Agent A \u2014 delivered information"
+            ],
+            [
+              "v",
+              "B",
+              "Agent B \u2014 delivered information"
+            ],
+            [
+              "p",
+              null,
+              "Omniscient \u2014 full world state"
+            ],
+            [
+              "v",
+              "A",
+              "Agent A \u2014 delivered information"
+            ]
+          ]
+        },
+        {
+          "step": "selector_clicks",
+          "t": 568.948698895,
+          "final": "A"
+        },
+        {
+          "step": "terminal_frames_all_views_sizes",
+          "t": 611.368710764,
+          "frames": {
+            "A_1100": {
+              "clean": true,
+              "layout_check": {
+                "labels": 8,
+                "omitted": 15,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "B_1100": {
+              "clean": true,
+              "layout_check": {
+                "labels": 0,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "Omni_1100": {
+              "clean": true,
+              "layout_check": {
+                "labels": 2,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "A_1000": {
+              "clean": true,
+              "layout_check": {
+                "labels": 6,
+                "omitted": 17,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "B_1000": {
+              "clean": true,
+              "layout_check": {
+                "labels": 0,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "Omni_1000": {
+              "clean": true,
+              "layout_check": {
+                "labels": 2,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "A_900": {
+              "clean": true,
+              "layout_check": {
+                "labels": 6,
+                "omitted": 17,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "B_900": {
+              "clean": true,
+              "layout_check": {
+                "labels": 0,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "Omni_900": {
+              "clean": true,
+              "layout_check": {
+                "labels": 2,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            }
+          },
+          "all_clean": true
+        },
+        {
+          "step": "history_scroll",
+          "t": 616.353156743,
+          "scroll": 3
+        },
+        {
+          "step": "help_toggle",
+          "t": 616.677778718,
+          "help": true,
+          "clean": true
+        },
+        {
+          "step": "step_speed_seek",
+          "t": 618.033789488,
+          "seek_index": 1698,
+          "speed": 2.0
+        },
+        {
+          "step": "exit",
+          "t": 618.228280071,
+          "exit_code": 0
+        },
+        {
+          "step": "delivered_key_events",
+          "t": 618.234247227,
+          "count": 27,
+          "observer_errors": ""
+        }
+      ],
+      "delivered_key_events": [
+        {
+          "pid": 587,
+          "key": 1073741901,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 51,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 49,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 118,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 112,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 118,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 51,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 49,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 51,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 49,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 51,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 49,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 1073742049,
+          "mod": 4097
+        },
+        {
+          "pid": 587,
+          "key": 47,
+          "mod": 4097
+        },
+        {
+          "pid": 587,
+          "key": 1073742049,
+          "mod": 4097
+        },
+        {
+          "pid": 587,
+          "key": 47,
+          "mod": 4097
+        },
+        {
+          "pid": 587,
+          "key": 1073741898,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 1073741903,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 1073741904,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 1073742049,
+          "mod": 4097
+        },
+        {
+          "pid": 587,
+          "key": 61,
+          "mod": 4097
+        },
+        {
+          "pid": 587,
+          "key": 27,
+          "mod": 4096
+        }
+      ],
+      "viewer_stdout": "pygame-ce 2.5.8 (SDL 2.32.10, Python 3.12.3)",
+      "frames": {
+        "A_help_900.png": {
+          "sha256": "7cfb24dd3ab5df9e886a83efb43d8aaa331627f6818f72bd399c2ce8ea9b3740",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_02/A_help_900x650.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "A_terminal_1000.png": {
+          "sha256": "a430499a6ae3f8a749e8ac688675e6532cc55a0ff70d5964373d033a7cd58bd9",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_02/A_1000x700.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "A_terminal_1100.png": {
+          "sha256": "38ee9d835d0e97d4a0315fc9a577ce663ce4772657d106880333c74ee87473fa",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_02/A_1100x750.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "A_terminal_900.png": {
+          "sha256": "d30a01407a354e33c33016a93cc0db7673e0a87c2153646e98488ea9bcd4f7a2",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_02/A_900x650.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "B_terminal_1000.png": {
+          "sha256": "e6284a4b8250f1e75ef28c75bf5812b89322e71d10fb9de934c2ffe001232568",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_02/B_1000x700.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "B_terminal_1100.png": {
+          "sha256": "cbf679e32eb614684fcffe51b3ec54542a7aa9d553a29f93616b66fb432bfad0",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_02/B_1100x750.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "B_terminal_900.png": {
+          "sha256": "4e1ea2ece763a1ce1b28f3ba567e5f77b6590750042221b91495f9e60774a1eb",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_02/B_900x650.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "Omni_terminal_1000.png": {
+          "sha256": "482f4e12aa8cfd4d549109a2c5a1ee020919ed6a3ed22dc68dfb10f181e7a39d",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_02/Omni_1000x700.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "Omni_terminal_1100.png": {
+          "sha256": "4823d217c7b0c055a994a2625e49a69d3c53515be409bfd34698e3305b42b6c3",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_02/Omni_1100x750.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "Omni_terminal_900.png": {
+          "sha256": "901dae4c117b0ffedd9da3141434102c4187a7272c3bdb2ebe224687dff51f6e",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_02/Omni_900x650.png",
+          "byte_equal_to_offscreen_twin": true
+        }
+      },
+      "local_bodies": {
+        "m2_4_20261015/linux_native_01/A_help_900.png": "7cfb24dd3ab5df9e886a83efb43d8aaa331627f6818f72bd399c2ce8ea9b3740",
+        "m2_4_20261015/linux_native_01/A_terminal_1000.png": "a430499a6ae3f8a749e8ac688675e6532cc55a0ff70d5964373d033a7cd58bd9",
+        "m2_4_20261015/linux_native_01/A_terminal_1100.png": "38ee9d835d0e97d4a0315fc9a577ce663ce4772657d106880333c74ee87473fa",
+        "m2_4_20261015/linux_native_01/A_terminal_900.png": "d30a01407a354e33c33016a93cc0db7673e0a87c2153646e98488ea9bcd4f7a2",
+        "m2_4_20261015/linux_native_01/B_terminal_1000.png": "e6284a4b8250f1e75ef28c75bf5812b89322e71d10fb9de934c2ffe001232568",
+        "m2_4_20261015/linux_native_01/B_terminal_1100.png": "cbf679e32eb614684fcffe51b3ec54542a7aa9d553a29f93616b66fb432bfad0",
+        "m2_4_20261015/linux_native_01/B_terminal_900.png": "4e1ea2ece763a1ce1b28f3ba567e5f77b6590750042221b91495f9e60774a1eb",
+        "m2_4_20261015/linux_native_01/Omni_terminal_1000.png": "482f4e12aa8cfd4d549109a2c5a1ee020919ed6a3ed22dc68dfb10f181e7a39d",
+        "m2_4_20261015/linux_native_01/Omni_terminal_1100.png": "4823d217c7b0c055a994a2625e49a69d3c53515be409bfd34698e3305b42b6c3",
+        "m2_4_20261015/linux_native_01/Omni_terminal_900.png": "901dae4c117b0ffedd9da3141434102c4187a7272c3bdb2ebe224687dff51f6e",
+        "m2_4_20261015/linux_native_01/summary.json": "427937201e3abdc9643bc6203dd6d10f3d454e48b3c8698260af9f7b5b179ad6",
+        "m2_4_20261015/linux_native_01/viewer.out": "b3c9780c39d02fa9fddc33348cf77934f0db17895488bc3d79590b8fa49e1357",
+        "m2_4_20261015/linux_native_01/viewer_states.jsonl": "26034088e6243bbecc4d4cd7b516f7fb939f78446e1718bc11ac9e19ba783430",
+        "m2_4_20261015/linux_native_01/viewer_states.jsonl.keys": "7ed04caa581f144b4031bd9ec05524a50aefd8a1f3dcadc4881665cc8edcaf84"
+      }
+    },
+    {
+      "run": "m2_4_20261015/linux_native_03",
+      "phase": "freeze 04",
+      "outcome": "PASS (supplementary)",
+      "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "input": "XTest via xdotool; explicit windowfocus",
+      "environment": {
+        "DISPLAY": ":0",
+        "WAYLAND_DISPLAY": "wayland-0",
+        "SDL_VIDEODRIVER": "x11",
+        "PYTHONPATH": "<checkout>/runs/v6_alpha_m2/m2_4_20261015/observer:<checkout>/engine/src:<checkout>/client/src:<checkout>"
+      },
+      "steps": [
+        {
+          "step": "environment",
+          "t": 1193.243244734,
+          "argv": [
+            "<checkout>/work/m2_2a_linux_env/bin/python",
+            "-m",
+            "battle_client.cli",
+            "--renderer",
+            "pygame",
+            "--replay",
+            "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/replay.jsonl",
+            "--trace",
+            "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/trace.jsonl",
+            "--result",
+            "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/result.json",
+            "--paused"
+          ]
+        },
+        {
+          "step": "viewer_first_draw",
+          "t": 1253.722995038,
+          "seconds": 60.47640223600001,
+          "launcher_pid": 576,
+          "viewer_pid": 576,
+          "driver": "x11",
+          "font": "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+          "size": [
+            1100,
+            750
+          ],
+          "selected": "A"
+        },
+        {
+          "step": "end_key",
+          "t": 1253.94060547,
+          "terminal": "Recorded end: winner B; tick_limit",
+          "index": 3396
+        },
+        {
+          "step": "number_keys_and_cycle",
+          "t": 1281.744813346,
+          "sequence": [
+            [
+              "3",
+              "B",
+              "Agent B \u2014 delivered information"
+            ],
+            [
+              "1",
+              null,
+              "Omniscient \u2014 full world state"
+            ],
+            [
+              "2",
+              "A",
+              "Agent A \u2014 delivered information"
+            ],
+            [
+              "v",
+              "B",
+              "Agent B \u2014 delivered information"
+            ],
+            [
+              "p",
+              null,
+              "Omniscient \u2014 full world state"
+            ],
+            [
+              "v",
+              "A",
+              "Agent A \u2014 delivered information"
+            ]
+          ]
+        },
+        {
+          "step": "selector_clicks",
+          "t": 1295.477835683,
+          "final": "A"
+        },
+        {
+          "step": "terminal_frames_all_views_sizes",
+          "t": 1338.480826148,
+          "frames": {
+            "A_1100": {
+              "clean": true,
+              "layout_check": {
+                "labels": 8,
+                "omitted": 15,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "B_1100": {
+              "clean": true,
+              "layout_check": {
+                "labels": 0,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "Omni_1100": {
+              "clean": true,
+              "layout_check": {
+                "labels": 2,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "A_1000": {
+              "clean": true,
+              "layout_check": {
+                "labels": 6,
+                "omitted": 17,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "B_1000": {
+              "clean": true,
+              "layout_check": {
+                "labels": 0,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "Omni_1000": {
+              "clean": true,
+              "layout_check": {
+                "labels": 2,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "A_900": {
+              "clean": true,
+              "layout_check": {
+                "labels": 6,
+                "omitted": 17,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "B_900": {
+              "clean": true,
+              "layout_check": {
+                "labels": 0,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "Omni_900": {
+              "clean": true,
+              "layout_check": {
+                "labels": 2,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            }
+          },
+          "all_clean": true
+        },
+        {
+          "step": "history_scroll",
+          "t": 1343.600063226,
+          "scroll": 3
+        },
+        {
+          "step": "help_toggle",
+          "t": 1343.925343272,
+          "help": true,
+          "clean": true
+        },
+        {
+          "step": "step_speed_seek",
+          "t": 1345.262106557,
+          "seek_index": 1698,
+          "speed": 2.0
+        },
+        {
+          "step": "exit",
+          "t": 1345.455716247,
+          "exit_code": 0
+        },
+        {
+          "step": "delivered_key_events",
+          "t": 1345.461664746,
+          "count": 27,
+          "observer_errors": ""
+        }
+      ],
+      "delivered_key_events": [
+        {
+          "pid": 576,
+          "key": 1073741901,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 51,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 49,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 118,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 112,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 118,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 51,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 49,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 51,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 49,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 51,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 49,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 1073742049,
+          "mod": 4097
+        },
+        {
+          "pid": 576,
+          "key": 47,
+          "mod": 4097
+        },
+        {
+          "pid": 576,
+          "key": 1073742049,
+          "mod": 4097
+        },
+        {
+          "pid": 576,
+          "key": 47,
+          "mod": 4097
+        },
+        {
+          "pid": 576,
+          "key": 1073741898,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 1073741903,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 1073741904,
+          "mod": 4096
+        },
+        {
+          "pid": 576,
+          "key": 1073742049,
+          "mod": 4097
+        },
+        {
+          "pid": 576,
+          "key": 61,
+          "mod": 4097
+        },
+        {
+          "pid": 576,
+          "key": 27,
+          "mod": 4096
+        }
+      ],
+      "viewer_stdout": "pygame-ce 2.5.8 (SDL 2.32.10, Python 3.12.3)",
+      "frames": {
+        "A_help_900.png": {
+          "sha256": "7cfb24dd3ab5df9e886a83efb43d8aaa331627f6818f72bd399c2ce8ea9b3740",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_04/A_help_900x650.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "A_terminal_1000.png": {
+          "sha256": "a430499a6ae3f8a749e8ac688675e6532cc55a0ff70d5964373d033a7cd58bd9",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_04/A_1000x700.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "A_terminal_1100.png": {
+          "sha256": "38ee9d835d0e97d4a0315fc9a577ce663ce4772657d106880333c74ee87473fa",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_04/A_1100x750.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "A_terminal_900.png": {
+          "sha256": "d30a01407a354e33c33016a93cc0db7673e0a87c2153646e98488ea9bcd4f7a2",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_04/A_900x650.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "B_terminal_1000.png": {
+          "sha256": "e6284a4b8250f1e75ef28c75bf5812b89322e71d10fb9de934c2ffe001232568",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_04/B_1000x700.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "B_terminal_1100.png": {
+          "sha256": "cbf679e32eb614684fcffe51b3ec54542a7aa9d553a29f93616b66fb432bfad0",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_04/B_1100x750.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "B_terminal_900.png": {
+          "sha256": "4e1ea2ece763a1ce1b28f3ba567e5f77b6590750042221b91495f9e60774a1eb",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_04/B_900x650.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "Omni_terminal_1000.png": {
+          "sha256": "482f4e12aa8cfd4d549109a2c5a1ee020919ed6a3ed22dc68dfb10f181e7a39d",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_04/Omni_1000x700.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "Omni_terminal_1100.png": {
+          "sha256": "4823d217c7b0c055a994a2625e49a69d3c53515be409bfd34698e3305b42b6c3",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_04/Omni_1100x750.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "Omni_terminal_900.png": {
+          "sha256": "901dae4c117b0ffedd9da3141434102c4187a7272c3bdb2ebe224687dff51f6e",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_04/Omni_900x650.png",
+          "byte_equal_to_offscreen_twin": true
+        }
+      },
+      "local_bodies": {
+        "m2_4_20261015/linux_native_03/A_help_900.png": "7cfb24dd3ab5df9e886a83efb43d8aaa331627f6818f72bd399c2ce8ea9b3740",
+        "m2_4_20261015/linux_native_03/A_terminal_1000.png": "a430499a6ae3f8a749e8ac688675e6532cc55a0ff70d5964373d033a7cd58bd9",
+        "m2_4_20261015/linux_native_03/A_terminal_1100.png": "38ee9d835d0e97d4a0315fc9a577ce663ce4772657d106880333c74ee87473fa",
+        "m2_4_20261015/linux_native_03/A_terminal_900.png": "d30a01407a354e33c33016a93cc0db7673e0a87c2153646e98488ea9bcd4f7a2",
+        "m2_4_20261015/linux_native_03/B_terminal_1000.png": "e6284a4b8250f1e75ef28c75bf5812b89322e71d10fb9de934c2ffe001232568",
+        "m2_4_20261015/linux_native_03/B_terminal_1100.png": "cbf679e32eb614684fcffe51b3ec54542a7aa9d553a29f93616b66fb432bfad0",
+        "m2_4_20261015/linux_native_03/B_terminal_900.png": "4e1ea2ece763a1ce1b28f3ba567e5f77b6590750042221b91495f9e60774a1eb",
+        "m2_4_20261015/linux_native_03/Omni_terminal_1000.png": "482f4e12aa8cfd4d549109a2c5a1ee020919ed6a3ed22dc68dfb10f181e7a39d",
+        "m2_4_20261015/linux_native_03/Omni_terminal_1100.png": "4823d217c7b0c055a994a2625e49a69d3c53515be409bfd34698e3305b42b6c3",
+        "m2_4_20261015/linux_native_03/Omni_terminal_900.png": "901dae4c117b0ffedd9da3141434102c4187a7272c3bdb2ebe224687dff51f6e",
+        "m2_4_20261015/linux_native_03/summary.json": "b2f21488394c908069abf65d1c6873f3d63382512a6552d3e6ce3925374da64b",
+        "m2_4_20261015/linux_native_03/viewer.out": "b3c9780c39d02fa9fddc33348cf77934f0db17895488bc3d79590b8fa49e1357",
+        "m2_4_20261015/linux_native_03/viewer_states.jsonl": "8c62178762d67b5ca926848cf4b54c48b6196f128d05cba05a044b4fdb6d5f7b",
+        "m2_4_20261015/linux_native_03/viewer_states.jsonl.keys": "be5075a7ce029f40bcb5b7431d3edbc9633123cc76ebd5623e26b3d47982ced0"
+      }
+    },
+    {
+      "run": "m2_4_20261015/windows_native_03",
+      "phase": "freeze 04",
+      "outcome": "PASS (supplementary); second Shift+/ arrived without Shift via PostMessage, Help off not confirmed natively on Windows",
+      "platform": "Windows-11-10.0.26120-SP0",
+      "input": "Win32 window messages (PostMessage)",
+      "environment": {
+        "DISPLAY": null,
+        "WAYLAND_DISPLAY": null,
+        "SDL_VIDEODRIVER": "windows",
+        "PYTHONPATH": "<checkout>/runs/v6_alpha_m2/m2_4_20261015/observer;<checkout>/engine/src;<checkout>/client/src;<checkout>"
+      },
+      "steps": [
+        {
+          "step": "environment",
+          "t": 728444.5451499,
+          "argv": [
+            "<checkout>/.venv/Scripts/python.exe",
+            "-m",
+            "battle_client.cli",
+            "--renderer",
+            "pygame",
+            "--replay",
+            "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/replay.jsonl",
+            "--trace",
+            "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/trace.jsonl",
+            "--result",
+            "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/result.json",
+            "--paused"
+          ]
+        },
+        {
+          "step": "viewer_first_draw",
+          "t": 728515.1405495,
+          "seconds": 70.59390189999249,
+          "launcher_pid": 58472,
+          "viewer_pid": 69124,
+          "driver": "windows",
+          "font": "C:\\Windows\\Fonts\\consola.ttf",
+          "size": [
+            1100,
+            750
+          ],
+          "selected": "A"
+        },
+        {
+          "step": "end_key",
+          "t": 728515.3615409,
+          "terminal": "Recorded end: winner B; tick_limit",
+          "index": 3396
+        },
+        {
+          "step": "number_keys_and_cycle",
+          "t": 728551.3136632,
+          "sequence": [
+            [
+              "3",
+              "B",
+              "Agent B \u2014 delivered information"
+            ],
+            [
+              "1",
+              null,
+              "Omniscient \u2014 full world state"
+            ],
+            [
+              "2",
+              "A",
+              "Agent A \u2014 delivered information"
+            ],
+            [
+              "v",
+              "B",
+              "Agent B \u2014 delivered information"
+            ],
+            [
+              "p",
+              null,
+              "Omniscient \u2014 full world state"
+            ],
+            [
+              "v",
+              "A",
+              "Agent A \u2014 delivered information"
+            ]
+          ]
+        },
+        {
+          "step": "selector_clicks",
+          "t": 728569.0234047,
+          "final": "A"
+        },
+        {
+          "step": "terminal_frames_all_views_sizes",
+          "t": 728624.4744755,
+          "frames": {
+            "A_1100": {
+              "clean": true,
+              "layout_check": {
+                "labels": 10,
+                "omitted": 13,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "B_1100": {
+              "clean": true,
+              "layout_check": {
+                "labels": 0,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "Omni_1100": {
+              "clean": true,
+              "layout_check": {
+                "labels": 2,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "A_1000": {
+              "clean": true,
+              "layout_check": {
+                "labels": 8,
+                "omitted": 15,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "B_1000": {
+              "clean": true,
+              "layout_check": {
+                "labels": 0,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "Omni_1000": {
+              "clean": true,
+              "layout_check": {
+                "labels": 2,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "A_900": {
+              "clean": true,
+              "layout_check": {
+                "labels": 6,
+                "omitted": 17,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "B_900": {
+              "clean": true,
+              "layout_check": {
+                "labels": 0,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "Omni_900": {
+              "clean": true,
+              "layout_check": {
+                "labels": 2,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            }
+          },
+          "all_clean": true
+        },
+        {
+          "step": "history_scroll",
+          "t": 728630.8755479,
+          "scroll": 3
+        },
+        {
+          "step": "help_toggle",
+          "t": 728631.2612949,
+          "help": true,
+          "clean": true
+        },
+        {
+          "step": "help_toggle",
+          "t": 728641.5524486,
+          "help": false,
+          "note": "Shift+/ not delivered as ? by this input method",
+          "error": "Viewer timeout waiting for help off; last=[{'pid': 69124, 'argv': ['<checkout>//client//src//battle_client//cli.py', '--renderer', 'pygame', '--replay', 'D://Projects//BA"
+        },
+        {
+          "step": "step_speed_seek",
+          "t": 728642.6463084,
+          "seek_index": 2093,
+          "speed": 2.0
+        },
+        {
+          "step": "exit",
+          "t": 728642.8576621,
+          "exit_code": 0
+        },
+        {
+          "step": "delivered_key_events",
+          "t": 728642.8632254,
+          "count": 26,
+          "observer_errors": ""
+        }
+      ],
+      "delivered_key_events": [
+        {
+          "pid": 69124,
+          "key": 1073741901,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 51,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 49,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 118,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 112,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 118,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 51,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 49,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 51,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 49,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 51,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 49,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 1073742049,
+          "mod": 4097
+        },
+        {
+          "pid": 69124,
+          "key": 47,
+          "mod": 4097
+        },
+        {
+          "pid": 69124,
+          "key": 1073742049,
+          "mod": 4097
+        },
+        {
+          "pid": 69124,
+          "key": 47,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 1073741898,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 1073741903,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 1073741904,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 61,
+          "mod": 4096
+        },
+        {
+          "pid": 69124,
+          "key": 27,
+          "mod": 4096
+        }
+      ],
+      "viewer_stdout": "pygame-ce 2.5.8 (SDL 2.32.10, Python 3.13.7)",
+      "frames": {
+        "A_help_900.png": {
+          "sha256": "5579aab359ee8532d2eb591410b2250d761d17608ec9b4030eab8e8d55b28e47",
+          "offscreen_twin": "m2_4_20261015/after_windows_final_04/A_help_900x650.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "A_terminal_1000.png": {
+          "sha256": "8c99995b863983ad0325219fa818c1e3845aa5ff8a50a16319780b1ad4c29d51",
+          "offscreen_twin": "m2_4_20261015/after_windows_final_04/A_1000x700.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "A_terminal_1100.png": {
+          "sha256": "e9271b9fbc5d02bedab9c384255aa4fb8306693bc203beb30f33b8c9feedaa0a",
+          "offscreen_twin": "m2_4_20261015/after_windows_final_04/A_1100x750.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "A_terminal_900.png": {
+          "sha256": "79c86c4aab075d99dfb6b684bec27b4d4e8221742ae21b833c25e337b7004f97",
+          "offscreen_twin": "m2_4_20261015/after_windows_final_04/A_900x650.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "B_terminal_1000.png": {
+          "sha256": "c1ed0acf70d245d51a1f1729e367570c2e1adf70f7a068131069a44d241b626f",
+          "offscreen_twin": "m2_4_20261015/after_windows_final_04/B_1000x700.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "B_terminal_1100.png": {
+          "sha256": "003fecb37e689190906c534b202ee503a1e489f43c6c9551a9d146983d103d95",
+          "offscreen_twin": "m2_4_20261015/after_windows_final_04/B_1100x750.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "B_terminal_900.png": {
+          "sha256": "9cf69945824f4726ff38cf6fdb48de8ca37cb92a8bd4cbd920588b040d00032b",
+          "offscreen_twin": "m2_4_20261015/after_windows_final_04/B_900x650.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "Omni_terminal_1000.png": {
+          "sha256": "aba689affe20fd042c727e1c23932d2efa462d0e7937125dc15fe4d75d8d5ac2",
+          "offscreen_twin": "m2_4_20261015/after_windows_final_04/Omni_1000x700.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "Omni_terminal_1100.png": {
+          "sha256": "90b0d96184dc1728503fd2bf9433f1d4de1efacd5c0aef2350f0efc1cfd9dfe5",
+          "offscreen_twin": "m2_4_20261015/after_windows_final_04/Omni_1100x750.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "Omni_terminal_900.png": {
+          "sha256": "b94ffcc98bac225c329e7242c0d0a51efd8a7b1238b877ba07d329d1b9d40f1d",
+          "offscreen_twin": "m2_4_20261015/after_windows_final_04/Omni_900x650.png",
+          "byte_equal_to_offscreen_twin": true
+        }
+      },
+      "local_bodies": {
+        "m2_4_20261015/windows_native_03/A_help_900.png": "5579aab359ee8532d2eb591410b2250d761d17608ec9b4030eab8e8d55b28e47",
+        "m2_4_20261015/windows_native_03/A_terminal_1000.png": "8c99995b863983ad0325219fa818c1e3845aa5ff8a50a16319780b1ad4c29d51",
+        "m2_4_20261015/windows_native_03/A_terminal_1100.png": "e9271b9fbc5d02bedab9c384255aa4fb8306693bc203beb30f33b8c9feedaa0a",
+        "m2_4_20261015/windows_native_03/A_terminal_900.png": "79c86c4aab075d99dfb6b684bec27b4d4e8221742ae21b833c25e337b7004f97",
+        "m2_4_20261015/windows_native_03/B_terminal_1000.png": "c1ed0acf70d245d51a1f1729e367570c2e1adf70f7a068131069a44d241b626f",
+        "m2_4_20261015/windows_native_03/B_terminal_1100.png": "003fecb37e689190906c534b202ee503a1e489f43c6c9551a9d146983d103d95",
+        "m2_4_20261015/windows_native_03/B_terminal_900.png": "9cf69945824f4726ff38cf6fdb48de8ca37cb92a8bd4cbd920588b040d00032b",
+        "m2_4_20261015/windows_native_03/Omni_terminal_1000.png": "aba689affe20fd042c727e1c23932d2efa462d0e7937125dc15fe4d75d8d5ac2",
+        "m2_4_20261015/windows_native_03/Omni_terminal_1100.png": "90b0d96184dc1728503fd2bf9433f1d4de1efacd5c0aef2350f0efc1cfd9dfe5",
+        "m2_4_20261015/windows_native_03/Omni_terminal_900.png": "b94ffcc98bac225c329e7242c0d0a51efd8a7b1238b877ba07d329d1b9d40f1d",
+        "m2_4_20261015/windows_native_03/summary.json": "ddbf4a72e21dd1f52d9341ab2e4ddfae868e10d901a13261290d7364e4b9d625",
+        "m2_4_20261015/windows_native_03/viewer.out": "3d1bd0ac5ebc866948531dfb429b8a47dc255f23e8d94e6ea2b357b729da3a9a",
+        "m2_4_20261015/windows_native_03/viewer_states.jsonl": "828e8c0ac2559fadaf3ad0ad1194c710645e04376655d046be6f31b235fc5201",
+        "m2_4_20261015/windows_native_03/viewer_states.jsonl.keys": "37fd69798fd501b4254c802c2a017855df038807a4c60181486032ff5c83115d"
+      }
+    },
+    {
+      "run": "m2_4_20261015/linux_native_04",
+      "phase": "freeze 05",
+      "outcome": "PASS (supplementary, final candidate)",
+      "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "input": "XTest via xdotool; explicit windowfocus",
+      "environment": {
+        "DISPLAY": ":0",
+        "WAYLAND_DISPLAY": "wayland-0",
+        "SDL_VIDEODRIVER": "x11",
+        "PYTHONPATH": "<checkout>/runs/v6_alpha_m2/m2_4_20261015/observer:<checkout>/engine/src:<checkout>/client/src:<checkout>"
+      },
+      "steps": [
+        {
+          "step": "environment",
+          "t": 473.352685586,
+          "argv": [
+            "<checkout>/work/m2_2a_linux_env/bin/python",
+            "-m",
+            "battle_client.cli",
+            "--renderer",
+            "pygame",
+            "--replay",
+            "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/replay.jsonl",
+            "--trace",
+            "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/trace.jsonl",
+            "--result",
+            "<checkout>/runs/v6_alpha_m2/m2_2a_20261015_correction/windows_native_complete/data_A/runs/agents_test/personal_keeper/20261015T150851058567-84f959a1-vs-reference/result.json",
+            "--paused"
+          ]
+        },
+        {
+          "step": "viewer_first_draw",
+          "t": 532.871119843,
+          "seconds": 59.51682219600002,
+          "launcher_pid": 587,
+          "viewer_pid": 587,
+          "driver": "x11",
+          "font": "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+          "size": [
+            1100,
+            750
+          ],
+          "selected": "A"
+        },
+        {
+          "step": "end_key",
+          "t": 533.080676843,
+          "terminal": "Recorded end: winner B; tick_limit",
+          "index": 3396
+        },
+        {
+          "step": "number_keys_and_cycle",
+          "t": 560.749397801,
+          "sequence": [
+            [
+              "3",
+              "B",
+              "Agent B \u2014 delivered information"
+            ],
+            [
+              "1",
+              null,
+              "Omniscient \u2014 full world state"
+            ],
+            [
+              "2",
+              "A",
+              "Agent A \u2014 delivered information"
+            ],
+            [
+              "v",
+              "B",
+              "Agent B \u2014 delivered information"
+            ],
+            [
+              "p",
+              null,
+              "Omniscient \u2014 full world state"
+            ],
+            [
+              "v",
+              "A",
+              "Agent A \u2014 delivered information"
+            ]
+          ]
+        },
+        {
+          "step": "selector_clicks",
+          "t": 574.454244998,
+          "final": "A"
+        },
+        {
+          "step": "terminal_frames_all_views_sizes",
+          "t": 615.534635551,
+          "frames": {
+            "A_1100": {
+              "clean": true,
+              "layout_check": {
+                "labels": 8,
+                "omitted": 15,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "B_1100": {
+              "clean": true,
+              "layout_check": {
+                "labels": 0,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "Omni_1100": {
+              "clean": true,
+              "layout_check": {
+                "labels": 2,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "A_1000": {
+              "clean": true,
+              "layout_check": {
+                "labels": 6,
+                "omitted": 17,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "B_1000": {
+              "clean": true,
+              "layout_check": {
+                "labels": 0,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "Omni_1000": {
+              "clean": true,
+              "layout_check": {
+                "labels": 2,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "A_900": {
+              "clean": true,
+              "layout_check": {
+                "labels": 6,
+                "omitted": 17,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "B_900": {
+              "clean": true,
+              "layout_check": {
+                "labels": 0,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            },
+            "Omni_900": {
+              "clean": true,
+              "layout_check": {
+                "labels": 2,
+                "omitted": 0,
+                "label_pairs": 0,
+                "labels_outside_map": 0,
+                "labels_on_glyphs": 0,
+                "text_pairs": 0,
+                "text_clipped": 0
+              }
+            }
+          },
+          "all_clean": true
+        },
+        {
+          "step": "history_scroll",
+          "t": 620.32530483,
+          "scroll": 3
+        },
+        {
+          "step": "help_toggle",
+          "t": 620.592835407,
+          "help": true,
+          "clean": true
+        },
+        {
+          "step": "step_speed_seek",
+          "t": 621.90461111,
+          "seek_index": 1698,
+          "speed": 2.0
+        },
+        {
+          "step": "exit",
+          "t": 622.094093892,
+          "exit_code": 0
+        },
+        {
+          "step": "delivered_key_events",
+          "t": 622.100667284,
+          "count": 27,
+          "observer_errors": ""
+        }
+      ],
+      "delivered_key_events": [
+        {
+          "pid": 587,
+          "key": 1073741901,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 51,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 49,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 118,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 112,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 118,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 51,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 49,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 51,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 49,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 51,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 49,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 50,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 1073742049,
+          "mod": 4097
+        },
+        {
+          "pid": 587,
+          "key": 47,
+          "mod": 4097
+        },
+        {
+          "pid": 587,
+          "key": 1073742049,
+          "mod": 4097
+        },
+        {
+          "pid": 587,
+          "key": 47,
+          "mod": 4097
+        },
+        {
+          "pid": 587,
+          "key": 1073741898,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 1073741903,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 1073741904,
+          "mod": 4096
+        },
+        {
+          "pid": 587,
+          "key": 1073742049,
+          "mod": 4097
+        },
+        {
+          "pid": 587,
+          "key": 61,
+          "mod": 4097
+        },
+        {
+          "pid": 587,
+          "key": 27,
+          "mod": 4096
+        }
+      ],
+      "viewer_stdout": "pygame-ce 2.5.8 (SDL 2.32.10, Python 3.12.3)",
+      "frames": {
+        "A_help_900.png": {
+          "sha256": "7cfb24dd3ab5df9e886a83efb43d8aaa331627f6818f72bd399c2ce8ea9b3740",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_05/A_help_900x650.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "A_terminal_1000.png": {
+          "sha256": "a430499a6ae3f8a749e8ac688675e6532cc55a0ff70d5964373d033a7cd58bd9",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_05/A_1000x700.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "A_terminal_1100.png": {
+          "sha256": "38ee9d835d0e97d4a0315fc9a577ce663ce4772657d106880333c74ee87473fa",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_05/A_1100x750.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "A_terminal_900.png": {
+          "sha256": "d30a01407a354e33c33016a93cc0db7673e0a87c2153646e98488ea9bcd4f7a2",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_05/A_900x650.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "B_terminal_1000.png": {
+          "sha256": "e6284a4b8250f1e75ef28c75bf5812b89322e71d10fb9de934c2ffe001232568",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_05/B_1000x700.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "B_terminal_1100.png": {
+          "sha256": "cbf679e32eb614684fcffe51b3ec54542a7aa9d553a29f93616b66fb432bfad0",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_05/B_1100x750.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "B_terminal_900.png": {
+          "sha256": "4e1ea2ece763a1ce1b28f3ba567e5f77b6590750042221b91495f9e60774a1eb",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_05/B_900x650.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "Omni_terminal_1000.png": {
+          "sha256": "482f4e12aa8cfd4d549109a2c5a1ee020919ed6a3ed22dc68dfb10f181e7a39d",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_05/Omni_1000x700.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "Omni_terminal_1100.png": {
+          "sha256": "4823d217c7b0c055a994a2625e49a69d3c53515be409bfd34698e3305b42b6c3",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_05/Omni_1100x750.png",
+          "byte_equal_to_offscreen_twin": true
+        },
+        "Omni_terminal_900.png": {
+          "sha256": "901dae4c117b0ffedd9da3141434102c4187a7272c3bdb2ebe224687dff51f6e",
+          "offscreen_twin": "m2_4_20261015/linux_after_final_05/Omni_900x650.png",
+          "byte_equal_to_offscreen_twin": true
+        }
+      },
+      "local_bodies": {
+        "m2_4_20261015/linux_native_04/A_help_900.png": "7cfb24dd3ab5df9e886a83efb43d8aaa331627f6818f72bd399c2ce8ea9b3740",
+        "m2_4_20261015/linux_native_04/A_terminal_1000.png": "a430499a6ae3f8a749e8ac688675e6532cc55a0ff70d5964373d033a7cd58bd9",
+        "m2_4_20261015/linux_native_04/A_terminal_1100.png": "38ee9d835d0e97d4a0315fc9a577ce663ce4772657d106880333c74ee87473fa",
+        "m2_4_20261015/linux_native_04/A_terminal_900.png": "d30a01407a354e33c33016a93cc0db7673e0a87c2153646e98488ea9bcd4f7a2",
+        "m2_4_20261015/linux_native_04/B_terminal_1000.png": "e6284a4b8250f1e75ef28c75bf5812b89322e71d10fb9de934c2ffe001232568",
+        "m2_4_20261015/linux_native_04/B_terminal_1100.png": "cbf679e32eb614684fcffe51b3ec54542a7aa9d553a29f93616b66fb432bfad0",
+        "m2_4_20261015/linux_native_04/B_terminal_900.png": "4e1ea2ece763a1ce1b28f3ba567e5f77b6590750042221b91495f9e60774a1eb",
+        "m2_4_20261015/linux_native_04/Omni_terminal_1000.png": "482f4e12aa8cfd4d549109a2c5a1ee020919ed6a3ed22dc68dfb10f181e7a39d",
+        "m2_4_20261015/linux_native_04/Omni_terminal_1100.png": "4823d217c7b0c055a994a2625e49a69d3c53515be409bfd34698e3305b42b6c3",
+        "m2_4_20261015/linux_native_04/Omni_terminal_900.png": "901dae4c117b0ffedd9da3141434102c4187a7272c3bdb2ebe224687dff51f6e",
+        "m2_4_20261015/linux_native_04/summary.json": "a8d03c41e55e123cd1edfb5e0106e642edcdb024b586fcbcced3324df4500e53",
+        "m2_4_20261015/linux_native_04/viewer.out": "b3c9780c39d02fa9fddc33348cf77934f0db17895488bc3d79590b8fa49e1357",
+        "m2_4_20261015/linux_native_04/viewer_states.jsonl": "69179d413dddd3ee8c308faeb22a6e000811823e549177139df5007c1996ac9a",
+        "m2_4_20261015/linux_native_04/viewer_states.jsonl.keys": "7ed04caa581f144b4031bd9ec05524a50aefd8a1f3dcadc4881665cc8edcaf84"
+      }
+    }
+  ]
+}

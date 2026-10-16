@@ -280,7 +280,8 @@ def _run_interactive_with_session(
         )
         if reason:
             print(f"[battle_client] {reason}", file=sys.stderr)
-        if presentation is not None and args.perspective not in {None, "A", "broadcast", "omniscient"}:
+        # Alpha 1 accepts either delivered entrant or omniscience ("broadcast" is its alias).
+        if presentation is not None and args.perspective not in {None, "A", "B", "broadcast", "omniscient"}:
             print("[battle_client] Requested perspective unavailable; showing Agent A delivered information.", file=sys.stderr)
         try:
             renderer.run(

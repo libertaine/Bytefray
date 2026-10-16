@@ -1,0 +1,218 @@
+{
+  "schema": "bytefray.v6.m2_4.curated_evidence_index",
+  "schema_version": 1,
+  "closure": "docs/v6/V6_ALPHA_M2_4_CLOSURE_01.md",
+  "baseline": {
+    "head": "e7c0f9de1f08f7c6494c36f2b4cc77850fad912f",
+    "tree": "0524c86e38f8def267342cf9ffaf6986f2f730ba"
+  },
+  "local_root": {
+    "path": "runs/v6_alpha_m2/m2_4_20261015/",
+    "files": 524,
+    "bytes": 27922340,
+    "published": false
+  },
+  "files": [
+    {
+      "path": ".gitattributes",
+      "kind": "generated",
+      "bytes": 268,
+      "sha256": "77635b172cf37e17252def7f4bb4248bb2cf43fd04a9c74c0995733e2f51481e"
+    },
+    {
+      "path": "README.md",
+      "kind": "generated",
+      "bytes": 8870,
+      "sha256": "2141c011c46d76ef03ad385d74ddd6c102542f9011c6824b612a16ee4d739bf0"
+    },
+    {
+      "path": "c2_layout/frames/linux_after_A_1100x750.png",
+      "kind": "byte_copy",
+      "origin": "m2_4_20261015/linux_after_final_05/A_1100x750.png",
+      "origin_sha256": "38ee9d835d0e97d4a0315fc9a577ce663ce4772657d106880333c74ee87473fa",
+      "note": "C2 probe frame, linux after, Agent A at recorded end",
+      "bytes": 125962,
+      "sha256": "38ee9d835d0e97d4a0315fc9a577ce663ce4772657d106880333c74ee87473fa"
+    },
+    {
+      "path": "c2_layout/frames/linux_after_A_900x650.png",
+      "kind": "byte_copy",
+      "origin": "m2_4_20261015/linux_after_final_05/A_900x650.png",
+      "origin_sha256": "d30a01407a354e33c33016a93cc0db7673e0a87c2153646e98488ea9bcd4f7a2",
+      "note": "C2 probe frame, linux after, Agent A at recorded end",
+      "bytes": 90455,
+      "sha256": "d30a01407a354e33c33016a93cc0db7673e0a87c2153646e98488ea9bcd4f7a2"
+    },
+    {
+      "path": "c2_layout/frames/linux_after_A_help_900x650.png",
+      "kind": "byte_copy",
+      "origin": "m2_4_20261015/linux_after_final_05/A_help_900x650.png",
+      "origin_sha256": "7cfb24dd3ab5df9e886a83efb43d8aaa331627f6818f72bd399c2ce8ea9b3740",
+      "note": "C2 probe frame, linux after, Agent A at recorded end (Help page)",
+      "bytes": 102563,
+      "sha256": "7cfb24dd3ab5df9e886a83efb43d8aaa331627f6818f72bd399c2ce8ea9b3740"
+    },
+    {
+      "path": "c2_layout/frames/linux_before_A_1100x750.png",
+      "kind": "byte_copy",
+      "origin": "m2_4_20261015/linux_before/A_1100x750.png",
+      "origin_sha256": "8a7d55148be4f3d9d13b4fed8b183895390cf2c203d29e0ab4504ce7c5365640",
+      "note": "C2 probe frame, linux before, Agent A at recorded end",
+      "bytes": 114030,
+      "sha256": "8a7d55148be4f3d9d13b4fed8b183895390cf2c203d29e0ab4504ce7c5365640"
+    },
+    {
+      "path": "c2_layout/frames/linux_before_A_900x650.png",
+      "kind": "byte_copy",
+      "origin": "m2_4_20261015/linux_before/A_900x650.png",
+      "origin_sha256": "468825e4ad1e3f21f5b2d578d119e39438b3637bac1d030fcadb5c765185d522",
+      "note": "C2 probe frame, linux before, Agent A at recorded end",
+      "bytes": 86686,
+      "sha256": "468825e4ad1e3f21f5b2d578d119e39438b3637bac1d030fcadb5c765185d522"
+    },
+    {
+      "path": "c2_layout/frames/windows_after_A_1100x750.png",
+      "kind": "byte_copy",
+      "origin": "m2_4_20261015/after_windows_final_05/A_1100x750.png",
+      "origin_sha256": "e9271b9fbc5d02bedab9c384255aa4fb8306693bc203beb30f33b8c9feedaa0a",
+      "note": "C2 probe frame, windows after, Agent A at recorded end",
+      "bytes": 112963,
+      "sha256": "e9271b9fbc5d02bedab9c384255aa4fb8306693bc203beb30f33b8c9feedaa0a"
+    },
+    {
+      "path": "c2_layout/frames/windows_after_A_900x650.png",
+      "kind": "byte_copy",
+      "origin": "m2_4_20261015/after_windows_final_05/A_900x650.png",
+      "origin_sha256": "79c86c4aab075d99dfb6b684bec27b4d4e8221742ae21b833c25e337b7004f97",
+      "note": "C2 probe frame, windows after, Agent A at recorded end",
+      "bytes": 93397,
+      "sha256": "79c86c4aab075d99dfb6b684bec27b4d4e8221742ae21b833c25e337b7004f97"
+    },
+    {
+      "path": "c2_layout/frames/windows_before_A_1100x750.png",
+      "kind": "byte_copy",
+      "origin": "m2_4_20261015/before_windows/A_1100x750.png",
+      "origin_sha256": "3176515b36d8865e2c6f0a76441738278908b19ead6290158afbd0aca5fc5c56",
+      "note": "C2 probe frame, windows before, Agent A at recorded end",
+      "bytes": 101256,
+      "sha256": "3176515b36d8865e2c6f0a76441738278908b19ead6290158afbd0aca5fc5c56"
+    },
+    {
+      "path": "c2_layout/frames/windows_before_A_900x650.png",
+      "kind": "byte_copy",
+      "origin": "m2_4_20261015/before_windows/A_900x650.png",
+      "origin_sha256": "4c291717bbf92042b281e99abaddc0391517452e6f78f280c2223aa7c966182e",
+      "note": "C2 probe frame, windows before, Agent A at recorded end",
+      "bytes": 77637,
+      "sha256": "4c291717bbf92042b281e99abaddc0391517452e6f78f280c2223aa7c966182e"
+    },
+    {
+      "path": "c2_layout/linux_after_report.json",
+      "kind": "sanitized_copy",
+      "origin": "m2_4_20261015/linux_after_final_05/report.json",
+      "origin_sha256": "c91682ebc148c8b3647a2256f635bfe468734f54ca03eddd2eb53fdd2dd26837",
+      "note": "C2 probe, Linux, after: freeze 05 renderer",
+      "bytes": 20049,
+      "sha256": "8bffdb8be4218b7842e5e4ae8127ef417425a1d432d2684df3b330358bf8e3df"
+    },
+    {
+      "path": "c2_layout/linux_before_report.json",
+      "kind": "sanitized_copy",
+      "origin": "m2_4_20261015/linux_before/report.json",
+      "origin_sha256": "3309c781a40867896ffd18ed864148b9a4838a0baf9aca044f9f493f5f1b6d9b",
+      "note": "C2 probe, Linux, before: published e7c0f9d renderer",
+      "bytes": 7487,
+      "sha256": "6b06d2ff9bbe05dff00df1e0154e4514b986ce419bda234e202ec49e94d9b8f4"
+    },
+    {
+      "path": "c2_layout/windows_after_report.json",
+      "kind": "sanitized_copy",
+      "origin": "m2_4_20261015/after_windows_final_05/report.json",
+      "origin_sha256": "7cc0f12f9fb9dc41c2a8638e24fc870ef5b48fdfea121e18a8c50488e598d570",
+      "note": "C2 probe, Windows, after: freeze 05 renderer",
+      "bytes": 20001,
+      "sha256": "b82524fe8b152bd261813b965aefb62ec107ea6c775817294f5870b18c508d80"
+    },
+    {
+      "path": "c2_layout/windows_before_report.json",
+      "kind": "byte_copy",
+      "origin": "m2_4_20261015/before_windows/report.json",
+      "origin_sha256": "981a37ed9e23fca084036eeadd3869ff6f033911e42af20d48f96ca134de148b",
+      "note": "C2 probe, Windows, before: renderer of the working tree before M2-4 edits (renderer hash not recorded by this early probe), Consolas",
+      "bytes": 5163,
+      "sha256": "981a37ed9e23fca084036eeadd3869ff6f033911e42af20d48f96ca134de148b"
+    },
+    {
+      "path": "failures/retained_attempts.json",
+      "kind": "generated",
+      "bytes": 20906,
+      "sha256": "08b5592962b22a9c0fefed3626dcc01a9cfbaeefe6a05e1431fde9ecd35d3a86"
+    },
+    {
+      "path": "native/native_observations.json",
+      "kind": "generated",
+      "bytes": 64533,
+      "sha256": "35d476e65e2faccc80bb1d8e26c48c3aec5f9fb02af72ea0810cac0e66bf8c44"
+    },
+    {
+      "path": "performance/load_timing_windows.json",
+      "kind": "byte_copy",
+      "origin": "m2_4_20261015/load_timing_windows.json",
+      "origin_sha256": "f319c45daa58b67ab4b43ec9fa61417c72ba33a67ac13a5c576c0b2e59da6b88",
+      "note": "D2 in-process load timing on the fixed C2 replay, idle Windows, freeze 03 or later loader",
+      "bytes": 254,
+      "sha256": "f319c45daa58b67ab4b43ec9fa61417c72ba33a67ac13a5c576c0b2e59da6b88"
+    },
+    {
+      "path": "qualification/historical_pins_publication_check.json",
+      "kind": "generated",
+      "bytes": 380,
+      "sha256": "52c32646a56f7e1b91cd838dd2483032126db2bb3bc8cc2fa3ff21f84e3879e9"
+    },
+    {
+      "path": "qualification/linux_summary.json",
+      "kind": "generated",
+      "bytes": 34930,
+      "sha256": "e6893b067ba89bc8274583c20af82013b8920d369f02754e3f1c74cd71197341"
+    },
+    {
+      "path": "qualification/node_skip_ledger.json",
+      "kind": "generated",
+      "bytes": 6290,
+      "sha256": "724644e69f594452a974675507a6a039c6f255161894db3733b1da8c0eb569cb"
+    },
+    {
+      "path": "qualification/preservation_final.json",
+      "kind": "byte_copy",
+      "origin": "m2_4_20261015/preservation_final.json",
+      "origin_sha256": "ee5b4a6ee819e70c859b5632b1efee8fe44ffff417b13acf9dad545a2303a0f0",
+      "note": "final preservation audit: boundary, engine identity, excluded modules, starters, catalog, 329 pins",
+      "bytes": 2196,
+      "sha256": "ee5b4a6ee819e70c859b5632b1efee8fe44ffff417b13acf9dad545a2303a0f0"
+    },
+    {
+      "path": "qualification/source_freeze_01.json",
+      "kind": "byte_copy",
+      "origin": "m2_4_20261015/source_freeze_01.json",
+      "origin_sha256": "a8145b4312fa49d0808c2899d69a707c59ca2783c9c972a7dc1af98652542f90",
+      "note": "first M2-4 source freeze",
+      "bytes": 2068,
+      "sha256": "a8145b4312fa49d0808c2899d69a707c59ca2783c9c972a7dc1af98652542f90"
+    },
+    {
+      "path": "qualification/source_freeze_05.json",
+      "kind": "byte_copy",
+      "origin": "m2_4_20261015/source_freeze_05.json",
+      "origin_sha256": "f3210c4f291a2f8a3ef2ee3366f2e94a8510ff13ce02b4991b2ff8ff15709fdb",
+      "note": "final M2-4 source freeze (accepted candidate)",
+      "bytes": 2196,
+      "sha256": "f3210c4f291a2f8a3ef2ee3366f2e94a8510ff13ce02b4991b2ff8ff15709fdb"
+    },
+    {
+      "path": "qualification/windows_summary.json",
+      "kind": "generated",
+      "bytes": 54905,
+      "sha256": "77fcb423fc88eeb76e4aee54afd9babeceaa45b548f14b230fef9861acfd0ed1"
+    }
+  ]
+}

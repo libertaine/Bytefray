@@ -1,0 +1,13 @@
+{
+  "checked_for": "M2-4 closure and publication preparation",
+  "baseline_head": "b948540aa9ef34134ff7e3c633c3acfc9f97da96",
+  "result": {
+    "ok": true,
+    "detail": {
+      "pins": 329,
+      "mismatches": []
+    }
+  },
+  "record": "m2_4_closure_20261015/preservation_publication.json",
+  "record_sha256": "ee5b4a6ee819e70c859b5632b1efee8fe44ffff417b13acf9dad545a2303a0f0"
+}

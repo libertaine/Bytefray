@@ -159,8 +159,10 @@ def test_scroll_reaches_recorded_histories_and_rewind_removes_future_receipts(tm
     try:
         renderer = SensingReplayRenderer()
         renderer.pg = pg
-        renderer.screen = pg.Surface((1100, 750))
-        renderer.font = pg.font.Font(None, 15)
+        # Smallest contract size with the bundled font: the history overflows
+        # on every platform, so the wheel must be what reaches the oldest rows.
+        renderer.screen = pg.Surface((900, 650))
+        renderer.font = pg.font.Font(None, 24)
         captured = []
         original_text = renderer.text
 

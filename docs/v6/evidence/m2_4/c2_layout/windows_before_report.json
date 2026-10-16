@@ -1,0 +1,150 @@
+{
+  "label": "before_windows",
+  "inputs": {
+    "replay.jsonl": "98edb90ddda6d5d28b3ff76431d6c1ed9e4b7f792b48144173408fc17d9305de",
+    "trace.jsonl": "47268aa8139bf676bbfa050d2c9f7ec21195a0ac047e68cb8e7bc208cbd9c7e9",
+    "result.json": "62003072f4280d1ed9a260bf67bdc98a3bed320ed6ee29c5f346b311dde4553f"
+  },
+  "platform": "Windows-11-10.0.26120-SP0",
+  "python": "3.13.7",
+  "pygame": "2.5.8",
+  "sdl": "2.32.10",
+  "font_request": "SysFont('consolas', 15)",
+  "font_match": "C:\\Windows\\Fonts\\consola.ttf",
+  "frames": [
+    {
+      "perspective": "A",
+      "available": true,
+      "size": [
+        900,
+        650
+      ],
+      "frame": "A_900x650.png",
+      "frame_sha256": "4c291717bbf92042b281e99abaddc0391517452e6f78f280c2223aa7c966182e",
+      "position": "PhasePosition(tick=200, callback=None, phase=<ExchangePhase.TICK_END: 'TICK_END'>)",
+      "delivered_samples": 395,
+      "delivered_contacts": 23,
+      "marker_labels": 23,
+      "intersecting_label_pairs": 81,
+      "labels_escaping_arena": 4,
+      "overlapping_text_pairs": 0,
+      "overlapping_text_examples": [],
+      "text_clipped_by_window": [],
+      "terminal_text": "Recorded end: winner B; tick_limit"
+    },
+    {
+      "perspective": "A",
+      "available": true,
+      "size": [
+        1000,
+        700
+      ],
+      "frame": "A_1000x700.png",
+      "frame_sha256": "deb6a48599399457ceaaae53e4db2760ca9afaff31446025b031112fbd431074",
+      "position": "PhasePosition(tick=200, callback=None, phase=<ExchangePhase.TICK_END: 'TICK_END'>)",
+      "delivered_samples": 395,
+      "delivered_contacts": 23,
+      "marker_labels": 23,
+      "intersecting_label_pairs": 81,
+      "labels_escaping_arena": 4,
+      "overlapping_text_pairs": 1,
+      "overlapping_text_examples": [
+        [
+          "age 56 ticks / 450 own callbacks; absent in",
+          "Historical samples stay at their recorded address; they do not track opponents."
+        ]
+      ],
+      "text_clipped_by_window": [],
+      "terminal_text": "Recorded end: winner B; tick_limit"
+    },
+    {
+      "perspective": "A",
+      "available": true,
+      "size": [
+        1100,
+        750
+      ],
+      "frame": "A_1100x750.png",
+      "frame_sha256": "3176515b36d8865e2c6f0a76441738278908b19ead6290158afbd0aca5fc5c56",
+      "position": "PhasePosition(tick=200, callback=None, phase=<ExchangePhase.TICK_END: 'TICK_END'>)",
+      "delivered_samples": 395,
+      "delivered_contacts": 23,
+      "marker_labels": 23,
+      "intersecting_label_pairs": 58,
+      "labels_escaping_arena": 4,
+      "overlapping_text_pairs": 1,
+      "overlapping_text_examples": [
+        [
+          "Anonymous sample at 1358; sampled t145 callback",
+          "Historical samples stay at their recorded address; they do not track opponents."
+        ]
+      ],
+      "text_clipped_by_window": [],
+      "terminal_text": "Recorded end: winner B; tick_limit"
+    },
+    {
+      "perspective": "B",
+      "available": false
+    },
+    {
+      "perspective": null,
+      "available": true,
+      "size": [
+        900,
+        650
+      ],
+      "frame": "Omni_900x650.png",
+      "frame_sha256": "dca75e7be831ccc7fbd059cc83e675f913e38b0230b639460f5eae32fc7b0f92",
+      "position": "PhasePosition(tick=200, callback=None, phase=<ExchangePhase.TICK_END: 'TICK_END'>)",
+      "delivered_samples": null,
+      "delivered_contacts": null,
+      "marker_labels": 0,
+      "intersecting_label_pairs": 0,
+      "labels_escaping_arena": 0,
+      "overlapping_text_pairs": 0,
+      "overlapping_text_examples": [],
+      "text_clipped_by_window": [],
+      "terminal_text": "Recorded end: winner B; tick_limit"
+    },
+    {
+      "perspective": null,
+      "available": true,
+      "size": [
+        1000,
+        700
+      ],
+      "frame": "Omni_1000x700.png",
+      "frame_sha256": "58fd549aeff5760888759b4e430afd5a5bbd96ebdef5461d1802674078f4cc38",
+      "position": "PhasePosition(tick=200, callback=None, phase=<ExchangePhase.TICK_END: 'TICK_END'>)",
+      "delivered_samples": null,
+      "delivered_contacts": null,
+      "marker_labels": 0,
+      "intersecting_label_pairs": 0,
+      "labels_escaping_arena": 0,
+      "overlapping_text_pairs": 0,
+      "overlapping_text_examples": [],
+      "text_clipped_by_window": [],
+      "terminal_text": "Recorded end: winner B; tick_limit"
+    },
+    {
+      "perspective": null,
+      "available": true,
+      "size": [
+        1100,
+        750
+      ],
+      "frame": "Omni_1100x750.png",
+      "frame_sha256": "3306a6bd2b066302952cb6ad80a3d284c102b2ac14cfb79bec636beca00e3299",
+      "position": "PhasePosition(tick=200, callback=None, phase=<ExchangePhase.TICK_END: 'TICK_END'>)",
+      "delivered_samples": null,
+      "delivered_contacts": null,
+      "marker_labels": 0,
+      "intersecting_label_pairs": 0,
+      "labels_escaping_arena": 0,
+      "overlapping_text_pairs": 0,
+      "overlapping_text_examples": [],
+      "text_clipped_by_window": [],
+      "terminal_text": "Recorded end: winner B; tick_limit"
+    }
+  ]
+}

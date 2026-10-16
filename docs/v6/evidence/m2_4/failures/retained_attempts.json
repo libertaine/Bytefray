@@ -1,0 +1,654 @@
+{
+  "junit_bodies": [
+    {
+      "junit": "m2_4_20261015/m2_4_broad.xml",
+      "sha256": "dc65c3d803f0e76b35bcea21242fe2c44565868ad83e13f3e81ad236c5b60867",
+      "phase": "freeze 01",
+      "tests": 3492,
+      "passed": 3471,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 21,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_broad_04.xml",
+      "sha256": "ce5f4d2771b147c1d10cc05c5300604badc0ba552343df7ac80f84a0ebc0738e",
+      "phase": "freeze 04",
+      "tests": 3493,
+      "passed": 3472,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 21,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_broad_05.xml",
+      "sha256": "0a8b4546b5eec3bf343d832b6ce7b3dff0e9e1cb893d850e4ef522abba95ac0f",
+      "phase": "freeze 05",
+      "tests": 3493,
+      "passed": 3472,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 21,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_client_sensing.xml",
+      "sha256": "36e225344918bbb9536fdba3ddce2f3a642093eaddf49815272cceb4f85fab74",
+      "phase": "freeze 01",
+      "tests": 163,
+      "passed": 163,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_client_sensing_03.xml",
+      "sha256": "34e22398323de4d5cd39b0024cd0581370ee10b3fb3b20944ea775d6b614dcfc",
+      "phase": "freeze 03",
+      "tests": 163,
+      "passed": 163,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_client_sensing_04.xml",
+      "sha256": "c09ef546a97014e965e0010448ad2e222bc437a4c06221f7bedd1e6d62c42990",
+      "phase": "freeze 04",
+      "tests": 163,
+      "passed": 163,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_client_sensing_05.xml",
+      "sha256": "761f8c98826f4897ac19c10f6289b23899e6bbef8ed9fee20070f8e0979014d9",
+      "phase": "freeze 05",
+      "tests": 163,
+      "passed": 163,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_dev_designer_01.xml",
+      "sha256": "234fe35ac500a4f60d40b0956bbf326ddb51f1221532ac1c4303d208ea20b813",
+      "phase": "development",
+      "tests": 1,
+      "passed": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_dev_existing_01.xml",
+      "sha256": "ce34bb3a114c10fa5ad9638a48e12f611044ad9a141e7b255efb9cb3f2001f3f",
+      "phase": "development",
+      "tests": 52,
+      "passed": 50,
+      "failures": 2,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [
+        "client.tests.test_v6_alpha_m1_5::test_pygame_surface_events_navigation_switching_and_rewind",
+        "client.tests.test_v6_alpha_m1_5_adversarial::test_scroll_reaches_recorded_histories_and_rewind_removes_future_receipts"
+      ],
+      "classification": "development; tests followed the measured geometry with assertions kept"
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_dev_new_01.xml",
+      "sha256": "276f70fa08144c94d27f33cf68a85af4e16cb0616422d176ca5b878618899443",
+      "phase": "development",
+      "tests": 36,
+      "passed": 34,
+      "failures": 2,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [
+        "client.tests.test_v6_alpha_m2_4_views::test_dense_sample_labels_never_intersect_and_history_keeps_every_fact",
+        "client.tests.test_v6_alpha_m2_4_views::test_help_page_shows_the_shared_cards_outside_the_arena_in_every_view"
+      ],
+      "classification": "development; dense-label fixture too sparse and Help equality compared scroll windows"
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_dev_new_02.xml",
+      "sha256": "7f81fea15f4e418fb07f4e2b6283272717fa43c768b5771074ef679390a5c61c",
+      "phase": "development",
+      "tests": 36,
+      "passed": 36,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_dev_new_03.xml",
+      "sha256": "f8fe6bf1a853c87f583d51e36b5293a29523bc7dbcbb2e107e530e20e7187b99",
+      "phase": "development",
+      "tests": 36,
+      "passed": 36,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_dev_new_04.xml",
+      "sha256": "ee328a4c2892fa4b2615ff503d46177a578bbdfbf0b8d4922c0baa29accc263c",
+      "phase": "development",
+      "tests": 36,
+      "passed": 36,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_dev_new_05.xml",
+      "sha256": "fde8d860f9a1bb679e5d5c5bf81ade2a95a97331b519a93382e69c7efb7a8ece",
+      "phase": "development",
+      "tests": 58,
+      "passed": 58,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_focused.xml",
+      "sha256": "b90639b9f304303dfb4997844b9307c239ad52ab8e97220ad336361bc2fa1985",
+      "phase": "freeze 01",
+      "tests": 823,
+      "passed": 823,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_focused_03.xml",
+      "sha256": "ebca86e247dd103e63e2fa3c0a92067db8d44d6ef74ad2c02ef9859932264cbc",
+      "phase": "freeze 03",
+      "tests": 824,
+      "passed": 824,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_focused_04.xml",
+      "sha256": "35b7ed0d9a8976a8677f46e84f9c61dace54ae7e2ef24e31b20da2d466c75849",
+      "phase": "freeze 04",
+      "tests": 824,
+      "passed": 824,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_focused_05.xml",
+      "sha256": "5e890bb4a756058bb23b98e88d98d194974ea7f29ca88a3b18592ada6799b026",
+      "phase": "freeze 05",
+      "tests": 824,
+      "passed": 824,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_linux_client_sensing.xml",
+      "sha256": "b76547e822e65dd403845f1ae6e81d02046eb8aaa13fd8f968cf269dbde16296",
+      "phase": "freeze 01",
+      "tests": 163,
+      "passed": 163,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_linux_client_sensing_02.xml",
+      "sha256": "fbc943f977a40da8fe4dab0af0a24c80bfc2bb823b38bbc4e4d5d1e23408c3c0",
+      "phase": "freeze 02",
+      "tests": 163,
+      "passed": 163,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_linux_client_sensing_04.xml",
+      "sha256": "1fdc3589e5026308286ef821f026eacdc9580661cdc8d7fb4f5cde141a15d8e5",
+      "phase": "freeze 04",
+      "tests": 163,
+      "passed": 163,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_linux_client_sensing_05.xml",
+      "sha256": "42ff63d08b7e2f7945be1ea1fd8ff208be38c3275f087a595da0247fd89eaad1",
+      "phase": "freeze 05",
+      "tests": 163,
+      "passed": 163,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_linux_designer_guide.xml",
+      "sha256": "a64ef5d6defcd781d92e0511031f5f34ac451fd03b9107d67869f8af9d617f68",
+      "phase": "freeze 01",
+      "tests": 1,
+      "passed": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_linux_designer_guide_04.xml",
+      "sha256": "81a94689df98155110db59489585b2da3c5bfa5019c3ab751bfd5c414e8114e9",
+      "phase": "freeze 04",
+      "tests": 1,
+      "passed": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_linux_designer_guide_05.xml",
+      "sha256": "145654cf2760749fedb0d420285626413deeac0a61043e3d94be9545d281d21f",
+      "phase": "freeze 05",
+      "tests": 1,
+      "passed": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_linux_dev_views_05.xml",
+      "sha256": "74bcb19f17fe1fef07f26b8aa2ee89af04767bd39d2da95e8017c5809b344a9e",
+      "phase": "development",
+      "tests": 0,
+      "passed": 0,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": "launch failure: -m \"gui or not gui\" was split into separate arguments, nothing was collected; relaunched unchanged as m2_4_linux_dev_views_05b. Not listed in Implementation Record 01 section 9.2"
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_linux_dev_views_05b.xml",
+      "sha256": "07c1886a6fa00c3f3e681c45baebc32a7673db2650cadda36229c6362e983e99",
+      "phase": "development",
+      "tests": 58,
+      "passed": 58,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_linux_focused.xml",
+      "sha256": "513b8c6ee395e6acfefb89e7e4bb8f8f27d3bc00fe4720a5e2f4cf04cb13b383",
+      "phase": "freeze 01",
+      "tests": 823,
+      "passed": 823,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_linux_focused_02.xml",
+      "sha256": "6c719ab4c93775baceef3c18b3cc1729e00b52a011d03b7fcae2206ec09a75e7",
+      "phase": "freeze 02",
+      "tests": 823,
+      "passed": 823,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_linux_focused_04.xml",
+      "sha256": "90df7f711eb4af337f94e24c906f0c2d1a98ac69ed48073471759779b01eafea",
+      "phase": "freeze 04",
+      "tests": 824,
+      "passed": 824,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_linux_focused_05.xml",
+      "sha256": "67dcb9c21e5a415af05221ce67c5d76dba4ff18439fd487fb10c8713cf731126",
+      "phase": "freeze 05",
+      "tests": 824,
+      "passed": 824,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_linux_views.xml",
+      "sha256": "3ae00a6d975ca614cbead1a4002530a56fa1f50de61e4ad8b7e8912b4c031151",
+      "phase": "freeze 01",
+      "tests": 36,
+      "passed": 33,
+      "failures": 3,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [
+        "client.tests.test_v6_alpha_m2_4_views::test_long_history_layout_all_sizes_views_and_terminal_state[keeper-A]",
+        "client.tests.test_v6_alpha_m2_4_views::test_long_history_layout_all_sizes_views_and_terminal_state[reacquirer-B]",
+        "client.tests.test_v6_alpha_m2_4_views::test_dense_sample_labels_never_intersect_and_history_keeps_every_fact"
+      ],
+      "classification": "product defect (freeze 01): DejaVu Sans Mono caption ran into the history header at 900x650; fixed"
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_linux_views_02.xml",
+      "sha256": "d2c4d97de37f113244a6a0366acadb1ce76267ad79b7d2d58db6fcc2f9ccb142",
+      "phase": "freeze 02",
+      "tests": 36,
+      "passed": 33,
+      "failures": 3,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [
+        "client.tests.test_v6_alpha_m2_4_views::test_long_history_layout_all_sizes_views_and_terminal_state[keeper-A]",
+        "client.tests.test_v6_alpha_m2_4_views::test_long_history_layout_all_sizes_views_and_terminal_state[reacquirer-B]",
+        "client.tests.test_v6_alpha_m2_4_views::test_dense_sample_labels_never_intersect_and_history_keeps_every_fact"
+      ],
+      "classification": "product defect (freeze 02): measured text taller than the line pitch on Linux; partially addressed in freeze 04"
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_linux_views_04.xml",
+      "sha256": "9655f6001c04bccab97270f7ea277ad01ae3ca56c3abab70e82d7ab72c687ffd",
+      "phase": "freeze 04",
+      "tests": 37,
+      "passed": 34,
+      "failures": 3,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [
+        "client.tests.test_v6_alpha_m2_4_views::test_long_history_layout_all_sizes_views_and_terminal_state[keeper-A]",
+        "client.tests.test_v6_alpha_m2_4_views::test_long_history_layout_all_sizes_views_and_terminal_state[reacquirer-B]",
+        "client.tests.test_v6_alpha_m2_4_views::test_dense_sample_labels_never_intersect_and_history_keeps_every_fact"
+      ],
+      "classification": "product defect (freeze 04): one probe string cannot bound Linux text height; fixed in freeze 05"
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_linux_views_05.xml",
+      "sha256": "df46dfecb5f7cedbb943ad2c5c82d3cd8986d5e16d206db4e34abe5ecf8f5f48",
+      "phase": "freeze 05",
+      "tests": 37,
+      "passed": 37,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_views.xml",
+      "sha256": "d795cd6eaad7ea7aeca4e008a98a6a676307b6d67cf2cfbbfb66ea0c60c1ba29",
+      "phase": "freeze 01",
+      "tests": 36,
+      "passed": 36,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_views_03.xml",
+      "sha256": "0158c94d4d064ad9fedef7bfe04eca956ffcf648ffc1dd2090cafd9df3ae374e",
+      "phase": "freeze 03",
+      "tests": 37,
+      "passed": 37,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_views_04.xml",
+      "sha256": "361ceae38757533f9e36d8fe3161973729a71d4755fc843394a6c48a72a1ce35",
+      "phase": "freeze 04",
+      "tests": 37,
+      "passed": 37,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_views_05.xml",
+      "sha256": "b897192d91382e950e63e7a6e4e9ccca77f793512a01b8f63773597a8b4f93d3",
+      "phase": "freeze 05",
+      "tests": 37,
+      "passed": 37,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_windows_gui.xml",
+      "sha256": "e81b398c7dee9202ab9e9e1b59e0b4d1f07b36264dfac0a63f2d81ace732b3b2",
+      "phase": "freeze 01",
+      "tests": 8,
+      "passed": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_windows_gui_04.xml",
+      "sha256": "4c2b1d9a8c2c0e1213454e17b883e5c705ce0d521beacc8fca70cf2ec4541f49",
+      "phase": "freeze 04",
+      "tests": 8,
+      "passed": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    },
+    {
+      "junit": "m2_4_20261015/m2_4_windows_gui_05.xml",
+      "sha256": "ece93dd49c189abff407c19342884084d77024d8a2ff8add176218c9b6ec0d1d",
+      "phase": "freeze 05",
+      "tests": 8,
+      "passed": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_nodes": [],
+      "classification": null
+    }
+  ],
+  "c2_probes": [
+    {
+      "probe": "m2_4_20261015/after_windows_01",
+      "sha256": "83c1345f3b720278e53c0c6a8e8642c7fd2da2a2e0d3e84bdeee7ef529cb95d9",
+      "renderer_sha256": null,
+      "assertion": null,
+      "failures": null
+    },
+    {
+      "probe": "m2_4_20261015/after_windows_02",
+      "sha256": "1005767572e6e37ec19702b25d5605ad710f199f1659264293650b4f1972acd0",
+      "renderer_sha256": null,
+      "assertion": null,
+      "failures": null
+    },
+    {
+      "probe": "m2_4_20261015/after_windows_final",
+      "sha256": "31753fd5915929292859ab43ad71f42e13f90061f1e4bb8c05979daedc2d4566",
+      "renderer_sha256": null,
+      "assertion": "PASS",
+      "failures": []
+    },
+    {
+      "probe": "m2_4_20261015/after_windows_final_02",
+      "sha256": "261d211da0a78d94ff02cd0fc2a307827888cda23806feb12d21da688af83594",
+      "renderer_sha256": "779e929d31106b81f006b49495e2671cf80d05ec398b60bad3129384fbc7197d",
+      "assertion": "PASS",
+      "failures": []
+    },
+    {
+      "probe": "m2_4_20261015/after_windows_final_04",
+      "sha256": "1960c7c212cbbabc61fad97ae634a51394f5970ab72c21e773df54bc47124307",
+      "renderer_sha256": "a8361278f8ec2ad453ecd2fcf2dc079e3e2ded0b1d3b365220ac0321bdafe9b2",
+      "assertion": "PASS",
+      "failures": []
+    },
+    {
+      "probe": "m2_4_20261015/after_windows_final_05",
+      "sha256": "7cc0f12f9fb9dc41c2a8638e24fc870ef5b48fdfea121e18a8c50488e598d570",
+      "renderer_sha256": "1526b5003ea75716c47853508af625b218b74dc2e7a52132bd33679a0e8e40ab",
+      "assertion": "PASS",
+      "failures": []
+    },
+    {
+      "probe": "m2_4_20261015/before_windows",
+      "sha256": "981a37ed9e23fca084036eeadd3869ff6f033911e42af20d48f96ca134de148b",
+      "renderer_sha256": null,
+      "assertion": null,
+      "failures": null
+    },
+    {
+      "probe": "m2_4_20261015/linux_after_final",
+      "sha256": "26b61c1f9bc86b8706576d40d7edbbd6aef99d4a9d2ee05d1fb995744a18aca4",
+      "renderer_sha256": "7606d33872cd7a3b5deb1107110de59105cbab583908868d8a1c4c455edcfc36",
+      "assertion": "FAIL",
+      "failures": [
+        [
+          "A",
+          [
+            900,
+            650
+          ]
+        ],
+        [
+          "B",
+          [
+            900,
+            650
+          ]
+        ]
+      ]
+    },
+    {
+      "probe": "m2_4_20261015/linux_after_final_02",
+      "sha256": "29a0ed8e63ecea58bf0b7d08d56e485c7addf0a174cc07ebf2e255c8603bbf69",
+      "renderer_sha256": "779e929d31106b81f006b49495e2671cf80d05ec398b60bad3129384fbc7197d",
+      "assertion": "PASS",
+      "failures": []
+    },
+    {
+      "probe": "m2_4_20261015/linux_after_final_04",
+      "sha256": "fc9d26be095c77c418f253edd7a3798cb85cf74529ab6f18dc1c4108d7e1659a",
+      "renderer_sha256": "a8361278f8ec2ad453ecd2fcf2dc079e3e2ded0b1d3b365220ac0321bdafe9b2",
+      "assertion": "PASS",
+      "failures": []
+    },
+    {
+      "probe": "m2_4_20261015/linux_after_final_05",
+      "sha256": "c91682ebc148c8b3647a2256f635bfe468734f54ca03eddd2eb53fdd2dd26837",
+      "renderer_sha256": "1526b5003ea75716c47853508af625b218b74dc2e7a52132bd33679a0e8e40ab",
+      "assertion": "PASS",
+      "failures": []
+    },
+    {
+      "probe": "m2_4_20261015/linux_before",
+      "sha256": "3309c781a40867896ffd18ed864148b9a4838a0baf9aca044f9f493f5f1b6d9b",
+      "renderer_sha256": "393f29afeec093d18d377600ccd75820c40032057aae8b4229cda6f29345aecf",
+      "assertion": null,
+      "failures": null
+    }
+  ],
+  "non_junit": [
+    {
+      "attempt": "m2_4_20261015/windows_native_01",
+      "outcome": "harness failure",
+      "classification": "harness failure, retained: .venv python.exe launcher PID differed from the viewer PID"
+    },
+    {
+      "attempt": "m2_4_20261015/windows_native_02",
+      "outcome": "harness/display failure",
+      "classification": "harness/display failure, retained: window could not return to 1100 wide on a portrait 1080x1920 display"
+    },
+    {
+      "attempt": "m2_4_20261015/windows_native_03",
+      "outcome": "PASS with one unconfirmed step",
+      "classification": "Help off: PostMessage did not carry the posted Shift (mod=4096); the viewer correctly ignored a plain \"/\""
+    },
+    {
+      "attempt": "m2_4_20261015/linux_after_final",
+      "outcome": "probe FAIL (freeze 01)",
+      "classification": "same product defect as m2_4_linux_views; fixed"
+    },
+    {
+      "attempt": "m2_4_20261015/linux_campaign_03.sh",
+      "outcome": "not executed",
+      "classification": "superseded by freeze 04 before it ran; recorded for completeness"
+    }
+  ]
+}

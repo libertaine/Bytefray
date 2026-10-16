@@ -17,7 +17,7 @@ and [FUTURE_PLANS.md](FUTURE_PLANS.md) for catalogued future ideas and research 
 | **Current Stable Release** | `5.0.0` | **Released** (2026-09-15) | Shipped stable product line atop `bytefray-rules-4` and Agent API v2. |
 | **Active Development Line** | `V6` (`v6-research` lineage) | **In Progress** | Alpha 1 product expansion after accepted M1; research and release authority remain separate. |
 | **Active Ruleset Control** | `bytefray-rules-4` | **Stable Control** | Sole executable v4 ruleset; production gameplay baseline. |
-| **Current Development Milestone** | M2 — Alpha 1 Expansion | **In progress — M2-2 CLOSED; M2-3 accepted; M2-4 awaiting authorization** | Active by the [October 15 lead decision](v6/V6_PROJECT_DIRECTION_DECISION_20261015.md) under accepted [Scope Revision 03](v6/V6_ALPHA_M2_SCOPE_CONTRACT_03.md). [M2-2 Watchful Keeper](v6/V6_ALPHA_M2_2_CLOSURE_01.md) and [M2-3 Roaming Reacquirer](v6/V6_ALPHA_M2_3_CLOSURE_01.md) are technically accepted with conditions; [M2-4 replay and usability](v6/V6_ALPHA_M2_4_ENTRY_DECISION_01.md) is not authorized. Not a release authorization. |
+| **Current Development Milestone** | M2 — Alpha 1 Expansion | **In progress — M2-2 CLOSED; M2-3 and M2-4 accepted; M2-5 awaiting authorization** | Active by the [October 15 lead decision](v6/V6_PROJECT_DIRECTION_DECISION_20261015.md) under accepted [Scope Revision 03](v6/V6_ALPHA_M2_SCOPE_CONTRACT_03.md). [M2-2 Watchful Keeper](v6/V6_ALPHA_M2_2_CLOSURE_01.md), [M2-3 Roaming Reacquirer](v6/V6_ALPHA_M2_3_CLOSURE_01.md) and [M2-4 Replay and Usability](v6/V6_ALPHA_M2_4_CLOSURE_01.md) are technically accepted with conditions; [M2-5 technical and platform qualification](v6/V6_ALPHA_M2_5_ENTRY_DECISION_01.md) is not authorized. Not a release authorization. |
 | **Accepted Product Milestone** | M1 — Verified Sensing Exchange | **Technically accepted / CLOSED** | [Final acceptance](v6/V6_ALPHA_M1_FINAL_ACCEPTANCE_01.md) consolidates Windows AMD64 and Linux X11/Xvfb qualification. Broader Alpha 1 remains incomplete; `bytefray-rules-6-alpha1` remains experimental. |
 | **Completed Research** | E8 — Explicit Active Sensing | **Completed** | Sealed [result](research/v6/V6_E8_RESULTS.md): YES / `R8-PRESERVES`; candidate for further design, promotion false. Primary H8-ADAPT NEITHER; Requirement C NOT ESTABLISHED. |
 | **Deferred Research** | Original E9 and potential successor | **OPERATIONALLY BLOCKED / deferred** | Original scientific execution LOCKED; G consumed exactly once at T2; Requirement C NOT ESTABLISHED. Successor-feasibility recommendation accepted as CONDITIONAL DESIGN-ONLY GO; no further E9 successor design, implementation or study creation authorized. |
@@ -47,8 +47,9 @@ Status words below are used consistently throughout this document:
 **Status: Active development.** Bytefray 5.0.0 is the current stable release.
 Active development is on the `v6-research` branch lineage. M1 is accepted and
 CLOSED; M2 is the active milestone, with its M2-2 Watchful Keeper slice
-technically accepted and CLOSED and its M2-3 Roaming Reacquirer implementation
-accepted. Further E9 work is deferred, and each later M2
+technically accepted and CLOSED and its M2-3 Roaming Reacquirer and M2-4
+Replay and Usability implementations accepted. Further E9 work is deferred, and
+each later M2
 slice requires its own approval. The V6
 program began with the theme:
 
@@ -272,9 +273,15 @@ overview and current milestone section below govern present priorities.
   PASS WITH CONDITIONS** ([closure](v6/V6_ALPHA_M2_3_CLOSURE_01.md)), with
   both-seat native sequences on Windows and Linux WSL2/WSLg X11; its conditions
   add the M2-4 A/B viewer dependency and unrequalified external-viewer
-  controls. M2-4 replay and usability has a
-  [read-only entry review](v6/V6_ALPHA_M2_4_ENTRY_DECISION_01.md) and is not
-  authorized; M2-4 through M2-6 remain ahead.
+  controls. **M2-4 Replay and Usability is accepted — PASS WITH CONDITIONS**
+  ([closure](v6/V6_ALPHA_M2_4_CLOSURE_01.md)): an `A | B | Omni` selector with
+  symmetric delivered views, a measured replay layout that corrects the
+  overlapping sample-marker labels, and one shared sensing guide with two
+  scenario cards. Its conditions are a replay load-time limitation and
+  unassessed accessibility, both carried to M2-5, plus the earlier native
+  obligations. M2-5 technical and platform qualification has a
+  [read-only entry review](v6/V6_ALPHA_M2_5_ENTRY_DECISION_01.md) and is not
+  authorized; M2-5 and M2-6 remain ahead.
 
 Stable V4 remains the default; Alpha 1 remains explicitly selected and
 experimental. Broader Alpha 1 is incomplete. Bytefray 5.1 is a potential

@@ -455,3 +455,38 @@ def test_scout_native_manifest_default_development_test(tmp_path, monkeypatch):
         designer.deleteLater()
         dialog.deleteLater()
         app.processEvents()
+
+
+def test_development_sensing_guide_shows_the_shared_static_cards(tmp_path, monkeypatch):
+    """M2-4 Q1/Q2: the Designer opens the same static guide as replay Help."""
+    pytest.importorskip("PySide6")
+    from battle_client.sensing_presentation import sensing_guide_lines
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+    from PySide6.QtWidgets import QApplication, QPlainTextEdit
+
+    from app.views.development import AgentDevelopmentPanel
+
+    monkeypatch.setenv("QT_QPA_PLATFORM", "windows" if sys.platform == "win32" else "xcb")
+    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
+    app = QApplication.instance() or QApplication([])
+    panel = AgentDevelopmentPanel()
+    panel.show()
+    try:
+        assert panel.btnSensingGuide.isEnabled()
+        QTest.mouseClick(panel.btnSensingGuide, Qt.LeftButton)
+        app.processEvents()
+        dialog = panel.sensingGuideDialog
+        assert dialog is not None and dialog.isVisible()
+        text = dialog.findChild(QPlainTextEdit, "sensingGuideText")
+        assert text.isReadOnly()
+        assert text.toPlainText() == "\n\n".join(line for line in sensing_guide_lines() if line)
+        assert text.toPlainText().count("Scenario card:") == 2
+        assert dialog.grab().save(str(tmp_path / "sensing_guide.png"))
+        dialog.close()
+        QTest.mouseClick(panel.btnSensingGuide, Qt.LeftButton)
+        assert panel.sensingGuideDialog is dialog and dialog.isVisible()
+    finally:
+        panel.close()
+        panel.deleteLater()
+        app.processEvents()

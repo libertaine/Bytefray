@@ -1,0 +1,1466 @@
+{
+  "platform": "windows",
+  "campaigns": [
+    {
+      "campaign": "m2_4_broad_04",
+      "phase": "freeze 04",
+      "command": [
+        "pytest",
+        "@docs/v6/evidence/m2_3/qualification/m2_3_broad_selection.txt",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_broad_04",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_broad_04",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_broad_04.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 306.34,
+      "junit": {
+        "tests": 3493,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 21,
+        "time": 305.453,
+        "passed": 3472,
+        "timestamp": "2026-10-15T20:05:19.292887-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "========= 3472 passed, 21 skipped, 11 deselected in 305.63s (0:05:05) ========="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_broad_04.xml": "ce5f4d2771b147c1d10cc05c5300604badc0ba552343df7ac80f84a0ebc0738e",
+        "m2_4_20261015/m2_4_broad_04.log": "82c5da2331fe92af253fbc747602dcd9e17cfeb2d29f7594e9839d635e260691",
+        "m2_4_20261015/m2_4_broad_04_command.json": "b2e689451f64d397bbcf3ec872f13da8471b8c121c380b40b726292eb0d86753"
+      }
+    },
+    {
+      "campaign": "m2_4_broad_05",
+      "phase": "freeze 05",
+      "command": [
+        "pytest",
+        "@docs/v6/evidence/m2_3/qualification/m2_3_broad_selection.txt",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_broad_05",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_broad_05",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_broad_05.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 307.58,
+      "junit": {
+        "tests": 3493,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 21,
+        "time": 306.784,
+        "passed": 3472,
+        "timestamp": "2026-10-15T20:21:40.044073-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "========= 3472 passed, 21 skipped, 11 deselected in 306.95s (0:05:06) ========="
+      ],
+      "disposition": "final",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_broad_05.xml": "0a8b4546b5eec3bf343d832b6ce7b3dff0e9e1cb893d850e4ef522abba95ac0f",
+        "m2_4_20261015/m2_4_broad_05.log": "dd48563e61c48bbdcf7f5825144e640ac2fa305fe251406c192ee483f1ec53bf",
+        "m2_4_20261015/m2_4_broad_05_command.json": "6183e8d89ec7aacfa09f9f7566563fb93e657aba00b1433bdffdff2ab8c3ceb8"
+      }
+    },
+    {
+      "campaign": "m2_4_broad",
+      "phase": "freeze 01",
+      "command": [
+        "pytest",
+        "@docs/v6/evidence/m2_3/qualification/m2_3_broad_selection.txt",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_broad",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_broad",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_broad.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 312.52,
+      "junit": {
+        "tests": 3492,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 21,
+        "time": 311.567,
+        "passed": 3471,
+        "timestamp": "2026-10-15T19:39:32.744063-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "========= 3471 passed, 21 skipped, 11 deselected in 311.73s (0:05:11) ========="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_broad.xml": "dc65c3d803f0e76b35bcea21242fe2c44565868ad83e13f3e81ad236c5b60867",
+        "m2_4_20261015/m2_4_broad.log": "a44578f2c0ba03fa1baf57385cc4b81dd62221e4aea1f37832a96fc43f20f359",
+        "m2_4_20261015/m2_4_broad_command.json": "37d4d44e299f54393909624872317158840d6dfea409b9b4112719d88b7e863e"
+      }
+    },
+    {
+      "campaign": "m2_4_client_sensing_03",
+      "phase": "freeze 03",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m1_5.py",
+        "client/tests/test_v6_alpha_m1_5_adversarial.py",
+        "client/tests/test_v6_alpha_sensing.py",
+        "client/tests/test_v6_alpha_sensing_adversarial.py",
+        "client/tests/test_v6_alpha_sensing_core_capture.py",
+        "client/tests/test_hud_layout.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_client_sensing_03",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_client_sensing_03",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_client_sensing_03.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 5.82,
+      "junit": {
+        "tests": 163,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 5.256,
+        "passed": 163,
+        "timestamp": "2026-10-15T19:59:51.305498-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 163 passed in 5.31s ============================="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_client_sensing_03.xml": "34e22398323de4d5cd39b0024cd0581370ee10b3fb3b20944ea775d6b614dcfc",
+        "m2_4_20261015/m2_4_client_sensing_03.log": "644dc059dacd3ad62e7b99ce76a5eecb224587daffd358e371a90e8c45ca80cb",
+        "m2_4_20261015/m2_4_client_sensing_03_command.json": "b2f1fb9ca9ab99d62ca4dc30892391b802a9bf8260fb94eef37b5d98b5e284dc"
+      }
+    },
+    {
+      "campaign": "m2_4_client_sensing_04",
+      "phase": "freeze 04",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m1_5.py",
+        "client/tests/test_v6_alpha_m1_5_adversarial.py",
+        "client/tests/test_v6_alpha_sensing.py",
+        "client/tests/test_v6_alpha_sensing_adversarial.py",
+        "client/tests/test_v6_alpha_sensing_core_capture.py",
+        "client/tests/test_hud_layout.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_client_sensing_04",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_client_sensing_04",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_client_sensing_04.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 5.77,
+      "junit": {
+        "tests": 163,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 5.21,
+        "passed": 163,
+        "timestamp": "2026-10-15T20:02:56.105780-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 163 passed in 5.26s ============================="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_client_sensing_04.xml": "c09ef546a97014e965e0010448ad2e222bc437a4c06221f7bedd1e6d62c42990",
+        "m2_4_20261015/m2_4_client_sensing_04.log": "e56b2d5853b4adc358f23013a2f687a230c53299bd43b5197b884c02b295e7b8",
+        "m2_4_20261015/m2_4_client_sensing_04_command.json": "e35468323434ebde5bac16b61078bf2d4f5f8629634255aa72483404f5372bf4"
+      }
+    },
+    {
+      "campaign": "m2_4_client_sensing_05",
+      "phase": "freeze 05",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m1_5.py",
+        "client/tests/test_v6_alpha_m1_5_adversarial.py",
+        "client/tests/test_v6_alpha_sensing.py",
+        "client/tests/test_v6_alpha_sensing_adversarial.py",
+        "client/tests/test_v6_alpha_sensing_core_capture.py",
+        "client/tests/test_hud_layout.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_client_sensing_05",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_client_sensing_05",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_client_sensing_05.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 5.71,
+      "junit": {
+        "tests": 163,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 5.289,
+        "passed": 163,
+        "timestamp": "2026-10-15T20:19:19.954440-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 163 passed in 5.34s ============================="
+      ],
+      "disposition": "final",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_client_sensing_05.xml": "761f8c98826f4897ac19c10f6289b23899e6bbef8ed9fee20070f8e0979014d9",
+        "m2_4_20261015/m2_4_client_sensing_05.log": "c393a4f0f6835dfa52fc2294d576554920da52c1c20d98b1b91242ec3d426a56",
+        "m2_4_20261015/m2_4_client_sensing_05_command.json": "cac00b1cf211a5b6b30483e5bba0cf51ff12dc417488861be20cb2b6da12a8a0"
+      }
+    },
+    {
+      "campaign": "m2_4_client_sensing",
+      "phase": "freeze 01",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m1_5.py",
+        "client/tests/test_v6_alpha_m1_5_adversarial.py",
+        "client/tests/test_v6_alpha_sensing.py",
+        "client/tests/test_v6_alpha_sensing_adversarial.py",
+        "client/tests/test_v6_alpha_sensing_core_capture.py",
+        "client/tests/test_hud_layout.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_client_sensing",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_client_sensing",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_client_sensing.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 5.51,
+      "junit": {
+        "tests": 163,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 5.116,
+        "passed": 163,
+        "timestamp": "2026-10-15T19:37:53.301486-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 163 passed in 5.16s ============================="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_client_sensing.xml": "36e225344918bbb9536fdba3ddce2f3a642093eaddf49815272cceb4f85fab74",
+        "m2_4_20261015/m2_4_client_sensing.log": "7459d34cd8e99edf2d05f66a3ef5eb10ce862f76d2e68e223e54a93dd9461d0f",
+        "m2_4_20261015/m2_4_client_sensing_command.json": "aa37ef5d3039eedc725775cec8c99e8999b951baf861dbacd07c4fa1089f7c13"
+      }
+    },
+    {
+      "campaign": "m2_4_dev_designer_01",
+      "phase": "development",
+      "command": [
+        "pytest",
+        "tests/test_v6_alpha_m1_5_designer.py::test_development_sensing_guide_shows_the_shared_static_cards",
+        "-m",
+        "gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_dev_designer_01",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_dev_designer_01",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_dev_designer_01.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 1.1,
+      "junit": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 0.669,
+        "passed": 1,
+        "timestamp": "2026-10-15T19:33:12.090211-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================== 1 passed in 0.71s =============================="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_dev_designer_01.xml": "234fe35ac500a4f60d40b0956bbf326ddb51f1221532ac1c4303d208ea20b813",
+        "m2_4_20261015/m2_4_dev_designer_01.log": "07a36b6cfa1a933587e0cb6c7c0ab1743a98d4adf9c83f207ea4d30660db4de8",
+        "m2_4_20261015/m2_4_dev_designer_01_command.json": "4ddf038bb36a0902a4e025407343001c59143660e08ddd0af4a91da79840b7b5"
+      }
+    },
+    {
+      "campaign": "m2_4_dev_existing_01",
+      "phase": "development",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m1_5.py",
+        "client/tests/test_v6_alpha_m1_5_adversarial.py",
+        "client/tests/test_v6_alpha_sensing.py",
+        "client/tests/test_v6_alpha_sensing_adversarial.py",
+        "client/tests/test_v6_alpha_sensing_core_capture.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_dev_existing_01",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_dev_existing_01",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_dev_existing_01.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 1,
+      "seconds": 6.06,
+      "junit": {
+        "tests": 52,
+        "failures": 2,
+        "errors": 0,
+        "skipped": 0,
+        "time": 5.612,
+        "passed": 50,
+        "timestamp": "2026-10-15T19:26:16.096329-04:00"
+      },
+      "failed_nodes": [
+        "client.tests.test_v6_alpha_m1_5::test_pygame_surface_events_navigation_switching_and_rewind",
+        "client.tests.test_v6_alpha_m1_5_adversarial::test_scroll_reaches_recorded_histories_and_rewind_removes_future_receipts"
+      ],
+      "log_tail": [
+        "======================== 2 failed, 50 passed in 5.66s ========================="
+      ],
+      "disposition": "development; tests followed the measured geometry with assertions kept",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_dev_existing_01.xml": "ce34bb3a114c10fa5ad9638a48e12f611044ad9a141e7b255efb9cb3f2001f3f",
+        "m2_4_20261015/m2_4_dev_existing_01.log": "0caf45a0ff670b1fc90021773485843220bbdbbfdaeecfddff501192607aa6f3",
+        "m2_4_20261015/m2_4_dev_existing_01_command.json": "6551fcfc9cdb3015169c025d62e0c08d206f00e7ed7fa511e458c546cf5d153e"
+      }
+    },
+    {
+      "campaign": "m2_4_dev_new_01",
+      "phase": "development",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_dev_new_01",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_dev_new_01",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_dev_new_01.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 1,
+      "seconds": 38.45,
+      "junit": {
+        "tests": 36,
+        "failures": 2,
+        "errors": 0,
+        "skipped": 0,
+        "time": 38.047,
+        "passed": 34,
+        "timestamp": "2026-10-15T19:31:26.778306-04:00"
+      },
+      "failed_nodes": [
+        "client.tests.test_v6_alpha_m2_4_views::test_dense_sample_labels_never_intersect_and_history_keeps_every_fact",
+        "client.tests.test_v6_alpha_m2_4_views::test_help_page_shows_the_shared_cards_outside_the_arena_in_every_view"
+      ],
+      "log_tail": [
+        "======================== 2 failed, 34 passed in 38.10s ========================"
+      ],
+      "disposition": "development; dense-label fixture too sparse and Help equality compared scroll windows",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_dev_new_01.xml": "276f70fa08144c94d27f33cf68a85af4e16cb0616422d176ca5b878618899443",
+        "m2_4_20261015/m2_4_dev_new_01.log": "31483c89844d993ef22c3f0fa7ef0bd3b3cfa4e8d228316db870e747324abe75",
+        "m2_4_20261015/m2_4_dev_new_01_command.json": "1c23f5213d088390e2288602e0245221d5a815f8b0d8c55efb4ebdb226863317"
+      }
+    },
+    {
+      "campaign": "m2_4_dev_new_02",
+      "phase": "development",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_dev_new_02",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_dev_new_02",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_dev_new_02.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 27.88,
+      "junit": {
+        "tests": 36,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 27.434,
+        "passed": 36,
+        "timestamp": "2026-10-15T19:32:27.357553-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 36 passed in 27.49s ============================="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_dev_new_02.xml": "7f81fea15f4e418fb07f4e2b6283272717fa43c768b5771074ef679390a5c61c",
+        "m2_4_20261015/m2_4_dev_new_02.log": "cfc9c186f77d7e16c6fad5f365aa20c3f1c4ed4af099d4b448c3ef4ecd3cc60e",
+        "m2_4_20261015/m2_4_dev_new_02_command.json": "ea2379cab2215cd25252622d161c35d2f664bbe17737c8742b4ff0bb5950f1f7"
+      }
+    },
+    {
+      "campaign": "m2_4_dev_new_03",
+      "phase": "development",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_dev_new_03",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_dev_new_03",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_dev_new_03.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 28.15,
+      "junit": {
+        "tests": 36,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 27.753,
+        "passed": 36,
+        "timestamp": "2026-10-15T19:48:15.643039-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 36 passed in 27.81s ============================="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_dev_new_03.xml": "f8fe6bf1a853c87f583d51e36b5293a29523bc7dbcbb2e107e530e20e7187b99",
+        "m2_4_20261015/m2_4_dev_new_03.log": "e2d73572c1abb1ca055f90eab482663d9f873b93815a586c0f6746215a09f15d",
+        "m2_4_20261015/m2_4_dev_new_03_command.json": "e1f1e0624fea418e9692f49eb9f0271789b2a6e8892047bbdce898f6048e6f6f"
+      }
+    },
+    {
+      "campaign": "m2_4_dev_new_04",
+      "phase": "development",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_dev_new_04",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_dev_new_04",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_dev_new_04.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 33.92,
+      "junit": {
+        "tests": 36,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 33.528,
+        "passed": 36,
+        "timestamp": "2026-10-15T19:49:08.408159-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 36 passed in 33.58s ============================="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_dev_new_04.xml": "ee328a4c2892fa4b2615ff503d46177a578bbdfbf0b8d4922c0baa29accc263c",
+        "m2_4_20261015/m2_4_dev_new_04.log": "f5e9fd56207d9fd6e56fa52c702dc807d28a407e96a68b5ed971ff33ae180da5",
+        "m2_4_20261015/m2_4_dev_new_04_command.json": "c321ee6fb00245e479296230ddcace0ca1474a4796532e5fc07ee6442f83c9ff"
+      }
+    },
+    {
+      "campaign": "m2_4_dev_new_05",
+      "phase": "development",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "client/tests/test_v6_alpha_m1_5.py",
+        "client/tests/test_v6_alpha_m1_5_adversarial.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_dev_new_05",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_dev_new_05",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_dev_new_05.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 28.96,
+      "junit": {
+        "tests": 58,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 28.518,
+        "passed": 58,
+        "timestamp": "2026-10-15T19:58:08.059756-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 58 passed in 28.56s ============================="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_dev_new_05.xml": "fde8d860f9a1bb679e5d5c5bf81ade2a95a97331b519a93382e69c7efb7a8ece",
+        "m2_4_20261015/m2_4_dev_new_05.log": "3c6ea23bb4eb9a29cc8cbae79a2ae818d822253215ea7cba2215140945490839",
+        "m2_4_20261015/m2_4_dev_new_05_command.json": "eb5542f824a8c581d1fc1426a68cfa3e3ee33d49efad303f4340f57dfae6d9bf"
+      }
+    },
+    {
+      "campaign": "m2_4_focused_03",
+      "phase": "freeze 03",
+      "command": [
+        "pytest",
+        "engine/tests/test_agent_test.py",
+        "@docs/v6/evidence/m2_2/qualification/m2_2_focused_selection.txt",
+        "engine/tests/test_v6_alpha_m2_reacquirer.py",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "client/tests/test_hud_layout.py",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_focused_03",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_focused_03",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_focused_03.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 83.02,
+      "junit": {
+        "tests": 824,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 82.352,
+        "passed": 824,
+        "timestamp": "2026-10-15T19:59:57.249914-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "================ 824 passed, 10 deselected in 82.55s (0:01:22) ================"
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_focused_03.xml": "ebca86e247dd103e63e2fa3c0a92067db8d44d6ef74ad2c02ef9859932264cbc",
+        "m2_4_20261015/m2_4_focused_03.log": "763975e92a98dc92bb864045325ddb026f95fd104d3dad994897e409eb1d2894",
+        "m2_4_20261015/m2_4_focused_03_command.json": "2b015866aa169d86b54945cbff327529224891b091e2c5317492add8aa852857"
+      }
+    },
+    {
+      "campaign": "m2_4_focused_04",
+      "phase": "freeze 04",
+      "command": [
+        "pytest",
+        "engine/tests/test_agent_test.py",
+        "@docs/v6/evidence/m2_2/qualification/m2_2_focused_selection.txt",
+        "engine/tests/test_v6_alpha_m2_reacquirer.py",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "client/tests/test_hud_layout.py",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_focused_04",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_focused_04",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_focused_04.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 80.24,
+      "junit": {
+        "tests": 824,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 79.704,
+        "passed": 824,
+        "timestamp": "2026-10-15T20:03:01.969503-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "================ 824 passed, 10 deselected in 79.81s (0:01:19) ================"
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_focused_04.xml": "35b7ed0d9a8976a8677f46e84f9c61dace54ae7e2ef24e31b20da2d466c75849",
+        "m2_4_20261015/m2_4_focused_04.log": "e58467ce9a51c1926820d25d39ae3fd20fb239c5e37d25ab9de2bceb110e491a",
+        "m2_4_20261015/m2_4_focused_04_command.json": "40ad777ed1b5a64545450ec36ac42e7ec5a2ff69e2f511596bbc5fa48e1a6b7e"
+      }
+    },
+    {
+      "campaign": "m2_4_focused_05",
+      "phase": "freeze 05",
+      "command": [
+        "pytest",
+        "engine/tests/test_agent_test.py",
+        "@docs/v6/evidence/m2_2/qualification/m2_2_focused_selection.txt",
+        "engine/tests/test_v6_alpha_m2_reacquirer.py",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "client/tests/test_hud_layout.py",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_focused_05",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_focused_05",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_focused_05.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 78.86,
+      "junit": {
+        "tests": 824,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 78.304,
+        "passed": 824,
+        "timestamp": "2026-10-15T20:19:25.915044-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "================ 824 passed, 10 deselected in 78.39s (0:01:18) ================"
+      ],
+      "disposition": "final",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_focused_05.xml": "5e890bb4a756058bb23b98e88d98d194974ea7f29ca88a3b18592ada6799b026",
+        "m2_4_20261015/m2_4_focused_05.log": "1f79e7d6cec0a0488659f24896f4b1dfa8b899b6ab69a9b62741a5aefdc8bafc",
+        "m2_4_20261015/m2_4_focused_05_command.json": "7893b001490d52876c755535be542993747c53cff8a2a558c3c1a7c2c0a4dbfa"
+      }
+    },
+    {
+      "campaign": "m2_4_focused",
+      "phase": "freeze 01",
+      "command": [
+        "pytest",
+        "engine/tests/test_agent_test.py",
+        "@docs/v6/evidence/m2_2/qualification/m2_2_focused_selection.txt",
+        "engine/tests/test_v6_alpha_m2_reacquirer.py",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "client/tests/test_hud_layout.py",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_focused",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_focused",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_focused.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 83.87,
+      "junit": {
+        "tests": 823,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 83.244,
+        "passed": 823,
+        "timestamp": "2026-10-15T19:38:03.121702-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "================ 823 passed, 10 deselected in 83.38s (0:01:23) ================"
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_focused.xml": "b90639b9f304303dfb4997844b9307c239ad52ab8e97220ad336361bc2fa1985",
+        "m2_4_20261015/m2_4_focused.log": "378e59f4c96d7670418fd6b0de1b071ff4ceb6704349746bf8ea269abb4474d2",
+        "m2_4_20261015/m2_4_focused_command.json": "0542de91cb66000aa8969e5d2f1b00e32855c4d4a7e379c141e002291346023d"
+      }
+    },
+    {
+      "campaign": "m2_4_mypy_client_03",
+      "phase": "freeze 03",
+      "command": [
+        "mypy",
+        "client/src/battle_client"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 1.41,
+      "log_tail": [
+        "Success: no issues found in 19 source files"
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_mypy_client_03.log": "6b17fb6a37a46097878dda7d24d47ea3abd7a26d94efdbf8f17ad1c639872d16",
+        "m2_4_20261015/m2_4_mypy_client_03_command.json": "de0a6e5582c5c8a25fc91cc6412bd8472097c6415d689aff95adef06827ab1c7"
+      }
+    },
+    {
+      "campaign": "m2_4_mypy_client_04",
+      "phase": "freeze 04",
+      "command": [
+        "mypy",
+        "client/src/battle_client"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 1.19,
+      "log_tail": [
+        "Success: no issues found in 19 source files"
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_mypy_client_04.log": "6b17fb6a37a46097878dda7d24d47ea3abd7a26d94efdbf8f17ad1c639872d16",
+        "m2_4_20261015/m2_4_mypy_client_04_command.json": "3e93f17b94f9b06b104965b191ea0c96e2f5cc6029d3d8e91865f20a7572839a"
+      }
+    },
+    {
+      "campaign": "m2_4_mypy_client_05",
+      "phase": "freeze 05",
+      "command": [
+        "mypy",
+        "client/src/battle_client"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 1.19,
+      "log_tail": [
+        "Success: no issues found in 19 source files"
+      ],
+      "disposition": "final",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_mypy_client_05.log": "6b17fb6a37a46097878dda7d24d47ea3abd7a26d94efdbf8f17ad1c639872d16",
+        "m2_4_20261015/m2_4_mypy_client_05_command.json": "1e8905766a6241310739b7f704ad3ee13fbc95abf71efb6c160bea5fd05414c5"
+      }
+    },
+    {
+      "campaign": "m2_4_mypy_client",
+      "phase": "freeze 01",
+      "command": [
+        "mypy",
+        "client/src/battle_client"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 2.13,
+      "log_tail": [
+        "Success: no issues found in 19 source files"
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_mypy_client.log": "6b17fb6a37a46097878dda7d24d47ea3abd7a26d94efdbf8f17ad1c639872d16",
+        "m2_4_20261015/m2_4_mypy_client_command.json": "7536168c706963d2a7f852cfa753ab87cf9b900681788bbc4c938d49e97aecf5"
+      }
+    },
+    {
+      "campaign": "m2_4_mypy_engine_05",
+      "phase": "freeze 05",
+      "command": [
+        "mypy",
+        "engine/src/battle_engine"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 0.56,
+      "log_tail": [
+        "Success: no issues found in 106 source files"
+      ],
+      "disposition": "final",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_mypy_engine_05.log": "1860637a02ad5d8f172ae2c55355729aa92ebafe5233f2d07dcd3fca43dc3ec3",
+        "m2_4_20261015/m2_4_mypy_engine_05_command.json": "271f47976208f001e6bf1aa8fa60c50892f81feb95fab735f3dd65ff82d458c9"
+      }
+    },
+    {
+      "campaign": "m2_4_mypy_engine",
+      "phase": "freeze 01",
+      "command": [
+        "mypy",
+        "engine/src/battle_engine"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 0.66,
+      "log_tail": [
+        "Success: no issues found in 106 source files"
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_mypy_engine.log": "1860637a02ad5d8f172ae2c55355729aa92ebafe5233f2d07dcd3fca43dc3ec3",
+        "m2_4_20261015/m2_4_mypy_engine_command.json": "107f293ff3350dd1aa76ef024ac34bd11a377c5597b710665ebc6a7bf2b7e526"
+      }
+    },
+    {
+      "campaign": "m2_4_ruff_03",
+      "phase": "freeze 03",
+      "command": [
+        "ruff",
+        "check",
+        "."
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 0.14,
+      "log_tail": [
+        "All checks passed!"
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_ruff_03.log": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+        "m2_4_20261015/m2_4_ruff_03_command.json": "2411996b912cda3bbd716d23e41560e5b01fb5e96e9422b1e497b8f1d69b6def"
+      }
+    },
+    {
+      "campaign": "m2_4_ruff_04",
+      "phase": "freeze 04",
+      "command": [
+        "ruff",
+        "check",
+        "."
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 0.14,
+      "log_tail": [
+        "All checks passed!"
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_ruff_04.log": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+        "m2_4_20261015/m2_4_ruff_04_command.json": "dd296457dcf09425a0255e49d39955ae32c82fd5c18bfe17615c0cf84d9eb43f"
+      }
+    },
+    {
+      "campaign": "m2_4_ruff_05",
+      "phase": "freeze 05",
+      "command": [
+        "ruff",
+        "check",
+        "."
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 0.14,
+      "log_tail": [
+        "All checks passed!"
+      ],
+      "disposition": "final",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_ruff_05.log": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+        "m2_4_20261015/m2_4_ruff_05_command.json": "7dba1cc1bcc5b56ae649a5a2312d9eb9a42001a1b6df4b0d15bc958ca3be2b06"
+      }
+    },
+    {
+      "campaign": "m2_4_ruff",
+      "phase": "freeze 01",
+      "command": [
+        "ruff",
+        "check",
+        "."
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 0.14,
+      "log_tail": [
+        "All checks passed!"
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_ruff.log": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+        "m2_4_20261015/m2_4_ruff_command.json": "99528419994b911985c617667f0019898b9beb92287d5bf6d7674350b1305d02"
+      }
+    },
+    {
+      "campaign": "m2_4_views_03",
+      "phase": "freeze 03",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_views_03",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_views_03",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_views_03.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 27.93,
+      "junit": {
+        "tests": 37,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 27.519,
+        "passed": 37,
+        "timestamp": "2026-10-15T19:59:23.010944-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 37 passed in 27.56s ============================="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_views_03.xml": "0158c94d4d064ad9fedef7bfe04eca956ffcf648ffc1dd2090cafd9df3ae374e",
+        "m2_4_20261015/m2_4_views_03.log": "c91629836dab1a832a2d34d888b1a328d850679d1c1d396f39622e9bdc41b0f1",
+        "m2_4_20261015/m2_4_views_03_command.json": "2a9e0fbd5a81a827ea85073b8296670144ae82d43be8142ca3d01368417b4465"
+      }
+    },
+    {
+      "campaign": "m2_4_views_04",
+      "phase": "freeze 04",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_views_04",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_views_04",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_views_04.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 26.45,
+      "junit": {
+        "tests": 37,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 25.996,
+        "passed": 37,
+        "timestamp": "2026-10-15T20:02:29.301322-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 37 passed in 26.05s ============================="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_views_04.xml": "361ceae38757533f9e36d8fe3161973729a71d4755fc843394a6c48a72a1ce35",
+        "m2_4_20261015/m2_4_views_04.log": "5bec8c306230117aa3bfaa24d5e8333df15d24cc87418c20c3ab66e9809734b5",
+        "m2_4_20261015/m2_4_views_04_command.json": "c7eadb75d6f9191a5551d9d85c6d3421d35d32d10033f835ee8aae0db06d03c7"
+      }
+    },
+    {
+      "campaign": "m2_4_views_05",
+      "phase": "freeze 05",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_views_05",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_views_05",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_views_05.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 25.7,
+      "junit": {
+        "tests": 37,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 25.205,
+        "passed": 37,
+        "timestamp": "2026-10-15T20:18:54.058136-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 37 passed in 25.26s ============================="
+      ],
+      "disposition": "final",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_views_05.xml": "b897192d91382e950e63e7a6e4e9ccca77f793512a01b8f63773597a8b4f93d3",
+        "m2_4_20261015/m2_4_views_05.log": "9e1e7c28a2405f38f1cfe62bd2c64173de6e58026ae03d50f67c56a99e64b89b",
+        "m2_4_20261015/m2_4_views_05_command.json": "a047910f1891e1a7cdb1ac7ea11cac1298a3946c97288cdfc7e14777048b30af"
+      }
+    },
+    {
+      "campaign": "m2_4_views",
+      "phase": "freeze 01",
+      "command": [
+        "pytest",
+        "client/tests/test_v6_alpha_m2_4_views.py",
+        "-m",
+        "gui or not gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_views",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_views",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_views.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 30.05,
+      "junit": {
+        "tests": 36,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 29.627,
+        "passed": 36,
+        "timestamp": "2026-10-15T19:37:18.986254-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 36 passed in 29.68s ============================="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_views.xml": "d795cd6eaad7ea7aeca4e008a98a6a676307b6d67cf2cfbbfb66ea0c60c1ba29",
+        "m2_4_20261015/m2_4_views.log": "54ebfd1d3a61444010074c5baf162353d36acba5a86b60199221370dd01299a3",
+        "m2_4_20261015/m2_4_views_command.json": "85b7af450b04c9e8e9bd075dd013346e202c1f8c03c106c45a9f5db039de6e62"
+      }
+    },
+    {
+      "campaign": "m2_4_windows_gui_04",
+      "phase": "freeze 04",
+      "command": [
+        "pytest",
+        "tests/test_v6_alpha_m1_5_designer.py",
+        "-m",
+        "gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_windows_gui_04",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_windows_gui_04",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_windows_gui_04.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 17.38,
+      "junit": {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 16.895,
+        "passed": 8,
+        "timestamp": "2026-10-15T20:05:01.668723-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 8 passed in 16.94s =============================="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_windows_gui_04.xml": "4c2b1d9a8c2c0e1213454e17b883e5c705ce0d521beacc8fca70cf2ec4541f49",
+        "m2_4_20261015/m2_4_windows_gui_04.log": "d49b2e209b7806ee1566295ee4f0ea11b837842d6087f300cbae87997075e3f9",
+        "m2_4_20261015/m2_4_windows_gui_04_command.json": "825df418886d8895748af3921e9d6d22754e3e19de65f704718fc54f517bc397"
+      }
+    },
+    {
+      "campaign": "m2_4_windows_gui_05",
+      "phase": "freeze 05",
+      "command": [
+        "pytest",
+        "tests/test_v6_alpha_m1_5_designer.py",
+        "-m",
+        "gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_windows_gui_05",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_windows_gui_05",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_windows_gui_05.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 17.07,
+      "junit": {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 16.614,
+        "passed": 8,
+        "timestamp": "2026-10-15T20:21:18.484971-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 8 passed in 16.66s =============================="
+      ],
+      "disposition": "final",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_windows_gui_05.xml": "ece93dd49c189abff407c19342884084d77024d8a2ff8add176218c9b6ec0d1d",
+        "m2_4_20261015/m2_4_windows_gui_05.log": "1305d951ffeddff326e0c2b221bb94b6aaf8ba5b468f319ea541da1ca826350e",
+        "m2_4_20261015/m2_4_windows_gui_05_command.json": "6184a6486966d969413cb499b9fe782cfd78e482d04f203ad38a6bd94c29a8a4"
+      }
+    },
+    {
+      "campaign": "m2_4_windows_gui",
+      "phase": "freeze 01",
+      "command": [
+        "pytest",
+        "tests/test_v6_alpha_m1_5_designer.py",
+        "-m",
+        "gui",
+        "--basetemp=<checkout>/.pytest-tmp/m2_4_windows_gui",
+        "-o",
+        "cache_dir=<checkout>/.pytest-cache/m2_4_windows_gui",
+        "--junitxml=<checkout>/runs/v6_alpha_m2/m2_4_20261015/m2_4_windows_gui.xml",
+        "-v",
+        "--tb=short"
+      ],
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "os": "Windows-11-10.0.26120-SP0",
+      "environment": {
+        "PYTHONPATH": "<checkout>/engine/src;<checkout>/client/src;<checkout>",
+        "BYTEFRAY_ROOT": "<checkout>",
+        "QT_QPA_PLATFORM": null,
+        "SDL_VIDEODRIVER": null,
+        "DISPLAY": null
+      },
+      "returncode": 0,
+      "seconds": 17.6,
+      "junit": {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "time": 17.11,
+        "passed": 8,
+        "timestamp": "2026-10-15T19:39:47.177786-04:00"
+      },
+      "failed_nodes": [],
+      "log_tail": [
+        "============================= 8 passed in 17.16s =============================="
+      ],
+      "disposition": "superseded by a later freeze",
+      "local_bodies": {
+        "m2_4_20261015/m2_4_windows_gui.xml": "e81b398c7dee9202ab9e9e1b59e0b4d1f07b36264dfac0a63f2d81ace732b3b2",
+        "m2_4_20261015/m2_4_windows_gui.log": "a83928c24074a2c045591f9812daf609f3746e8f64d54ee32d606758d0b65360",
+        "m2_4_20261015/m2_4_windows_gui_command.json": "20bb50c3c1fa3b66040c4a6ad42fd4cff68664c98dadef25a12f93daef0297db"
+      }
+    }
+  ]
+}

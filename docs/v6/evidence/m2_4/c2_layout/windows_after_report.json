@@ -1,0 +1,890 @@
+{
+  "origin": "m2_4_20261015/after_windows_final_05/report.json",
+  "origin_sha256": "7cc0f12f9fb9dc41c2a8638e24fc870ef5b48fdfea121e18a8c50488e598d570",
+  "note": "C2 probe, Windows, after: freeze 05 renderer",
+  "sanitization": "checkout prefix -> <checkout>",
+  "report": {
+    "label": "after_windows_final_05",
+    "source_root": "<checkout>",
+    "renderer_sha256": "1526b5003ea75716c47853508af625b218b74dc2e7a52132bd33679a0e8e40ab",
+    "inputs": {
+      "replay.jsonl": "98edb90ddda6d5d28b3ff76431d6c1ed9e4b7f792b48144173408fc17d9305de",
+      "trace.jsonl": "47268aa8139bf676bbfa050d2c9f7ec21195a0ac047e68cb8e7bc208cbd9c7e9",
+      "result.json": "62003072f4280d1ed9a260bf67bdc98a3bed320ed6ee29c5f346b311dde4553f"
+    },
+    "platform": "Windows-11-10.0.26120-SP0",
+    "python": "3.13.7",
+    "pygame": "2.5.8",
+    "sdl": "2.32.10",
+    "font_request": "SysFont('consolas', 15)",
+    "font_match": "C:\\Windows\\Fonts\\consola.ttf",
+    "frames": [
+      {
+        "perspective": "A",
+        "available": true,
+        "size": [
+          900,
+          650
+        ],
+        "frame": "A_900x650.png",
+        "frame_sha256": "79c86c4aab075d99dfb6b684bec27b4d4e8221742ae21b833c25e337b7004f97",
+        "position": "PhasePosition(tick=200, callback=None, phase=<ExchangePhase.TICK_END: 'TICK_END'>)",
+        "delivered_samples": 395,
+        "delivered_contacts": 23,
+        "marker_labels": 6,
+        "intersecting_label_pairs": 0,
+        "labels_escaping_arena": 0,
+        "overlapping_text_pairs": 0,
+        "overlapping_text_examples": [],
+        "text_clipped_by_window": [],
+        "labels_covering_glyphs": 0,
+        "omitted_map_labels": 17,
+        "intersecting_layout_regions": [],
+        "text_outside_layout_regions": [],
+        "layout": {
+          "title": [
+            20,
+            10,
+            860,
+            18
+          ],
+          "phase": [
+            20,
+            30,
+            860,
+            18
+          ],
+          "selector": [
+            20,
+            56,
+            860,
+            28
+          ],
+          "content": [
+            20,
+            94,
+            860,
+            416
+          ],
+          "caption": [
+            20,
+            94,
+            462,
+            18
+          ],
+          "arena": [
+            20,
+            116,
+            462,
+            394
+          ],
+          "side": [
+            502,
+            94,
+            378,
+            416
+          ],
+          "disclaimer": [
+            20,
+            518,
+            860,
+            36
+          ],
+          "terminal": [
+            20,
+            560,
+            860,
+            18
+          ],
+          "timeline": [
+            20,
+            584,
+            860,
+            16
+          ],
+          "footer": [
+            20,
+            606,
+            860,
+            36
+          ],
+          "arena_note": [
+            24,
+            490,
+            328,
+            15
+          ]
+        },
+        "terminal_text": "Recorded end: winner B; tick_limit"
+      },
+      {
+        "perspective": "A",
+        "available": true,
+        "size": [
+          1000,
+          700
+        ],
+        "frame": "A_1000x700.png",
+        "frame_sha256": "8c99995b863983ad0325219fa818c1e3845aa5ff8a50a16319780b1ad4c29d51",
+        "position": "PhasePosition(tick=200, callback=None, phase=<ExchangePhase.TICK_END: 'TICK_END'>)",
+        "delivered_samples": 395,
+        "delivered_contacts": 23,
+        "marker_labels": 8,
+        "intersecting_label_pairs": 0,
+        "labels_escaping_arena": 0,
+        "overlapping_text_pairs": 0,
+        "overlapping_text_examples": [],
+        "text_clipped_by_window": [],
+        "labels_covering_glyphs": 0,
+        "omitted_map_labels": 15,
+        "intersecting_layout_regions": [],
+        "text_outside_layout_regions": [],
+        "layout": {
+          "title": [
+            20,
+            10,
+            960,
+            18
+          ],
+          "phase": [
+            20,
+            30,
+            960,
+            18
+          ],
+          "selector": [
+            20,
+            56,
+            960,
+            28
+          ],
+          "content": [
+            20,
+            94,
+            960,
+            466
+          ],
+          "caption": [
+            20,
+            94,
+            517,
+            18
+          ],
+          "arena": [
+            20,
+            116,
+            517,
+            444
+          ],
+          "side": [
+            557,
+            94,
+            423,
+            466
+          ],
+          "disclaimer": [
+            20,
+            568,
+            960,
+            36
+          ],
+          "terminal": [
+            20,
+            610,
+            960,
+            18
+          ],
+          "timeline": [
+            20,
+            634,
+            960,
+            16
+          ],
+          "footer": [
+            20,
+            656,
+            960,
+            36
+          ],
+          "arena_note": [
+            24,
+            540,
+            328,
+            15
+          ]
+        },
+        "terminal_text": "Recorded end: winner B; tick_limit"
+      },
+      {
+        "perspective": "A",
+        "available": true,
+        "size": [
+          1100,
+          750
+        ],
+        "frame": "A_1100x750.png",
+        "frame_sha256": "e9271b9fbc5d02bedab9c384255aa4fb8306693bc203beb30f33b8c9feedaa0a",
+        "position": "PhasePosition(tick=200, callback=None, phase=<ExchangePhase.TICK_END: 'TICK_END'>)",
+        "delivered_samples": 395,
+        "delivered_contacts": 23,
+        "marker_labels": 10,
+        "intersecting_label_pairs": 0,
+        "labels_escaping_arena": 0,
+        "overlapping_text_pairs": 0,
+        "overlapping_text_examples": [],
+        "text_clipped_by_window": [],
+        "labels_covering_glyphs": 0,
+        "omitted_map_labels": 13,
+        "intersecting_layout_regions": [],
+        "text_outside_layout_regions": [],
+        "layout": {
+          "title": [
+            20,
+            10,
+            1060,
+            18
+          ],
+          "phase": [
+            20,
+            30,
+            1060,
+            18
+          ],
+          "selector": [
+            20,
+            56,
+            1060,
+            28
+          ],
+          "content": [
+            20,
+            94,
+            1060,
+            516
+          ],
+          "caption": [
+            20,
+            94,
+            572,
+            18
+          ],
+          "arena": [
+            20,
+            116,
+            572,
+            494
+          ],
+          "side": [
+            612,
+            94,
+            468,
+            516
+          ],
+          "disclaimer": [
+            20,
+            618,
+            1060,
+            36
+          ],
+          "terminal": [
+            20,
+            660,
+            1060,
+            18
+          ],
+          "timeline": [
+            20,
+            684,
+            1060,
+            16
+          ],
+          "footer": [
+            20,
+            706,
+            1060,
+            36
+          ],
+          "arena_note": [
+            24,
+            590,
+            328,
+            15
+          ]
+        },
+        "terminal_text": "Recorded end: winner B; tick_limit"
+      },
+      {
+        "perspective": "A",
+        "help_frame": "A_help_900x650.png",
+        "frame_sha256": "5579aab359ee8532d2eb591410b2250d761d17608ec9b4030eab8e8d55b28e47"
+      },
+      {
+        "perspective": "B",
+        "available": true,
+        "size": [
+          900,
+          650
+        ],
+        "frame": "B_900x650.png",
+        "frame_sha256": "9cf69945824f4726ff38cf6fdb48de8ca37cb92a8bd4cbd920588b040d00032b",
+        "position": "PhasePosition(tick=200, callback=None, phase=<ExchangePhase.TICK_END: 'TICK_END'>)",
+        "delivered_samples": 0,
+        "delivered_contacts": 0,
+        "marker_labels": 0,
+        "intersecting_label_pairs": 0,
+        "labels_escaping_arena": 0,
+        "overlapping_text_pairs": 0,
+        "overlapping_text_examples": [],
+        "text_clipped_by_window": [],
+        "labels_covering_glyphs": 0,
+        "omitted_map_labels": 0,
+        "intersecting_layout_regions": [],
+        "text_outside_layout_regions": [],
+        "layout": {
+          "title": [
+            20,
+            10,
+            860,
+            18
+          ],
+          "phase": [
+            20,
+            30,
+            860,
+            18
+          ],
+          "selector": [
+            20,
+            56,
+            860,
+            28
+          ],
+          "content": [
+            20,
+            94,
+            860,
+            416
+          ],
+          "caption": [
+            20,
+            94,
+            462,
+            18
+          ],
+          "arena": [
+            20,
+            116,
+            462,
+            394
+          ],
+          "side": [
+            502,
+            94,
+            378,
+            416
+          ],
+          "disclaimer": [
+            20,
+            518,
+            860,
+            36
+          ],
+          "terminal": [
+            20,
+            560,
+            860,
+            18
+          ],
+          "timeline": [
+            20,
+            584,
+            860,
+            16
+          ],
+          "footer": [
+            20,
+            606,
+            860,
+            36
+          ]
+        },
+        "terminal_text": "Recorded end: winner B; tick_limit"
+      },
+      {
+        "perspective": "B",
+        "available": true,
+        "size": [
+          1000,
+          700
+        ],
+        "frame": "B_1000x700.png",
+        "frame_sha256": "c1ed0acf70d245d51a1f1729e367570c2e1adf70f7a068131069a44d241b626f",
+        "position": "PhasePosition(tick=200, callback=None, phase=<ExchangePhase.TICK_END: 'TICK_END'>)",
+        "delivered_samples": 0,
+        "delivered_contacts": 0,
+        "marker_labels": 0,
+        "intersecting_label_pairs": 0,
+        "labels_escaping_arena": 0,
+        "overlapping_text_pairs": 0,
+        "overlapping_text_examples": [],
+        "text_clipped_by_window": [],
+        "labels_covering_glyphs": 0,
+        "omitted_map_labels": 0,
+        "intersecting_layout_regions": [],
+        "text_outside_layout_regions": [],
+        "layout": {
+          "title": [
+            20,
+            10,
+            960,
+            18
+          ],
+          "phase": [
+            20,
+            30,
+            960,
+            18
+          ],
+          "selector": [
+            20,
+            56,
+            960,
+            28
+          ],
+          "content": [
+            20,
+            94,
+            960,
+            466
+          ],
+          "caption": [
+            20,
+            94,
+            517,
+            18
+          ],
+          "arena": [
+            20,
+            116,
+            517,
+            444
+          ],
+          "side": [
+            557,
+            94,
+            423,
+            466
+          ],
+          "disclaimer": [
+            20,
+            568,
+            960,
+            36
+          ],
+          "terminal": [
+            20,
+            610,
+            960,
+            18
+          ],
+          "timeline": [
+            20,
+            634,
+            960,
+            16
+          ],
+          "footer": [
+            20,
+            656,
+            960,
+            36
+          ]
+        },
+        "terminal_text": "Recorded end: winner B; tick_limit"
+      },
+      {
+        "perspective": "B",
+        "available": true,
+        "size": [
+          1100,
+          750
+        ],
+        "frame": "B_1100x750.png",
+        "frame_sha256": "003fecb37e689190906c534b202ee503a1e489f43c6c9551a9d146983d103d95",
+        "position": "PhasePosition(tick=200, callback=None, phase=<ExchangePhase.TICK_END: 'TICK_END'>)",
+        "delivered_samples": 0,
+        "delivered_contacts": 0,
+        "marker_labels": 0,
+        "intersecting_label_pairs": 0,
+        "labels_escaping_arena": 0,
+        "overlapping_text_pairs": 0,
+        "overlapping_text_examples": [],
+        "text_clipped_by_window": [],
+        "labels_covering_glyphs": 0,
+        "omitted_map_labels": 0,
+        "intersecting_layout_regions": [],
+        "text_outside_layout_regions": [],
+        "layout": {
+          "title": [
+            20,
+            10,
+            1060,
+            18
+          ],
+          "phase": [
+            20,
+            30,
+            1060,
+            18
+          ],
+          "selector": [
+            20,
+            56,
+            1060,
+            28
+          ],
+          "content": [
+            20,
+            94,
+            1060,
+            516
+          ],
+          "caption": [
+            20,
+            94,
+            572,
+            18
+          ],
+          "arena": [
+            20,
+            116,
+            572,
+            494
+          ],
+          "side": [
+            612,
+            94,
+            468,
+            516
+          ],
+          "disclaimer": [
+            20,
+            618,
+            1060,
+            36
+          ],
+          "terminal": [
+            20,
+            660,
+            1060,
+            18
+          ],
+          "timeline": [
+            20,
+            684,
+            1060,
+            16
+          ],
+          "footer": [
+            20,
+            706,
+            1060,
+            36
+          ]
+        },
+        "terminal_text": "Recorded end: winner B; tick_limit"
+      },
+      {
+        "perspective": "B",
+        "help_frame": "B_help_900x650.png",
+        "frame_sha256": "a10318674b2529c40282da518d77cd1b2a554f1b9cdf913380a8816fec4db3d2"
+      },
+      {
+        "perspective": null,
+        "available": true,
+        "size": [
+          900,
+          650
+        ],
+        "frame": "Omni_900x650.png",
+        "frame_sha256": "b94ffcc98bac225c329e7242c0d0a51efd8a7b1238b877ba07d329d1b9d40f1d",
+        "position": "PhasePosition(tick=200, callback=None, phase=<ExchangePhase.TICK_END: 'TICK_END'>)",
+        "delivered_samples": null,
+        "delivered_contacts": null,
+        "marker_labels": 2,
+        "intersecting_label_pairs": 0,
+        "labels_escaping_arena": 0,
+        "overlapping_text_pairs": 0,
+        "overlapping_text_examples": [],
+        "text_clipped_by_window": [],
+        "labels_covering_glyphs": 0,
+        "omitted_map_labels": 0,
+        "intersecting_layout_regions": [],
+        "text_outside_layout_regions": [],
+        "layout": {
+          "title": [
+            20,
+            10,
+            860,
+            18
+          ],
+          "phase": [
+            20,
+            30,
+            860,
+            18
+          ],
+          "selector": [
+            20,
+            56,
+            860,
+            28
+          ],
+          "content": [
+            20,
+            94,
+            860,
+            416
+          ],
+          "caption": [
+            20,
+            94,
+            462,
+            18
+          ],
+          "arena": [
+            20,
+            116,
+            462,
+            394
+          ],
+          "side": [
+            502,
+            94,
+            378,
+            416
+          ],
+          "disclaimer": [
+            20,
+            518,
+            860,
+            36
+          ],
+          "terminal": [
+            20,
+            560,
+            860,
+            18
+          ],
+          "timeline": [
+            20,
+            584,
+            860,
+            16
+          ],
+          "footer": [
+            20,
+            606,
+            860,
+            36
+          ]
+        },
+        "terminal_text": "Recorded end: winner B; tick_limit"
+      },
+      {
+        "perspective": null,
+        "available": true,
+        "size": [
+          1000,
+          700
+        ],
+        "frame": "Omni_1000x700.png",
+        "frame_sha256": "aba689affe20fd042c727e1c23932d2efa462d0e7937125dc15fe4d75d8d5ac2",
+        "position": "PhasePosition(tick=200, callback=None, phase=<ExchangePhase.TICK_END: 'TICK_END'>)",
+        "delivered_samples": null,
+        "delivered_contacts": null,
+        "marker_labels": 2,
+        "intersecting_label_pairs": 0,
+        "labels_escaping_arena": 0,
+        "overlapping_text_pairs": 0,
+        "overlapping_text_examples": [],
+        "text_clipped_by_window": [],
+        "labels_covering_glyphs": 0,
+        "omitted_map_labels": 0,
+        "intersecting_layout_regions": [],
+        "text_outside_layout_regions": [],
+        "layout": {
+          "title": [
+            20,
+            10,
+            960,
+            18
+          ],
+          "phase": [
+            20,
+            30,
+            960,
+            18
+          ],
+          "selector": [
+            20,
+            56,
+            960,
+            28
+          ],
+          "content": [
+            20,
+            94,
+            960,
+            466
+          ],
+          "caption": [
+            20,
+            94,
+            517,
+            18
+          ],
+          "arena": [
+            20,
+            116,
+            517,
+            444
+          ],
+          "side": [
+            557,
+            94,
+            423,
+            466
+          ],
+          "disclaimer": [
+            20,
+            568,
+            960,
+            36
+          ],
+          "terminal": [
+            20,
+            610,
+            960,
+            18
+          ],
+          "timeline": [
+            20,
+            634,
+            960,
+            16
+          ],
+          "footer": [
+            20,
+            656,
+            960,
+            36
+          ]
+        },
+        "terminal_text": "Recorded end: winner B; tick_limit"
+      },
+      {
+        "perspective": null,
+        "available": true,
+        "size": [
+          1100,
+          750
+        ],
+        "frame": "Omni_1100x750.png",
+        "frame_sha256": "90b0d96184dc1728503fd2bf9433f1d4de1efacd5c0aef2350f0efc1cfd9dfe5",
+        "position": "PhasePosition(tick=200, callback=None, phase=<ExchangePhase.TICK_END: 'TICK_END'>)",
+        "delivered_samples": null,
+        "delivered_contacts": null,
+        "marker_labels": 2,
+        "intersecting_label_pairs": 0,
+        "labels_escaping_arena": 0,
+        "overlapping_text_pairs": 0,
+        "overlapping_text_examples": [],
+        "text_clipped_by_window": [],
+        "labels_covering_glyphs": 0,
+        "omitted_map_labels": 0,
+        "intersecting_layout_regions": [],
+        "text_outside_layout_regions": [],
+        "layout": {
+          "title": [
+            20,
+            10,
+            1060,
+            18
+          ],
+          "phase": [
+            20,
+            30,
+            1060,
+            18
+          ],
+          "selector": [
+            20,
+            56,
+            1060,
+            28
+          ],
+          "content": [
+            20,
+            94,
+            1060,
+            534
+          ],
+          "caption": [
+            20,
+            94,
+            572,
+            18
+          ],
+          "arena": [
+            20,
+            116,
+            572,
+            512
+          ],
+          "side": [
+            612,
+            94,
+            468,
+            534
+          ],
+          "disclaimer": [
+            20,
+            636,
+            1060,
+            18
+          ],
+          "terminal": [
+            20,
+            660,
+            1060,
+            18
+          ],
+          "timeline": [
+            20,
+            684,
+            1060,
+            16
+          ],
+          "footer": [
+            20,
+            706,
+            1060,
+            36
+          ]
+        },
+        "terminal_text": "Recorded end: winner B; tick_limit"
+      },
+      {
+        "perspective": null,
+        "help_frame": "Omni_help_900x650.png",
+        "frame_sha256": "30aab5ef2c0bd09f741fe230283fff91341930c36b039bd3365001404a954b4a"
+      }
+    ],
+    "assertion": {
+      "failures": [],
+      "missing_perspectives": [],
+      "result": "PASS"
+    }
+  }
+}

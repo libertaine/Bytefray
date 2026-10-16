@@ -149,11 +149,16 @@ describes the authoring and viewer integration.
 Its **M2-2 Watchful Keeper** slice is technically accepted and CLOSED — PASS WITH
 CONDITIONS ([closure record](docs/v6/V6_ALPHA_M2_2_CLOSURE_01.md)). Its **M2-3
 Roaming Reacquirer** implementation is accepted — PASS WITH CONDITIONS
-([closure record](docs/v6/V6_ALPHA_M2_3_CLOSURE_01.md)). Both acceptances cover
-Windows and Linux WSL2/WSLg X11 only and are not release authorizations. A/B
-replay and layout usability work (M2-4), technical qualification and human
-evaluation remain ahead; M2-4 has a read-only
-[entry review](docs/v6/V6_ALPHA_M2_4_ENTRY_DECISION_01.md) and awaits a separate
+([closure record](docs/v6/V6_ALPHA_M2_3_CLOSURE_01.md)). Its **M2-4 Replay and
+Usability** implementation is accepted — PASS WITH CONDITIONS
+([closure record](docs/v6/V6_ALPHA_M2_4_CLOSURE_01.md)): an `A | B | Omni`
+replay selector with symmetric delivered views, a measured layout with readable
+sample-marker labels, and one shared sensing guide with two scenario cards.
+These acceptances cover Windows and Linux WSL2/WSLg X11 only and are not
+release authorizations. Replay load time and accessibility remain open
+conditions. Technical and platform qualification (M2-5) and human evaluation
+(M2-6) remain ahead; M2-5 has a read-only
+[entry review](docs/v6/V6_ALPHA_M2_5_ENTRY_DECISION_01.md) and awaits a separate
 authorization decision.
 
 ## V6 Alpha 1: decisions from delivered information

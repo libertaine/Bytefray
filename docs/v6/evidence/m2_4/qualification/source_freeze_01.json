@@ -1,0 +1,67 @@
+{
+  "changed_paths_within_m2_4_boundary": {
+    "ok": true,
+    "detail": []
+  },
+  "engine_tree_byte_identical": {
+    "ok": true,
+    "detail": null
+  },
+  "excluded_client_modules_unchanged": {
+    "ok": true,
+    "detail": []
+  },
+  "readme_roadmap_packaging_config_unchanged": {
+    "ok": true,
+    "detail": []
+  },
+  "no_research_or_evidence_path_changed": {
+    "ok": true,
+    "detail": []
+  },
+  "starter_digests_match_catalog": {
+    "ok": true,
+    "detail": []
+  },
+  "catalog_suffix_and_terminal_dual_team": {
+    "ok": true,
+    "detail": [
+      "v6_window_scout",
+      "v6_watchful_keeper",
+      "v6_roaming_reacquirer",
+      "v5_dual_team"
+    ]
+  },
+  "historical_pins_329": {
+    "ok": true,
+    "detail": {
+      "pins": 329,
+      "mismatches": []
+    }
+  },
+  "head_is_published_m2_3": {
+    "ok": true,
+    "detail": null
+  },
+  "nothing_staged": {
+    "ok": true,
+    "detail": null
+  },
+  "local_v6_research_untouched": {
+    "ok": true,
+    "detail": null
+  },
+  "changed_files_manifest": {
+    "ok": true,
+    "detail": {
+      "app/views/development.py": "dbb4c9ac19850968449c5832a5cb4c37b65d76edc08d87b85a3c8b2ed6c22e40",
+      "client/src/battle_client/cli.py": "b37c41c922c639397d0cfdaf97183ba9af9b08bbffde1dc71aac24dfe7b77667",
+      "client/src/battle_client/renderers/sensing_renderer.py": "7606d33872cd7a3b5deb1107110de59105cbab583908868d8a1c4c455edcfc36",
+      "client/src/battle_client/sensing_presentation.py": "3cfd22d6a174733262b36978fa89d1099e74d7a8debd62b8a6c522341fccb8f2",
+      "client/tests/test_v6_alpha_m1_5.py": "46b9e7737e41cc2e3ea1ad4956809ee3e507bd5df87f3635148ab31209ba0b50",
+      "client/tests/test_v6_alpha_m1_5_adversarial.py": "08f52080edd766796eabcef74defb433182291bbc12dfdea8e2e4bdfd7d36c4b",
+      "client/tests/test_v6_alpha_m2_4_views.py": "238705ec491eb9c42fb492ff321472b02bbe50ae40b2ead9b23d9bf8222b3057",
+      "tests/test_v6_alpha_m1_5_designer.py": "b003347df64617cca2dc28f02d648f126fa6cb553c14dcb3c8ae6d299755d80d"
+    }
+  }
+}

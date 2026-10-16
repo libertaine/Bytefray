@@ -1,0 +1,4 @@
+# Preserve raw evidence bytes: every byte copy is bound by SHA-256 in evidence_index.json, and the
+# copied local JSON records (C2 Windows before report, load timing, source freezes, preservation
+# audit) are CRLF bodies, so no end-of-line normalization here.
+* -text

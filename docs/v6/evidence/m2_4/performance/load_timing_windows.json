@@ -1,0 +1,10 @@
+{
+  "platform": "Windows-11-10.0.26120-SP0",
+  "python": "3.13.7",
+  "seconds": {
+    "session_load": 0.01,
+    "cursor_A_from_paths": 6.08,
+    "switch_view_B_validation": 5.72,
+    "load_sensing_presentation_total_after_session": 11.79
+  }
+}
