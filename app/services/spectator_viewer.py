@@ -76,7 +76,11 @@ def _executable_names(platform: str) -> tuple[str, ...]:
 def _runnable(path: Path, platform: str) -> bool:
     if not path.is_file():
         return False
-    return platform == "win32" or os.access(path, os.X_OK)
+    if platform == "win32":
+        # Only a real executable: a .cmd/.bat shim would be re-parsed by cmd.exe,
+        # which does not treat a presentation path as one opaque argument.
+        return path.suffix.lower() == ".exe"
+    return os.access(path, os.X_OK)
 
 
 def _executable_in(folder: Path, platform: str) -> Path | None:
@@ -125,11 +129,12 @@ def discover_spectator(
     environ: Mapping[str, str] | None = None,
     *,
     platform: str | None = None,
-    which: Callable[[str], str | None] = shutil.which,
+    which: Callable[[str], str | None] | None = None,
 ) -> SpectatorDiscovery:
     """Find Spectator without guessing; see the module docstring for the order."""
     values = os.environ if environ is None else environ
     system = sys.platform if platform is None else platform
+    which = shutil.which if which is None else which
     configured = values.get(ENV_SPECTATOR, "").strip()
     if configured:
         if configured.lower() in DISABLED_VALUES:
@@ -139,7 +144,7 @@ def discover_spectator(
     if drop_in is not None:
         return SpectatorDiscovery(SpectatorInstall(drop_in.resolve(), origin="data root"))
     found = which(PATH_COMMAND)
-    if found:
+    if found and _runnable(Path(found), system):
         return SpectatorDiscovery(SpectatorInstall(Path(found).resolve(), origin="PATH"))
     return SpectatorDiscovery()
 
@@ -155,11 +160,27 @@ def presentation_cache_root(data_root: Path) -> Path:
     return default_cache_root(Path(data_root))
 
 
-def build_prepare_command(result_path: Path, cache_root: Path) -> list[str]:
-    """``bytefray spectator prepare`` for one match, as an argument list."""
-    return build_spectator_command(
-        ["prepare", "--source", str(Path(result_path)), "--cache", str(Path(cache_root))]
-    )
+def build_prepare_command(
+    result_path: Path,
+    cache_root: Path,
+    *,
+    artifact_root: Path | None = None,
+    expected_match_id: str | None = None,
+    expected_result_id: str | None = None,
+) -> list[str]:
+    """``bytefray spectator prepare`` for one match, as an argument list.
+
+    The artifact root and expected ids carry Designer's own preflight context
+    into the export, whose preflight then enforces them too.
+    """
+    arguments = ["prepare", "--source", str(Path(result_path)), "--cache", str(Path(cache_root))]
+    if artifact_root is not None:
+        arguments += ["--artifact-root", str(Path(artifact_root))]
+    if expected_match_id is not None:
+        arguments += ["--expect-match-id", expected_match_id]
+    if expected_result_id is not None:
+        arguments += ["--expect-result-id", expected_result_id]
+    return build_spectator_command(arguments)
 
 
 def source_environment(data_root: Path, environ: Mapping[str, str] | None = None) -> dict[str, str]:
@@ -181,10 +202,19 @@ class PrepareOutcome:
     reused: bool = False
     code: str | None = None
     message: str = ""
+    match_id: str | None = None
+    result_id: str | None = None
 
     @property
     def ok(self) -> bool:
         return self.presentation is not None
+
+    def mismatch(self, match_id: str | None, result_id: str | None) -> str | None:
+        """Why a successful outcome is for a different match than expected, if it is."""
+        for label, expected, actual in (("match_id", match_id, self.match_id), ("result_id", result_id, self.result_id)):
+            if expected is not None and actual != expected:
+                return f"the presentation's {label} {actual!r} is not the selected match's {expected!r}"
+        return None
 
 
 def parse_prepare_output(stdout: str, exit_code: int) -> PrepareOutcome:
@@ -204,7 +234,12 @@ def parse_prepare_output(stdout: str, exit_code: int) -> PrepareOutcome:
     if record is None:
         return PrepareOutcome(None, code="exporter_failed", message=f"the exporter exited with code {exit_code}")
     if record["status"] == "ok" and exit_code == 0 and isinstance(record.get("presentation"), str):
-        return PrepareOutcome(Path(record["presentation"]), bool(record.get("reused")))
+        return PrepareOutcome(
+            Path(record["presentation"]),
+            bool(record.get("reused")),
+            match_id=record.get("match_id"),
+            result_id=record.get("result_id"),
+        )
     return PrepareOutcome(
         None, code=str(record.get("code") or "exporter_failed"), message=str(record.get("message") or "")
     )
@@ -254,6 +289,7 @@ def unavailable_message(code: str | None, detail: str) -> str:
         "evidence_unverified": "The match trace and replay did not verify against each other.",
         "outcome_unverified": "The recorded outcome did not verify.",
         "source_changed": "The match files changed while they were being prepared.",
+        "identity_changed": "The prepared presentation is not for the selected match.",
         "trace_missing": "The match has no sensing trace.",
         "agent_view_leak": "The Agent A view failed its knowledge-isolation check.",
     }

@@ -89,6 +89,8 @@ def designer(monkeypatch, tmp_path):
     data_root = tmp_path / "data"
     monkeypatch.setenv("BYTEFRAY_ROOT", str(data_root))
     monkeypatch.delenv("BYTEFRAY_SPECTATOR", raising=False)
+    # "Not configured" must not find a Spectator that is on this machine's PATH.
+    monkeypatch.setattr("app.services.spectator_viewer.shutil.which", lambda _name: None)
     QApplication.instance() or QApplication([])
     window = AgentDesigner()
     recorded = {"spectator": [], "pygame": [], "warnings": []}
@@ -222,6 +224,123 @@ def test_a_changed_replay_is_refused_before_either_viewer(designer, monkeypatch,
     assert designer.recorded["spectator"] == [] and designer.recorded["pygame"] == []
     assert designer.recorded["warnings"][-1][0] == "Replay Changed"
     assert not designer._spectator.busy()
+
+
+@pytest.mark.gui
+def test_view_last_match_never_blocks_the_gui_thread(designer, monkeypatch, tmp_path):
+    from PySide6.QtCore import QTimer
+
+    result = _v6_match(designer.data_root_for_test, "20261017-000000-ffffffff")
+    _finish(designer, result)  # not configured yet: no background preparation
+    _configure_spectator(monkeypatch, tmp_path)
+    started = time.monotonic()
+    designer._on_open_replay()
+    assert time.monotonic() - started < 1.0  # the export runs in a child process
+    assert designer._spectator.busy() and designer.recorded["spectator"] == []
+    ticks = []
+    timer = QTimer()
+    timer.timeout.connect(lambda: ticks.append(designer._spectator.busy()))
+    timer.start(10)
+    _wait_idle(designer)
+    timer.stop()
+    assert True in ticks  # the event loop kept running while the export worked
+    assert len(designer.recorded["spectator"]) == 1
+
+
+@pytest.mark.gui
+def test_a_spectator_that_cannot_start_falls_back(designer, monkeypatch, tmp_path):
+    def cannot_start(install, presentation):
+        raise OSError(f"Failed to start Spectator '{install.program}': access denied")
+
+    monkeypatch.setattr("app.widgets.spectator_launch.launch_spectator", cannot_start)
+    _configure_spectator(monkeypatch, tmp_path)
+    result = _v6_match(designer.data_root_for_test, "20261017-000000-abababab")
+    _finish(designer, result)
+    designer._on_open_replay()
+    _wait_idle(designer)
+    [(title, body)] = designer.recorded["warnings"]
+    assert title == "Spectator Unavailable" and "access denied" in body
+    assert designer.recorded["pygame"] == [result.with_name("replay.jsonl").resolve()]
+
+
+@pytest.mark.gui
+def test_a_spectator_that_exits_immediately_is_reported(designer, monkeypatch, tmp_path):
+    from PySide6.QtWidgets import QApplication
+
+    class _Crashed(_FakeProcess):
+        def poll(self):
+            return 3
+
+    monkeypatch.setattr(
+        "app.widgets.spectator_launch.launch_spectator",
+        lambda install, presentation: designer.recorded["spectator"].append((install, presentation)) or _Crashed(),
+    )
+    monkeypatch.setattr("app.widgets.spectator_launch.EARLY_EXIT_MS", 50)
+    _configure_spectator(monkeypatch, tmp_path)
+    result = _v6_match(designer.data_root_for_test, "20261017-000000-cdcdcdcd")
+    _finish(designer, result)
+    designer._on_open_replay()
+    _wait_idle(designer)
+    deadline = time.monotonic() + 5
+    while not designer.recorded["warnings"] and time.monotonic() < deadline:
+        QApplication.processEvents()
+        time.sleep(0.02)
+    [(title, body)] = designer.recorded["warnings"]
+    assert title == "Spectator Unavailable" and "exit code 3" in body
+    assert len(designer.recorded["spectator"]) == 1
+
+
+@pytest.mark.gui
+def test_the_export_must_confirm_the_preflighted_match(designer, monkeypatch, tmp_path):
+    import app.widgets.spectator_launch as launch
+
+    commands = []
+    real_build = launch.build_prepare_command
+    monkeypatch.setattr(
+        launch,
+        "build_prepare_command",
+        lambda *args, **kwargs: commands.append(kwargs) or real_build(*args, **kwargs),
+    )
+    real_parse = launch.parse_prepare_output
+    monkeypatch.setattr(  # the child reports a different match than the one preflighted
+        launch,
+        "parse_prepare_output",
+        lambda stdout, code: launch.replace(real_parse(stdout, code), match_id="match_not_the_selected_one"),
+    )
+    _configure_spectator(monkeypatch, tmp_path)
+    result = _v6_match(designer.data_root_for_test, "20261017-000000-efefefef")
+    recorded = json.loads(result.read_text(encoding="utf-8"))
+    _finish(designer, result)
+    designer._on_open_replay()
+    _wait_idle(designer)
+    assert commands and all(
+        (c["expected_match_id"], c["expected_result_id"]) == (recorded["match_id"], recorded["result_id"])
+        for c in commands
+    )
+    assert designer.recorded["spectator"] == []
+    [(title, body)] = designer.recorded["warnings"]
+    assert title == "Spectator Unavailable" and "not for the selected match" in body
+    # The fallback re-runs the preflight with the same pinned identity; this result still matches.
+    assert designer.recorded["pygame"] == [result.with_name("replay.jsonl").resolve()]
+
+
+@pytest.mark.gui
+def test_a_background_preparation_yields_to_the_users_click(designer, monkeypatch, tmp_path):
+    from battle_client.spectator_export import verify_presentation
+
+    _configure_spectator(monkeypatch, tmp_path)
+    log = []
+    designer._spectator.log.connect(log.append)
+    first = _v6_match(designer.data_root_for_test, "20261017-000000-11111111")
+    _finish(designer, first)  # background preparation of the first match starts
+    second = _v6_match(designer.data_root_for_test, "20261017-000000-22222222")
+    _finish(designer, second)  # busy: no second background preparation
+    designer._on_open_replay()  # View Last Match = the second match
+    assert any("Stopping a background preparation" in line for line in log)
+    _wait_idle(designer)
+    [(_install, presentation)] = designer.recorded["spectator"]
+    expected = json.loads(second.read_text(encoding="utf-8"))["match_id"]
+    assert verify_presentation(presentation)["match"]["match_id"] == expected
 
 
 @pytest.mark.gui

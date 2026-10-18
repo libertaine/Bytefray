@@ -68,7 +68,9 @@ PACKAGES = ("battle_engine", "battle_client")
 # never indexes it, and bounded.
 CACHE_RELATIVE = Path("cache") / "spectator" / "presentations"
 CACHE_LIMIT = 16
-STALE_STAGING_SECONDS = 3600
+# A staging directory is only abandoned once no export could still be writing
+# it; export time grows with the square of match length, so allow a full day.
+STALE_STAGING_SECONDS = 24 * 3600
 
 # Every key that may appear anywhere in agent_a.json. Anything else is a leak.
 AGENT_ALLOWED_KEYS = frozenset(
@@ -519,11 +521,31 @@ class _Sources:
         return {path.name: path for path in (self.result, self.replay, self.trace)}
 
 
-def _verified_sources(result_path: Path) -> _Sources:
+@dataclass(frozen=True)
+class Expectation:
+    """The identity a caller already verified, re-enforced by the export's own preflight.
+
+    ``artifact_root`` is the directory the result must stay beneath; the
+    expected ids are the result/match ids the caller's own preflight accepted.
+    """
+
+    artifact_root: Path | None = None
+    match_id: str | None = None
+    result_id: str | None = None
+
+
+def _verified_sources(result_path: Path, expectation: Expectation | None = None) -> _Sources:
     """Run Designer's authoritative replay preflight and locate the bound trace."""
     from battle_engine.replay_integrity import ResultReplayRequest, preflight_result_replay
 
-    outcome = preflight_result_replay(ResultReplayRequest(result_path=result_path, artifact_root=result_path.parent))
+    expect = expectation or Expectation()
+    request = ResultReplayRequest(
+        result_path=result_path,
+        artifact_root=Path(expect.artifact_root) if expect.artifact_root is not None else result_path.parent,
+        expected_result_id=expect.result_id,
+        expected_match_id=expect.match_id,
+    )
+    outcome = preflight_result_replay(request)
     if not outcome.verified or outcome.replay_path is None:
         reason = outcome.failure.value if outcome.failure is not None else "unknown"
         raise SpectatorExportError(RESULT_UNVERIFIED, f"replay preflight failed ({reason}): {outcome.diagnostic}")
@@ -648,15 +670,20 @@ def _write_presentation(
     return manifest
 
 
-def _export_into(result_path: Path, staging: Path, progress: Progress) -> dict[str, Any]:
+def _export_into(
+    result_path: Path, staging: Path, progress: Progress, expectation: Expectation | None = None
+) -> dict[str, Any]:
     progress("verifying sources")
-    sources = _verified_sources(result_path)
+    sources = _verified_sources(result_path, expectation)
     before = _source_records(sources.named())
     documents = _build_documents(sources, progress)
     if _source_records(sources.named()) != before:
         raise SpectatorExportError(SOURCE_CHANGED, "match artifacts changed while they were being exported")
     progress("writing presentation")
-    return _write_presentation(staging, before, documents)
+    try:
+        return _write_presentation(staging, before, documents)
+    except OSError as exc:
+        raise SpectatorExportError(OUTPUT_FAILED, f"could not write the presentation: {exc}") from None
 
 
 def _is_presentation_dir(path: Path) -> bool:
@@ -666,9 +693,16 @@ def _is_presentation_dir(path: Path) -> bool:
 
 
 def _check_output(out_dir: Path, result_path: Path, replace_existing: bool) -> None:
+    """Refuse any output that could write into, or delete, something not ours.
+
+    Run before the export and again immediately before installing: an export
+    can take minutes, and the folder may be created or filled meanwhile.
+    """
     source_dir = result_path.parent
-    if out_dir == source_dir or out_dir in source_dir.parents:
-        raise SpectatorExportError(OUTPUT_UNSAFE, "the output directory must not be the match directory or contain it")
+    if out_dir == source_dir or out_dir in source_dir.parents or source_dir in out_dir.parents:
+        raise SpectatorExportError(
+            OUTPUT_UNSAFE, "the output directory must be outside the match directory and must not contain it"
+        )
     if not out_dir.exists():
         return
     if not out_dir.is_dir():
@@ -682,17 +716,28 @@ def _check_output(out_dir: Path, result_path: Path, replace_existing: bool) -> N
 
 
 def _new_staging(parent: Path, name: str) -> Path:
-    parent.mkdir(parents=True, exist_ok=True)
-    staging = parent / f".{name}.staging-{uuid.uuid4().hex[:12]}"
-    staging.mkdir()
+    try:
+        parent.mkdir(parents=True, exist_ok=True)
+        staging = parent / f".{name}.staging-{uuid.uuid4().hex[:12]}"
+        staging.mkdir()
+    except OSError as exc:
+        raise SpectatorExportError(OUTPUT_FAILED, f"cannot create an output directory in {parent}: {exc}") from None
     return staging
 
 
 def _install(staging: Path, out_dir: Path) -> None:
-    """Move a complete staged presentation into place (rename within one directory)."""
+    """Move a complete staged presentation into place (rename within one directory).
+
+    An existing ``out_dir`` is moved aside first and deleted only if it is empty
+    or holds nothing but a presentation; anything else is moved back untouched
+    and the install is refused.
+    """
     if out_dir.exists():
         aside = out_dir.with_name(f".{out_dir.name}.old-{uuid.uuid4().hex[:12]}")
         os.replace(out_dir, aside)
+        if not _is_presentation_dir(aside):
+            os.replace(aside, out_dir)
+            raise SpectatorExportError(OUTPUT_UNSAFE, f"{out_dir} gained files that are not a Spectator presentation")
         try:
             os.replace(staging, out_dir)
         except OSError:
@@ -723,6 +768,7 @@ def export_presentation(
     staging = _new_staging(target.parent, target.name)
     try:
         manifest = _export_into(result_path, staging, progress)
+        _check_output(target, result_path, replace_existing)  # the export may have taken minutes
         try:
             _install(staging, target)
         except OSError as exc:
@@ -785,7 +831,12 @@ def verify_presentation(
             raise invalid(f"cannot read {filename}: {exc}") from None
         if len(data) != entry.get("bytes") or _sha256_bytes(data) != entry.get("sha256"):
             raise invalid(f"{filename} does not match the manifest")
-        document = json.loads(data)
+        try:
+            document = json.loads(data)
+        except ValueError as exc:
+            raise invalid(f"{filename} is not JSON: {exc}") from None
+        if not isinstance(document, dict) or not isinstance(document.get("frames"), list):
+            raise invalid(f"{filename} is not a presentation document")
         if (document.get("schema"), document.get("schema_version")) != (DOCUMENT_SCHEMAS[key], DOCUMENT_SCHEMA_VERSION):
             raise invalid(f"{filename} has an unexpected schema")
         if len(document.get("frames", ())) != entry.get("frames"):
@@ -836,28 +887,40 @@ def _discard(path: Path) -> None:
     shutil.rmtree(aside, ignore_errors=True)
 
 
+def _mtime(path: Path) -> float | None:
+    try:
+        return path.stat().st_mtime
+    except OSError:  # removed meanwhile by a concurrent prepare
+        return None
+
+
 def _prune(cache_root: Path, keep: Path) -> None:
-    """Bound the cache; remove abandoned staging directories."""
+    """Bound the cache; remove abandoned staging directories.
+
+    Never fails the prepare that called it: entries may vanish concurrently.
+    """
     now = time.time()
     try:
         entries = list(cache_root.iterdir())
     except OSError:
         return
+    presentations: list[tuple[float, Path]] = []
     for entry in entries:
-        if entry.name.startswith(".") and entry.is_dir():
-            try:
-                if now - entry.stat().st_mtime > STALE_STAGING_SECONDS:
-                    shutil.rmtree(entry, ignore_errors=True)
-            except OSError:
-                pass
-    presentations = [entry for entry in entries if entry.is_dir() and not entry.name.startswith(".") and entry != keep]
-    presentations.sort(key=lambda entry: entry.stat().st_mtime, reverse=True)
-    for stale in presentations[CACHE_LIMIT - 1 :]:
+        modified = _mtime(entry)
+        if modified is None or not entry.is_dir():
+            continue
+        if entry.name.startswith("."):
+            if now - modified > STALE_STAGING_SECONDS:
+                shutil.rmtree(entry, ignore_errors=True)
+        elif entry != keep:
+            presentations.append((modified, entry))
+    presentations.sort(reverse=True)
+    for _modified, stale in presentations[CACHE_LIMIT - 1 :]:
         _discard(stale)
 
 
 def prepare_presentation(
-    source: Path, cache_root: Path, *, progress: Progress = _no_progress
+    source: Path, cache_root: Path, *, progress: Progress = _no_progress, expectation: Expectation | None = None
 ) -> PreparedPresentation:
     """Return a verified presentation for ``source``, reusing a cached one when it verifies.
 
@@ -865,13 +928,15 @@ def prepare_presentation(
     digests, its files to match the manifest, and the same exporter build; the
     replay preflight also runs again. Anything else is discarded and exported
     afresh. Concurrent callers export into separate staging directories; the
-    first complete one is installed and the others reuse it.
+    first complete one is installed and the others reuse it. ``expectation``
+    (Designer's own preflight context: artifact root and expected ids) is
+    enforced by every preflight this function runs.
     """
     result_path = resolve_result_path(source)
     support = spectator_support(result_path)
     if not support.supported:
         raise SpectatorExportError(support.code or SOURCE_UNAVAILABLE, support.message)
-    sources = _source_records(_verified_sources(result_path).named())
+    sources = _source_records(_verified_sources(result_path, expectation).named())
     cache = Path(cache_root).expanduser().resolve()
     final = cache / _cache_key(result_path, sources)
     if final.is_dir():
@@ -880,11 +945,14 @@ def prepare_presentation(
         except SpectatorExportError:
             _discard(final)
         else:
-            os.utime(final)
+            try:
+                os.utime(final)  # most recently used: kept longest by _prune
+            except OSError:
+                pass
             return PreparedPresentation(final, True, manifest)
     staging = _new_staging(cache, final.name)
     try:
-        manifest = _export_into(result_path, staging, progress)
+        manifest = _export_into(result_path, staging, progress, expectation)
         if manifest["sources"] != sources:
             raise SpectatorExportError(SOURCE_CHANGED, "match artifacts changed while they were being exported")
         try:
@@ -920,6 +988,9 @@ def _parser() -> argparse.ArgumentParser:
     prepare = commands.add_parser("prepare", help="reuse or create a cached presentation (used by Designer)")
     prepare.add_argument("--source", type=Path, required=True, help="match directory or its result.json")
     prepare.add_argument("--cache", type=Path, default=None, help="cache root (default: <data root>/cache/spectator/presentations)")
+    prepare.add_argument("--artifact-root", type=Path, default=None, help="directory the result must stay beneath")
+    prepare.add_argument("--expect-match-id", default=None, help="refuse unless the result has this match_id")
+    prepare.add_argument("--expect-result-id", default=None, help="refuse unless the result has this result_id")
     verify = commands.add_parser("verify", help="check a presentation directory against its manifest")
     verify.add_argument("--presentation", type=Path, required=True)
     verify.add_argument("--source", type=Path, default=None, help="also require these match artifacts")
@@ -943,8 +1014,12 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.action == "prepare":
             cache = args.cache if args.cache is not None else default_cache_root()
+            expectation = Expectation(args.artifact_root, args.expect_match_id, args.expect_result_id)
             prepared = prepare_presentation(
-                args.source, cache, progress=lambda stage: _emit({"status": "progress", "stage": stage})
+                args.source,
+                cache,
+                progress=lambda stage: _emit({"status": "progress", "stage": stage}),
+                expectation=expectation,
             )
             _emit(
                 {
@@ -952,6 +1027,7 @@ def main(argv: list[str] | None = None) -> int:
                     "presentation": str(prepared.directory),
                     "reused": prepared.reused,
                     "match_id": prepared.manifest["match"]["match_id"],
+                    "result_id": prepared.manifest["match"]["result_id"],
                 }
             )
             return 0
@@ -961,11 +1037,14 @@ def main(argv: list[str] | None = None) -> int:
         manifest = verify_presentation(args.presentation, sources=sources)
         print(f"verified: {manifest['match']['match_id']} ({manifest['match']['ruleset_id']})")
         return 0
-    except SpectatorExportError as exc:
+    except (SpectatorExportError, OSError) as exc:
+        # Any other OSError (disk full, permissions) is an output failure, still
+        # reported in the same structured way rather than as a traceback.
+        code = exc.code if isinstance(exc, SpectatorExportError) else OUTPUT_FAILED
         if args.action == "prepare":
-            _emit({"status": "error", "code": exc.code, "message": str(exc)})
+            _emit({"status": "error", "code": code, "message": str(exc)})
         else:
-            print(f"spectator {args.action} failed ({exc.code}): {exc}", file=sys.stderr)
+            print(f"spectator {args.action} failed ({code}): {exc}", file=sys.stderr)
         return 1
 
 
@@ -974,6 +1053,7 @@ __all__ = [
     "EXPORTER_VERSION",
     "MANIFEST_SCHEMA_VERSION",
     "PROVENANCE",
+    "Expectation",
     "PreparedPresentation",
     "SpectatorExportError",
     "SpectatorSupport",

@@ -81,6 +81,17 @@ def test_data_root_drop_in_then_path(tmp_path):
     assert found.install == sv.SpectatorInstall(drop_in.resolve(), origin="data root")
 
 
+def test_windows_accepts_only_real_executables(tmp_path):
+    # A .cmd/.bat shim would be re-parsed by cmd.exe; only .exe files are launched.
+    for name in ("bytefray-spectator.cmd", "bytefray-spectator.bat"):
+        shim = _executable(tmp_path / "bin" / name)
+        assert sv.discover_spectator(tmp_path, {}, platform="win32", which=lambda _n, s=shim: str(s)) == sv.SpectatorDiscovery()
+        found = sv.discover_spectator(tmp_path, {sv.ENV_SPECTATOR: str(shim)}, platform="win32", which=_no_path)
+        assert found.install is None and "not executable" in (found.problem or "")
+    exe = _executable(tmp_path / "bin" / "bytefray-spectator.exe")
+    assert sv.discover_spectator(tmp_path, {}, platform="win32", which=lambda _n: str(exe)).install is not None
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX execute bit")
 def test_a_non_executable_file_is_not_runnable_on_posix(tmp_path):
     exe = tmp_path / "bytefray-spectator"
@@ -145,6 +156,9 @@ def test_prepare_command_source_and_frozen(monkeypatch, tmp_path):
     assert sv.build_prepare_command(result, cache) == [
         str(python), "-m", "battle_engine", "spectator", "prepare", "--source", str(result), "--cache", str(cache),
     ]  # fmt: skip
+    assert sv.build_prepare_command(
+        result, cache, artifact_root=result.parent, expected_match_id="match_1", expected_result_id="result_1"
+    )[-6:] == ["--artifact-root", str(result.parent), "--expect-match-id", "match_1", "--expect-result-id", "result_1"]
     app_dir = tmp_path / "Bytefray Portable"
     app_dir.mkdir()
     bytefray = app_dir / f"bytefray{_EXE_SUFFIX}"
@@ -159,8 +173,15 @@ def test_presentation_cache_is_outside_the_run_tree(tmp_path):
 
 
 def test_prepare_output_parsing():
-    ok = '{"stage": "reconstructing", "status": "progress"}\n{"match_id": "m", "presentation": "/c/p", "reused": true, "status": "ok"}\n'
-    assert sv.parse_prepare_output(ok, 0) == sv.PrepareOutcome(Path("/c/p"), True)
+    ok = (
+        '{"stage": "reconstructing", "status": "progress"}\n'
+        '{"match_id": "m", "presentation": "/c/p", "result_id": "r", "reused": true, "status": "ok"}\n'
+    )
+    outcome = sv.parse_prepare_output(ok, 0)
+    assert outcome == sv.PrepareOutcome(Path("/c/p"), True, match_id="m", result_id="r")
+    assert outcome.mismatch("m", "r") is None and outcome.mismatch(None, None) is None
+    assert "match_id" in (outcome.mismatch("other", "r") or "")
+    assert "result_id" in (outcome.mismatch("m", "other") or "")
     assert sv.last_progress_stage(ok) == "reconstructing"
     error = '{"code": "trace_missing", "message": "no trace", "status": "error"}\n'
     assert sv.parse_prepare_output(error, 1) == sv.PrepareOutcome(None, code="trace_missing", message="no trace")

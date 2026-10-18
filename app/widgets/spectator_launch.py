@@ -10,8 +10,11 @@ from __future__ import annotations
 
 import subprocess
 from collections.abc import Callable
+from dataclasses import dataclass, replace
 from pathlib import Path
 
+from battle_engine.replay_integrity import ResultReplayRequest
+from battle_engine.result_model import read_result
 from PySide6.QtCore import QObject, QProcess, QProcessEnvironment, QTimer, Signal
 from PySide6.QtWidgets import QMessageBox, QWidget
 
@@ -34,28 +37,60 @@ from app.services.spectator_viewer import (
 EARLY_EXIT_MS = 2500
 
 
+@dataclass(frozen=True)
+class _Job:
+    """One match to prepare: Designer's own preflight request, with its identity pinned."""
+
+    request: ResultReplayRequest
+    open_when_ready: bool
+
+    @property
+    def result(self) -> Path:
+        return Path(self.request.result_path).resolve()
+
+
+def _pinned(request: ResultReplayRequest) -> ResultReplayRequest:
+    """Pin the ids Designer's preflight just accepted, so a later replacement is refused.
+
+    Called right after a successful preflight. Ids the caller already expects
+    win; otherwise the result's current ids are recorded.
+    """
+    if request.expected_match_id is not None and request.expected_result_id is not None:
+        return request
+    try:
+        envelope = read_result(request.result_path)
+    except (OSError, ValueError, KeyError, TypeError):
+        return request  # the export's own preflight will refuse it
+    return replace(
+        request,
+        expected_match_id=request.expected_match_id or envelope.match_id,
+        expected_result_id=request.expected_result_id or envelope.result_id,
+    )
+
+
 class SpectatorLaunchController(QObject):
     """Prepare and open one match at a time in Spectator.
 
-    ``fallback(result_path)`` opens Designer's existing viewer; it must run its
-    own fresh replay preflight, because time passes between a click and a
-    failed export.
+    ``fallback(request)`` opens Designer's existing viewer for the original
+    request; it must run its own fresh replay preflight, because time passes
+    between a click and a failed export.
     """
 
     log = Signal(str)
 
-    def __init__(self, data_root: Path, parent: QWidget, fallback: Callable[[Path], None]) -> None:
+    def __init__(
+        self, data_root: Path, parent: QWidget, fallback: Callable[[ResultReplayRequest], None]
+    ) -> None:
         super().__init__(parent)
         self._data_root = Path(data_root)
         self._parent = parent
         self._fallback = fallback
         self._proc: QProcess | None = None
-        self._job: Path | None = None
+        self._job: _Job | None = None
         self._install: SpectatorInstall | None = None
-        self._open_when_ready = False
         self._stdout = ""
         self._stage: str | None = None
-        self._pending: tuple[Path, bool] | None = None
+        self._pending: _Job | None = None
         self._launched: list[subprocess.Popen[bytes]] = []
         self._problem_reported = False
 
@@ -64,43 +99,48 @@ class SpectatorLaunchController(QObject):
     def busy(self) -> bool:
         return self._proc is not None
 
-    def open_match(self, result_path: Path) -> bool:
-        """Take over viewing ``result_path`` (already preflighted) if Spectator applies.
+    def open_match(self, request: ResultReplayRequest) -> bool:
+        """Take over viewing a match Designer has just preflighted, if Spectator applies.
 
         Returns ``False`` when Spectator is off, absent, misconfigured or does not
         support this match: the caller then opens its usual viewer.
         """
-        install = self._usable_install(result_path, report=True)
+        install = self._usable_install(Path(request.result_path), report=True)
         if install is None:
             return False
-        result = Path(result_path).resolve()
-        if self._job == result:
-            self._open_when_ready = True
+        job = _Job(_pinned(request), open_when_ready=True)
+        if self._job is not None and self._job.result == job.result:
+            self._job = replace(self._job, open_when_ready=True)
             self.log.emit("[Spectator] Still preparing this match; it opens when ready.\n")
             return True
-        self._enqueue(result, install, open_when_ready=True)
+        if self._job is not None and not self._job.open_when_ready:
+            # Nobody is waiting for that background preparation: the click wins.
+            self.log.emit("[Spectator] Stopping a background preparation to open the selected match.\n")
+            self._stop_current()
+        self._enqueue(job, install)
         return True
 
     def prewarm(self, result_path: Path) -> None:
-        """Quietly prepare a just-finished match so a later View Last Match is instant."""
+        """Quietly prepare a just-finished match so a later View Last Match is quick."""
         install = self._usable_install(result_path, report=False)
         if install is None:
             return
-        result = Path(result_path).resolve()
-        if self._job == result:
-            return
+        job = _Job(_pinned(ResultReplayRequest(Path(result_path), Path(result_path).parent)), open_when_ready=False)
         if self._proc is None:
-            self._start(result, install, open_when_ready=False)
+            self._start(job, install)
 
     def shutdown(self) -> None:
         self._pending = None
+        self._stop_current()
+
+    # ---- internals ------------------------------------------------------
+
+    def _stop_current(self) -> None:
         proc, self._proc = self._proc, None
         self._job = None
         if proc is not None and proc.state() != QProcess.NotRunning:
             proc.kill()
             proc.waitForFinished(2000)
-
-    # ---- internals ------------------------------------------------------
 
     def _usable_install(self, result_path: Path, *, report: bool) -> SpectatorInstall | None:
         discovery = discover_spectator(self._data_root)
@@ -124,15 +164,24 @@ class SpectatorLaunchController(QObject):
             return None
         return discovery.install
 
-    def _enqueue(self, result: Path, install: SpectatorInstall, *, open_when_ready: bool) -> None:
+    def _enqueue(self, job: _Job, install: SpectatorInstall) -> None:
         if self._proc is None:
-            self._start(result, install, open_when_ready=open_when_ready)
+            self._start(job, install)
             return
-        self._pending = (result, open_when_ready)
+        if self._pending is not None and self._pending.result != job.result and self._pending.open_when_ready:
+            self.log.emit(f"[Spectator] No longer waiting to open {self._pending.result}; a newer request replaced it.\n")
+        self._pending = job
         self.log.emit("[Spectator] Another match is being prepared; this one is next.\n")
 
-    def _start(self, result: Path, install: SpectatorInstall, *, open_when_ready: bool) -> None:
-        command = build_prepare_command(result, presentation_cache_root(self._data_root))
+    def _start(self, job: _Job, install: SpectatorInstall) -> None:
+        request = job.request
+        command = build_prepare_command(
+            job.result,
+            presentation_cache_root(self._data_root),
+            artifact_root=Path(request.artifact_root),
+            expected_match_id=request.expected_match_id,
+            expected_result_id=request.expected_result_id,
+        )
         env = QProcessEnvironment()
         for key, value in source_environment(self._data_root).items():
             env.insert(key, value)
@@ -145,12 +194,11 @@ class SpectatorLaunchController(QObject):
         proc.finished.connect(lambda code, _status, p=proc: self._finished(p, code))
         proc.errorOccurred.connect(lambda error, p=proc: self._error(p, error))
         self._proc = proc
-        self._job = result
+        self._job = job
         self._install = install
-        self._open_when_ready = open_when_ready
         self._stdout = ""
         self._stage = None
-        if open_when_ready:
+        if job.open_when_ready:
             self.log.emit(
                 "[Spectator] Verifying the match for Spectator (a first export of a "
                 "long match can take a minute)...\n"
@@ -164,7 +212,7 @@ class SpectatorLaunchController(QObject):
         stage = last_progress_stage(self._stdout)
         if stage and stage != self._stage:
             self._stage = stage
-            if self._open_when_ready:
+            if self._job is not None and self._job.open_when_ready:
                 self.log.emit(f"[Spectator] {stage}...\n")
 
     def _error(self, proc: QProcess, error: QProcess.ProcessError) -> None:
@@ -179,17 +227,20 @@ class SpectatorLaunchController(QObject):
         self._complete(proc, parse_prepare_output(self._stdout, code))
 
     def _complete(self, proc: QProcess, outcome: PrepareOutcome) -> None:
-        result, install, open_when_ready = self._job, self._install, self._open_when_ready
+        job, install = self._job, self._install
         self._proc = None
         self._job = None
         proc.deleteLater()
-        if result is not None and install is not None:
+        if job is not None and install is not None:
+            mismatch = outcome.mismatch(job.request.expected_match_id, job.request.expected_result_id)
+            if outcome.ok and mismatch is not None:
+                outcome = PrepareOutcome(None, code="identity_changed", message=mismatch)
             if outcome.ok and outcome.presentation is not None:
                 note = "reused a verified presentation" if outcome.reused else "presentation verified and written"
                 self.log.emit(f"[Spectator] {note}: {outcome.presentation}\n")
-                if open_when_ready:
-                    self._launch(install, outcome.presentation, result)
-            elif open_when_ready:
+                if job.open_when_ready:
+                    self._launch(install, outcome.presentation, job.request)
+            elif job.open_when_ready:
                 self.log.emit(f"[Spectator] Could not prepare the match ({outcome.code}): {outcome.message}\n")
                 QMessageBox.warning(
                     self._parent,
@@ -197,16 +248,16 @@ class SpectatorLaunchController(QObject):
                     unavailable_message(outcome.code, outcome.message)
                     + "\n\nBytefray will open the classic replay viewer instead.",
                 )
-                self._fallback(result)
+                self._fallback(job.request)
         pending, self._pending = self._pending, None
         if pending is not None:
-            again = self._usable_install(pending[0], report=pending[1])
+            again = self._usable_install(pending.result, report=pending.open_when_ready)
             if again is not None:
-                self._start(pending[0], again, open_when_ready=pending[1])
-            elif pending[1]:
-                self._fallback(pending[0])
+                self._start(pending, again)
+            elif pending.open_when_ready:
+                self._fallback(pending.request)
 
-    def _launch(self, install: SpectatorInstall, presentation: Path, result: Path) -> None:
+    def _launch(self, install: SpectatorInstall, presentation: Path, request: ResultReplayRequest) -> None:
         self._launched = [p for p in self._launched if p.poll() is None]
         try:
             process = launch_spectator(install, presentation)
@@ -217,7 +268,7 @@ class SpectatorLaunchController(QObject):
                 SPECTATOR_UNAVAILABLE_TITLE,
                 f"{exc}\n\nBytefray will open the classic replay viewer instead.",
             )
-            self._fallback(result)
+            self._fallback(request)
             return
         self._launched.append(process)
         self.log.emit(f"[Spectator] Started {install.program.name} (process {process.pid}).\n")

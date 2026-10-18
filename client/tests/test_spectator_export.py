@@ -365,6 +365,75 @@ def test_output_must_be_new_empty_or_an_explicitly_replaced_presentation(tie_mat
     assert _leftovers(tmp_path) == []
 
 
+def test_output_inside_the_match_directory_is_refused(tie_match, tmp_path):
+    match = tmp_path / "match"
+    shutil.copytree(tie_match, match)
+    before = sorted(path.name for path in match.iterdir())
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.export_presentation(match, match / "presentation")
+    assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert sorted(path.name for path in match.iterdir()) == before  # not even a staging directory
+
+
+@pytest.mark.parametrize("replace", [False, True])
+def test_files_that_appear_in_the_output_during_export_are_never_deleted(tie_match, tie_export, tmp_path, replace):
+    out = tmp_path / "out"
+    if replace:
+        shutil.copytree(tie_export, out)
+
+    def meanwhile(stage: str) -> None:
+        if stage == "projecting agent view":  # long after the first output check
+            out.mkdir(exist_ok=True)
+            (out / "notes.txt").write_text("written during the export", encoding="utf-8")
+
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.export_presentation(tie_match, out, replace_existing=replace, progress=meanwhile)
+    assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert (out / "notes.txt").read_text(encoding="utf-8") == "written during the export"
+    assert _leftovers(tmp_path) == []
+
+
+def test_install_never_deletes_a_folder_that_is_not_a_presentation(tie_export, tmp_path):
+    out = tmp_path / "out"
+    out.mkdir()
+    (out / "keep.txt").write_text("keep", encoding="utf-8")
+    staging = tmp_path / ".staging"
+    shutil.copytree(tie_export, staging)
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx._install(staging, out)
+    assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert (out / "keep.txt").read_text(encoding="utf-8") == "keep" and staging.is_dir()
+
+
+def test_prepare_enforces_the_callers_expected_identity_and_artifact_root(tie_match, tmp_path):
+    result = json.loads((tie_match / "result.json").read_bytes())
+    cache = tmp_path / "cache"
+    good = sx.Expectation(tie_match.parent, result["match_id"], result["result_id"])
+    assert sx.prepare_presentation(tie_match, cache, expectation=good).manifest["match"]["match_id"] == result["match_id"]
+    for wrong in (
+        sx.Expectation(match_id="match_000000000000000000000000"),
+        sx.Expectation(result_id="result_000000000000000000000000"),
+        sx.Expectation(artifact_root=tmp_path / "elsewhere"),
+    ):
+        with pytest.raises(sx.SpectatorExportError) as caught:
+            sx.prepare_presentation(tie_match, cache, expectation=wrong)
+        assert caught.value.code == sx.RESULT_UNVERIFIED
+
+
+def test_cli_prepare_reports_identity_and_output_failures_as_json(tie_match, tmp_path, capsys):
+    result = json.loads((tie_match / "result.json").read_bytes())
+    args = ["prepare", "--source", str(tie_match), "--cache", str(tmp_path / "c")]
+    assert sx.main([*args, "--expect-match-id", result["match_id"], "--expect-result-id", result["result_id"]]) == 0
+    final = json.loads(capsys.readouterr().out.splitlines()[-1])
+    assert (final["status"], final["match_id"], final["result_id"]) == ("ok", result["match_id"], result["result_id"])
+    assert sx.main([*args, "--expect-match-id", "match_000000000000000000000000"]) == 1
+    assert json.loads(capsys.readouterr().out.splitlines()[-1])["code"] == sx.RESULT_UNVERIFIED
+    blocked = tmp_path / "not a directory"
+    blocked.write_text("a file where the cache should be", encoding="utf-8")
+    assert sx.main(["prepare", "--source", str(tie_match), "--cache", str(blocked / "cache")]) == 1
+    assert json.loads(capsys.readouterr().out.splitlines()[-1])["code"] == sx.OUTPUT_FAILED
+
+
 def test_a_failed_replacement_keeps_the_previous_presentation(tie_match, tie_export, tmp_path):
     out = tmp_path / "out"
     shutil.copytree(tie_export, out)
@@ -393,6 +462,18 @@ def test_verify_presentation_detects_any_change(tie_match, tie_export, tmp_path)
         assert caught.value.code == sx.PRESENTATION_INVALID
     with pytest.raises(sx.SpectatorExportError):
         sx.verify_presentation(tie_export, sources={**sources, "trace.jsonl": {"sha256": "0" * 64, "bytes": 1}})
+    # A manifest rewritten to vouch for a non-document is still refused, with a stable code.
+    forged = tmp_path / "forged"
+    shutil.copytree(tie_export, forged)
+    manifest = json.loads((forged / "manifest.json").read_bytes())
+    for payload, name in ((b"[1, 2]\n", "broadcast.json"), (b"not json\n", "agent_a.json")):
+        (forged / name).write_bytes(payload)
+        key = "broadcast" if name == "broadcast.json" else "agent_a"
+        manifest["presentation"][key].update(sha256=hashlib.sha256(payload).hexdigest(), bytes=len(payload))
+        (forged / "manifest.json").write_bytes(sx.canonical_json(manifest))
+        with pytest.raises(sx.SpectatorExportError) as caught:
+            sx.verify_presentation(forged)
+        assert caught.value.code == sx.PRESENTATION_INVALID
 
 
 # --- Designer cache ---------------------------------------------------------------

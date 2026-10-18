@@ -68,12 +68,21 @@ installed.
 8. **Sources unchanged.** The three sources are re-hashed and must equal the
    snapshot from step 3 (`source_changed`).
 9. **Install.** The files are written to a staging directory beside the output
-   and renamed into place only when complete (`output_failed`).
+   and renamed into place only when complete. Any I/O failure gives
+   `output_failed`.
 
-The exporter never runs agent code. It never writes to the match directory,
-and it refuses an output directory that is or contains the match directory
-(`output_unsafe`). An existing output directory is replaced only on request
-(`--replace`), and only if it holds nothing but a presentation.
+The exporter never runs agent code. It never writes to the match directory:
+it refuses an output directory that is, contains, or lies inside the match
+directory (`output_unsafe`). An existing output directory is replaced only on
+request (`--replace`), and only if it holds nothing but a presentation. The
+output rules are checked before the export and again right before installing,
+because an export can take minutes. As a last guard, a folder that has been
+moved aside is deleted only if it is empty or a presentation; otherwise it is
+moved back.
+
+Callers can also pass an *expectation*: an artifact root the result must stay
+beneath, plus the `match_id` and `result_id` their own preflight accepted. Every
+preflight the export runs enforces it, and a mismatch gives `result_unverified`.
 
 ## 4. Presentation format
 
@@ -140,13 +149,15 @@ together.
 ```text
 bytefray spectator export  --source <match dir | result.json> --out <dir> [--replace]
 bytefray spectator prepare --source <match dir | result.json> [--cache <dir>]
+                           [--artifact-root <dir>] [--expect-match-id <id>] [--expect-result-id <id>]
 bytefray spectator verify  --presentation <dir> [--source <match dir>]
 ```
 
 `prepare` is the Designer entry point. It prints one JSON line per stage
 (`{"status": "progress", "stage": …}`), then a final
-`{"status": "ok", "presentation": …, "reused": …}` or
-`{"status": "error", "code": …, "message": …}`. It exits 0 or 1.
+`{"status": "ok", "presentation": …, "reused": …, "match_id": …, "result_id": …}`
+or `{"status": "error", "code": …, "message": …}`. It exits 0 or 1. Unexpected
+I/O errors are reported as `output_failed`, never as a traceback.
 
 ## 6. Designer presentation cache
 
@@ -164,8 +175,9 @@ A cached presentation is reused only when all of these hold:
 * it was written by the current exporter build.
 
 Otherwise it is discarded and exported again. The cache keeps at most 16
-presentations, and abandoned staging directories are removed after an hour.
-Deleting the cache loses nothing.
+presentations, and abandoned staging directories are removed after a day. A
+day is longer than any export could still be writing one. Pruning tolerates
+entries removed concurrently. Deleting the cache loses nothing.
 
 ## 7. Designer viewer dispatch
 
@@ -175,33 +187,43 @@ go through `AgentDesigner._open_result_replay`:
 1. The existing replay preflight runs and stays authoritative. On failure the
    existing warning is shown and nothing opens.
 2. If Spectator is available (§8) and the match is supported (§2),
-   `SpectatorLaunchController` runs `bytefray spectator prepare` in a
-   `QProcess`, never on the GUI thread. Designer stays responsive and reports
-   progress in its log.
-3. On success, Spectator starts as an independent process with an argument
-   list (no shell), its standard streams discarded, in a new process group or
-   session:
+   `SpectatorLaunchController` takes over Designer's own `ResultReplayRequest`.
+   It pins the request's identity: expected ids already on the request win;
+   otherwise it records the result's ids as the preflight just accepted them.
+   It then runs `bytefray spectator prepare` with that artifact root and those
+   expected ids, in a `QProcess`, never on the GUI thread. Designer stays
+   responsive and reports progress in its log.
+3. On success, the reported `match_id` and `result_id` must equal the pinned
+   ones, or the result is treated as a failure (`identity_changed`). Spectator
+   then starts as an independent process with an argument list (no shell),
+   its standard streams discarded, in a new process group or session:
    `<spectator> -- --fixture=<presentation> --perspective=broadcast`.
    In development mode the command is
    `<godot> --path <project> -- --fixture=<presentation> --perspective=broadcast`.
    An exit within 2.5 s with a nonzero code is reported.
 4. If export or launch fails, a warning names the reason. The Pygame viewer
-   then opens, after a **fresh** preflight.
+   then opens, after a **fresh** preflight of the same pinned request. A
+   result replaced in the meantime is refused there as well.
 5. Unsupported matches, and every match when Spectator is absent or off, open
    in the Pygame viewer exactly as before.
 
 When a Simple or Advanced match completes, Designer prepares its presentation
-quietly in the background. A View Last Match click while that runs simply
-waits for it. Development-test and historical targets keep their existing
-separation: preparation never changes which match a button opens. Tournament
-and Replay History launches are unchanged and use the Pygame viewer.
+quietly in the background, unless another preparation is already running.
+A View Last Match click for the match being prepared waits for it. A click for
+a different match stops a background-only preparation and starts its own, so
+a user never waits behind a match they did not ask for. Development-test and
+historical targets keep their existing separation: preparation never changes
+which match a button opens. Tournament and Replay History launches are
+unchanged and use the Pygame viewer.
 
 ## 8. Finding Spectator
 
 Spectator is found in this order, and no other location is guessed:
 
 1. `BYTEFRAY_SPECTATOR`, which can be any of:
-   * an exported Spectator executable;
+   * an exported Spectator executable. On Windows this must be an `.exe`:
+     a `.cmd` or `.bat` shim would let `cmd.exe` re-parse the presentation
+     path;
    * a folder containing one (`bytefray-spectator.exe` on Windows;
      `bytefray-spectator.x86_64` or `bytefray-spectator` on Linux);
    * a Spectator project folder (`project.godot`). This also needs
@@ -212,7 +234,11 @@ Spectator is found in this order, and no other location is guessed:
    on each use.
 2. `<data root>/spectator/` holding an exported executable (a portable
    unpack).
-3. `bytefray-spectator` on `PATH`.
+3. `bytefray-spectator` on `PATH` (on Windows, only an `.exe` match counts).
+
+Designer's display-backed tests (`tests/conftest.py`) set
+`BYTEFRAY_SPECTATOR=off` unless a test configures Spectator itself, so a
+Spectator installed on a developer's machine never changes their outcome.
 
 ## 9. Tests
 
@@ -225,7 +251,10 @@ Spectator is found in this order, and no other location is guessed:
 * `tests/test_agent_designer_spectator.py` (`gui`): View Last Match with the
   real prepare process; unsupported and unconfigured fallbacks; failed export,
   then fallback after a fresh preflight; a changed replay refused before
-  either viewer; misconfiguration.
+  either viewer; misconfiguration; a non-blocking GUI thread; a Spectator that
+  cannot start or exits at once; the export's reported identity confirmed
+  against the preflighted match; a background preparation yielding to a
+  click for another match.
 * Spectator's `exporter/tests/test_production_presentations.py` runs with
   `BYTEFRAY_PRODUCTION_ROOT` pointing at this checkout. It covers byte
   identity with the frozen showcase, and a fresh Bytefray match exported and

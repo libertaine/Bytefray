@@ -1251,16 +1251,16 @@ class AgentDesigner(QMainWindow):
         # takes over only a supported match it can actually be launched for;
         # its own export re-verifies every artifact before anything is shown.
         spectator = getattr(self, "_spectator", None)
-        if allow_spectator and spectator is not None and spectator.open_match(Path(request.result_path)):
+        if allow_spectator and spectator is not None and spectator.open_match(request):
             return
         try:
             open_pygame_client_direct(self.data_root, outcome.replay_path)
         except (FileNotFoundError, OSError) as exc:
             QMessageBox.critical(self, "Replay Launch Failed", str(exc))
 
-    def _open_classic_result_replay(self, result_path: Path) -> None:
-        """Spectator could not show a match: re-verify it and use the Pygame viewer."""
-        self._open_result_replay(result_replay_request(result_path), allow_spectator=False)
+    def _open_classic_result_replay(self, request: ResultReplayRequest) -> None:
+        """Spectator could not show a match: re-verify the same request and use the Pygame viewer."""
+        self._open_result_replay(request, allow_spectator=False)
 
     def _append_spectator_log(self, text: str) -> None:
         target = getattr(self, "_log_target", None) or getattr(self, "simple", None)
