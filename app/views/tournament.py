@@ -58,6 +58,7 @@ from app.services.tournament_results import (
     replay_column_text,
     replay_preflight_state,
     replay_preflight_unavailable_reason,
+    ruleset_id_tooltip,
     ruleset_text,
     status_text,
     tournaments_root,
@@ -207,6 +208,7 @@ class TournamentResultsDialog(QDialog):
 
         facts = QFormLayout()
         self.rulesetLabel = QLabel(ruleset_text(results))
+        self.rulesetLabel.setToolTip(ruleset_id_tooltip(results))
         self.entrantsLabel = QLabel(entrants_text(results))
         self.matchesLabel = QLabel(matches_text(results))
         facts.addRow("Ruleset:", self.rulesetLabel)

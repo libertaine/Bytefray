@@ -114,7 +114,8 @@ def runtime_problems(record: dict[str, Any]) -> list[str]:
         tournament_service,
     )
     from battle_engine import ruleset_policy as rp
-    from battle_engine.agent_capabilities import KNOWN_CAPABILITIES
+    from battle_engine.agent_api import AgentManifestError
+    from battle_engine.agent_capabilities import KNOWN_CAPABILITIES, parse_required_capabilities
     from battle_engine.project_info import get_project_info
     from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
     from battle_engine.ruleset_names import RULESET_DISPLAY_NAMES
@@ -174,6 +175,11 @@ def runtime_problems(record: dict[str, Any]) -> list[str]:
     expect("agent_api executable", set(api["executable"]), set(agent_api.SUPPORTED_AGENT_API_VERSIONS))
     expect("agent_api current", agent_api.AGENT_API_VERSION in api["executable"], True)
     expect("capabilities known", set(api["manifest_capabilities"]["known"]), set(KNOWN_CAPABILITIES))
+    declared_block = {"version": api["manifest_capabilities"]["version"], "required": sorted(KNOWN_CAPABILITIES)}
+    try:
+        parse_required_capabilities({"capabilities": declared_block})
+    except AgentManifestError as exc:
+        problems.append(f"capabilities version: the manifest parser rejects the declared block ({exc})")
 
     formats = record["formats"]
     expect(
@@ -199,11 +205,20 @@ def runtime_problems(record: dict[str, Any]) -> list[str]:
             "reads": [agent_trace.TRACE_SCHEMA_VERSION, agent_trace.TRACE_SCHEMA_VERSION_V2],
         },
     )
-    expect(
-        "evaluation",
-        formats["evaluation"],
-        {"schema": evaluation_contracts.SCHEMA_NAME, "writes": evaluation_contracts.SCHEMA_VERSION},
-    )
+    # Evaluations resolve their version from the Ruleset's methodology; the
+    # module-level SCHEMA_VERSION is only the historical Ruleset-1 recipe.
+    for ruleset_id in rulesets["surfaces"]["bytefray agents evaluate"]:
+        is_v2 = evaluation_contracts.is_ruleset_v2_methodology(ruleset_id)
+        is_v4 = evaluation_contracts.is_ruleset_v4_methodology(ruleset_id)
+        expect(
+            f"evaluation ({ruleset_id})",
+            formats["evaluation"],
+            {
+                "schema": evaluation_contracts.SCHEMA_NAME,
+                "writes": evaluation_contracts.resolved_schema_version(is_v2, False, is_v4),
+                "identity": evaluation_contracts.resolved_identity_version(is_v2, False, is_v4),
+            },
+        )
     expect(
         "tournament",
         formats["tournament"],
@@ -264,6 +279,8 @@ def render_markdown(record: dict[str, Any]) -> str:
         entry = formats[name]
         reads = entry.get("reads")
         text = f"`{entry['schema']}` writes {entry['writes']}"
+        if "identity" in entry:
+            text = f"{text} (identity {entry['identity']})"
         return text if reads is None else f"{text}; reads {', '.join(str(v) for v in reads)}"
 
     def joined(values: Iterable[object], prefix: str = "") -> str:

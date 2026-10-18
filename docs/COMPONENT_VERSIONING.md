@@ -77,8 +77,9 @@ Semantic Versioning 2.0.0.
   such as Spectator, new Designer workflows, or the retirement of an
   experimental or research capability.
 - **PATCH** — fixes that change no component identity: no new Ruleset ID, no
-  new format version, no Agent API change. A fix that changes match outcomes
-  needs a new Ruleset ID (§4.2), so it is never a patch.
+  new format version, no Agent API change. Repairing a regression back to an
+  identity's frozen characterization is a patch. Changing what a shipped
+  identity does needs a new Ruleset ID (§4.2), so it is never a patch.
 - **Prerelease** — `-alpha.N` (scope still settling inside the approved
   freeze), `-beta.N` (feature-complete), `-rc.N` (release candidate), using
   the dotted SemVer form so `alpha.10` sorts after `alpha.2`. Each prerelease
@@ -105,10 +106,15 @@ available for re-execution.
 
 A Ruleset ID names one exact set of gameplay semantics, permanently.
 
-- **Immutable.** Any gameplay-observable change (scoring, scheduling,
-  placement, sensing, visibility, capture, termination, action semantics)
-  creates a new ID. A Ruleset has no minor or patch versions, and an
-  existing ID is never edited in place.
+- **Immutable.** An identity's behavior is what it shipped with, as pinned by
+  its frozen goldens and characterizations. Any intended gameplay-observable
+  change (scoring, scheduling, placement, sensing, visibility, capture,
+  termination, action semantics) creates a new ID, even when the shipped
+  behavior is considered a mistake. A Ruleset has no minor or patch versions.
+  The one exception is the existing AGENTS.md rule: code that drifts from an
+  identity's frozen goldens is an implementation defect. Restoring the
+  goldens repairs that defect under the same ID; it does not re-bless the
+  drifted behavior.
 - **Lifecycle is a state, not a name.** Stable, experimental, research,
   retired-research and historical-read-only are recorded in
   `battle_engine.ruleset_policy`'s lifecycle sets. Moving an identity between
@@ -285,7 +291,7 @@ pins the Ruleset IDs, the wire-format identities and the Spectator contract.
 | `battle2.replay` 4 (reads 2–4) | wire format | `replay.jsonl` | unchanged |
 | `battle2.result` 2 (reads 1–2) | wire format | `result.json` | unchanged |
 | `bytefray.agent_trace` 2 (reads 1–2) | wire format | `trace.jsonl` | unchanged |
-| `bytefray.evaluation` 4 / identity 4 | wire format | `evaluation.json` | unchanged |
+| `bytefray.evaluation` writes 7 / identity 7 (the Classic and research methodologies); versions 4–6 belong to retired methodologies | wire format | `evaluation.json` | unchanged; historical versions stay readable through evaluation history |
 | `battle2.tournament` 1, `bytefray.agent_package` 1, `bytefray.agent_revision` 1, `bytefray.evaluation_preset` 1, `bytefray.benchmark_population` 1 | wire formats | their artifacts | unchanged |
 | `bytefray.sensing_demo` 1, `bytefray.sensing_playback` 1 | wire formats | sensing demonstrations | unchanged |
 | `bytefray.spectator_*` 1 (events, derivation, director, perspective, aggregates, fight_night) | Pygame/analysis formats | spectator-intelligence outputs | unchanged |

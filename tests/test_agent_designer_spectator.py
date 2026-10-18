@@ -208,7 +208,7 @@ def test_failed_export_warns_then_falls_back_after_a_fresh_preflight(designer, m
     _wait_idle(designer)
     assert designer.recorded["spectator"] == []
     [(title, body)] = designer.recorded["warnings"]
-    assert title == "Spectator Unavailable" and "did not verify" in body and "classic replay viewer" in body
+    assert title == "Spectator Unavailable" and "did not verify" in body and "Pygame replay viewer" in body
     assert designer.recorded["pygame"] == [result.with_name("replay.jsonl").resolve()]
 
 

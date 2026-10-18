@@ -138,7 +138,11 @@ def test_results_dialog_shows_winner_standings_and_matches_from_canonical_artifa
 ):
     _make_app()
     modals = _Modals(monkeypatch)
-    from app.services.tournament_results import format_score, read_tournament_results
+    from app.services.tournament_results import (
+        format_score,
+        match_detail_lines,
+        read_tournament_results,
+    )
     from app.views.tournament import TournamentResultsDialog
 
     service_result = _run_tournament(tmp_path / "cup")
@@ -148,6 +152,7 @@ def test_results_dialog_shows_winner_standings_and_matches_from_canonical_artifa
         assert dialog.headlineLabel.text().startswith("Winner:")
         assert dialog.statusLabel.text() == "Complete: 3 of 3 matches completed."
         assert dialog.rulesetLabel.text() == "Classic"
+        assert dialog.rulesetLabel.toolTip() == "Ruleset ID: bytefray-rules-4"
         assert dialog.entrantsLabel.text() == "3 (Python)"
         assert dialog.matchesLabel.text() == "3 of 3 matches completed"
         assert dialog.outputFolderLabel.text() == str((tmp_path / "cup").resolve())
@@ -169,6 +174,9 @@ def test_results_dialog_shows_winner_standings_and_matches_from_canonical_artifa
         rows = _table_text(dialog.matchesTable)
         assert len(rows) == 3
         assert [row[-1] for row in rows] == ["Available"] * 3
+        # The technical details name the canonical identity, not just the label.
+        details = match_detail_lines(read_tournament_results(tmp_path / "cup").matches[0])
+        assert "Ruleset: Classic (bytefray-rules-4)" in details
     finally:
         dialog.deleteLater()
     assert modals.calls == []

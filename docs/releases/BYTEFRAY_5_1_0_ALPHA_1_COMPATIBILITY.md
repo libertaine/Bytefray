@@ -58,7 +58,7 @@ make them qualified for release. Qualification evidence today:
 | Replay format | `battle2.replay` writes 4; reads 2, 3, 4 |
 | Result format | `battle2.result` writes 2; reads 1, 2 |
 | Trace format | `bytefray.agent_trace` writes 2; reads 1, 2 |
-| Other persisted formats | `bytefray.evaluation` writes 4; `battle2.tournament` writes 1; `bytefray.agent_package` writes 1 |
+| Other persisted formats | `bytefray.evaluation` writes 7 (identity 7); `battle2.tournament` writes 1; `bytefray.agent_package` writes 1 |
 | Spectator application | unreleased and unversioned; no published build. Compatible development source: `libertaine/Bytefray-Spectator` `designer-integration` `14089a7`. Separate application, not bundled; Designer finds it through `BYTEFRAY_SPECTATOR`, `<data root>/spectator/` or `bytefray-spectator` on `PATH` |
 | Spectator presentation protocol | `bytefray.spectator.manifest`: Bytefray writes 2, Spectator reads 1, 2; provenance `bytefray_match`; documents broadcast `bytefray.spectator.broadcast` v1, agent_a `bytefray.spectator.agent_view` v1 |
 | Spectator match support | `bytefray-rules-6-alpha1` with entrants A, B; perspectives broadcast, agent_a |
@@ -87,7 +87,7 @@ make them qualified for release. Qualification evidence today:
 
 - Bytefray Spectator presents only completed two-entrant (A, B) Active Sensing (Alpha) matches; every other match opens in the Pygame viewer.
 - Spectator offers two perspectives: Broadcast and Agent A delivered information.
-- The Pygame viewer remains available for every supported workflow and is the fallback whenever Spectator is absent, unsupported or fails.
+- The Pygame viewer remains available for every supported workflow. Designer opens it instead of Spectator when Spectator is absent or turned off, does not support the match, or fails to export or launch; if Spectator starts and then exits at once, Designer shows a warning but does not reopen the match in Pygame.
 - The Pygame Active Sensing views (Agent A, Agent B, Omniscient) are a separate capability from Spectator's perspectives; entrant C has no delivered-information view.
 - Three-entrant or larger Spectator presentation is deferred.
 - Human comprehension evaluation of Active Sensing is deferred to 5.2.

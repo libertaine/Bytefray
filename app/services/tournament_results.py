@@ -489,6 +489,17 @@ def ruleset_text(results: TournamentResults) -> str:
     return ", ".join(ruleset_label(ruleset_id, "recorded") for ruleset_id in results.ruleset_ids)
 
 
+def ruleset_id_tooltip(results: TournamentResults) -> str:
+    """The exact Ruleset IDs behind :func:`ruleset_text`'s readable labels."""
+
+    return f"Ruleset ID: {', '.join(results.ruleset_ids)}" if results.ruleset_ids else ""
+
+
+def _ruleset_detail_text(ruleset_id: str) -> str:
+    label = ruleset_label(ruleset_id, "recorded")
+    return label if label == ruleset_id else f"{label} ({ruleset_id})"
+
+
 def entrants_text(results: TournamentResults) -> str:
     runtime = RUNTIME_LABELS.get(results.division, results.division)
     if not results.finished:
@@ -538,7 +549,7 @@ def match_detail_lines(match: MatchRow) -> tuple[str, ...]:
     if match.termination_reason is not None and match.ticks is not None:
         lines.append(f"Ended: {match.termination_reason} after {match.ticks} ticks")
     if match.ruleset_id:
-        lines.append(f"Ruleset: {ruleset_label(match.ruleset_id, 'recorded')}")
+        lines.append(f"Ruleset: {_ruleset_detail_text(match.ruleset_id)}")
     lines.append(f"Seed: {match.seed}")
     if match.artifact_dir is not None:
         lines.append(f"Match folder: {match.artifact_dir}")

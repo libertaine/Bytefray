@@ -14,7 +14,17 @@ from pathlib import Path
 
 import pytest
 from battle_client import spectator_export
-from battle_engine import agent_api, agent_trace, cli, replay, result_model, rules
+from battle_engine import (
+    agent_api,
+    agent_package,
+    agent_trace,
+    cli,
+    evaluation_contracts,
+    replay,
+    result_model,
+    rules,
+    tournament_service,
+)
 from battle_engine import ruleset_policy as rp
 from battle_engine.agents import AgentSpec, agent_spec_from_dir
 from battle_engine.config import Config
@@ -132,6 +142,13 @@ def test_wire_format_identities_are_unchanged() -> None:
     assert result_model.SUPPORTED_SCHEMA_VERSIONS == (1, 2)
     assert agent_trace.TRACE_SCHEMA == "bytefray.agent_trace"
     assert (agent_trace.TRACE_SCHEMA_VERSION, agent_trace.TRACE_SCHEMA_VERSION_V2) == (1, 2)
+    # Evaluation versions are per methodology: 4 (Ruleset 1), 5/6 (Ruleset 2), 7 (Classic, research).
+    assert evaluation_contracts.SCHEMA_NAME == "bytefray.evaluation"
+    assert (evaluation_contracts.SCHEMA_VERSION, evaluation_contracts.IDENTITY_VERSION) == (4, 4)
+    assert (evaluation_contracts.SCHEMA_VERSION_V4, evaluation_contracts.IDENTITY_VERSION_V4) == (7, 7)
+    assert evaluation_contracts.is_ruleset_v4_methodology("bytefray-rules-4")
+    assert (tournament_service.SCHEMA_NAME, tournament_service.SCHEMA_VERSION) == ("battle2.tournament", 1)
+    assert (agent_package.PACKAGE_SCHEMA, agent_package.PACKAGE_SCHEMA_VERSION) == ("bytefray.agent_package", 1)
 
 
 def test_spectator_presentation_contract_is_unchanged() -> None:
