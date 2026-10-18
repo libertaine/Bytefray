@@ -98,6 +98,7 @@ from app.views.tournament import (
     TournamentResultsDialog,
 )
 from app.widgets.designer_presentation import DesignerIdentityHeader
+from app.widgets.spectator_launch import SpectatorLaunchController
 
 
 def _resolve_data_root() -> Path:
@@ -166,6 +167,12 @@ class AgentDesigner(QMainWindow):
         # thread, one window: reopening raises the existing one rather than
         # starting a second background scan over the same run tree.
         self._replay_history: ReplayHistoryWindow | None = None
+        # Bytefray Spectator, preferred for supported V6 alpha1 matches when
+        # installed or configured (app/services/spectator_viewer.py); every
+        # other match keeps the Pygame viewer. Its export runs in a child
+        # process, never on this GUI thread.
+        self._spectator = SpectatorLaunchController(data_root, self, self._open_classic_result_replay)
+        self._spectator.log.connect(self._append_spectator_log)
 
         # Tabs + panels
         self.tabs = QTabWidget(self)
@@ -723,6 +730,9 @@ class AgentDesigner(QMainWindow):
                 )
                 if hasattr(self, "advanced"):
                     self.advanced.show_result(result)
+                spectator = getattr(self, "_spectator", None)
+                if spectator is not None and result.result_path is not None:
+                    spectator.prewarm(Path(result.result_path))
             except (OSError, ValueError, KeyError) as exc:
                 self._log_target.appendLog(f"[Result] Could not read canonical result: {exc}\n")
         if self._last_replay and Path(self._last_replay).is_file():
@@ -1229,16 +1239,33 @@ class AgentDesigner(QMainWindow):
                 self, "Agent Lab Test", "The rerun did not produce a trace to inspect."
             )
 
-    def _open_result_replay(self, request: ResultReplayRequest) -> None:
+    def _open_result_replay(
+        self, request: ResultReplayRequest, *, allow_spectator: bool = True
+    ) -> None:
         outcome = preflight_result_replay(request)
         if not outcome.verified or outcome.replay_path is None:
             message = replay_failure_message(outcome.failure)
             QMessageBox.warning(self, message.title, message.body)
             return
+        # The preflight above stays authoritative for both viewers. Spectator
+        # takes over only a supported match it can actually be launched for;
+        # its own export re-verifies every artifact before anything is shown.
+        spectator = getattr(self, "_spectator", None)
+        if allow_spectator and spectator is not None and spectator.open_match(Path(request.result_path)):
+            return
         try:
             open_pygame_client_direct(self.data_root, outcome.replay_path)
         except (FileNotFoundError, OSError) as exc:
             QMessageBox.critical(self, "Replay Launch Failed", str(exc))
+
+    def _open_classic_result_replay(self, result_path: Path) -> None:
+        """Spectator could not show a match: re-verify it and use the Pygame viewer."""
+        self._open_result_replay(result_replay_request(result_path), allow_spectator=False)
+
+    def _append_spectator_log(self, text: str) -> None:
+        target = getattr(self, "_log_target", None) or getattr(self, "simple", None)
+        if target is not None:
+            target.appendLog(text)
 
     def _on_evaluation_open_replay(self, request: ResultReplayRequest) -> None:
         self._open_result_replay(request)
@@ -1635,6 +1662,12 @@ class AgentDesigner(QMainWindow):
         # from it can never run against a partially/fully destroyed window,
         # and so the child is not left running detached from the app.
         self._dispose_process()
+        # Stop an in-flight Spectator export (it only ever writes a staging
+        # directory in the presentation cache). A Spectator window that is
+        # already open is an independent application and stays open.
+        spectator = getattr(self, "_spectator", None)
+        if spectator is not None:
+            spectator.shutdown()
         # Join the Replay History worker before this window's children are
         # destroyed. Without this the browser's QThread could outlive the
         # objects its queued signals target -- the "QThread: Destroyed while
