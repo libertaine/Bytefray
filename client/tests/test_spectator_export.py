@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import shutil
+import subprocess
 import threading
 from pathlib import Path
 
@@ -527,13 +528,13 @@ def test_concurrent_prepares_share_one_verified_presentation(tie_match, tmp_path
     assert [entry.name for entry in cache.iterdir() if not entry.name.startswith(".")] == [outcomes[0].directory.name]
 
 
-def test_cache_is_bounded_and_lives_outside_the_run_tree(tie_match, tmp_path, monkeypatch):
+def test_cache_is_bounded_and_lives_outside_the_run_tree(tie_match, tie_export, tmp_path, monkeypatch):
     assert sx.default_cache_root(tmp_path) == tmp_path / "cache" / "spectator" / "presentations"
     monkeypatch.setattr(sx, "CACHE_LIMIT", 2)
     cache = tmp_path / "cache"
     stale = [cache / f"match_old{index}-{'0' * 16}" for index in range(3)]
     for index, folder in enumerate(stale):
-        folder.mkdir(parents=True)
+        shutil.copytree(tie_export, folder)
         os.utime(folder, (1_000_000 + index, 1_000_000 + index))
     prepared = sx.prepare_presentation(tie_match, cache)
     remaining = sorted(entry.name for entry in cache.iterdir())
@@ -577,3 +578,279 @@ def test_cli_export_and_verify(tie_match, tmp_path, capsys):
     assert sx.main(["verify", "--presentation", str(out), "--source", str(tie_match)]) == 0
     assert sx.main(["export", "--source", str(tie_match), "--out", str(out)]) == 1
     assert "output_unsafe" in capsys.readouterr().err
+
+
+# --- independent-review regression cases -------------------------------------
+
+
+def test_prepare_refuses_original_pruning_reproduction(tie_match, tmp_path, capsys):
+    runs = tmp_path / "runs"
+    match = runs / "old-source"
+    shutil.copytree(tie_match, match)
+    before = _snapshot(match)
+    os.utime(match, (1, 1))
+    for index in range(16):
+        sibling = runs / f"newer-{index}"
+        sibling.mkdir()
+        (sibling / "keep.txt").write_text("unrelated")
+        os.utime(sibling, (2 + index, 2 + index))
+    names = sorted(p.name for p in runs.iterdir())
+    assert sx.main(["prepare", "--source", str(match), "--cache", str(runs)]) == 1
+    assert json.loads(capsys.readouterr().out.splitlines()[-1])["code"] == sx.OUTPUT_UNSAFE
+    assert _snapshot(match) == before
+    assert sorted(p.name for p in runs.iterdir()) == names
+
+
+@pytest.mark.parametrize("location", ["same", "descendant", "ancestor"])
+def test_prepare_refuses_all_source_cache_overlaps(tie_match, tmp_path, location):
+    match = tmp_path / "match"
+    shutil.copytree(tie_match, match)
+    cache = {"same": match, "descendant": match / "cache", "ancestor": tmp_path}[location]
+    before = _snapshot(match)
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.prepare_presentation(match, cache)
+    assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert _snapshot(match) == before
+    assert not (match / "cache").exists()
+    assert _leftovers(tmp_path) == []
+
+
+@pytest.mark.parametrize("api", ["export", "prepare"])
+@pytest.mark.parametrize("score", [999999, None, "0", True, False, [], {}, float("nan"), float("inf"), "missing"])
+def test_unverified_entrant_scores_never_get_a_manifest(tie_match, tmp_path, api, score):
+    match = tmp_path / "copied-valid-match"
+    shutil.copytree(tie_match, match)
+    result = json.loads((match / "result.json").read_bytes())
+    if score == "missing":
+        del result["entrants"][0]["score"]
+    else:
+        result["entrants"][0]["score"] = score
+    _edit_result(match, entrants=result["entrants"])
+    before = _snapshot(match)
+    out = tmp_path / "output"
+    with pytest.raises(sx.SpectatorExportError):
+        if api == "export":
+            sx.export_presentation(match, out)
+        else:
+            sx.prepare_presentation(match, out)
+    assert not list(out.rglob("manifest.json"))
+    assert not list(out.glob(".*"))
+    assert _snapshot(match) == before
+
+
+def test_cache_never_prunes_unrelated_directories(tie_match, tmp_path, monkeypatch):
+    monkeypatch.setattr(sx, "CACHE_LIMIT", 1)
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    for name in ("ordinary", ".hidden", ".match_old.staging-deadbeef0000", "match_fake-" + "0" * 16):
+        folder = cache / name
+        folder.mkdir()
+        (folder / "keep.txt").write_text("keep")
+        os.utime(folder, (1, 1))
+    before = {p.name: _snapshot(p) for p in cache.iterdir()}
+    sx.prepare_presentation(tie_match, cache)
+    for name, snapshot in before.items():
+        assert _snapshot(cache / name) == snapshot
+
+
+def _directory_alias(alias: Path, target: Path) -> None:
+    if os.name == "nt":
+        # Junctions need no symlink privilege and exercise native reparse points.
+        completed = subprocess.run(
+            ["cmd", "/c", "mklink", "/J", str(alias), str(target)],
+            capture_output=True, text=True, check=False,
+        )
+        assert completed.returncode == 0, completed.stdout + completed.stderr
+    else:
+        alias.symlink_to(target, target_is_directory=True)
+
+
+@pytest.mark.parametrize("kind", ["cache-alias", "source-alias", "cache-child-alias"])
+def test_canonical_source_cache_alias_overlaps_are_refused(tie_match, tmp_path, kind):
+    match = tmp_path / "runs" / "match"
+    shutil.copytree(tie_match, match)
+    before = _snapshot(match)
+    alias = tmp_path / "alias"
+    if kind == "cache-alias":
+        _directory_alias(alias, match.parent)
+        source, cache = match, alias
+    elif kind == "source-alias":
+        _directory_alias(alias, match)
+        source, cache = alias, match.parent
+    else:
+        _directory_alias(alias, match)
+        source, cache = match, alias / "new-cache"
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.prepare_presentation(source, cache)
+    assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert _snapshot(match) == before
+    assert not (match / "new-cache").exists()
+
+
+def test_pruning_preserves_junctions_and_entries_with_unrelated_files(tie_match, tie_export, tmp_path, monkeypatch):
+    monkeypatch.setattr(sx, "CACHE_LIMIT", 1)
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    target = tmp_path / "foreign"
+    shutil.copytree(tie_export, target)
+    alias = cache / ("match_alias-" + "a" * 16)
+    _directory_alias(alias, target)
+    occupied = cache / ("match_occupied-" + "b" * 16)
+    shutil.copytree(tie_export, occupied)
+    (occupied / "notes.txt").write_text("keep")
+    for path in (target, occupied):
+        os.utime(path, (1, 1))
+    snapshots = [_snapshot(path) for path in (target, occupied)]
+    sx.prepare_presentation(tie_match, cache)
+    assert alias.is_dir()
+    assert [_snapshot(path) for path in (target, occupied)] == snapshots
+
+
+def test_cache_key_collision_never_discards_unrelated_files(tie_match, tmp_path, monkeypatch):
+    cache = tmp_path / "cache"
+    key = "match_collision-" + "f" * 16
+    monkeypatch.setattr(sx, "_cache_key", lambda *_: key)
+    foreign = cache / key
+    foreign.mkdir(parents=True)
+    (foreign / "notes.txt").write_text("keep")
+    before = _snapshot(foreign)
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.prepare_presentation(tie_match, cache)
+    assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert _snapshot(foreign) == before
+
+
+def test_owned_staging_cleanup_and_cache_retention(tie_match, tmp_path, monkeypatch):
+    cache = tmp_path / "cache"
+    monkeypatch.setattr(sx, "CACHE_LIMIT", 2)
+    prepared = sx.prepare_presentation(tie_match, cache)
+    key = prepared.directory.name
+    # Real cache entries (including corrupt rebuildable documents) are bounded.
+    old_keys = ["match_old-" + str(i) * 16 for i in range(3)]
+    for index, old_key in enumerate(old_keys):
+        old = cache / old_key
+        shutil.copytree(prepared.directory, old)
+        (old / sx.CACHE_OWNER).write_bytes(sx.canonical_json({"schema": sx.CACHE_OWNER_SCHEMA, "key": old_key}))
+        (old / "broadcast.json").write_text("damaged cache")
+        os.utime(old, (1 + index, 1 + index))
+    abandoned = cache / f".{key}.staging-012345abcdef"
+    abandoned.mkdir()
+    (abandoned / sx.CACHE_OWNER).write_bytes(sx.canonical_json({"schema": sx.CACHE_OWNER_SCHEMA, "key": key}))
+    (abandoned / "broadcast.json").write_text("partial")
+    os.utime(abandoned, (1, 1))
+    recent = cache / f".{key}.staging-abcdef012345"
+    shutil.copytree(abandoned, recent)
+    os.utime(recent, None)
+    sx._prune(cache, prepared.directory)
+    assert sorted(p.name for p in cache.iterdir()) == sorted([key, old_keys[-1], recent.name])
+
+
+def test_valid_entrant_scores_match_terminal_and_broadcast(tie_match, tmp_path):
+    result = json.loads((tie_match / "result.json").read_bytes())
+    terminal = json.loads((tie_match / "replay.jsonl").read_text().splitlines()[-1])
+    prepared = sx.prepare_presentation(tie_match, tmp_path / "cache")
+    broadcast = json.loads((prepared.directory / "broadcast.json").read_bytes())
+    assert prepared.manifest["verification"]["outcome_verified"] is True
+    assert {e["id"]: e["score"] for e in broadcast["entrants"]} == terminal["score"] == result["score"]
+
+
+@pytest.mark.parametrize("exporter", [None, [], 1, "not-an-exporter"])
+def test_malformed_legacy_cache_manifest_is_preserved(tie_match, tie_export, tmp_path, exporter):
+    cache = tmp_path / "cache"
+    legacy = cache / ("match_legacy-" + "0" * 16)
+    shutil.copytree(tie_export, legacy)
+    manifest = json.loads((legacy / "manifest.json").read_bytes())
+    manifest["exporter"] = exporter
+    (legacy / "manifest.json").write_bytes(sx.canonical_json(manifest))
+    os.utime(legacy, (1, 1))
+    before = _snapshot(legacy)
+    prepared = sx.prepare_presentation(tie_match, cache)
+    assert sx.verify_presentation(prepared.directory)["verification"]["outcome_verified"] is True
+    assert _snapshot(legacy) == before
+
+
+def test_cache_does_not_delete_files_added_during_export(tie_match, tmp_path, monkeypatch):
+    key = "match_occupied-" + "0" * 16
+    monkeypatch.setattr(sx, "_cache_key", lambda *_: key)
+    cache = tmp_path / "cache"
+
+    def meanwhile(stage):
+        if stage == "projecting agent view":
+            foreign = cache / key
+            foreign.mkdir()
+            (foreign / "notes.txt").write_text("keep")
+
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.prepare_presentation(tie_match, cache, progress=meanwhile)
+    assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert (cache / key / "notes.txt").read_text() == "keep"
+    assert not list(cache.rglob("manifest.json"))
+    assert _leftovers(cache) == []
+
+
+@pytest.mark.parametrize("score", [
+    None, [], {"A": 0}, {"A": 0, "B": 0, "C": 0},
+    {"A": False, "B": 0}, {"A": "0", "B": 0}, {"A": float("inf"), "B": 0},
+])
+def test_malformed_result_score_maps_fail_closed(tie_match, tmp_path, score):
+    match = tmp_path / "match"
+    shutil.copytree(tie_match, match)
+    _edit_result(match, score=score)
+    with pytest.raises(sx.SpectatorExportError):
+        sx.export_presentation(match, tmp_path / "out")
+    assert not (tmp_path / "out").exists()
+    assert _leftovers(tmp_path) == []
+
+
+@pytest.mark.parametrize("score", [
+    None, [], {"A": 0}, {"A": 0, "B": 0, "C": 0},
+    {"A": False, "B": 0}, {"A": float("nan"), "B": 0},
+])
+def test_terminal_score_map_requires_exact_finite_numeric_entrants(tie_match, score):
+    from battle_engine.sensing_playback import reconstruct_sensing_playback
+
+    result = json.loads((tie_match / "result.json").read_bytes())
+    terminal = sx._replay_terminal(tie_match / "replay.jsonl")
+    terminal["score"] = score
+    playback = reconstruct_sensing_playback(
+        tie_match / "replay.jsonl", tie_match / "trace.jsonl", result_path=tie_match / "result.json",
+    )
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.verify_outcome(playback, terminal, result)
+    assert caught.value.code == sx.OUTCOME_UNVERIFIED
+
+
+@pytest.mark.parametrize("blocked_discard", [False, True])
+def test_unmarked_legacy_cache_is_reverified_even_with_identical_exporter_identity(
+    tie_match, tmp_path, monkeypatch, blocked_discard,
+):
+    cache = tmp_path / "cache"
+    first = sx.prepare_presentation(tie_match, cache)
+    (first.directory / sx.CACHE_OWNER).unlink()
+    broadcast_path = first.directory / "broadcast.json"
+    broadcast = json.loads(broadcast_path.read_bytes())
+    broadcast["entrants"][0]["score"] = 999999
+    data = sx.canonical_json(broadcast)
+    broadcast_path.write_bytes(data)
+    manifest_path = first.directory / "manifest.json"
+    manifest = json.loads(manifest_path.read_bytes())
+    manifest["presentation"]["broadcast"].update(sha256=hashlib.sha256(data).hexdigest(), bytes=len(data))
+    manifest_path.write_bytes(sx.canonical_json(manifest))
+    # A pre-fix cache can have valid file digests and the same frozen identity.
+    sx.verify_presentation(first.directory, require_current_exporter=True)
+    if blocked_discard:
+        # Windows sharing/ACLs may prevent retiring the old directory. The
+        # concurrent-winner fallback must not re-authorize this legacy cache.
+        monkeypatch.setattr(sx, "_discard", lambda *_: None)
+        before = _snapshot(first.directory)
+        with pytest.raises(sx.SpectatorExportError) as caught:
+            sx.prepare_presentation(tie_match, cache)
+        assert caught.value.code == sx.OUTPUT_FAILED
+        assert _snapshot(first.directory) == before
+        assert _leftovers(cache) == []
+        return
+    prepared = sx.prepare_presentation(tie_match, cache)
+    assert prepared.reused is False
+    result = json.loads((tie_match / "result.json").read_bytes())
+    rebuilt = json.loads((prepared.directory / "broadcast.json").read_bytes())
+    assert {e["id"]: e["score"] for e in rebuilt["entrants"]} == result["score"]

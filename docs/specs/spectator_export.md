@@ -1,7 +1,9 @@
 # Bytefray Spectator export and Designer viewer dispatch
 
 Status: implemented on the `v6-spectator-integration` development branch.
-Not released, and not yet independently reviewed or human-qualified.
+Not released. Independent review remediation and verification are recorded in
+[the remediation report](../SPECTATOR_REMEDIATION_20261018.md). Human GUI,
+native Linux desktop and frozen Bytefray build qualification remain pending.
 
 This spec covers how Bytefray turns a completed V6 alpha1 match into a
 Bytefray Spectator presentation, and how Agent Designer opens that
@@ -57,8 +59,11 @@ installed.
 6. **Outcome.** The winner and termination reason are re-derived from the
    reconstructed final world under the engine's rule (`process_runtime`), then
    compared with the replay's terminal record and with `result.json`. Ticks,
-   tick limit, identity, score and alive flags must all agree
-   (`outcome_verified`).
+   tick limit, identity, score and alive flags must all agree.
+   Both score maps must name exactly A and B; every map value and serialized
+   entrant score must be a finite JSON number (booleans are refused), and each
+   entrant score must equal its replay terminal score
+   (`outcome_unverified`).
 7. **Projection.** The broadcast view comes from `SensingCursor(entrant_id=None)`,
    one frame per verified fact. Each TICK_END step re-checks the canonical
    replay boundary. Agent A comes *only* from the receipt-only `SensingView`
@@ -172,12 +177,27 @@ A cached presentation is reused only when all of these hold:
 * the replay preflight passes again;
 * its manifest names exactly the current source digests;
 * its files match its manifest;
-* it was written by the current exporter build.
+* it was written by the current exporter build;
+* it carries the current cache ownership marker, including on concurrent-install fallback.
 
-Otherwise it is discarded and exported again. The cache keeps at most 16
-presentations, and abandoned staging directories are removed after a day. A
-day is longer than any export could still be writing one. Pruning tolerates
-entries removed concurrently. Deleting the cache loses nothing.
+Otherwise a positively identified cache entry is discarded and exported again.
+Unmarked legacy entries are rebuilt even when a frozen exporter has the same
+product identity. A legacy entry that cannot be retired is refused, never reused.
+Before any cache mutation, canonical source and cache roots must be disjoint
+in both directions, including resolved symlink/junction aliases and the actual
+targets of source files (output_unsafe). The check runs again before install.
+
+The cache keeps at most 16 owned presentations. New entries and staging folders
+carry .bytefray-spectator-cache.json, binding the cache key to the Spectator
+cache schema. This private cache sidecar does not change the presentation
+documents or manifest. Older entries qualify for pruning only if their three
+files form a verified production presentation with the Bytefray exporter
+identity. A directory with unrelated files, subdirectories, symlinks or Windows
+reparse points is never discarded; an occupied target key is refused instead.
+Age alone never establishes ownership. Owned staging folders with the exact
+generated name are removed after a day; unrelated hidden folders are preserved.
+Pruning tolerates entries removed concurrently. Only owned cache data is
+rebuildable; arbitrary data placed under a misconfigured cache root is protected.
 
 ## 7. Designer viewer dispatch
 

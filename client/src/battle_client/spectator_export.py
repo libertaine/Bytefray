@@ -34,8 +34,11 @@ import argparse
 import functools
 import hashlib
 import json
+import math
 import os
+import re
 import shutil
+import stat
 import sys
 import time
 import uuid
@@ -71,6 +74,9 @@ CACHE_LIMIT = 16
 # A staging directory is only abandoned once no export could still be writing
 # it; export time grows with the square of match length, so allow a full day.
 STALE_STAGING_SECONDS = 24 * 3600
+CACHE_OWNER = ".bytefray-spectator-cache.json"
+CACHE_OWNER_SCHEMA = "bytefray.spectator.cache"
+CACHE_KEY_PATTERN = r"[\w-]{1,48}-[0-9a-f]{16}"
 
 # Every key that may appear anywhere in agent_a.json. Anything else is a leak.
 AGENT_ALLOWED_KEYS = frozenset(
@@ -281,6 +287,26 @@ def verify_outcome(playback: Any, terminal: Mapping[str, Any], result: Mapping[s
         ticks = final.tick
         tick_limit = int(result["reproducibility"]["tick_limit"])
         score = terminal["score"]
+        result_score = result["score"]
+        # JSON booleans compare equal to 0/1 in Python; coercion would also
+        # admit strings, NaN and infinity. Only finite JSON numbers qualify.
+        def valid_score(value: Any) -> bool:
+            return type(value) is int or (type(value) is float and math.isfinite(value))
+
+        if not isinstance(score, dict) or set(score) != set(SUPPORTED_ENTRANTS):
+            raise ValueError("terminal score must name exactly A and B")
+        if not isinstance(result_score, dict) or set(result_score) != set(score):
+            raise ValueError("result score must name exactly the terminal entrants")
+        for entrant_id in score:
+            if not valid_score(score[entrant_id]) or not valid_score(result_score[entrant_id]):
+                raise ValueError(f"malformed score for {entrant_id}")
+        entrants = result["entrants"]
+        if [e["agent_id"] for e in entrants] != list(SUPPORTED_ENTRANTS):
+            raise ValueError("entrant scores must name exactly A and B")
+        for entrant in entrants:
+            value = entrant["score"]
+            if not valid_score(value) or value != score[entrant["agent_id"]]:
+                raise ValueError(f"entrant score disagrees with terminal score for {entrant['agent_id']}")
         if len(alive) == 1:
             expected = (alive[0], "last_agent_standing")
         elif not alive:
@@ -698,11 +724,7 @@ def _check_output(out_dir: Path, result_path: Path, replace_existing: bool) -> N
     Run before the export and again immediately before installing: an export
     can take minutes, and the folder may be created or filled meanwhile.
     """
-    source_dir = result_path.parent
-    if out_dir == source_dir or out_dir in source_dir.parents or source_dir in out_dir.parents:
-        raise SpectatorExportError(
-            OUTPUT_UNSAFE, "the output directory must be outside the match directory and must not contain it"
-        )
+    _check_separation(out_dir, (result_path.parent,))
     if not out_dir.exists():
         return
     if not out_dir.is_dir():
@@ -878,13 +900,80 @@ def _cache_key(result_path: Path, sources: Mapping[str, Mapping[str, Any]]) -> s
     return f"{safe_match}-{digest}"
 
 
-def _discard(path: Path) -> None:
+def _is_link(path: Path) -> bool:
+    """Include Windows junctions/reparse points on every supported Python."""
+    info = path.lstat()
+    return stat.S_ISLNK(info.st_mode) or bool(
+        getattr(info, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT
+    )
+
+
+def _check_separation(target: Path, source_dirs: tuple[Path, ...]) -> None:
+    try:
+        canonical = target.resolve()
+        canonical_sources = tuple(source.resolve() for source in source_dirs)
+    except (OSError, RuntimeError) as exc:
+        raise SpectatorExportError(OUTPUT_UNSAFE, f"cannot resolve output/cache paths: {exc}") from None
+    for source in canonical_sources:
+        if canonical == source or canonical in source.parents or source in canonical.parents:
+            raise SpectatorExportError(
+                OUTPUT_UNSAFE, "the output/cache directory must be disjoint from the match directories"
+            )
+
+
+def _cache_owned(path: Path, key: str) -> bool:
+    """Positive ownership plus a closed file set; never follow reparse points.
+
+    New entries carry a private cache marker, including while staging or after
+    file corruption. Older caches qualify only with a fully valid production
+    presentation. Extra files or subdirectories always protect an entry.
+    """
+    if re.fullmatch(CACHE_KEY_PATTERN, key) is None:
+        return False
+    try:
+        if _is_link(path) or not path.is_dir():
+            return False
+        names = {entry.name for entry in path.iterdir()}
+        allowed = {MANIFEST_FILENAME, *PRESENTATION_FILES.values(), CACHE_OWNER}
+        if not names <= allowed:
+            return False
+        if any(_is_link(path / name) or not (path / name).is_file() for name in names):
+            return False
+        if CACHE_OWNER in names:
+            return json.loads((path / CACHE_OWNER).read_bytes()) == {"schema": CACHE_OWNER_SCHEMA, "key": key}
+        if names != allowed - {CACHE_OWNER}:
+            return False
+        manifest = verify_presentation(path)
+        exporter = manifest.get("exporter")
+        return isinstance(exporter, dict) and exporter.get("name") == EXPORTER_NAME
+    except (OSError, ValueError, TypeError, SpectatorExportError):
+        return False
+
+
+def _verify_cached(path: Path, sources: Mapping[str, Mapping[str, Any]]) -> dict[str, Any]:
+    # Older frozen builds may share the same product identity. Every reuse
+    # path, including a concurrent install winner, must have the new marker.
+    if not (path / CACHE_OWNER).is_file() or not _cache_owned(path, path.name):
+        raise SpectatorExportError(PRESENTATION_INVALID, "cached presentation predates cache safety checks")
+    return verify_presentation(path, sources=sources, require_current_exporter=True)
+
+
+def _discard(path: Path, key: str) -> None:
+    if not _cache_owned(path, key):
+        return
     aside = path.with_name(f".{path.name}.discard-{uuid.uuid4().hex[:12]}")
     try:
         os.replace(path, aside)
     except OSError:
         return
-    shutil.rmtree(aside, ignore_errors=True)
+    # Recheck after taking custody: never delete files added meanwhile.
+    if _cache_owned(aside, key):
+        shutil.rmtree(aside, ignore_errors=True)
+    else:
+        try:
+            os.replace(aside, path)
+        except OSError:
+            pass  # retain everything under the aside name if restoration races
 
 
 def _mtime(path: Path) -> float | None:
@@ -907,16 +996,20 @@ def _prune(cache_root: Path, keep: Path) -> None:
     presentations: list[tuple[float, Path]] = []
     for entry in entries:
         modified = _mtime(entry)
-        if modified is None or not entry.is_dir():
+        if modified is None:
             continue
-        if entry.name.startswith("."):
+        abandoned = re.fullmatch(rf"\.({CACHE_KEY_PATTERN})\.(?:staging|discard)-[0-9a-f]{{12}}", entry.name)
+        key = abandoned[1] if abandoned else entry.name
+        if not _cache_owned(entry, key):
+            continue
+        if abandoned:
             if now - modified > STALE_STAGING_SECONDS:
-                shutil.rmtree(entry, ignore_errors=True)
+                _discard(entry, key)
         elif entry != keep:
             presentations.append((modified, entry))
     presentations.sort(reverse=True)
     for _modified, stale in presentations[CACHE_LIMIT - 1 :]:
-        _discard(stale)
+        _discard(stale, stale.name)
 
 
 def prepare_presentation(
@@ -936,14 +1029,25 @@ def prepare_presentation(
     support = spectator_support(result_path)
     if not support.supported:
         raise SpectatorExportError(support.code or SOURCE_UNAVAILABLE, support.message)
-    sources = _source_records(_verified_sources(result_path, expectation).named())
-    cache = Path(cache_root).expanduser().resolve()
+    try:
+        cache = Path(cache_root).expanduser().resolve()
+    except (OSError, RuntimeError) as exc:
+        raise SpectatorExportError(OUTPUT_UNSAFE, f"cannot resolve cache: {exc}") from None
+    _check_separation(cache, (result_path.parent,))
+    verified = _verified_sources(result_path, expectation)
+    source_dirs = tuple(
+        parent for path in verified.named().values() for parent in (path.parent, path.resolve().parent)
+    )
+    _check_separation(cache, source_dirs)
+    sources = _source_records(verified.named())
     final = cache / _cache_key(result_path, sources)
-    if final.is_dir():
+    if os.path.lexists(final):
+        if not _cache_owned(final, final.name):
+            raise SpectatorExportError(OUTPUT_UNSAFE, f"{final} is not a Spectator-owned cache entry")
         try:
-            manifest = verify_presentation(final, sources=sources, require_current_exporter=True)
+            manifest = _verify_cached(final, sources)
         except SpectatorExportError:
-            _discard(final)
+            _discard(final, final.name)
         else:
             try:
                 os.utime(final)  # most recently used: kept longest by _prune
@@ -952,15 +1056,19 @@ def prepare_presentation(
             return PreparedPresentation(final, True, manifest)
     staging = _new_staging(cache, final.name)
     try:
+        (staging / CACHE_OWNER).write_bytes(canonical_json({"schema": CACHE_OWNER_SCHEMA, "key": final.name}))
         manifest = _export_into(result_path, staging, progress, expectation)
         if manifest["sources"] != sources:
             raise SpectatorExportError(SOURCE_CHANGED, "match artifacts changed while they were being exported")
+        _check_separation(cache, source_dirs)
+        if os.path.lexists(final) and not _cache_owned(final, final.name):
+            raise SpectatorExportError(OUTPUT_UNSAFE, f"{final} gained unrelated files during export")
         try:
             os.replace(staging, final)
         except OSError:
             # Another export installed this key first; use it only if it verifies.
             try:
-                manifest = verify_presentation(final, sources=sources, require_current_exporter=True)
+                manifest = _verify_cached(final, sources)
             except SpectatorExportError as exc:
                 raise SpectatorExportError(OUTPUT_FAILED, f"could not install the presentation: {exc}") from None
             return PreparedPresentation(final, True, manifest)
