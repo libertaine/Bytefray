@@ -82,6 +82,8 @@ def _tampered(record: dict, change) -> list[str]:
         lambda r: r["rulesets"]["surfaces"]["bytefray tournament"].append("bytefray-rules-6-alpha1"),
         lambda r: r["rulesets"]["historical_readable_not_executable"].append("bytefray-rules-4"),
         lambda r: r["agent_api"].__setitem__("executable", [1, 2]),
+        lambda r: r["agent_api"].__setitem__("retired_from_execution", [2]),
+        lambda r: r["agent_api"].__setitem__("retired_from_execution", []),
         lambda r: r["agent_api"]["manifest_capabilities"].__setitem__("version", 99),
         lambda r: r["formats"]["evaluation"].__setitem__("writes", 4),
         lambda r: r["formats"]["evaluation"].__setitem__("identity", 4),

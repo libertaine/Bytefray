@@ -124,7 +124,7 @@
   "limitations": [
     "Bytefray Spectator presents only completed two-entrant (A, B) Active Sensing (Alpha) matches; every other match opens in the Pygame viewer.",
     "Spectator offers two perspectives: Broadcast and Agent A delivered information.",
-    "The Pygame viewer remains available for every supported workflow. Designer opens it instead of Spectator when Spectator is absent or turned off, does not support the match, or fails to export or launch; if Spectator starts and then exits at once, Designer shows a warning but does not reopen the match in Pygame.",
+    "The Pygame viewer remains available for every supported workflow. Designer opens it instead of Spectator when Spectator is absent or turned off, does not support the match, or fails to export or launch. Once Spectator has started, Designer never reopens the match in Pygame; an immediate nonzero Spectator exit shows a warning.",
     "The Pygame Active Sensing views (Agent A, Agent B, Omniscient) are a separate capability from Spectator's perspectives; entrant C has no delivered-information view.",
     "Three-entrant or larger Spectator presentation is deferred.",
     "Human comprehension evaluation of Active Sensing is deferred to 5.2.",
@@ -135,7 +135,7 @@
   "unsupported": [
     "Active Sensing (Alpha) in Designer Simple, in evaluation (CLI and Designer) or in tournaments.",
     "Executing Agent API v1 agents, VM/blob agents or Redcode/pMARS warriors; their recorded artifacts stay readable, and Bytefray 5.0.0 still runs them.",
-    "New matches under any historical or retired Ruleset identity.",
+    "New matches under the historical Rulesets listed as readable but not executable. The two retired research Rulesets remain executable for research reproduction only.",
     "Spectator for Classic matches, three-entrant matches, tournaments or Replay History launches."
   ]
 }

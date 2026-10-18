@@ -174,6 +174,12 @@ def runtime_problems(record: dict[str, Any]) -> list[str]:
     api = record["agent_api"]
     expect("agent_api executable", set(api["executable"]), set(agent_api.SUPPORTED_AGENT_API_VERSIONS))
     expect("agent_api current", agent_api.AGENT_API_VERSION in api["executable"], True)
+    # Every earlier generation the runtime no longer executes, and nothing else.
+    expect(
+        "agent_api retired_from_execution",
+        set(api["retired_from_execution"]),
+        set(range(1, agent_api.AGENT_API_VERSION)) - set(agent_api.SUPPORTED_AGENT_API_VERSIONS),
+    )
     expect("capabilities known", set(api["manifest_capabilities"]["known"]), set(KNOWN_CAPABILITIES))
     declared_block = {"version": api["manifest_capabilities"]["version"], "required": sorted(KNOWN_CAPABILITIES)}
     try:
@@ -206,17 +212,22 @@ def runtime_problems(record: dict[str, Any]) -> list[str]:
         },
     )
     # Evaluations resolve their version from the Ruleset's methodology; the
-    # module-level SCHEMA_VERSION is only the historical Ruleset-1 recipe.
-    for ruleset_id in rulesets["surfaces"]["bytefray agents evaluate"]:
+    # module-level SCHEMA_VERSION is only the historical Ruleset-1 recipe. Every
+    # Ruleset evaluate accepts (Classic and research) must use the v4-derived
+    # seeded methodology, which the resolvers map to one version whichever
+    # v4-derived flag is set, so passing is_v4_methodology stands for all of them.
+    for ruleset_id in actual_surfaces["bytefray agents evaluate"]:
+        if not evaluation_contracts.is_ruleset_v4_derived_methodology(ruleset_id):
+            problems.append(f"evaluation ({ruleset_id}): not a v4-derived methodology")
+            continue
         is_v2 = evaluation_contracts.is_ruleset_v2_methodology(ruleset_id)
-        is_v4 = evaluation_contracts.is_ruleset_v4_methodology(ruleset_id)
         expect(
             f"evaluation ({ruleset_id})",
             formats["evaluation"],
             {
                 "schema": evaluation_contracts.SCHEMA_NAME,
-                "writes": evaluation_contracts.resolved_schema_version(is_v2, False, is_v4),
-                "identity": evaluation_contracts.resolved_identity_version(is_v2, False, is_v4),
+                "writes": evaluation_contracts.resolved_schema_version(is_v2, False, True),
+                "identity": evaluation_contracts.resolved_identity_version(is_v2, False, True),
             },
         )
     expect(
