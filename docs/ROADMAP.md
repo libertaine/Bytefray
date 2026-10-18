@@ -17,11 +17,11 @@ and [FUTURE_PLANS.md](FUTURE_PLANS.md) for catalogued future ideas and research 
 | **Current Stable Release** | `5.0.0` | **Released** (2026-09-15) | Shipped stable product line atop `bytefray-rules-4` and Agent API v2. |
 | **Active Development Line** | V6 program (`v6-research` lineage) | **In Progress** | Alpha 1 product expansion after accepted M1; research and release authority remain separate. "V6" names the program and branch, not an application version ([component versioning policy](COMPONENT_VERSIONING.md)). |
 | **Active Ruleset Control** | Classic (`bytefray-rules-4`) | **Stable Control** | Sole executable v4 ruleset; production gameplay baseline. |
-| **Current Development Milestone** | M2 — Alpha 1 Expansion | **In progress — M2-2 CLOSED; M2-3 and M2-4 accepted; M2-5 awaiting authorization** | Active by the [October 15 lead decision](v6/V6_PROJECT_DIRECTION_DECISION_20261015.md) under accepted [Scope Revision 03](v6/V6_ALPHA_M2_SCOPE_CONTRACT_03.md). [M2-2 Watchful Keeper](v6/V6_ALPHA_M2_2_CLOSURE_01.md), [M2-3 Roaming Reacquirer](v6/V6_ALPHA_M2_3_CLOSURE_01.md) and [M2-4 Replay and Usability](v6/V6_ALPHA_M2_4_CLOSURE_01.md) are technically accepted with conditions; [M2-5 technical and platform qualification](v6/V6_ALPHA_M2_5_ENTRY_DECISION_01.md) is not authorized. Not a release authorization. |
+| **Current Development Milestone** | M2 — Alpha 1 Expansion | **In progress — M2-2 CLOSED; M2-3, M2-4 and M2-5 accepted; M2-6 deferred to 5.2** | Active by the [October 15 lead decision](v6/V6_PROJECT_DIRECTION_DECISION_20261015.md) under accepted [Scope Revision 03](v6/V6_ALPHA_M2_SCOPE_CONTRACT_03.md). [M2-2 Watchful Keeper](v6/V6_ALPHA_M2_2_CLOSURE_01.md), [M2-3 Roaming Reacquirer](v6/V6_ALPHA_M2_3_CLOSURE_01.md) and [M2-4 Replay and Usability](v6/V6_ALPHA_M2_4_CLOSURE_01.md) are technically accepted with conditions. [M2-5 technical and platform qualification](v6/V6_ALPHA_M2_5_CLOSURE_01.md) is accepted — PASS WITH CONDITIONS — on Windows, Linux WSL2/WSLg X11 and an Ubuntu Wayland session through XWayland; native Ubuntu on Xorg is not qualified. M2-6 human comprehension evaluation is deferred to Bytefray 5.2. Not a release authorization. |
 | **Accepted Product Milestone** | M1 — Verified Sensing Exchange | **Technically accepted / CLOSED** | [Final acceptance](v6/V6_ALPHA_M1_FINAL_ACCEPTANCE_01.md) consolidates Windows AMD64 and Linux X11/Xvfb qualification. Broader Alpha 1 remains incomplete; Active Sensing (Alpha) (`bytefray-rules-6-alpha1`) remains experimental. |
 | **Completed Research** | E8 — Explicit Active Sensing | **Completed** | Sealed [result](research/v6/V6_E8_RESULTS.md): YES / `R8-PRESERVES`; candidate for further design, promotion false. Primary H8-ADAPT NEITHER; Requirement C NOT ESTABLISHED. |
 | **Deferred Research** | Original E9 and potential successor | **OPERATIONALLY BLOCKED / deferred** | Original scientific execution LOCKED; G consumed exactly once at T2; Requirement C NOT ESTABLISHED. Successor-feasibility recommendation accepted as CONDITIONAL DESIGN-ONLY GO; no further E9 successor design, implementation or study creation authorized. |
-| **Potential Application Release** | Bytefray 5.1 (proposed `5.1.0-alpha.1`) | **Not authorized for release** | Separate from ruleset identity, M2 acceptance and the Bytefray-Spectator companion project. Its component versions are declared in the [proposed compatibility record](releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md). |
+| **Potential Application Release** | Bytefray 5.1 (proposed `5.1.0-alpha.1`) | **Not authorized for release; feature freeze** | Separate from ruleset identity, M2 acceptance and the Bytefray-Spectator companion project. The lead accepted the component identity reset and its [versioning policy](COMPONENT_VERSIONING.md) on 2026-10-18; component versions are declared in the [proposed compatibility record](releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md). The feature freeze continues, the application version stays `5.0.0`, and Alpha Release Candidate Preparation needs its own authorization. Bytefray Spectator's proposed first distribution version is `0.1.0-alpha.1`, subject to its own release qualification. |
 | **Completed Research** | E6 — Priced Sensing | **Completed** | The full frozen matrix (11,520 matches) ran and was analyzed under analysis freeze `v6-e6-freeze-v2-275057e27725` (structural matrix `v6-e6-matrix-v2-7de29a4a6954`, execution matrix `v6-e6-exec-v1-62b88ba3ddb4`). The frozen analysis ran with the seeds hidden; the seed list was then revealed, and every E6-D clause passed, D-6 included. Registered verdicts: E6-H1T supported (no fixed best response to every opponent under priced sensing, in 1000 of 1000 resamples); E6-H1C refuted (SPLIT is universal under the parent); E6-H2 supported (less information wins against at least one opponent); E6-H0 neither; E6-H3 refuted; PF-4 raised. **Registered interpretation: `R-CREATES`**, qualified by E6-H2: priced sensing creates an opponent-dependent choice of how to allocate actions, an information/action tradeoff rather than a discovery tax. **Registered disposition: REJECT as a gameplay candidate**, because KC-5 fires (a new seat artifact in the PACED–ADAPT pairing). The research lead reads E6 as strategically successful but product-unsuitable in its current form. The λ = 1 companion reproduces the strategic findings without the seat artifact. The sensing × disruption follow-up is **closed by post-hoc audit; no E7 experiment was run** ([audit](research/v6/V6_E6_POST_HOC_FACTORIAL_AUDIT.md)). Research-only. See [results](research/v6/V6_E6_PRICED_SENSING_RESULTS.md), [registration](research/v6/V6_E6_PRICED_SENSING_PREREGISTRATION.md) and [implementation plan](research/v6/V6_E6_PRICED_SENSING_IMPLEMENTATION_PLAN.md). |
 | **Completed Research** | E2 — Multi-Tick Capture Hold | **Completed** | The full frozen matrix (15,360 matches) ran and was analyzed under analysis freeze `v6-e2-freeze-v2-db6458596d82`. Result: K = 2 breaks the canonical forced line but mainly converts it into one-tick delay, scheduler-phase-locked recovery stalemates, zero-core wins and one new mirror seat inversion; it does not by itself create sufficient strategic opponent-dependence. Disposition: useful but insufficient, research-only. See [results](research/v6/V6_E2_CAPTURE_HOLD_RESULTS.md). |
 | **Completed Research** | E3 — Slot-Limited Disruption | **Completed** | The full frozen matrix (19,456 matches) ran and was analyzed under analysis freeze `v6-e3-freeze-v1-506811e78ad8`. Registered verdicts: D2, D3, D6 and D9 supported; D0, D4, D5 and D7 refuted; D1 and D8 neither (median two-sided parity dependence 0.714). **No pre-registered interpretation row applies.** Descriptively, slot-limited disruption removes whole-tick first-mover exclusivity and most seat determination but leaves a moderate, last-mover-leaning order dependence: a successful causal intervention, not a complete gameplay solution; research-only. See [results](research/v6/V6_E3_SLOT_LIMITED_DISRUPTION_RESULTS.md) and [experiment freeze](research/v6/V6_E3_EXPERIMENT_FREEZE.md). |
@@ -47,8 +47,10 @@ Status words below are used consistently throughout this document:
 **Status: Active development.** Bytefray 5.0.0 is the current stable release.
 Active development is on the `v6-research` branch lineage. M1 is accepted and
 CLOSED; M2 is the active milestone, with its M2-2 Watchful Keeper slice
-technically accepted and CLOSED and its M2-3 Roaming Reacquirer and M2-4
-Replay and Usability implementations accepted. Further E9 work is deferred, and
+technically accepted and CLOSED, its M2-3 Roaming Reacquirer and M2-4
+Replay and Usability implementations accepted, and its M2-5 technical and
+platform qualification accepted with conditions. M2-6 human evaluation is
+deferred to Bytefray 5.2. Further E9 work is deferred, and
 each later M2
 slice requires its own approval. The V6
 program began with the theme:
@@ -279,13 +281,22 @@ overview and current milestone section below govern present priorities.
   overlapping sample-marker labels, and one shared sensing guide with two
   scenario cards. Its conditions are a replay load-time limitation and
   unassessed accessibility, both carried to M2-5, plus the earlier native
-  obligations. M2-5 technical and platform qualification has a
-  [read-only entry review](v6/V6_ALPHA_M2_5_ENTRY_DECISION_01.md) and is not
-  authorized; M2-5 and M2-6 remain ahead.
+  obligations. **M2-5 technical and platform qualification is accepted — PASS
+  WITH CONDITIONS** ([closure](v6/V6_ALPHA_M2_5_CLOSURE_01.md),
+  [public summary](v6/V6_ALPHA_M2_5_PUBLIC_SUMMARY_01.md)) for the published
+  `bb6c4b8` source. It covers Windows and Linux WSL2/WSLg X11 and, through a
+  later native confirmation, an Ubuntu Wayland session using XWayland. Native
+  Ubuntu on Xorg is not qualified. Its conditions include Windows replay
+  loading of about 12.2 seconds, slow perspective switches, missing keyboard
+  alternatives, WSLg focus assistance, unresolved historical Linux crash
+  observations and no display-scale or accessibility certification. AC01–AC10
+  and AC12 are technically supported. AC11 needs human evaluation, and **M2-6
+  is deferred to Bytefray 5.2**; it has not run.
 
 Stable V4 remains the default; Alpha 1 remains explicitly selected and
 experimental. Broader Alpha 1 is incomplete. Bytefray 5.1 is a potential
-application release without release authorization; Bytefray-Spectator remains a
+application release without release authorization, under a continuing
+feature freeze; Bytefray-Spectator remains a
 separate companion project. Neither teaching demonstrations nor usability work
 reinterpret sealed scientific results or establish Requirement C.
 

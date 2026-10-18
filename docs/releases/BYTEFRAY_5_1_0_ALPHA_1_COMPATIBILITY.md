@@ -33,10 +33,11 @@ make them qualified for release. Qualification evidence today:
   ([final acceptance](../v6/V6_ALPHA_M1_FINAL_ACCEPTANCE_01.md)).
 - **M2-2, M2-3 and M2-4** (Watchful Keeper, Roaming Reacquirer, Replay and
   Usability) are technically accepted with conditions.
-- **M2-5 technical and platform qualification** reported PASS WITH CONDITIONS
-  on a separate local lineage (`v6-alpha1-m2-5-qualified`, `bb6c4b8`). That
-  lineage is not merged into the Spectator integration line, and the report
-  awaits lead acceptance.
+- **M2-5 technical and platform qualification** is accepted — PASS WITH
+  CONDITIONS — for the published `bb6c4b8` source, now merged into this line
+  ([closure](../v6/V6_ALPHA_M2_5_CLOSURE_01.md)). It covers Windows, Linux
+  WSL2/WSLg X11 and an Ubuntu Wayland session through XWayland. Native Ubuntu
+  on Xorg is not qualified. M2-6 human evaluation is deferred to 5.2.
 - **Spectator integration** has automated verification and a real Designer
   end-to-end launch on Windows. It has no human GUI qualification and no
   native Linux desktop run. No Spectator version has been released.
@@ -78,8 +79,8 @@ make them qualified for release. Qualification evidence today:
 
 | Platform | Bytefray | Spectator |
 | --- | --- | --- |
-| Windows 11 AMD64 | Primary target. M1 qualified (M1-6A). M2-5 technical/platform qualification reported PASS WITH CONDITIONS on a separate, unmerged lineage and awaits lead acceptance. | Executable built from tracked presets; automated self-checks and a real Designer end-to-end launch pass. No human GUI qualification. |
-| Linux x86_64 | Headless-first wheel. Designer qualified on X11/Xvfb for M1 (M1-6B). | Executable built; headless checks only (WSL Ubuntu 24.04). No native desktop run. |
+| Windows 11 AMD64 | Primary target. M1 qualified (M1-6A). M2-5 technical/platform qualification accepted PASS WITH CONDITIONS (published bb6c4b8, merged into this line). | Executable built from tracked presets; automated self-checks and a real Designer end-to-end launch pass. No human GUI qualification. |
+| Linux x86_64 | Headless-first wheel. Designer qualified on X11/Xvfb for M1 (M1-6B). M2-5 accepted PASS WITH CONDITIONS on WSL2/WSLg X11 and an Ubuntu Wayland session through XWayland; native Ubuntu on Xorg not qualified. | Executable built; headless checks only (WSL Ubuntu 24.04). No native desktop run. |
 | macOS | Not qualified. | Not built or qualified. |
 | Windows ARM64 | Not supported (AMD64 packaging only). | Not built. |
 

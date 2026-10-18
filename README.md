@@ -160,10 +160,11 @@ replay selector with symmetric delivered views, a measured layout with readable
 sample-marker labels, and one shared sensing guide with two scenario cards.
 These acceptances cover Windows and Linux WSL2/WSLg X11 only and are not
 release authorizations. Replay load time and accessibility remain open
-conditions. Technical and platform qualification (M2-5) and human evaluation
-(M2-6) remain ahead; M2-5 has a read-only
-[entry review](docs/v6/V6_ALPHA_M2_5_ENTRY_DECISION_01.md) and awaits a separate
-authorization decision.
+conditions. Its **M2-5 technical and platform qualification** is accepted —
+PASS WITH CONDITIONS ([closure record](docs/v6/V6_ALPHA_M2_5_CLOSURE_01.md)) —
+on Windows, Linux WSL2/WSLg X11 and an Ubuntu Wayland session through XWayland;
+native Ubuntu on Xorg is not qualified. Human evaluation (M2-6) is deferred to
+Bytefray 5.2.
 
 ## V6 Alpha 1: decisions from delivered information
 

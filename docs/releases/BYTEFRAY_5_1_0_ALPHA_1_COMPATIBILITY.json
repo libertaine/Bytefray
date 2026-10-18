@@ -102,12 +102,12 @@
   "platforms": [
     {
       "platform": "Windows 11 AMD64",
-      "bytefray": "Primary target. M1 qualified (M1-6A). M2-5 technical/platform qualification reported PASS WITH CONDITIONS on a separate, unmerged lineage and awaits lead acceptance.",
+      "bytefray": "Primary target. M1 qualified (M1-6A). M2-5 technical/platform qualification accepted PASS WITH CONDITIONS (published bb6c4b8, merged into this line).",
       "spectator": "Executable built from tracked presets; automated self-checks and a real Designer end-to-end launch pass. No human GUI qualification."
     },
     {
       "platform": "Linux x86_64",
-      "bytefray": "Headless-first wheel. Designer qualified on X11/Xvfb for M1 (M1-6B).",
+      "bytefray": "Headless-first wheel. Designer qualified on X11/Xvfb for M1 (M1-6B). M2-5 accepted PASS WITH CONDITIONS on WSL2/WSLg X11 and an Ubuntu Wayland session through XWayland; native Ubuntu on Xorg not qualified.",
       "spectator": "Executable built; headless checks only (WSL Ubuntu 24.04). No native desktop run."
     },
     {
