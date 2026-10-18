@@ -94,12 +94,17 @@ def test_large_seed_history_refresh_filter_and_clipboard_through_browser(browser
 def test_date_filter_range_through_real_history_window(
     browser, tmp_path, start_day, end_day, matches,
 ):
-    from PySide6.QtCore import QDate
+    from PySide6.QtCore import QDate, QDateTime, Qt, QTime, QTimeZone
     from PySide6.QtGui import QGuiApplication
 
+    # These expectations describe September 11 in the user's local calendar.
+    # The shared UTC fixture is September 12 in Tokyo (the original 0 != 2).
+    local_noon = QDateTime(QDate(2026, 9, 11), QTime(12, 0), QTimeZone.systemTimeZone())
+    assert local_noon.isValid()
+    completed_at = local_noon.toUTC().toString(Qt.ISODateWithMs)
     runs = tmp_path / "runs"
-    _write_run(runs, "ordinary", seed=42)
-    _write_run(runs, "large", seed=2**64 - 1)
+    _write_run(runs, "ordinary", seed=42, completed_at=completed_at)
+    _write_run(runs, "large", seed=2**64 - 1, completed_at=completed_at)
     before = _snapshot(runs)
     make, until = browser
     window = make()
@@ -142,6 +147,41 @@ def test_date_filter_range_through_real_history_window(
     assert _snapshot(runs) == before
 
 
+@pytest.mark.parametrize("day", (11, 12))
+def test_recorded_utc_instant_filters_by_local_calendar_day(browser, tmp_path, day):
+    from datetime import date, datetime
+
+    from PySide6.QtCore import QDate
+
+    # Retain the original UTC-midnight crossing independently of local-noon setup.
+    completed_at = "2026-09-11T19:54:50.985486Z"
+    local_day = datetime.fromisoformat(completed_at.replace("Z", "+00:00")).astimezone().date()
+    expected = 2 if local_day == date(2026, 9, day) else 0
+    runs = tmp_path / "runs"
+    for name, seed in (("ordinary", 42), ("large", 2**64 - 1)):
+        _write_run(runs, name, seed=seed, completed_at=completed_at)
+    before = _snapshot(runs)
+    make, until = browser
+    window = make()
+    until(lambda: window._reader_ready and not window._refreshing and window._total == 2)
+    pages, errors = [], []
+    window._reader.pageReady.connect(pages.append)
+    window._reader.failed.connect(errors.append)
+    prior = window._generation
+    window.fromDate.setDate(QDate(2026, 9, day))
+    window.toDate.setDate(QDate(2026, 9, day))
+    window.fromCheck.setChecked(True)
+    window.toCheck.setChecked(True)
+    until(lambda: window._generation > prior and bool(pages)
+          and pages[-1].generation == window._generation
+          and window._total == pages[-1].total
+          and window.model.loadedCount == len(pages[-1].rows))
+    assert not errors
+    assert window._total == expected
+    assert window.model.loadedCount == expected
+    assert _snapshot(runs) == before
+
+
 @pytest.mark.parametrize("day", ((2026, 3, 8), (2026, 11, 1), (2026, 9, 11)))
 def test_designer_date_bounds_preserve_ordinary_local_day(browser, tmp_path, day):
     from PySide6.QtCore import QDate
@@ -172,6 +212,31 @@ def test_designer_date_bound_rejects_invalid_calendar_dates(date_parts):
         _local_date_bound(date, end=False)
     with pytest.raises(ValueError, match="Invalid history filter date"):
         _local_date_bound(date, end=True)
+
+
+@pytest.mark.parametrize("end", (False, True), ids=("lower", "upper"))
+@pytest.mark.parametrize("conversion_error", (ValueError, OSError, OverflowError))
+def test_designer_max_date_fallback_preserves_inclusive_bound(monkeypatch, end, conversion_error):
+    from datetime import datetime, timedelta
+
+    from PySide6.QtCore import QDate, QDateTime, QTime, QTimeZone
+
+    from app.views import replay_history as view
+
+    def unsupported_day(*_args):
+        raise conversion_error("platform calendar conversion failure")
+
+    monkeypatch.setattr(view, "day_bounds", unsupported_day)
+    date = QDate(9999, 12, 31)
+    clock = QTime(23, 59, 59, 999) if end else QTime(0, 0)
+    local = QDateTime(date, clock, QTimeZone.systemTimeZone())
+    assert local.isValid()
+    bound = view._local_date_bound(date, end=end)
+    assert bound == datetime(
+        9999, 12, 31, 23 if end else 0, 59 if end else 0,
+        59 if end else 0, 999_999 if end else 0, tzinfo=bound.tzinfo,
+    )
+    assert bound.utcoffset() == timedelta(seconds=local.offsetFromUtc())
 
 
 def test_designer_date_bound_rejects_unresolved_qt_calendar(monkeypatch):

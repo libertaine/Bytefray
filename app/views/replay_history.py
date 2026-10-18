@@ -164,7 +164,7 @@ def _local_date_bound(date: QDate, *, end: bool) -> datetime:
         raise ValueError("Invalid history filter date.")
     try:
         return day_bounds(date.year(), date.month(), date.day())[1 if end else 0]
-    except (OSError, OverflowError):
+    except (OSError, OverflowError, ValueError):
         # Windows rejects otherwise valid calendar years outside its C-runtime
         # range. Qt resolves those local offsets without timestamp conversion.
         pass
