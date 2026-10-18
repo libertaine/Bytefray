@@ -93,6 +93,20 @@ def build_agents_command(subcommand: str, arguments: Sequence[str]) -> list[str]
     ]
 
 
+def build_spectator_command(arguments: Sequence[str]) -> list[str]:
+    """Build a non-shell command for a ``bytefray spectator <action>`` verb.
+
+    Mirrors :func:`build_match_command`: the packaged ``bytefray`` executable
+    when frozen, otherwise this interpreter's ``-m battle_engine``. The
+    export runs in its own process so Designer never verifies or projects a
+    match on its GUI thread.
+    """
+    options = list(arguments)
+    if is_frozen_application():
+        return [str(_packaged_executable("bytefray")), "spectator", *options]
+    return [_current_executable(), "-m", "battle_engine", "spectator", *options]
+
+
 def build_designer_match_arguments(
     *,
     ticks: object,

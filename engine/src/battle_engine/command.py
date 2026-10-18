@@ -7,7 +7,7 @@ import importlib
 import sys
 from collections.abc import Sequence
 
-COMMANDS = ("run", "tournament", "replay", "design", "agents")
+COMMANDS = ("run", "tournament", "replay", "design", "agents", "spectator")
 
 def _version_string() -> str:
     from battle_engine.project_info import get_project_info
@@ -48,6 +48,11 @@ def _parser() -> argparse.ArgumentParser:
     )
     subcommands.add_parser(
         "agents", add_help=False, help="list discovered agent manifests"
+    )
+    subcommands.add_parser(
+        "spectator",
+        add_help=False,
+        help="verify a V6 alpha1 match and export it for Bytefray Spectator",
     )
     return parser
 
@@ -208,6 +213,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _design(remainder)
     if namespace.command == "agents":
         return _agents(remainder)
+    if namespace.command == "spectator":
+        # Lazy, like ``replay``: the exporter needs battle_client's verified
+        # sensing projection, which the engine package never imports eagerly.
+        from battle_client.spectator_export import main as spectator_main
+
+        return spectator_main(remainder)
     parser.error(f"unknown command: {namespace.command}")
     return 2
 
