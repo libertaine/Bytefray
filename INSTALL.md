@@ -99,6 +99,37 @@ python -m pip install -e ".[replay,designer,dev]"
 bytefray design
 ```
 
+## Optional: Bytefray Spectator viewer (development branch)
+
+Agent Designer can open supported V6 alpha1 matches (two entrants, with a
+sensing trace) in the separate
+[Bytefray Spectator](https://github.com/libertaine/Bytefray-Spectator)
+application. Every other match keeps the Pygame replay viewer. Designer looks
+for Spectator in this order:
+
+1. `BYTEFRAY_SPECTATOR`, which can name any of:
+   * an exported Spectator executable;
+   * the folder containing one;
+   * a Spectator Godot project folder. This also needs `BYTEFRAY_GODOT` or
+     `GODOT` set to the Godot 4.7.2 executable.
+
+   Set it to `off` to always use the Pygame viewer.
+2. A portable Spectator build unpacked into `<data root>/spectator/`.
+3. `bytefray-spectator` on `PATH`.
+
+```powershell
+$env:BYTEFRAY_SPECTATOR = "C:\Tools\Bytefray Spectator\bytefray-spectator.exe"
+```
+
+```bash
+export BYTEFRAY_SPECTATOR="$HOME/Applications/bytefray-spectator/bytefray-spectator.x86_64"
+```
+
+Verified presentations are cached under `<data root>/cache/spectator/`, and
+deleting that folder is always safe. To export a match by hand, run
+`bytefray spectator export --source <match dir> --out <dir>`. See
+[docs/specs/spectator_export.md](docs/specs/spectator_export.md).
+
 ## macOS
 
 macOS is **not a currently supported or tested distribution target.** No

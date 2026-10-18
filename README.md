@@ -273,19 +273,32 @@ Windows automated verification is documented; other Spectator platforms and
 independent human usability/listening evaluation remain unqualified or pending.
 There is no standalone executable release.
 
-Generating additional matches/exports requires Python 3.13 and exact locally
-supplied Bytefray source at exporter pin
-`9c81718d057c8cd021f6d1cc7938ea19881b78e1`. That commit is not currently public:
-an ordinary release or public clone is not an interchangeable exporter dependency.
-The workflow generates canonical artifacts plus a supported `match.json` or
-teaching `demo.json`, then verifies and exports them into a separate presentation
-directory. Godot consumes supported exports, not arbitrary raw replay formats.
+That pinned exporter and its frozen fixtures remain unchanged. They require
+Python 3.13 and exact locally supplied Bytefray source at pin
+`9c81718d057c8cd021f6d1cc7938ea19881b78e1`, which is not currently public.
 See Spectator's [dependency and export instructions](https://github.com/libertaine/Bytefray-Spectator#generate-matches-or-exports--dependency-limitation).
 
-Broader replay compatibility, additional entrant perspectives, other-platform
-qualification and executable distribution remain future work rather than supported
-features. The 5.1 relationship currently means complementary gameplay and viewing
-experiences; no bundled installer or integrated launch workflow is committed.
+**Integrated viewing (development branch, unreleased and unqualified).** The
+`v6-spectator-integration` branch moves export into Bytefray itself:
+
+* `bytefray spectator export --source <match dir> --out <dir>` verifies an
+  ordinary completed two-entrant V6 alpha1 match. It runs the same replay
+  preflight Designer uses, then the authoritative sensing reconstruction, then
+  re-derives the outcome. It writes the same Broadcast and Agent A documents
+  under a version-2 manifest. No hand-written `match.json` is needed.
+* Agent Designer's **View Last Match** opens such matches in Spectator when one
+  is installed or configured (`BYTEFRAY_SPECTATOR`). Every other match, and
+  every match when Spectator is absent, keeps the Pygame viewer.
+* Spectator's own branch adds **File > Open Presentation** and Windows/Linux
+  export presets for standalone builds.
+
+See the [Spectator export and Designer dispatch spec](docs/specs/spectator_export.md).
+
+Godot consumes verified exports, not arbitrary raw replay formats. Broader
+replay compatibility, additional entrant perspectives, other-platform
+qualification and a published executable remain future work, not supported
+features. The 5.1 relationship currently means complementary gameplay and
+viewing experiences; no bundled installer is committed.
 
 ### Current development direction
 
@@ -660,6 +673,7 @@ Bytefray includes a modular tool suite separating headless simulation from prese
   * `inspect`: Inspect observation and action decisions from `trace.jsonl`.
   * `diverge`: Compare two traces to identify the exact tick where decisions differed.
   * `evaluate`: Run pairwise or group evaluation matrices across seeds.
+* `bytefray spectator`: Verify a completed V6 alpha1 match and `export` it for Bytefray Spectator (development branch; see [docs/specs/spectator_export.md](docs/specs/spectator_export.md)).
 
 ### 2. Pygame Replay Viewer
 Launched via `bytefray replay --replay <path> --renderer pygame` or `bytefray-replay-viewer`. Features:
@@ -678,6 +692,8 @@ Launched via `bytefray design` or `bytefray-agent-designer`. Features:
 * Match setup with agent selection, seed controls, and ruleset pickers.
 * Dynamic parameter controls generated from agent YAML schemas.
 * Built-in code inspection, validation, test launcher, and replay browser.
+* **View Last Match** in Bytefray Spectator for supported V6 alpha1 matches, when
+  Spectator is installed or configured (development branch; Pygame otherwise).
 * **Replay History** (**History → Replay History…**): a searchable, filterable
   browser over every completed match Bytefray has written, including matches
   produced before the current result schema. Selecting a match with an

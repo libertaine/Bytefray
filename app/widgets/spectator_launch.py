@@ -152,8 +152,8 @@ class SpectatorLaunchController(QObject):
         self._stage = None
         if open_when_ready:
             self.log.emit(
-                "[Spectator] Verifying and preparing the match for Spectator "
-                "(long matches can take a minute)...\n"
+                "[Spectator] Verifying the match for Spectator (a first export of a "
+                "long match can take a minute)...\n"
             )
         proc.start()
 

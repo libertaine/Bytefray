@@ -52,7 +52,7 @@ def test_unrecognized_top_level_flag_is_a_controlled_error_not_a_silent_help_dum
 def test_primary_help_lists_all_subcommands():
     result = _run("--help")
     assert result.returncode == 0
-    assert "{run,tournament,replay,design,agents}" in result.stdout
+    assert "{run,tournament,replay,design,agents,spectator}" in result.stdout
     for name in command.COMMANDS:
         assert name in result.stdout
 

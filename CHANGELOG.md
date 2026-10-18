@@ -4,6 +4,34 @@ This changelog records notable user- and developer-visible changes to Bytefray.
 
 ## [Unreleased]
 
+### Added — Bytefray Spectator export and Designer launch (development branch)
+
+`bytefray spectator export|prepare|verify` (`battle_client.spectator_export`)
+turns an ordinary completed two-entrant `bytefray-rules-6-alpha1` match into a
+Bytefray Spectator presentation, with no hand-written provenance file. The
+export:
+
+* runs Designer's replay preflight and the authoritative sensing
+  reconstruction;
+* re-derives the outcome;
+* projects Broadcast and Agent A exactly as Spectator's pinned prototype
+  exporter does (byte-identical on the frozen showcase), with Agent A built
+  only from receipt-only `SensingView` objects;
+* writes a version-2 manifest with provenance `bytefray_match`.
+
+Every inconsistency fails closed, and output is staged so a failed export
+installs nothing.
+
+Agent Designer's View Last Match, Agent Development test replay and evaluation
+replays now prefer Spectator for such matches when it is installed or
+configured (`BYTEFRAY_SPECTATOR`, `<data root>/spectator/`, or
+`bytefray-spectator` on `PATH`). Export runs in a child process, and a
+just-finished match is prepared in the background. Any unsupported match,
+missing Spectator, or failed export or launch falls back to the existing
+Pygame viewer, the last two after a warning and a fresh preflight. Tournament
+and Replay History launches are unchanged. See
+[docs/specs/spectator_export.md](docs/specs/spectator_export.md).
+
 ### Removed — V4 prerelease rulesets retired from execution
 
 `bytefray-rules-4-alpha1` and `bytefray-rules-4-alpha2` are no longer
