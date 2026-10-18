@@ -361,11 +361,12 @@ and tells you which phase stalled. Pass `--no-trace` to skip writing
 
 ## Using the Agent Designer (GUI)
 
-Watchful Keeper is an experimental V6 sensing starter. Create a personal copy
+Watchful Keeper is an experimental Active Sensing starter. Create a personal copy
 with **New Agent → Watchful Keeper — personal copy**, or
 `bytefray agents create my_keeper --template watchful_keeper`. Select
-`bytefray-rules-6-alpha1` explicitly before Validate or a match; the starter
-choice leaves the stable V4 default in place. The copy preserves bundled source,
+**Active Sensing (Alpha)** (`bytefray-rules-6-alpha1`; the Ruleset selector's
+tooltip shows the ID) explicitly before Validate or a match; the starter
+choice leaves the stable **Classic** (`bytefray-rules-4`) default in place. The copy preserves bundled source,
 capabilities and presets and cannot overwrite an existing agent.
 
 Keeper stays at its observed own core. A delivered READ showing non-own
@@ -379,10 +380,10 @@ Development Test executes a full match with manifest defaults. Use Advanced for
 edited-parameter full matches and Open Replay for their associated result.
 Changed settings/source label retained earlier output without rewriting it.
 
-Roaming Reacquirer is the third experimental V6 sensing starter. Create a copy
+Roaming Reacquirer is the third experimental Active Sensing starter. Create a copy
 with **New Agent → Roaming Reacquirer — personal copy**, or
 `bytefray agents create my_reacquirer --template roaming_reacquirer`, and select
-`bytefray-rules-6-alpha1` explicitly, as for Keeper. It scans relative to its
+**Active Sensing (Alpha)** explicitly, as for Keeper. It scans relative to its
 own anchor. A positive receipt is an anonymous historical sample: it holds the
 smallest address and pays `rescan_wait` READs before it rescans that address.
 If an applied rescan omits the address, it records only "absent in a newer

@@ -1,0 +1,141 @@
+{
+  "schema": "bytefray.release_compatibility",
+  "schema_version": 1,
+  "status": "proposed",
+  "status_note": "Planning record for the next application release. It is not a release, not a qualification result and not a version bump: the installed package still reports 5.0.0 until the separately authorized release-candidate milestone changes it.",
+  "policy": "docs/COMPONENT_VERSIONING.md",
+  "application": {
+    "name": "Bytefray",
+    "version": "5.1.0-alpha.1",
+    "python_package_version": "5.1.0a1",
+    "git_tag": "v5.1.0-alpha.1",
+    "previous_release": "5.0.0",
+    "python": ["3.10", "3.11", "3.12", "3.13", "3.14"]
+  },
+  "rulesets": {
+    "default": "bytefray-rules-4",
+    "offered": [
+      {
+        "id": "bytefray-rules-4",
+        "display_name": "Classic",
+        "stability": "stable",
+        "selection": "default when no Ruleset is chosen"
+      },
+      {
+        "id": "bytefray-rules-6-alpha1",
+        "display_name": "Active Sensing (Alpha)",
+        "stability": "experimental",
+        "selection": "explicit only; never selected automatically"
+      }
+    ],
+    "surfaces": {
+      "bytefray run": ["bytefray-rules-4", "bytefray-rules-6-alpha1"],
+      "bytefray agents test": ["bytefray-rules-4", "bytefray-rules-6-alpha1"],
+      "bytefray agents validate": ["bytefray-rules-4", "bytefray-rules-6-alpha1"],
+      "bytefray agents evaluate": ["bytefray-rules-4"],
+      "bytefray tournament": ["bytefray-rules-4"],
+      "Designer Simple": ["bytefray-rules-4"],
+      "Designer Advanced": ["bytefray-rules-4", "bytefray-rules-6-alpha1"],
+      "Designer Development": ["bytefray-rules-4", "bytefray-rules-6-alpha1"],
+      "Designer Evaluation": ["bytefray-rules-4"]
+    },
+    "research_only": {
+      "count": 14,
+      "selection": "`bytefray agents evaluate --ruleset <exact id>` or the Python API",
+      "promise": "Research reproduction only. Not a product feature; no stability or compatibility promise."
+    },
+    "historical_readable_not_executable": [
+      "bytefray-rules-1",
+      "bytefray-rules-2",
+      "bytefray-rules-2-alpha1",
+      "bytefray-rules-2-alpha11",
+      "bytefray-rules-3-alpha1",
+      "bytefray-rules-4-alpha1",
+      "bytefray-rules-4-alpha2"
+    ]
+  },
+  "agent_api": {
+    "executable": [2],
+    "retired_from_execution": [1],
+    "manifest_capabilities": {"version": 1, "known": ["sense"]}
+  },
+  "formats": {
+    "replay": {"schema": "battle2.replay", "writes": 4, "reads": [2, 3, 4]},
+    "result": {"schema": "battle2.result", "writes": 2, "reads": [1, 2]},
+    "trace": {"schema": "bytefray.agent_trace", "writes": 2, "reads": [1, 2]},
+    "evaluation": {"schema": "bytefray.evaluation", "writes": 4},
+    "tournament": {"schema": "battle2.tournament", "writes": 1},
+    "agent_package": {"schema": "bytefray.agent_package", "writes": 1}
+  },
+  "spectator": {
+    "application": {
+      "name": "Bytefray Spectator",
+      "version": null,
+      "release_status": "unreleased and unversioned; no published build",
+      "compatible_development_source": {
+        "repository": "libertaine/Bytefray-Spectator",
+        "branch": "designer-integration",
+        "commit": "14089a7bf624a5974346306a277e307ea8f48c07"
+      },
+      "distribution": "separate application, not bundled; Designer finds it through `BYTEFRAY_SPECTATOR`, `<data root>/spectator/` or `bytefray-spectator` on `PATH`"
+    },
+    "presentation_protocol": {
+      "manifest_schema": "bytefray.spectator.manifest",
+      "bytefray_writes": 2,
+      "spectator_reads": [1, 2],
+      "provenance": "bytefray_match",
+      "documents": {
+        "broadcast": {"schema": "bytefray.spectator.broadcast", "schema_version": 1},
+        "agent_a": {"schema": "bytefray.spectator.agent_view", "schema_version": 1}
+      }
+    },
+    "supported_matches": {
+      "rulesets": ["bytefray-rules-6-alpha1"],
+      "entrants": ["A", "B"],
+      "perspectives": ["broadcast", "agent_a"]
+    },
+    "designer_launch": {
+      "prefers_spectator": ["View Last Match", "Development test replay", "Evaluation replays"],
+      "always_pygame": ["Tournament results", "Replay History", "Advanced replay file browser"]
+    }
+  },
+  "platforms": [
+    {
+      "platform": "Windows 11 AMD64",
+      "bytefray": "Primary target. M1 qualified (M1-6A). M2-5 technical/platform qualification reported PASS WITH CONDITIONS on a separate, unmerged lineage and awaits lead acceptance.",
+      "spectator": "Executable built from tracked presets; automated self-checks and a real Designer end-to-end launch pass. No human GUI qualification."
+    },
+    {
+      "platform": "Linux x86_64",
+      "bytefray": "Headless-first wheel. Designer qualified on X11/Xvfb for M1 (M1-6B).",
+      "spectator": "Executable built; headless checks only (WSL Ubuntu 24.04). No native desktop run."
+    },
+    {
+      "platform": "macOS",
+      "bytefray": "Not qualified.",
+      "spectator": "Not built or qualified."
+    },
+    {
+      "platform": "Windows ARM64",
+      "bytefray": "Not supported (AMD64 packaging only).",
+      "spectator": "Not built."
+    }
+  ],
+  "limitations": [
+    "Bytefray Spectator presents only completed two-entrant (A, B) Active Sensing (Alpha) matches; every other match opens in the Pygame viewer.",
+    "Spectator offers two perspectives: Broadcast and Agent A delivered information.",
+    "The Pygame viewer remains available for every supported workflow and is the fallback whenever Spectator is absent, unsupported or fails.",
+    "The Pygame Active Sensing views (Agent A, Agent B, Omniscient) are a separate capability from Spectator's perspectives; entrant C has no delivered-information view.",
+    "Three-entrant or larger Spectator presentation is deferred.",
+    "Human comprehension evaluation of Active Sensing is deferred to 5.2.",
+    "Classic (`bytefray-rules-4`) stays the default on every surface; Active Sensing (Alpha) is never chosen automatically, including when a sensing starter is selected.",
+    "Spectator export time grows with the square of match length (about 40 s for 477 ticks); Designer prepares exports in the background.",
+    "The frozen (PyInstaller) Bytefray build has not yet been verified with `bytefray spectator`."
+  ],
+  "unsupported": [
+    "Active Sensing (Alpha) in Designer Simple, in evaluation (CLI and Designer) or in tournaments.",
+    "Executing Agent API v1 agents, VM/blob agents or Redcode/pMARS warriors; their recorded artifacts stay readable, and Bytefray 5.0.0 still runs them.",
+    "New matches under any historical or retired Ruleset identity.",
+    "Spectator for Classic matches, three-entrant matches, tournaments or Replay History launches."
+  ]
+}

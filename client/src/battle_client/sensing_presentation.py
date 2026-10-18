@@ -9,6 +9,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from battle_engine.rules import BYTEFRAY_RULESET_V4_ID, BYTEFRAY_RULESET_V6_ALPHA1_ID
+from battle_engine.ruleset_names import ACTIVE_SENSING_DISPLAY_NAME, ruleset_name_with_id
 from battle_engine.sensing_playback import ExchangePhase
 
 from battle_client.player import PhasePlaybackController
@@ -317,7 +319,7 @@ CARD_SCOPE_NOTE = (
 )
 
 ALPHA1_SENSING_GUIDE: tuple[str, ...] = (
-    "V6 alpha1 experimental sensing: reading these replays (informational summary)",
+    f"{ACTIVE_SENSING_DISPLAY_NAME}: reading these replays (informational summary)",
     (
         "Paid active sensing: SENSE uses one ordinary action opportunity, like READ, WRITE or MOVE. "
         "It reports anonymous enemy anchor addresses within +/-27 cells of a legal center, with no "
@@ -344,7 +346,9 @@ ALPHA1_SENSING_GUIDE: tuple[str, ...] = (
     ),
     (
         "This summary is informational. The Ruleset and the recorded artifacts remain authoritative; "
-        "stable Ruleset v4 stays the default and V6 alpha1 must be selected explicitly."
+        f"{ruleset_name_with_id(BYTEFRAY_RULESET_V4_ID)} stays the default, and "
+        f"{ACTIVE_SENSING_DISPLAY_NAME} is {BYTEFRAY_RULESET_V6_ALPHA1_ID} and must be selected "
+        "explicitly."
     ),
 )
 

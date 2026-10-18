@@ -33,6 +33,7 @@ from battle_engine.agent_scaffold import (
 )
 from battle_engine.agent_test import DEFAULT_AGENT_TIMEOUT, DEFAULT_TICKS
 from battle_engine.config import Config
+from battle_engine.ruleset_names import ACTIVE_SENSING_DISPLAY_NAME
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFontDatabase
 from PySide6.QtWidgets import (
@@ -79,7 +80,7 @@ _MAX_SPINBOX_INT = 2_147_483_647
 _TEMPLATE_LABELS = {
     "blank": "Blank",
     "annotated": "Annotated Example (commented)",
-    "window_scout": "Window Scout — V6 experimental sensing (personal copy)",
+    "window_scout": "Window Scout — personal copy",
     "watchful_keeper": "Watchful Keeper — personal copy",
     "roaming_reacquirer": "Roaming Reacquirer — personal copy",
 }
@@ -378,20 +379,21 @@ class AgentDevelopmentPanel(QWidget):
         test_layout.addWidget(self.rulesetExplanation)
         workflow_hint = QLabel(
             "For Window Scout, Watchful Keeper or Roaming Reacquirer: create a personal "
-            "copy with New Agent, explicitly select V6 alpha1 here, and Validate. Edit the "
-            "agent's parameters in Advanced, select V6 alpha1 there, then Run and Open Replay. "
+            f"copy with New Agent, explicitly select {ACTIVE_SENSING_DISPLAY_NAME} here, and "
+            f"Validate. Edit the agent's parameters in Advanced, select "
+            f"{ACTIVE_SENSING_DISPLAY_NAME} there, then Run and Open Replay. "
             "Development Test runs a full match using manifest defaults."
         )
         workflow_hint.setWordWrap(True)
         test_layout.addWidget(workflow_hint)
         # M2-4: the same static guide and scenario cards as replay Help (?),
         # shown outside any replay; it never describes a particular run.
-        self.btnSensingGuide = QPushButton("V6 alpha1 sensing guide…")
+        self.btnSensingGuide = QPushButton(f"{ACTIVE_SENSING_DISPLAY_NAME} sensing guide…")
         self.btnSensingGuide.setToolTip(
-            "Static explanation of V6 alpha1 sensing with the Watchful Keeper and "
-            "Roaming Reacquirer scenario cards."
+            f"Static explanation of {ACTIVE_SENSING_DISPLAY_NAME} sensing with the Watchful "
+            "Keeper and Roaming Reacquirer scenario cards."
         )
-        self.btnSensingGuide.setAccessibleName("V6 alpha1 sensing guide")
+        self.btnSensingGuide.setAccessibleName(f"{ACTIVE_SENSING_DISPLAY_NAME} sensing guide")
         test_layout.addWidget(self.btnSensingGuide)
         self.sensingGuideDialog: QDialog | None = None
 
@@ -641,12 +643,12 @@ class AgentDevelopmentPanel(QWidget):
         self.sourceRevisionChanged.emit(agent_id)
 
     def showSensingGuide(self) -> QDialog:
-        """Open the static V6 alpha1 guide and scenario cards in a separate window."""
+        """Open the static Active Sensing guide and scenario cards in a separate window."""
         from battle_client.sensing_presentation import sensing_guide_lines
 
         if self.sensingGuideDialog is None:
             dialog = QDialog(self)
-            dialog.setWindowTitle("V6 alpha1 sensing guide")
+            dialog.setWindowTitle(f"{ACTIVE_SENSING_DISPLAY_NAME} sensing guide")
             layout = QVBoxLayout(dialog)
             text = QPlainTextEdit()
             text.setObjectName("sensingGuideText")

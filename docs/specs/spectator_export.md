@@ -5,7 +5,8 @@ Not released. Independent review remediation and verification are recorded in
 [the remediation report](../SPECTATOR_REMEDIATION_20261018.md). Human GUI,
 native Linux desktop and frozen Bytefray build qualification remain pending.
 
-This spec covers how Bytefray turns a completed V6 alpha1 match into a
+This spec covers how Bytefray turns a completed Active Sensing (Alpha)
+(`bytefray-rules-6-alpha1`) match into a
 Bytefray Spectator presentation, and how Agent Designer opens that
 presentation. Bytefray Spectator is a separate Godot application
 (<https://github.com/libertaine/Bytefray-Spectator>). It plays verified
@@ -31,7 +32,7 @@ The export supports a completed match when all of these hold:
 * there are exactly two entrants, with seats `A` and `B` (Spectator's
   legend, colours and qualification cover two entrants);
 * `trace.jsonl` sits beside the replay that `result.json` references.
-  Designer writes it automatically for V6 alpha1.
+  Designer writes it automatically for Active Sensing (Alpha) matches.
 
 Everything else is refused with a stable code. In Designer, refused matches
 keep opening in the Pygame viewer. `spectator_support(result_path)` is the

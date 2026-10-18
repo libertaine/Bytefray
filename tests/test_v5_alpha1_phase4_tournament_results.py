@@ -147,7 +147,7 @@ def test_results_dialog_shows_winner_standings_and_matches_from_canonical_artifa
     try:
         assert dialog.headlineLabel.text().startswith("Winner:")
         assert dialog.statusLabel.text() == "Complete: 3 of 3 matches completed."
-        assert dialog.rulesetLabel.text() == "Ruleset v4"
+        assert dialog.rulesetLabel.text() == "Classic"
         assert dialog.entrantsLabel.text() == "3 (Python)"
         assert dialog.matchesLabel.text() == "3 of 3 matches completed"
         assert dialog.outputFolderLabel.text() == str((tmp_path / "cup").resolve())

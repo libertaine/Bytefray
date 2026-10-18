@@ -101,8 +101,8 @@ bytefray design
 
 ## Optional: Bytefray Spectator viewer (development branch)
 
-Agent Designer can open supported V6 alpha1 matches (two entrants, with a
-sensing trace) in the separate
+Agent Designer can open supported Active Sensing (Alpha) matches
+(`bytefray-rules-6-alpha1`, two entrants, with a sensing trace) in the separate
 [Bytefray Spectator](https://github.com/libertaine/Bytefray-Spectator)
 application. Every other match keeps the Pygame replay viewer. Designer looks
 for Spectator in this order:

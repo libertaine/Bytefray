@@ -6,9 +6,31 @@ maintains, distinguishes supported contracts from historical experiments,
 and gives a worked table for
 deciding which axis a given change actually requires bumping. For the full
 wire-level detail behind each axis, follow the links below rather than
-expecting this document to repeat them.
+expecting this document to repeat them. How each axis is *named and
+versioned* — application SemVer, immutable Ruleset IDs and their display
+names, integer Agent API and format versions, Spectator's own series, and
+objective-based research names — is set by
+[COMPONENT_VERSIONING.md](COMPONENT_VERSIONING.md).
+
+## Current development line (toward 5.1)
+
+This branch differs from the released 5.0.0 described in the next section.
+New matches run only on Agent API v2 Python agents, under **Classic**
+(`bytefray-rules-4`, the stable default) or the explicitly selected
+experimental **Active Sensing (Alpha)** (`bytefray-rules-6-alpha1`). Fourteen
+research Rulesets remain selectable only by exact ID through
+`bytefray agents evaluate`. V6 Phases 2B.9–2B.12 retired execution of Agent API
+v1, VM/blob agents, Redcode/pMARS and every other Ruleset (see
+[Retired from execution / still recognised](#retired-from-execution--still-recognised-v6-phase-2b9-2b10-scope-b));
+their artifacts stay readable, and 5.0.0 still runs them. The display names
+are presentation only: artifacts, `--ruleset` and diagnostics use the exact
+ID. The per-surface details are in the proposed
+[5.1.0-alpha.1 compatibility record](releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md).
 
 ## Current V5 product boundary
+
+This section describes the released `5.0.0`. On this development line the
+retirements above apply.
 
 Bytefray `5.0.0` is the current V5 release; its process-agent gameplay
 continues to use permanent `bytefray-rules-4` and Agent API v2. There is no
@@ -149,9 +171,12 @@ does not imply, and should not silently piggyback on, a change to another:
 
 | Axis | What it identifies | Where it lives |
 |---|---|---|
-| Project/package version | The installable release (e.g. `0.10.0`). | `pyproject.toml` / `ProjectInfo.version`. |
+| Project/package version | The installable release (e.g. `0.10.0`; SemVer per [COMPONENT_VERSIONING.md](COMPONENT_VERSIONING.md)). | `pyproject.toml` / `ProjectInfo.version`. |
 | Agent API version | The Python agent programming contract, including RNG derivation. | `battle_engine.agent_api.AGENT_API_VERSION`. |
-| Ruleset identity | The gameplay rules of the game itself. | `battle_engine.rules.BYTEFRAY_RULESET_ID`. |
+| Ruleset identity | The gameplay rules of the game itself. | `battle_engine.rules` (one constant per identity). |
+| Ruleset display name | A presentation label (Classic, Active Sensing (Alpha)) for a product-offered Ruleset. Never persisted, never input, never a compatibility key. | `battle_engine.ruleset_names.RULESET_DISPLAY_NAMES`. |
+| Spectator presentation protocol | Wire shape of the presentation Bytefray exports for Bytefray Spectator. | `battle_client.spectator_export.MANIFEST_SCHEMA_VERSION` / `DOCUMENT_SCHEMA_VERSION` (`bytefray.spectator.manifest`). |
+| Spectator application version | The separate Bytefray Spectator release (own series; none released yet). | Bytefray-Spectator repository. |
 | Artifact schema versions | Wire shape of persisted artifacts. | `battle_engine.replay.SCHEMA_VERSION` (`battle2.replay`), `battle_engine.result_model` (`battle2.result`), `battle_engine.agent_evaluation.SCHEMA_VERSION`/`IDENTITY_VERSION` (`bytefray.evaluation`), `battle_engine.agent_trace` (`bytefray.agent_trace`). |
 | Evaluation methodology fields | How `agents evaluate` measures agents (orientation coverage, arena-alignment/placement/layout disclosure, seed set, Ruleset selection, roster/seat assignment for multi-entrant), not gameplay itself. | `bytefray.evaluation`'s `orientation_mode`/`arena_alignment_mode`/`rules_compatibility_id`/`group`/`roster_agent_ids` (request-resolved as of v2.0.0-beta2 Phase 1/2) fields, and each cell's `placement_id`/`subject_start`/`opponent_start` (1v1) or `roster_agent_ids`/`seat_agent_ids`/`layout_id`/`seat_starts` (multi-entrant). |
 | Agent revision identity | Content-addressed identity of one archived copy of an agent's source. | `battle_engine.agent_revisions`. |
@@ -733,7 +758,7 @@ gameplay Ruleset produced one native match:
 
 | Artifact | Version/era | Rules identity behavior |
 | --- | --- | --- |
-| `result.json` | current native (VM or Python) | exact recorded Ruleset identity (`bytefray-rules-1`, `bytefray-rules-2`, `bytefray-rules-4-alpha1`, `bytefray-rules-4-alpha2`, or `bytefray-rules-4`) |
+| `result.json` | current native (VM or Python) | exact recorded Ruleset identity (`bytefray-rules-1`, `bytefray-rules-2`, `bytefray-rules-4-alpha1`, `bytefray-rules-4-alpha2`, `bytefray-rules-4`, `bytefray-rules-6-alpha1`, or a research identity) |
 | `result.json` | legacy native, `battle2.result` v1, missing field | `recovered` `bytefray-rules-1` (proven stable since v0.3.0) |
 | `result.json` | `redcode94`/pMARS | `not_applicable` |
 | `replay.jsonl` header | current Ruleset-v1/v2 native, schema v3 | exact recorded Ruleset identity |

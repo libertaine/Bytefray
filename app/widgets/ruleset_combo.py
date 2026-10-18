@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
+from battle_engine.ruleset_names import ACTIVE_SENSING_DISPLAY_NAME
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QComboBox, QLabel
 
 from app.services.ruleset_options import (
@@ -50,6 +52,9 @@ def populate_ruleset_combo(
     combo.clear()
     for option in options:
         combo.addItem(option.label, option.ruleset_id)
+        # The label is presentation only; the canonical identity stays one
+        # hover away, exactly as Replay History's Ruleset column shows it.
+        combo.setItemData(combo.count() - 1, f"Ruleset ID: {option.ruleset_id}", Qt.ToolTipRole)
     combo.setToolTip(RULESET_DESCRIPTION)
     combo.setAccessibleDescription(RULESET_DESCRIPTION)
     default_index = combo.findData(default_ruleset_id)
@@ -109,7 +114,7 @@ def sync_ruleset_choices_for_metadata(
     if explanation is not None:
         if not current_compatible:
             explanation.setText(
-                "Select V6 alpha1 — Experimental sensing explicitly to use this agent."
+                f"Select {ACTIVE_SENSING_DISPLAY_NAME} explicitly to use this agent."
                 if replacement_id == BYTEFRAY_RULESET_V6_ALPHA1_ID
                 else NO_COMPATIBLE_RULESET_EXPLANATION
             )

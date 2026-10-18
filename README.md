@@ -24,13 +24,17 @@ Release scope, distribution and release authorization remain pending.
 | --- | --- |
 | **Bytefray 5.0.0** | Latest stable application release; downloads below. See the [stable `main` branch](https://github.com/libertaine/Bytefray/tree/main). |
 | **Bytefray 5.1** | Potential application release; not authorized for release or available as a published download. |
-| **`bytefray-rules-4`** | Permanent stable gameplay and omitted-ruleset default. |
-| **`bytefray-rules-6-alpha1`** | Distinct, explicitly selected experimental ruleset implemented here; bounded M1 acceptance does not establish unrestricted release readiness. |
-| **`v6-research`** | Research and development branch; experiments, probes and instrumentation are not all prospective product features. |
-| **Bytefray-Spectator** | Separate Godot application; currently an experimental source-only recorded-match preview. |
+| **Classic** (`bytefray-rules-4`) | Permanent stable gameplay and omitted-ruleset default. |
+| **Active Sensing (Alpha)** (`bytefray-rules-6-alpha1`) | Distinct, explicitly selected experimental ruleset implemented here; bounded M1 acceptance does not establish unrestricted release readiness. |
+| **V6**, **`v6-research`** | Research and development program and its branch; experiments, probes and instrumentation are not all prospective product features. "V6" is not an application version. |
+| **Bytefray-Spectator** | Separate Godot application with its own release series; currently an experimental source-only recorded-match preview with no released version. |
 
 Application versions, ruleset identities, Agent API versions and artifact schemas
-are independent. The V6 research/ruleset name does not announce an application 6.0.
+are independent. Classic and Active Sensing (Alpha) are display names: artifacts,
+`--ruleset` and diagnostics always use the exact ruleset ID. The V6 program name
+does not announce an application 6.0. See the
+[component versioning policy](docs/COMPONENT_VERSIONING.md) and the proposed
+[5.1.0-alpha.1 compatibility record](docs/releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md).
 
 ### What V6 research is trying to solve
 
@@ -185,7 +189,8 @@ new universal arena-size requirement. Alpha 1 retains Agent API v2 and
 replay4/trace2/result2; capability metadata v1 (`required: [sense]`) and demo
 sidecar v1 are additive. Sensing agents declare that capability so incompatible
 stable-V4 runs fail preflight. Explicit selection is available in the CLI and
-Designer Advanced/Development; Simple and Evaluation retain stable-V4 scope.
+Designer Advanced/Development, where it is labeled **Active Sensing (Alpha)**;
+Simple and Evaluation retain stable-V4 (**Classic**) scope.
 
 ### Teaching examples and limits
 
@@ -282,7 +287,8 @@ See Spectator's [dependency and export instructions](https://github.com/libertai
 `v6-spectator-integration` branch moves export into Bytefray itself:
 
 * `bytefray spectator export --source <match dir> --out <dir>` verifies an
-  ordinary completed two-entrant V6 alpha1 match. It runs the same replay
+  ordinary completed two-entrant Active Sensing (Alpha) match
+  (`bytefray-rules-6-alpha1`). It runs the same replay
   preflight Designer uses, then the authoritative sensing reconstruction, then
   re-derives the outcome. It writes the same Broadcast and Agent A documents
   under a version-2 manifest. No hand-written `match.json` is needed.
@@ -673,7 +679,7 @@ Bytefray includes a modular tool suite separating headless simulation from prese
   * `inspect`: Inspect observation and action decisions from `trace.jsonl`.
   * `diverge`: Compare two traces to identify the exact tick where decisions differed.
   * `evaluate`: Run pairwise or group evaluation matrices across seeds.
-* `bytefray spectator`: Verify a completed V6 alpha1 match and `export` it for Bytefray Spectator (development branch; see [docs/specs/spectator_export.md](docs/specs/spectator_export.md)).
+* `bytefray spectator`: Verify a completed Active Sensing (Alpha) match and `export` it for Bytefray Spectator (development branch; see [docs/specs/spectator_export.md](docs/specs/spectator_export.md)).
 
 ### 2. Pygame Replay Viewer
 Launched via `bytefray replay --replay <path> --renderer pygame` or `bytefray-replay-viewer`. Features:
@@ -692,7 +698,7 @@ Launched via `bytefray design` or `bytefray-agent-designer`. Features:
 * Match setup with agent selection, seed controls, and ruleset pickers.
 * Dynamic parameter controls generated from agent YAML schemas.
 * Built-in code inspection, validation, test launcher, and replay browser.
-* **View Last Match** in Bytefray Spectator for supported V6 alpha1 matches, when
+* **View Last Match** in Bytefray Spectator for supported Active Sensing (Alpha) matches, when
   Spectator is installed or configured (development branch; Pygame otherwise).
 * **Replay History** (**History → Replay History…**): a searchable, filterable
   browser over every completed match Bytefray has written, including matches

@@ -6,6 +6,11 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 
 from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
+from battle_engine.ruleset_names import (
+    ACTIVE_SENSING_DISPLAY_NAME,
+    CLASSIC_DISPLAY_NAME,
+    ruleset_name_with_id,
+)
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
     UnknownRulesetError,
@@ -29,11 +34,13 @@ class DesignerRulesetOption:
 # retiring Agent API v1 and VM/blob execution entirely
 # (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md). Stable v4
 # remains the default; M1-5 adds an explicit experimental sensing choice.
+# Labels start with the shared display name (battle_engine.ruleset_names);
+# the combo stores and selects by ``ruleset_id`` only, never by label.
 RULESET_V4_OPTION = DesignerRulesetOption(
-    BYTEFRAY_RULESET_V4_ID, "Ruleset v4 — Current / Recommended"
+    BYTEFRAY_RULESET_V4_ID, f"{CLASSIC_DISPLAY_NAME} — Recommended"
 )
 RULESET_V6_ALPHA1_OPTION = DesignerRulesetOption(
-    BYTEFRAY_RULESET_V6_ALPHA1_ID, "V6 alpha1 — Experimental sensing"
+    BYTEFRAY_RULESET_V6_ALPHA1_ID, ACTIVE_SENSING_DISPLAY_NAME
 )
 
 # V5 Alpha 1 Phase 1: the Designer's canonical new-session/fresh-state
@@ -63,11 +70,13 @@ EVALUATION_RULESET_OPTIONS = (RULESET_V4_OPTION,)
 DESIGNER_RULESET_OPTIONS = (RULESET_V4_OPTION, RULESET_V6_ALPHA1_OPTION)
 
 RULESET_DESCRIPTION = (
-    "Ruleset v4 is Bytefray's current, permanent process-agent gameplay "
-    "contract and requires Agent API v2; it places entrant cores from the "
-    "match seed and rotates action slots between an entrant's own "
-    "processes. V6 alpha1 — Experimental sensing requires explicit selection; "
-    "Window Scout requires this option. Edit personal-copy parameters in Advanced, "
+    f"{ruleset_name_with_id(BYTEFRAY_RULESET_V4_ID)} is Bytefray's stable, "
+    "permanent process-agent gameplay and the default; it requires Agent API "
+    "v2, places entrant cores from the match seed and rotates action slots "
+    "between an entrant's own processes. "
+    f"{ruleset_name_with_id(BYTEFRAY_RULESET_V6_ALPHA1_ID)} is experimental "
+    "and requires explicit selection; Window Scout, Watchful Keeper and "
+    "Roaming Reacquirer require it. Edit personal-copy parameters in Advanced, "
     "then run a full match there. Development Test uses manifest defaults."
 )
 

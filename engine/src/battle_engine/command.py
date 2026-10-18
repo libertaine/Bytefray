@@ -23,6 +23,8 @@ def _version_string() -> str:
 
 
 def _parser() -> argparse.ArgumentParser:
+    from battle_engine.ruleset_names import ACTIVE_SENSING_DISPLAY_NAME
+
     parser = argparse.ArgumentParser(
         prog="bytefray",
         description="Bytefray engine, replay, designer, and agent tools.",
@@ -52,7 +54,7 @@ def _parser() -> argparse.ArgumentParser:
     subcommands.add_parser(
         "spectator",
         add_help=False,
-        help="verify a V6 alpha1 match and export it for Bytefray Spectator",
+        help=f"verify an {ACTIVE_SENSING_DISPLAY_NAME} match and export it for Bytefray Spectator",
     )
     return parser
 

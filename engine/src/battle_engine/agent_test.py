@@ -59,6 +59,7 @@ from battle_engine.python_runtime import (
 )
 from battle_engine.results import WINNER_TIE_SENTINEL
 from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
+from battle_engine.ruleset_names import ACTIVE_SENSING_DISPLAY_NAME, CLASSIC_DISPLAY_NAME
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
     NoCompatibleRulesetError,
@@ -1032,9 +1033,10 @@ def _parser() -> argparse.ArgumentParser:
         choices=[BYTEFRAY_RULESET_V4_ID, BYTEFRAY_RULESET_V6_ALPHA1_ID],
         default=None,
         help=(
-            f"gameplay Ruleset identity. Stable {BYTEFRAY_RULESET_V4_ID} is "
-            "selected when this flag is omitted. Experimental "
-            f"{BYTEFRAY_RULESET_V6_ALPHA1_ID} requires explicit selection. "
+            f"gameplay Ruleset identity. Stable {BYTEFRAY_RULESET_V4_ID} "
+            f"({CLASSIC_DISPLAY_NAME}) is selected when this flag is omitted. "
+            f"Experimental {BYTEFRAY_RULESET_V6_ALPHA1_ID} is "
+            f"{ACTIVE_SENSING_DISPLAY_NAME} and requires explicit selection. "
             "Entrants must be compatible Agent API v2 Python agents. "
             "Affects gameplay semantics "
             "and is recorded in the match's result/replay artifacts."

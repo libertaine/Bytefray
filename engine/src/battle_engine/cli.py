@@ -23,6 +23,8 @@ from battle_engine.match_service import (
 from battle_engine.paths import get_data_root
 from battle_engine.placement import resolve_direct_match_starts
 from battle_engine.python_runtime import PythonEntrantInitializationError
+from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
+from battle_engine.ruleset_names import ACTIVE_SENSING_DISPLAY_NAME, CLASSIC_DISPLAY_NAME
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
     PUBLIC_EXPERIMENTAL_RULESET_IDS,
@@ -256,9 +258,10 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
         choices=sorted(PUBLIC_STABLE_RULESET_IDS | PUBLIC_EXPERIMENTAL_RULESET_IDS),
         default=None,
         help=(
-            f"gameplay Ruleset identity. {BYTEFRAY_RULESET_V4_ID} is the "
-            "default when this flag is omitted. V6 alpha1 experimental sensing "
-            "requires explicit selection. Affects "
+            f"gameplay Ruleset identity. {BYTEFRAY_RULESET_V4_ID} "
+            f"({CLASSIC_DISPLAY_NAME}) is the default when this flag is omitted. "
+            f"{BYTEFRAY_RULESET_V6_ALPHA1_ID} is {ACTIVE_SENSING_DISPLAY_NAME}: "
+            "experimental, it requires explicit selection. Affects "
             "gameplay semantics and is recorded in the match's result/replay "
             "artifacts."
         ),

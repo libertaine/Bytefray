@@ -122,6 +122,15 @@ abbreviated.
   [docs/AGENT_API_V1.md](docs/AGENT_API_V1.md), and
   [docs/AGENT_API_V2.md](docs/AGENT_API_V2.md). Bump the version and update
   the schema doc rather than silently changing wire shape in place.
+- Every component versions independently — application, Rulesets, Agent
+  API, formats, Spectator, research — per
+  [docs/COMPONENT_VERSIONING.md](docs/COMPONENT_VERSIONING.md). Never
+  renumber or rename an existing identity to tidy a sequence. Ruleset
+  display names ("Classic", "Active Sensing (Alpha)") live only in
+  `battle_engine.ruleset_names`, are presentation only, and must never be
+  persisted, accepted as input or used for compatibility. Release component
+  compatibility is declared once, in `docs/releases/*_COMPATIBILITY.json`,
+  and checked by `tools/release_compatibility.py`.
 - Agent API v2 is a stable contract, not a replacement for the frozen
   historical ones above — see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)
   for exactly what stays frozen (API v1, Ruleset v1/v2, schema-3 replays)
@@ -206,5 +215,6 @@ abbreviated.
 | Replay schema | [docs/REPLAY_SCHEMA.md](docs/REPLAY_SCHEMA.md) |
 | Headless tournaments | [docs/TOURNAMENTS.md](docs/TOURNAMENTS.md) |
 | Compatibility axes (Ruleset/Agent API/schema/methodology) | [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) |
+| Component naming and versioning policy; release compatibility records | [docs/COMPONENT_VERSIONING.md](docs/COMPONENT_VERSIONING.md), `docs/releases/` |
 | Manual smoke-test checklist | [docs/MANUAL_SMOKE_TESTS.md](docs/MANUAL_SMOKE_TESTS.md) |
 | Feature specs (source of truth before implementing) | `docs/specs/` |

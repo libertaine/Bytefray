@@ -146,13 +146,13 @@ class SpectatorLaunchController(QObject):
         discovery = discover_spectator(self._data_root)
         if discovery.problem:
             if report:
-                self.log.emit(f"[Spectator] {discovery.problem} Using the classic replay viewer.\n")
+                self.log.emit(f"[Spectator] {discovery.problem} Using the Pygame replay viewer.\n")
                 if not self._problem_reported:
                     self._problem_reported = True
                     QMessageBox.warning(
                         self._parent,
                         SPECTATOR_UNAVAILABLE_TITLE,
-                        f"{discovery.problem}\n\nBytefray will use the classic replay viewer.",
+                        f"{discovery.problem}\n\nBytefray will use the Pygame replay viewer.",
                     )
             return None
         if discovery.install is None:
@@ -160,7 +160,7 @@ class SpectatorLaunchController(QObject):
         support = match_support(result_path)
         if not support.supported:
             if report:
-                self.log.emit(f"[Spectator] Not used: {support.message}. Using the classic replay viewer.\n")
+                self.log.emit(f"[Spectator] Not used: {support.message}. Using the Pygame replay viewer.\n")
             return None
         return discovery.install
 
@@ -246,7 +246,7 @@ class SpectatorLaunchController(QObject):
                     self._parent,
                     SPECTATOR_UNAVAILABLE_TITLE,
                     unavailable_message(outcome.code, outcome.message)
-                    + "\n\nBytefray will open the classic replay viewer instead.",
+                    + "\n\nBytefray will open the Pygame replay viewer instead.",
                 )
                 self._fallback(job.request)
         pending, self._pending = self._pending, None
@@ -266,7 +266,7 @@ class SpectatorLaunchController(QObject):
             QMessageBox.warning(
                 self._parent,
                 SPECTATOR_UNAVAILABLE_TITLE,
-                f"{exc}\n\nBytefray will open the classic replay viewer instead.",
+                f"{exc}\n\nBytefray will open the Pygame replay viewer instead.",
             )
             self._fallback(request)
             return
@@ -282,5 +282,5 @@ class SpectatorLaunchController(QObject):
                 self._parent,
                 SPECTATOR_UNAVAILABLE_TITLE,
                 f"Spectator exited immediately (exit code {code}). Check its installation, "
-                "or set BYTEFRAY_SPECTATOR=off to always use the classic replay viewer.",
+                "or set BYTEFRAY_SPECTATOR=off to always use the Pygame replay viewer.",
             )

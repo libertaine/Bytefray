@@ -1084,9 +1084,15 @@ def prepare_presentation(
 
 
 def _parser() -> argparse.ArgumentParser:
+    from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
+    from battle_engine.ruleset_names import ruleset_name_with_id
+
     parser = argparse.ArgumentParser(
         prog="bytefray spectator",
-        description="Verify completed V6 alpha1 matches and write Bytefray Spectator presentations.",
+        description=(
+            f"Verify completed two-entrant {ruleset_name_with_id(BYTEFRAY_RULESET_V6_ALPHA1_ID)} "
+            "matches and write Bytefray Spectator presentations."
+        ),
     )
     commands = parser.add_subparsers(dest="action", required=True)
     export = commands.add_parser("export", help="verify a match and write its presentation directory")

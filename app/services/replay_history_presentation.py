@@ -44,6 +44,7 @@ from battle_engine.replay_history import (
     TimestampConfidence,
     WorkflowSource,
 )
+from battle_engine.ruleset_names import ruleset_display_name
 
 # ----------------------------------------------------------------------
 # Columns
@@ -312,12 +313,19 @@ def ruleset_label(ruleset_id: str | None, confidence: str) -> str:
 def _readable_ruleset(ruleset_id: str) -> str:
     """``bytefray-rules-4-alpha1`` -> ``Ruleset v4 alpha1``.
 
-    Derived from the identifier's own shape rather than a fixed table, so a
-    historical or research Ruleset the current product no longer offers still
-    reads correctly. Anything that does not match falls back to the exact ID,
-    which is never wrong -- only less friendly.
+    A Ruleset Bytefray currently offers shows its shared display name
+    (``bytefray-rules-4`` -> ``Classic``), the same name Designer's Ruleset
+    selectors use. Every other identity is derived from its own shape rather
+    than a fixed table, so a historical or research Ruleset the current
+    product no longer offers still reads correctly and is never given a
+    current product's name. Anything that does not match falls back to the
+    exact ID, which is never wrong -- only less friendly. The exact ID always
+    stays in the tooltip and details.
     """
 
+    display_name = ruleset_display_name(ruleset_id)
+    if display_name is not None:
+        return display_name
     prefix = "bytefray-rules-"
     if not ruleset_id.startswith(prefix):
         return ruleset_id

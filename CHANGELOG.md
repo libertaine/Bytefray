@@ -4,6 +4,38 @@ This changelog records notable user- and developer-visible changes to Bytefray.
 
 ## [Unreleased]
 
+### Changed — component names and versioning policy
+
+Each part of Bytefray now has its own identity and version line:
+
+* application SemVer;
+* immutable Ruleset IDs;
+* integer Agent API and format versions;
+* a separate Bytefray Spectator series;
+* objective-based research names.
+
+See [docs/COMPONENT_VERSIONING.md](docs/COMPONENT_VERSIONING.md). No
+persisted identity changed. Every Ruleset ID, Agent API version, replay,
+result, trace and Spectator-manifest version, and every historical artifact,
+is exactly as before.
+
+* **Ruleset display names.** Designer, Replay History, tournament results, CLI
+  help and the Active Sensing viewer now show **Classic** for
+  `bytefray-rules-4` and **Active Sensing (Alpha)** for
+  `bytefray-rules-6-alpha1`. They replace "Ruleset v4 — Current / Recommended"
+  and "V6 alpha1 — Experimental sensing". The names are presentation only:
+  `--ruleset`, artifacts and diagnostics use the exact ID, and Designer's
+  Ruleset items show it as a tooltip. Historical and research identities keep
+  their existing labels.
+* **Fallback wording.** Designer's Spectator fallback messages say "Pygame
+  replay viewer" instead of "classic replay viewer", so "Classic" means only
+  the Ruleset.
+* **Compatibility record.** The proposed component compatibility for the next
+  release is
+  [docs/releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md](docs/releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md),
+  generated from one JSON record that `tools/release_compatibility.py` checks
+  against the code. The installed version is still 5.0.0.
+
 ### Added — Bytefray Spectator export and Designer launch (development branch)
 
 `bytefray spectator export|prepare|verify` (`battle_client.spectator_export`)
@@ -32,6 +64,19 @@ Pygame viewer, the last two after a warning and a fresh preflight. Tournament
 and Replay History launches are unchanged. See
 [docs/specs/spectator_export.md](docs/specs/spectator_export.md).
 
+### Removed — Agent API v1, VM/blob execution and Rulesets 1 and 2
+
+V6 Phase 2B.12 ended new execution under `bytefray-rules-1` and
+`bytefray-rules-2`, of Agent API v1 agents and of native VM/builtin/blob
+entrants. It also ended creation of Ruleset-2 group evaluations. Only Agent API v2
+Python process agents run new matches, under `bytefray-rules-4` or an
+explicitly selected experimental or research Ruleset. Historical results,
+replays, traces, package inspection and evaluation history stay readable
+where their compatibility contracts require it. The retired API-v1 and VM
+starters and the Ruleset-1/Ruleset-2 promotion-equivalence test modules were
+removed. Bytefray 5.0.0 still executes all of them. See
+[`docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md`](docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md).
+
 ### Removed — V4 prerelease rulesets retired from execution
 
 `bytefray-rules-4-alpha1` and `bytefray-rules-4-alpha2` are no longer
@@ -40,7 +85,8 @@ Agent Designer, and evaluation surface before this change — unlike the
 closed-research identities retired below, these two were shipped,
 documented prerelease process-agent identities. `bytefray-rules-4` remains
 the single supported V6 process-gameplay control, unchanged; `bytefray-rules-1`
-and `bytefray-rules-2` remain executable, unaffected.
+and `bytefray-rules-2` were unaffected by this change (V6 Phase 2B.12 later
+retired them; see above).
 
 Historical results, replays, evaluations, and Replay History entries
 recorded under either retired identity remain fully readable, indexable,
@@ -69,16 +115,18 @@ surface — all three were closed research, reachable only through the
 low-level Python API.
 
 `bytefray-rules-4` remains the supported V6 gameplay baseline, unchanged.
-`bytefray-rules-1` and `bytefray-rules-2` remain executable.
+`bytefray-rules-1` and `bytefray-rules-2` were unaffected by this change
+(V6 Phase 2B.12 later retired them; see above).
 
 Historical results, replays, evaluations, and Replay History entries
 recorded under the three retired identities remain fully readable,
 indexable, filterable, and replayable — their identifiers are still
 recognized and labeled correctly. Only creating *new* matches under them is
 removed. `bytefray-rules-2`'s promotion-equivalence proof against
-`bytefray-rules-2-alpha11` (docs/V2_0_BETA1_PLAN.md) survives as a
+`bytefray-rules-2-alpha11` (docs/V2_0_BETA1_PLAN.md) was kept here as a
 frozen-golden characterization (`engine/tests/test_ruleset_v2_promotion_equivalence.py`)
-rather than a live comparison.
+until V6 Phase 2B.12 removed that module with Ruleset 2 execution; the proof
+remains in Git history and in the `v5.0.0` release.
 
 Exact re-execution of the retired identities remains available through the
 `v5.0.0` release (tag, wheel, and Windows installer), whose ruleset registry

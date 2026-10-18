@@ -14,6 +14,8 @@ from __future__ import annotations
 import math
 from typing import Any
 
+from battle_engine.ruleset_names import ACTIVE_SENSING_DISPLAY_NAME
+
 from battle_client.renderers.base import RendererDependencyError
 from battle_client.sensing import OmniscientView, SensingView
 from battle_client.sensing_presentation import (
@@ -110,7 +112,7 @@ class SensingReplayRenderer:
         pygame.init()
         try:
             self.screen = pygame.display.set_mode((1100, 750), pygame.RESIZABLE)
-            pygame.display.set_caption("Bytefray — Experimental sensing replay")
+            pygame.display.set_caption(f"Bytefray — {ACTIVE_SENSING_DISPLAY_NAME} replay")
             self.font = pygame.font.SysFont("consolas", 15)
             if initial_speed is not None:
                 presentation.controller.set_speed(initial_speed)
