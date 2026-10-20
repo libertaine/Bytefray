@@ -149,12 +149,7 @@ def _harness(monkeypatch, tmp_path, *, scripted: bool):
     import app.widgets.spectator_launch as launch
     from app.services.spectator_viewer import SpectatorDiscovery, SpectatorInstall
 
-    application = QApplication.instance() or QApplication([])
-    # These tests pump events outside exec(). A Quit an earlier test left queued
-    # (test_linux_designer_smoke's closed window posts one that its explicit quit
-    # can overtake) would be delivered here, and every later QEventLoop.exec() in
-    # the session would then return at once.
-    application.removePostedEvents(application, QtCore.QEvent.Type.Quit)
+    QApplication.instance() or QApplication([])
     (tmp_path / "data").mkdir()
     h = SimpleNamespace(
         launch=launch,
@@ -698,15 +693,10 @@ def _alive(pid: int) -> bool:
     return True
 
 
-def _until(condition, timeout: float = 30.0) -> None:
-    from PySide6.QtWidgets import QApplication
-
-    deadline = time.monotonic() + timeout
-    while not condition():
-        assert time.monotonic() < deadline, "the event loop never delivered the expected state"
-        QApplication.processEvents()
-        _flush_deletions()
-        time.sleep(0.01)
+# The real children are awaited with QProcess.waitForStarted/waitForFinished, which deliver
+# that one process's signals and nothing else. Pumping the application's event loop here
+# would also fire whatever an earlier test left pending; test_linux_designer_smoke can leave
+# a quit armed or queued, and once delivered, every later QEventLoop.exec() returns at once.
 
 
 @pytest.fixture
@@ -743,19 +733,25 @@ def test_a_superseded_real_preparation_is_killed_and_deleted(real):
     _real_children(h)
     h.controller.prewarm(_run(h, "a", "match-a", "result-a"))
     old = h.controller._proc
-    _until(lambda: old.state() == RUNNING)
+    assert old.waitForStarted(30000)
     seen = _watch(old)
     assert _alive(seen["pid"])
 
     started = time.monotonic()
     h.controller.open_match(_request(_run(h, "b", "match-b", "result-b")))
     assert time.monotonic() - started < 1.0
-    _until(lambda: seen["destroyed"] and h.launched)
+    new = h.controller._proc
+    assert new is not None and new is not old
 
-    assert not _alive(seen["pid"])
+    assert old.waitForFinished(30000)  # Qt reports the kill: only the deletion hook hears it
+    _flush_deletions()
+    assert seen["destroyed"] and not _alive(seen["pid"])
+    assert h.launched == [] and h.controller._proc is new
+
+    assert new.waitForFinished(30000)  # the superseding preparation completes through the controller
     assert h.launched == [h.tmp / "b"]
     assert h.fallbacks == [] and h.warnings == []
-    _until(lambda: not h.controller.busy())
+    assert not h.controller.busy()
 
 
 def test_shutdown_kills_a_real_preparation(real):
@@ -763,11 +759,12 @@ def test_shutdown_kills_a_real_preparation(real):
     _real_children(h)
     h.controller.prewarm(_run(h, "a", "match-a", "result-a"))
     proc = h.controller._proc
-    _until(lambda: proc.state() == RUNNING)
+    assert proc.waitForStarted(30000)
     seen = _watch(proc)
 
     h.controller.shutdown()
     assert not h.controller.busy()
-    _until(lambda: seen["destroyed"])
-    assert not _alive(seen["pid"])
+    assert proc.waitForFinished(30000)
+    _flush_deletions()
+    assert seen["destroyed"] and not _alive(seen["pid"])
     assert h.launched == [] and h.fallbacks == [] and h.warnings == []
