@@ -360,9 +360,13 @@ def test_output_must_be_new_empty_or_an_explicitly_replaced_presentation(tie_mat
     sx.export_presentation(tie_match, empty)
     with pytest.raises(sx.SpectatorExportError):
         sx.export_presentation(tie_match, empty)
-    (empty / "broadcast.json").write_bytes(b"stale")
     sx.export_presentation(tie_match, empty, replace_existing=True)
     assert (empty / "broadcast.json").read_bytes() == (tie_export / "broadcast.json").read_bytes()
+    (empty / "broadcast.json").write_bytes(b"stale")
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.export_presentation(tie_match, empty, replace_existing=True)
+    assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert (empty / "broadcast.json").read_bytes() == b"stale"
     assert _leftovers(tmp_path) == []
 
 
@@ -854,3 +858,592 @@ def test_unmarked_legacy_cache_is_reverified_even_with_identical_exporter_identi
     result = json.loads((tie_match / "result.json").read_bytes())
     rebuilt = json.loads((prepared.directory / "broadcast.json").read_bytes())
     assert {e["id"]: e["score"] for e in rebuilt["entrants"]} == result["score"]
+
+
+# --- P1 remediation 01: export --replace destination safety ------------------
+
+
+def test_replace_valid_presentation_with_different_match_succeeds(tie_match, tie_export, tmp_path, capsys):
+    second_match = _match(tmp_path / "second", [[("read", 0)], [("sense", 0)]], ticks=4)
+    out = tmp_path / "presentation"
+    shutil.copytree(tie_export, out)
+    second_result = json.loads((second_match / "result.json").read_bytes())
+
+    manifest = sx.export_presentation(second_match, out, replace_existing=True)
+    assert manifest["match"]["match_id"] == second_result["match_id"]
+    assert sx.verify_presentation(out, require_current_exporter=True)["match"]["ticks"] == 4
+    assert _leftovers(tmp_path) == []
+
+    # Also verify via CLI --replace back to tie_match.
+    assert sx.main(["export", "--source", str(tie_match), "--out", str(out), "--replace"]) == 0
+    capsys.readouterr()
+    for name in ("manifest.json", "broadcast.json", "agent_a.json"):
+        assert (out / name).read_bytes() == (tie_export / name).read_bytes()
+    assert _leftovers(tmp_path) == []
+
+
+def test_replace_refuses_original_reproduction_directory_and_preserves_files(tie_match, tmp_path, capsys):
+    victim = tmp_path / "unrelated_user_dir"
+    victim.mkdir()
+    (victim / "manifest.json").write_text('{"app": "user_project", "version": "1.0"}\n', encoding="utf-8")
+    (victim / "agent_a.json").write_text('{"notes": "important user data"}\n', encoding="utf-8")
+    before = _snapshot(victim)
+
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.export_presentation(tie_match, victim, replace_existing=True)
+    assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert _snapshot(victim) == before
+    assert sorted(p.name for p in victim.iterdir()) == ["agent_a.json", "manifest.json"]
+    assert _leftovers(tmp_path) == []
+
+    assert sx.main(["export", "--source", str(tie_match), "--out", str(victim), "--replace"]) == 1
+    assert "output_unsafe" in capsys.readouterr().err
+    assert _snapshot(victim) == before
+    assert _leftovers(tmp_path) == []
+
+
+@pytest.mark.parametrize(
+    "variant",
+    [
+        "arbitrary_json",
+        "non_json",
+        "corrupt_broadcast",
+        "corrupt_agent_a",
+        "forged_digests_non_document",
+        "forged_tick_end_count",
+        "forged_exporter_name",
+        "forged_provenance",
+        "forged_verification_flag",
+        "extra_manifest_key",
+    ],
+)
+def test_replace_refuses_three_presentation_filenames_with_arbitrary_or_corrupted_content(
+    tie_match, tie_export, tmp_path, capsys, variant
+):
+    victim = tmp_path / "victim"
+    if variant == "arbitrary_json":
+        victim.mkdir()
+        for name in ("manifest.json", "broadcast.json", "agent_a.json"):
+            (victim / name).write_text(f'{{"user_file": "{name}"}}\n', encoding="utf-8")
+    elif variant == "non_json":
+        victim.mkdir()
+        for name in ("manifest.json", "broadcast.json", "agent_a.json"):
+            (victim / name).write_text(f"plain text in {name}\n", encoding="utf-8")
+    else:
+        shutil.copytree(tie_export, victim)
+        manifest = json.loads((victim / "manifest.json").read_bytes())
+        if variant == "corrupt_broadcast":
+            (victim / "broadcast.json").write_bytes(b'{"corrupt":true}\n')
+        elif variant == "corrupt_agent_a":
+            (victim / "agent_a.json").write_bytes(b'{"corrupt":true}\n')
+        elif variant == "forged_digests_non_document":
+            payload = b'{"schema":"unrelated","schema_version":1,"frames":[]}\n'
+            (victim / "broadcast.json").write_bytes(payload)
+            manifest["presentation"]["broadcast"].update(
+                sha256=hashlib.sha256(payload).hexdigest(), bytes=len(payload), frames=0
+            )
+            (victim / "manifest.json").write_bytes(sx.canonical_json(manifest))
+        elif variant == "forged_tick_end_count":
+            manifest["verification"]["tick_end_boundaries_checked"] += 1
+            (victim / "manifest.json").write_bytes(sx.canonical_json(manifest))
+        elif variant == "forged_exporter_name":
+            manifest["exporter"] = {"name": "other.exporter", "version": 1}
+            (victim / "manifest.json").write_bytes(sx.canonical_json(manifest))
+        elif variant == "forged_provenance":
+            manifest["verification"]["provenance"] = "user_crafted"
+            (victim / "manifest.json").write_bytes(sx.canonical_json(manifest))
+        elif variant == "forged_verification_flag":
+            manifest["verification"]["outcome_verified"] = False
+            (victim / "manifest.json").write_bytes(sx.canonical_json(manifest))
+        elif variant == "extra_manifest_key":
+            manifest["user_note"] = "keep"
+            (victim / "manifest.json").write_bytes(sx.canonical_json(manifest))
+
+    before = _snapshot(victim)
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.export_presentation(tie_match, victim, replace_existing=True)
+    assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert _snapshot(victim) == before
+    assert sx.main(["export", "--source", str(tie_match), "--out", str(victim), "--replace"]) == 1
+    assert "output_unsafe" in capsys.readouterr().err
+    assert _snapshot(victim) == before
+    assert _leftovers(tmp_path) == []
+
+
+@pytest.mark.parametrize("missing", ["manifest.json", "broadcast.json", "agent_a.json"])
+def test_replace_refuses_when_required_presentation_document_is_missing(tie_match, tie_export, tmp_path, missing):
+    partial = tmp_path / "partial"
+    shutil.copytree(tie_export, partial)
+    (partial / missing).unlink()
+    before = _snapshot(partial)
+
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.export_presentation(tie_match, partial, replace_existing=True)
+    assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert _snapshot(partial) == before
+    assert sorted(p.name for p in partial.iterdir()) == sorted(before)
+    assert _leftovers(tmp_path) == []
+
+
+@pytest.mark.parametrize(
+    "tamper",
+    ["broadcast_byte_flip", "agent_a_byte_flip", "manifest_bytes_mismatch", "manifest_sha256_mismatch"],
+)
+def test_replace_refuses_when_document_hash_or_size_mismatches_manifest(tie_match, tie_export, tmp_path, tamper):
+    target = tmp_path / "tampered"
+    shutil.copytree(tie_export, target)
+    if tamper == "broadcast_byte_flip":
+        raw = bytearray((target / "broadcast.json").read_bytes())
+        raw[0] = ord(" ")
+        (target / "broadcast.json").write_bytes(bytes(raw))
+    elif tamper == "agent_a_byte_flip":
+        raw = bytearray((target / "agent_a.json").read_bytes())
+        raw[0] = ord(" ")
+        (target / "agent_a.json").write_bytes(bytes(raw))
+    elif tamper == "manifest_bytes_mismatch":
+        manifest = json.loads((target / "manifest.json").read_bytes())
+        manifest["presentation"]["broadcast"]["bytes"] += 1
+        (target / "manifest.json").write_bytes(sx.canonical_json(manifest))
+    elif tamper == "manifest_sha256_mismatch":
+        manifest = json.loads((target / "manifest.json").read_bytes())
+        manifest["presentation"]["agent_a"]["sha256"] = "0" * 64
+        (target / "manifest.json").write_bytes(sx.canonical_json(manifest))
+
+    before = _snapshot(target)
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.export_presentation(tie_match, target, replace_existing=True)
+    assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert _snapshot(target) == before
+    assert _leftovers(tmp_path) == []
+
+
+@pytest.mark.parametrize(
+    "extra_kind",
+    ["extra_file", "hidden_dotfile", "cache_owner_marker", "empty_subdir", "populated_subdir"],
+)
+def test_replace_refuses_when_extra_file_or_subdirectory_is_present(tie_match, tie_export, tmp_path, extra_kind):
+    target = tmp_path / "with_extra"
+    shutil.copytree(tie_export, target)
+    if extra_kind == "extra_file":
+        (target / "notes.txt").write_text("keep me", encoding="utf-8")
+    elif extra_kind == "hidden_dotfile":
+        (target / ".keep").write_text("hidden", encoding="utf-8")
+    elif extra_kind == "cache_owner_marker":
+        (target / sx.CACHE_OWNER).write_bytes(
+            sx.canonical_json({"schema": sx.CACHE_OWNER_SCHEMA, "key": "match_x-" + "0" * 16})
+        )
+    elif extra_kind == "empty_subdir":
+        (target / "subdir").mkdir()
+    elif extra_kind == "populated_subdir":
+        sub = target / "subdir"
+        sub.mkdir()
+        (sub / "nested.txt").write_text("nested keep", encoding="utf-8")
+
+    before = _snapshot(target)
+    before_entries = sorted(p.name for p in target.iterdir())
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.export_presentation(tie_match, target, replace_existing=True)
+    assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert _snapshot(target) == before
+    assert sorted(p.name for p in target.iterdir()) == before_entries
+    if extra_kind == "populated_subdir":
+        assert (target / "subdir" / "nested.txt").read_text(encoding="utf-8") == "nested keep"
+    assert _leftovers(tmp_path) == []
+
+
+@pytest.mark.parametrize("schema_pair", [("bytefray.spectator.manifest", 1), ("bytefray.spectator.manifest", 99), ("other.manifest", 2)])
+def test_replace_refuses_unsupported_manifest_schema_or_v1_presentation(
+    tie_match, tie_export, tmp_path, schema_pair
+):
+    target = tmp_path / "unsupported_schema"
+    shutil.copytree(tie_export, target)
+    manifest = json.loads((target / "manifest.json").read_bytes())
+    manifest["schema"], manifest["schema_version"] = schema_pair
+    (target / "manifest.json").write_bytes(sx.canonical_json(manifest))
+    before = _snapshot(target)
+
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.export_presentation(tie_match, target, replace_existing=True)
+    assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert _snapshot(target) == before
+    assert _leftovers(tmp_path) == []
+
+
+@pytest.mark.parametrize("link_mode", ["target_dir_alias", "parent_dir_alias", "child_dir_alias"])
+def test_replace_refuses_directory_symlink_junction_or_reparse_point_targets(
+    tie_match, tie_export, tmp_path, link_mode
+):
+    real_pres = tmp_path / "real_pres"
+    shutil.copytree(tie_export, real_pres)
+    before = _snapshot(real_pres)
+
+    if link_mode == "target_dir_alias":
+        alias = tmp_path / "alias_pres"
+        _directory_alias(alias, real_pres)
+        out = alias
+    elif link_mode == "parent_dir_alias":
+        alias_parent = tmp_path / "alias_parent"
+        _directory_alias(alias_parent, tmp_path)
+        out = alias_parent / "real_pres"
+    else:
+        foreign = tmp_path / "foreign"
+        foreign.mkdir()
+        (foreign / "keep.txt").write_text("keep", encoding="utf-8")
+        _directory_alias(real_pres / "linked_subdir", foreign)
+        out = real_pres
+
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.export_presentation(tie_match, out, replace_existing=True)
+    assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert _snapshot(real_pres) == before
+    if link_mode == "child_dir_alias":
+        assert (tmp_path / "foreign" / "keep.txt").read_text(encoding="utf-8") == "keep"
+
+
+def test_replace_refuses_symlinked_presentation_member_file(tie_match, tie_export, tmp_path, monkeypatch):
+    target = tmp_path / "pres_with_file_link"
+    shutil.copytree(tie_export, target)
+    outside = tmp_path / "outside_manifest.json"
+    outside.write_bytes((tie_export / "manifest.json").read_bytes())
+    before_outside = outside.read_bytes()
+
+    manifest_member = target / "manifest.json"
+    created_native_symlink = False
+    try:
+        manifest_member.unlink()
+        manifest_member.symlink_to(outside)
+        created_native_symlink = True
+    except OSError:
+        # Unprivileged Windows accounts may disallow file symlinks; restore the
+        # file and simulate the lstat reparse-point check on manifest.json.
+        shutil.copyfile(outside, manifest_member)
+        real_is_link = sx._is_link
+        monkeypatch.setattr(sx, "_is_link", lambda p: Path(p) == manifest_member or real_is_link(Path(p)))
+
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.export_presentation(tie_match, target, replace_existing=True)
+    assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert outside.read_bytes() == before_outside
+    if created_native_symlink:
+        assert manifest_member.is_symlink()
+    assert _leftovers(tmp_path) == []
+
+
+@pytest.mark.parametrize("kind", ["out-alias-to-source", "source-alias-in-out", "out-child-of-source-alias", "split-replay-dir"])
+def test_export_and_replace_refuse_canonical_and_split_source_overlaps(tie_match, tie_export, tmp_path, kind):
+    match = tmp_path / "runs" / "match"
+    shutil.copytree(tie_match, match)
+    before = _snapshot(match)
+
+    if kind == "out-alias-to-source":
+        alias = tmp_path / "out_alias"
+        _directory_alias(alias, match)
+        source, out = match, alias
+    elif kind == "source-alias-in-out":
+        out = tmp_path / "container"
+        out.mkdir()
+        alias = out / "match_alias"
+        _directory_alias(alias, match)
+        source = alias
+    elif kind == "out-child-of-source-alias":
+        alias = tmp_path / "source_alias"
+        _directory_alias(alias, match)
+        source, out = alias, alias / "presentation"
+    else:
+        replay_dir = tmp_path / "runs" / "replays"
+        replay_dir.mkdir(parents=True)
+        shutil.move(str(match / "replay.jsonl"), str(replay_dir / "replay.jsonl"))
+        shutil.move(str(match / "trace.jsonl"), str(replay_dir / "trace.jsonl"))
+        _edit_result(match, replay_path="../replays/replay.jsonl")
+        before = _snapshot(match)
+        before_replays = _snapshot(replay_dir)
+        source, out = match, replay_dir
+
+    for replace in (False, True):
+        with pytest.raises(sx.SpectatorExportError) as caught:
+            sx.export_presentation(source, out, replace_existing=replace)
+        assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert _snapshot(match) == before
+    if kind == "split-replay-dir":
+        assert _snapshot(replay_dir) == before_replays
+
+
+@pytest.mark.parametrize("failure_mode", ["write_oserror", "corrupt_staged_output", "install_replace_oserror"])
+def test_simulated_staging_or_install_failure_during_replace_preserves_original_presentation(
+    tie_match, tie_export, tmp_path, monkeypatch, failure_mode
+):
+    out = tmp_path / "out"
+    shutil.copytree(tie_export, out)
+    before = _snapshot(out)
+    second_match = _match(tmp_path / "second", [[("read", 0)], [("sense", 0)]], ticks=4)
+
+    if failure_mode == "write_oserror":
+        def fail_write(staging, sources, documents):
+            (staging / "broadcast.json").write_bytes(b"partial")
+            raise OSError("simulated disk full during staging")
+
+        monkeypatch.setattr(sx, "_write_presentation", fail_write)
+        expected_code = sx.OUTPUT_FAILED
+    elif failure_mode == "corrupt_staged_output":
+        real_write = sx._write_presentation
+
+        def corrupt_write(staging, sources, documents):
+            manifest = real_write(staging, sources, documents)
+            (staging / "broadcast.json").write_bytes(b"corrupted in staging")
+            return manifest
+
+        monkeypatch.setattr(sx, "_write_presentation", corrupt_write)
+        expected_code = sx.PRESENTATION_INVALID
+    else:
+        real_replace = os.replace
+
+        def fail_second_replace(src, dst):
+            if Path(dst) == out and ".staging-" in Path(src).name:
+                raise OSError("simulated failure moving staging into out_dir")
+            return real_replace(src, dst)
+
+        monkeypatch.setattr(os, "replace", fail_second_replace)
+        expected_code = sx.OUTPUT_FAILED
+
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.export_presentation(second_match, out, replace_existing=True)
+    assert caught.value.code == expected_code
+    assert _snapshot(out) == before
+    assert sx.verify_presentation(out, require_current_exporter=True)["match"]["ticks"] == 6
+    assert _leftovers(tmp_path) == []
+
+
+@pytest.mark.parametrize("variant", [
+    "minimal_pair", "broadcast_missing_identity", "agent_missing_core", "broadcast_missing_owners",
+    "broadcast_frame_missing_field", "agent_frame_missing_field", "invalid_phase", "boolean_tick",
+    "bad_anchor_row", "bad_owner_change", "bad_contact", "bad_event", "bad_sample", "bad_read",
+    "broadcast_identity", "agent_identity", "arena_identity", "result_identity", "entrant_identity",
+    "nonfinite_score", "unexpected_document_key", "bad_match_type", "bad_phase_codes",
+    "core_identity", "bad_phase_order", "non_object_frame", "missing_tick_boundary",
+])
+def test_replace_refuses_structurally_invalid_documents_with_consistent_hashes(
+    tie_match, tie_export, tmp_path, capsys, variant
+):
+    out = tmp_path / "out"
+    shutil.copytree(tie_export, out)
+    manifest = json.loads((out / "manifest.json").read_bytes())
+    broadcast = json.loads((out / "broadcast.json").read_bytes())
+    agent = json.loads((out / "agent_a.json").read_bytes())
+    if variant == "minimal_pair":
+        broadcast = {"schema": sx.BROADCAST_SCHEMA, "schema_version": 1,
+                     "frames": [{"p": 2, "user_notes": "preserve me"}]}
+        agent = {"schema": sx.AGENT_SCHEMA, "schema_version": 1, "frames": []}
+        manifest["verification"]["tick_end_boundaries_checked"] = 1
+    elif variant == "broadcast_missing_identity":
+        del broadcast["match_id"]
+    elif variant == "agent_missing_core":
+        del agent["core_size"]
+    elif variant == "broadcast_missing_owners":
+        del broadcast["frames"][0]["owners"]
+    elif variant == "broadcast_frame_missing_field":
+        del broadcast["frames"][0]["anchors"]
+    elif variant == "agent_frame_missing_field":
+        del agent["frames"][0]["processes"]
+    elif variant == "invalid_phase":
+        agent["frames"][0]["p"] = 99
+    elif variant == "boolean_tick":
+        broadcast["frames"][0]["t"] = False
+    elif variant == "bad_anchor_row":
+        broadcast["frames"][0]["anchors"] = [["A", "main"]]
+    elif variant == "bad_owner_change":
+        broadcast["frames"][1]["owner_changes"] = [[manifest["match"]["arena_size"], "A"]]
+    elif variant == "bad_contact":
+        agent["frames"][0]["contacts"] = [{"address": 0}]
+    elif variant == "bad_event":
+        next(frame for frame in agent["frames"] if frame["events"])["events"][0]["cost"] = "one"
+    elif variant == "bad_sample":
+        agent["frames"][0]["samples"] = [{"center": 0, "addresses": []}]
+    elif variant == "bad_read":
+        agent["frames"][0]["reads"] = [{"address": 0, "value": 1}]
+    elif variant == "broadcast_identity":
+        broadcast["match_id"] = "other_match"
+    elif variant == "agent_identity":
+        agent["entrant_id"] = "B"
+    elif variant == "arena_identity":
+        agent["arena_size"] += 1
+    elif variant == "result_identity":
+        broadcast["result"]["winner"] = "B"
+    elif variant == "entrant_identity":
+        broadcast["entrants"][0]["name"] = "another_agent"
+    elif variant == "nonfinite_score":
+        broadcast["entrants"][0]["score"] = float("nan")
+    elif variant == "unexpected_document_key":
+        broadcast["user_notes"] = "preserve me"
+    elif variant == "bad_match_type":
+        manifest["match"]["arena_size"] = "512"
+    elif variant == "bad_phase_codes":
+        agent["phase_codes"]["OBSERVATION"] = False
+    elif variant == "core_identity":
+        agent["core_base"] = (agent["core_base"] + 1) % agent["arena_size"]
+    elif variant == "bad_phase_order":
+        agent["frames"][1], agent["frames"][2] = agent["frames"][2], agent["frames"][1]
+    elif variant == "non_object_frame":
+        agent["frames"][0] = 1
+    elif variant == "missing_tick_boundary":
+        agent["frames"].pop()
+    for key, document in (("broadcast", broadcast), ("agent_a", agent)):
+        data = sx.canonical_json(document)
+        (out / sx.PRESENTATION_FILES[key]).write_bytes(data)
+        manifest["presentation"][key].update(
+            sha256=hashlib.sha256(data).hexdigest(), bytes=len(data), frames=len(document["frames"])
+        )
+    (out / "manifest.json").write_bytes(sx.canonical_json(manifest))
+    before = {p.name: p.read_bytes() for p in out.iterdir()}
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.export_presentation(tie_match, out, replace_existing=True)
+    assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert {p.name: p.read_bytes() for p in out.iterdir()} == before
+    assert sx.main(["export", "--source", str(tie_match), "--out", str(out), "--replace"]) == 1
+    assert "output_unsafe" in capsys.readouterr().err
+    assert {p.name: p.read_bytes() for p in out.iterdir()} == before
+    assert _leftovers(tmp_path) == []
+
+
+@pytest.mark.parametrize("replace", [False, True])
+def test_export_refuses_child_of_resolved_trace_directory(tie_match, tmp_path, replace):
+    match = tmp_path / "match"
+    shutil.copytree(tie_match, match)
+    trace_dir = tmp_path / "trace_store"
+    trace_dir.mkdir()
+    actual_trace = trace_dir / "bound_trace.jsonl"
+    actual_trace.write_bytes((match / "trace.jsonl").read_bytes())
+    (match / "trace.jsonl").unlink()
+    try:
+        (match / "trace.jsonl").symlink_to(actual_trace)
+    except OSError as exc:
+        pytest.skip(f"native file symlinks unavailable: {exc}")
+    # Establish that this is a valid source, not rejection of unusable evidence.
+    outside = tmp_path / "separate_output"
+    sx.export_presentation(match, outside)
+    before = _snapshot(match), _snapshot(trace_dir)
+    out = trace_dir / "presentation"
+    out.mkdir()
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.export_presentation(match, out, replace_existing=replace)
+    assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert list(out.iterdir()) == []
+    assert (_snapshot(match), _snapshot(trace_dir)) == before
+    assert _leftovers(trace_dir) == []
+
+
+@pytest.mark.parametrize("entrypoint", ["api", "cli"])
+@pytest.mark.parametrize("failure", ["install", "post_rename_check"])
+def test_failed_restore_reports_and_preserves_original(tie_match, tie_export, tmp_path, monkeypatch, capsys, entrypoint, failure):
+    out = tmp_path / "out"
+    shutil.copytree(tie_export, out)
+    before = {p.name: p.read_bytes() for p in out.iterdir()}
+    real_replace = os.replace
+    retained = []
+
+    def replace(src, dst):
+        src, dst = Path(src), Path(dst)
+        if src == out:
+            real_replace(src, dst)
+            retained.append(dst)
+            if failure == "post_rename_check":
+                (dst / "notes.txt").write_bytes(b"added after the last output check")
+            return None
+        if retained and src == retained[0]:
+            raise OSError("restoration sharing violation")
+        if dst == out and ".staging-" in src.name:
+            raise OSError("installation I/O failure")
+        return real_replace(src, dst)
+
+    monkeypatch.setattr(os, "replace", replace)
+    if entrypoint == "api":
+        with pytest.raises(sx.SpectatorExportError) as caught:
+            sx.export_presentation(tie_match, out, replace_existing=True)
+        assert caught.value.code == sx.OUTPUT_FAILED
+        diagnostic = str(caught.value)
+    else:
+        assert sx.main(["export", "--source", str(tie_match), "--out", str(out), "--replace"]) == 1
+        diagnostic = capsys.readouterr().err
+        assert "output_failed" in diagnostic
+    assert len(retained) == 1
+    recovery = retained[0]
+    assert str(recovery.resolve()) in diagnostic
+    assert "restoration sharing violation" in diagnostic
+    assert ("installation I/O failure" if failure == "install" else "gained files") in diagnostic
+    assert not out.exists()
+    for name, data in before.items():
+        assert (recovery / name).read_bytes() == data
+    if failure == "post_rename_check":
+        assert (recovery / "notes.txt").read_bytes() == b"added after the last output check"
+    assert _leftovers(tmp_path) == [recovery.name]
+
+
+@pytest.mark.parametrize("timing", ["after_rename", "after_install"])
+def test_files_added_after_final_check_are_retained(tie_match, tie_export, tmp_path, monkeypatch, timing):
+    out = tmp_path / "out"
+    shutil.copytree(tie_export, out)
+    before = _snapshot(out)
+    real_replace = os.replace
+    aside = []
+
+    def replace(src, dst):
+        result = real_replace(src, dst)
+        if Path(src) == out:
+            aside.append(Path(dst))
+            if timing == "after_rename":
+                (aside[0] / "notes.txt").write_bytes(b"keep")
+        elif Path(dst) == out and ".staging-" in Path(src).name and timing == "after_install":
+            (aside[0] / "notes.txt").write_bytes(b"keep")
+        return result
+
+    monkeypatch.setattr(os, "replace", replace)
+    if timing == "after_rename":
+        with pytest.raises(sx.SpectatorExportError) as caught:
+            sx.export_presentation(tie_match, out, replace_existing=True)
+        assert caught.value.code == sx.OUTPUT_UNSAFE
+        preserved = out
+        assert _leftovers(tmp_path) == []
+    else:
+        sx.export_presentation(tie_match, out, replace_existing=True)
+        sx.verify_presentation(out)
+        preserved = aside[0]
+        assert _leftovers(tmp_path) == [preserved.name]
+    assert (preserved / "notes.txt").read_bytes() == b"keep"
+    assert {k: v for k, v in _snapshot(preserved).items() if k != "notes.txt"} == before
+
+
+def test_aside_cleanup_failure_keeps_installed_output_and_original(tie_match, tie_export, tmp_path, monkeypatch):
+    out = tmp_path / "out"
+    shutil.copytree(tie_export, out)
+    before = _snapshot(out)
+    real_unlink = Path.unlink
+
+    def unlink(path, *args, **kwargs):
+        if path.parent.name.startswith(".out.old-"):
+            raise PermissionError("original is open")
+        return real_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "unlink", unlink)
+    sx.export_presentation(tie_match, out, replace_existing=True)
+    sx.verify_presentation(out)
+    recovery, = tmp_path.glob(".out.old-*")
+    assert _snapshot(recovery) == before
+    assert _leftovers(tmp_path) == [recovery.name]
+
+
+@pytest.mark.parametrize("failure_type", [OSError, RuntimeError])
+def test_export_fails_closed_when_trace_location_cannot_resolve(tie_match, tmp_path, monkeypatch, failure_type):
+    before = _snapshot(tie_match)
+    trace = tie_match / "trace.jsonl"
+    real_resolve = Path.resolve
+
+    def resolve(path, *args, **kwargs):
+        if path == trace:
+            raise failure_type("trace target unavailable")
+        return real_resolve(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "resolve", resolve)
+    with pytest.raises(sx.SpectatorExportError) as caught:
+        sx.export_presentation(tie_match, tmp_path / "out")
+    assert caught.value.code == sx.OUTPUT_UNSAFE
+    assert _snapshot(tie_match) == before
+    assert list(tmp_path.iterdir()) == []

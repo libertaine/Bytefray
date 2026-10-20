@@ -44,6 +44,7 @@ import time
 import uuid
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from itertools import pairwise
 from pathlib import Path
 from typing import Any
 
@@ -60,7 +61,37 @@ RESULT_FILENAME = "result.json"
 TRACE_FILENAME = "trace.jsonl"
 MANIFEST_FILENAME = "manifest.json"
 PRESENTATION_FILES = {"broadcast": "broadcast.json", "agent_a": "agent_a.json"}
+PRESENTATION_DIR_FILES = frozenset({MANIFEST_FILENAME, *PRESENTATION_FILES.values()})
 DOCUMENT_SCHEMAS = {"broadcast": BROADCAST_SCHEMA, "agent_a": AGENT_SCHEMA}
+MANIFEST_KEYS = frozenset(
+    {"schema", "schema_version", "exporter", "bytefray", "match", "sources", "verification", "presentation"}
+)
+VERIFICATION_BOOL_KEYS = (
+    "result_replay_preflight",
+    "artifact_pair_consistent",
+    "exchange_reconstructed",
+    "outcome_verified",
+    "sources_unchanged",
+    "agent_view_allowlist_checked",
+)
+VERIFICATION_KEYS = frozenset({"provenance", "tick_end_boundaries_checked", *VERIFICATION_BOOL_KEYS})
+PRESENTATION_ENTRY_KEYS = frozenset({"path", "schema", "schema_version", "sha256", "bytes", "frames"})
+MATCH_KEYS = frozenset(
+    {
+        "match_id",
+        "result_id",
+        "ruleset_id",
+        "arena_size",
+        "seed",
+        "tick_limit",
+        "ticks",
+        "termination_reason",
+        "winner",
+        "entrants",
+        "product_version",
+    }
+)
+HEX_SHA256_PATTERN = r"[0-9a-f]{64}"
 # Spectator's legend, colours and qualification cover exactly two entrants.
 SUPPORTED_ENTRANTS = ("A", "B")
 AGENT_ID = "A"
@@ -696,6 +727,108 @@ def _write_presentation(
     return manifest
 
 
+def _is_link(path: Path) -> bool:
+    """Include Windows junctions/reparse points on every supported Python."""
+    info = path.lstat()
+    return stat.S_ISLNK(info.st_mode) or bool(
+        getattr(info, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT
+    )
+
+
+def _is_real_dir(path: Path) -> bool:
+    """True only for an existing directory that is not a symlink, junction, or reparse point."""
+    try:
+        return not _is_link(path) and stat.S_ISDIR(path.lstat().st_mode)
+    except OSError:
+        return False
+
+
+def _is_regular_file(path: Path) -> bool:
+    """True only for an existing regular file that is not a symlink, junction, or reparse point."""
+    try:
+        return not _is_link(path) and stat.S_ISREG(path.lstat().st_mode)
+    except OSError:
+        return False
+
+
+def _is_empty_dir(path: Path) -> bool:
+    """True only for an existing non-link directory with no entries."""
+    if not _is_real_dir(path):
+        return False
+    try:
+        return not any(path.iterdir())
+    except OSError:
+        return False
+
+
+def _reject_link_path(out_dir: Path) -> Path:
+    """Return the normalized absolute path for ``out_dir``, refusing any symlink or reparse point."""
+    expanded = Path(out_dir).expanduser()
+    lexical = expanded if expanded.is_absolute() else Path.cwd() / expanded
+    current = Path(lexical.anchor) if lexical.anchor else Path()
+    for part in lexical.parts[1 if lexical.anchor else 0 :]:
+        current = current / part
+        try:
+            if os.path.lexists(current) and _is_link(current):
+                raise SpectatorExportError(
+                    OUTPUT_UNSAFE, f"{out_dir} traverses a symbolic link or reparse point: {current}"
+                )
+        except OSError as exc:
+            raise SpectatorExportError(OUTPUT_UNSAFE, f"cannot inspect output path {out_dir}: {exc}") from None
+    normalized = Path(os.path.abspath(expanded))
+    for candidate in (normalized, *normalized.parents):
+        try:
+            if os.path.lexists(candidate) and _is_link(candidate):
+                raise SpectatorExportError(
+                    OUTPUT_UNSAFE, f"{out_dir} traverses a symbolic link or reparse point: {candidate}"
+                )
+        except OSError as exc:
+            raise SpectatorExportError(OUTPUT_UNSAFE, f"cannot inspect output path {out_dir}: {exc}") from None
+    return normalized
+
+
+def _paths_overlap(first: Path, second: Path) -> bool:
+    return first == second or first in second.parents or second in first.parents
+
+
+def _check_separation(target: Path, source_dirs: tuple[Path, ...]) -> None:
+    try:
+        lexical_target = Path(os.path.abspath(Path(target).expanduser()))
+        canonical_target = lexical_target.resolve()
+        source_pairs = tuple(
+            (
+                Path(os.path.abspath(Path(source).expanduser())),
+                Path(source).expanduser().resolve(),
+            )
+            for source in source_dirs
+        )
+    except (OSError, RuntimeError) as exc:
+        raise SpectatorExportError(OUTPUT_UNSAFE, f"cannot resolve output/cache paths: {exc}") from None
+    for lexical_source, canonical_source in source_pairs:
+        if (
+            _paths_overlap(lexical_target, lexical_source)
+            or _paths_overlap(canonical_target, canonical_source)
+            or _paths_overlap(lexical_target, canonical_source)
+            or _paths_overlap(canonical_target, lexical_source)
+        ):
+            raise SpectatorExportError(
+                OUTPUT_UNSAFE, "the output/cache directory must be disjoint from the match directories"
+            )
+
+
+def _source_directories(source: Path, verified: _Sources) -> tuple[Path, ...]:
+    """Protect apparent and actual parents of every preflight-verified artifact."""
+    try:
+        raw_source = Path(os.path.abspath(Path(source).expanduser()))
+        dirs = [raw_source if raw_source.is_dir() else raw_source.parent]
+        for artifact in verified.named().values():
+            lexical = Path(os.path.abspath(artifact))
+            dirs.extend((lexical.parent, lexical.resolve(strict=True).parent))
+    except (OSError, ValueError, RuntimeError) as exc:
+        raise SpectatorExportError(OUTPUT_UNSAFE, f"cannot resolve source artifact locations: {exc}") from None
+    return tuple(dirs)
+
+
 def _export_into(
     result_path: Path, staging: Path, progress: Progress, expectation: Expectation | None = None
 ) -> dict[str, Any]:
@@ -707,33 +840,46 @@ def _export_into(
         raise SpectatorExportError(SOURCE_CHANGED, "match artifacts changed while they were being exported")
     progress("writing presentation")
     try:
-        return _write_presentation(staging, before, documents)
+        _write_presentation(staging, before, documents)
     except OSError as exc:
         raise SpectatorExportError(OUTPUT_FAILED, f"could not write the presentation: {exc}") from None
+    return verify_presentation(staging, sources=before, require_current_exporter=True)
 
 
 def _is_presentation_dir(path: Path) -> bool:
-    names = {entry.name for entry in path.iterdir()}
-    allowed = {MANIFEST_FILENAME, *PRESENTATION_FILES.values()}
-    return names <= allowed and all((path / name).is_file() for name in names)
+    """True only when ``path`` is a real directory holding a complete, verified presentation."""
+    try:
+        if not _is_real_dir(path):
+            return False
+        names = {entry.name for entry in path.iterdir()}
+        if names != PRESENTATION_DIR_FILES:
+            return False
+        if not all(_is_regular_file(path / name) for name in PRESENTATION_DIR_FILES):
+            return False
+        verify_presentation(path)
+        return True
+    except (OSError, SpectatorExportError):
+        return False
 
 
-def _check_output(out_dir: Path, result_path: Path, replace_existing: bool) -> None:
+def _check_output(out_dir: Path, source_or_dirs: Path | tuple[Path, ...], replace_existing: bool) -> None:
     """Refuse any output that could write into, or delete, something not ours.
 
     Run before the export and again immediately before installing: an export
     can take minutes, and the folder may be created or filled meanwhile.
     """
-    _check_separation(out_dir, (result_path.parent,))
-    if not out_dir.exists():
+    target = _reject_link_path(out_dir)
+    source_dirs = (source_or_dirs.parent,) if isinstance(source_or_dirs, Path) else source_or_dirs
+    _check_separation(target, source_dirs)
+    if not os.path.lexists(target):
         return
-    if not out_dir.is_dir():
+    if not _is_real_dir(target):
         raise SpectatorExportError(OUTPUT_UNSAFE, f"{out_dir} exists and is not a directory")
-    if not any(out_dir.iterdir()):
+    if _is_empty_dir(target):
         return
     if not replace_existing:
         raise SpectatorExportError(OUTPUT_UNSAFE, f"{out_dir} is not empty; pass --replace to replace a presentation")
-    if not _is_presentation_dir(out_dir):
+    if not _is_presentation_dir(target):
         raise SpectatorExportError(OUTPUT_UNSAFE, f"{out_dir} holds files that are not a Spectator presentation")
 
 
@@ -747,25 +893,57 @@ def _new_staging(parent: Path, name: str) -> Path:
     return staging
 
 
-def _install(staging: Path, out_dir: Path) -> None:
+def _remove_verified_aside(aside: Path, *, was_empty: bool) -> None:
+    """Remove a displaced empty or verified-presentation directory without rmtree."""
+    try:
+        if was_empty:
+            if _is_empty_dir(aside):
+                aside.rmdir()
+            return
+        if not _is_presentation_dir(aside):
+            return
+        for name in PRESENTATION_DIR_FILES:
+            member = aside / name
+            if _is_regular_file(member):
+                member.unlink()
+        aside.rmdir()
+    except OSError:
+        pass
+
+
+def _install(staging: Path, out_dir: Path, *, replace_existing: bool = True) -> None:
     """Move a complete staged presentation into place (rename within one directory).
 
     An existing ``out_dir`` is moved aside first and deleted only if it is empty
-    or holds nothing but a presentation; anything else is moved back untouched
-    and the install is refused.
+    or holds nothing but a verified presentation. Installation and post-rename
+    validation failures attempt restoration; failed restoration retains the
+    original aside and reports its complete recovery path.
     """
-    if out_dir.exists():
+    _reject_link_path(out_dir)
+    if not _is_presentation_dir(staging):
+        raise SpectatorExportError(OUTPUT_FAILED, "staged presentation is incomplete or invalid")
+    if os.path.lexists(out_dir):
+        if not (_is_empty_dir(out_dir) or (replace_existing and _is_presentation_dir(out_dir))):
+            raise SpectatorExportError(OUTPUT_UNSAFE, f"{out_dir} holds files that are not a Spectator presentation")
         aside = out_dir.with_name(f".{out_dir.name}.old-{uuid.uuid4().hex[:12]}")
         os.replace(out_dir, aside)
-        if not _is_presentation_dir(aside):
-            os.replace(aside, out_dir)
-            raise SpectatorExportError(OUTPUT_UNSAFE, f"{out_dir} gained files that are not a Spectator presentation")
         try:
+            was_empty = _is_empty_dir(aside)
+            was_presentation = not was_empty and replace_existing and _is_presentation_dir(aside)
+            if not (was_empty or was_presentation):
+                raise SpectatorExportError(OUTPUT_UNSAFE, f"{out_dir} gained files that are not a Spectator presentation")
             os.replace(staging, out_dir)
-        except OSError:
-            os.replace(aside, out_dir)
+        except (OSError, SpectatorExportError) as install_error:
+            try:
+                os.replace(aside, out_dir)
+            except OSError as restore_error:
+                raise SpectatorExportError(
+                    OUTPUT_FAILED,
+                    f"installation failed: {install_error}; restoration failed: {restore_error}; "
+                    f"original directory retained for recovery at {aside.absolute()}",
+                ) from install_error
             raise
-        shutil.rmtree(aside, ignore_errors=True)
+        _remove_verified_aside(aside, was_empty=was_empty)
     else:
         os.replace(staging, out_dir)
 
@@ -781,18 +959,23 @@ def export_presentation(
 
     ``source`` is the match directory or its ``result.json``. ``out_dir`` must be
     absent or empty, or (with ``replace_existing``) an earlier presentation.
-    Returns the manifest. Raises :class:`SpectatorExportError` and leaves
-    ``out_dir`` exactly as it was on any failure.
+    Returns the manifest or raises :class:`SpectatorExportError`. Failures
+    before installation preserve the destination; installation failures attempt
+    restoration. If restoration also fails, the error names the retained
+    original directory. Abrupt termination and hostile filesystem mutation
+    are not covered by a restoration guarantee.
     """
     result_path = resolve_result_path(source)
-    target = Path(out_dir).expanduser().resolve()
+    target = _reject_link_path(out_dir)
     _check_output(target, result_path, replace_existing)
+    source_dirs = _source_directories(source, _verified_sources(result_path))
+    _check_output(target, source_dirs, replace_existing)
     staging = _new_staging(target.parent, target.name)
     try:
         manifest = _export_into(result_path, staging, progress)
-        _check_output(target, result_path, replace_existing)  # the export may have taken minutes
+        _check_output(target, source_dirs, replace_existing)  # the export may have taken minutes
         try:
-            _install(staging, target)
+            _install(staging, target, replace_existing=replace_existing)
         except OSError as exc:
             raise SpectatorExportError(OUTPUT_FAILED, f"could not install the presentation: {exc}") from None
         return manifest
@@ -803,6 +986,144 @@ def export_presentation(
 # --------------------------------------------------------------------------
 # Verification of an existing presentation
 # --------------------------------------------------------------------------
+
+
+def _verify_document(document: dict[str, Any], key: str, match: dict[str, Any]) -> None:
+    """Validate the v1 shape emitted by _broadcast/_agent and consumed by Spectator.
+
+    This proves structural eligibility, not authentic ownership or historical
+    match execution. Self-consistent complete impersonation is still possible.
+    """
+    from battle_engine.agent_api import ActionKindV2
+
+    from battle_client.sensing import SampleStatus
+
+    def require(ok: bool, detail: str) -> None:
+        if not ok:
+            raise SpectatorExportError(PRESENTATION_INVALID, f"{key}: {detail}")
+
+    def integer(value: Any) -> bool:
+        return type(value) is int
+
+    def nonnegative(value: Any) -> bool:
+        return integer(value) and value >= 0
+
+    def positive(value: Any) -> bool:
+        return integer(value) and value > 0
+
+    def text(value: Any) -> bool:
+        return isinstance(value, str)
+
+    def nullable(check: Callable[[Any], bool]) -> Callable[[Any], bool]:
+        return lambda value: value is None or check(value)
+
+    def array(check: Callable[[Any], bool]) -> Callable[[Any], bool]:
+        return lambda value: isinstance(value, list) and all(check(item) for item in value)
+
+    def row(*checks: Callable[[Any], bool]) -> Callable[[Any], bool]:
+        return lambda value: isinstance(value, list) and len(value) == len(checks) and all(
+            check(item) for check, item in zip(checks, value)
+        )
+
+    def record(fields: Mapping[str, Callable[[Any], bool]]) -> Callable[[Any], bool]:
+        return lambda value: isinstance(value, dict) and set(value) == set(fields) and all(
+            check(value[name]) for name, check in fields.items()
+        )
+
+    match_shape = record({
+        "match_id": text, "result_id": text, "ruleset_id": text, "arena_size": positive,
+        "seed": integer, "tick_limit": positive, "ticks": nonnegative,
+        "termination_reason": text, "winner": text,
+        "entrants": array(row(text, text)), "product_version": nullable(text),
+    })
+    require(match_shape(match), "malformed match fields")
+    require(match["ticks"] <= match["tick_limit"], "match ticks exceed the limit")
+    require([e[0] for e in match["entrants"]] == list(SUPPORTED_ENTRANTS), "unexpected match entrants")
+    require(match["winner"] in (*SUPPORTED_ENTRANTS, "tie"), "unexpected match winner")
+    require(match["termination_reason"] in ("tick_limit", "last_agent_standing", "all_agents_dead"), "unexpected termination")
+    arena = match["arena_size"]
+
+    def address(value: Any) -> bool:
+        return nonnegative(value) and value < arena
+
+    def seat(value: Any) -> bool:
+        return text(value) and value in SUPPORTED_ENTRANTS
+
+    def phase(value: Any) -> bool:
+        return integer(value) and value in PHASE_CODES.values()
+
+    sample_statuses = {status.value for status in SampleStatus}
+    action_kinds = {action.value for action in ActionKindV2}
+
+    def sample_status(value: Any) -> bool:
+        return text(value) and value in sample_statuses
+
+    def score(value: Any) -> bool:
+        return integer(value) or (type(value) is float and math.isfinite(value))
+
+    def phase_codes(value: Any) -> bool:
+        return record(dict.fromkeys(PHASE_CODES, integer))(value) and value == PHASE_CODES
+
+    def point(value: Any) -> bool:
+        return row(nonnegative, positive, text)(value)
+
+    common = {"schema": text, "schema_version": integer, "label": text,
+              "arena_size": positive, "phase_codes": phase_codes, "frames": array(lambda v: isinstance(v, dict))}
+    if key == "broadcast":
+        entrant = record({"id": seat, "name": text, "alive": lambda v: type(v) is bool,
+                          "score": score, "core": array(address)})
+        result = record({"termination_reason": text, "ticks": nonnegative, "winner": text})
+        require(record({**common, "match_id": text, "ruleset_id": text, "entrants": array(entrant), "result": result})(document),
+                "invalid broadcast document structure")
+        require(all(document[name] == match[name] for name in ("match_id", "ruleset_id")), "match identity mismatch")
+        require([[e["id"], e["name"]] for e in document["entrants"]] == match["entrants"], "entrant identity mismatch")
+        require(document["result"] == {name: match[name] for name in ("termination_reason", "ticks", "winner")}, "result mismatch")
+        frame_fields = {
+            "t": nonnegative, "d": nullable(nonnegative), "p": phase,
+            "anchors": array(row(seat, text, address)), "disrupted": array(row(seat, text)),
+            "alive": array(seat), "actor": nullable(seat), "process": nullable(text),
+            "kind": nullable(text), "status": nullable(text), "address": nullable(address),
+            "operand": nullable(integer), "sensed": nullable(array(address)),
+        }
+        for index, frame in enumerate(document["frames"]):
+            ownership = {"owners": array(nullable(seat))} if index == 0 else {"owner_changes": array(row(address, nullable(seat)))}
+            require(record({**frame_fields, **ownership})(frame), f"invalid broadcast frame {index}")
+            if index == 0:
+                require(len(frame["owners"]) == arena, "initial ownership size mismatch")
+            require((frame["d"] is None) == (frame["p"] == PHASE_CODES["TICK_END"]), "invalid decision boundary")
+    else:
+        require(record({**common, "entrant_id": seat, "name": text, "core_base": nullable(address),
+                        "core_size": nullable(positive), "opponent_activity": text})(document), "invalid agent document structure")
+        require((document["entrant_id"], document["name"]) == tuple(match["entrants"][0]), "agent identity mismatch")
+        require((document["core_base"] is None) == (document["core_size"] is None), "incomplete own core")
+        contact = record({"address": address, "sampled": point, "received": point,
+                          "age_ticks": nonnegative, "age_callbacks": nonnegative, "stale_since": nullable(point)})
+        event = record({"kind": lambda v: text(v) and v in action_kinds | {"observation", "attempt"},
+                        "process": text, "address": nullable(address), "operand": nullable(integer), "value": nullable(integer),
+                        "cost": nonnegative, "status": nullable(text), "sample_status": sample_status, "message": text})
+        sample = record({"center": address, "half_width": nonnegative, "status": sample_status,
+                         "addresses": array(address), "sampled": point, "received": point})
+        read = record({"address": address, "value": integer, "owner": nullable(seat), "sampled": point, "received": point})
+        frame_shape = record({"t": nonnegative, "cb": nullable(positive), "p": phase,
+                              "processes": array(row(text, address, nonnegative)), "contacts": array(contact),
+                              "receipt": sample_status, "events": array(event), "samples": array(sample), "reads": array(read)})
+        for index, frame in enumerate(document["frames"]):
+            require(frame_shape(frame), f"invalid agent frame {index}")
+            require((frame["cb"] is None) == (frame["p"] == PHASE_CODES["TICK_END"]), "invalid callback boundary")
+    require(document["arena_size"] == arena, "arena identity mismatch")
+    frames = document["frames"]
+    require(bool(frames), "no presentation frames")
+    require(all(f["t"] <= match["ticks"] for f in frames), "frame exceeds match duration")
+    ordinal = "d" if key == "broadcast" else "cb"
+
+    def position(frame: dict[str, Any]) -> tuple[int, float, int]:
+        return frame["t"], frame[ordinal] if frame[ordinal] is not None else math.inf, frame["p"]
+
+    require(all(position(a) < position(b) for a, b in pairwise(frames)), "frames out of phase order")
+    require(frames[0]["t"] == 0 and frames[0]["p"] == PHASE_CODES["TICK_END"], "missing initial boundary")
+    tick_ends = [f["t"] for f in frames if f["p"] == PHASE_CODES["TICK_END"]]
+    require(len(tick_ends) == match["ticks"] + 1 and all(t == i for i, t in enumerate(tick_ends)), "incomplete tick boundaries")
+    require(frames[-1]["p"] == PHASE_CODES["TICK_END"], "presentation does not end at a tick boundary")
 
 
 def verify_presentation(
@@ -819,36 +1140,99 @@ def verify_presentation(
     def invalid(message: str) -> SpectatorExportError:
         return SpectatorExportError(PRESENTATION_INVALID, message)
 
+    if not _is_real_dir(folder):
+        raise invalid(f"{folder} is not a regular presentation directory")
+    manifest_path = folder / MANIFEST_FILENAME
+    if not _is_regular_file(manifest_path):
+        raise invalid(f"cannot read {MANIFEST_FILENAME}: not a regular file")
     try:
-        manifest = json.loads((folder / MANIFEST_FILENAME).read_bytes())
+        manifest = json.loads(manifest_path.read_bytes())
     except (OSError, ValueError) as exc:
         raise invalid(f"cannot read {MANIFEST_FILENAME}: {exc}") from None
     if not isinstance(manifest, dict):
         raise invalid("manifest is not a JSON object")
     if (manifest.get("schema"), manifest.get("schema_version")) != (MANIFEST_SCHEMA, MANIFEST_SCHEMA_VERSION):
         raise invalid("unsupported manifest schema")
-    verification = manifest.get("verification")
-    if not isinstance(verification, dict) or verification.get("provenance") != PROVENANCE:
-        raise invalid("manifest records no verified Bytefray match")
-    for key in (
-        "result_replay_preflight",
-        "artifact_pair_consistent",
-        "exchange_reconstructed",
-        "outcome_verified",
-        "sources_unchanged",
-        "agent_view_allowlist_checked",
+    if set(manifest) != MANIFEST_KEYS:
+        raise invalid("manifest has unexpected top-level keys")
+    exporter = manifest.get("exporter")
+    if (
+        not isinstance(exporter, dict)
+        or set(exporter) != {"name", "version"}
+        or exporter.get("name") != EXPORTER_NAME
+        or type(exporter.get("version")) is not int
+        or exporter["version"] < 1
     ):
+        raise invalid("manifest records an unsupported exporter")
+    bytefray = manifest.get("bytefray")
+    if not isinstance(bytefray, dict) or not isinstance(bytefray.get("version"), str) or not bytefray["version"]:
+        raise invalid("manifest records no valid Bytefray identity")
+    match = manifest.get("match")
+    if (
+        not isinstance(match, dict)
+        or set(match) != MATCH_KEYS
+        or not isinstance(match.get("match_id"), str)
+        or not match["match_id"]
+        or not isinstance(match.get("result_id"), str)
+        or not match["result_id"]
+        or not isinstance(match.get("ruleset_id"), str)
+        or not match["ruleset_id"]
+    ):
+        raise invalid("manifest match record is malformed")
+    sources_field = manifest.get("sources")
+    if (
+        not isinstance(sources_field, dict)
+        or len(sources_field) != 3
+        or RESULT_FILENAME not in sources_field
+        or TRACE_FILENAME not in sources_field
+    ):
+        raise invalid("manifest sources record is malformed")
+    for source_name, source_record in sources_field.items():
+        if (
+            not isinstance(source_name, str)
+            or not isinstance(source_record, dict)
+            or set(source_record) != {"sha256", "bytes"}
+            or not isinstance(source_record.get("sha256"), str)
+            or re.fullmatch(HEX_SHA256_PATTERN, source_record["sha256"]) is None
+            or type(source_record.get("bytes")) is not int
+            or source_record["bytes"] <= 0
+        ):
+            raise invalid(f"manifest source record for {source_name} is malformed")
+    verification = manifest.get("verification")
+    if (
+        not isinstance(verification, dict)
+        or set(verification) != VERIFICATION_KEYS
+        or verification.get("provenance") != PROVENANCE
+    ):
+        raise invalid("manifest records no verified Bytefray match")
+    for key in VERIFICATION_BOOL_KEYS:
         if verification.get(key) is not True:
             raise invalid(f"manifest does not record {key}")
+    tick_ends = verification.get("tick_end_boundaries_checked")
+    if type(tick_ends) is not int or tick_ends < 1:
+        raise invalid("manifest does not record tick_end_boundaries_checked")
     entries = manifest.get("presentation")
     if not isinstance(entries, dict) or set(entries) != set(PRESENTATION_FILES):
         raise invalid("manifest lists unexpected presentation files")
+    documents: dict[str, dict[str, Any]] = {}
     for key, filename in PRESENTATION_FILES.items():
         entry = entries[key]
-        if not isinstance(entry, dict) or entry.get("path") != filename:
+        if (
+            not isinstance(entry, dict)
+            or set(entry) != PRESENTATION_ENTRY_KEYS
+            or entry.get("path") != filename
+            or (entry.get("schema"), entry.get("schema_version")) != (DOCUMENT_SCHEMAS[key], DOCUMENT_SCHEMA_VERSION)
+            or type(entry.get("bytes")) is not int
+            or type(entry.get("frames")) is not int
+            or not isinstance(entry.get("sha256"), str)
+            or re.fullmatch(HEX_SHA256_PATTERN, entry["sha256"]) is None
+        ):
             raise invalid(f"manifest entry for {key} is malformed")
+        doc_path = folder / filename
+        if not _is_regular_file(doc_path):
+            raise invalid(f"cannot read {filename}: not a regular file")
         try:
-            data = (folder / filename).read_bytes()
+            data = doc_path.read_bytes()
         except OSError as exc:
             raise invalid(f"cannot read {filename}: {exc}") from None
         if len(data) != entry.get("bytes") or _sha256_bytes(data) != entry.get("sha256"):
@@ -863,8 +1247,29 @@ def verify_presentation(
             raise invalid(f"{filename} has an unexpected schema")
         if len(document.get("frames", ())) != entry.get("frames"):
             raise invalid(f"{filename} frame count does not match the manifest")
+        _verify_document(document, key, match)
+        documents[key] = document
+        if key == "broadcast":
+            observed_tick_ends = sum(
+                1
+                for frame in document["frames"]
+                if isinstance(frame, dict) and frame.get("p") == PHASE_CODES["TICK_END"]
+            )
+            if observed_tick_ends != tick_ends:
+                raise invalid(f"{filename} tick_end boundary count does not match the manifest")
         if key == "agent_a":
             check_agent_allowlist(document)
+    agent = documents["agent_a"]
+    own_core = documents["broadcast"]["entrants"][0]["core"]
+    if agent["core_base"] is None:
+        core_agrees = not own_core
+    else:
+        core_agrees = len(own_core) == agent["core_size"] and all(
+            cell == (agent["core_base"] + index) % match["arena_size"]
+            for index, cell in enumerate(own_core)
+        )
+    if not core_agrees:
+        raise invalid("agent core does not match the broadcast entrant")
     if sources is not None and manifest.get("sources") != dict(sources):
         raise invalid("presentation was exported from different source artifacts")
     if require_current_exporter and (
@@ -900,27 +1305,6 @@ def _cache_key(result_path: Path, sources: Mapping[str, Mapping[str, Any]]) -> s
     return f"{safe_match}-{digest}"
 
 
-def _is_link(path: Path) -> bool:
-    """Include Windows junctions/reparse points on every supported Python."""
-    info = path.lstat()
-    return stat.S_ISLNK(info.st_mode) or bool(
-        getattr(info, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT
-    )
-
-
-def _check_separation(target: Path, source_dirs: tuple[Path, ...]) -> None:
-    try:
-        canonical = target.resolve()
-        canonical_sources = tuple(source.resolve() for source in source_dirs)
-    except (OSError, RuntimeError) as exc:
-        raise SpectatorExportError(OUTPUT_UNSAFE, f"cannot resolve output/cache paths: {exc}") from None
-    for source in canonical_sources:
-        if canonical == source or canonical in source.parents or source in canonical.parents:
-            raise SpectatorExportError(
-                OUTPUT_UNSAFE, "the output/cache directory must be disjoint from the match directories"
-            )
-
-
 def _cache_owned(path: Path, key: str) -> bool:
     """Positive ownership plus a closed file set; never follow reparse points.
 
@@ -931,21 +1315,17 @@ def _cache_owned(path: Path, key: str) -> bool:
     if re.fullmatch(CACHE_KEY_PATTERN, key) is None:
         return False
     try:
-        if _is_link(path) or not path.is_dir():
+        if not _is_real_dir(path):
             return False
         names = {entry.name for entry in path.iterdir()}
-        allowed = {MANIFEST_FILENAME, *PRESENTATION_FILES.values(), CACHE_OWNER}
+        allowed = {*PRESENTATION_DIR_FILES, CACHE_OWNER}
         if not names <= allowed:
             return False
-        if any(_is_link(path / name) or not (path / name).is_file() for name in names):
+        if any(not _is_regular_file(path / name) for name in names):
             return False
         if CACHE_OWNER in names:
             return json.loads((path / CACHE_OWNER).read_bytes()) == {"schema": CACHE_OWNER_SCHEMA, "key": key}
-        if names != allowed - {CACHE_OWNER}:
-            return False
-        manifest = verify_presentation(path)
-        exporter = manifest.get("exporter")
-        return isinstance(exporter, dict) and exporter.get("name") == EXPORTER_NAME
+        return _is_presentation_dir(path)
     except (OSError, ValueError, TypeError, SpectatorExportError):
         return False
 
