@@ -481,7 +481,12 @@ def test_closing_designer_kills_a_preparation_in_progress(designer, monkeypatch,
     result = _v6_match(designer.data_root_for_test, "20261020-000000-d0d0d0d0")
     _finish(designer, result)  # the completed match starts its background preparation
     proc = designer._spectator._proc
-    assert proc is not None and proc.state() == QProcess.ProcessState.Running
+    assert proc is not None
+    deadline = time.monotonic() + 30
+    while proc.state() != QProcess.ProcessState.Running:  # POSIX reports Starting until events run
+        assert time.monotonic() < deadline, "the preparation never started"
+        QApplication.processEvents()
+        time.sleep(0.01)
     pid = int(proc.processId())
     assert _alive(pid)
     gone = []
