@@ -91,6 +91,12 @@ include-package-data = false
 [tool.setuptools.packages.find]
 where = ["engine/src", "client/src", "."]
 include = ["battle_engine*", "battle_client*", "app*"]
+# battle_engine/data holds agent resources, not product packages. Namespace
+# discovery would otherwise turn every directory there containing a .py file
+# into a package: retired research agents would ship, and a starter missing
+# from package-data below would still ship its agent.py without agent.yaml.
+# Resources enter the wheel only through the package-data patterns below.
+exclude = ["battle_engine.data", "battle_engine.data.*"]
 
 [tool.setuptools.package-dir]
 battle_engine = "engine/src/battle_engine"
@@ -99,7 +105,10 @@ app = "app"
 
 # Only package-local runtime data belongs here. Repository-level agents are
 # user data discovered at runtime and are deliberately not folded into the
-# Python wheel.
+# Python wheel. Every starter in battle_engine.starters.STARTER_AGENT_NAMES and
+# every directory in battle_engine.agent_scaffold.TEMPLATE_DIRECTORIES_BY_API_VERSION
+# must match a pattern here; tools/check_wheel.py enforces that on the built
+# wheel.
 [tool.setuptools.package-data]
 app = [
   "assets/**/*",
@@ -111,6 +120,7 @@ battle_engine = [
   "data/agent_template_v2_annotated/*",
   "data/starter_agents/v4_*/*",
   "data/starter_agents/v5_*/*",
+  "data/starter_agents/v6_*/*",
 ]
 
 # Runtime imports can create bytecode beneath package-data agent directories.
