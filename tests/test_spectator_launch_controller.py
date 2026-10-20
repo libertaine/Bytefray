@@ -149,7 +149,12 @@ def _harness(monkeypatch, tmp_path, *, scripted: bool):
     import app.widgets.spectator_launch as launch
     from app.services.spectator_viewer import SpectatorDiscovery, SpectatorInstall
 
-    QApplication.instance() or QApplication([])
+    application = QApplication.instance() or QApplication([])
+    # These tests pump events outside exec(). A Quit an earlier test left queued
+    # (test_linux_designer_smoke's closed window posts one that its explicit quit
+    # can overtake) would be delivered here, and every later QEventLoop.exec() in
+    # the session would then return at once.
+    application.removePostedEvents(application, QtCore.QEvent.Type.Quit)
     (tmp_path / "data").mkdir()
     h = SimpleNamespace(
         launch=launch,
