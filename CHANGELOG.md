@@ -29,7 +29,9 @@ package `5.1.0a1`). It is not yet published; see the
 * **Windows metadata and notices.** Every executable carries a version
   resource (`5.1.0-alpha.1`, file version `5.1.0.101`), and `licenses\`
   holds the license texts of Python, Qt for Python, pygame-ce and its
-  libraries, PyYAML, the PyInstaller bootloader, Spectator and Godot.
+  libraries, PyYAML, the PyInstaller bootloader, Spectator and Godot. The
+  unused Qt Virtual Keyboard plugin, which is GPL-3.0-only and which the 5.0
+  executables shipped, is no longer included.
 
 ### Changed — application version 5.1.0-alpha.1
 

@@ -82,6 +82,28 @@ foreach ($Artifact in $Artifacts) {
   if (-not (Test-Path $ExePath)) { throw "Expected artifact was not produced: $ExePath" }
 }
 
+# Qt Virtual Keyboard is licensed only under the GPL-3.0 (or commercially),
+# not under the LGPL the rest of Qt for Python is used under here.
+# PyInstaller's PySide6 hook collects it with every platform input-context
+# plugin, but Qt loads that plugin only when QT_IM_MODULE asks for the virtual
+# keyboard, which nothing in Bytefray does, and nothing else imports its
+# library. Bytefray 5.0 shipped both files unused; the distribution now omits them.
+$GplOnlyQtFiles = @(
+  "PySide6\plugins\platforminputcontexts\qtvirtualkeyboardplugin.dll",
+  "PySide6\Qt6VirtualKeyboard.dll"
+)
+foreach ($Artifact in $Artifacts) {
+  foreach ($Relative in $GplOnlyQtFiles) {
+    $QtFile = Join-Path $DistDir "$($Artifact.Name)\_internal\$Relative"
+    if (Test-Path -LiteralPath $QtFile) { Remove-Item -LiteralPath $QtFile -Force }
+  }
+  $Remaining = @(Get-ChildItem -LiteralPath (Join-Path $DistDir $Artifact.Name) -Recurse -File -Filter "*virtualkeyboard*")
+  if ($Remaining.Count -gt 0) {
+    throw "Qt Virtual Keyboard files remain in $($Artifact.Name): $(($Remaining | ForEach-Object FullName) -join ', ')"
+  }
+}
+Write-Host "[build] Omitted the unused, GPL-3.0-only Qt Virtual Keyboard."
+
 # Verify no Python bytecode/cache reached any distributable tree.
 #
 # This build runs from the live repository checkout, and the engine imports
