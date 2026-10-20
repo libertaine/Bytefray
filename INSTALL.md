@@ -1,5 +1,32 @@
 # Installation Guide
 
+## Windows: Bytefray 5.1 Alpha (preview)
+
+The 5.1 Alpha installer, `Bytefray-<version>-Windows-x64-Setup.exe` (see
+[README.md](README.md) and the release notes in `docs/releases/` for the
+current preview), is a separate product from the stable installer described
+in the next section, and the two can be installed side by side:
+
+- It installs **for the current Windows account only**, without
+  administrator rights, into `%LOCALAPPDATA%\Programs\Bytefray 5.1 Alpha`:
+  the four applications under `bin\` as below, plus
+  `bin\bytefray-spectator\`, the bundled Bytefray Spectator.
+- Its data folder is `%LOCALAPPDATA%\Bytefray 5.1 Alpha` (agents, `runs\`,
+  caches). The installer records it in `bin\bytefray-install.json`, and every
+  installed application uses that folder even if `BYTEFRAY_ROOT` is set, for
+  example by the stable installer. Run the installer with
+  `/BYTEFRAYDATAROOT=<folder>` to choose another folder; an upgrade keeps the
+  folder chosen before.
+- It writes no environment variable and nothing for all users, and it never
+  touches the stable installation, its data or its shortcuts.
+- Its Start Menu folder is **Bytefray 5.1 Alpha**. Uninstall it from
+  Settings → Apps; that removes the programs and shortcuts and keeps the data
+  folder.
+- Agent Designer finds the bundled Spectator automatically.
+  `BYTEFRAY_SPECTATOR=off` uses the Pygame viewer instead, and
+  `BYTEFRAY_SPECTATOR=<executable or folder>` selects another Spectator build.
+- Like the stable installer, it is not code-signed (see below).
+
 ## Windows installer
 
 Download the Windows installer, `Bytefray-Setup-<version>.exe`, from the

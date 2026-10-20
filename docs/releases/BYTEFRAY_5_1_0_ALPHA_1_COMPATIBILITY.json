@@ -1,8 +1,8 @@
 {
   "schema": "bytefray.release_compatibility",
   "schema_version": 1,
-  "status": "proposed",
-  "status_note": "Planning record for the next application release. It is not a release, not a qualification result and not a version bump: the installed package still reports 5.0.0 until the separately authorized release-candidate milestone changes it.",
+  "status": "candidate",
+  "status_note": "Release-candidate record. The package version is 5.1.0a1, and a local Windows installer candidate has been built from this line. It is not a published release: publication needs separate project-lead approval.",
   "policy": "docs/COMPONENT_VERSIONING.md",
   "application": {
     "name": "Bytefray",
@@ -70,14 +70,19 @@
   "spectator": {
     "application": {
       "name": "Bytefray Spectator",
-      "version": null,
-      "release_status": "unreleased and unversioned; no published build",
-      "compatible_development_source": {
+      "version": "0.1.0-alpha.1",
+      "release_status": "proposed first distribution version, bundled with the 5.1.0-alpha.1 Windows installer candidate; not separately tagged or published",
+      "source": {
         "repository": "libertaine/Bytefray-Spectator",
         "branch": "designer-integration",
         "commit": "14089a7bf624a5974346306a277e307ea8f48c07"
       },
-      "distribution": "separate application, not bundled; Designer finds it through `BYTEFRAY_SPECTATOR`, `<data root>/spectator/` or `bytefray-spectator` on `PATH`"
+      "windows_build": {
+        "file": "bytefray-spectator.exe",
+        "sha256": "8a3bd1a48430a0edd1faf8ca5c5b287ed1ecd06975c4e683f273562d428fd602",
+        "engine": "Godot 4.7.2.stable"
+      },
+      "distribution": "the Windows installer bundles this build in `<install>\\bin\\bytefray-spectator\\`, pinned by `tools/spectator_companion.json`, and Designer finds it there automatically. `BYTEFRAY_SPECTATOR` still overrides it or turns Spectator off. Source and wheel installs find Spectator through `BYTEFRAY_SPECTATOR`, `<data root>/spectator/` or `bytefray-spectator` on `PATH`"
     },
     "presentation_protocol": {
       "manifest_schema": "bytefray.spectator.manifest",
@@ -102,8 +107,8 @@
   "platforms": [
     {
       "platform": "Windows 11 AMD64",
-      "bytefray": "Primary target. M1 qualified (M1-6A). M2-5 technical/platform qualification accepted PASS WITH CONDITIONS (published bb6c4b8, merged into this line).",
-      "spectator": "Executable built from tracked presets; automated self-checks and a real Designer end-to-end launch pass. No human GUI qualification."
+      "bytefray": "Primary target. M1 qualified (M1-6A). M2-5 technical/platform qualification accepted PASS WITH CONDITIONS (published bb6c4b8, merged into this line). Distributed as a per-user Inno Setup installer (`Bytefray-5.1.0-alpha.1-Windows-x64-Setup.exe`) that installs beside Bytefray 5.0; its qualification is recorded in docs/releases/5_1_ALPHA1_WINDOWS_INSTALLER_QUALIFICATION.md.",
+      "spectator": "0.1.0-alpha.1, built from tracked presets and bundled with the Windows installer; automated self-checks run on every Windows build."
     },
     {
       "platform": "Linux x86_64",
@@ -129,8 +134,11 @@
     "Three-entrant or larger Spectator presentation is deferred.",
     "Human comprehension evaluation of Active Sensing is deferred to 5.2.",
     "Classic (`bytefray-rules-4`) stays the default on every surface; Active Sensing (Alpha) is never chosen automatically, including when a sensing starter is selected.",
-    "Spectator export time grows with the square of match length (about 40 s for 477 ticks); Designer prepares exports in the background.",
-    "The frozen (PyInstaller) Bytefray build has not yet been verified with `bytefray spectator`."
+    "Spectator export time grows with the square of match length (about 40 s for 477 ticks); Designer prepares exports in the background, and a prepared presentation is reused from the data root's cache.",
+    "The Windows installer and executables are not code-signed, so Windows SmartScreen may warn before the first run.",
+    "The Windows installer installs for one Windows account (no all-users option) and supports AMD64 only.",
+    "Bytefray Spectator keeps its own settings and logs in `%APPDATA%\\Godot\\app_userdata\\Bytefray Spectator`, outside the Bytefray data root; uninstalling leaves them, as it leaves the data root.",
+    "The standalone sensing demonstration generators (`sensing_demo` and the keeper/reacquirer scenario verifiers) remain source-only."
   ],
   "unsupported": [
     "Active Sensing (Alpha) in Designer Simple, in evaluation (CLI and Designer) or in tournaments.",

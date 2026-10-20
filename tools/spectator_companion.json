@@ -1,0 +1,30 @@
+{
+  "schema": "bytefray.spectator_companion",
+  "schema_version": 1,
+  "note": "The exact Bytefray Spectator build the Windows installer bundles. Spectator is a separate application with its own version series; this pin records which build this Bytefray release was qualified with. tools/build_win.ps1 -SpectatorExe refuses any executable whose SHA-256 differs, and stages this record beside it as SPECTATOR_BUILD.json.",
+  "name": "Bytefray Spectator",
+  "version": "0.1.0-alpha.1",
+  "source": {
+    "repository": "libertaine/Bytefray-Spectator",
+    "branch": "designer-integration",
+    "commit": "14089a7bf624a5974346306a277e307ea8f48c07"
+  },
+  "build": {
+    "engine": "Godot 4.7.2.stable, official Windows x86_64 release export template",
+    "export_templates_sha512": "ca4d71c4d7b81dfc15d1a98baa07534aa95b03fdda78a0075b06672e1648d2e5f40980c9adc28d23e1b92e732ee7bf3461997aa804af74ec2fcd7a93ccb84079",
+    "command": "packaging/build.ps1 -Platform Windows",
+    "preset": "Windows Desktop (packaging/export_presets.cfg, single executable with embedded .pck)",
+    "reproducibility": "Godot exports are not byte-reproducible: rebuilding the same commit changes generated import IDs and caches inside the embedded .pck. The pinned hash identifies this one build."
+  },
+  "windows": {
+    "file": "bytefray-spectator.exe",
+    "size": 137850648,
+    "sha256": "8a3bd1a48430a0edd1faf8ca5c5b287ed1ecd06975c4e683f273562d428fd602"
+  },
+  "license": {
+    "file": "LICENSE",
+    "spdx": "MIT",
+    "sha256_lf": "60e404db8590b0b492b4bc7600a6e8524843f7542982167be8b27e3ed0550373"
+  },
+  "presentation_manifest_versions_read": [1, 2]
+}

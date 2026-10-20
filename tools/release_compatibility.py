@@ -26,6 +26,8 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RECORD_SCHEMA = ("bytefray.release_compatibility", 1)
+RECORD_STATUSES = ("proposed", "candidate", "released")
+SPECTATOR_COMPANION = REPO_ROOT / "tools" / "spectator_companion.json"
 BEGIN_MARKER = "<!-- BEGIN GENERATED: tools/release_compatibility.py -->"
 END_MARKER = "<!-- END GENERATED -->"
 SEMVER = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:-(alpha|beta|rc)\.(\d+))?$")
@@ -135,6 +137,14 @@ def runtime_problems(record: dict[str, Any]) -> list[str]:
     except ValueError as exc:
         problems.append(str(exc))
     expect("git_tag", app["git_tag"], f"v{app['version']}")
+    expect("status", record.get("status") in RECORD_STATUSES, True)
+    if record.get("status") in ("candidate", "released"):
+        # From the release-candidate milestone on, the record describes the
+        # version this tree actually builds (docs/COMPONENT_VERSIONING.md §6).
+        declared = re.search(
+            r'^version = "([^"]+)"$', (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"), re.MULTILINE
+        )
+        expect("pyproject.toml version", app["python_package_version"], declared and declared.group(1))
     classifiers = re.findall(
         r'"Programming Language :: Python :: (3\.\d+)"',
         (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"),
@@ -245,7 +255,14 @@ def runtime_problems(record: dict[str, Any]) -> list[str]:
     expect("bytefray --version result schema", info.result_schema_version, formats["result"]["writes"])
     expect("bytefray --version replay schema", info.replay_schema_version, formats["replay"]["writes"])
 
+    # The Spectator build the record names is the one the installer bundles.
+    companion = json.loads(SPECTATOR_COMPANION.read_text(encoding="utf-8"))
+    viewer = record["spectator"]["application"]
+    expect("Spectator version", viewer["version"], companion["version"])
+    expect("Spectator source", viewer["source"], companion["source"])
+    expect("Spectator Windows build", viewer["windows_build"]["sha256"], companion["windows"]["sha256"])
     protocol = record["spectator"]["presentation_protocol"]
+    expect("Spectator reads (companion pin)", protocol["spectator_reads"], companion["presentation_manifest_versions_read"])
     expect("manifest schema", protocol["manifest_schema"], spectator.MANIFEST_SCHEMA)
     expect("manifest version written", protocol["bytefray_writes"], spectator.MANIFEST_SCHEMA_VERSION)
     expect("Spectator reads what Bytefray writes", protocol["bytefray_writes"] in protocol["spectator_reads"], True)
@@ -283,7 +300,9 @@ def render_markdown(record: dict[str, Any]) -> str:
     formats = record["formats"]
     spectator = record["spectator"]
     protocol = spectator["presentation_protocol"]
-    source = spectator["application"]["compatible_development_source"]
+    viewer = spectator["application"]
+    source = viewer["source"]
+    build = viewer["windows_build"]
     matches = spectator["supported_matches"]
 
     def fmt(name: str) -> str:
@@ -299,7 +318,7 @@ def render_markdown(record: dict[str, Any]) -> str:
 
     research = rulesets["research_only"]
     capabilities = api["manifest_capabilities"]
-    distribution = spectator["application"]["distribution"]
+    distribution = viewer["distribution"]
     launch = spectator["designer_launch"]
     application = (
         f"{app['name']} {app['version']} (Python package `{app['python_package_version']}`, "
@@ -316,8 +335,9 @@ def render_markdown(record: dict[str, Any]) -> str:
         f"manifest capabilities v{capabilities['version']} ({_ids(capabilities['known'])})"
     )
     spectator_text = (
-        f"{spectator['application']['release_status']}. Compatible development source: "
-        f"`{source['repository']}` `{source['branch']}` `{source['commit'][:7]}`. "
+        f"{viewer['name']} {viewer['version']}: {viewer['release_status']}. Source "
+        f"`{source['repository']}` `{source['branch']}` `{source['commit'][:7]}`; Windows build "
+        f"`{build['file']}` SHA-256 `{build['sha256']}` ({build['engine']}). "
         f"{distribution[0].upper()}{distribution[1:]}"
     )
     documents = joined(

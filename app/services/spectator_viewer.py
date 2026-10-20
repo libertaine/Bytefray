@@ -13,8 +13,13 @@ Discovery, first match wins:
    4.7.2 executable). ``off`` (or ``pygame``/``none``/``0``/``false``) turns
    Spectator off. A value that names nothing usable is reported, never
    silently replaced by a guess.
-2. ``<data root>/spectator/`` - a portable Spectator export unpacked there.
-3. ``bytefray-spectator`` on ``PATH``.
+2. The companion bundled with a frozen Bytefray: ``bytefray-spectator/`` beside
+   the running application's own folder, which is where the Windows installer
+   puts it (``<install>/bin/bytefray-spectator/`` next to
+   ``<install>/bin/bytefray-agent-designer/``). Source and wheel installs have
+   no bundled companion.
+3. ``<data root>/spectator/`` - a portable Spectator export unpacked there.
+4. ``bytefray-spectator`` on ``PATH``.
 
 No location is hardcoded beyond these, and no shell is involved: every
 command is an argument list, so paths with spaces need no quoting.
@@ -34,10 +39,12 @@ from typing import Any
 
 from battle_client.spectator_export import SpectatorSupport, spectator_support
 from battle_engine.launchers import build_spectator_command
+from battle_engine.paths import is_frozen_application
 
 ENV_SPECTATOR = "BYTEFRAY_SPECTATOR"
 ENV_GODOT = ("BYTEFRAY_GODOT", "GODOT")
 DISABLED_VALUES = frozenset({"off", "0", "false", "none", "no", "pygame", "disabled"})
+BUNDLED_DIRECTORY = "bytefray-spectator"
 DROP_IN_DIRECTORY = "spectator"
 PATH_COMMAND = "bytefray-spectator"
 WINDOWS_EXECUTABLES = ("bytefray-spectator.exe", "Bytefray Spectator.exe")
@@ -124,14 +131,30 @@ def _from_configured(value: str, environ: Mapping[str, str], platform: str) -> S
     return SpectatorDiscovery(problem=f"{ENV_SPECTATOR} names a path that does not exist: {path}")
 
 
+def bundled_spectator_directory() -> Path | None:
+    """``<install>/bin/bytefray-spectator`` for a frozen Bytefray; ``None`` otherwise.
+
+    A frozen executable is ``<install>/bin/<app>/<app>.exe``, so the companion
+    folder is a sibling of the running application's own folder. The same
+    layout holds in ``dist/windows/`` before installation.
+    """
+    if not is_frozen_application():
+        return None
+    return Path(sys.executable).resolve().parent.parent / BUNDLED_DIRECTORY
+
+
 def discover_spectator(
     data_root: Path,
     environ: Mapping[str, str] | None = None,
     *,
     platform: str | None = None,
     which: Callable[[str], str | None] | None = None,
+    bundled_directory: Path | None = None,
 ) -> SpectatorDiscovery:
-    """Find Spectator without guessing; see the module docstring for the order."""
+    """Find Spectator without guessing; see the module docstring for the order.
+
+    ``bundled_directory`` overrides :func:`bundled_spectator_directory` (tests).
+    """
     values = os.environ if environ is None else environ
     system = sys.platform if platform is None else platform
     which = shutil.which if which is None else which
@@ -140,6 +163,11 @@ def discover_spectator(
         if configured.lower() in DISABLED_VALUES:
             return SpectatorDiscovery(disabled=True)
         return _from_configured(configured, values, system)
+    bundled_folder = bundled_spectator_directory() if bundled_directory is None else bundled_directory
+    if bundled_folder is not None:
+        bundled = _executable_in(bundled_folder, system)
+        if bundled is not None:
+            return SpectatorDiscovery(SpectatorInstall(bundled.resolve(), origin="bundled"))
     drop_in = _executable_in(Path(data_root).expanduser() / DROP_IN_DIRECTORY, system)
     if drop_in is not None:
         return SpectatorDiscovery(SpectatorInstall(drop_in.resolve(), origin="data root"))
@@ -305,6 +333,7 @@ __all__: Sequence[str] = (
     "SpectatorDiscovery",
     "SpectatorInstall",
     "build_prepare_command",
+    "bundled_spectator_directory",
     "discover_spectator",
     "last_progress_stage",
     "launch_spectator",

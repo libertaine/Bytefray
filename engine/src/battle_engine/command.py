@@ -14,7 +14,7 @@ def _version_string() -> str:
 
     info = get_project_info()
     return (
-        f"{info.project_name} {info.version}, "
+        f"{info.project_name} {info.display_version}, "
         f"Agent API v{info.agent_api_version}, "
         f"result schema v{info.result_schema_version}, "
         f"replay schema v{info.replay_schema_version}, "
@@ -191,7 +191,23 @@ def _tournament(argv: list[str]) -> int:
     return tournament_main(argv)
 
 
+def _tolerate_unencodable_output() -> None:
+    """Escape, rather than crash on, characters a redirected stream cannot encode.
+
+    On Windows a redirected stdout/stderr uses the ANSI code page (cp1252), which
+    cannot encode many folder names (Greek, Cyrillic, CJK). Designer reads every
+    child command's output through a pipe, and an installed Bytefray keeps its
+    data under the user's profile folder, so printing a path must never end a
+    command that has already done its work. Encodable text is unchanged.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(errors="backslashreplace")
+
+
 def main(argv: Sequence[str] | None = None) -> int:
+    _tolerate_unencodable_output()
     arguments = list(sys.argv[1:] if argv is None else argv)
     parser = _parser()
     namespace, remainder = parser.parse_known_args(arguments)

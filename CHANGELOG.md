@@ -4,6 +4,48 @@ This changelog records notable user- and developer-visible changes to Bytefray.
 
 ## [Unreleased]
 
+Everything below is in the **5.1.0-alpha.1** release candidate (Python
+package `5.1.0a1`). It is not yet published; see the
+[release notes](docs/releases/BYTEFRAY_5_1_0_ALPHA_1_RELEASE_NOTES.md) and the
+[compatibility record](docs/releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md).
+
+### Added — Bytefray 5.1 Alpha Windows installer
+
+* **`Bytefray-5.1.0-alpha.1-Windows-x64-Setup.exe`** installs Agent Designer,
+  the `bytefray` command line, the Pygame replay viewer and Bytefray Spectator
+  `0.1.0-alpha.1` with no Python or Godot required.
+* **Side by side with Bytefray 5.0.** The Alpha is its own product (its own
+  AppId, Start Menu folder and uninstall entry), installs per user without
+  administrator rights into `%LOCALAPPDATA%\Programs\Bytefray 5.1 Alpha`, and
+  keeps its data in `%LOCALAPPDATA%\Bytefray 5.1 Alpha`. It writes no
+  environment variable and nothing per machine, and it ignores the
+  `BYTEFRAY_ROOT` that Bytefray 5.0 sets, through an installation record
+  (`bin\bytefray-install.json`) that a PyInstaller runtime hook reads.
+  Upgrades keep the data folder; uninstalling keeps it too.
+* **Spectator bundled.** Designer finds the bundled Spectator automatically
+  (`<install>\bin\bytefray-spectator\`); `BYTEFRAY_SPECTATOR` still overrides
+  it or turns it off. The build accepts only the Spectator executable pinned in
+  `tools/spectator_companion.json`.
+* **Windows metadata and notices.** Every executable carries a version
+  resource (`5.1.0-alpha.1`, file version `5.1.0.101`), and `licenses\`
+  holds the license texts of Python, Qt for Python, pygame-ce and its
+  libraries, PyYAML, the PyInstaller bootloader, Spectator and Godot.
+
+### Changed — application version 5.1.0-alpha.1
+
+* `pyproject.toml` is `5.1.0a1`. `bytefray --version` and Designer's About box
+  show the public spelling, `5.1.0-alpha.1 (package 5.1.0a1)`; `result.json`
+  keeps recording the PEP 440 `product_version`.
+* The compatibility record moved from **proposed** to **candidate**.
+
+### Fixed
+
+* `bytefray` commands no longer fail when their output is redirected and a
+  path contains characters the Windows ANSI code page cannot encode, such as a
+  Greek or CJK user-profile name; those characters are escaped instead.
+  Designer reads every child command's output through a pipe, so a match that
+  had finished could otherwise be reported as failed.
+
 ### Changed — component names and versioning policy
 
 Each part of Bytefray now has its own identity and version line:
@@ -30,11 +72,11 @@ is exactly as before.
 * **Fallback wording.** Designer's Spectator fallback messages say "Pygame
   replay viewer" instead of "classic replay viewer", so "Classic" means only
   the Ruleset.
-* **Compatibility record.** The proposed component compatibility for the next
+* **Compatibility record.** The component compatibility for the next
   release is
   [docs/releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md](docs/releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md),
   generated from one JSON record that `tools/release_compatibility.py` checks
-  against the code. The installed version is still 5.0.0.
+  against the code.
 
 ### Added — Bytefray Spectator export and Designer launch (development branch)
 

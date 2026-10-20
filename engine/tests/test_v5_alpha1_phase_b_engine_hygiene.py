@@ -209,8 +209,10 @@ def test_replay_deserialization_passive_compatibility() -> None:
     assert state.integrity == 1
 
 
-def test_version_transition_5_0_0() -> None:
-    """Project version is final 5.0.0 across pyproject.toml, installer.iss, and package metadata."""
+def test_version_transition_5_1_0_alpha_1() -> None:
+    """Project version is 5.1.0-alpha.1 (PEP 440 ``5.1.0a1``) across pyproject.toml,
+    installer.iss, and package metadata. It was final 5.0.0 until the 5.1 Alpha
+    release-candidate milestone."""
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     installer = (ROOT / "tools" / "installer.iss").read_text(encoding="utf-8")
 
@@ -222,10 +224,10 @@ def test_version_transition_5_0_0() -> None:
     assert app_match is not None
     assert tag_match is not None
 
-    assert proj_match.group(1) == "5.0.0"
-    assert app_match.group(1) == "5.0.0"
-    assert tag_match.group(1) == "5.0.0"
-    assert distribution_version("bytefray") == "5.0.0"
+    assert proj_match.group(1) == "5.1.0a1"
+    assert app_match.group(1) == "5.1.0-alpha.1"
+    assert tag_match.group(1) == "5.1.0-alpha.1"
+    assert distribution_version("bytefray") == "5.1.0a1"
 
 
 def test_windows_smoke_uses_an_isolated_data_root_and_installs_starters() -> None:

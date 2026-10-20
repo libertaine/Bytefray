@@ -32,6 +32,10 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 from battle_engine.agent_scaffold import TEMPLATE_DIRECTORIES_BY_API_VERSION
 from tools.packaging_data import collect_data_tree
+from tools.windows_version_info import executable_version_info
+
+# Installed builds take their data root from the installer's record; see the hook.
+install_hook = os.path.join(project_root, "tools", "pyi_rth_bytefray_install.py")
 
 agent_template_dirs = sorted(
     {
@@ -78,10 +82,13 @@ a = Analysis(
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],
-    runtime_hooks=[],
+    runtime_hooks=[install_hook],
     excludes=[],
     noarchive=False,
 )
 pyz = PYZ(a.pure)
-exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name="bytefray", console=True, icon=icon_path)
+exe = EXE(
+    pyz, a.scripts, [], exclude_binaries=True, name="bytefray", console=True, icon=icon_path,
+    version=executable_version_info(project_root, "bytefray", "Bytefray command-line interface"),
+)
 coll = COLLECT(exe, a.binaries, a.datas, name="bytefray")

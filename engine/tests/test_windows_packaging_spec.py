@@ -60,23 +60,37 @@ LINUX_PACKAGE_WORKFLOW = ROOT / ".github" / "workflows" / "linux-package.yml"
 
 
 def test_installer_versions_match_package_and_release_tag() -> None:
-    """Prevent a new package from silently producing an old-version installer."""
+    """Prevent a new package from silently producing an old-version installer.
+
+    The installer shows and names itself with the public SemVer spelling
+    (``AppVersion``, ``ReleaseTag``: ``5.1.0-alpha.1``), carries the PEP 440
+    package spelling (``PackageVersion``: ``5.1.0a1``) and stamps the numeric
+    Windows form (``FileVersion``: ``5.1.0.101``). All of them must describe
+    the one version pyproject.toml declares (docs/COMPONENT_VERSIONING.md §4.1).
+    """
+
+    from battle_engine.project_info import public_version
+
+    from tools.release_compatibility import python_package_version
+    from tools.windows_version_info import windows_file_version
 
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     installer = INSTALLER_SCRIPT.read_text(encoding="utf-8")
     project_version = re.search(r'^version = "([^"]+)"$', pyproject, re.MULTILINE)
-    app_version = re.search(
-        r'^#define AppVersion "([^"]+)"$', installer, re.MULTILINE
-    )
-    release_tag = re.search(
-        r'^#define ReleaseTag "([^"]+)"$', installer, re.MULTILINE
-    )
+    defines = {
+        name: re.search(rf'^#define {name} "([^"]+)"$', installer, re.MULTILINE)
+        for name in ("AppVersion", "ReleaseTag", "PackageVersion", "FileVersion")
+    }
 
     assert project_version is not None
-    assert app_version is not None
-    assert release_tag is not None
-    assert app_version.group(1) == distribution_version("bytefray")
-    assert release_tag.group(1) == project_version.group(1)
+    assert all(match is not None for match in defines.values()), defines
+    package = project_version.group(1)
+    found = {name: match.group(1) for name, match in defines.items() if match is not None}
+    assert distribution_version("bytefray") == package
+    assert found["PackageVersion"] == package
+    assert found["AppVersion"] == found["ReleaseTag"] == public_version(package)
+    assert python_package_version(found["ReleaseTag"]) == package
+    assert found["FileVersion"] == ".".join(str(part) for part in windows_file_version(package))
 
 
 def test_linux_release_archive_name_derives_from_project_version() -> None:

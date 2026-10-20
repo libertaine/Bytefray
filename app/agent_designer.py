@@ -1649,7 +1649,7 @@ class AgentDesigner(QMainWindow):
         QMessageBox.about(
             self,
             "About Bytefray",
-            f"{info.project_name} {info.version}\n"
+            f"{info.project_name} {info.display_version}\n"
             f"Agent API v{info.agent_api_version}\n"
             f"Result schema v{info.result_schema_version}; replay schema v{info.replay_schema_version}\n"
             f"Python {info.python_version}\n"

@@ -1,10 +1,10 @@
-# Bytefray 5.1.0-alpha.1 — Proposed Component Compatibility
+# Bytefray 5.1.0-alpha.1 — Component Compatibility
 
-**Status: proposed.** This is the planning record for the next application
-release. It is not a release, not a qualification result and not a version
-bump. The installed package still reports `5.0.0`; the separately authorized
-*5.1 Alpha Release Candidate Preparation* milestone decides whether and when
-that changes.
+**Status: candidate.** This is the record for the 5.1.0-alpha.1 release
+candidate: the package reports `5.1.0a1`, and a Windows installer candidate
+bundles Bytefray Spectator `0.1.0-alpha.1`. It is not a published release.
+Publication needs separate project-lead approval, and only then does this
+record become **released**.
 
 The authoritative record is
 [`BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.json`](BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.json).
@@ -39,17 +39,20 @@ make them qualified for release. Qualification evidence today:
   WSL2/WSLg X11 and an Ubuntu Wayland session through XWayland. Native Ubuntu
   on Xorg is not qualified. M2-6 human evaluation is deferred to 5.2.
 - **Spectator integration** has automated verification and a real Designer
-  end-to-end launch on Windows. It has no human GUI qualification and no
-  native Linux desktop run. No Spectator version has been released.
-- **5.1.0-alpha.1 as a whole** has not been qualified. Release-candidate
-  qualification is a later, separately authorized milestone.
+  end-to-end launch on Windows. It has no native Linux desktop run.
+  Spectator `0.1.0-alpha.1` is bundled with the Windows installer candidate
+  and is not separately published.
+- **The 5.1.0-alpha.1 Windows installer candidate** is qualified separately;
+  the results and any conditions are in
+  [5_1_ALPHA1_WINDOWS_INSTALLER_QUALIFICATION.md](5_1_ALPHA1_WINDOWS_INSTALLER_QUALIFICATION.md).
+  Linux distribution of 5.1.0-alpha.1 has its own, separate qualification.
 
 ## Summary
 
 <!-- BEGIN GENERATED: tools/release_compatibility.py -->
 | Component | Declaration |
 | --- | --- |
-| Status | **proposed** — Planning record for the next application release. It is not a release, not a qualification result and not a version bump: the installed package still reports 5.0.0 until the separately authorized release-candidate milestone changes it. |
+| Status | **candidate** — Release-candidate record. The package version is 5.1.0a1, and a local Windows installer candidate has been built from this line. It is not a published release: publication needs separate project-lead approval. |
 | Application | Bytefray 5.1.0-alpha.1 (Python package `5.1.0a1`, tag `v5.1.0-alpha.1`); previous release 5.0.0; Python 3.10, 3.11, 3.12, 3.13, 3.14 |
 | Default Ruleset | Classic (`bytefray-rules-4`) |
 | Offered Rulesets | Classic (`bytefray-rules-4`) — stable, default when no Ruleset is chosen; Active Sensing (Alpha) (`bytefray-rules-6-alpha1`) — experimental, explicit only; never selected automatically |
@@ -60,7 +63,7 @@ make them qualified for release. Qualification evidence today:
 | Result format | `battle2.result` writes 2; reads 1, 2 |
 | Trace format | `bytefray.agent_trace` writes 2; reads 1, 2 |
 | Other persisted formats | `bytefray.evaluation` writes 7 (identity 7); `battle2.tournament` writes 1; `bytefray.agent_package` writes 1 |
-| Spectator application | unreleased and unversioned; no published build. Compatible development source: `libertaine/Bytefray-Spectator` `designer-integration` `14089a7`. Separate application, not bundled; Designer finds it through `BYTEFRAY_SPECTATOR`, `<data root>/spectator/` or `bytefray-spectator` on `PATH` |
+| Spectator application | Bytefray Spectator 0.1.0-alpha.1: proposed first distribution version, bundled with the 5.1.0-alpha.1 Windows installer candidate; not separately tagged or published. Source `libertaine/Bytefray-Spectator` `designer-integration` `14089a7`; Windows build `bytefray-spectator.exe` SHA-256 `8a3bd1a48430a0edd1faf8ca5c5b287ed1ecd06975c4e683f273562d428fd602` (Godot 4.7.2.stable). The Windows installer bundles this build in `<install>\bin\bytefray-spectator\`, pinned by `tools/spectator_companion.json`, and Designer finds it there automatically. `BYTEFRAY_SPECTATOR` still overrides it or turns Spectator off. Source and wheel installs find Spectator through `BYTEFRAY_SPECTATOR`, `<data root>/spectator/` or `bytefray-spectator` on `PATH` |
 | Spectator presentation protocol | `bytefray.spectator.manifest`: Bytefray writes 2, Spectator reads 1, 2; provenance `bytefray_match`; documents broadcast `bytefray.spectator.broadcast` v1, agent_a `bytefray.spectator.agent_view` v1 |
 | Spectator match support | `bytefray-rules-6-alpha1` with entrants A, B; perspectives broadcast, agent_a |
 | Designer viewer dispatch | Prefers Spectator: View Last Match, Development test replay, Evaluation replays. Always Pygame: Tournament results, Replay History, Advanced replay file browser |
@@ -79,7 +82,7 @@ make them qualified for release. Qualification evidence today:
 
 | Platform | Bytefray | Spectator |
 | --- | --- | --- |
-| Windows 11 AMD64 | Primary target. M1 qualified (M1-6A). M2-5 technical/platform qualification accepted PASS WITH CONDITIONS (published bb6c4b8, merged into this line). | Executable built from tracked presets; automated self-checks and a real Designer end-to-end launch pass. No human GUI qualification. |
+| Windows 11 AMD64 | Primary target. M1 qualified (M1-6A). M2-5 technical/platform qualification accepted PASS WITH CONDITIONS (published bb6c4b8, merged into this line). Distributed as a per-user Inno Setup installer (`Bytefray-5.1.0-alpha.1-Windows-x64-Setup.exe`) that installs beside Bytefray 5.0; its qualification is recorded in docs/releases/5_1_ALPHA1_WINDOWS_INSTALLER_QUALIFICATION.md. | 0.1.0-alpha.1, built from tracked presets and bundled with the Windows installer; automated self-checks run on every Windows build. |
 | Linux x86_64 | Headless-first wheel. Designer qualified on X11/Xvfb for M1 (M1-6B). M2-5 accepted PASS WITH CONDITIONS on WSL2/WSLg X11 and an Ubuntu Wayland session through XWayland; native Ubuntu on Xorg not qualified. | Executable built; headless checks only (WSL Ubuntu 24.04). No native desktop run. |
 | macOS | Not qualified. | Not built or qualified. |
 | Windows ARM64 | Not supported (AMD64 packaging only). | Not built. |
@@ -93,8 +96,11 @@ make them qualified for release. Qualification evidence today:
 - Three-entrant or larger Spectator presentation is deferred.
 - Human comprehension evaluation of Active Sensing is deferred to 5.2.
 - Classic (`bytefray-rules-4`) stays the default on every surface; Active Sensing (Alpha) is never chosen automatically, including when a sensing starter is selected.
-- Spectator export time grows with the square of match length (about 40 s for 477 ticks); Designer prepares exports in the background.
-- The frozen (PyInstaller) Bytefray build has not yet been verified with `bytefray spectator`.
+- Spectator export time grows with the square of match length (about 40 s for 477 ticks); Designer prepares exports in the background, and a prepared presentation is reused from the data root's cache.
+- The Windows installer and executables are not code-signed, so Windows SmartScreen may warn before the first run.
+- The Windows installer installs for one Windows account (no all-users option) and supports AMD64 only.
+- Bytefray Spectator keeps its own settings and logs in `%APPDATA%\Godot\app_userdata\Bytefray Spectator`, outside the Bytefray data root; uninstalling leaves them, as it leaves the data root.
+- The standalone sensing demonstration generators (`sensing_demo` and the keeper/reacquirer scenario verifiers) remain source-only.
 
 **Unsupported**
 

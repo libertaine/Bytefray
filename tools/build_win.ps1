@@ -1,4 +1,12 @@
-param([string]$Mode = "Release")
+# -SpectatorExe/-SpectatorLicense stage the pinned Bytefray Spectator build
+# (tools/spectator_companion.json) beside the frozen applications, as
+# tools/installer.iss requires. Without them only the four Python
+# applications are built, as in CI.
+param(
+  [string]$Mode = "Release",
+  [string]$SpectatorExe,
+  [string]$SpectatorLicense
+)
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
@@ -114,6 +122,59 @@ if (-not (Test-Path -LiteralPath $UnifiedBrandingIcon -PathType Leaf)) {
   throw "Unified Designer branding resource missing: $UnifiedBrandingIcon"
 }
 
+# Every executable carries the application version in its Windows version
+# resource (tools/windows_version_info.py), so Explorer, the installer and
+# support tooling report the same release. A spec that lost its version=
+# argument would otherwise ship binaries that identify as nothing.
+$Versions = & $PyExe (Join-Path $RepoRoot "tools\windows_version_info.py") | ConvertFrom-Json
+if ($LASTEXITCODE -ne 0) { throw "tools/windows_version_info.py failed with exit code $LASTEXITCODE" }
+foreach ($Artifact in $Artifacts) {
+  $Info = (Get-Item -LiteralPath (Join-Path $DistDir "$($Artifact.Name)\$($Artifact.Name).exe")).VersionInfo
+  if ($Info.ProductVersion -ne $Versions.public -or "$($Info.FileVersionRaw)" -ne $Versions.file_version) {
+    throw "$($Artifact.Name).exe identifies as '$($Info.ProductVersion)' ($($Info.FileVersionRaw)); expected '$($Versions.public)' ($($Versions.file_version))."
+  }
+}
+Write-Host "[build] Version resources: $($Versions.public) ($($Versions.file_version))."
+
+# Bytefray Spectator is a separate Godot application with its own version
+# series. The installer bundles exactly the build tools/spectator_companion.json
+# pins, beside the frozen applications, where Designer's discovery looks for it
+# (app/services/spectator_viewer.py). Any other executable is refused.
+$SpectatorDir = Join-Path $DistDir "bytefray-spectator"
+Remove-Item -Recurse -Force $SpectatorDir -ErrorAction SilentlyContinue
+if ($SpectatorExe) {
+  if (-not $SpectatorLicense) { throw "-SpectatorLicense is required with -SpectatorExe." }
+  $CompanionPath = Join-Path $RepoRoot "tools\spectator_companion.json"
+  $Companion = Get-Content -LiteralPath $CompanionPath -Raw | ConvertFrom-Json
+  $SpectatorHash = (Get-FileHash -LiteralPath $SpectatorExe -Algorithm SHA256).Hash.ToLower()
+  if ($SpectatorHash -ne $Companion.windows.sha256) {
+    throw "Spectator executable $SpectatorExe has SHA-256 $SpectatorHash; tools/spectator_companion.json pins $($Companion.windows.sha256)."
+  }
+  New-Item -ItemType Directory -Force -Path $SpectatorDir | Out-Null
+  $StagedSpectator = Join-Path $SpectatorDir $Companion.windows.file
+  Copy-Item -LiteralPath $SpectatorExe -Destination $StagedSpectator
+  Copy-Item -LiteralPath $CompanionPath -Destination (Join-Path $SpectatorDir "SPECTATOR_BUILD.json")
+  # A GUI-subsystem executable: Start-Process -Wait is what waits for it and
+  # reports its exit code. --check verifies a bundled presentation and the
+  # cue bank headlessly, from the staged location.
+  $CheckOut = Join-Path ([IO.Path]::GetTempPath()) ("bytefray-spectator-check-" + [Guid]::NewGuid().ToString("N") + ".log")
+  try {
+    $Check = Start-Process -FilePath $StagedSpectator -ArgumentList @("--headless", "--", "--fixture=sample", "--check") `
+      -Wait -PassThru -NoNewWindow -RedirectStandardOutput $CheckOut
+    Get-Content -LiteralPath $CheckOut | Select-String "PRESENTATION|CUE BANK" | ForEach-Object { Write-Host "[build] Spectator $($_.Line)" }
+    if ($Check.ExitCode -ne 0) { throw "The staged Spectator failed its --check (exit $($Check.ExitCode))." }
+  } finally {
+    Remove-Item -LiteralPath $CheckOut -Force -ErrorAction SilentlyContinue
+  }
+  Write-Host "[build] Staged Bytefray Spectator $($Companion.version) ($SpectatorHash)."
+}
+
+# License texts for everything the distribution bundles (dist\windows\licenses).
+$NoticeArgs = @((Join-Path $RepoRoot "tools\collect_third_party_notices.py"), "--dist", $DistDir)
+if ($SpectatorExe) { $NoticeArgs += @("--spectator-license", $SpectatorLicense) }
+& $PyExe @NoticeArgs
+if ($LASTEXITCODE -ne 0) { throw "Third-party notice collection failed with exit code $LASTEXITCODE" }
+
 # Exercise the dynamically imported Designer from the unified dispatcher and
 # the standalone Designer. The internal timeout enters the Qt event loop and
 # closes deterministically without requiring desktop automation.
@@ -199,9 +260,17 @@ try {
 # Every supported (api-version, template) pair is exercised, not just the
 # historical default -- covering only the default is precisely why three
 # separate template omissions reached shipped executables.
+#
+# The three personal-copy templates copy an Active Sensing teaching starter,
+# whose manifest requires the `sense` capability: validation must refuse it
+# under the default Classic Ruleset (exit 2) and accept it under Active
+# Sensing (Alpha).
 $SmokeVariants = @(
-  @{ Id = 'smoke_agent_v2';           CreateArgs = @('--api-version', '2');                            Validate = $true }
-  @{ Id = 'smoke_agent_v2_annotated'; CreateArgs = @('--api-version', '2', '--template', 'annotated'); Validate = $true }
+  @{ Id = 'smoke_agent_v2';           CreateArgs = @('--api-version', '2');                            Validate = $true; Sensing = $false }
+  @{ Id = 'smoke_agent_v2_annotated'; CreateArgs = @('--api-version', '2', '--template', 'annotated'); Validate = $true; Sensing = $false }
+  @{ Id = 'smoke_window_scout';       CreateArgs = @('--api-version', '2', '--template', 'window_scout');       Validate = $true; Sensing = $true }
+  @{ Id = 'smoke_watchful_keeper';    CreateArgs = @('--api-version', '2', '--template', 'watchful_keeper');    Validate = $true; Sensing = $true }
+  @{ Id = 'smoke_roaming_reacquirer'; CreateArgs = @('--api-version', '2', '--template', 'roaming_reacquirer'); Validate = $true; Sensing = $true }
 )
 $SmokeRoot = Join-Path ([IO.Path]::GetTempPath()) ("bytefray-agents-create-smoke-" + [Guid]::NewGuid().ToString("N"))
 $PreviousBytefrayRoot = $env:BYTEFRAY_ROOT
@@ -226,7 +295,16 @@ try {
     # written: validation loads the manifest and the agent module through
     # the normal supported path, so a bundled-but-broken template fails here
     # rather than at a user's first match.
-    if ($Variant.Validate) {
+    if ($Variant.Validate -and $Variant.Sensing) {
+      & $BytefrayExe agents validate $Variant.Id 2>$null | Out-Null
+      if ($LASTEXITCODE -ne 2) {
+        throw "'bytefray.exe agents validate $($Variant.Id)' under Classic exited $LASTEXITCODE; expected the capability refusal (2)"
+      }
+      & $BytefrayExe agents validate $Variant.Id --ruleset bytefray-rules-6-alpha1
+      if ($LASTEXITCODE -ne 0) {
+        throw "'bytefray.exe agents validate $($Variant.Id) --ruleset bytefray-rules-6-alpha1' failed with exit code $LASTEXITCODE"
+      }
+    } elseif ($Variant.Validate) {
       & $BytefrayExe agents validate $Variant.Id
       if ($LASTEXITCODE -ne 0) {
         throw "'bytefray.exe agents validate $($Variant.Id)' failed with exit code $LASTEXITCODE"
@@ -248,6 +326,55 @@ try {
   }
 }
 
+# Exercise 'bytefray spectator' against the frozen bytefray.exe: a real
+# two-entrant Active Sensing (Alpha) match, then export, verify, prepare and a
+# cached prepare. Designer runs these same frozen commands with their output
+# redirected, so they run redirected here too, in an isolated root whose path
+# has spaces and a character (U+03A9) the Windows ANSI code page cannot encode.
+$SpectatorSmokeRoot = Join-Path ([IO.Path]::GetTempPath()) ("bytefray spectator smoke " + [char]0x03A9 + " " + [Guid]::NewGuid().ToString("N"))
+$PreviousBytefrayRoot = $env:BYTEFRAY_ROOT
+try {
+  New-Item -ItemType Directory -Force -Path $SpectatorSmokeRoot | Out-Null
+  $env:BYTEFRAY_ROOT = $SpectatorSmokeRoot
+  $BytefrayExe = Join-Path $DistDir "bytefray\bytefray.exe"
+  $SmokeMatch = Join-Path $SpectatorSmokeRoot "runs\smoke match"
+  $SmokePresentation = Join-Path $SpectatorSmokeRoot "presentation"
+  $SmokeCache = Join-Path $SpectatorSmokeRoot "cache"
+  $SmokeLog = Join-Path $SpectatorSmokeRoot "spectator-smoke.log"
+  New-Item -ItemType Directory -Force -Path $SmokeMatch | Out-Null
+  $Steps = @(
+    @{ Label = "run (Active Sensing, 2 entrants)"; Args = @("run", "--ruleset", "bytefray-rules-6-alpha1", "--a-type", "v6_window_scout",
+        "--b-type", "v6_watchful_keeper", "--ticks", "120", "--seed", "7",
+        "--replay", (Join-Path $SmokeMatch "replay.jsonl"), "--trace", (Join-Path $SmokeMatch "trace.jsonl")) },
+    @{ Label = "spectator export"; Args = @("spectator", "export", "--source", $SmokeMatch, "--out", $SmokePresentation) },
+    @{ Label = "spectator verify"; Args = @("spectator", "verify", "--presentation", $SmokePresentation, "--source", $SmokeMatch) }
+  )
+  foreach ($Step in $Steps) {
+    Write-Host "[build] 'bytefray $($Step.Label)' smoke (BYTEFRAY_ROOT=$SpectatorSmokeRoot)"
+    & $BytefrayExe @($Step.Args) *>> $SmokeLog
+    if ($LASTEXITCODE -ne 0) {
+      throw "'bytefray.exe $($Step.Label)' failed with exit code $LASTEXITCODE; see $SmokeLog"
+    }
+  }
+  foreach ($Expected in @($false, $true)) {
+    $Status = & $BytefrayExe spectator prepare --source $SmokeMatch --cache $SmokeCache 2>> $SmokeLog |
+      Select-Object -Last 1 | ConvertFrom-Json
+    if ($LASTEXITCODE -ne 0 -or $Status.status -ne "ok" -or $Status.reused -ne $Expected) {
+      throw "'bytefray.exe spectator prepare' (reused=$Expected expected) returned exit $LASTEXITCODE, $($Status | ConvertTo-Json -Compress)"
+    }
+  }
+  Write-Host "[build] 'bytefray spectator' smoke tests passed (export, verify, prepare, cached prepare)."
+} finally {
+  if ($null -eq $PreviousBytefrayRoot) {
+    Remove-Item Env:BYTEFRAY_ROOT -ErrorAction SilentlyContinue
+  } else {
+    $env:BYTEFRAY_ROOT = $PreviousBytefrayRoot
+  }
+  if (Test-Path -LiteralPath $SpectatorSmokeRoot) {
+    Remove-Item -LiteralPath $SpectatorSmokeRoot -Recurse -Force -ErrorAction Stop
+  }
+}
+
 # Final proof, not just a hope, that build qualification above (GUI smoke,
 # 'agents create' smoke) left no runtime-generated data root under any of
 # the four distributable application trees -- both smoke blocks isolate
@@ -265,5 +392,10 @@ Write-Host ""
 Write-Host "[build] Success."
 foreach ($Artifact in $Artifacts) {
   Write-Host ("[build] {0}: {1}" -f $Artifact.Name, (Join-Path $DistDir "$($Artifact.Name)\$($Artifact.Name).exe"))
+}
+if ($SpectatorExe) {
+  Write-Host ("[build] bytefray-spectator: {0}" -f (Join-Path $SpectatorDir "bytefray-spectator.exe"))
+} else {
+  Write-Host "[build] Bytefray Spectator not staged (no -SpectatorExe); tools/installer.iss needs it."
 }
 Write-Host ("[build] Dist dir: {0}" -f $DistDir)

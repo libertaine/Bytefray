@@ -253,9 +253,13 @@ Spectator is found in this order, and no other location is guessed:
    The values `off`, `pygame`, `none`, `0` and `false` turn Spectator off.
    A value that names nothing usable is reported once per session and logged
    on each use.
-2. `<data root>/spectator/` holding an exported executable (a portable
+2. In a frozen Bytefray only, the companion bundled beside the running
+   application's own folder: `<install>/bin/bytefray-spectator/` next to
+   `<install>/bin/bytefray-agent-designer/`, where the Windows installer puts
+   the build pinned by `tools/spectator_companion.json`.
+3. `<data root>/spectator/` holding an exported executable (a portable
    unpack).
-3. `bytefray-spectator` on `PATH` (on Windows, only an `.exe` match counts).
+4. `bytefray-spectator` on `PATH` (on Windows, only an `.exe` match counts).
 
 Designer's display-backed tests (`tests/conftest.py`) set
 `BYTEFRAY_SPECTATOR=off` unless a test configures Spectator itself, so a

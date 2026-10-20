@@ -11,6 +11,10 @@ starter_agents_dir = os.path.join(engine_src, "battle_engine", "data", "starter_
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 from tools.packaging_data import collect_data_tree
+from tools.windows_version_info import executable_version_info
+
+# Installed builds take their data root from the installer's record; see the hook.
+install_hook = os.path.join(project_root, "tools", "pyi_rth_bytefray_install.py")
 
 # See tools/bytefray.spec for why starter_agents is expanded per-file through
 # the shared bytecode-filtering collector instead of being passed as a
@@ -25,10 +29,13 @@ a = Analysis(
     datas=datas,
     hiddenimports=collect_submodules("battle_engine"),
     hookspath=[],
-    runtime_hooks=[],
+    runtime_hooks=[install_hook],
     excludes=[],
     noarchive=False,
 )
 pyz = PYZ(a.pure)
-exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name="bytefray-cli", console=True, icon=icon_path)
+exe = EXE(
+    pyz, a.scripts, [], exclude_binaries=True, name="bytefray-cli", console=True, icon=icon_path,
+    version=executable_version_info(project_root, "bytefray-cli", "Bytefray legacy match command"),
+)
 coll = COLLECT(exe, a.binaries, a.datas, name="bytefray-cli")

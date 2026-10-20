@@ -81,6 +81,41 @@ def test_data_root_drop_in_then_path(tmp_path):
     assert found.install == sv.SpectatorInstall(drop_in.resolve(), origin="data root")
 
 
+def test_installed_layout_finds_the_bundled_companion_first(tmp_path):
+    """<install>/bin/bytefray-spectator/ (the Windows installer's layout) wins
+    over a drop-in and PATH; the environment variable still overrides it."""
+    bundled = _executable(tmp_path / "Bytefray 5.1 Alpha" / "bin" / sv.BUNDLED_DIRECTORY / EXECUTABLE)
+    drop_in = _executable(tmp_path / "data" / "spectator" / EXECUTABLE)
+    on_path = _executable(tmp_path / "elsewhere" / EXECUTABLE)
+    found = sv.discover_spectator(
+        tmp_path / "data", {}, which=lambda _n: str(on_path), bundled_directory=bundled.parent
+    )
+    assert found.install == sv.SpectatorInstall(bundled.resolve(), origin="bundled")
+    configured = sv.discover_spectator(
+        tmp_path / "data", {sv.ENV_SPECTATOR: str(on_path)}, which=_no_path, bundled_directory=bundled.parent
+    )
+    assert configured.install == sv.SpectatorInstall(on_path.resolve(), origin=sv.ENV_SPECTATOR)
+    turned_off = sv.discover_spectator(
+        tmp_path / "data", {sv.ENV_SPECTATOR: "off"}, which=_no_path, bundled_directory=bundled.parent
+    )
+    assert turned_off == sv.SpectatorDiscovery(disabled=True)
+    bundled.unlink()  # a damaged installation falls through to the other locations
+    fallback = sv.discover_spectator(tmp_path / "data", {}, which=_no_path, bundled_directory=bundled.parent)
+    assert fallback.install == sv.SpectatorInstall(drop_in.resolve(), origin="data root")
+
+
+def test_bundled_companion_is_beside_the_frozen_application(tmp_path, monkeypatch):
+    assert sv.bundled_spectator_directory() is None  # source and wheel installs bundle nothing
+    application = tmp_path / "Bytefray Ω" / "bin" / "bytefray-agent-designer" / f"bytefray-agent-designer{_EXE_SUFFIX}"
+    _executable(application)
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(sys, "executable", str(application))
+    assert sv.bundled_spectator_directory() == (tmp_path / "Bytefray Ω" / "bin" / sv.BUNDLED_DIRECTORY).resolve()
+    bundled = _executable(tmp_path / "Bytefray Ω" / "bin" / sv.BUNDLED_DIRECTORY / EXECUTABLE)
+    found = sv.discover_spectator(tmp_path / "data", {}, which=_no_path)
+    assert found.install == sv.SpectatorInstall(bundled.resolve(), origin="bundled")
+
+
 def test_windows_accepts_only_real_executables(tmp_path):
     # A .cmd/.bat shim would be re-parsed by cmd.exe; only .exe files are launched.
     for name in ("bytefray-spectator.cmd", "bytefray-spectator.bat"):

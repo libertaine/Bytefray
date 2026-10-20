@@ -1,4 +1,4 @@
-"""The proposed 5.1.0-alpha.1 compatibility record agrees with the code.
+"""The 5.1.0-alpha.1 compatibility record agrees with the code.
 
 docs/releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.json is the single
 authoritative compatibility declaration (docs/COMPONENT_VERSIONING.md). These
@@ -42,9 +42,15 @@ def test_generated_summary_is_current(record: dict) -> None:
     )
 
 
-def test_record_stays_a_proposal_and_names_no_released_spectator(record: dict) -> None:
-    assert record["status"] == "proposed"
-    assert record["spectator"]["application"]["version"] is None
+def test_record_is_a_candidate_and_names_the_bundled_spectator_build(record: dict) -> None:
+    """The release-candidate milestone moved the record from proposed to
+    candidate (docs/COMPONENT_VERSIONING.md §6). Publication, which would make
+    it released, is a separate project-lead decision."""
+
+    assert record["status"] == "candidate"
+    viewer = record["spectator"]["application"]
+    assert viewer["version"] == "0.1.0-alpha.1"
+    assert viewer["source"]["commit"] == "14089a7bf624a5974346306a277e307ea8f48c07"
 
 
 @pytest.mark.parametrize(
@@ -92,6 +98,16 @@ def _tampered(record: dict, change) -> list[str]:
         lambda r: r["spectator"]["presentation_protocol"].__setitem__("bytefray_writes", 3),
         lambda r: r["spectator"]["supported_matches"].__setitem__("entrants", ["A", "B", "C"]),
         lambda r: r["application"].__setitem__("python_package_version", "5.1.0-alpha.1"),
+        # A candidate must describe the version this tree builds.
+        lambda r: (r["application"].__setitem__("version", "5.1.0-alpha.2"),
+                   r["application"].__setitem__("python_package_version", "5.1.0a2"),
+                   r["application"].__setitem__("git_tag", "v5.1.0-alpha.2")),
+        lambda r: r.__setitem__("status", "published"),
+        # The named Spectator build is the one tools/spectator_companion.json pins.
+        lambda r: r["spectator"]["application"].__setitem__("version", "0.1.0"),
+        lambda r: r["spectator"]["application"]["source"].__setitem__("commit", "b8a4f49"),
+        lambda r: r["spectator"]["application"]["windows_build"].__setitem__("sha256", "0" * 64),
+        lambda r: r["spectator"]["presentation_protocol"].__setitem__("spectator_reads", [2]),
     ],
 )
 def test_a_disagreement_is_reported(record: dict, change) -> None:

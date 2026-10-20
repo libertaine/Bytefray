@@ -31,7 +31,7 @@ application's version number never implies them.
 
 | Component | Identity form | On this development line | Defined in | Changes when |
 | --- | --- | --- | --- | --- |
-| Bytefray application | SemVer `MAJOR.MINOR.PATCH[-PRERELEASE]` | `5.0.0` released; `5.1.0-alpha.1` proposed | `pyproject.toml`, `tools/installer.iss` | a user-visible product change ships (§4.1) |
+| Bytefray application | SemVer `MAJOR.MINOR.PATCH[-PRERELEASE]` | `5.0.0` released; `5.1.0-alpha.1` release candidate (`5.1.0a1`) | `pyproject.toml`, `tools/installer.iss` | a user-visible product change ships (§4.1) |
 | Gameplay Ruleset | immutable ID + display name | `bytefray-rules-4` **Classic**; `bytefray-rules-6-alpha1` **Active Sensing (Alpha)** | `battle_engine.rules`, `battle_engine.ruleset_policy`, `battle_engine.ruleset_names` | any gameplay-observable change → a new ID (§4.2) |
 | Agent API | integer `api_version` | 2 | `battle_engine.agent_api` | the agent programming contract changes incompatibly (§4.4) |
 | Agent manifest capabilities | integer `capabilities.version` | 1 (`sense`) | `battle_engine.agent_capabilities` | the capability block's shape changes |
@@ -209,10 +209,13 @@ Rules:
 ### 4.6 Bytefray Spectator application
 
 - Spectator has its own SemVer release series, independent of Bytefray's.
-- It has no version today: no tag, no `config/version`, empty export-preset
-  version fields. Choosing its first version number is a Spectator release
-  decision for the project lead. A `0.x` series fits a pre-stable companion.
-  No version is advertised until a build is qualified and published.
+- The project lead set its first distribution version, `0.1.0-alpha.1`, in the
+  2026-10-20 Windows installer authorization. That build is bundled with the
+  Bytefray 5.1.0-alpha.1 Windows installer candidate and pinned, by source
+  commit and executable SHA-256, in Bytefray's `tools/spectator_companion.json`.
+  The Spectator source does not embed the number yet: it has no tag, no
+  `config/version` and empty export-preset version fields. A version is
+  published only together with a qualified build.
 - A Spectator release declares the presentation-manifest versions it reads.
   A Bytefray release declares the manifest version it writes and the Spectator
   builds it was verified with (§6).
@@ -329,7 +332,7 @@ release-candidate milestone bumps the runtime version) → **released**
 create a second manifest for the same release. README, CHANGELOG and release
 notes link to the record instead of restating it.
 
-Current record: [5.1.0-alpha.1 (proposed)](releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md).
+Current record: [5.1.0-alpha.1 (candidate)](releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md).
 
 ## 7. Decisions reserved for the project lead
 

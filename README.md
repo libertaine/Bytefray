@@ -15,25 +15,26 @@ You write the agents: they maneuver, inspect, and rewrite memory while defending
 
 [`v6-research`](https://github.com/libertaine/Bytefray/tree/v6-research) now contains
 both sealed gameplay research and an implemented **V6 Alpha 1 sensing milestone**.
-**Bytefray 5.1** is a potential application release that could introduce this
-experimental gameplay and draw attention to the separate
-[Bytefray-Spectator](https://github.com/libertaine/Bytefray-Spectator) companion.
-Release scope, distribution and release authorization remain pending.
+**Bytefray 5.1** brings this experimental gameplay to the application, with the
+separate [Bytefray-Spectator](https://github.com/libertaine/Bytefray-Spectator)
+companion. Its first preview, **5.1.0-alpha.1**, is a release candidate: a Windows
+installer candidate has been prepared, and publishing it awaits the project
+lead's approval.
 
 | Name | Current meaning |
 | --- | --- |
 | **Bytefray 5.0.0** | Latest stable application release; downloads below. See the [stable `main` branch](https://github.com/libertaine/Bytefray/tree/main). |
-| **Bytefray 5.1** | Potential application release; not authorized for release or available as a published download. |
+| **Bytefray 5.1.0-alpha.1** | Preview release candidate (Python package `5.1.0a1`); not yet published. See the [release notes](docs/releases/BYTEFRAY_5_1_0_ALPHA_1_RELEASE_NOTES.md). |
 | **Classic** (`bytefray-rules-4`) | Permanent stable gameplay and omitted-ruleset default. |
 | **Active Sensing (Alpha)** (`bytefray-rules-6-alpha1`) | Distinct, explicitly selected experimental ruleset implemented here; bounded M1 acceptance does not establish unrestricted release readiness. |
 | **V6**, **`v6-research`** | Research and development program and its branch; experiments, probes and instrumentation are not all prospective product features. "V6" is not an application version. |
-| **Bytefray-Spectator** | Separate Godot application with its own release series; currently an experimental source-only recorded-match preview with no released version. |
+| **Bytefray-Spectator** | Separate Godot application with its own release series. Version `0.1.0-alpha.1` is bundled with the 5.1 Alpha Windows installer candidate; it is not separately published. |
 
 Application versions, ruleset identities, Agent API versions and artifact schemas
 are independent. Classic and Active Sensing (Alpha) are display names: artifacts,
 `--ruleset` and diagnostics always use the exact ruleset ID. The V6 program name
 does not announce an application 6.0. See the
-[component versioning policy](docs/COMPONENT_VERSIONING.md) and the proposed
+[component versioning policy](docs/COMPONENT_VERSIONING.md) and the
 [5.1.0-alpha.1 compatibility record](docs/releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md).
 
 ### What V6 research is trying to solve
@@ -303,9 +304,9 @@ See the [Spectator export and Designer dispatch spec](docs/specs/spectator_expor
 
 Godot consumes verified exports, not arbitrary raw replay formats. Broader
 replay compatibility, additional entrant perspectives, other-platform
-qualification and a published executable remain future work, not supported
-features. The 5.1 relationship currently means complementary gameplay and
-viewing experiences; no bundled installer is committed.
+qualification and a separately published Spectator executable remain future
+work, not supported features. The 5.1 Alpha Windows installer bundles
+Spectator `0.1.0-alpha.1`, and Designer finds that copy automatically.
 
 ### Current development direction
 
@@ -354,6 +355,13 @@ With Bytefray, you can:
 The wheel and source distribution are published on the GitHub Release; Bytefray is not currently published on PyPI. See **Installation** below for setup steps after downloading.
 
 [View the Bytefray 5.0.0 release](https://github.com/libertaine/Bytefray/releases/tag/v5.0.0) · [All releases](https://github.com/libertaine/Bytefray/releases)
+
+**Preview: Bytefray 5.1.0-alpha.1 (not yet published).** When published, its
+Windows installer, `Bytefray-5.1.0-alpha.1-Windows-x64-Setup.exe`, installs for
+your Windows account only, beside Bytefray 5.0, without administrator rights,
+Python or Godot. It adds Active Sensing (Alpha), its teaching agents and the
+bundled Bytefray Spectator. See the
+[5.1.0-alpha.1 release notes](docs/releases/BYTEFRAY_5_1_0_ALPHA_1_RELEASE_NOTES.md).
 
 ## Build agents your way
 
