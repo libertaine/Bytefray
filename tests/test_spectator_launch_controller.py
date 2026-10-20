@@ -152,6 +152,7 @@ def _harness(monkeypatch, tmp_path, *, scripted: bool):
     QApplication.instance() or QApplication([])
     (tmp_path / "data").mkdir()
     h = SimpleNamespace(
+        launch=launch,
         tmp=tmp_path,
         registry=_Registry(),
         ids={},
@@ -318,7 +319,9 @@ def test_an_identical_click_shares_the_background_preparation(harness):
     _idle(h)
 
 
-@pytest.mark.parametrize("field", ["artifact_root", "expected_match_id", "expected_result_id"])
+@pytest.mark.parametrize(
+    "field", ["artifact_root", "expected_match_id", "expected_result_id", "empty_expected_result_id"]
+)
 def test_a_click_with_other_expectations_gets_its_own_preparation(harness, field):
     h = harness
     result = _run(h, "a")
@@ -328,6 +331,7 @@ def test_a_click_with_other_expectations_gets_its_own_preparation(harness, field
         "artifact_root": {"root": result.parent.parent},
         "expected_match_id": {"match_id": "match-2"},
         "expected_result_id": {"result_id": "result-2"},
+        "empty_expected_result_id": {"result_id": ""},  # kept as given, never read as "absent"
     }[field]
     request = _request(result, **differs)
 
@@ -414,6 +418,12 @@ def test_a_request_that_cannot_verify_is_not_vouched_for_by_an_earlier_one(harne
     assert h.fallbacks == [bogus]
 
 
+def test_job_identity_expands_the_user_directory_like_the_preflight(harness):
+    job = harness.launch._Job(ResultReplayRequest(Path("~/run/result.json"), Path("~/run")), True)
+    assert job.result == (Path.home() / "run" / "result.json").resolve()
+    assert job.key[:2] == (job.result, (Path.home() / "run").resolve())
+
+
 def test_only_the_latest_waiting_click_opens(harness):
     h = harness
     a, b, c = (_request(_run(h, name, f"match-{name}", f"result-{name}")) for name in "abc")
@@ -447,6 +457,83 @@ def test_clicking_the_match_in_flight_again_drops_an_older_waiting_click(harness
     assert h.launched == [h.tmp / "a"]
     assert len(h.registry.created) == 1
     _idle(h)
+
+
+# ---- requests made while a completion's dialog is open --------------------
+#
+# QMessageBox.warning and the fallback run nested event loops inside _complete,
+# so a click (or the window closing) can arrive before _complete returns. These
+# hooks make that delivery happen at exactly that point.
+
+
+def _during_the_first_dialog(h, monkeypatch, action) -> None:
+    def warning(_parent, title, body):
+        h.warnings.append((title, body))
+        if len(h.warnings) == 1:
+            action()
+
+    monkeypatch.setattr(h.launch.QMessageBox, "warning", warning)
+
+
+def test_a_click_during_a_failure_dialog_replaces_the_waiting_click(harness, monkeypatch):
+    h = harness
+    a, b, c = (_request(_run(h, name, f"match-{name}", f"result-{name}")) for name in "abc")
+    h.controller.open_match(a)
+    h.controller.open_match(b)  # waits
+    [pa] = h.registry.created
+    _during_the_first_dialog(h, monkeypatch, lambda: h.controller.open_match(c))
+
+    pa.finish(1, _error())
+
+    [_, pc] = h.registry.created
+    assert _option(pc, "--expect-match-id") == "match-c"
+    assert h.controller._pending is None, "the click before c still waits"
+    assert h.fallbacks == [_pinned(a, "match-a", "result-a")]
+    pc.finish(0, _ok(h.tmp / "c", "match-c", "result-c"))
+    assert h.launched == [h.tmp / "c"]
+    assert len(h.registry.created) == 2  # b never started
+    _idle(h)
+
+
+def test_a_click_waiting_behind_a_newer_preparation_stays_with_it(harness, monkeypatch):
+    h = harness
+    a, c, d = (_request(_run(h, name, f"match-{name}", f"result-{name}")) for name in "acd")
+    h.controller.open_match(a)
+    [pa] = h.registry.created
+
+    def two_clicks():
+        h.controller.open_match(c)  # starts at once: nothing is running
+        h.controller.open_match(d)  # waits behind c
+
+    _during_the_first_dialog(h, monkeypatch, two_clicks)
+    pa.finish(1, _error())
+
+    [_, pc] = h.registry.created
+    assert h.controller._proc is pc and h.controller._pending.request == _pinned(d, "match-d", "result-d")
+    assert sum("this one is next" in line for line in h.log) == 1
+    pc.finish(0, _ok(h.tmp / "c", "match-c", "result-c"))
+    [_, _, pd] = h.registry.created
+    pd.finish(0, _ok(h.tmp / "d", "match-d", "result-d"))
+    assert h.launched == [h.tmp / "c", h.tmp / "d"]
+    assert h.fallbacks == [_pinned(a, "match-a", "result-a")]
+    _idle(h)
+
+
+def test_closing_during_a_failure_dialog_opens_and_starts_nothing_afterwards(harness, monkeypatch):
+    h = harness
+    a, b = (_request(_run(h, name, f"match-{name}", f"result-{name}")) for name in "ab")
+    h.controller.open_match(a)
+    h.controller.open_match(b)  # waits
+    [pa] = h.registry.created
+    _during_the_first_dialog(h, monkeypatch, h.controller.shutdown)
+
+    pa.finish(1, _error())
+
+    assert h.fallbacks == [] and h.launched == []
+    assert len(h.registry.created) == 1
+    _idle(h)
+    h.controller.prewarm(_run(h, "c", "match-c", "result-c"))
+    assert len(h.registry.created) == 1  # nothing starts once the window has closed
 
 
 # ---- Defect C: QProcess ownership and late signals -----------------------
@@ -561,7 +648,7 @@ def test_shutdown_stops_preparation_forgets_waiting_clicks_and_is_idempotent(har
     h = harness
     with warnings.catch_warnings():
         warnings.simplefilter("error")  # a second disconnect or deletion would warn
-        h.controller.shutdown()  # nothing to stop
+        h.controller._stop_current()  # nothing to stop
         h.controller.open_match(_request(_run(h, "a", "match-a", "result-a")))
         h.controller.open_match(_request(_run(h, "b", "match-b", "result-b")))
         [proc] = h.registry.created

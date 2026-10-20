@@ -53,7 +53,7 @@ class _Job:
 
     @property
     def result(self) -> Path:
-        return Path(self.request.result_path).resolve()
+        return Path(self.request.result_path).expanduser().resolve()
 
     @property
     def key(self) -> tuple[Path, Path, str | None, str | None]:
@@ -66,7 +66,7 @@ class _Job:
         request = self.request
         return (
             self.result,
-            Path(request.artifact_root).resolve(),
+            Path(request.artifact_root).expanduser().resolve(),
             request.expected_match_id,
             request.expected_result_id,
         )
@@ -125,6 +125,7 @@ class SpectatorLaunchController(QObject):
         self._pending: _Job | None = None
         self._launched: list[subprocess.Popen[bytes]] = []
         self._problem_reported = False
+        self._closed = False
 
     # ---- public API -----------------------------------------------------
 
@@ -153,7 +154,12 @@ class SpectatorLaunchController(QObject):
             self._start(job, install)
 
     def shutdown(self) -> None:
-        """Stop for good when the window closes; Spectator windows already open stay open."""
+        """Stop for good when the window closes; Spectator windows already open stay open.
+
+        Nothing starts or falls back afterwards, not even from a dialog that was
+        still open when the window closed.
+        """
+        self._closed = True
         self._pending = None
         self._stop_current()
 
@@ -174,6 +180,9 @@ class SpectatorLaunchController(QObject):
             self.log.emit("[Spectator] Stopping a background preparation to open the selected match.\n")
             self._stop_current()
         if self._proc is None:
+            # Nothing runs, yet a request may wait: _complete was interrupted by a
+            # dialog's nested event loop. This newer request replaces it.
+            self._drop_pending()
             self._start(job, install)
             return
         if self._pending is None or self._pending.key != job.key:
@@ -204,6 +213,10 @@ class SpectatorLaunchController(QObject):
         proc.stateChanged.connect(lambda state, p=proc: p.deleteLater() if state == stopped else None)
         proc.kill()
 
+    def _fall_back(self, request: ResultReplayRequest) -> None:
+        if not self._closed:
+            self._fallback(request)
+
     def _report_problem(self, problem: str) -> None:
         """An installation problem: logged on every use, shown once per session."""
         self.log.emit(f"[Spectator] {problem} Using the Pygame replay viewer.\n")
@@ -231,6 +244,8 @@ class SpectatorLaunchController(QObject):
         return discovery.install
 
     def _start(self, job: _Job, install: SpectatorInstall) -> None:
+        if self._closed:
+            return
         request = job.request
         try:
             command = build_prepare_command(
@@ -246,7 +261,7 @@ class SpectatorLaunchController(QObject):
             problem = f"Spectator's match exporter is unavailable ({exc})."
             if job.open_when_ready:
                 self._report_problem(problem)
-                self._fallback(request)
+                self._fall_back(request)
             else:
                 self.log.emit(f"[Spectator] Background preparation skipped: {problem}\n")
             return
@@ -319,16 +334,18 @@ class SpectatorLaunchController(QObject):
                     unavailable_message(outcome.code, outcome.message)
                     + "\n\nBytefray will open the Pygame replay viewer instead.",
                 )
-                self._fallback(job.request)
-        # Taken only now: a dialog above runs a nested event loop, during which a
-        # newer request may have replaced it or another preparation may have begun.
+                self._fall_back(job.request)
+        # A dialog above runs a nested event loop. A request made during it either
+        # replaced the waiting one, or started a preparation that now owns it.
+        if self._proc is not None:
+            return
         pending, self._pending = self._pending, None
         if pending is not None:
             again = self._usable_install(pending.result, report=pending.open_when_ready)
             if again is not None:
                 self._submit(pending, again)
             elif pending.open_when_ready:
-                self._fallback(pending.request)
+                self._fall_back(pending.request)
 
     def _launch(self, install: SpectatorInstall, presentation: Path, request: ResultReplayRequest) -> None:
         self._launched = [p for p in self._launched if p.poll() is None]
@@ -341,7 +358,7 @@ class SpectatorLaunchController(QObject):
                 SPECTATOR_UNAVAILABLE_TITLE,
                 f"{exc}\n\nBytefray will open the Pygame replay viewer instead.",
             )
-            self._fallback(request)
+            self._fall_back(request)
             return
         self._launched.append(process)
         self.log.emit(f"[Spectator] Started {install.program.name} (process {process.pid}).\n")

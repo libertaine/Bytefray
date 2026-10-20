@@ -443,16 +443,47 @@ def test_neither_viewer_launching_is_reported_without_a_crash(designer, monkeypa
     assert len(critical) == 2 and len(designer.recorded["warnings"]) == 1
 
 
+def _alive(pid: int) -> bool:
+    if sys.platform == "win32":
+        import ctypes
+
+        kernel32 = ctypes.windll.kernel32
+        handle = kernel32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+        if not handle:
+            return False
+        try:
+            code = ctypes.c_ulong()
+            kernel32.GetExitCodeProcess(handle, ctypes.byref(code))
+            return code.value == 259  # STILL_ACTIVE
+        finally:
+            kernel32.CloseHandle(handle)
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
 @pytest.mark.gui
-def test_closing_designer_stops_a_preparation_in_progress(designer, monkeypatch, tmp_path):
-    from PySide6.QtCore import QCoreApplication, QEvent
+def test_closing_designer_kills_a_preparation_in_progress(designer, monkeypatch, tmp_path):
+    from PySide6.QtCore import QCoreApplication, QEvent, QProcess
     from PySide6.QtWidgets import QApplication
 
+    import app.widgets.spectator_launch as launch
+
     _configure_spectator(monkeypatch, tmp_path)
+    # A preparation that cannot end on its own during this test: only a kill ends it.
+    monkeypatch.setattr(
+        launch, "build_prepare_command", lambda *_a, **_k: [sys.executable, "-c", "import time; time.sleep(120)"]
+    )
     result = _v6_match(designer.data_root_for_test, "20261020-000000-d0d0d0d0")
-    _finish(designer, result)
+    _finish(designer, result)  # the completed match starts its background preparation
     proc = designer._spectator._proc
-    assert proc is not None
+    assert proc is not None and proc.state() == QProcess.ProcessState.Running
+    pid = int(proc.processId())
+    assert _alive(pid)
     gone = []
     proc.destroyed.connect(lambda *_: gone.append(True))
     designer._proc = None  # _finish's stand-in match process was never connected
@@ -467,5 +498,6 @@ def test_closing_designer_stops_a_preparation_in_progress(designer, monkeypatch,
         QApplication.processEvents()
         QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
         time.sleep(0.01)
+    assert not _alive(pid)
     assert designer.recorded["spectator"] == [] and designer.recorded["pygame"] == []
     assert designer.recorded["warnings"] == []
