@@ -354,3 +354,118 @@ def test_misconfigured_spectator_is_reported_and_the_classic_viewer_opens(design
     assert title == "Spectator Unavailable" and "does not exist" in body
     designer._on_open_replay()  # reported once per session, logged every time
     assert len(designer.recorded["warnings"]) == 1
+
+
+def _frozen_without_companions(monkeypatch, tmp_path) -> None:
+    """Command construction as in a frozen Designer whose folder lacks ``bytefray`` and the replay viewer."""
+    from battle_engine import launchers
+
+    folder = tmp_path / "Bytefray" / "Agent Designer"
+    folder.mkdir(parents=True)
+    executable = folder / ("agent-designer.exe" if sys.platform == "win32" else "agent-designer")
+    monkeypatch.setattr(launchers, "is_frozen_application", lambda: True)
+    monkeypatch.setattr(launchers, "sys", type("FrozenSys", (), {"executable": str(executable), "platform": sys.platform}))
+
+
+def _capture_designer_log(designer, monkeypatch) -> list[str]:
+    lines: list[str] = []
+    for panel in (designer.simple, designer.advanced):
+        real = panel.appendLog
+        monkeypatch.setattr(panel, "appendLog", lambda text, real=real: lines.append(text) or real(text))
+    return lines
+
+
+@pytest.mark.gui
+def test_a_frozen_build_without_its_exporter_skips_background_preparation(designer, monkeypatch, tmp_path):
+    _configure_spectator(monkeypatch, tmp_path)
+    result = _v6_match(designer.data_root_for_test, "20261020-000000-a0a0a0a0")
+    _frozen_without_companions(monkeypatch, tmp_path)
+    lines = _capture_designer_log(designer, monkeypatch)
+
+    _finish(designer, result)  # completion starts the background preparation
+
+    assert not any("Could not read canonical result" in line for line in lines)
+    assert any("[Result] winner=" in line for line in lines)
+    [skipped] = [line for line in lines if "Background preparation skipped" in line]
+    assert "bytefray" in skipped and "exporter" in skipped
+    assert Path(designer._last_result_path).resolve() == result.resolve()
+    assert designer.recorded["warnings"] == [] and designer.recorded["pygame"] == []
+    assert not designer._spectator.busy() and designer._spectator._job is None
+
+
+@pytest.mark.gui
+def test_view_last_match_without_the_exporter_opens_the_pygame_viewer(designer, monkeypatch, tmp_path):
+    _configure_spectator(monkeypatch, tmp_path)
+    result = _v6_match(designer.data_root_for_test, "20261020-000000-b0b0b0b0")
+    _frozen_without_companions(monkeypatch, tmp_path)
+    _finish(designer, result)
+    lines = _capture_designer_log(designer, monkeypatch)
+
+    designer._on_open_replay()  # must not raise on the GUI thread
+
+    [(title, body)] = designer.recorded["warnings"]
+    assert title == "Spectator Unavailable"
+    assert "bytefray" in body and "exporter" in body and "Pygame replay viewer" in body
+    assert designer.recorded["pygame"] == [result.with_name("replay.jsonl").resolve()]
+    assert designer.recorded["spectator"] == []
+    assert not designer._spectator.busy() and designer._spectator._job is None
+
+    designer._on_open_replay()  # logged again, not shown again, and the Pygame viewer opens again
+    assert len(designer.recorded["warnings"]) == 1
+    assert len(designer.recorded["pygame"]) == 2
+    assert sum("exporter is unavailable" in line for line in lines) == 2
+
+
+@pytest.mark.gui
+def test_neither_viewer_launching_is_reported_without_a_crash(designer, monkeypatch, tmp_path):
+    from app.services.engine_commands import open_pygame_client_direct
+
+    _configure_spectator(monkeypatch, tmp_path)
+    result = _v6_match(designer.data_root_for_test, "20261020-000000-c0c0c0c0")
+    _frozen_without_companions(monkeypatch, tmp_path)
+    _finish(designer, result)
+    monkeypatch.setattr("app.agent_designer.open_pygame_client_direct", open_pygame_client_direct)
+    critical = []
+    monkeypatch.setattr(
+        "app.agent_designer.QMessageBox.critical", lambda parent, title, body: critical.append((title, body))
+    )
+
+    designer._on_open_replay()
+
+    [(title, body)] = designer.recorded["warnings"]
+    assert title == "Spectator Unavailable" and "bytefray" in body
+    [(title, body)] = critical  # never a silent success
+    assert title == "Replay Launch Failed" and "bytefray-replay-viewer" in body
+    assert designer.recorded["spectator"] == []
+    assert not designer._spectator.busy()
+
+    designer._on_open_replay()  # each click is reported once, and nothing retries in a loop
+    assert len(critical) == 2 and len(designer.recorded["warnings"]) == 1
+
+
+@pytest.mark.gui
+def test_closing_designer_stops_a_preparation_in_progress(designer, monkeypatch, tmp_path):
+    from PySide6.QtCore import QCoreApplication, QEvent
+    from PySide6.QtWidgets import QApplication
+
+    _configure_spectator(monkeypatch, tmp_path)
+    result = _v6_match(designer.data_root_for_test, "20261020-000000-d0d0d0d0")
+    _finish(designer, result)
+    proc = designer._spectator._proc
+    assert proc is not None
+    gone = []
+    proc.destroyed.connect(lambda *_: gone.append(True))
+    designer._proc = None  # _finish's stand-in match process was never connected
+
+    started = time.monotonic()
+    designer.close()
+    assert time.monotonic() - started < 1.0  # no blocking wait on the GUI thread
+    assert not designer._spectator.busy()
+    deadline = time.monotonic() + 30
+    while not gone:
+        assert time.monotonic() < deadline, "the stopped preparation was never deleted"
+        QApplication.processEvents()
+        QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+        time.sleep(0.01)
+    assert designer.recorded["spectator"] == [] and designer.recorded["pygame"] == []
+    assert designer.recorded["warnings"] == []
