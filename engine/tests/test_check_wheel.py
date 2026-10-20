@@ -1,8 +1,8 @@
 """Contract tests for ``tools/check_wheel.py``.
 
-The synthetic wheels below carry this checkout's real registry modules
-(``battle_engine/starters.py`` and ``battle_engine/agent_scaffold.py``) and
-the real bundled bytes of every registered starter and template. The omission
+The synthetic wheels below carry this checkout's real ``battle_engine``
+package modules -- so the checker imports real registries from them -- and the
+real bundled bytes of every registered starter and template. The omission
 cases are generated from those registries, so a newly registered starter or
 template gets its own failure case without anyone editing this file -- the
 property whose absence let the three V6 teaching agents ship without their
@@ -12,6 +12,7 @@ manifests (Pre-RC Remediation 02).
 from __future__ import annotations
 
 import zipfile
+from collections.abc import Mapping
 from pathlib import Path
 
 import pytest
@@ -38,6 +39,16 @@ def _source(relative: str) -> str:
     return (ENGINE / relative).read_text(encoding="utf-8").replace("\r\n", "\n")
 
 
+def _package_modules() -> dict[str, bytes]:
+    """The real ``battle_engine`` code, so the checker can import its registries."""
+
+    return {
+        f"battle_engine/{path.relative_to(ENGINE).as_posix()}": path.read_bytes()
+        for path in sorted(ENGINE.rglob("*.py"))
+        if "__pycache__" not in path.parts and path.relative_to(ENGINE).parts[0] != "data"
+    }
+
+
 def _registered_resources() -> dict[str, bytes]:
     """Every file the runtime registries require, keyed by its wheel path."""
 
@@ -55,6 +66,7 @@ def _registered_resources() -> dict[str, bytes]:
     return files
 
 
+PACKAGE_MODULES = _package_modules()
 REGISTERED_RESOURCES = _registered_resources()
 TEMPLATE_COUNT = sum(len(templates) for templates in TEMPLATE_DIRECTORIES_BY_API_VERSION.values())
 
@@ -63,14 +75,13 @@ def _wheel(
     tmp_path: Path,
     *,
     omit: frozenset[str] = frozenset(),
-    replace: dict[str, bytes | str] | None = None,
+    replace: Mapping[str, bytes | str] | None = None,
     scripts: dict[str, str] | None = None,
     metadata_version: str = "5.0.0rc1",
 ) -> Path:
     wheel = tmp_path / "bytefray-5.0.0rc1-py3-none-any.whl"
     files: dict[str, bytes | str] = {name: b"" for name in EXPECTED_FILES}
-    files[STARTERS_MODULE] = _source("starters.py")
-    files[SCAFFOLD_MODULE] = _source("agent_scaffold.py")
+    files.update(PACKAGE_MODULES)
     files.update(REGISTERED_RESOURCES)
     files.update(replace or {})
     for name in omit:
@@ -93,6 +104,10 @@ def _edited(module: str, old: str, new: str) -> dict[str, bytes | str]:
     source = _source(module)
     assert source.count(old) == 1, f"registry layout changed; update this test's anchor {old!r}"
     return {f"battle_engine/{module}": source.replace(old, new)}
+
+
+def _appended(module: str, code: str) -> dict[str, bytes | str]:
+    return {f"battle_engine/{module}": _source(module) + "\n\n" + code}
 
 
 def test_registered_inventory_is_not_empty() -> None:
@@ -161,7 +176,7 @@ def test_a_newly_registered_template_is_required_without_editing_the_checker(
 ) -> None:
     registry = _edited(
         "agent_scaffold.py",
-        'TEMPLATE_DIRECTORIES = {\n',
+        "TEMPLATE_DIRECTORIES = {\n",
         'TEMPLATE_DIRECTORIES = {\n    "v9_template": "agent_template_v9",\n',
     )
 
@@ -169,6 +184,73 @@ def test_a_newly_registered_template_is_required_without_editing_the_checker(
         validate_wheel(_wheel(tmp_path, replace=registry))
 
     assert "battle_engine/data/agent_template_v9/agent.yaml" in str(failure.value)
+
+
+@pytest.mark.parametrize(
+    ("module", "code", "expected"),
+    [
+        (
+            "starters.py",
+            'STARTER_AGENT_NAMES += ("v9_late",)\n',
+            "starter_agents/v9_late/agent.yaml",
+        ),
+        (
+            "agent_scaffold.py",
+            'if True:\n    TEMPLATE_DIRECTORIES["extra"] = "agent_template_extra"\n',
+            "data/agent_template_extra/agent.yaml",
+        ),
+        (
+            "agent_scaffold.py",
+            (
+                "def _register_late() -> None:\n"
+                '    TEMPLATE_DIRECTORIES_BY_API_VERSION[2]["late"] = "agent_template_late"\n'
+                "\n\n_register_late()\n"
+            ),
+            "data/agent_template_late/agent.yaml",
+        ),
+    ],
+    ids=["augmented-roster", "conditional-template", "registered-by-call"],
+)
+def test_registrations_made_while_the_registry_imports_are_required(
+    tmp_path: Path, module: str, code: str, expected: str
+) -> None:
+    """The checker sees the registry the runtime builds, however it is built."""
+
+    with pytest.raises(ValueError, match="registered agent resources") as failure:
+        validate_wheel(_wheel(tmp_path, replace=_appended(module, code)))
+
+    assert expected in str(failure.value)
+
+
+def test_a_computed_registry_is_read_as_the_runtime_computes_it(tmp_path: Path) -> None:
+    registry = _appended("starters.py", "STARTER_AGENT_NAMES = tuple(sorted(STARTER_AGENT_NAMES))\n")
+
+    summary = validate_wheel(_wheel(tmp_path, replace=registry))
+
+    assert summary.starters == tuple(sorted(STARTER_AGENT_NAMES))
+
+
+@pytest.mark.parametrize(
+    "unloadable",
+    [
+        {STARTERS_MODULE: "STARTER_AGENT_NAMES = (\n"},
+        {SCAFFOLD_MODULE: "raise RuntimeError('registry failed to import')\n"},
+    ],
+    ids=["syntax-error", "import-error"],
+)
+def test_validator_rejects_registries_that_cannot_load(
+    tmp_path: Path, unloadable: dict[str, str]
+) -> None:
+    with pytest.raises(ValueError, match="Cannot load the wheel's starter/template registries"):
+        validate_wheel(_wheel(tmp_path, replace=unloadable))
+
+
+@pytest.mark.parametrize("module", [STARTERS_MODULE, SCAFFOLD_MODULE])
+def test_validator_rejects_a_wheel_without_its_registry_module(
+    tmp_path: Path, module: str
+) -> None:
+    with pytest.raises(ValueError, match="Cannot load the wheel's starter/template registries"):
+        validate_wheel(_wheel(tmp_path, omit=frozenset({module})))
 
 
 @pytest.mark.parametrize(
@@ -201,59 +283,6 @@ def test_validator_rejects_a_manifest_naming_another_agent(tmp_path: Path) -> No
 
     with pytest.raises(ValueError, match="declares name 'someone_else'"):
         validate_wheel(_wheel(tmp_path, replace={path: manifest}))
-
-
-@pytest.mark.parametrize(
-    ("module", "old", "new", "expected"),
-    [
-        (
-            "starters.py",
-            "\n\ndef _starter_resource_dir(",
-            (
-                "\nSTARTER_AGENT_NAMES = tuple(sorted(STARTER_AGENT_NAMES))\n\n\n"
-                "def _starter_resource_dir("
-            ),
-            "Cannot read STARTER_AGENT_NAMES",
-        ),
-        (
-            "starters.py",
-            "\n\ndef _starter_resource_dir(",
-            '\nSTARTER_AGENT_NAMES += ("late",)\n\n\ndef _starter_resource_dir(',
-            "Cannot read STARTER_AGENT_NAMES",
-        ),
-        (
-            "agent_scaffold.py",
-            "\n__all__ = [",
-            '\nTEMPLATE_DIRECTORIES["late"] = "agent_template_late"\n__all__ = [',
-            "Cannot read TEMPLATE_DIRECTORIES_BY_API_VERSION",
-        ),
-        (
-            "starters.py",
-            "STARTER_CONTENT_DIGEST_VERSION = 1\n",
-            "STARTER_CONTENT_DIGEST_VERSION = 2\n",
-            "digest version 2",
-        ),
-    ],
-    ids=["computed-roster", "mutated-roster", "mutated-templates", "digest-version"],
-)
-def test_validator_refuses_a_registry_it_cannot_read_reliably(
-    tmp_path: Path, module: str, old: str, new: str, expected: str
-) -> None:
-    with pytest.raises(ValueError, match=expected):
-        validate_wheel(_wheel(tmp_path, replace=_edited(module, old, new)))
-
-
-@pytest.mark.parametrize("module", [STARTERS_MODULE, SCAFFOLD_MODULE])
-def test_validator_rejects_a_wheel_without_its_registry_module(
-    tmp_path: Path, module: str
-) -> None:
-    with pytest.raises(ValueError, match="missing its registry module"):
-        validate_wheel(_wheel(tmp_path, omit=frozenset({module})))
-
-
-def test_validator_rejects_an_unparsable_registry_module(tmp_path: Path) -> None:
-    with pytest.raises(ValueError, match="Cannot parse registry module"):
-        validate_wheel(_wheel(tmp_path, replace={STARTERS_MODULE: "STARTER_AGENT_NAMES = (\n"}))
 
 
 @pytest.mark.parametrize(

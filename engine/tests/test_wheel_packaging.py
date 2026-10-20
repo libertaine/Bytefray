@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import fnmatch
 import glob
+import importlib.metadata
+import importlib.util
 import json
 import os
 import shutil
@@ -129,17 +131,14 @@ def _setuptools_can_build() -> str | None:
     """Why the current interpreter cannot build the wheel offline, if it cannot."""
 
     try:
-        import setuptools
-    except ImportError:
+        installed = importlib.metadata.version("setuptools")
+    except importlib.metadata.PackageNotFoundError:
         return "setuptools is not installed"
-    version = tuple(int(part) for part in setuptools.__version__.split(".")[:2] if part.isdigit())
+    version = tuple(int(part) for part in installed.split(".")[:2] if part.isdigit())
     if version < (69,):
-        return f"pyproject.toml requires setuptools>=69, found {setuptools.__version__}"
-    if version < (70, 1):
-        try:
-            import wheel  # noqa: F401
-        except ImportError:
-            return f"setuptools {setuptools.__version__} needs the 'wheel' package"
+        return f"pyproject.toml requires setuptools>=69, found {installed}"
+    if version < (70, 1) and importlib.util.find_spec("wheel") is None:
+        return f"setuptools {installed} needs the 'wheel' package"
     return None
 
 
@@ -214,8 +213,8 @@ def test_built_wheel_passes_the_release_checker(built_wheel: Path) -> None:
 def test_built_wheel_ships_every_registered_resource_exactly(built_wheel: Path) -> None:
     """Each registered directory ships exactly its source files, byte for byte.
 
-    Independent of the checker's own registry parsing: the expectation comes
-    from this checkout's imported registries and files.
+    Independent of the checker: the expectation comes from this checkout's
+    imported registries and files, not from the wheel under test.
     """
 
     with zipfile.ZipFile(built_wheel) as archive:
