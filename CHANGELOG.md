@@ -37,9 +37,11 @@ package `5.1.0a1`). It is not yet published; see the
   Keyboard with the Qt Quick, QML and OpenGL libraries only it needed, and the
   Qt PDF image reader. The build checks that nothing left imports them.
 * **Installation safety.** Setup refuses a folder that already holds another
-  installation (for example Bytefray 5.0), and compares folders by their long
-  names. The applications refuse to start when the data folder overlaps the
-  program folder (resolved through 8.3 names and junctions), or when an
+  installation (for example Bytefray 5.0), and compares folders fully resolved
+  (8.3 names, junctions and symbolic links). An upgrade deletes exactly the
+  files the previous build installed, listed in `bin\bytefray-files.txt`, and
+  never a folder recursively. The applications refuse to start when the data
+  folder overlaps the program folder (also fully resolved), or when an
   installation's record is missing, instead of falling back to another data root.
 
 ### Changed — application version 5.1.0-alpha.1

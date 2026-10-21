@@ -55,6 +55,12 @@ yourself if you no longer want it. Bytefray Spectator keeps its own settings
 and logs in `%APPDATA%\Godot\app_userdata\Bytefray Spectator`, which
 uninstalling also leaves in place.
 
+**Choosing folders.** Keep the installation folder's path under about 150
+characters; some installed files lie deep inside it, and Setup stops (and
+undoes its changes) when a path would be too long for Windows. The data folder
+must be separate from the installation folder: Setup refuses one inside the
+other, and so do the installed programs.
+
 **Advanced.** `/BYTEFRAYDATAROOT=<folder>` on the installer's command line
 chooses another data folder. `BYTEFRAY_SPECTATOR=off` makes Agent Designer use
 the Pygame viewer for every match; `BYTEFRAY_SPECTATOR=<path>` points it at a
@@ -93,8 +99,14 @@ different Spectator build.
 - The standalone sensing demonstration generators are available from source
   only.
 - The installer and programs are not code-signed (see SmartScreen above).
+- If a program finds its installation damaged (for example its installation
+  record missing) or its data folder inside its program folder, it refuses to
+  start and explains why: `bytefray` prints the reason, and Agent Designer and
+  the replay viewer show it in a generic "Unhandled exception in script"
+  window. Reinstall as the message says.
 - Accessibility has not been reviewed for this Alpha. Spectator is operated
-  from the keyboard.
+  from the keyboard, and Agent Designer's entrant C selector has no
+  screen-reader name.
 
 See the [compatibility record](BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md) for
 the complete list of supported and unsupported combinations.
