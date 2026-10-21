@@ -60,9 +60,12 @@ uninstalling also leaves in place.
 characters; some installed files lie deep inside it, and a first installation
 stops (and undoes its changes) when a path would be too long for Windows. The
 data folder must be separate from the installation folder: Setup refuses one
-inside the other, and so do the installed programs. Don't replace folders
-inside the installation folder with junctions or symbolic links: Setup and the
-uninstaller refuse to run while one exists there.
+inside the other, and so do the installed programs. Choose installation and
+data folders that are not reached through a junction or symbolic link created
+without administrator rights: Windows does not let Setup follow such a link, so
+Setup refuses those folders. Don't replace folders inside the installation
+folder with junctions or symbolic links: Setup and the uninstaller refuse to run
+while one exists there.
 
 **Advanced.** `/BYTEFRAYDATAROOT=<folder>` on the installer's command line
 chooses another data folder. `BYTEFRAY_SPECTATOR=off` makes Agent Designer use

@@ -115,6 +115,18 @@ def test_links_inside_the_installation_stop_setup_and_the_uninstaller() -> None:
     assert "LinkInInstalledFolders(" in uninstall and "Result := Link = '';" in uninstall
 
 
+def test_folders_reached_through_links_setup_cannot_follow_are_refused() -> None:
+    """Under Windows RedirectionGuard (enabled by Inno Setup) Setup cannot follow a
+    junction a standard user created, so a comparison through one would silently use
+    the unresolved path; Setup refuses such folders before any other check."""
+
+    check = SCRIPT[SCRIPT.index("function HasUnresolvedLink") : SCRIPT.index("{ The data folder must stay outside")]
+    assert "((Found.Attributes and ReparsePointAttribute) <> 0) and (FinalPath(Part) = '')" in check
+    prepare = SCRIPT[SCRIPT.index("function PrepareToInstall") : SCRIPT.index("function JsonString")]
+    first = prepare.index("if HasUnresolvedLink(App) or HasUnresolvedLink(DataRoot()) then")
+    assert first < prepare.index("HoldsAnotherInstallation(App)") < prepare.index("IsSameOrInside(DataRoot(), App)")
+
+
 def test_the_file_list_names_the_documents_the_installer_copies() -> None:
     build = (ROOT / "tools" / "build_win.ps1").read_text(encoding="utf-8")
     listed = re.search(r"\$InstalledDocuments = @\(([^)]*)\)", build, re.DOTALL)
@@ -145,7 +157,7 @@ def test_a_folder_holding_another_installation_is_refused() -> None:
     # A leftover installation record must not make a foreign folder look like ours.
     assert "InstallRecordName" not in body.split("begin", 1)[1]
     # Checked on every run: a registered location may since point at another folder.
-    assert "  if HoldsAnotherInstallation(App) then" in SCRIPT
+    assert "  else if HoldsAnotherInstallation(App) then" in SCRIPT
     assert "not IsUpgradeOfThisInstallation() and HoldsAnotherInstallation" not in SCRIPT
 
 

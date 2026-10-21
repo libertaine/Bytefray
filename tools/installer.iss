@@ -336,10 +336,36 @@ begin
     Result := FirstLink(App + '\licenses');
 end;
 
+{ True when Path passes through a junction or symbolic link whose target Setup
+  cannot resolve (a dangling link, or one Setup may not follow: Inno Setup enables
+  Windows RedirectionGuard, under which Setup does not follow links created
+  without administrator rights). Folder comparisons through such a link would
+  silently compare the wrong paths, so callers refuse it instead. Links Setup can
+  follow are resolved by LongPath and compared normally. Each component is
+  examined; those below a link Setup cannot follow cannot be read and are skipped
+  until the link itself is reached. }
+function HasUnresolvedLink(Path: String): Boolean;
+var
+  Part: String;
+  Found: TFindRec;
+begin
+  Result := False;
+  Part := RemoveBackslashUnlessRoot(ExpandFileName(Path));
+  while not Result and (ExtractFileDir(Part) <> Part) do
+  begin
+    if FindFirst(Part, Found) then
+    begin
+      FindClose(Found);
+      Result := ((Found.Attributes and ReparsePointAttribute) <> 0) and (FinalPath(Part) = '');
+    end;
+    Part := ExtractFileDir(Part);
+  end;
+end;
+
 { The data folder must stay outside the program folder, whose files upgrades replace
   and uninstall removes, and must not contain it; the program folder must not
   belong to another installation; and the folders Setup writes into must not be
-  redirected by links. }
+  redirected by links. Folders whose location Setup cannot verify are refused. }
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   App, Link: String;
@@ -347,7 +373,11 @@ begin
   Result := '';
   App := RemoveBackslashUnlessRoot(ExpandConstant('{app}'));
   Link := LinkInInstalledFolders(App);
-  if HoldsAnotherInstallation(App) then
+  if HasUnresolvedLink(App) or HasUnresolvedLink(DataRoot()) then
+    Result := 'The installation folder (' + App + ') or the data folder (' + DataRoot() + ') is reached ' +
+      'through a junction or symbolic link that Setup cannot follow, so Setup cannot check where it ' +
+      'leads. Choose folders reached without such links.'
+  else if HoldsAnotherInstallation(App) then
     Result := 'The folder ' + App + ' already holds another installation (for example Bytefray 5.0). ' +
       'Choose an empty folder for Bytefray 5.1 Alpha.'
   else if IsSameOrInside(DataRoot(), App) or IsSameOrInside(App, DataRoot()) then

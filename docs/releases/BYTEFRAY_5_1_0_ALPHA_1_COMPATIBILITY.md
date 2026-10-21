@@ -104,7 +104,8 @@ make them qualified for release. Qualification evidence today:
 - Spectator export time grows with the square of match length (about 40 s for 477 ticks); Designer prepares exports in the background, and a prepared presentation is reused from the data root's cache.
 - The Windows installer and executables are not code-signed, so Windows SmartScreen may warn before the first run.
 - The Windows installer installs for one Windows account (no all-users option) and supports AMD64 only.
-- The Windows installation folder's path must stay under about 150 characters: the deepest installed file lies 107 characters below it, and Setup stops and rolls back when a path would exceed the Windows 260-character limit.
+- The Windows installation folder's path must stay under about 150 characters: the deepest installed file lies 107 characters below it, and Setup stops and rolls back when a first installation's path would exceed the Windows 260-character limit.
+- The Windows installer refuses installation or data folders reached through a junction or symbolic link it cannot follow (Windows RedirectionGuard keeps Setup from following links created without administrator rights), and Setup and the uninstaller refuse to run while a junction or symbolic link exists inside the installation's bin, docs or licenses folders.
 - A Windows application that finds its installation record missing or damaged, or its data folder overlapping its program folder, refuses to start: the command-line programs print the explanation, and the windowed applications show it in a generic "Unhandled exception in script" dialog.
 - Agent Designer's entrant C selector has no accessible name for screen readers; accessibility has not been reviewed for this Alpha.
 - Bytefray Spectator keeps its own settings and logs in `%APPDATA%\Godot\app_userdata\Bytefray Spectator`, outside the Bytefray data root; uninstalling leaves them, as it leaves the data root.

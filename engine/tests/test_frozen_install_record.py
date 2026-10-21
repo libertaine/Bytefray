@@ -141,8 +141,9 @@ def _overlapping(install: Path, tmp_path: Path, kind: str) -> Path:
     ],
 )
 def test_a_data_root_overlapping_the_program_folder_is_refused(hook, tmp_path, kind):
-    """Upgrades replace the program folders, so data there could be deleted; the
-    check compares resolved paths, so aliases cannot disguise an overlap."""
+    """The program folder belongs to the installer, whose upgrades replace its files
+    and whose uninstaller removes them; the check compares resolved paths, so
+    aliases cannot disguise an overlap."""
 
     install = tmp_path / "programs" / "Bytefray 5.1 Alpha"
     executable = _installed_executable(install)

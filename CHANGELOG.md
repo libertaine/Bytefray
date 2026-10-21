@@ -39,9 +39,11 @@ package `5.1.0a1`). It is not yet published; see the
 * **Installation safety.** Setup refuses a folder that holds or overlaps
   another installation (for example Bytefray 5.0) on every run, upgrades
   included, and compares folders fully resolved (8.3 names, junctions and
-  symbolic links). Setup and the uninstaller refuse to run while a junction or
-  symbolic link exists inside the installation's `bin`, `docs` or `licenses`
-  folders. After an upgrade has installed its files, Setup deletes only files
+  symbolic links); it refuses an installation or data folder reached through a
+  link it cannot follow (Windows RedirectionGuard keeps Setup from following
+  links created without administrator rights). Setup and the uninstaller
+  refuse to run while a junction or symbolic link exists inside the
+  installation's `bin`, `docs` or `licenses` folders. After an upgrade has installed its files, Setup deletes only files
   the previous build installed (listed with their SHA-256 in
   `bin\bytefray-files.txt`) that the new build no longer ships and that are
   still unchanged -- never a folder recursively. The applications refuse to
