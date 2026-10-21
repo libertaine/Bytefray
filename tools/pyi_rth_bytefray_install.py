@@ -18,8 +18,9 @@ A record that exists but cannot be used stops the application with an
 explanation instead of silently falling back to another data root. So does an
 installed layout without its record -- Inno Setup's ``unins*.exe`` beside
 ``bin``, which a portable tree never has -- and a data root that resolves inside
-the program folder (or contains it): upgrades replace the program folders, so
-data there could be deleted. Paths are compared fully resolved, so an 8.3 short
+the program folder (or contains it): that folder belongs to the installer, whose
+upgrades replace its files and whose uninstaller removes them. Paths are
+compared fully resolved, so an 8.3 short
 name or a junction cannot disguise one folder as another.
 """
 

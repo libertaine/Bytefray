@@ -63,9 +63,18 @@ def test_a_binary_that_still_imports_an_omitted_library_is_reported(tmp_path: Pa
     assert [(path.name, name) for path, name in dangling] == [("renamed-plugin.dll", "qt6pdf.dll")]
 
 
+def test_the_installed_file_list_is_written_last() -> None:
+    assert 'Join-Path $DistDir "bytefray-files.txt"' in SOURCE
+    # After the smoke tests and the residue check, so it lists the final tree.
+    assert SOURCE.index("# Final proof") < SOURCE.index("$InstalledDocuments") < SOURCE.index('"[build] Success."')
+    assert "[Text.UTF8Encoding]::new($false)" in SOURCE
+
+
 def test_release_builds_can_pin_every_dependency() -> None:
     assert "[string]$Constraints" in SOURCE
     assert '$ConstraintArgs = @("-c", (Resolve-Path -LiteralPath $Constraints).Path)' in SOURCE
+    # The isolated build of the editable install is pinned too.
+    assert '$BuildConstraintArgs = @("--build-constraint", (Resolve-Path -LiteralPath $Constraints).Path)' in SOURCE
     pins = (ROOT / "tools" / "windows-build-constraints.txt").read_text(encoding="utf-8")
     for pin in ("pyinstaller==6.22.2", "PySide6==6.11.2", "pygame-ce==2.5.8", "PyYAML==6.0.3"):
         assert pin in pins

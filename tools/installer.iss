@@ -80,19 +80,12 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Tasks]
 Name: "desktopicon"; Description: "Create a desktop shortcut for Agent Designer"; GroupDescription: "Additional shortcuts:"; Flags: unchecked
 
-[InstallDelete]
-; An upgrade or repair replaces each application folder instead of layering new
-; files over the previous build's: a stale Qt plugin or DLL left behind could
-; otherwise be loaded by the new build. Only these installer-owned folders are
-; removed, and only when this AppId is already installed in this same folder.
-Type: filesandordirs; Name: "{app}\bin\bytefray"; Check: IsUpgradeOfThisInstallation
-Type: filesandordirs; Name: "{app}\bin\bytefray-cli"; Check: IsUpgradeOfThisInstallation
-Type: filesandordirs; Name: "{app}\bin\bytefray-agent-designer"; Check: IsUpgradeOfThisInstallation
-Type: filesandordirs; Name: "{app}\bin\bytefray-replay-viewer"; Check: IsUpgradeOfThisInstallation
-Type: filesandordirs; Name: "{app}\bin\bytefray-spectator"; Check: IsUpgradeOfThisInstallation
-Type: filesandordirs; Name: "{app}\licenses"; Check: IsUpgradeOfThisInstallation
-
 [Files]
+; bin\bytefray-files.txt lists every file below (tools\build_win.ps1 writes it). An
+; upgrade or repair deletes exactly the files the previous build's list names
+; before installing (RemovePreviousBuild in [Code]), so a stale Qt plugin or DLL
+; cannot be loaded by the new build -- and nothing is ever deleted recursively.
+Source: "{#DistRoot}\bytefray-files.txt"; DestDir: "{app}\bin"; Flags: ignoreversion
 ; Preserve each canonical PyInstaller onedir tree and their sibling relationship.
 Source: "{#DistRoot}\bytefray\*"; DestDir: "{app}\bin\bytefray"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#DistRoot}\bytefray-cli\*"; DestDir: "{app}\bin\bytefray-cli"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -124,12 +117,19 @@ Filename: "{app}\bin\bytefray-agent-designer\bytefray-agent-designer.exe"; Worki
 [Code]
 const
   InstallRecordName = 'bytefray-install.json';
+  FileListName = 'bytefray-files.txt';
 
 var
   ChosenDataRoot: String;
 
 function GetLongPathName(ShortPath: String; LongPath: String; Size: Cardinal): Cardinal;
   external 'GetLongPathNameW@kernel32.dll stdcall';
+function CreateFile(Name: String; Access, Share, Security, Disposition, Flags, Template: Cardinal): THandle;
+  external 'CreateFileW@kernel32.dll stdcall';
+function GetFinalPathNameByHandle(Handle: THandle; Path: String; Size, Flags: Cardinal): Cardinal;
+  external 'GetFinalPathNameByHandleW@kernel32.dll stdcall';
+function CloseHandle(Handle: THandle): Boolean;
+  external 'CloseHandle@kernel32.dll stdcall';
 
 function UninstallKey(): String;
 begin
@@ -142,13 +142,38 @@ begin
   Result := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{A5B86D38-9A6C-4D7F-9B4E-BA7720000002}_is1';
 end;
 
-{ The absolute path with its existing part spelled in long names, so that an
-  8.3 alias (C:\BYTEFR~1\...) cannot make one folder look like another. Junctions
-  are not resolved here; the installed applications refuse an overlapping data
-  folder using fully resolved paths (tools\pyi_rth_bytefray_install.py). }
+{ The final path of an existing file or folder: 8.3 aliases expanded and
+  junctions and symbolic links followed (GetFinalPathNameByHandleW), or '' when
+  it cannot be opened. }
+function FinalPath(Existing: String): String;
+var
+  Handle: THandle;
+  Buffer: String;
+  Count: Cardinal;
+begin
+  Result := '';
+  { access 0, share read/write/delete, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS (folders) }
+  Handle := CreateFile(Existing, 0, 7, 0, 3, $02000000, 0);
+  if (Handle = 0) or (Handle = THandle(-1)) then
+    Exit;
+  SetLength(Buffer, 32767);
+  Count := GetFinalPathNameByHandle(Handle, Buffer, 32767, 0);
+  CloseHandle(Handle);
+  if (Count = 0) or (Count >= 32767) then
+    Exit;
+  Result := Copy(Buffer, 1, Count);
+  if Copy(Result, 1, 8) = '\\?\UNC\' then
+    Result := '\\' + Copy(Result, 9, Length(Result))
+  else if Copy(Result, 1, 4) = '\\?\' then
+    Result := Copy(Result, 5, Length(Result));
+end;
+
+{ The absolute path with its existing part resolved -- long names, junctions and
+  links -- so that an alias cannot make one folder look like another. The
+  installed applications repeat this check (tools\pyi_rth_bytefray_install.py). }
 function LongPath(Path: String): String;
 var
-  Existing, Tail, Buffer: String;
+  Existing, Tail, Buffer, Resolved: String;
   Count: Cardinal;
 begin
   Existing := RemoveBackslashUnlessRoot(ExpandFileName(Path));
@@ -158,11 +183,17 @@ begin
     Tail := ExtractFileName(Existing) + '\' + Tail;
     Existing := ExtractFileDir(Existing);
   end;
-  SetLength(Buffer, 32767);
-  Count := GetLongPathName(Existing, Buffer, 32767);
-  if (Count > 0) and (Count < 32767) then
-    Existing := Copy(Buffer, 1, Count);
-  Result := RemoveBackslashUnlessRoot(AddBackslash(Existing) + Tail);
+  Resolved := FinalPath(Existing);
+  if Resolved = '' then
+  begin
+    SetLength(Buffer, 32767);
+    Count := GetLongPathName(Existing, Buffer, 32767);
+    if (Count > 0) and (Count < 32767) then
+      Resolved := Copy(Buffer, 1, Count)
+    else
+      Resolved := Existing;
+  end;
+  Result := RemoveBackslashUnlessRoot(AddBackslash(Resolved) + Tail);
 end;
 
 function SamePath(A, B: String): Boolean;
@@ -201,17 +232,16 @@ begin
   Result := Copy(Path, 1, Length(Folder)) = Folder;
 end;
 
-{ True when the folder already holds a different installation -- Bytefray 5.0
-  (registered or not) or any other Inno Setup application -- which copying this
-  product's files over would damage. A 5.1 Alpha folder carries its record. }
+{ True when the folder already holds an installation other than this AppId's own
+  registered one (checked by the caller) -- Bytefray 5.0, registered or not, or any
+  other Inno Setup application -- which copying this product's files over would
+  damage. A leftover installation record proves nothing, so it is not consulted. }
 function HoldsAnotherInstallation(App: String): Boolean;
 var
   Found: TFindRec;
   Location: String;
 begin
   Result := False;
-  if FileExists(App + '\bin\' + InstallRecordName) then
-    Exit;
   if FindFirst(App + '\unins*.exe', Found) then
   begin
     FindClose(Found);
@@ -224,7 +254,7 @@ begin
     Result := True;
 end;
 
-{ The data folder must stay outside the program folder, which upgrades replace
+{ The data folder must stay outside the program folder, whose files upgrades replace
   and uninstall removes, and must not contain it; and the program folder must not
   belong to another installation. }
 function PrepareToInstall(var NeedsRestart: Boolean): String;
@@ -261,8 +291,45 @@ begin
     RaiseException('Could not write ' + ExpandConstant('{app}\bin\') + InstallRecordName);
 end;
 
+(* Before an upgrade or repair installs anything: delete each file the previous
+   build's bin\bytefray-files.txt names (paths relative to the installation folder;
+   anything absolute or climbing out of it is ignored), then remove folders it left
+   empty. Files the list does not name -- anything a user or the application put
+   there -- are never touched, so no data can be lost even if a data folder lies
+   inside the installation folder. An installation without a list (an earlier
+   candidate) gets no cleanup. *)
+procedure RemovePreviousBuild();
+var
+  Lines: TArrayOfString;
+  I: Integer;
+  App, Relative, Folder: String;
+begin
+  App := RemoveBackslashUnlessRoot(ExpandConstant('{app}'));
+  if not IsUpgradeOfThisInstallation() or not LoadStringsFromFile(App + '\bin\' + FileListName, Lines) then
+    Exit;
+  for I := 0 to GetArrayLength(Lines) - 1 do
+  begin
+    Relative := Trim(Lines[I]);
+    if (Relative = '') or (Pos('..', Relative) > 0) or (Pos(':', Relative) > 0) or (Copy(Relative, 1, 1) = '\') then
+      Continue;
+    DeleteFile(App + '\' + Relative);
+  end;
+  for I := GetArrayLength(Lines) - 1 downto 0 do
+  begin
+    Relative := Trim(Lines[I]);
+    if (Relative = '') or (Pos('..', Relative) > 0) or (Pos(':', Relative) > 0) or (Copy(Relative, 1, 1) = '\') then
+      Continue;
+    Folder := ExtractFileDir(App + '\' + Relative);
+    { RemoveDir only removes empty folders. }
+    while (Length(Folder) > Length(App)) and RemoveDir(Folder) do
+      Folder := ExtractFileDir(Folder);
+  end;
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
+  if CurStep = ssInstall then
+    RemovePreviousBuild();
   if CurStep = ssPostInstall then
     WriteInstallRecord();
 end;

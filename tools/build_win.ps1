@@ -60,7 +60,11 @@ if ($Constraints) {
   Write-Host "[build] Python $(& $PyExe -c 'import sys; print(sys.version.split()[0])'); dependencies pinned by $Constraints"
 }
 Run-PyMod -Module pip -Args (@("install","--upgrade","pip","wheel") + $ConstraintArgs)
-Run-PyMod -Module pip -Args (@("install", "-e", ".[replay,designer,windows-build]") + $ConstraintArgs)
+# The editable install builds in an isolated environment, which ordinary
+# constraints do not reach; --build-constraint pins that build backend too.
+$BuildConstraintArgs = @()
+if ($Constraints) { $BuildConstraintArgs = @("--build-constraint", (Resolve-Path -LiteralPath $Constraints).Path) }
+Run-PyMod -Module pip -Args (@("install", "-e", ".[replay,designer,windows-build]") + $ConstraintArgs + $BuildConstraintArgs)
 
 # Ensure PyInstaller available (from venv)
 Run-PyMod -Module pip -Args @("show","pyinstaller") | Out-Null
@@ -405,6 +409,26 @@ foreach ($Artifact in $Artifacts) {
     throw "Build qualification left runtime-generated data under $ResidueDir -- smoke tests must run against an isolated BYTEFRAY_ROOT, not the app's default data root."
   }
 }
+
+# Every file tools/installer.iss installs, relative to the installation folder.
+# Setup ships this list as bin\bytefray-files.txt, and an upgrade deletes exactly
+# the files the previous build's list names -- never a folder recursively, so
+# nothing else in the installation folder can be lost. The documents are the
+# ones installer.iss copies into docs\ (engine/tests/test_windows_installer_side_by_side.py
+# keeps the two lists in step).
+$InstalledDocuments = @("README.md", "LICENSE", "CHANGELOG.md", "BYTEFRAY_5_1_0_ALPHA_1_RELEASE_NOTES.md",
+  "BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md", "BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.json")
+$FileList = Join-Path $DistDir "bytefray-files.txt"
+$Listed = @()
+foreach ($Folder in @(@($Artifacts | ForEach-Object Name) + @("bytefray-spectator") | Where-Object { Test-Path -LiteralPath (Join-Path $DistDir $_) })) {
+  $Listed += Get-ChildItem -LiteralPath (Join-Path $DistDir $Folder) -Recurse -File |
+    ForEach-Object { "bin\" + $_.FullName.Substring($DistDir.Length).TrimStart('\') }
+}
+$Listed += Get-ChildItem -LiteralPath (Join-Path $DistDir "licenses") -Recurse -File |
+  ForEach-Object { $_.FullName.Substring($DistDir.Length).TrimStart('\') }
+$Listed += $InstalledDocuments | ForEach-Object { "docs\$_" }
+[IO.File]::WriteAllLines($FileList, [string[]]$Listed, [Text.UTF8Encoding]::new($false))
+Write-Host "[build] Installed-file list: $($Listed.Count) files ($FileList)."
 
 Write-Host ""
 Write-Host "[build] Success."

@@ -66,17 +66,32 @@ def test_per_user_installation_writes_nothing_per_machine() -> None:
         assert forbidden not in STATEMENTS.replace(reads_stable_entry, ""), forbidden
 
 
-def test_upgrade_cleanup_is_limited_to_installer_owned_folders() -> None:
-    entries = _section("InstallDelete")
-    owned = {f'{{app}}\\bin\\{folder}' for folder in APPLICATION_FOLDERS} | {"{app}\\licenses"}
-    assert len(entries) == len(owned)
-    for entry in entries:
-        match = re.fullmatch(r'Type: filesandordirs; Name: "([^"]+)"; Check: IsUpgradeOfThisInstallation', entry)
-        assert match is not None, entry
-        assert match.group(1) in owned
+def test_upgrade_cleanup_deletes_only_the_previous_builds_listed_files() -> None:
+    """Nothing is ever deleted recursively: an upgrade removes exactly the files the
+    previous build's bin\\bytefray-files.txt names, so data inside the program folder
+    (through a junction, say) cannot be lost."""
+
+    assert "[InstallDelete]" not in STATEMENTS
+    assert "filesandordirs" not in STATEMENTS and "DelTree" not in STATEMENTS
+    assert 'Source: "{#DistRoot}\\bytefray-files.txt"; DestDir: "{app}\\bin"' in SCRIPT
+    body = SCRIPT[SCRIPT.index("procedure RemovePreviousBuild") : SCRIPT.index("procedure CurStepChanged")]
+    assert "if not IsUpgradeOfThisInstallation() or not LoadStringsFromFile(App + '\\bin\\' + FileListName, Lines) then" in body
+    # Only relative paths that stay inside {app}.
+    assert body.count("(Pos('..', Relative) > 0) or (Pos(':', Relative) > 0) or (Copy(Relative, 1, 1) = '\\')") == 2
+    assert "DeleteFile(App + '\\' + Relative)" in body and "RemoveDir(Folder)" in body
+    assert "if CurStep = ssInstall then\n    RemovePreviousBuild();" in SCRIPT
     # The check compares the recorded install location of this AppId only.
     assert "RegQueryStringValue(HKA, UninstallKey(), 'InstallLocation', PreviousLocation)" in SCRIPT
     assert "SamePath(PreviousLocation, ExpandConstant('{app}'))" in SCRIPT
+
+
+def test_the_file_list_names_the_documents_the_installer_copies() -> None:
+    build = (ROOT / "tools" / "build_win.ps1").read_text(encoding="utf-8")
+    listed = re.search(r"\$InstalledDocuments = @\(([^)]*)\)", build, re.DOTALL)
+    assert listed is not None
+    documents = sorted(re.findall(r'"([^"]+)"', listed.group(1)))
+    shipped = sorted(Path(source).name for source in re.findall(r'^Source: "\.\.\\([^"]+)"; DestDir: "\{app\}\\docs"', SCRIPT, re.MULTILINE))
+    assert documents == shipped
 
 
 def test_uninstall_removes_only_what_it_installed() -> None:
@@ -91,17 +106,21 @@ def test_a_folder_holding_another_installation_is_refused() -> None:
 
     assert f"{{{STABLE_APP_ID}}}_is1" in SCRIPT
     body = SCRIPT[SCRIPT.index("function HoldsAnotherInstallation") : SCRIPT.index("function PrepareToInstall")]
-    for clue in ("FileExists(App + '\\bin\\' + InstallRecordName)", "FindFirst(App + '\\unins*.exe'",
-                 "DirExists(App + '\\bin\\bytefray')", "RegQueryStringValue(HKLM, StableUninstallKey()",
-                 "RegQueryStringValue(HKCU, StableUninstallKey()"):
+    for clue in ("FindFirst(App + '\\unins*.exe'", "DirExists(App + '\\bin\\bytefray')",
+                 "RegQueryStringValue(HKLM, StableUninstallKey()", "RegQueryStringValue(HKCU, StableUninstallKey()"):
         assert clue in body, clue
+    # A leftover installation record must not make a foreign folder look like ours.
+    assert "InstallRecordName" not in body.split("begin", 1)[1]
     assert "if not IsUpgradeOfThisInstallation() and HoldsAnotherInstallation(App) then" in SCRIPT
 
 
-def test_folder_comparisons_use_long_path_names() -> None:
-    """An 8.3 alias must not make an overlapping data folder look separate."""
+def test_folder_comparisons_resolve_aliases_and_links() -> None:
+    """An 8.3 alias or a junction must not make an overlapping data folder look separate."""
 
+    assert "external 'GetFinalPathNameByHandleW@kernel32.dll stdcall'" in SCRIPT
     assert "external 'GetLongPathNameW@kernel32.dll stdcall'" in SCRIPT
+    long_path = SCRIPT[SCRIPT.index("function LongPath") : SCRIPT.index("function SamePath")]
+    assert "Resolved := FinalPath(Existing);" in long_path
     same = SCRIPT[SCRIPT.index("function SamePath") : SCRIPT.index("{ /BYTEFRAYDATAROOT")]
     inside = SCRIPT[SCRIPT.index("function IsSameOrInside") : SCRIPT.index("function HoldsAnotherInstallation")]
     assert "LongPath(A)" in same and "LongPath(B)" in same

@@ -13,10 +13,11 @@ used by Bytefray, and each drags in libraries nothing else needs:
   Bytefray reads only its own PNG/ICO resources.
 
 Bytefray 5.0 shipped all of these unused. :func:`omit` deletes them from each
-frozen application tree, and :func:`dangling_imports` then scans the import table
-of every remaining ``.exe``/``.dll``/``.pyd`` so that an omission that something
-still needs fails the build instead of the application. Requires ``pefile``
-(the ``windows-build`` extra).
+frozen application tree, and :func:`dangling_imports` then scans the import and
+delay-import tables of every remaining ``.exe``/``.dll``/``.pyd`` so that an
+omission that something still links to fails the build instead of the
+application. Dynamic loading by computed name is outside that scan (see
+:func:`imported_names`). Requires ``pefile`` (the ``windows-build`` extra).
 
     python tools/omit_unused_qt.py --dist dist/windows
 """
@@ -60,11 +61,22 @@ def omit(tree: Path) -> list[Path]:
 
 
 def imported_names(binary: Path) -> set[str]:
+    """Every library ``binary`` imports, at load time or delay-loaded.
+
+    A library loaded only through ``LoadLibrary`` with a computed name (as Qt
+    loads its plugins) is invisible here; the omitted plugins are exactly such
+    leaves, and the libraries omitted with them are imported only by them.
+    """
+
     import pefile  # type: ignore[import-untyped]
 
     image = pefile.PE(str(binary), fast_load=True)
-    image.parse_data_directories(directories=[pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_IMPORT"]])
-    return {entry.dll.decode(errors="replace").lower() for entry in getattr(image, "DIRECTORY_ENTRY_IMPORT", ())}
+    image.parse_data_directories(directories=[
+        pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_IMPORT"],
+        pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT"],
+    ])
+    entries = [*getattr(image, "DIRECTORY_ENTRY_IMPORT", ()), *getattr(image, "DIRECTORY_ENTRY_DELAY_IMPORT", ())]
+    return {entry.dll.decode(errors="replace").lower() for entry in entries}
 
 
 def dangling_imports(tree: Path) -> list[tuple[Path, str]]:
