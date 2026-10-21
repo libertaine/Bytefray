@@ -118,9 +118,15 @@ def test_links_inside_the_installation_stop_setup_and_the_uninstaller() -> None:
     prepare = SCRIPT[SCRIPT.index("function PrepareToInstall") : SCRIPT.index("function JsonString")]
     assert "Link := LinkInInstalledFolders(App);" in prepare and "Setup does not install through links" in prepare
     # The uninstaller also refuses a folder that no longer holds this installation
-    # (redirected since installation) before looking for links inside it.
+    # (moved or redirected since installation) before looking for links inside it.
+    # It cannot read its own uninstall log (it holds it open), so it checks the
+    # installed-file list against the SHA-256 Setup recorded with the uninstall entry.
     uninstall = SCRIPT[SCRIPT.index("function InitializeUninstall") : SCRIPT.index("function UpdateReadyMemo")]
-    assert "if HasUnresolvedLink(App) or not HasOwnUninstallLog(App) then" in uninstall
+    assert "if HasUnresolvedLink(App) or not HoldsThisInstallation(App) then" in uninstall
+    holds = SCRIPT[SCRIPT.index("function HoldsThisInstallation") : SCRIPT.index("{ The uninstaller removes")]
+    assert "RegQueryStringValue(HKA, UninstallKey(), 'Inno Setup CodeFile: FileListSha256', Recorded)" in holds
+    assert "(FileSha256(App + '\\bin\\' + FileListName) = Recorded)" in holds
+    assert "HasOwnUninstallLog" not in uninstall
     assert "Problem := LinkInInstalledFolders(App);" in uninstall and "Result := Problem = '';" in uninstall
 
 

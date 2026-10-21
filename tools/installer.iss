@@ -532,20 +532,32 @@ begin
   SetPreviousData(PreviousDataKey, 'FileListSha256', FileSha256(ExpandConstant('{app}\bin\') + FileListName));
 end;
 
+{ True when the folder still holds the installation this AppId's uninstall entry
+  describes: its bin\bytefray-files.txt has the SHA-256 Setup recorded there. (The
+  uninstaller keeps its own uninstall log open, so it cannot read that log.) }
+function HoldsThisInstallation(App: String): Boolean;
+var
+  Recorded: String;
+begin
+  Result := RegQueryStringValue(HKA, UninstallKey(), 'Inno Setup CodeFile: FileListSha256', Recorded) and
+    (Recorded <> '') and (FileSha256(App + '\bin\' + FileListName) = Recorded);
+end;
+
 { The uninstaller removes the files Setup logged by their paths, so it refuses to
-  run unless the installation folder still holds this installation -- its own
-  uninstall log, reached without a link that cannot be followed (the folder may
-  have been redirected since installation) -- and contains no link, or unlistable
-  folder, that could redirect a deletion elsewhere. }
+  run unless the installation folder still holds this installation -- reached
+  without a link that cannot be followed, and with the installed-file list Setup
+  recorded (the folder may have been moved or redirected since installation) --
+  and contains no link, or unlistable folder, that could redirect a deletion. }
 function InitializeUninstall(): Boolean;
 var
   App, Problem: String;
 begin
   App := RemoveBackslashUnlessRoot(ExpandConstant('{app}'));
   Problem := '';
-  if HasUnresolvedLink(App) or not HasOwnUninstallLog(App) then
-    Problem := 'The folder ' + App + ' no longer holds this Bytefray 5.1 Alpha installation: its uninstall ' +
-      'log is not there, or the folder is reached through a link that cannot be followed.'
+  if HasUnresolvedLink(App) or not HoldsThisInstallation(App) then
+    Problem := 'The folder ' + App + ' no longer holds this Bytefray 5.1 Alpha installation as it was ' +
+      'installed (it was moved, changed or redirected, or is reached through a link that cannot be ' +
+      'followed). Run the Bytefray 5.1 Alpha installer again to repair it, then uninstall.'
   else
   begin
     Problem := LinkInInstalledFolders(App);
