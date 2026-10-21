@@ -43,7 +43,8 @@ package `5.1.0a1`). It is not yet published; see the
   link it cannot follow (Windows RedirectionGuard keeps Setup from following
   links created without administrator rights). Setup and the uninstaller
   refuse to run while a junction or symbolic link exists inside the
-  installation's `bin`, `docs` or `licenses` folders. After an upgrade has installed its files, Setup deletes only files
+  installation's `bin`, `docs` or `licenses` folders, and the uninstaller also
+  refuses a folder that no longer holds this installation. After an upgrade has installed its files, Setup deletes only files
   the previous build installed (listed with their SHA-256 in
   `bin\bytefray-files.txt`) that the new build no longer ships and that are
   still unchanged -- never a folder recursively. The applications refuse to

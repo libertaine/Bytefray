@@ -242,8 +242,10 @@ begin
         Result := False;
         Exit;
       end;
+      { The log's signature, then its AppId field at offset $40, NUL-terminated. }
       Header := Copy(LogData, 1, 448);
-      if Pos('{' + '{#AppGuid}' + '}', Header) = 0 then
+      if (Copy(Header, 1, 24) <> 'Inno Setup Uninstall Log') or
+         (Copy(Header, 65, 39) <> '{' + '{#AppGuid}' + '}' + #0) then
       begin
         Result := False;
         Exit;
@@ -302,7 +304,9 @@ begin
     Result := True;
 end;
 
-{ The first junction or symbolic link (any reparse point) at or below Path, or ''. }
+{ The first junction or symbolic link (any reparse point) at or below Path, or ''.
+  A folder there that cannot be listed is reported as well: an incomplete scan
+  must not pass for one that found no link. }
 function FirstLink(Path: String): String;
 var
   Found: TFindRec;
@@ -313,7 +317,13 @@ begin
   FindClose(Found);
   if (Found.Attributes and ReparsePointAttribute) <> 0 then
     Result := Path
-  else if ((Found.Attributes and DirectoryAttribute) <> 0) and FindFirst(Path + '\*', Found) then
+  else if (Found.Attributes and DirectoryAttribute) <> 0 then
+  begin
+    if not FindFirst(Path + '\*', Found) then
+    begin
+      Result := Path + ' (a folder that cannot be listed)';
+      Exit;
+    end;
     try
       repeat
         if (Found.Name <> '.') and (Found.Name <> '..') then
@@ -322,6 +332,7 @@ begin
     finally
       FindClose(Found);
     end;
+  end;
 end;
 
 { A link inside the folders Setup installs into (or the uninstaller removes from)
@@ -384,8 +395,8 @@ begin
     Result := 'The Bytefray data folder (' + DataRoot() + ') and the installation folder (' + App +
       ') must be separate folders, neither inside the other.'
   else if Link <> '' then
-    Result := 'The installation folder contains a link (junction or symbolic link): ' + Link +
-      '. Setup does not install through links; remove it, or choose another folder.';
+    Result := 'The installation folder contains a link (junction or symbolic link) or a folder that ' +
+      'cannot be listed: ' + Link + '. Setup does not install through links; remove it, or choose another folder.';
 end;
 
 function JsonString(Value: String): String;
@@ -404,6 +415,11 @@ begin
     '"product": ' + JsonString('{#AppName}') + ', ' +
     '"version": ' + JsonString('{#AppVersion}') + ', ' +
     '"data_root": ' + JsonString(DataRoot()) + '}';
+  { Replace the old record's directory entry instead of rewriting the file in
+    place: were it a hard link to some other file, rewriting would overwrite that. }
+  if FileExists(ExpandConstant('{app}\bin\') + InstallRecordName) and
+     not DeleteFile(ExpandConstant('{app}\bin\') + InstallRecordName) then
+    RaiseException('Could not replace ' + ExpandConstant('{app}\bin\') + InstallRecordName);
   if not SaveStringsToUTF8FileWithoutBOM(ExpandConstant('{app}\bin\') + InstallRecordName, Lines, False) then
     RaiseException('Could not write ' + ExpandConstant('{app}\bin\') + InstallRecordName);
 end;
@@ -417,15 +433,29 @@ begin
   end;
 end;
 
+{ True for a path inside one of the folders [Files] installs: the five application
+  trees, licenses and docs -- never the installation record, the list itself or
+  anything else in the installation folder. }
+function IsInstalledTreePath(Relative: String): Boolean;
+var
+  Lower: String;
+begin
+  Lower := Lowercase(Relative);
+  Result := (Pos('bin\bytefray\', Lower) = 1) or (Pos('bin\bytefray-cli\', Lower) = 1) or
+    (Pos('bin\bytefray-agent-designer\', Lower) = 1) or (Pos('bin\bytefray-replay-viewer\', Lower) = 1) or
+    (Pos('bin\bytefray-spectator\', Lower) = 1) or (Pos('licenses\', Lower) = 1) or (Pos('docs\', Lower) = 1);
+end;
+
 { One bin\bytefray-files.txt line, '<sha256>  <path relative to the installation
-  folder>'. False for anything malformed, absolute, rooted or climbing out. }
+  folder>'. False for anything malformed, absolute, rooted, climbing out, or outside
+  the folders [Files] installs. }
 function ParseListedFile(Line: String; var Hash, Relative: String): Boolean;
 begin
   Hash := Lowercase(Copy(Line, 1, 64));
   Relative := Copy(Line, 67, Length(Line));
   Result := (Length(Line) > 66) and (Copy(Line, 65, 2) = '  ') and (Trim(Relative) = Relative) and
     (Pos('..', Relative) = 0) and (Pos(':', Relative) = 0) and (Pos('/', Relative) = 0) and
-    (Copy(Relative, 1, 1) <> '\');
+    (Copy(Relative, 1, 1) <> '\') and IsInstalledTreePath(Relative);
 end;
 
 { At ssInstall, before [Files] replaces it: the previous build's list, trusted only
@@ -503,16 +533,29 @@ begin
 end;
 
 { The uninstaller removes the files Setup logged by their paths, so it refuses to
-  run while a link inside the installation folder could redirect it elsewhere. }
+  run unless the installation folder still holds this installation -- its own
+  uninstall log, reached without a link that cannot be followed (the folder may
+  have been redirected since installation) -- and contains no link, or unlistable
+  folder, that could redirect a deletion elsewhere. }
 function InitializeUninstall(): Boolean;
 var
-  Link: String;
+  App, Problem: String;
 begin
-  Link := LinkInInstalledFolders(RemoveBackslashUnlessRoot(ExpandConstant('{app}')));
-  Result := Link = '';
+  App := RemoveBackslashUnlessRoot(ExpandConstant('{app}'));
+  Problem := '';
+  if HasUnresolvedLink(App) or not HasOwnUninstallLog(App) then
+    Problem := 'The folder ' + App + ' no longer holds this Bytefray 5.1 Alpha installation: its uninstall ' +
+      'log is not there, or the folder is reached through a link that cannot be followed.'
+  else
+  begin
+    Problem := LinkInInstalledFolders(App);
+    if Problem <> '' then
+      Problem := 'The Bytefray 5.1 Alpha installation folder contains a link (junction or symbolic link) or a ' +
+        'folder that cannot be listed: ' + Problem + '. Remove it, then uninstall again.';
+  end;
+  Result := Problem = '';
   if not Result then
-    SuppressibleMsgBox('The Bytefray 5.1 Alpha installation folder contains a link (junction or symbolic link): ' +
-      Link + '. Remove it, then uninstall again; nothing has been removed.', mbError, MB_OK, IDOK);
+    SuppressibleMsgBox(Problem + ' Nothing has been removed.', mbError, MB_OK, IDOK);
 end;
 
 function UpdateReadyMemo(Space, NewLine, MemoUserInfoInfo, MemoDirInfo, MemoTypeInfo,

@@ -84,8 +84,13 @@ def test_upgrade_cleanup_deletes_only_obsolete_unchanged_files_after_installing(
     assert "SetPreviousData(PreviousDataKey, 'FileListSha256', FileSha256(" in SCRIPT
     parse = SCRIPT[SCRIPT.index("function ParseListedFile") : SCRIPT.index("{ At ssInstall")]
     for rule in ("(Pos('..', Relative) = 0)", "(Pos(':', Relative) = 0)", "(Pos('/', Relative) = 0)",
-                 "(Copy(Relative, 1, 1) <> '\\')", "(Copy(Line, 65, 2) = '  ')"):
+                 "(Copy(Relative, 1, 1) <> '\\')", "(Copy(Line, 65, 2) = '  ')", "IsInstalledTreePath(Relative)"):
         assert rule in parse, rule
+    # Only the folders [Files] installs: never the record, the list or anything else in {app}.
+    trees = SCRIPT[SCRIPT.index("function IsInstalledTreePath") : SCRIPT.index("{ One bin\\bytefray-files.txt line")]
+    for folder in (*(f"bin\\\\{name}\\\\" for name in APPLICATION_FOLDERS), "licenses\\\\", "docs\\\\"):
+        assert f"Pos('{folder}', Lower) = 1".replace("\\\\", "\\") in trees, folder
+    assert "bin\\bytefray-install.json" not in trees and "bytefray-files.txt" not in trees
     remove = SCRIPT[SCRIPT.index("procedure RemoveObsoleteFiles") : SCRIPT.index("procedure CurStepChanged")]
     assert "(Shipped.IndexOf(Lowercase(Relative)) >= 0)" in remove
     assert "(AnsiLowercase(FinalPath(Target)) <> AnsiLowercase(AppFinal + '\\' + Relative))" in remove
@@ -101,18 +106,36 @@ def test_an_upgrade_is_recognized_by_location_and_by_its_own_uninstall_log() -> 
     assert "SamePath(PreviousLocation, App) and HasOwnUninstallLog(App)" in SCRIPT
     own = SCRIPT[SCRIPT.index("function HasOwnUninstallLog") : SCRIPT.index("function IsUpgradeOfThisInstallation")]
     assert "FindFirst(App + '\\unins*.dat', Found)" in own
-    assert "Pos('{' + '{#AppGuid}' + '}', Header) = 0" in own
 
 
 def test_links_inside_the_installation_stop_setup_and_the_uninstaller() -> None:
     links = SCRIPT[SCRIPT.index("function FirstLink") : SCRIPT.index("{ The data folder must stay outside")]
     assert "(Found.Attributes and ReparsePointAttribute) <> 0" in links
+    # A folder that cannot be listed is reported, not taken as "no link".
+    assert "Result := Path + ' (a folder that cannot be listed)';" in links
     for folder in ("bin", "docs", "licenses"):
         assert f"FirstLink(App + '\\{folder}')" in links
     prepare = SCRIPT[SCRIPT.index("function PrepareToInstall") : SCRIPT.index("function JsonString")]
     assert "Link := LinkInInstalledFolders(App);" in prepare and "Setup does not install through links" in prepare
-    uninstall = SCRIPT[SCRIPT.index("function InitializeUninstall") :]
-    assert "LinkInInstalledFolders(" in uninstall and "Result := Link = '';" in uninstall
+    # The uninstaller also refuses a folder that no longer holds this installation
+    # (redirected since installation) before looking for links inside it.
+    uninstall = SCRIPT[SCRIPT.index("function InitializeUninstall") : SCRIPT.index("function UpdateReadyMemo")]
+    assert "if HasUnresolvedLink(App) or not HasOwnUninstallLog(App) then" in uninstall
+    assert "Problem := LinkInInstalledFolders(App);" in uninstall and "Result := Problem = '';" in uninstall
+
+
+def test_the_installation_record_is_replaced_not_rewritten_in_place() -> None:
+    """A hard link in place of the record must not carry the new record into another file."""
+
+    record = SCRIPT[SCRIPT.index("procedure WriteInstallRecord") : SCRIPT.index("function FileSha256")]
+    assert record.index("not DeleteFile(ExpandConstant('{app}\\bin\\') + InstallRecordName)") < record.index(
+        "SaveStringsToUTF8FileWithoutBOM(")
+
+
+def test_an_upgrade_recognizes_only_its_own_uninstall_log_header() -> None:
+    own = SCRIPT[SCRIPT.index("function HasOwnUninstallLog") : SCRIPT.index("function IsUpgradeOfThisInstallation")]
+    assert "(Copy(Header, 1, 24) <> 'Inno Setup Uninstall Log')" in own
+    assert "(Copy(Header, 65, 39) <> '{' + '{#AppGuid}' + '}' + #0)" in own
 
 
 def test_folders_reached_through_links_setup_cannot_follow_are_refused() -> None:
