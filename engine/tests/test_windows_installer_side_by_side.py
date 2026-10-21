@@ -110,9 +110,15 @@ def test_an_upgrade_is_recognized_by_location_and_by_its_own_uninstall_log() -> 
 
 def test_links_inside_the_installation_stop_setup_and_the_uninstaller() -> None:
     links = SCRIPT[SCRIPT.index("function FirstLink") : SCRIPT.index("{ The data folder must stay outside")]
-    assert "(Found.Attributes and ReparsePointAttribute) <> 0" in links
-    # A folder that cannot be listed is reported, not taken as "no link".
+    # Each path is examined by name (no right to list its parent needed); anything that
+    # cannot be examined, or a folder that cannot be listed, is reported, not taken as "no link".
+    assert "Attributes := PathAttributes(Path, Missing);" in links
+    assert "(Attributes and ReparsePointAttribute) <> 0" in links
+    assert "Result := Path + ' (cannot be examined)';" in links
     assert "Result := Path + ' (a folder that cannot be listed)';" in links
+    lookup = SCRIPT[SCRIPT.index("function PathAttributes") : SCRIPT.index("function UninstallKey")]
+    assert "external 'GetFileAttributesW@kernel32.dll stdcall'" in SCRIPT
+    assert "Missing := (Error = 2) or (Error = 3);" in lookup
     for folder in ("bin", "docs", "licenses"):
         assert f"FirstLink(App + '\\{folder}')" in links
     prepare = SCRIPT[SCRIPT.index("function PrepareToInstall") : SCRIPT.index("function JsonString")]
@@ -128,6 +134,15 @@ def test_links_inside_the_installation_stop_setup_and_the_uninstaller() -> None:
     assert "(FileSha256(App + '\\bin\\' + FileListName) = Recorded)" in holds
     assert "HasOwnUninstallLog" not in uninstall
     assert "Problem := LinkInInstalledFolders(App);" in uninstall and "Result := Problem = '';" in uninstall
+
+
+def test_installing_an_older_build_over_a_newer_one_is_refused() -> None:
+    """An older build's cleanup must never act on a newer build's files."""
+
+    assert "SetPreviousData(PreviousDataKey, 'FileVersion', '{#FileVersion}');" in SCRIPT
+    downgrade = SCRIPT[SCRIPT.index("function IsDowngrade") : SCRIPT.index("{ The data folder must stay outside")]
+    assert "ComparePackedVersion(PreviousVersion, ThisVersion) > 0" in downgrade
+    assert "else if IsUpgradeOfThisInstallation() and IsDowngrade() then" in SCRIPT
 
 
 def test_the_installation_record_is_replaced_not_rewritten_in_place() -> None:
@@ -149,8 +164,10 @@ def test_folders_reached_through_links_setup_cannot_follow_are_refused() -> None
     junction a standard user created, so a comparison through one would silently use
     the unresolved path; Setup refuses such folders before any other check."""
 
-    check = SCRIPT[SCRIPT.index("function HasUnresolvedLink") : SCRIPT.index("{ The data folder must stay outside")]
-    assert "((Found.Attributes and ReparsePointAttribute) <> 0) and (FinalPath(Part) = '')" in check
+    check = SCRIPT[SCRIPT.index("function HasUnresolvedLink") : SCRIPT.index("{ True when a newer build")]
+    assert "((Attributes and ReparsePointAttribute) <> 0) and (FinalPath(Part) = '')" in check
+    # A component that exists but cannot be examined makes the path unverifiable.
+    assert "Result := not Missing" in check
     prepare = SCRIPT[SCRIPT.index("function PrepareToInstall") : SCRIPT.index("function JsonString")]
     first = prepare.index("if HasUnresolvedLink(App) or HasUnresolvedLink(DataRoot()) then")
     assert first < prepare.index("HoldsAnotherInstallation(App)") < prepare.index("IsSameOrInside(DataRoot(), App)")

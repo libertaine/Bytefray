@@ -50,7 +50,8 @@ SHA-256 matches the published `SHA256SUMS`.
 
 **Upgrading and uninstalling.** A later 5.1 Alpha installer upgrades this one
 in place and keeps using the same data folder. If an upgrade is cancelled or
-fails, run the installer again to complete it. Uninstalling (Settings → Apps)
+fails, run the installer again to complete it. Installing an older 5.1 Alpha
+build over a newer one is refused; uninstall the newer build first. Uninstalling (Settings → Apps)
 removes the programs and shortcuts and keeps your data folder; delete it
 yourself if you no longer want it. Bytefray Spectator keeps its own settings
 and logs in `%APPDATA%\Godot\app_userdata\Bytefray Spectator`, which

@@ -135,6 +135,24 @@ function GetFinalPathNameByHandle(Handle: THandle; Path: String; Size, Flags: Ca
   external 'GetFinalPathNameByHandleW@kernel32.dll stdcall';
 function CloseHandle(Handle: THandle): Boolean;
   external 'CloseHandle@kernel32.dll stdcall';
+function GetFileAttributes(Name: String): Cardinal;
+  external 'GetFileAttributesW@kernel32.dll stdcall';
+
+{ Path's attributes, or $FFFFFFFF. Missing is True only when Path does not exist
+  (ERROR_FILE_NOT_FOUND or ERROR_PATH_NOT_FOUND), not when it cannot be examined.
+  Unlike a directory search, this needs no right to list the parent folder. }
+function PathAttributes(Path: String; var Missing: Boolean): Cardinal;
+var
+  Error: Integer;
+begin
+  Result := GetFileAttributes(Path);
+  Missing := False;
+  if Result = $FFFFFFFF then
+  begin
+    Error := DLLGetLastError();
+    Missing := (Error = 2) or (Error = 3);
+  end;
+end;
 
 function UninstallKey(): String;
 begin
@@ -305,19 +323,26 @@ begin
 end;
 
 { The first junction or symbolic link (any reparse point) at or below Path, or ''.
-  A folder there that cannot be listed is reported as well: an incomplete scan
-  must not pass for one that found no link. }
+  Anything there that cannot be examined, or a folder that cannot be listed, is
+  reported as well: an incomplete scan must not pass for one that found no link.
+  Path itself is examined by name, so an unlistable parent cannot hide it. }
 function FirstLink(Path: String): String;
 var
   Found: TFindRec;
+  Attributes: Cardinal;
+  Missing: Boolean;
 begin
   Result := '';
-  if not FindFirst(Path, Found) then
+  Attributes := PathAttributes(Path, Missing);
+  if Attributes = $FFFFFFFF then
+  begin
+    if not Missing then
+      Result := Path + ' (cannot be examined)';
     Exit;
-  FindClose(Found);
-  if (Found.Attributes and ReparsePointAttribute) <> 0 then
+  end;
+  if (Attributes and ReparsePointAttribute) <> 0 then
     Result := Path
-  else if (Found.Attributes and DirectoryAttribute) <> 0 then
+  else if (Attributes and DirectoryAttribute) <> 0 then
   begin
     if not FindFirst(Path + '\*', Found) then
     begin
@@ -352,25 +377,40 @@ end;
   Windows RedirectionGuard, under which Setup does not follow links created
   without administrator rights). Folder comparisons through such a link would
   silently compare the wrong paths, so callers refuse it instead. Links Setup can
-  follow are resolved by LongPath and compared normally. Each component is
-  examined; those below a link Setup cannot follow cannot be read and are skipped
-  until the link itself is reached. }
+  follow are resolved by LongPath and compared normally. Each existing component is
+  examined by name; one that exists but cannot be examined (as below a link Setup
+  may not follow) makes the path unverifiable too. }
 function HasUnresolvedLink(Path: String): Boolean;
 var
   Part: String;
-  Found: TFindRec;
+  Attributes: Cardinal;
+  Missing: Boolean;
 begin
   Result := False;
   Part := RemoveBackslashUnlessRoot(ExpandFileName(Path));
   while not Result and (ExtractFileDir(Part) <> Part) do
   begin
-    if FindFirst(Part, Found) then
-    begin
-      FindClose(Found);
-      Result := ((Found.Attributes and ReparsePointAttribute) <> 0) and (FinalPath(Part) = '');
-    end;
+    Attributes := PathAttributes(Part, Missing);
+    if Attributes = $FFFFFFFF then
+      Result := not Missing
+    else
+      Result := ((Attributes and ReparsePointAttribute) <> 0) and (FinalPath(Part) = '');
     Part := ExtractFileDir(Part);
   end;
+end;
+
+{ True when a newer build of this AppId is installed: its numeric file version,
+  recorded with the uninstall entry, is higher than this build's. Installing an
+  older build over it is refused -- its cleanup would act on the newer build's
+  files, a path this build was not qualified for. }
+function IsDowngrade(): Boolean;
+var
+  Previous: String;
+  PreviousVersion, ThisVersion: Int64;
+begin
+  Previous := GetPreviousData('FileVersion', '');
+  Result := (Previous <> '') and StrToVersion(Previous, PreviousVersion) and
+    StrToVersion('{#FileVersion}', ThisVersion) and (ComparePackedVersion(PreviousVersion, ThisVersion) > 0);
 end;
 
 { The data folder must stay outside the program folder, whose files upgrades replace
@@ -391,6 +431,9 @@ begin
   else if HoldsAnotherInstallation(App) then
     Result := 'The folder ' + App + ' already holds another installation (for example Bytefray 5.0). ' +
       'Choose an empty folder for Bytefray 5.1 Alpha.'
+  else if IsUpgradeOfThisInstallation() and IsDowngrade() then
+    Result := 'A newer Bytefray 5.1 Alpha build (' + GetPreviousData('FileVersion', '') + ') is installed in ' +
+      App + '. Installing this older build ({#FileVersion}) over it is not supported; uninstall it first.'
   else if IsSameOrInside(DataRoot(), App) or IsSameOrInside(App, DataRoot()) then
     Result := 'The Bytefray data folder (' + DataRoot() + ') and the installation folder (' + App +
       ') must be separate folders, neither inside the other.'
@@ -530,11 +573,14 @@ procedure RegisterPreviousData(PreviousDataKey: Integer);
 begin
   SetPreviousData(PreviousDataKey, 'DataRoot', DataRoot());
   SetPreviousData(PreviousDataKey, 'FileListSha256', FileSha256(ExpandConstant('{app}\bin\') + FileListName));
+  SetPreviousData(PreviousDataKey, 'FileVersion', '{#FileVersion}');
 end;
 
-{ True when the folder still holds the installation this AppId's uninstall entry
-  describes: its bin\bytefray-files.txt has the SHA-256 Setup recorded there. (The
-  uninstaller keeps its own uninstall log open, so it cannot read that log.) }
+{ True when the folder still contains the installed-file list whose SHA-256 Setup
+  recorded with this AppId's uninstall entry -- a content check that a moved,
+  substituted or redirected folder fails, not proof of identity (a deliberately
+  planted copy of the list would pass). The uninstaller keeps its own uninstall
+  log open, so it cannot read that log instead. }
 function HoldsThisInstallation(App: String): Boolean;
 var
   Recorded: String;
