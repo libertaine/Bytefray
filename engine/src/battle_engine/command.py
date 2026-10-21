@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import os
 import sys
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 COMMANDS = ("run", "tournament", "replay", "design", "agents", "spectator")
 
@@ -191,23 +192,37 @@ def _tournament(argv: list[str]) -> int:
     return tournament_main(argv)
 
 
-def _tolerate_unencodable_output() -> None:
-    """Escape, rather than crash on, characters a redirected stream cannot encode.
+def _configure_output_streams(environ: Mapping[str, str] | None = None) -> None:
+    """Apply ``PYTHONIOENCODING``, and escape rather than crash on unencodable text.
 
     On Windows a redirected stdout/stderr uses the ANSI code page (cp1252), which
-    cannot encode many folder names (Greek, Cyrillic, CJK). Designer reads every
-    child command's output through a pipe, and an installed Bytefray keeps its
-    data under the user's profile folder, so printing a path must never end a
-    command that has already done its work. Encodable text is unchanged.
+    cannot encode many folder names (Greek, Cyrillic, CJK), and an installed
+    Bytefray keeps its data under the user's profile folder. Designer reads every
+    child command's output through a pipe as UTF-8 and sets
+    ``PYTHONIOENCODING=utf-8`` for it, which a source checkout's interpreter
+    applies itself. A frozen Bytefray's embedded interpreter ignores PYTHON*
+    variables, so the same setting is applied here; then a printed path reaches
+    Designer intact (it parses ``agents test``'s ``replay:`` line, for example).
+    Without the variable, unencodable characters are escaped instead, so printing
+    a path never ends a command that has already done its work.
     """
+    values = os.environ if environ is None else environ
+    encoding, _, errors = values.get("PYTHONIOENCODING", "").partition(":")
     for stream in (sys.stdout, sys.stderr):
         reconfigure = getattr(stream, "reconfigure", None)
-        if reconfigure is not None:
-            reconfigure(errors="backslashreplace")
+        if reconfigure is None:
+            continue
+        try:
+            if encoding.strip():
+                reconfigure(encoding=encoding.strip(), errors=errors.strip() or "backslashreplace")
+                continue
+        except LookupError:
+            pass  # an unknown encoding name: keep the stream's own encoding
+        reconfigure(errors="backslashreplace")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    _tolerate_unencodable_output()
+    _configure_output_streams()
     arguments = list(sys.argv[1:] if argv is None else argv)
     parser = _parser()
     namespace, remainder = parser.parse_known_args(arguments)

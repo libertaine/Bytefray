@@ -1,6 +1,7 @@
 # app/agent_designer.py
 from __future__ import annotations
 
+import codecs
 import json
 import os
 import sys
@@ -392,6 +393,11 @@ class AgentDesigner(QMainWindow):
         process, independent of Qt's ``sender()`` tracking.
         """
         self._dispose_process()
+        # Output is read as UTF-8 (_pipe_proc_output), and some of it is parsed
+        # (agents test's replay: line), so ask the child to write UTF-8: a data
+        # root under a non-Latin profile name must survive the pipe intact.
+        # battle_engine.command applies this in frozen builds too.
+        env.insert("PYTHONIOENCODING", "utf-8")
         proc = QProcess(self)
         proc.setProcessEnvironment(env)
         proc.setWorkingDirectory(str(working_directory))
@@ -552,8 +558,16 @@ class AgentDesigner(QMainWindow):
     def _pipe_proc_output(self, proc=None):
         if proc is None or proc is not self._proc:
             return  # Stale signal from a process this window has already moved past.
-        out = bytes(proc.readAllStandardOutput()).decode("utf-8", "ignore")
-        err = bytes(proc.readAllStandardError()).decode("utf-8", "ignore")
+        # One incremental decoder per stream for this process's lifetime, so a
+        # character split across two reads is not lost.
+        decoders = getattr(proc, "bf_decoders", None)
+        if decoders is None:
+            decoders = proc.bf_decoders = (
+                codecs.getincrementaldecoder("utf-8")("ignore"),
+                codecs.getincrementaldecoder("utf-8")("ignore"),
+            )
+        out = decoders[0].decode(bytes(proc.readAllStandardOutput()))
+        err = decoders[1].decode(bytes(proc.readAllStandardError()))
         if self._active_workflow == "validate":
             # Validation's stdout/stderr is the structured `label: value`
             # payload itself (docs/specs/agent_validation.md Sec 3.4), not

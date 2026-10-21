@@ -42,11 +42,15 @@ package `5.1.0a1`). It is not yet published; see the
 
 ### Fixed
 
-* `bytefray` commands no longer fail when their output is redirected and a
-  path contains characters the Windows ANSI code page cannot encode, such as a
-  Greek or CJK user-profile name; those characters are escaped instead.
-  Designer reads every child command's output through a pipe, so a match that
-  had finished could otherwise be reported as failed.
+* Paths with characters the Windows ANSI code page cannot encode, such as a
+  Greek or CJK user-profile name (now part of the per-user data folder), no
+  longer break Designer's child commands. A finished match was reported as
+  failed, and a Development Test's Open Replay and Inspect Trace stayed
+  disabled. Designer now asks its child commands for UTF-8 output
+  (`PYTHONIOENCODING=utf-8`) and decodes each stream incrementally, and
+  `bytefray` applies `PYTHONIOENCODING` itself in frozen builds, whose
+  embedded Python ignores it. Without the variable, `bytefray` escapes such
+  characters in redirected output instead of failing.
 
 ### Changed — component names and versioning policy
 

@@ -86,6 +86,34 @@ def test_executables_get_a_complete_version_resource() -> None:
         assert expected in text
 
 
+@pytest.mark.parametrize(
+    ("environ", "expected"),
+    [
+        ({}, b"\\u03a9 \xe9"),  # escaped, Latin-1 text unchanged
+        ({"PYTHONIOENCODING": "utf-8"}, "Ω é".encode()),
+        ({"PYTHONIOENCODING": "utf-8:strict"}, "Ω é".encode()),
+        ({"PYTHONIOENCODING": "no-such-codec"}, b"\\u03a9 \xe9"),
+    ],
+)
+def test_output_streams_follow_pythonioencoding_as_a_frozen_build_must(monkeypatch, environ, expected) -> None:
+    """A frozen interpreter ignores PYTHON* variables, so ``bytefray`` applies
+    PYTHONIOENCODING itself (Designer sets it to utf-8 for its child commands
+    and parses their output); without it, unencodable text is escaped."""
+
+    import io
+
+    from battle_engine import command
+
+    streams = [io.TextIOWrapper(io.BytesIO(), encoding="cp1252") for _ in range(2)]
+    monkeypatch.setattr(sys, "stdout", streams[0])
+    monkeypatch.setattr(sys, "stderr", streams[1])
+    command._configure_output_streams(environ)
+    for stream in streams:
+        stream.write("Ω é")
+        stream.flush()
+        assert stream.buffer.getvalue() == expected  # type: ignore[attr-defined]
+
+
 def test_redirected_output_never_crashes_on_an_unencodable_path(tmp_path: Path) -> None:
     """Designer reads child output through a pipe, which uses the ANSI code page
     on Windows; an installed data root under a profile folder named in Greek,
