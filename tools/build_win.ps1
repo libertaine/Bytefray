@@ -410,23 +410,28 @@ foreach ($Artifact in $Artifacts) {
   }
 }
 
-# Every file tools/installer.iss installs, relative to the installation folder.
-# Setup ships this list as bin\bytefray-files.txt, and an upgrade deletes exactly
-# the files the previous build's list names -- never a folder recursively, so
-# nothing else in the installation folder can be lost. The documents are the
-# ones installer.iss copies into docs\ (engine/tests/test_windows_installer_side_by_side.py
-# keeps the two lists in step).
-$InstalledDocuments = @("README.md", "LICENSE", "CHANGELOG.md", "BYTEFRAY_5_1_0_ALPHA_1_RELEASE_NOTES.md",
-  "BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md", "BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.json")
+# Every file tools/installer.iss installs except this list itself, as
+# "<sha256>  <path relative to the installation folder>". Setup ships it as
+# bin\bytefray-files.txt. After an upgrade has installed its files, Setup deletes
+# a file the previous build's list names only when this build no longer ships it
+# and it is still byte-identical to what was installed -- never a folder
+# recursively, so nothing else in the installation folder can be lost. The
+# documents are the sources installer.iss copies into docs\
+# (engine/tests/test_windows_installer_side_by_side.py keeps the two in step).
+$InstalledDocuments = @("README.md", "LICENSE", "CHANGELOG.md", "docs\releases\BYTEFRAY_5_1_0_ALPHA_1_RELEASE_NOTES.md",
+  "docs\releases\BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md", "docs\releases\BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.json")
 $FileList = Join-Path $DistDir "bytefray-files.txt"
+function Format-ListedFile([string]$Source, [string]$Installed) {
+  "{0}  {1}" -f (Get-FileHash -LiteralPath $Source -Algorithm SHA256).Hash.ToLowerInvariant(), $Installed
+}
 $Listed = @()
 foreach ($Folder in @(@($Artifacts | ForEach-Object Name) + @("bytefray-spectator") | Where-Object { Test-Path -LiteralPath (Join-Path $DistDir $_) })) {
   $Listed += Get-ChildItem -LiteralPath (Join-Path $DistDir $Folder) -Recurse -File |
-    ForEach-Object { "bin\" + $_.FullName.Substring($DistDir.Length).TrimStart('\') }
+    ForEach-Object { Format-ListedFile $_.FullName ("bin\" + $_.FullName.Substring($DistDir.Length).TrimStart('\')) }
 }
 $Listed += Get-ChildItem -LiteralPath (Join-Path $DistDir "licenses") -Recurse -File |
-  ForEach-Object { $_.FullName.Substring($DistDir.Length).TrimStart('\') }
-$Listed += $InstalledDocuments | ForEach-Object { "docs\$_" }
+  ForEach-Object { Format-ListedFile $_.FullName $_.FullName.Substring($DistDir.Length).TrimStart('\') }
+$Listed += $InstalledDocuments | ForEach-Object { Format-ListedFile (Join-Path $RepoRoot $_) ("docs\" + (Split-Path -Leaf $_)) }
 [IO.File]::WriteAllLines($FileList, [string[]]$Listed, [Text.UTF8Encoding]::new($false))
 Write-Host "[build] Installed-file list: $($Listed.Count) files ($FileList)."
 

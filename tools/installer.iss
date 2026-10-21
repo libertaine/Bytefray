@@ -81,11 +81,6 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "Create a desktop shortcut for Agent Designer"; GroupDescription: "Additional shortcuts:"; Flags: unchecked
 
 [Files]
-; bin\bytefray-files.txt lists every file below (tools\build_win.ps1 writes it). An
-; upgrade or repair deletes exactly the files the previous build's list names
-; before installing (RemovePreviousBuild in [Code]), so a stale Qt plugin or DLL
-; cannot be loaded by the new build -- and nothing is ever deleted recursively.
-Source: "{#DistRoot}\bytefray-files.txt"; DestDir: "{app}\bin"; Flags: ignoreversion
 ; Preserve each canonical PyInstaller onedir tree and their sibling relationship.
 Source: "{#DistRoot}\bytefray\*"; DestDir: "{app}\bin\bytefray"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#DistRoot}\bytefray-cli\*"; DestDir: "{app}\bin\bytefray-cli"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -100,6 +95,12 @@ Source: "..\CHANGELOG.md"; DestDir: "{app}\docs"; Flags: ignoreversion
 Source: "..\docs\releases\BYTEFRAY_5_1_0_ALPHA_1_RELEASE_NOTES.md"; DestDir: "{app}\docs"; Flags: ignoreversion
 Source: "..\docs\releases\BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md"; DestDir: "{app}\docs"; Flags: ignoreversion
 Source: "..\docs\releases\BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.json"; DestDir: "{app}\docs"; Flags: ignoreversion
+; bin\bytefray-files.txt lists every file above with its SHA-256 (tools\build_win.ps1
+; writes it). After an upgrade has installed them, RemoveObsoleteFiles in [Code]
+; deletes the files the previous build's list names that this build no longer
+; ships, so a stale Qt plugin or DLL cannot be loaded by the new build. Installed
+; last, so an interrupted upgrade leaves the previous list for the next attempt.
+Source: "{#DistRoot}\bytefray-files.txt"; DestDir: "{app}\bin"; Flags: ignoreversion
 
 [UninstallDelete]
 ; Written by [Code] below rather than [Files], so uninstall names it explicitly.
@@ -118,9 +119,13 @@ Filename: "{app}\bin\bytefray-agent-designer\bytefray-agent-designer.exe"; Worki
 const
   InstallRecordName = 'bytefray-install.json';
   FileListName = 'bytefray-files.txt';
+  DirectoryAttribute = $10;
+  ReparsePointAttribute = $400;
 
 var
   ChosenDataRoot: String;
+  { The previous build's bin\bytefray-files.txt, read before [Files] replaces it. }
+  PreviousFiles: TArrayOfString;
 
 function GetLongPathName(ShortPath: String; LongPath: String; Size: Cardinal): Cardinal;
   external 'GetLongPathNameW@kernel32.dll stdcall';
@@ -217,12 +222,46 @@ begin
   Result := ChosenDataRoot;
 end;
 
+{ True when the folder holds at least one Inno Setup uninstall log and every one
+  of them is this AppId's (the AppId is stored in the log's header): the folder's
+  installed files are this product's. A registered location alone is not proof,
+  because the path may since have been redirected to another folder. }
+function HasOwnUninstallLog(App: String): Boolean;
+var
+  Found: TFindRec;
+  LogData: AnsiString;
+  Header: String;
+begin
+  Result := False;
+  if not FindFirst(App + '\unins*.dat', Found) then
+    Exit;
+  try
+    repeat
+      if not LoadStringFromFile(App + '\' + Found.Name, LogData) then
+      begin
+        Result := False;
+        Exit;
+      end;
+      Header := Copy(LogData, 1, 448);
+      if Pos('{' + '{#AppGuid}' + '}', Header) = 0 then
+      begin
+        Result := False;
+        Exit;
+      end;
+      Result := True;
+    until not FindNext(Found);
+  finally
+    FindClose(Found);
+  end;
+end;
+
 function IsUpgradeOfThisInstallation(): Boolean;
 var
-  PreviousLocation: String;
+  PreviousLocation, App: String;
 begin
+  App := RemoveBackslashUnlessRoot(ExpandConstant('{app}'));
   Result := RegQueryStringValue(HKA, UninstallKey(), 'InstallLocation', PreviousLocation) and
-    SamePath(PreviousLocation, ExpandConstant('{app}'));
+    SamePath(PreviousLocation, App) and HasOwnUninstallLog(App);
 end;
 
 function IsSameOrInside(Path, Folder: String): Boolean;
@@ -232,43 +271,91 @@ begin
   Result := Copy(Path, 1, Length(Folder)) = Folder;
 end;
 
-{ True when the folder already holds an installation other than this AppId's own
-  registered one (checked by the caller) -- Bytefray 5.0, registered or not, or any
-  other Inno Setup application -- which copying this product's files over would
-  damage. A leftover installation record proves nothing, so it is not consulted. }
+function Overlaps(A, B: String): Boolean;
+begin
+  Result := (A <> '') and (B <> '') and (IsSameOrInside(A, B) or IsSameOrInside(B, A));
+end;
+
+{ True when the folder holds, overlaps or belongs to an installation other than
+  this AppId's own -- Bytefray 5.0, registered or not, or any other Inno Setup
+  application -- which copying this product's files over would damage. Checked
+  on every run, upgrades included. A leftover installation record proves
+  nothing, so it is not consulted. }
 function HoldsAnotherInstallation(App: String): Boolean;
 var
   Found: TFindRec;
   Location: String;
+  Own: Boolean;
 begin
+  Own := IsUpgradeOfThisInstallation();
   Result := False;
   if FindFirst(App + '\unins*.exe', Found) then
   begin
     FindClose(Found);
-    Result := True;
+    Result := not Own;
   end;
-  Result := Result or DirExists(App + '\bin\bytefray') or DirExists(App + '\bin\bytefray-agent-designer');
-  if RegQueryStringValue(HKLM, StableUninstallKey(), 'InstallLocation', Location) and SamePath(Location, App) then
+  if not Own and (DirExists(App + '\bin\bytefray') or DirExists(App + '\bin\bytefray-agent-designer')) then
     Result := True;
-  if RegQueryStringValue(HKCU, StableUninstallKey(), 'InstallLocation', Location) and SamePath(Location, App) then
+  if RegQueryStringValue(HKLM, StableUninstallKey(), 'InstallLocation', Location) and Overlaps(Location, App) then
+    Result := True;
+  if RegQueryStringValue(HKCU, StableUninstallKey(), 'InstallLocation', Location) and Overlaps(Location, App) then
     Result := True;
 end;
 
+{ The first junction or symbolic link (any reparse point) at or below Path, or ''. }
+function FirstLink(Path: String): String;
+var
+  Found: TFindRec;
+begin
+  Result := '';
+  if not FindFirst(Path, Found) then
+    Exit;
+  FindClose(Found);
+  if (Found.Attributes and ReparsePointAttribute) <> 0 then
+    Result := Path
+  else if ((Found.Attributes and DirectoryAttribute) <> 0) and FindFirst(Path + '\*', Found) then
+    try
+      repeat
+        if (Found.Name <> '.') and (Found.Name <> '..') then
+          Result := FirstLink(Path + '\' + Found.Name);
+      until (Result <> '') or not FindNext(Found);
+    finally
+      FindClose(Found);
+    end;
+end;
+
+{ A link inside the folders Setup installs into (or the uninstaller removes from)
+  would make it write or delete files elsewhere, such as in a data folder, so
+  neither proceeds while one exists. The installation folder itself may be one. }
+function LinkInInstalledFolders(App: String): String;
+begin
+  Result := FirstLink(App + '\bin');
+  if Result = '' then
+    Result := FirstLink(App + '\docs');
+  if Result = '' then
+    Result := FirstLink(App + '\licenses');
+end;
+
 { The data folder must stay outside the program folder, whose files upgrades replace
-  and uninstall removes, and must not contain it; and the program folder must not
-  belong to another installation. }
+  and uninstall removes, and must not contain it; the program folder must not
+  belong to another installation; and the folders Setup writes into must not be
+  redirected by links. }
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
-  App: String;
+  App, Link: String;
 begin
   Result := '';
   App := RemoveBackslashUnlessRoot(ExpandConstant('{app}'));
-  if not IsUpgradeOfThisInstallation() and HoldsAnotherInstallation(App) then
+  Link := LinkInInstalledFolders(App);
+  if HoldsAnotherInstallation(App) then
     Result := 'The folder ' + App + ' already holds another installation (for example Bytefray 5.0). ' +
       'Choose an empty folder for Bytefray 5.1 Alpha.'
   else if IsSameOrInside(DataRoot(), App) or IsSameOrInside(App, DataRoot()) then
     Result := 'The Bytefray data folder (' + DataRoot() + ') and the installation folder (' + App +
-      ') must be separate folders, neither inside the other.';
+      ') must be separate folders, neither inside the other.'
+  else if Link <> '' then
+    Result := 'The installation folder contains a link (junction or symbolic link): ' + Link +
+      '. Setup does not install through links; remove it, or choose another folder.';
 end;
 
 function JsonString(Value: String): String;
@@ -291,52 +378,111 @@ begin
     RaiseException('Could not write ' + ExpandConstant('{app}\bin\') + InstallRecordName);
 end;
 
-(* Before an upgrade or repair installs anything: delete each file the previous
-   build's bin\bytefray-files.txt names (paths relative to the installation folder;
-   anything absolute or climbing out of it is ignored), then remove folders it left
-   empty. Files the list does not name -- anything a user or the application put
-   there -- are never touched, so no data can be lost even if a data folder lies
-   inside the installation folder. An installation without a list (an earlier
-   candidate) gets no cleanup. *)
-procedure RemovePreviousBuild();
+function FileSha256(Path: String): String;
+begin
+  try
+    Result := Lowercase(GetSHA256OfFile(Path));
+  except
+    Result := '';
+  end;
+end;
+
+{ One bin\bytefray-files.txt line, '<sha256>  <path relative to the installation
+  folder>'. False for anything malformed, absolute, rooted or climbing out. }
+function ParseListedFile(Line: String; var Hash, Relative: String): Boolean;
+begin
+  Hash := Lowercase(Copy(Line, 1, 64));
+  Relative := Copy(Line, 67, Length(Line));
+  Result := (Length(Line) > 66) and (Copy(Line, 65, 2) = '  ') and (Trim(Relative) = Relative) and
+    (Pos('..', Relative) = 0) and (Pos(':', Relative) = 0) and (Pos('/', Relative) = 0) and
+    (Copy(Relative, 1, 1) <> '\');
+end;
+
+{ At ssInstall, before [Files] replaces it: the previous build's list, trusted only
+  when this AppId's own installation is being upgraded and the list is unchanged
+  since that build installed it (its SHA-256 is kept with the uninstall entry). }
+procedure ReadPreviousFileList();
 var
-  Lines: TArrayOfString;
+  List: String;
+begin
+  SetArrayLength(PreviousFiles, 0);
+  List := ExpandConstant('{app}\bin\') + FileListName;
+  if not IsUpgradeOfThisInstallation() or (GetPreviousData('FileListSha256', '') = '') or
+     (FileSha256(List) <> GetPreviousData('FileListSha256', '')) or
+     not LoadStringsFromFile(List, PreviousFiles) then
+    SetArrayLength(PreviousFiles, 0);
+end;
+
+(* At ssPostInstall, after every new file is in place: delete each file the previous
+   build installed that this build no longer ships -- named by the previous list,
+   still byte-identical to what was installed, and reached at exactly that path with
+   no link on the way -- then remove folders left empty. Anything else in the
+   installation folder, including data a user keeps there, is never touched; nothing
+   is deleted recursively; and an interrupted upgrade has deleted nothing. *)
+procedure RemoveObsoleteFiles();
+var
+  Current: TArrayOfString;
+  Shipped: TStringList;
   I: Integer;
-  App, Relative, Folder: String;
+  App, AppFinal, Hash, Relative, Target, Folder: String;
 begin
   App := RemoveBackslashUnlessRoot(ExpandConstant('{app}'));
-  if not IsUpgradeOfThisInstallation() or not LoadStringsFromFile(App + '\bin\' + FileListName, Lines) then
+  AppFinal := FinalPath(App);
+  if (GetArrayLength(PreviousFiles) = 0) or (AppFinal = '') or
+     not LoadStringsFromFile(App + '\bin\' + FileListName, Current) then
     Exit;
-  for I := 0 to GetArrayLength(Lines) - 1 do
-  begin
-    Relative := Trim(Lines[I]);
-    if (Relative = '') or (Pos('..', Relative) > 0) or (Pos(':', Relative) > 0) or (Copy(Relative, 1, 1) = '\') then
-      Continue;
-    DeleteFile(App + '\' + Relative);
-  end;
-  for I := GetArrayLength(Lines) - 1 downto 0 do
-  begin
-    Relative := Trim(Lines[I]);
-    if (Relative = '') or (Pos('..', Relative) > 0) or (Pos(':', Relative) > 0) or (Copy(Relative, 1, 1) = '\') then
-      Continue;
-    Folder := ExtractFileDir(App + '\' + Relative);
-    { RemoveDir only removes empty folders. }
-    while (Length(Folder) > Length(App)) and RemoveDir(Folder) do
-      Folder := ExtractFileDir(Folder);
+  Shipped := TStringList.Create;
+  try
+    for I := 0 to GetArrayLength(Current) - 1 do
+      if ParseListedFile(Current[I], Hash, Relative) then
+        Shipped.Add(Lowercase(Relative));
+    Shipped.Sorted := True;
+    for I := 0 to GetArrayLength(PreviousFiles) - 1 do
+    begin
+      if not ParseListedFile(PreviousFiles[I], Hash, Relative) or (Shipped.IndexOf(Lowercase(Relative)) >= 0) then
+        Continue;
+      Target := App + '\' + Relative;
+      if not FileExists(Target) or (AnsiLowercase(FinalPath(Target)) <> AnsiLowercase(AppFinal + '\' + Relative)) or
+         (FileSha256(Target) <> Hash) or not DeleteFile(Target) then
+        Continue;
+      Folder := ExtractFileDir(Target);
+      { RemoveDir only removes empty folders. }
+      while (Length(Folder) > Length(App)) and RemoveDir(Folder) do
+        Folder := ExtractFileDir(Folder);
+    end;
+  finally
+    Shipped.Free;
   end;
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssInstall then
-    RemovePreviousBuild();
+    ReadPreviousFileList();
   if CurStep = ssPostInstall then
+  begin
     WriteInstallRecord();
+    RemoveObsoleteFiles();
+  end;
 end;
 
 procedure RegisterPreviousData(PreviousDataKey: Integer);
 begin
   SetPreviousData(PreviousDataKey, 'DataRoot', DataRoot());
+  SetPreviousData(PreviousDataKey, 'FileListSha256', FileSha256(ExpandConstant('{app}\bin\') + FileListName));
+end;
+
+{ The uninstaller removes the files Setup logged by their paths, so it refuses to
+  run while a link inside the installation folder could redirect it elsewhere. }
+function InitializeUninstall(): Boolean;
+var
+  Link: String;
+begin
+  Link := LinkInInstalledFolders(RemoveBackslashUnlessRoot(ExpandConstant('{app}')));
+  Result := Link = '';
+  if not Result then
+    SuppressibleMsgBox('The Bytefray 5.1 Alpha installation folder contains a link (junction or symbolic link): ' +
+      Link + '. Remove it, then uninstall again; nothing has been removed.', mbError, MB_OK, IDOK);
 end;
 
 function UpdateReadyMemo(Space, NewLine, MemoUserInfoInfo, MemoDirInfo, MemoTypeInfo,

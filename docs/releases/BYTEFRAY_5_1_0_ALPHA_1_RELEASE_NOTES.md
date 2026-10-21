@@ -49,17 +49,20 @@ downloaded the installer from the official Bytefray GitHub release and its
 SHA-256 matches the published `SHA256SUMS`.
 
 **Upgrading and uninstalling.** A later 5.1 Alpha installer upgrades this one
-in place and keeps using the same data folder. Uninstalling (Settings → Apps)
+in place and keeps using the same data folder. If an upgrade is cancelled or
+fails, run the installer again to complete it. Uninstalling (Settings → Apps)
 removes the programs and shortcuts and keeps your data folder; delete it
 yourself if you no longer want it. Bytefray Spectator keeps its own settings
 and logs in `%APPDATA%\Godot\app_userdata\Bytefray Spectator`, which
 uninstalling also leaves in place.
 
 **Choosing folders.** Keep the installation folder's path under about 150
-characters; some installed files lie deep inside it, and Setup stops (and
-undoes its changes) when a path would be too long for Windows. The data folder
-must be separate from the installation folder: Setup refuses one inside the
-other, and so do the installed programs.
+characters; some installed files lie deep inside it, and a first installation
+stops (and undoes its changes) when a path would be too long for Windows. The
+data folder must be separate from the installation folder: Setup refuses one
+inside the other, and so do the installed programs. Don't replace folders
+inside the installation folder with junctions or symbolic links: Setup and the
+uninstaller refuse to run while one exists there.
 
 **Advanced.** `/BYTEFRAYDATAROOT=<folder>` on the installer's command line
 chooses another data folder. `BYTEFRAY_SPECTATOR=off` makes Agent Designer use

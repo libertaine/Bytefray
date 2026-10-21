@@ -12,7 +12,7 @@ the script's safety properties from regressing between qualifications.
 from __future__ import annotations
 
 import re
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = (ROOT / "tools" / "installer.iss").read_text(encoding="utf-8")
@@ -66,23 +66,53 @@ def test_per_user_installation_writes_nothing_per_machine() -> None:
         assert forbidden not in STATEMENTS.replace(reads_stable_entry, ""), forbidden
 
 
-def test_upgrade_cleanup_deletes_only_the_previous_builds_listed_files() -> None:
-    """Nothing is ever deleted recursively: an upgrade removes exactly the files the
-    previous build's bin\\bytefray-files.txt names, so data inside the program folder
-    (through a junction, say) cannot be lost."""
+def test_upgrade_cleanup_deletes_only_obsolete_unchanged_files_after_installing() -> None:
+    """Nothing is ever deleted recursively or before the new build is in place: after
+    an upgrade has installed its files, Setup removes a file only when the previous
+    build's integrity-checked list names it, the new build no longer ships it, it is
+    still byte-identical to what was installed, and it is reached at exactly that path."""
 
     assert "[InstallDelete]" not in STATEMENTS
     assert "filesandordirs" not in STATEMENTS and "DelTree" not in STATEMENTS
-    assert 'Source: "{#DistRoot}\\bytefray-files.txt"; DestDir: "{app}\\bin"' in SCRIPT
-    body = SCRIPT[SCRIPT.index("procedure RemovePreviousBuild") : SCRIPT.index("procedure CurStepChanged")]
-    assert "if not IsUpgradeOfThisInstallation() or not LoadStringsFromFile(App + '\\bin\\' + FileListName, Lines) then" in body
-    # Only relative paths that stay inside {app}.
-    assert body.count("(Pos('..', Relative) > 0) or (Pos(':', Relative) > 0) or (Copy(Relative, 1, 1) = '\\')") == 2
-    assert "DeleteFile(App + '\\' + Relative)" in body and "RemoveDir(Folder)" in body
-    assert "if CurStep = ssInstall then\n    RemovePreviousBuild();" in SCRIPT
-    # The check compares the recorded install location of this AppId only.
+    # The list is installed after every file it names.
+    files = _section("Files")
+    assert files[-1] == 'Source: "{#DistRoot}\\bytefray-files.txt"; DestDir: "{app}\\bin"; Flags: ignoreversion'
+    # Read before [Files] replaces it, trusted only for this AppId's own, unchanged list.
+    read = SCRIPT[SCRIPT.index("procedure ReadPreviousFileList") : SCRIPT.index("(* At ssPostInstall")]
+    assert "not IsUpgradeOfThisInstallation()" in read
+    assert "(FileSha256(List) <> GetPreviousData('FileListSha256', ''))" in read
+    assert "SetPreviousData(PreviousDataKey, 'FileListSha256', FileSha256(" in SCRIPT
+    parse = SCRIPT[SCRIPT.index("function ParseListedFile") : SCRIPT.index("{ At ssInstall")]
+    for rule in ("(Pos('..', Relative) = 0)", "(Pos(':', Relative) = 0)", "(Pos('/', Relative) = 0)",
+                 "(Copy(Relative, 1, 1) <> '\\')", "(Copy(Line, 65, 2) = '  ')"):
+        assert rule in parse, rule
+    remove = SCRIPT[SCRIPT.index("procedure RemoveObsoleteFiles") : SCRIPT.index("procedure CurStepChanged")]
+    assert "(Shipped.IndexOf(Lowercase(Relative)) >= 0)" in remove
+    assert "(AnsiLowercase(FinalPath(Target)) <> AnsiLowercase(AppFinal + '\\' + Relative))" in remove
+    assert "(FileSha256(Target) <> Hash)" in remove
+    assert remove.count("DeleteFile(") == 1 and "RemoveDir(Folder)" in remove
+    steps = SCRIPT[SCRIPT.index("procedure CurStepChanged") : SCRIPT.index("procedure RegisterPreviousData")]
+    assert "if CurStep = ssInstall then\n    ReadPreviousFileList();" in steps
+    assert steps.index("ssPostInstall") < steps.index("RemoveObsoleteFiles();")
+
+
+def test_an_upgrade_is_recognized_by_location_and_by_its_own_uninstall_log() -> None:
     assert "RegQueryStringValue(HKA, UninstallKey(), 'InstallLocation', PreviousLocation)" in SCRIPT
-    assert "SamePath(PreviousLocation, ExpandConstant('{app}'))" in SCRIPT
+    assert "SamePath(PreviousLocation, App) and HasOwnUninstallLog(App)" in SCRIPT
+    own = SCRIPT[SCRIPT.index("function HasOwnUninstallLog") : SCRIPT.index("function IsUpgradeOfThisInstallation")]
+    assert "FindFirst(App + '\\unins*.dat', Found)" in own
+    assert "Pos('{' + '{#AppGuid}' + '}', Header) = 0" in own
+
+
+def test_links_inside_the_installation_stop_setup_and_the_uninstaller() -> None:
+    links = SCRIPT[SCRIPT.index("function FirstLink") : SCRIPT.index("{ The data folder must stay outside")]
+    assert "(Found.Attributes and ReparsePointAttribute) <> 0" in links
+    for folder in ("bin", "docs", "licenses"):
+        assert f"FirstLink(App + '\\{folder}')" in links
+    prepare = SCRIPT[SCRIPT.index("function PrepareToInstall") : SCRIPT.index("function JsonString")]
+    assert "Link := LinkInInstalledFolders(App);" in prepare and "Setup does not install through links" in prepare
+    uninstall = SCRIPT[SCRIPT.index("function InitializeUninstall") :]
+    assert "LinkInInstalledFolders(" in uninstall and "Result := Link = '';" in uninstall
 
 
 def test_the_file_list_names_the_documents_the_installer_copies() -> None:
@@ -90,8 +120,10 @@ def test_the_file_list_names_the_documents_the_installer_copies() -> None:
     listed = re.search(r"\$InstalledDocuments = @\(([^)]*)\)", build, re.DOTALL)
     assert listed is not None
     documents = sorted(re.findall(r'"([^"]+)"', listed.group(1)))
-    shipped = sorted(Path(source).name for source in re.findall(r'^Source: "\.\.\\([^"]+)"; DestDir: "\{app\}\\docs"', SCRIPT, re.MULTILINE))
+    shipped = sorted(re.findall(r'^Source: "\.\.\\([^"]+)"; DestDir: "\{app\}\\docs"', SCRIPT, re.MULTILINE))
     assert documents == shipped
+    # Each entry carries the SHA-256 of the file as installed.
+    assert '"{0}  {1}" -f (Get-FileHash -LiteralPath $Source -Algorithm SHA256).Hash.ToLowerInvariant(), $Installed' in build
 
 
 def test_uninstall_removes_only_what_it_installed() -> None:
@@ -105,13 +137,16 @@ def test_a_folder_holding_another_installation_is_refused() -> None:
     unregistered tree) or any other Inno Setup application's folder."""
 
     assert f"{{{STABLE_APP_ID}}}_is1" in SCRIPT
-    body = SCRIPT[SCRIPT.index("function HoldsAnotherInstallation") : SCRIPT.index("function PrepareToInstall")]
+    body = SCRIPT[SCRIPT.index("function HoldsAnotherInstallation") : SCRIPT.index("{ The first junction")]
     for clue in ("FindFirst(App + '\\unins*.exe'", "DirExists(App + '\\bin\\bytefray')",
-                 "RegQueryStringValue(HKLM, StableUninstallKey()", "RegQueryStringValue(HKCU, StableUninstallKey()"):
+                 "RegQueryStringValue(HKLM, StableUninstallKey(), 'InstallLocation', Location) and Overlaps(Location, App)",
+                 "RegQueryStringValue(HKCU, StableUninstallKey(), 'InstallLocation', Location) and Overlaps(Location, App)"):
         assert clue in body, clue
     # A leftover installation record must not make a foreign folder look like ours.
     assert "InstallRecordName" not in body.split("begin", 1)[1]
-    assert "if not IsUpgradeOfThisInstallation() and HoldsAnotherInstallation(App) then" in SCRIPT
+    # Checked on every run: a registered location may since point at another folder.
+    assert "  if HoldsAnotherInstallation(App) then" in SCRIPT
+    assert "not IsUpgradeOfThisInstallation() and HoldsAnotherInstallation" not in SCRIPT
 
 
 def test_folder_comparisons_resolve_aliases_and_links() -> None:
@@ -146,7 +181,8 @@ def test_every_application_and_the_spectator_companion_are_installed() -> None:
         ) in files
     assert 'Source: "{#DistRoot}\\licenses\\*"; DestDir: "{app}\\licenses"' in files
     documents = re.findall(r'^Source: "\.\.\\([^"]+)"; DestDir: "\{app\}\\docs"', files, re.MULTILINE)
-    assert sorted(Path(document).name for document in documents) == sorted(
+    # Windows path syntax on every host (the suite also runs on Linux).
+    assert sorted(PureWindowsPath(document).name for document in documents) == sorted(
         ("README.md", "LICENSE", "CHANGELOG.md", "BYTEFRAY_5_1_0_ALPHA_1_RELEASE_NOTES.md",
          "BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md", "BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.json")
     )
