@@ -36,13 +36,26 @@ def test_notices_cover_every_bundled_component(tmp_path: Path) -> None:
     out = notices.collect(dist, None)
     index = (out / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")
     for expected in ("bytefray/LICENSE", "python/LICENSE.txt", "pyinstaller/COPYING.txt",
-                     "qt-pyside6/lgpl-3.0.txt", "qt-pyside6/gpl-3.0.txt", "pygame-ce/LGPL.txt",
-                     "pygame-ce/LICENSE.sdl2.txt", "pyyaml/LICENSE"):
+                     "qt-pyside6/lgpl-3.0.txt", "qt-pyside6/gpl-3.0.txt", "qt-pyside6/QT_THIRD_PARTY_NOTICES.txt",
+                     "pygame-ce/LGPL.txt", "pygame-ce/LICENSE.sdl2.txt",
+                     # The texts for the shipped DLLs, from the SDL packages pygame-ce builds with.
+                     "pygame-ce/SDL2_mixer-2.8.2/LICENSE.wavpack.txt", "pygame-ce/SDL2_mixer-2.8.2/LICENSE.xmp.txt",
+                     "pygame-ce/SDL2_ttf-2.24.0/LICENSE.txt",
+                     "pygame-ce/SDL2_ttf-2.24.0/vendored/harfbuzz-COPYING.txt",
+                     "pygame-ce/SDL2_image-2.8.12/LICENSE.libjpegturbo.md", "pyyaml/LICENSE"):
         assert (out / expected).is_file(), expected
         assert f"`{expected}`" in index
+    qt = (out / "qt-pyside6" / "QT_THIRD_PARTY_NOTICES.txt").read_text(encoding="utf-8")
+    assert "Mesa llvmpipe" in qt and "PCRE2" in qt and "HarfBuzz" in qt
     # Qt's commercial-licensee notice does not describe how Bytefray uses Qt.
     assert not (out / "qt-pyside6" / "LicenseRef-Qt-Commercial.txt").exists()
     assert "bytefray-spectator" not in index  # not staged, not listed
+    # Exact corresponding source for each LGPL component, for the shipped versions.
+    sources = index[index.index("## Corresponding source") :]
+    qt_version = notices.distribution("PySide6").version
+    for expected in (f"qtbase-everywhere-src-{qt_version}.tar.xz", f"pyside-setup-everywhere-src-{qt_version}.tar.xz",
+                     f"pygame-ce/archive/refs/tags/{notices.distribution('pygame-ce').version}.tar.gz"):
+        assert expected in sources, expected
 
 
 def test_spectator_and_godot_notices_need_the_pinned_license(tmp_path: Path, monkeypatch) -> None:

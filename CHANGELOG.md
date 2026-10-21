@@ -28,10 +28,19 @@ package `5.1.0a1`). It is not yet published; see the
   `tools/spectator_companion.json`.
 * **Windows metadata and notices.** Every executable carries a version
   resource (`5.1.0-alpha.1`, file version `5.1.0.101`), and `licenses\`
-  holds the license texts of Python, Qt for Python, pygame-ce and its
-  libraries, PyYAML, the PyInstaller bootloader, Spectator and Godot. The
-  unused Qt Virtual Keyboard plugin, which is GPL-3.0-only and which the 5.0
-  executables shipped, is no longer included.
+  holds the license texts of Python, Qt for Python and the third-party code in
+  the shipped Qt modules, pygame-ce and every SDL, codec and font library it
+  bundles, PyYAML, the PyInstaller bootloader, Spectator and Godot, with the
+  exact corresponding-source locations of the LGPL libraries.
+* **Smaller Qt payload.** Qt components Bytefray cannot use, which the 5.0
+  executables shipped, are no longer included: the GPL-3.0-only Qt Virtual
+  Keyboard with the Qt Quick, QML and OpenGL libraries only it needed, and the
+  Qt PDF image reader. The build checks that nothing left imports them.
+* **Installation safety.** Setup refuses a folder that already holds another
+  installation (for example Bytefray 5.0), and compares folders by their long
+  names. The applications refuse to start when the data folder overlaps the
+  program folder (resolved through 8.3 names and junctions), or when an
+  installation's record is missing, instead of falling back to another data root.
 
 ### Changed — application version 5.1.0-alpha.1
 

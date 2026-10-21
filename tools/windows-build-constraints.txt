@@ -1,0 +1,32 @@
+# Exact dependency versions the Bytefray 5.1.0-alpha.1 Windows candidate was built and
+# qualified with (CPython 3.13.14, x64). tools/build_win.ps1 -Constraints applies them.
+altgraph==0.17.5
+ast_serialize==0.8.0
+build==1.6.0
+colorama==0.4.6
+iniconfig==2.3.0
+librt==0.15.0
+mypy==2.3.1
+mypy_extensions==1.1.0
+packaging==26.3
+pathspec==1.1.1
+pefile==2024.8.26
+pluggy==1.6.0
+pygame-ce==2.5.8
+Pygments==2.21.0
+pyinstaller==6.22.2
+pyinstaller-hooks-contrib==2026.6
+pyproject_hooks==1.2.0
+PySide6==6.11.2
+PySide6_Addons==6.11.2
+PySide6_Essentials==6.11.2
+pytest==9.1.1
+pywin32-ctypes==0.2.3
+PyYAML==6.0.3
+ruff==0.16.3
+setuptools==84.0.0
+shiboken6==6.11.2
+types-PyYAML==6.0.12.20260815
+typing_extensions==4.16.0
+pip==26.2.1
+wheel==0.48.0

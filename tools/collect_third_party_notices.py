@@ -54,15 +54,28 @@ class Notices:
         self.out = out
         self.rows: list[tuple[str, str, str, str, list[str]]] = []
 
-    def add(self, folder: str, component: str, version: str, license_name: str, source: str, files: list[Path]) -> None:
+    def add(
+        self, folder: str, component: str, version: str, license_name: str, source: str,
+        files: list[Path], *, trees: tuple[Path, ...] = (),
+    ) -> None:
+        """Copy ``files`` into ``folder`` and every file under each of ``trees``
+        into ``folder/<tree name>/``, keeping its relative path (several
+        upstream packages each call their text ``LICENSE.txt``)."""
+
         target = self.out / folder
         target.mkdir(parents=True, exist_ok=True)
+        copies = [(path, Path(path.name)) for path in files]
+        for tree in trees:
+            if not tree.is_dir():
+                raise SystemExit(f"Missing license texts for {component}: {tree}")
+            copies += [(path, Path(tree.name) / path.relative_to(tree)) for path in sorted(tree.rglob("*")) if path.is_file()]
         names = []
-        for path in files:
+        for path, relative in copies:
             if not path.is_file():
                 raise SystemExit(f"Missing license text for {component}: {path}")
-            shutil.copyfile(path, target / path.name)
-            names.append(f"{folder}/{path.name}")
+            (target / relative).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(path, target / relative)
+            names.append(f"{folder}/{relative.as_posix()}")
         self.rows.append((component, version, license_name, source, names))
 
     def write_index(self, extra: str) -> None:
@@ -95,24 +108,49 @@ def collect(dist: Path, spectator_license: Path | None) -> Path:
     notices.add("pyinstaller", "PyInstaller bootloader", distribution("pyinstaller").version,
                 "GPL-2.0-or-later WITH Bootloader-exception", "https://pyinstaller.org/",
                 _dist_license_files("pyinstaller"))
+    sources: list[str] = []
     if _frozen(dist, "PySide6"):
         version = distribution("PySide6").version
-        notices.add("qt-pyside6", "Qt for Python (PySide6, Shiboken6) and the Qt libraries it bundles", version,
-                    "LGPL-3.0-only (used unmodified, as replaceable DLLs)",
-                    f"https://download.qt.io/official_releases/QtForPython/pyside6/ (Qt {version} sources: https://download.qt.io/official_releases/qt/)",
+        qt_texts = NOTICES / f"qt-{version}"
+        if not qt_texts.is_dir():
+            raise SystemExit(f"tools/third_party_notices has no texts for Qt {version}")
+        notices.add("qt-pyside6", "Qt for Python (PySide6, Shiboken6), the Qt libraries it bundles and their "
+                    "third-party components (including Mesa llvmpipe, opengl32sw.dll)", version,
+                    "LGPL-3.0-only (used unmodified, as replaceable DLLs); components as listed",
+                    "https://www.qt.io/",
                     # The wheels' only license file is Qt's commercial-licensee notice, which
                     # does not apply: Bytefray uses Qt under the LGPL.
-                    [NOTICES / "gnu" / "lgpl-3.0.txt", NOTICES / "gnu" / "gpl-3.0.txt"])
+                    [NOTICES / "gnu" / "lgpl-3.0.txt", NOTICES / "gnu" / "gpl-3.0.txt",
+                     qt_texts / "QT_THIRD_PARTY_NOTICES.txt"])
+        minor = ".".join(version.split(".")[:2])
+        sources += [
+            (
+                f"- Qt {version} (Qt Core, GUI, Widgets, Network and SVG in `qtbase` and `qtsvg`; image formats in "
+                f"`qtimageformats`): https://download.qt.io/official_releases/qt/{minor}/{version}/submodules/ "
+                f"(`qtbase-everywhere-src-{version}.tar.xz`, `qtsvg-everywhere-src-{version}.tar.xz`, "
+                f"`qtimageformats-everywhere-src-{version}.tar.xz`)"
+            ),
+            (
+                f"- PySide6 and Shiboken6 {version}: https://download.qt.io/official_releases/QtForPython/pyside6/"
+                f"PySide6-{version}-src/pyside-setup-everywhere-src-{version}.tar.xz"
+            ),
+        ]
     if _frozen(dist, "pygame"):
         found = distribution("pygame-ce")
         bundled_texts = NOTICES / f"pygame-ce-{found.version}"
+        prebuilts = NOTICES / "sdl-windows-prebuilts"
         if not bundled_texts.is_dir():
             raise SystemExit(f"tools/third_party_notices has no texts for pygame-ce {found.version}")
         lgpl = Path(str(found.locate_file("pygame/docs/generated/LGPL.txt")))
-        notices.add("pygame-ce", "pygame-ce and the SDL2 and codec libraries it bundles", found.version,
-                    "LGPL-2.1-or-later; bundled libraries under their own licenses",
+        notices.add("pygame-ce", "pygame-ce and the SDL2, image, audio-codec and font libraries it bundles",
+                    found.version, "LGPL-2.1-or-later; bundled libraries under their own licenses",
                     f"https://github.com/pygame-community/pygame-ce/tree/{found.version}",
-                    [lgpl, *sorted(bundled_texts.glob("LICENSE.*.txt"))])
+                    [lgpl, *sorted(bundled_texts.glob("LICENSE.*.txt"))],
+                    trees=tuple(sorted(path for path in prebuilts.iterdir() if path.is_dir())))
+        sources.append(
+            f"- pygame-ce {found.version}: https://github.com/pygame-community/pygame-ce/archive/refs/tags/"
+            f"{found.version}.tar.gz (also the `pygame_ce-{found.version}` source distribution on PyPI)"
+        )
     if _frozen(dist, "yaml"):
         notices.add("pyyaml", "PyYAML", distribution("PyYAML").version, "MIT", "https://pyyaml.org/",
                     _dist_license_files("PyYAML"))
@@ -132,13 +170,22 @@ def collect(dist: Path, spectator_license: Path | None) -> Path:
                     [godot / "LICENSE.txt", godot / "COPYRIGHT.txt"])
 
     notices.write_index(
-        "pygame-ce also bundles SDL2_ttf (zlib, as SDL2), WavPack (BSD-3-Clause) and libxmp (MIT),\n"
-        "whose upstream projects publish their license texts at https://github.com/libsdl-org/SDL_ttf,\n"
-        "https://github.com/dbry/WavPack and https://github.com/libxmp/libxmp.\n"
+        "## Bundled binaries\n"
         "\n"
-        "The Qt libraries incorporate third-party components of their own; Qt lists them at\n"
-        "https://doc.qt.io/qt-6/licenses-used-in-qt.html. To use a modified Qt or pygame-ce,\n"
-        "replace the corresponding DLLs in an application's `_internal` folder.\n"
+        "pygame-ce's SDL2, SDL2_image, SDL2_mixer and SDL2_ttf libraries and their optional\n"
+        "codec libraries are the unmodified binaries of the upstream SDL release packages\n"
+        "(SDL2 2.32.10, SDL2_image 2.8.12-pgce, SDL2_mixer 2.8.2, SDL2_ttf 2.24.0); the license\n"
+        "texts in `pygame-ce/` are the ones those packages ship, including WavPack and libxmp,\n"
+        "and FreeType and HarfBuzz, which SDL2_ttf links statically. `qt-pyside6/` holds the\n"
+        "copyright statements and license texts of the third-party code in the shipped Qt\n"
+        "modules, from Qt's own documentation for this Qt version.\n"
+        "\n"
+        "## Corresponding source for the LGPL-licensed libraries\n"
+        "\n"
+        "Qt, PySide6/Shiboken6 and pygame-ce are used unmodified, as separate DLLs and\n"
+        "extension modules that can be replaced in an application's `_internal` folder. Their\n"
+        "complete corresponding source for the versions shipped here:\n"
+        "\n" + "\n".join(sources) + "\n"
     )
     return out
 

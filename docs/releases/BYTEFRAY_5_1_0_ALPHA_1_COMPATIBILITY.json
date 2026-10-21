@@ -129,6 +129,7 @@
   "limitations": [
     "Bytefray Spectator presents only completed two-entrant (A, B) Active Sensing (Alpha) matches; every other match opens in the Pygame viewer.",
     "Spectator offers two perspectives: Broadcast and Agent A delivered information.",
+    "In Spectator 0.1.0-alpha.1, Tab moves keyboard focus between controls instead of switching perspective, although the on-screen key hint lists it, and Space presses a focused button instead of playing or pausing. The perspective list and the playback buttons work.",
     "The Pygame viewer remains available for every supported workflow. Designer opens it instead of Spectator when Spectator is absent or turned off, does not support the match, or fails to export or launch. Once Spectator has started, Designer never reopens the match in Pygame; an immediate nonzero Spectator exit shows a warning.",
     "The Pygame Active Sensing views (Agent A, Agent B, Omniscient) are a separate capability from Spectator's perspectives; entrant C has no delivered-information view.",
     "Three-entrant or larger Spectator presentation is deferred.",

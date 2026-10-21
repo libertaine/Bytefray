@@ -2,10 +2,16 @@
 # (tools/spectator_companion.json) beside the frozen applications, as
 # tools/installer.iss requires. Without them only the four Python
 # applications are built, as in CI.
+#
+# -Constraints <file> pins every dependency the build installs; a release
+# build passes tools/windows-build-constraints.txt (the versions the
+# 5.1.0-alpha.1 candidate was built and qualified with). See
+# docs/releases/5_1_ALPHA1_WINDOWS_INSTALLER_QUALIFICATION.md for the recipe.
 param(
   [string]$Mode = "Release",
   [string]$SpectatorExe,
-  [string]$SpectatorLicense
+  [string]$SpectatorLicense,
+  [string]$Constraints
 )
 
 $ErrorActionPreference = "Stop"
@@ -48,8 +54,13 @@ function Run-PyMod {
 }
 
 # --- Dependencies -------------------------------------------------------------
-Run-PyMod -Module pip -Args @("install","--upgrade","pip","wheel")
-Run-PyMod -Module pip -Args @("install", "-e", ".[replay,designer,windows-build]")
+$ConstraintArgs = @()
+if ($Constraints) {
+  $ConstraintArgs = @("-c", (Resolve-Path -LiteralPath $Constraints).Path)
+  Write-Host "[build] Python $(& $PyExe -c 'import sys; print(sys.version.split()[0])'); dependencies pinned by $Constraints"
+}
+Run-PyMod -Module pip -Args (@("install","--upgrade","pip","wheel") + $ConstraintArgs)
+Run-PyMod -Module pip -Args (@("install", "-e", ".[replay,designer,windows-build]") + $ConstraintArgs)
 
 # Ensure PyInstaller available (from venv)
 Run-PyMod -Module pip -Args @("show","pyinstaller") | Out-Null
@@ -82,27 +93,12 @@ foreach ($Artifact in $Artifacts) {
   if (-not (Test-Path $ExePath)) { throw "Expected artifact was not produced: $ExePath" }
 }
 
-# Qt Virtual Keyboard is licensed only under the GPL-3.0 (or commercially),
-# not under the LGPL the rest of Qt for Python is used under here.
-# PyInstaller's PySide6 hook collects it with every platform input-context
-# plugin, but Qt loads that plugin only when QT_IM_MODULE asks for the virtual
-# keyboard, which nothing in Bytefray does, and nothing else imports its
-# library. Bytefray 5.0 shipped both files unused; the distribution now omits them.
-$GplOnlyQtFiles = @(
-  "PySide6\plugins\platforminputcontexts\qtvirtualkeyboardplugin.dll",
-  "PySide6\Qt6VirtualKeyboard.dll"
-)
-foreach ($Artifact in $Artifacts) {
-  foreach ($Relative in $GplOnlyQtFiles) {
-    $QtFile = Join-Path $DistDir "$($Artifact.Name)\_internal\$Relative"
-    if (Test-Path -LiteralPath $QtFile) { Remove-Item -LiteralPath $QtFile -Force }
-  }
-  $Remaining = @(Get-ChildItem -LiteralPath (Join-Path $DistDir $Artifact.Name) -Recurse -File -Filter "*virtualkeyboard*")
-  if ($Remaining.Count -gt 0) {
-    throw "Qt Virtual Keyboard files remain in $($Artifact.Name): $(($Remaining | ForEach-Object FullName) -join ', ')"
-  }
-}
-Write-Host "[build] Omitted the unused, GPL-3.0-only Qt Virtual Keyboard."
+# Omit the Qt components Bytefray cannot use -- the GPL-3.0-only Qt Virtual
+# Keyboard with the Quick/QML/OpenGL libraries only it needs, and the Qt PDF
+# image reader (PDFium) -- then prove from every remaining binary's import table
+# that nothing depends on them. See tools/omit_unused_qt.py.
+& $PyExe (Join-Path $RepoRoot "tools\omit_unused_qt.py") --dist $DistDir
+if ($LASTEXITCODE -ne 0) { throw "Omitting unused Qt components failed with exit code $LASTEXITCODE" }
 
 # Verify no Python bytecode/cache reached any distributable tree.
 #

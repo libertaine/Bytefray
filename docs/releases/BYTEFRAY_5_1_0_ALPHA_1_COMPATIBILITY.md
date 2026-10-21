@@ -6,6 +6,10 @@ bundles Bytefray Spectator `0.1.0-alpha.1`. It is not a published release.
 Publication needs separate project-lead approval, and only then does this
 record become **released**.
 
+Links on this page are relative to `docs/releases/` in the Bytefray
+repository. The Windows installer copies only this page and its JSON record
+into `<install>\docs`.
+
 The authoritative record is
 [`BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.json`](BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.json).
 The summary below is generated from it by `tools/release_compatibility.py`,
@@ -43,8 +47,8 @@ make them qualified for release. Qualification evidence today:
   Spectator `0.1.0-alpha.1` is bundled with the Windows installer candidate
   and is not separately published.
 - **The 5.1.0-alpha.1 Windows installer candidate** is qualified separately;
-  the results and any conditions are in
-  [5_1_ALPHA1_WINDOWS_INSTALLER_QUALIFICATION.md](5_1_ALPHA1_WINDOWS_INSTALLER_QUALIFICATION.md).
+  the results and any conditions are in the repository's
+  `docs/releases/5_1_ALPHA1_WINDOWS_INSTALLER_QUALIFICATION.md`.
   Linux distribution of 5.1.0-alpha.1 has its own, separate qualification.
 
 ## Summary
@@ -91,6 +95,7 @@ make them qualified for release. Qualification evidence today:
 
 - Bytefray Spectator presents only completed two-entrant (A, B) Active Sensing (Alpha) matches; every other match opens in the Pygame viewer.
 - Spectator offers two perspectives: Broadcast and Agent A delivered information.
+- In Spectator 0.1.0-alpha.1, Tab moves keyboard focus between controls instead of switching perspective, although the on-screen key hint lists it, and Space presses a focused button instead of playing or pausing. The perspective list and the playback buttons work.
 - The Pygame viewer remains available for every supported workflow. Designer opens it instead of Spectator when Spectator is absent or turned off, does not support the match, or fails to export or launch. Once Spectator has started, Designer never reopens the match in Pygame; an immediate nonzero Spectator exit shows a warning.
 - The Pygame Active Sensing views (Agent A, Agent B, Omniscient) are a separate capability from Spectator's perspectives; entrant C has no delivered-information view.
 - Three-entrant or larger Spectator presentation is deferred.

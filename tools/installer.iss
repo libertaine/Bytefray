@@ -106,6 +106,7 @@ Source: "..\LICENSE"; DestDir: "{app}\docs"; Flags: ignoreversion
 Source: "..\CHANGELOG.md"; DestDir: "{app}\docs"; Flags: ignoreversion
 Source: "..\docs\releases\BYTEFRAY_5_1_0_ALPHA_1_RELEASE_NOTES.md"; DestDir: "{app}\docs"; Flags: ignoreversion
 Source: "..\docs\releases\BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md"; DestDir: "{app}\docs"; Flags: ignoreversion
+Source: "..\docs\releases\BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.json"; DestDir: "{app}\docs"; Flags: ignoreversion
 
 [UninstallDelete]
 ; Written by [Code] below rather than [Files], so uninstall names it explicitly.
@@ -127,14 +128,46 @@ const
 var
   ChosenDataRoot: String;
 
+function GetLongPathName(ShortPath: String; LongPath: String; Size: Cardinal): Cardinal;
+  external 'GetLongPathNameW@kernel32.dll stdcall';
+
 function UninstallKey(): String;
 begin
   Result := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{' + '{#AppGuid}' + '}_is1';
 end;
 
+{ Bytefray 5.0's (stable) uninstall key; see the header comment. }
+function StableUninstallKey(): String;
+begin
+  Result := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{A5B86D38-9A6C-4D7F-9B4E-BA7720000002}_is1';
+end;
+
+{ The absolute path with its existing part spelled in long names, so that an
+  8.3 alias (C:\BYTEFR~1\...) cannot make one folder look like another. Junctions
+  are not resolved here; the installed applications refuse an overlapping data
+  folder using fully resolved paths (tools\pyi_rth_bytefray_install.py). }
+function LongPath(Path: String): String;
+var
+  Existing, Tail, Buffer: String;
+  Count: Cardinal;
+begin
+  Existing := RemoveBackslashUnlessRoot(ExpandFileName(Path));
+  Tail := '';
+  while not DirExists(Existing) and not FileExists(Existing) and (ExtractFileDir(Existing) <> Existing) do
+  begin
+    Tail := ExtractFileName(Existing) + '\' + Tail;
+    Existing := ExtractFileDir(Existing);
+  end;
+  SetLength(Buffer, 32767);
+  Count := GetLongPathName(Existing, Buffer, 32767);
+  if (Count > 0) and (Count < 32767) then
+    Existing := Copy(Buffer, 1, Count);
+  Result := RemoveBackslashUnlessRoot(AddBackslash(Existing) + Tail);
+end;
+
 function SamePath(A, B: String): Boolean;
 begin
-  Result := AnsiLowercase(RemoveBackslashUnlessRoot(A)) = AnsiLowercase(RemoveBackslashUnlessRoot(B));
+  Result := AnsiLowercase(LongPath(A)) = AnsiLowercase(LongPath(B));
 end;
 
 { /BYTEFRAYDATAROOT=<folder>, else the folder an earlier installation of this
@@ -163,20 +196,47 @@ end;
 
 function IsSameOrInside(Path, Folder: String): Boolean;
 begin
-  Path := AddBackslash(AnsiLowercase(Path));
-  Folder := AddBackslash(AnsiLowercase(Folder));
+  Path := AddBackslash(AnsiLowercase(LongPath(Path)));
+  Folder := AddBackslash(AnsiLowercase(LongPath(Folder)));
   Result := Copy(Path, 1, Length(Folder)) = Folder;
 end;
 
+{ True when the folder already holds a different installation -- Bytefray 5.0
+  (registered or not) or any other Inno Setup application -- which copying this
+  product's files over would damage. A 5.1 Alpha folder carries its record. }
+function HoldsAnotherInstallation(App: String): Boolean;
+var
+  Found: TFindRec;
+  Location: String;
+begin
+  Result := False;
+  if FileExists(App + '\bin\' + InstallRecordName) then
+    Exit;
+  if FindFirst(App + '\unins*.exe', Found) then
+  begin
+    FindClose(Found);
+    Result := True;
+  end;
+  Result := Result or DirExists(App + '\bin\bytefray') or DirExists(App + '\bin\bytefray-agent-designer');
+  if RegQueryStringValue(HKLM, StableUninstallKey(), 'InstallLocation', Location) and SamePath(Location, App) then
+    Result := True;
+  if RegQueryStringValue(HKCU, StableUninstallKey(), 'InstallLocation', Location) and SamePath(Location, App) then
+    Result := True;
+end;
+
 { The data folder must stay outside the program folder, which upgrades replace
-  and uninstall removes, and must not contain it. }
+  and uninstall removes, and must not contain it; and the program folder must not
+  belong to another installation. }
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   App: String;
 begin
   Result := '';
   App := RemoveBackslashUnlessRoot(ExpandConstant('{app}'));
-  if IsSameOrInside(DataRoot(), App) or IsSameOrInside(App, DataRoot()) then
+  if not IsUpgradeOfThisInstallation() and HoldsAnotherInstallation(App) then
+    Result := 'The folder ' + App + ' already holds another installation (for example Bytefray 5.0). ' +
+      'Choose an empty folder for Bytefray 5.1 Alpha.'
+  else if IsSameOrInside(DataRoot(), App) or IsSameOrInside(App, DataRoot()) then
     Result := 'The Bytefray data folder (' + DataRoot() + ') and the installation folder (' + App +
       ') must be separate folders, neither inside the other.';
 end;

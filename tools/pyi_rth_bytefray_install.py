@@ -15,7 +15,12 @@ caches. Designer passes its own data root to every child process, and each
 child reads the same record, so the whole application agrees on one root.
 
 A record that exists but cannot be used stops the application with an
-explanation instead of silently falling back to another data root.
+explanation instead of silently falling back to another data root. So does an
+installed layout without its record -- Inno Setup's ``unins*.exe`` beside
+``bin``, which a portable tree never has -- and a data root that resolves inside
+the program folder (or contains it): upgrades replace the program folders, so
+data there could be deleted. Paths are compared fully resolved, so an 8.3 short
+name or a junction cannot disguise one folder as another.
 """
 
 from __future__ import annotations
@@ -37,11 +42,21 @@ def installation_record_path(executable: str | os.PathLike[str]) -> Path:
     return Path(executable).resolve().parent.parent / INSTALLATION_FILE
 
 
+def _is_inside(path: Path, folder: Path) -> bool:
+    return path == folder or folder in path.parents
+
+
 def recorded_data_root(executable: str | os.PathLike[str]) -> Path | None:
     """The data root the installation recorded, or ``None`` when not installed."""
 
     record_path = installation_record_path(executable)
+    install_root = record_path.parent.parent
     if not record_path.is_file():
+        if any(install_root.glob("unins*.exe")):
+            raise RuntimeError(
+                f"The Bytefray installation in {install_root} is missing its installation record "
+                f"{record_path}. Reinstall Bytefray to repair it."
+            )
         return None
     try:
         # The installer writes UTF-8 with a byte-order mark.
@@ -64,6 +79,12 @@ def recorded_data_root(executable: str | os.PathLike[str]) -> Path | None:
         raise RuntimeError(
             f"The Bytefray installation record {record_path} has no absolute data_root. "
             "Reinstall Bytefray to repair it."
+        )
+    resolved_data, resolved_install = Path(data_root).resolve(), install_root.resolve()
+    if _is_inside(resolved_data, resolved_install) or _is_inside(resolved_install, resolved_data):
+        raise RuntimeError(
+            f"The Bytefray data folder {data_root} and the installation folder {install_root} overlap. "
+            "Reinstall Bytefray with separate folders (/BYTEFRAYDATAROOT=<folder>)."
         )
     return Path(data_root)
 

@@ -57,9 +57,13 @@ def test_per_user_installation_writes_nothing_per_machine() -> None:
     assert not any(line.startswith("PrivilegesRequiredOverridesAllowed") for line in setup)
     assert not any(line.startswith("ChangesEnvironment") for line in setup)
     assert "[Registry]" not in STATEMENTS
+    assert not re.search(r"\bRegWrite|\bRegDelete|\bSetEnvironment", STATEMENTS)
+    # The only per-machine access is reading Bytefray 5.0's uninstall entry, to refuse its folder.
+    reads_stable_entry = "RegQueryStringValue(HKLM, StableUninstallKey(), 'InstallLocation', Location)"
+    assert reads_stable_entry in STATEMENTS
     for forbidden in ("HKLM", "Session Manager\\Environment", "{commonappdata}", "{commonpf}", "{commondesktop}",
                       "{commonprograms}", "uninsdeletevalue", "BYTEFRAY_ROOT"):
-        assert forbidden not in STATEMENTS, forbidden
+        assert forbidden not in STATEMENTS.replace(reads_stable_entry, ""), forbidden
 
 
 def test_upgrade_cleanup_is_limited_to_installer_owned_folders() -> None:
@@ -79,6 +83,29 @@ def test_uninstall_removes_only_what_it_installed() -> None:
     assert _section("UninstallDelete") == ['Type: files; Name: "{app}\\bin\\bytefray-install.json"']
     assert "[UninstallRun]" not in SCRIPT
     assert "[Dirs]" not in SCRIPT  # the data folder is created by the application, never by setup
+
+
+def test_a_folder_holding_another_installation_is_refused() -> None:
+    """A custom /DIR must not copy this product over Bytefray 5.0 (registered or an
+    unregistered tree) or any other Inno Setup application's folder."""
+
+    assert f"{{{STABLE_APP_ID}}}_is1" in SCRIPT
+    body = SCRIPT[SCRIPT.index("function HoldsAnotherInstallation") : SCRIPT.index("function PrepareToInstall")]
+    for clue in ("FileExists(App + '\\bin\\' + InstallRecordName)", "FindFirst(App + '\\unins*.exe'",
+                 "DirExists(App + '\\bin\\bytefray')", "RegQueryStringValue(HKLM, StableUninstallKey()",
+                 "RegQueryStringValue(HKCU, StableUninstallKey()"):
+        assert clue in body, clue
+    assert "if not IsUpgradeOfThisInstallation() and HoldsAnotherInstallation(App) then" in SCRIPT
+
+
+def test_folder_comparisons_use_long_path_names() -> None:
+    """An 8.3 alias must not make an overlapping data folder look separate."""
+
+    assert "external 'GetLongPathNameW@kernel32.dll stdcall'" in SCRIPT
+    same = SCRIPT[SCRIPT.index("function SamePath") : SCRIPT.index("{ /BYTEFRAYDATAROOT")]
+    inside = SCRIPT[SCRIPT.index("function IsSameOrInside") : SCRIPT.index("function HoldsAnotherInstallation")]
+    assert "LongPath(A)" in same and "LongPath(B)" in same
+    assert "LongPath(Path)" in inside and "LongPath(Folder)" in inside
 
 
 def test_data_folder_is_separate_kept_and_reused_on_upgrade() -> None:
@@ -102,7 +129,7 @@ def test_every_application_and_the_spectator_companion_are_installed() -> None:
     documents = re.findall(r'^Source: "\.\.\\([^"]+)"; DestDir: "\{app\}\\docs"', files, re.MULTILINE)
     assert sorted(Path(document).name for document in documents) == sorted(
         ("README.md", "LICENSE", "CHANGELOG.md", "BYTEFRAY_5_1_0_ALPHA_1_RELEASE_NOTES.md",
-         "BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md")
+         "BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md", "BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.json")
     )
     for document in documents:  # sources are relative to tools/
         assert (ROOT / document.replace("\\", "/")).is_file(), document

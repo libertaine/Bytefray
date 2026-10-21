@@ -9,20 +9,66 @@ earlier steps.
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
+import pytest
 from battle_engine.agent_scaffold import TEMPLATE_DIRECTORIES
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = (ROOT / "tools" / "build_win.ps1").read_text(encoding="utf-8")
 
 
-def test_the_gpl_only_qt_virtual_keyboard_is_omitted_and_checked() -> None:
-    assert '"PySide6\\plugins\\platforminputcontexts\\qtvirtualkeyboardplugin.dll"' in SOURCE
-    assert '"PySide6\\Qt6VirtualKeyboard.dll"' in SOURCE
-    assert '-Filter "*virtualkeyboard*"' in SOURCE
+def test_unused_qt_components_are_omitted_before_the_payload_checks() -> None:
+    from tools import omit_unused_qt
+
+    assert 'tools\\omit_unused_qt.py") --dist $DistDir' in SOURCE
     # Before the payload checks and every smoke test, so those run on the shipped tree.
-    assert SOURCE.index("$GplOnlyQtFiles") < SOURCE.index("# Verify no Python bytecode/cache")
+    assert SOURCE.index("omit_unused_qt.py") < SOURCE.index("# Verify no Python bytecode/cache")
+    assert {"qtvirtualkeyboardplugin.dll", "qt6virtualkeyboard.dll", "qpdf.dll", "qt6pdf.dll", "qt6quick.dll",
+            "qt6qml.dll", "qt6opengl.dll"} <= omit_unused_qt.OMITTED_NAMES
+    # Libraries Bytefray needs are never on the list.
+    assert not {"qt6core.dll", "qt6gui.dll", "qt6widgets.dll", "qt6network.dll", "qt6svg.dll", "qwindows.dll",
+                "opengl32sw.dll"} & omit_unused_qt.OMITTED_NAMES
+
+
+def test_omitting_deletes_only_the_listed_files(tmp_path: Path) -> None:
+    from tools import omit_unused_qt
+
+    tree = tmp_path / "bytefray-agent-designer"
+    kept = tree / "_internal" / "PySide6" / "Qt6Widgets.dll"
+    listed = [tree / "_internal" / Path(*relative.split("/")) for relative in omit_unused_qt.OMITTED]
+    for path in [kept, *listed]:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"")
+    assert sorted(omit_unused_qt.omit(tree)) == sorted(listed)
+    assert kept.is_file() and not any(path.exists() for path in listed)
+
+
+def test_a_binary_that_still_imports_an_omitted_library_is_reported(tmp_path: Path) -> None:
+    """The real qpdf plugin imports Qt6Pdf.dll: renamed so it survives omission, it
+    must be reported as dangling -- the check that fails the build."""
+
+    pytest.importorskip("pefile")
+    pyside = pytest.importorskip("PySide6")
+    plugin = Path(pyside.__file__).parent / "plugins" / "imageformats" / "qpdf.dll"
+    if not plugin.is_file():
+        pytest.skip("this PySide6 build has no qpdf plugin")
+    from tools import omit_unused_qt
+
+    tree = tmp_path / "app"
+    (tree / "_internal").mkdir(parents=True)
+    shutil.copyfile(plugin, tree / "_internal" / "renamed-plugin.dll")
+    dangling = omit_unused_qt.dangling_imports(tree)
+    assert [(path.name, name) for path, name in dangling] == [("renamed-plugin.dll", "qt6pdf.dll")]
+
+
+def test_release_builds_can_pin_every_dependency() -> None:
+    assert "[string]$Constraints" in SOURCE
+    assert '$ConstraintArgs = @("-c", (Resolve-Path -LiteralPath $Constraints).Path)' in SOURCE
+    pins = (ROOT / "tools" / "windows-build-constraints.txt").read_text(encoding="utf-8")
+    for pin in ("pyinstaller==6.22.2", "PySide6==6.11.2", "pygame-ce==2.5.8", "PyYAML==6.0.3"):
+        assert pin in pins
 
 
 def test_only_the_pinned_spectator_build_is_staged_and_self_checked() -> None:

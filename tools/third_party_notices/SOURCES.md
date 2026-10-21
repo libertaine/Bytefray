@@ -43,5 +43,58 @@ pygame-ce 2.5.8 `docs/licenses/`:
 | `LICENSE.webp.txt` | `5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf` |
 | `LICENSE.zlib.txt` | `464352f7afcece608041241e20b28e8006ae170446898e9713fb076323d1487d` |
 
-Update these files, and this table, whenever the build's Godot, pygame-ce or
-Qt licensing changes.
+## `sdl-windows-prebuilts/` — the libraries inside the pygame-ce 2.5.8 Windows wheel
+
+pygame-ce 2.5.8's `buildconfig/download_win_prebuilt.py` builds its Windows
+wheel from the upstream SDL release packages below (it pins their SHA-1s, which
+these downloads matched). Every DLL of theirs that the frozen Bytefray trees
+contain is byte-identical to the package's x64 copy, so the license files those
+packages ship are the ones for the shipped binaries. Only the texts for shipped
+libraries were kept (not `libavif`, `dav1d` or `libgme`).
+
+| Package (SHA-1) | Files |
+| --- | --- |
+| `SDL2-devel-2.32.10-VC.zip` (`27f5179346a0b0db80c4dd1769c7c9d62b9a91f3`) | `SDL2-2.32.10/LICENSE.txt` |
+| `SDL2_image-devel-2.8.12-VCpgce.zip` (`77058bbf460c7701d60b27e82bec17b529d55014`) | `SDL2_image-2.8.12/LICENSE.txt`, and from `lib/x64/optional/`: `LICENSE.libjpegturbo.md`, `LICENSE.tiff.txt`, `LICENSE.webp.txt` |
+| `SDL2_mixer-devel-2.8.2-VC.zip` (`7e01cc961326ec44a61009c61a409310489aee6b`) | `SDL2_mixer-2.8.2/LICENSE.txt`, and from `lib/x64/optional/`: `LICENSE.ogg-vorbis.txt`, `LICENSE.opus.txt`, `LICENSE.opusfile.txt`, `LICENSE.wavpack.txt` (WavPack 5.6.0), `LICENSE.xmp.txt` (libxmp, MIT) |
+| `SDL2_ttf-devel-2.24.0-VC.zip` (`2d18b9a4fc2ec0eee80de2a946b088d4e6efd0ee`) | `SDL2_ttf-2.24.0/LICENSE.txt` |
+
+`SDL2_ttf.dll` links FreeType and HarfBuzz statically (it imports only
+`KERNEL32.dll` and `SDL2.dll`). Their texts come from the commits SDL_ttf
+`release-2.24.0` vendors as submodules:
+`vendored/harfbuzz-COPYING.txt` from libsdl-org/harfbuzz
+`e18e66409d0136cc8f8b05aac791f84314520676` (`COPYING`), and
+`vendored/freetype-LICENSE.txt` and `vendored/freetype-FTL.txt` from
+libsdl-org/freetype `12c5e620858bd503731091e9371d06c0a3e7c967` (`LICENSE.TXT`,
+`docs/FTL.TXT`).
+
+## `qt-6.11.2/QT_THIRD_PARTY_NOTICES.txt`
+
+The text of https://doc.qt.io/qt-6.11/licenses-used-in-qt.html ("The following
+sections list third-party components in Qt 6.11.2") and of the 53 component
+pages it links for the Qt modules the frozen applications ship (Qt Core, Qt GUI,
+Qt Image Formats, Qt Network, Qt SVG) plus Mesa llvmpipe (`opengl32sw.dll`),
+converted from HTML to text without other changes. Qt Quick, QML, OpenGL, PDF
+and Virtual Keyboard are not shipped (`tools/omit_unused_qt.py`).
+
+| File | SHA-256 (LF) |
+| --- | --- |
+| `qt-6.11.2/QT_THIRD_PARTY_NOTICES.txt` | `3bb59575a35c8a4fb6f26b1a17f955bb35936e4b6114a0880a7128c53ca9a463` |
+| `sdl-windows-prebuilts/SDL2-2.32.10/LICENSE.txt` | `97f35b302b361680ec1e891e95d2d52097bb95abff361434916d99dc1305f127` |
+| `sdl-windows-prebuilts/SDL2_image-2.8.12/LICENSE.libjpegturbo.md` | `ba6bceebcba0fdd35488477c2cca8c4632ce82c74dbfbc87d886ce6fc4433579` |
+| `sdl-windows-prebuilts/SDL2_image-2.8.12/LICENSE.tiff.txt` | `fbd6fed7938541d2c809c0826225fc85e551fdbfa8732b10f0c87e0847acafd7` |
+| `sdl-windows-prebuilts/SDL2_image-2.8.12/LICENSE.txt` | `7826eca0a0f7e591f38dd844e207a200aac81a59b20d8a30c3af8c6282af13e6` |
+| `sdl-windows-prebuilts/SDL2_image-2.8.12/LICENSE.webp.txt` | `5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf` |
+| `sdl-windows-prebuilts/SDL2_mixer-2.8.2/LICENSE.ogg-vorbis.txt` | `ec1815db59fcd302846df949d7424876cb2e2dc5ed1606c5fb0b36787b1cf43a` |
+| `sdl-windows-prebuilts/SDL2_mixer-2.8.2/LICENSE.opus.txt` | `8338ce8d922bb4416ce3dd1e5680173332435e3f0755007ac7801ccd674fe682` |
+| `sdl-windows-prebuilts/SDL2_mixer-2.8.2/LICENSE.opusfile.txt` | `0267ae795ab744c4e0f9c45e249440fdf2e75dac8c804f36066b28649bf74aaf` |
+| `sdl-windows-prebuilts/SDL2_mixer-2.8.2/LICENSE.txt` | `7826eca0a0f7e591f38dd844e207a200aac81a59b20d8a30c3af8c6282af13e6` |
+| `sdl-windows-prebuilts/SDL2_mixer-2.8.2/LICENSE.wavpack.txt` | `275d65ec11a78d552d078b9c26d950e3075892bca895a415ceaaec33bcfabff9` |
+| `sdl-windows-prebuilts/SDL2_mixer-2.8.2/LICENSE.xmp.txt` | `f34309e37033bd4da61f5448d18b7a1280336b00eb18d5e4165c1c509a9c318c` |
+| `sdl-windows-prebuilts/SDL2_ttf-2.24.0/LICENSE.txt` | `7826eca0a0f7e591f38dd844e207a200aac81a59b20d8a30c3af8c6282af13e6` |
+| `sdl-windows-prebuilts/SDL2_ttf-2.24.0/vendored/freetype-FTL.txt` | `08c135755dd589039470f1fdbb400daaabaaa50d0b366d19cebff4d22986baa1` |
+| `sdl-windows-prebuilts/SDL2_ttf-2.24.0/vendored/freetype-LICENSE.txt` | `2e3bbb7d7c5c396368dd0853a790ec29ce5b8647163dde42a0493fb0d6556b2b` |
+| `sdl-windows-prebuilts/SDL2_ttf-2.24.0/vendored/harfbuzz-COPYING.txt` | `ba8f810f2455c2f08e2d56bb49b72f37fcf68f1f4fade38977cfd7372050ad64` |
+
+Update these files, and these tables, whenever the build's Godot, pygame-ce or
+Qt version changes.

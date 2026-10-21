@@ -13,6 +13,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -96,6 +97,59 @@ def test_a_damaged_record_stops_instead_of_guessing(hook, tmp_path, text):
     with pytest.raises(RuntimeError, match="Reinstall Bytefray"):
         hook.apply(executable, environ)
     assert environ == {"BYTEFRAY_ROOT": "inherited"}
+
+
+@pytest.mark.parametrize("record", ["absent", "a directory"])
+def test_an_installed_layout_without_its_record_stops(hook, tmp_path, record):
+    """Inno Setup's uninstaller beside bin/ marks an installation; without its record
+    the application must not fall back to an inherited BYTEFRAY_ROOT (Bytefray 5.0's)."""
+
+    install = tmp_path / "Bytefray 5.1 Alpha"
+    executable = _installed_executable(install)
+    (install / "unins000.exe").write_bytes(b"")
+    if record == "a directory":
+        (install / "bin" / "bytefray-install.json").mkdir()
+    environ = {"BYTEFRAY_ROOT": r"C:\ProgramData\Bytefray"}
+    with pytest.raises(RuntimeError, match="missing its installation record"):
+        hook.apply(executable, environ)
+    assert environ == {"BYTEFRAY_ROOT": r"C:\ProgramData\Bytefray"}
+
+
+def _overlapping(install: Path, tmp_path: Path, kind: str) -> Path:
+    if kind == "inside an application folder":
+        return install / "bin" / "bytefray" / "userdata"
+    if kind == "the installation folder":
+        return install
+    if kind == "containing the installation":
+        return tmp_path
+    # A junction elsewhere that points into the program folder (mklink /J needs no elevation).
+    link = tmp_path / "innocent looking data"
+    target = install / "bin" / "bytefray-agent-designer"
+    result = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(target)], capture_output=True, check=False)
+    if result.returncode != 0:
+        pytest.skip(f"cannot create a junction here: {result.stderr!r}")
+    return link / "data"
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        "inside an application folder",
+        "the installation folder",
+        "containing the installation",
+        pytest.param("a junction into the program folder", marks=pytest.mark.skipif(sys.platform != "win32", reason="NTFS junction")),
+    ],
+)
+def test_a_data_root_overlapping_the_program_folder_is_refused(hook, tmp_path, kind):
+    """Upgrades replace the program folders, so data there could be deleted; the
+    check compares resolved paths, so aliases cannot disguise an overlap."""
+
+    install = tmp_path / "programs" / "Bytefray 5.1 Alpha"
+    executable = _installed_executable(install)
+    data_root = _overlapping(install, tmp_path, kind)
+    _record(install, json.dumps({"schema": "bytefray.installation", "schema_version": 1, "data_root": str(data_root)}))
+    with pytest.raises(RuntimeError, match="overlap"):
+        hook.apply(executable, {})
 
 
 def test_installer_writes_the_record_the_hook_reads(hook):

@@ -69,8 +69,9 @@ different Spectator build.
 3. Click **View Last Match**. The first time, Designer prepares a Spectator
    presentation in the background; this can take from several seconds to a
    few minutes for long matches. Later views of the same match open at once.
-4. In Spectator, press **Tab** to switch between Broadcast and Agent A, and
-   **H** for the other keys.
+4. In Spectator, choose **Broadcast** or **Agent A** in the perspective list
+   at the top right, and use the buttons along the bottom to play, step and
+   seek. **H** or the Help button lists the keyboard shortcuts.
 
 ## Known limitations
 
@@ -82,6 +83,10 @@ different Spectator build.
   agents, tournaments, Replay History — opens in the Pygame replay viewer.
 - Preparing a match for Spectator the first time is slow, and the time grows
   quickly with match length.
+- In Spectator `0.1.0-alpha.1`, Tab moves keyboard focus between the on-screen
+  controls instead of switching perspective, although the on-screen key hint
+  lists it; use the perspective list. Once a button has keyboard focus, Space
+  presses that button instead of playing or pausing.
 - Human comprehension evaluation of Active Sensing is planned for 5.2.
 - This installer is for Windows AMD64 only. Linux packaging is qualified
   separately, and native Ubuntu on Xorg is not qualified.
