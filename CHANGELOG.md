@@ -26,8 +26,16 @@ package `5.1.0a1`). It is not yet published; see the
   (`<install>\bin\bytefray-spectator\`); `BYTEFRAY_SPECTATOR` still overrides
   it or turns it off. The build accepts only the Spectator executable pinned in
   `tools/spectator_companion.json`.
+* **One Microsoft-signed Visual C++ runtime, and its terms.** Every
+  application ships the same Microsoft-signed runtime files (14.51.36247.0,
+  pinned in `tools/msvc_runtime.json`) instead of the CPython and Qt-re-signed
+  copies PyInstaller collected, so no process mixes runtime versions. Setup's
+  License page presents the Microsoft runtime terms and requires acceptance; an
+  unattended installation must pass
+  `/ACCEPTMICROSOFTRUNTIMETERMS=BYTEFRAY-5.1-MSVC-RUNTIME-TERMS-1`, and the
+  acceptance is recorded with the uninstall entry.
 * **Windows metadata and notices.** Every executable carries a version
-  resource (`5.1.0-alpha.1`, file version `5.1.0.101`), and `licenses\`
+  resource (`5.1.0-alpha.1`, file version `5.1.0.1011`), and `licenses\`
   holds the license texts of Python, Qt for Python and the third-party code in
   the shipped Qt modules, pygame-ce and every SDL, codec and font library it
   bundles, PyYAML, the PyInstaller bootloader, Spectator and Godot, with the

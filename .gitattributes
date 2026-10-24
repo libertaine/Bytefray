@@ -16,3 +16,6 @@ engine/src/battle_engine/evaluation_history/v2_adapter.py -text
 engine/src/battle_engine/evaluation_history/verification.py -text
 engine/src/battle_engine/evaluation_worker.py -text
 engine/tests/conftest.py -text
+
+# Shown on the installer's License page (tools/installer.iss LicenseFile): UTF-8 with BOM, CRLF.
+docs/releases/BYTEFRAY_5_1_0_ALPHA_1_MICROSOFT_RUNTIME_TERMS.txt text eol=crlf

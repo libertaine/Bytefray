@@ -43,6 +43,18 @@ The two never share programs, data, shortcuts or uninstall entries, so
 installing, upgrading or removing the Alpha does not change Bytefray 5.0. The
 Alpha ignores the `BYTEFRAY_ROOT` setting that Bytefray 5.0 creates.
 
+**Microsoft Visual C++ runtime terms.** Bytefray includes Microsoft Visual C++
+runtime files (version 14.51.36247.0) redistributed under Microsoft's Visual
+Studio Community 2026 terms, which require everyone who installs them to agree
+to terms that protect them. Setup shows those terms on its License page and
+continues only after you select **I accept the agreement**. They apply only to
+the Microsoft files: Bytefray stays under the MIT License and every other
+component under its own license. A copy is installed in
+`licenses\microsoft-visual-cpp-runtime\`. An unattended installation
+(`/SILENT` or `/VERYSILENT`) shows no pages, so it is refused unless it also
+passes `/ACCEPTMICROSOFTRUNTIMETERMS=BYTEFRAY-5.1-MSVC-RUNTIME-TERMS-1`, which
+accepts those terms on behalf of the person the installation is for.
+
 **Windows SmartScreen.** The Alpha installer is not code-signed. Windows may
 show "Windows protected your PC"; choose **More info → Run anyway** only if you
 downloaded the installer from the official Bytefray GitHub release and its

@@ -27,18 +27,39 @@
 ; pyproject.toml; FileVersion is the numeric Windows form that
 ; tools/windows_version_info.py stamps into the executables.
 ; engine/tests/test_windows_packaging_spec.py checks that all four agree.
+;
+; Microsoft Visual C++ runtime. Every runtime DLL in the frozen applications is
+; the exact Microsoft-signed file tools/msvc_runtime.json pins
+; (tools\build_win.ps1 -MsvcRuntimeDir), redistributed under the Visual Studio
+; Community 2026 Distributable Code terms, which require every recipient to agree
+; to terms that protect it. The License page shows those terms (MsvcTermsFile);
+; an unattended installation must accept them explicitly with
+; /ACCEPTMICROSOFTRUNTIMETERMS=<MsvcTermsId> and is refused otherwise. Setup
+; records how, by whom and when they were accepted with the uninstall entry. The
+; compiler refuses a dist tree whose runtime was not replaced.
 
 #define AppName "Bytefray 5.1 Alpha"
 #define ProductName "Bytefray"
 #define AppVersion "5.1.0-alpha.1"
 #define ReleaseTag "5.1.0-alpha.1"
 #define PackageVersion "5.1.0a1"
-#define FileVersion "5.1.0.101"
+#define FileVersion "5.1.0.1011"
 #define AppGuid "30F5713B-F69B-44F1-A759-AC43E33C0889"
 #define AppPublisher "Bytefray Project"
 #define DataFolderName "Bytefray 5.1 Alpha"
 #define DistRoot "..\dist\windows"
 #define OutputRoot "..\dist\installer"
+#define MsvcTermsFile "..\docs\releases\BYTEFRAY_5_1_0_ALPHA_1_MICROSOFT_RUNTIME_TERMS.txt"
+#define MsvcTermsId "BYTEFRAY-5.1-MSVC-RUNTIME-TERMS-1"
+; Written by tools\build_win.ps1 beside the installed copy of the terms.
+#define MsvcRuntimeFolder "licenses\microsoft-visual-cpp-runtime"
+
+#if !FileExists(AddBackslash(AddBackslash(SourcePath) + DistRoot) + MsvcRuntimeFolder + "\MSVC_RUNTIME_PROVENANCE.json")
+  #error dist\windows does not carry the pinned Microsoft runtime (run tools\build_win.ps1 with -MsvcRuntimeDir).
+#endif
+#if !FileExists(AddBackslash(SourcePath) + MsvcTermsFile)
+  #error The Microsoft runtime terms file is missing.
+#endif
 
 [Setup]
 ; Bytefray 5.1 Alpha product identity. Keep this AppId unchanged across 5.1 Alpha builds.
@@ -61,6 +82,8 @@ VersionInfoDescription={#AppName} Setup
 UninstallDisplayName={#AppName}
 SetupIconFile=..\assets\branding\bytefray-icon.ico
 UninstallDisplayIcon={app}\bin\bytefray-agent-designer\bytefray-agent-designer.exe
+; The terms for the Microsoft runtime files; Next stays disabled until they are accepted.
+LicenseFile={#MsvcTermsFile}
 ; Per-user: {autopf} is %LOCALAPPDATA%\Programs and {group} the user's Start Menu.
 PrivilegesRequired=lowest
 DefaultDirName={autopf}\{#AppName}
@@ -126,6 +149,8 @@ var
   ChosenDataRoot: String;
   { The previous build's bin\bytefray-files.txt, read before [Files] replaces it. }
   PreviousFiles: TArrayOfString;
+  { How, by whom and when the Microsoft runtime terms were accepted; set by PrepareToInstall. }
+  TermsAcceptance: String;
 
 function GetLongPathName(ShortPath: String; LongPath: String; Size: Cardinal): Cardinal;
   external 'GetLongPathNameW@kernel32.dll stdcall';
@@ -413,10 +438,22 @@ begin
     StrToVersion('{#FileVersion}', ThisVersion) and (ComparePackedVersion(PreviousVersion, ThisVersion) > 0);
 end;
 
+{ True when the Microsoft runtime terms were accepted: on the License page, or for an
+  unattended installation (which shows no pages) by /ACCEPTMICROSOFTRUNTIMETERMS
+  naming exactly these terms. }
+function TermsAccepted(): Boolean;
+begin
+  if WizardSilent then
+    Result := CompareText(ExpandConstant('{param:ACCEPTMICROSOFTRUNTIMETERMS|}'), '{#MsvcTermsId}') = 0
+  else
+    Result := WizardForm.LicenseAcceptedRadio.Checked;
+end;
+
 { The data folder must stay outside the program folder, whose files upgrades replace
   and uninstall removes, and must not contain it; the program folder must not
   belong to another installation; and the folders Setup writes into must not be
-  redirected by links. Folders whose location Setup cannot verify are refused. }
+  redirected by links. Folders whose location Setup cannot verify are refused, and
+  so is any installation whose Microsoft runtime terms were not accepted. }
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   App, Link: String;
@@ -424,7 +461,11 @@ begin
   Result := '';
   App := RemoveBackslashUnlessRoot(ExpandConstant('{app}'));
   Link := LinkInInstalledFolders(App);
-  if HasUnresolvedLink(App) or HasUnresolvedLink(DataRoot()) then
+  if not TermsAccepted() then
+    Result := 'Bytefray includes Microsoft Visual C++ runtime files that may be installed only by someone who ' +
+      'accepts their terms ({#MsvcTermsId}). An unattended installation must accept them with ' +
+      '/ACCEPTMICROSOFTRUNTIMETERMS={#MsvcTermsId}. Nothing has been installed.'
+  else if HasUnresolvedLink(App) or HasUnresolvedLink(DataRoot()) then
     Result := 'The installation folder (' + App + ') or the data folder (' + DataRoot() + ') is reached ' +
       'through a junction or symbolic link that Setup cannot follow, so Setup cannot check where it ' +
       'leads. Choose folders reached without such links.'
@@ -440,6 +481,16 @@ begin
   else if Link <> '' then
     Result := 'The installation folder contains a link (junction or symbolic link) or a folder that ' +
       'cannot be listed: ' + Link + '. Setup does not install through links; remove it, or choose another folder.';
+  if Result = '' then
+  begin
+    if WizardSilent then
+      TermsAcceptance := 'unattended /ACCEPTMICROSOFTRUNTIMETERMS={#MsvcTermsId}'
+    else
+      TermsAcceptance := 'License page, I accept the agreement';
+    TermsAcceptance := TermsAcceptance + '; Windows user ' + GetUserNameString() + '; local time ' +
+      GetDateTimeString('yyyy/mm/dd hh:nn:ss', '-', ':');
+    Log('Microsoft runtime terms {#MsvcTermsId} accepted: ' + TermsAcceptance);
+  end;
 end;
 
 function JsonString(Value: String): String;
@@ -574,6 +625,10 @@ begin
   SetPreviousData(PreviousDataKey, 'DataRoot', DataRoot());
   SetPreviousData(PreviousDataKey, 'FileListSha256', FileSha256(ExpandConstant('{app}\bin\') + FileListName));
   SetPreviousData(PreviousDataKey, 'FileVersion', '{#FileVersion}');
+  SetPreviousData(PreviousDataKey, 'MicrosoftRuntimeTerms', '{#MsvcTermsId}');
+  SetPreviousData(PreviousDataKey, 'MicrosoftRuntimeTermsSha256',
+    FileSha256(ExpandConstant('{app}\{#MsvcRuntimeFolder}\') + ExtractFileName('{#MsvcTermsFile}')));
+  SetPreviousData(PreviousDataKey, 'MicrosoftRuntimeTermsAcceptance', TermsAcceptance);
 end;
 
 { True when the folder still contains the installed-file list whose SHA-256 Setup

@@ -1,0 +1,71 @@
+{
+  "schema": "bytefray.msvc-runtime-pin",
+  "schema_version": 1,
+  "version": "14.51.36247.0",
+  "grant": {
+    "licensee": "Rod Satterfield (individual; section 2(b) Individual License)",
+    "product": "Microsoft Visual Studio Community 2026",
+    "license_terms": "https://visualstudio.microsoft.com/license-terms/vs2026-ga-community/",
+    "eulaid": "VS2026_Comm_ENU.1033",
+    "distributable_list": "https://aka.ms/vs/18/redistribution",
+    "distributable_list_entry": "Visual C++ Runtime Files: any of the files within [VisualStudioFolder]\\VC\\redist (except debug_nonredist); \"You may not modify these files.\""
+  },
+  "source": {
+    "visual_studio": "Visual Studio Community 2026 18.11.1 (build 18.11.12315.225, Stable channel)",
+    "catalog": "VisualStudio/18.11.1+12315.225",
+    "package": "Microsoft.VC.14.51.CRT.Redist.X64.base",
+    "package_version": "14.51.36247",
+    "payload_sha256": "24a1c8dba0376d9b008ac2ba430d13c06664fc6f163511fd7866485030e289af",
+    "payload_url": "https://download.visualstudio.microsoft.com/download/pr/3984a6ef-2ffc-4c07-962e-bf9e9b862819/24a1c8dba0376d9b008ac2ba430d13c06664fc6f163511fd7866485030e289af/Microsoft.VC.14.51.CRT.Redist.X64.base.vsix",
+    "folder": "VC\\Redist\\MSVC\\14.51.36231\\x64\\Microsoft.VC145.CRT"
+  },
+  "signer_organization": "O=Microsoft Corporation",
+  "files": {
+    "vcruntime140.dll": {
+      "bytes": 178616,
+      "sha256": "d1f4225df2cd877dbf130d5668a021dce3f94118455ff5ec952061c30afc9ce7"
+    },
+    "vcruntime140_1.dll": {
+      "bytes": 50112,
+      "sha256": "a7146c08f89fe5b04541ab507cdb59ff7b44534d4ba3c668a426c6450a03434e"
+    },
+    "msvcp140.dll": {
+      "bytes": 643512,
+      "sha256": "7c26614e1d733892c2deac7e245ce115504b1d80592dd0a01b08e3e5a55f89ca"
+    },
+    "msvcp140_1.dll": {
+      "bytes": 35768,
+      "sha256": "206c931bf90fdad8816de3b5e2ef80b2bcaa9406c89ecc05fe6fddffe251e982"
+    },
+    "msvcp140_2.dll": {
+      "bytes": 274872,
+      "sha256": "d50d7883f20d1dc6191768d3746f52dd9cac89c346ffaed5be1f110c2f34a838"
+    }
+  },
+  "locations": [
+    "bytefray-agent-designer/_internal/PySide6/MSVCP140.dll",
+    "bytefray-agent-designer/_internal/PySide6/MSVCP140_1.dll",
+    "bytefray-agent-designer/_internal/PySide6/MSVCP140_2.dll",
+    "bytefray-agent-designer/_internal/PySide6/VCRUNTIME140.dll",
+    "bytefray-agent-designer/_internal/PySide6/VCRUNTIME140_1.dll",
+    "bytefray-agent-designer/_internal/VCRUNTIME140.dll",
+    "bytefray-agent-designer/_internal/VCRUNTIME140_1.dll",
+    "bytefray-agent-designer/_internal/shiboken6/MSVCP140.dll",
+    "bytefray-agent-designer/_internal/shiboken6/VCRUNTIME140.dll",
+    "bytefray-agent-designer/_internal/shiboken6/VCRUNTIME140_1.dll",
+    "bytefray-cli/_internal/VCRUNTIME140.dll",
+    "bytefray-cli/_internal/VCRUNTIME140_1.dll",
+    "bytefray-replay-viewer/_internal/VCRUNTIME140.dll",
+    "bytefray-replay-viewer/_internal/VCRUNTIME140_1.dll",
+    "bytefray/_internal/PySide6/MSVCP140.dll",
+    "bytefray/_internal/PySide6/MSVCP140_1.dll",
+    "bytefray/_internal/PySide6/MSVCP140_2.dll",
+    "bytefray/_internal/PySide6/VCRUNTIME140.dll",
+    "bytefray/_internal/PySide6/VCRUNTIME140_1.dll",
+    "bytefray/_internal/VCRUNTIME140.dll",
+    "bytefray/_internal/VCRUNTIME140_1.dll",
+    "bytefray/_internal/shiboken6/MSVCP140.dll",
+    "bytefray/_internal/shiboken6/VCRUNTIME140.dll",
+    "bytefray/_internal/shiboken6/VCRUNTIME140_1.dll"
+  ]
+}

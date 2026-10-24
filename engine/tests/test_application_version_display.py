@@ -3,7 +3,8 @@
 ``pyproject.toml`` holds the PEP 440 form (``5.1.0a1``), which result.json
 records. People see the SemVer form (``5.1.0-alpha.1``) in About, ``bytefray
 --version``, the installer and executable metadata. Windows binaries also need
-a numeric four-part version (``5.1.0.101``). These must always agree.
+a numeric four-part version (``5.1.0.1011``: 5.1.0a1, Windows build revision 1).
+These must always agree.
 """
 
 from __future__ import annotations
@@ -26,24 +27,42 @@ ROOT = Path(__file__).resolve().parents[2]
 @pytest.mark.parametrize(
     ("package", "public", "numeric"),
     [
-        ("5.1.0a1", "5.1.0-alpha.1", (5, 1, 0, 101)),
-        ("5.1.0a12", "5.1.0-alpha.12", (5, 1, 0, 112)),
-        ("5.1.0b2", "5.1.0-beta.2", (5, 1, 0, 202)),
-        ("5.1.0rc1", "5.1.0-rc.1", (5, 1, 0, 301)),
-        ("5.1.0", "5.1.0", (5, 1, 0, 900)),
-        ("5.0.0", "5.0.0", (5, 0, 0, 900)),
+        ("5.1.0a1", "5.1.0-alpha.1", (5, 1, 0, 1010)),
+        ("5.1.0a12", "5.1.0-alpha.12", (5, 1, 0, 1120)),
+        ("5.1.0b2", "5.1.0-beta.2", (5, 1, 0, 2020)),
+        ("5.1.0rc1", "5.1.0-rc.1", (5, 1, 0, 3010)),
+        ("5.1.0", "5.1.0", (5, 1, 0, 9000)),
+        ("5.0.0", "5.0.0", (5, 0, 0, 9000)),
     ],
 )
 def test_the_three_spellings_agree(package: str, public: str, numeric: tuple[int, int, int, int]) -> None:
     assert public_version(package) == wvi.public_version(package) == public
     assert python_package_version(public) == package
-    assert wvi.windows_file_version(package) == numeric
+    assert wvi.windows_file_version(package, revision=0) == numeric
 
 
 def test_numeric_versions_sort_like_the_releases() -> None:
-    ordered = ["5.1.0a1", "5.1.0a2", "5.1.0b1", "5.1.0rc1", "5.1.0", "5.1.1a1"]
-    numeric = [wvi.windows_file_version(version) for version in ordered]
-    assert numeric == sorted(numeric)
+    ordered = [("5.1.0a1", 0), ("5.1.0a1", 1), ("5.1.0a1", 9), ("5.1.0a2", 0), ("5.1.0b1", 0), ("5.1.0rc1", 0),
+               ("5.1.0", 0), ("5.1.1a1", 0)]
+    numeric = [wvi.windows_file_version(version, revision) for version, revision in ordered]
+    assert numeric == sorted(numeric) and len(set(numeric)) == len(numeric)
+
+
+def test_the_rebuild_replaces_the_first_alpha_1_windows_build() -> None:
+    """The first 5.1.0-alpha.1 build recorded 5.1.0.101 with its uninstall entry;
+    the installer refuses to install over a higher recorded build, so this
+    rebuild must be higher and every later version higher still."""
+
+    current = wvi.windows_file_version("5.1.0a1")
+    assert wvi.BUILD_REVISION == 1 and current == (5, 1, 0, 1011)
+    assert (5, 1, 0, 101) < current < wvi.windows_file_version("5.1.0a2", revision=0)
+    assert max(wvi.windows_file_version("5.1.0rc99", revision=9)) < 2**16
+
+
+@pytest.mark.parametrize("revision", [-1, 10])
+def test_a_revision_that_does_not_fit_is_refused(revision: int) -> None:
+    with pytest.raises(SystemExit, match="revision"):
+        wvi.windows_file_version("5.1.0a1", revision)
 
 
 @pytest.mark.parametrize("version", ["development checkout", "5.1.0.dev3", "5.1.0+local", "5.1"])

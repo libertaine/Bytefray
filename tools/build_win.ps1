@@ -7,11 +7,19 @@
 # build passes tools/windows-build-constraints.txt (the versions the
 # 5.1.0-alpha.1 candidate was built and qualified with). See
 # docs/releases/5_1_ALPHA1_WINDOWS_INSTALLER_QUALIFICATION.md for the recipe.
+#
+# -MsvcRuntimeDir <folder> is the licensed Visual Studio's
+# VC\Redist\MSVC\<version>\x64\Microsoft.VC145.CRT folder (or the same files
+# from its catalog-verified package). Every Microsoft Visual C++ runtime DLL
+# in the frozen applications is replaced by the exact files tools/msvc_runtime.json
+# pins (tools/replace_msvc_runtime.py). Required with -SpectatorExe, so a
+# release build cannot ship the runtime copies PyInstaller collected.
 param(
   [string]$Mode = "Release",
   [string]$SpectatorExe,
   [string]$SpectatorLicense,
-  [string]$Constraints
+  [string]$Constraints,
+  [string]$MsvcRuntimeDir
 )
 
 $ErrorActionPreference = "Stop"
@@ -103,6 +111,46 @@ foreach ($Artifact in $Artifacts) {
 # that nothing depends on them. See tools/omit_unused_qt.py.
 & $PyExe (Join-Path $RepoRoot "tools\omit_unused_qt.py") --dist $DistDir
 if ($LASTEXITCODE -ne 0) { throw "Omitting unused Qt components failed with exit code $LASTEXITCODE" }
+
+# One Microsoft-signed Visual C++ runtime in every application (tools/msvc_runtime.json).
+# PyInstaller collected CPython's 14.42 copies and Qt-re-signed 14.44 copies, which
+# Windows mixed in one process. Replaced here, before the payload checks and every
+# smoke test, so those run on the shipped runtime. Each source file must carry its
+# own valid Microsoft signature (decoded from the file, not a Windows catalog);
+# tools/replace_msvc_runtime.py then checks the pinned names, sizes, SHA-256 values,
+# versions and locations, and changes nothing unless all of them match.
+$MsvcPin = Join-Path $RepoRoot "tools\msvc_runtime.json"
+$MsvcRecord = Join-Path $BuildDir "MSVC_RUNTIME_PROVENANCE.json"
+if ($SpectatorExe -and -not $MsvcRuntimeDir) { throw "-MsvcRuntimeDir is required for a release build (with -SpectatorExe)." }
+function Get-EmbeddedSignerSubject([string]$Path) {
+  $Bytes = [IO.File]::ReadAllBytes($Path)
+  $Optional = [BitConverter]::ToInt32($Bytes, 0x3C) + 24
+  $Directories = $Optional + $(if ([BitConverter]::ToUInt16($Bytes, $Optional) -eq 0x20B) { 112 } else { 96 })
+  $Offset = [BitConverter]::ToInt32($Bytes, $Directories + 32)
+  $Length = [BitConverter]::ToInt32($Bytes, $Directories + 36)
+  if ($Length -le 8) { return $null }
+  $Cms = [System.Security.Cryptography.Pkcs.SignedCms]::new()
+  $Cms.Decode($Bytes[($Offset + 8)..($Offset + [BitConverter]::ToInt32($Bytes, $Offset) - 1)])
+  $Cms.CheckSignature($true)
+  $Cms.SignerInfos[0].Certificate.Subject
+}
+if ($MsvcRuntimeDir) {
+  Add-Type -AssemblyName System.Security
+  $Pin = Get-Content -LiteralPath $MsvcPin -Raw | ConvertFrom-Json
+  foreach ($Name in $Pin.files.PSObject.Properties.Name) {
+    $Source = Join-Path $MsvcRuntimeDir $Name
+    if (-not (Test-Path -LiteralPath $Source -PathType Leaf)) { throw "$MsvcRuntimeDir has no $Name." }
+    $Signature = Get-AuthenticodeSignature -LiteralPath $Source
+    $Signer = Get-EmbeddedSignerSubject $Source
+    if ($Signature.Status -ne "Valid" -or -not $Signer -or $Signer -notmatch [regex]::Escape($Pin.signer_organization)) {
+      throw "$Source is not a validly Microsoft-signed file (status $($Signature.Status), embedded signer '$Signer')."
+    }
+  }
+  & $PyExe (Join-Path $RepoRoot "tools\replace_msvc_runtime.py") --dist $DistDir --source $MsvcRuntimeDir --pin $MsvcPin --record $MsvcRecord
+  if ($LASTEXITCODE -ne 0) { throw "Replacing the Microsoft Visual C++ runtime failed with exit code $LASTEXITCODE" }
+} else {
+  Write-Warning "[build] No -MsvcRuntimeDir: the Microsoft runtime copies are PyInstaller's; tools/installer.iss refuses this tree."
+}
 
 # Verify no Python bytecode/cache reached any distributable tree.
 #
@@ -196,6 +244,17 @@ $NoticeArgs = @((Join-Path $RepoRoot "tools\collect_third_party_notices.py"), "-
 if ($SpectatorExe) { $NoticeArgs += @("--spectator-license", $SpectatorLicense) }
 & $PyExe @NoticeArgs
 if ($LASTEXITCODE -ne 0) { throw "Third-party notice collection failed with exit code $LASTEXITCODE" }
+
+# The Microsoft runtime terms the installer's License page shows, and the record of
+# the replacement, installed beside the other notices (after collection, which
+# rewrites dist\windows\licenses). tools/installer.iss requires the record.
+$MsvcTerms = Join-Path $RepoRoot "docs\releases\BYTEFRAY_5_1_0_ALPHA_1_MICROSOFT_RUNTIME_TERMS.txt"
+if ($MsvcRuntimeDir) {
+  $MsvcNotices = Join-Path $DistDir "licenses\microsoft-visual-cpp-runtime"
+  New-Item -ItemType Directory -Force -Path $MsvcNotices | Out-Null
+  Copy-Item -LiteralPath $MsvcTerms -Destination $MsvcNotices
+  Copy-Item -LiteralPath $MsvcRecord -Destination $MsvcNotices
+}
 
 # Exercise the dynamically imported Designer from the unified dispatcher and
 # the standalone Designer. The internal timeout enters the Qt event loop and
@@ -434,6 +493,19 @@ $Listed += Get-ChildItem -LiteralPath (Join-Path $DistDir "licenses") -Recurse -
 $Listed += $InstalledDocuments | ForEach-Object { Format-ListedFile (Join-Path $RepoRoot $_) ("docs\" + (Split-Path -Leaf $_)) }
 [IO.File]::WriteAllLines($FileList, [string[]]$Listed, [Text.UTF8Encoding]::new($false))
 Write-Host "[build] Installed-file list: $($Listed.Count) files ($FileList)."
+
+# The list -- what Setup installs -- must name exactly the pinned runtime copies, each
+# with the pinned file's SHA-256: nothing after the replacement changed them.
+if ($MsvcRuntimeDir) {
+  $Pinned = @{}
+  foreach ($Location in $Pin.locations) { $Pinned[("bin\" + $Location.Replace("/", "\")).ToLowerInvariant()] = $Pin.files.((Split-Path -Leaf $Location).ToLowerInvariant()).sha256 }
+  $Runtime = @($Listed | Where-Object { (Split-Path -Leaf $_.Substring(66)) -match '^(vcruntime|msvcp|concrt|vccorlib|ucrtbase|api-ms-win-crt-)' })
+  $Wrong = @($Runtime | Where-Object { $Pinned[$_.Substring(66).ToLowerInvariant()] -ne $_.Substring(0, 64) })
+  if ($Runtime.Count -ne $Pinned.Count -or $Wrong.Count -gt 0) {
+    throw "The installed-file list carries $($Runtime.Count) runtime files, $($Wrong.Count) not as pinned:`n  $($Wrong -join "`n  ")"
+  }
+  Write-Host "[build] Microsoft Visual C++ runtime: $($Runtime.Count) copies of $($Pin.version), as pinned."
+}
 
 Write-Host ""
 Write-Host "[build] Success."
