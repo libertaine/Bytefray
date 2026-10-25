@@ -45,7 +45,9 @@ With Bytefray, you can:
 
 ## Downloads
 
-**Latest stable release: [Bytefray 5.0.0](https://github.com/libertaine/Bytefray/releases/tag/v5.0.0)** — released September 2026.\n\n**Testing the new features?** Get the [5.1.0-alpha.1 Windows prerelease](https://github.com/libertaine/Bytefray/releases/tag/v5.1.0-alpha.1) above; the packages below remain the stable 5.0.0 downloads.
+**Latest stable release: [Bytefray 5.0.0](https://github.com/libertaine/Bytefray/releases/tag/v5.0.0)** — released September 2026.
+
+**Testing the new features?** Get the [5.1.0-alpha.1 Windows prerelease](https://github.com/libertaine/Bytefray/releases/tag/v5.1.0-alpha.1) above; the packages below remain the stable 5.0.0 downloads.
 
 | Platform / package | Download | Notes |
 |---|---|---|
