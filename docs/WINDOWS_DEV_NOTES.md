@@ -35,6 +35,33 @@ paths on some other machine, the same class of problem (a stale directory
 with the wrong owner/ACL) is the first thing to check -- not a Bytefray
 bug.
 
+### Checkouts that retain evidence
+
+pytest empties an existing `--basetemp` directory before its first use, so
+the default run deletes everything under `.pytest-tmp/`. A checkout that
+keeps retained research or qualification evidence there, or under `runs/`,
+would lose it to an ordinary test run; this has happened once already. The
+root `conftest.py` therefore refuses, before pytest deletes anything, any
+`--basetemp` that equals, contains or lies inside an existing evidence
+location it protects (the `PROTECTED_EVIDENCE_PATTERNS` list there, such as
+`.pytest-tmp/e9*` and `runs/research_v6_e8`). Paths are compared both as
+written and with junctions/symlinks resolved, ignoring case on Windows.
+
+In a checkout without such evidence -- a fresh clone, CI, most worktrees --
+the guard does nothing and `python -m pytest` behaves as above. In a
+checkout with it, the default run stops with a usage error (exit code 4)
+naming the protected paths. Choose a disposable basetemp that doesn't
+overlap them, preferably outside the checkout:
+
+```
+python -m pytest --basetemp=<a disposable directory outside this checkout>
+```
+
+A new subdirectory such as `.pytest-tmp/<run-name>` is also accepted, but
+pytest empties whatever basetemp you name, so never point it at a directory
+you want to keep. Don't work around the refusal with `--noconftest` or by
+deleting the guard; move to a separate basetemp instead.
+
 ## Running mypy
 
 ```

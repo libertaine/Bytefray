@@ -49,6 +49,15 @@ abbreviated.
 - Run the suite with `python -m pytest` — no extra flags required.
   `pytest.ini` already sets `-m "not gui"`, repo-local cache/temp dirs, and
   `testpaths` (`_legacy/tests`, `engine/tests`, `client/tests`).
+- pytest empties its `--basetemp` (`.pytest-tmp/` by default) before use.
+  The root `conftest.py` refuses a basetemp that would delete retained
+  evidence it protects, such as `.pytest-tmp/e9*` or
+  `runs/research_v6_e8`; it does nothing where no such evidence exists. If
+  a run stops with that usage error, rerun with
+  `--basetemp=<a disposable directory outside the checkout>`. Never bypass
+  it with `--noconftest` or by editing the guard, and never point
+  `--basetemp` at anything you want to keep. See
+  [docs/WINDOWS_DEV_NOTES.md](docs/WINDOWS_DEV_NOTES.md).
 - Tests marked `gui` are display-backed and intentionally excluded from the
   headless run; they're exercised by a dedicated CI workflow instead. Don't
   add plain (unmarked) tests that require a display.

@@ -4,8 +4,19 @@ This changelog records notable user- and developer-visible changes to Bytefray.
 
 ## [Unreleased]
 
-Everything below is in the **5.1.0-alpha.1** release candidate (Python
-package `5.1.0a1`). It is not yet published; see the
+### Fixed
+
+* pytest now refuses a `--basetemp` that overlaps protected retained evidence
+  before its automatic cleanup can delete it. The guard checks existing
+  evidence locations, including junctions/symlinks and Windows case variants;
+  checkouts without that evidence retain the normal test workflow. See
+  [Windows development notes](docs/WINDOWS_DEV_NOTES.md#checkouts-that-retain-evidence)
+  for choosing a disposable basetemp after a refusal.
+
+## [5.1.0-alpha.1] - 2026-10-25
+
+The **5.1.0-alpha.1** Windows Alpha (Python package `5.1.0a1`) was published
+on 2026-10-25; see the
 [release notes](docs/releases/BYTEFRAY_5_1_0_ALPHA_1_RELEASE_NOTES.md) and the
 [compatibility record](docs/releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md).
 
