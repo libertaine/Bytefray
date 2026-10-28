@@ -20,6 +20,7 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+    UnknownRulesetError,
     resolve_ruleset_policy,
 )
 
@@ -55,6 +56,13 @@ from tools.research.v6.experiment_harness import (
     run_experiment,
 )
 
+# E2's C-V4 condition is the retired Classic Ruleset (bytefray-rules-4), which
+# can no longer execute. Tests that run it are kept for the record and skipped;
+# reproduce them on Bytefray 5.1.0-alpha.1.
+requires_classic = pytest.mark.skip(
+    reason="executes E2's C-V4 condition (bytefray-rules-4), retired from execution; reproduce on Bytefray 5.1.0-alpha.1"
+)
+
 REVIEW = REPO_ROOT / "docs" / "research" / "v6" / "V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md"
 
 
@@ -88,8 +96,11 @@ def test_seeds_arena_ticks_orientations_and_conditions_are_frozen() -> None:
         ("C-RS", BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID),
         ("T-E2", BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID),
     ]
-    # No K = 3 arm in the primary experiment.
-    assert [resolve_ruleset_policy(c.ruleset_id).capture_hold_ticks for c in matrix.CONDITIONS] == [1, 1, 2]
+    # No K = 3 arm in the primary experiment. C-V4 (Classic) is retired from
+    # execution, so only the two research conditions still resolve.
+    with pytest.raises(UnknownRulesetError):
+        resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ID)
+    assert [resolve_ruleset_policy(c.ruleset_id).capture_hold_ticks for c in matrix.CONDITIONS[1:]] == [1, 2]
     assert matrix.FORBIDDEN_REQUEST_OVERRIDES == (
         "scheduler_chunk_size",
         "scheduler_rotate_start",
@@ -296,6 +307,7 @@ def test_control_gate_record_rules(tmp_path: Path) -> None:
             )
 
 
+@requires_classic
 def test_dry_run_counts_every_cell_with_the_real_planner_and_runs_nothing(tmp_path: Path) -> None:
     rows = [dry_run_plan(c.condition_id, f.field_id) for c in matrix.CONDITIONS for f in matrix.FIELDS]
     assert all(row["consistent"] for row in rows)
@@ -329,6 +341,7 @@ def control_runs(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, Path]:
     return root / "v4", root / "rs"
 
 
+@requires_classic
 def test_control_gate_passes_behaviourally_identical_controls(control_runs: tuple[Path, Path]) -> None:
     v4, rs = control_runs
     # Precondition: two different Rulesets really ran.
@@ -352,6 +365,7 @@ def _copy(rs: Path, tmp_path: Path) -> tuple[Path, list[dict[str, object]]]:
     return target, cells
 
 
+@requires_classic
 def test_control_gate_fails_on_a_score_difference(control_runs: tuple[Path, Path], tmp_path: Path) -> None:
     v4, rs = control_runs
     target, cells = _copy(rs, tmp_path)
@@ -364,6 +378,7 @@ def test_control_gate_fails_on_a_score_difference(control_runs: tuple[Path, Path
     assert [m["reason"] for m in report["mismatch_samples"]] == ["result_json"]
 
 
+@requires_classic
 def test_control_gate_fails_on_a_replay_difference(control_runs: tuple[Path, Path], tmp_path: Path) -> None:
     v4, rs = control_runs
     target, cells = _copy(rs, tmp_path)
@@ -378,6 +393,7 @@ def test_control_gate_fails_on_a_replay_difference(control_runs: tuple[Path, Pat
     assert [m["reason"] for m in report["mismatch_samples"]] == ["replay_stream"]
 
 
+@requires_classic
 def test_control_gate_fails_on_an_outcome_or_a_missing_cell(control_runs: tuple[Path, Path], tmp_path: Path) -> None:
     v4, rs = control_runs
     target, _ = _copy(rs, tmp_path)

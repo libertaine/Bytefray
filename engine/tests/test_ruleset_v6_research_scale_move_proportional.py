@@ -70,7 +70,7 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
     OMITTED_RULESET_CANDIDATES,
     PROCESS_RULESET_IDS,
-    RULESET_V4,
+    RULESET_V6_ALPHA1,
     RULESET_V6_RESEARCH_SCALE,
     RULESET_V6_RESEARCH_SCALE_MOVE,
     RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL,
@@ -299,7 +299,7 @@ def test_operand_clamping_at_64() -> None:
 def test_literal_controls_remain_literal() -> None:
     for a in [512, 1024, 4096, 16384, 65536]:
         for op in [1, -1, 40, -40, 64, -64]:
-            assert RULESET_V4.resolve_movement_displacement(op, a) == op
+            assert RULESET_V6_ALPHA1.resolve_movement_displacement(op, a) == op
             assert RULESET_V6_RESEARCH_SCALE.resolve_movement_displacement(op, a) == op
             assert RULESET_V6_RESEARCH_SCALE_MOVE.resolve_movement_displacement(op, a) == op
 

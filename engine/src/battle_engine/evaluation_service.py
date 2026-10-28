@@ -105,7 +105,7 @@ from battle_engine.paths import get_data_root
 from battle_engine.project_info import get_project_info
 from battle_engine.python_runtime import CORE_SIZE
 from battle_engine.ruleset_policy import (
-    BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
@@ -120,6 +120,8 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID,
+    describe_unavailable_ruleset,
+    is_retired_ruleset_id,
     resolve_ruleset_policy,
 )
 
@@ -133,7 +135,7 @@ from battle_engine.ruleset_policy import (
 # `RulesetPolicy`).
 _EVALUATION_ALLOWED_RULESET_IDS: frozenset[str] = frozenset(
     {
-        BYTEFRAY_RULESET_V4_ID,
+        BYTEFRAY_RULESET_V6_ALPHA1_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
         BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
@@ -945,7 +947,15 @@ class EvaluationService:
         # registered Ruleset": every retired identity (including the two
         # alphas and bytefray-rules-1/-2) stays rejected here exactly as
         # before.
+        #
+        # The Classic retirement replaced bytefray-rules-4 here with Active
+        # Sensing (bytefray-rules-6-alpha1); a retired selection is named as
+        # retired, never remapped.
         if request.ruleset_id is not None and request.ruleset_id not in _EVALUATION_ALLOWED_RULESET_IDS:
+            if is_retired_ruleset_id(request.ruleset_id):
+                raise EvaluationConfigurationError(
+                    describe_unavailable_ruleset(request.ruleset_id, (BYTEFRAY_RULESET_V6_ALPHA1_ID,))
+                )
             raise EvaluationConfigurationError(
                 f"Unsupported evaluation --ruleset {request.ruleset_id!r}; expected one of "
                 f"{sorted(_EVALUATION_ALLOWED_RULESET_IDS)!r}."
@@ -974,7 +984,7 @@ class EvaluationService:
         ):
             raise EvaluationConfigurationError(
                 f"Evaluation --arena-size {request.arena_size} is incompatible with the "
-                f"stable v4 evaluation methodology, which is pinned to "
+                f"{request.resolved_rules_compatibility_id} evaluation methodology, which is pinned to "
                 f"{STANDARD_V4_ARENA_SIZE} cells (research report Sec H.1 item 3); omit "
                 "--arena-size, or select a different --ruleset for a non-standard arena."
             )

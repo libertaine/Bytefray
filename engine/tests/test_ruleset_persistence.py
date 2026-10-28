@@ -37,7 +37,11 @@ from battle_engine.result_model import (
     resolve_result_ruleset,
     write_json_atomic,
 )
-from battle_engine.rules import BYTEFRAY_RULESET_ID, BYTEFRAY_RULESET_V4_ID, RulesetProvenance
+from battle_engine.rules import (
+    BYTEFRAY_RULESET_ID,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
+    RulesetProvenance,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures" / "replay"
 
@@ -272,13 +276,13 @@ def test_native_python_match_records_ruleset_id_in_result_and_replay(tmp_path):
     )
 
     envelope = read_result(result.result_path)
-    assert envelope.ruleset_id == BYTEFRAY_RULESET_V4_ID
-    assert resolve_result_ruleset(envelope) == RulesetProvenance(BYTEFRAY_RULESET_V4_ID, "recorded")
+    assert envelope.ruleset_id == BYTEFRAY_RULESET_V6_ALPHA1_ID
+    assert resolve_result_ruleset(envelope) == RulesetProvenance(BYTEFRAY_RULESET_V6_ALPHA1_ID, "recorded")
 
     header = next(record for record in iter_replay(result.replay_path) if isinstance(record, ReplayHeader))
-    assert header.ruleset_id == BYTEFRAY_RULESET_V4_ID
+    assert header.ruleset_id == BYTEFRAY_RULESET_V6_ALPHA1_ID
     assert header.runtime_kind == "python"
-    assert resolve_replay_ruleset(header) == RulesetProvenance(BYTEFRAY_RULESET_V4_ID, "recorded")
+    assert resolve_replay_ruleset(header) == RulesetProvenance(BYTEFRAY_RULESET_V6_ALPHA1_ID, "recorded")
 
 
 # ---------------------------------------------------------------------------

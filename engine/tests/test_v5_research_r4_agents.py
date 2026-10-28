@@ -11,8 +11,8 @@ rather than by inspection:
   records, read back out of the match the engine actually ran;
 * none bypasses reach, issues an invalid action, or exceeds the ordinary
   Q = 8 per-tick entrant budget;
-* none receives privileged information: every match runs under stable
-  ``bytefray-rules-4`` with neither R1 mortality nor the R2 oracle, and
+* none receives privileged information: every match runs under
+  ``bytefray-rules-6-research-scale`` (retired Classic's field-for-field copy) with neither R1 mortality nor the R2 oracle, and
   every address any of them was ever shown was a genuine live enemy anchor;
 * each expresses the archetype it was admitted for -- region-write
   diversity for the attackers, own-core coverage for the defender,
@@ -28,7 +28,10 @@ from battle_engine.agents import agent_spec_from_dir, discover_agents
 from battle_engine.config import Config
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
 from battle_engine.placement import resolve_direct_match_starts
-from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
+from battle_engine.ruleset_policy import (
+    # Retired Classic's field-for-field research copy.
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID as RESEARCH_CONTROL_ID,
+)
 from battle_engine.starters import STARTER_AGENT_NAMES
 
 from tools.research.v5.analyzer import analyze_match
@@ -85,7 +88,7 @@ def _run(
     """Run one stable-V4 match, resolving research agents out of tools/."""
 
     starts = resolve_direct_match_starts(
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=RESEARCH_CONTROL_ID,
         arena_size=ARENA_SIZE,
         entrant_count=2,
         supplied_starts=[None, None],
@@ -104,7 +107,7 @@ def _run(
         replay_path=replay_path,
         trace_path=trace_path,
         verbose=False,
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=RESEARCH_CONTROL_ID,
     )
     result = NativeMatchService().run(request)
     assert result.result_path is not None
@@ -225,7 +228,7 @@ def test_r4_agent_receives_only_ordinary_legal_v4_information(
 ) -> None:
     """The legal-information boundary, proven from what the agent was handed.
 
-    Under stable ``bytefray-rules-4`` the R2 objective oracle cannot be
+    Under the research control the R2 objective oracle cannot be
     activated at all, so every address in the target channel must be one a
     live enemy process actually occupied. An injected enemy core base would
     show up here as an address no enemy process was ever standing on.
@@ -237,7 +240,7 @@ def test_r4_agent_receives_only_ordinary_legal_v4_information(
     assert trace_path is not None
 
     header = json.loads(replay_path.read_text(encoding="utf-8").splitlines()[0])
-    assert header["ruleset_id"] == BYTEFRAY_RULESET_V4_ID
+    assert header["ruleset_id"] == RESEARCH_CONTROL_ID
     assert "process_integrity" not in header["reproducibility"]
     assert "objective_target_oracle" not in header["reproducibility"]
 

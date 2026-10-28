@@ -278,7 +278,7 @@ def test_designer_construction_survives_one_malformed_bundled_starter(monkeypatc
         agent_dir = base / name
         agent_dir.mkdir(parents=True)
         agent_dir.joinpath("agent.yaml").write_text(
-            "not json" if name == "v4_scout" else json.dumps({"name": name}),
+            "not json" if name == "v6_watchful_keeper" else json.dumps({"name": name}),
             encoding="utf-8",
         )
     monkeypatch.setattr("battle_engine.starters.get_resource_root", lambda: resources)
@@ -302,9 +302,9 @@ def test_designer_construction_survives_one_malformed_bundled_starter(monkeypatc
     try:
         assert critical == []
         assert len(warned) == 1
-        assert "v4_scout" in warned[0][2]
+        assert "v6_watchful_keeper" in warned[0][2]
         installed = {p.name for p in (data_root / "agents").iterdir()}
-        assert installed == set(STARTER_AGENT_NAMES) - {"v4_scout"}
+        assert installed == set(STARTER_AGENT_NAMES) - {"v6_watchful_keeper"}
     finally:
         designer.deleteLater()
 

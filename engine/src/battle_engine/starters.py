@@ -25,32 +25,23 @@ from battle_engine.paths import get_data_root, get_resource_root
 #   disposition removes both those packages and their three corpora; Git
 #   history and historical releases retain the reproducibility evidence.
 #
+# The Classic retirement removed the six v4_* and four v5_* starters. Each
+# finds and pursues opponents through passive enemy-anchor visibility, which
+# Active Sensing turns off, so under the only remaining Ruleset their
+# defining behavior never engages. Their packages stay in the repository,
+# byte for byte, because the V5/V6 research corpora fingerprint them as a
+# benchmark population; they are no longer installed, packaged or shipped.
+# A copy a user already has in the writable agents/ catalog is left alone.
+#
 # ensure_starter_agents() installs when absent, refreshes when provably an
 # untouched older bundled copy, and otherwise preserves, into the writable
-# agents/ catalog -- unchanged for the ten remaining Agent API v2 starters.
-#
-# The four v4_* entries (added in v4.0.0-rc1) keep their historical
-# behavior byte for byte -- replays, evaluation records and the Phase
-# 0/R3/R4 research corpora all refer to those IDs. The four v5_* starters
-# (added in v5.0.0a1, V5 Alpha 1 Phase C -- see
-# docs/research/v5/V5_ALPHA1_PHASE_C_STARTER_AGENTS.md) are the newer
-# educational ladder: regional offense, search-and-strike movement,
-# READ-driven core defense, and a two-process team. A v5_* redesign gets a
-# new ID rather than silently replacing an old one.
+# agents/ catalog. The three remaining starters are the Active Sensing
+# teaching starters; a redesign gets a new ID rather than silently replacing
+# an old one.
 STARTER_AGENT_NAMES = (
-    "v4_claimer",
-    "v4_concentrated_attacker",
-    "v4_defender_scout",
-    "v4_local_defender",
-    "v4_scout",
-    "v4_quorum",
-    "v5_region_attacker",
-    "v5_scout_striker",
-    "v5_core_defender",
     "v6_window_scout",
     "v6_watchful_keeper",
     "v6_roaming_reacquirer",
-    "v5_dual_team",
 )
 
 
@@ -209,9 +200,7 @@ def starter_content_digest(agent_dir: Path) -> str | None:
 #: of a specific past bundled release, so replacing it with current bundled
 #: content destroys no user work. An installed starter whose digest appears
 #: *neither* here nor in the current bundled tree is treated as user-modified
-#: and is never overwritten -- which is why the historical ``v4_*`` and v0.6.1
-#: starters need no entries at all: their content has not changed, so they take
-#: the "already current" path, and any local edit to one is preserved.
+#: and is never overwritten.
 #:
 #: Maintenance rule, enforced by
 #: ``test_v5_alpha1_phase_e_starter_refresh.py::
@@ -220,30 +209,7 @@ def starter_content_digest(agent_dir: Path) -> str | None:
 #: that starter's tuple here. Forgetting to is not dangerous -- it only means
 #: existing installs keep the older copy -- but the pinned-digest test fails
 #: first and says so.
-SUPERSEDED_STARTER_DIGESTS: Mapping[str, tuple[str, ...]] = {
-    # The four Agent API v2 educational starters shipped at version 1.0.0 in
-    # V5 Alpha 1 Phase C with no ``parameters`` section, and at 1.1.0 in Phase
-    # D with one. An installation created between those two phases holds a
-    # pristine 1.0.0 copy that the Agent Designer would otherwise show no
-    # parameter controls for, forever -- the exact upgrade problem Phase E
-    # exists to fix.
-    "v5_region_attacker": (
-        # 1.0.0 -- V5 Alpha 1 Phase C (69fc958)
-        "f09d7fd5720e86b1a0f0c61de042a449bfba09e60065d92d894a24f8a44b6b00",
-    ),
-    "v5_scout_striker": (
-        # 1.0.0 -- V5 Alpha 1 Phase C (69fc958)
-        "2324bbf1ecebdca3149c16d3b9be94b6ec6bca409f6a78f0343f482c742f03cd",
-    ),
-    "v5_core_defender": (
-        # 1.0.0 -- V5 Alpha 1 Phase C (69fc958)
-        "be1ba8a24aee67fe378d0f90957d023024704697de7b4249d98122e75fac4e22",
-    ),
-    "v5_dual_team": (
-        # 1.0.0 -- V5 Alpha 1 Phase C (69fc958)
-        "2088e6b14d36ef2f0283ba11b9430c0eb0cddc4e8002ffeb0b372942ec3e29c0",
-    ),
-}
+SUPERSEDED_STARTER_DIGESTS: Mapping[str, tuple[str, ...]] = {}
 
 #: The digest each bundled starter currently has, pinned so that changing one
 #: is a deliberate act. A failure here means the bundled content moved: append
@@ -252,21 +218,9 @@ SUPERSEDED_STARTER_DIGESTS: Mapping[str, tuple[str, ...]] = {
 #: upgrade instead of being frozen as "customized"), then update the value
 #: below. Never update this alone.
 CURRENT_STARTER_DIGESTS: Mapping[str, str] = {
-    "v4_claimer": "f34d61b83819776368cddf95c597b1997591aa2b97d92949371704596b54b2ed",
-    "v4_concentrated_attacker": (
-        "94e9b1cd5a674bce2ec35aa60f1677370ecc322d023610a7494a463f89bbd09d"
-    ),
-    "v4_defender_scout": "ba14eff7ada06f0cd83fe88e600a73e4a817b5fd8d48e4012a3636fc72663d0e",
-    "v4_local_defender": "8a7f53d9635467360a57876f044c5c9b752464ae572c484d59bb0a1024b8e619",
-    "v4_scout": "8cd6760ffa9057f0513a4d245a2db05194fb5d4a87c4cc668298d5ac934eaa1d",
-    "v4_quorum": "20a4ffe6a09110b7d3e636d19aa019cb11619834a638f0c2834e86bd5b95d414",
-    "v5_region_attacker": "bacf587a66a25ea1209d634cf782a28570e38789f494093b7206edd5b54719e7",
-    "v5_scout_striker": "e23bb1d07f32a5ac06c3b6295fa32fb0f177a5e540cd02b558c84becc6241e1c",
-    "v5_core_defender": "f7fcaa52694a77c4f0b96a5d1046f8d282ae48c771a142c66681073d26238dee",
     "v6_window_scout": "9d8a90ff209c2a9f13d5f3615cc67923204a095fdde6de9e183ca4ef8be10ce7",
     "v6_watchful_keeper": "35b945ad33f34168ea4374dad05fa61fe5b20d08cc15ca2e9af293ebb0c8016e",
     "v6_roaming_reacquirer": "65866988dd2dfdddd9782a8040d932dc84f05cec9b5d6feab3fb6a73c9697f21",
-    "v5_dual_team": "9773667d547ec3de0c8ef9e5b17d8f7b7f4271631235742e69aebd9569edf79b",
 }
 
 

@@ -138,17 +138,17 @@ def test_scaffolded_agent_tests_successfully_against_reference(tmp_path):
 
 def test_ruleset_kwarg_omitted_defaults_to_the_retained_control(tmp_path):
     """V6 Phase 2B.12 retired bytefray-rules-1: an omitted ``ruleset_id``
-    now resolves to the sole remaining Ruleset, bytefray-rules-4."""
+    now resolves to the only product Ruleset, bytefray-rules-6-alpha1."""
     scaffold_create_agent("example", data_root=tmp_path, resource_root=ROOT)
 
     outcome = run_development_test("example", data_root=tmp_path, resource_root=ROOT)
 
-    assert outcome.ruleset_id == "bytefray-rules-4"
+    assert outcome.ruleset_id == "bytefray-rules-6-alpha1"
     data = json.loads(outcome.match_result.result_path.read_text(encoding="utf-8"))
-    assert data["ruleset_id"] == "bytefray-rules-4"
+    assert data["ruleset_id"] == "bytefray-rules-6-alpha1"
 
 
-def test_cli_omitted_ruleset_resolves_current_v4_for_a_scaffolded_api_v2_agent(
+def test_cli_omitted_ruleset_resolves_active_sensing_for_a_scaffolded_api_v2_agent(
     tmp_path, monkeypatch, capsys
 ):
     """H1 end-to-end: `agents create --api-version 2` then `agents test`
@@ -167,7 +167,7 @@ def test_cli_omitted_ruleset_resolves_current_v4_for_a_scaffolded_api_v2_agent(
     captured = capsys.readouterr()
 
     assert exit_code == 0, captured.err
-    assert "ruleset: bytefray-rules-4" in captured.out
+    assert "ruleset: bytefray-rules-6-alpha1" in captured.out
     assert "ruleset: bytefray-rules-4-alpha" not in captured.out
     assert "Traceback" not in captured.err
 
@@ -189,7 +189,7 @@ def test_cli_explicit_v4_alpha1_is_rejected_as_an_unknown_ruleset(
     with pytest.raises(SystemExit) as caught:
         main(["process_probe", "--ticks", "10", "--ruleset", "bytefray-rules-4-alpha1"])
     assert caught.value.code == 2
-    assert "invalid choice" in capsys.readouterr().err
+    assert "'bytefray-rules-4-alpha1' is retired" in capsys.readouterr().err
 
 
 def _write_python_agent_v1(root: Path, name: str) -> Path:
@@ -305,7 +305,7 @@ def test_api_v1_agent_is_rejected_before_test_artifacts(tmp_path):
             opponent="v2_opponent",
             data_root=tmp_path,
             resource_root=ROOT,
-            ruleset_id="bytefray-rules-4",
+            ruleset_id="bytefray-rules-6-alpha1",
         )
 
     assert caught.value.diagnostic.stage == "discovery"
@@ -313,7 +313,7 @@ def test_api_v1_agent_is_rejected_before_test_artifacts(tmp_path):
     assert not (tmp_path / "runs" / "agents_test" / "v1_agent").exists()
 
 
-def test_cli_explicit_v4_rejects_api_v1_at_discovery(
+def test_cli_explicit_ruleset_rejects_api_v1_at_discovery(
     tmp_path, monkeypatch, capsys
 ):
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
@@ -321,7 +321,7 @@ def test_cli_explicit_v4_rejects_api_v1_at_discovery(
     _write_python_agent_v2(tmp_path, "v2_opponent")
 
     exit_code = main(
-        ["v1_agent", "--opponent", "v2_opponent", "--ruleset", "bytefray-rules-4"]
+        ["v1_agent", "--opponent", "v2_opponent", "--ruleset", "bytefray-rules-6-alpha1"]
     )
     captured = capsys.readouterr()
 
@@ -339,7 +339,7 @@ def test_non_python_tested_agent_rejected_even_with_explicit_v2(tmp_path):
     A non-Python agent is rejected by ``_resolve_python_entrant``'s existing
     ``agent_kind_unsupported`` check regardless of Ruleset -- it never
     reaches ``NativeMatchService``, so this is the same, pre-existing tool
-    error whether or not ``--ruleset bytefray-rules-4`` was requested.
+    error whether or not ``--ruleset bytefray-rules-6-alpha1`` was requested.
     """
 
     _write_builtin_agent(tmp_path, "builtin_agent")
@@ -349,7 +349,7 @@ def test_non_python_tested_agent_rejected_even_with_explicit_v2(tmp_path):
             "builtin_agent",
             data_root=tmp_path,
             resource_root=ROOT,
-            ruleset_id="bytefray-rules-4",
+            ruleset_id="bytefray-rules-6-alpha1",
         )
 
     assert caught.value.diagnostic.code == "agent_kind_unsupported"
@@ -797,7 +797,8 @@ def test_forfeit_line_present_on_tested_agent_forfeit(tmp_path, monkeypatch, cap
 def test_cli_ruleset_flag_omitted_defaults_to_the_retained_control(
     tmp_path, monkeypatch, capsys
 ):
-    """V6 Phase 2B.12 retired every Ruleset but bytefray-rules-4: an
+    """V6 Phase 2B.12 retired every Ruleset but bytefray-rules-4, and the
+    Classic retirement replaced that with bytefray-rules-6-alpha1: an
     omitted --ruleset now resolves to it, not the historical v1/v2
     fallbacks this test previously distinguished."""
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
@@ -807,7 +808,7 @@ def test_cli_ruleset_flag_omitted_defaults_to_the_retained_control(
     captured = capsys.readouterr()
 
     assert exit_code == 0
-    assert "ruleset: bytefray-rules-4" in captured.out
+    assert "ruleset: bytefray-rules-6-alpha1" in captured.out
 
 
 def test_cli_ruleset_flag_explicit_succeeds_and_prints_identity(
@@ -818,12 +819,12 @@ def test_cli_ruleset_flag_explicit_succeeds_and_prints_identity(
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
     scaffold_create_agent("example", data_root=tmp_path, resource_root=ROOT)
 
-    exit_code = main(["example", "--ticks", "5", "--ruleset", "bytefray-rules-4"])
+    exit_code = main(["example", "--ticks", "5", "--ruleset", "bytefray-rules-6-alpha1"])
     captured = capsys.readouterr()
 
     assert exit_code == 0
     assert captured.err == ""
-    assert "ruleset: bytefray-rules-4" in captured.out
+    assert "ruleset: bytefray-rules-6-alpha1" in captured.out
     assert "Traceback" not in captured.out
 
 
@@ -834,15 +835,15 @@ def test_cli_ruleset_flag_unknown_value_fails_closed(capsys):
     assert "invalid choice" in capsys.readouterr().err
 
 
-def test_cli_help_lists_stable_default_and_explicit_alpha1_only(capsys):
+def test_cli_help_lists_only_the_product_ruleset(capsys):
     """Product choices exclude retired and internal research identities."""
     with pytest.raises(SystemExit):
         main(["--help"])
     out = capsys.readouterr().out
     assert "--ruleset" in out
-    assert "bytefray-rules-4" in out
     assert ALPHA in out
-    assert "requires explicit selection" in " ".join(out.split())
+    assert "is the only Ruleset" in " ".join(out.split())
+    assert "bytefray-rules-4" not in out
     assert "research" not in out
     assert "bytefray-rules-1" not in out
     assert "bytefray-rules-2" not in out
@@ -894,16 +895,16 @@ def test_cli_explicit_alpha1_supervised_personal_copy(tmp_path, template, oppone
 @pytest.mark.parametrize("explicit", [False, True])
 def test_cli_stable_default_artifact_identity(tmp_path, explicit):
     scaffold_create_agent("ordinary", data_root=tmp_path, resource_root=ROOT)
-    args = ["--ruleset", "bytefray-rules-4"] if explicit else []
+    args = ["--ruleset", "bytefray-rules-6-alpha1"] if explicit else []
     completed = _run("agents", "test", "ordinary", "--ticks", "5", *args,
                      env=dict(os.environ, BYTEFRAY_ROOT=str(tmp_path)))
     assert completed.returncode == 0, completed.stderr
-    assert "ruleset: bytefray-rules-4" in completed.stdout
+    assert "ruleset: bytefray-rules-6-alpha1" in completed.stdout
     result_path, = (tmp_path / "runs").rglob("result.json")
     replay = result_path.with_name("replay.jsonl")
     assert verify_result_replay(result_path)
-    assert json.loads(result_path.read_text())["ruleset_id"] == "bytefray-rules-4"
-    assert json.loads(replay.read_text().splitlines()[0])["ruleset_id"] == "bytefray-rules-4"
+    assert json.loads(result_path.read_text())["ruleset_id"] == "bytefray-rules-6-alpha1"
+    assert json.loads(replay.read_text().splitlines()[0])["ruleset_id"] == "bytefray-rules-6-alpha1"
 
 
 def _preflight_sentinels(root, directory):
@@ -914,28 +915,6 @@ def _preflight_sentinels(root, directory):
         f"class Agent:\n    def reset(self, context): Path({str(reset)!r}).touch()\n"
         "def create_agent(): return Agent()\n", encoding="utf-8")
     return imported, reset
-
-
-@pytest.mark.parametrize("template", ["watchful_keeper", "roaming_reacquirer"])
-@pytest.mark.parametrize("opponent", [False, True])
-@pytest.mark.parametrize("explicit", [False, True])
-def test_cli_sense_mismatch_in_either_slot_precedes_import_reset_and_artifacts(
-    tmp_path, monkeypatch, capsys, opponent, explicit, template,
-):
-    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
-    scaffold_create_agent("sensor", template=template, data_root=tmp_path, resource_root=ROOT)
-    scaffold_create_agent("ordinary", data_root=tmp_path, resource_root=ROOT)
-    sentinels = [_preflight_sentinels(tmp_path, tmp_path / "agents" / name)
-                 for name in ("sensor", "ordinary")]
-    args = ["ordinary", "--opponent", "sensor"] if opponent else ["sensor", "--opponent", "ordinary"]
-    if explicit:
-        args += ["--ruleset", "bytefray-rules-4"]
-    assert main(args) == 2
-    captured = capsys.readouterr()
-    assert "code: agent_capability_unsupported" in captured.err
-    assert "agent_manifest_invalid" not in captured.err
-    assert not any(p.exists() for pair in sentinels for p in pair)
-    assert not (tmp_path / "runs").exists()
 
 
 @pytest.mark.parametrize("opponent", [False, True])
@@ -985,14 +964,15 @@ def test_cli_alpha1_rejects_incompatible_entrant_metadata(tmp_path, monkeypatch,
 @pytest.mark.parametrize("ruleset", [
     "bytefray-rules-99", "bytefray-rules-1", "bytefray-rules-2",
     "bytefray-rules-2-alpha1", "bytefray-rules-3-alpha1", "bytefray-rules-4-alpha1",
-    "bytefray-rules-4-alpha2", "bytefray-rules-6-research-sensing-active-w27",
+    "bytefray-rules-4-alpha2", "bytefray-rules-4", "bytefray-rules-6-research-sensing-active-w27",
 ])
 def test_cli_rejects_nonproduct_rulesets_before_discovery(tmp_path, monkeypatch, capsys, ruleset):
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
     with pytest.raises(SystemExit) as caught:
         main(["absent", "--ruleset", ruleset])
     assert caught.value.code == 2
-    assert "invalid choice" in capsys.readouterr().err
+    err = capsys.readouterr().err
+    assert "invalid choice" in err or f"{ruleset!r} is retired" in err
     assert not (tmp_path / "runs").exists()
 
 
@@ -1001,7 +981,7 @@ def test_cli_ruleset_choices_are_exact_and_omission_is_stable():
 
     parser = _parser()
     action, = [action for action in parser._actions if action.dest == "ruleset"]
-    assert action.choices == ["bytefray-rules-4", ALPHA]
+    assert action.choices == [ALPHA]
     assert parser.parse_args(["ordinary"]).ruleset is None
 
 

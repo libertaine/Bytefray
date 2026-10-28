@@ -10,13 +10,7 @@ from battle_engine.launchers import build_designer_match_arguments
 from battle_engine.project_info import get_project_info
 from battle_engine.replay import SCHEMA_VERSION as REPLAY_SCHEMA_VERSION
 from battle_engine.result_model import SCHEMA_VERSION as RESULT_SCHEMA_VERSION
-from battle_engine.rules import BYTEFRAY_RULESET_ID
-from battle_engine.ruleset_policy import (
-    BYTEFRAY_RULESET_V2_ID,
-    BYTEFRAY_RULESET_V4_ALPHA1_ID,
-    BYTEFRAY_RULESET_V4_ALPHA2_ID,
-    BYTEFRAY_RULESET_V4_ID,
-)
+from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
 
 from app.services.agent_catalog import AgentRow
 from app.services.designer_workflows import (
@@ -70,40 +64,19 @@ def test_new_match_run_directory_is_unique_and_isolated(tmp_path):
     assert first_replay != second_replay
 
 
-def test_designer_trace_path_is_requested_for_the_stable_v4_ruleset(tmp_path):
+def test_designer_trace_path_is_the_replays_sibling(tmp_path):
     replay_path = tmp_path / "runs" / "_designer" / "run-1" / "replay.jsonl"
-    trace_path = designer_trace_path(replay_path, BYTEFRAY_RULESET_V4_ID)
+    trace_path = designer_trace_path(replay_path)
     assert trace_path == replay_path.parent / "trace.jsonl"
     assert trace_path.name == "trace.jsonl"
-
-
-@pytest.mark.parametrize(
-    "ruleset_id",
-    [
-        BYTEFRAY_RULESET_ID,
-        BYTEFRAY_RULESET_V2_ID,
-        # V6 Phase 2B.10 Scope B: bytefray-rules-4-alpha1/-alpha2 were
-        # removed from DESIGNER_AUTO_TRACE_RULESET_IDS alongside their
-        # executable registration, so this call now returns None for both
-        # -- unreachable in practice, since a new Designer match can no
-        # longer be launched under either id at all (resolve_ruleset_policy
-        # rejects it first), but the function's own behavior for the
-        # identity is still worth pinning explicitly.
-        BYTEFRAY_RULESET_V4_ALPHA1_ID,
-        BYTEFRAY_RULESET_V4_ALPHA2_ID,
-    ],
-)
-def test_designer_trace_path_is_none_for_historical_rulesets(tmp_path, ruleset_id):
-    replay_path = tmp_path / "runs" / "_designer" / "run-1" / "replay.jsonl"
-    assert designer_trace_path(replay_path, ruleset_id) is None
 
 
 def test_designer_trace_path_cannot_collide_across_independent_runs(tmp_path):
     first_replay = new_match_run_directory(tmp_path) / "replay.jsonl"
     second_replay = new_match_run_directory(tmp_path) / "replay.jsonl"
 
-    first_trace = designer_trace_path(first_replay, BYTEFRAY_RULESET_V4_ID)
-    second_trace = designer_trace_path(second_replay, BYTEFRAY_RULESET_V4_ID)
+    first_trace = designer_trace_path(first_replay)
+    second_trace = designer_trace_path(second_replay)
 
     assert first_trace != second_trace
     assert first_trace.parent == first_replay.parent
@@ -114,8 +87,8 @@ def test_designer_trace_path_cannot_collide_across_independent_runs(tmp_path):
     assert second_trace.parent != tmp_path
 
 
-def test_designer_v4_match_produces_full_spectator_artifact_set(tmp_path, monkeypatch):
-    """A short, real v4 match run with the exact arguments a Designer match
+def test_designer_match_produces_full_spectator_artifact_set(tmp_path, monkeypatch):
+    """A short, real match run with the exact arguments a Designer match
     now builds must produce result.json/replay.jsonl/trace.jsonl together as
     siblings, with the trace readable by the existing trace-parsing
     machinery -- proving the Designer's automatic-trace policy actually
@@ -126,15 +99,14 @@ def test_designer_v4_match_produces_full_spectator_artifact_set(tmp_path, monkey
 
     run_directory = new_match_run_directory(tmp_path)
     result_path, replay_path = match_artifact_paths(run_directory / "replay.jsonl")
-    trace_path = designer_trace_path(replay_path, BYTEFRAY_RULESET_V4_ID)
-    assert trace_path is not None
+    trace_path = designer_trace_path(replay_path)
 
     arguments = build_designer_match_arguments(
         ticks=2,
-        arena=64,
-        a_type="v4_claimer",
-        b_type="v4_scout",
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        arena=512,
+        a_type="v6_window_scout",
+        b_type="v6_watchful_keeper",
+        ruleset_id=BYTEFRAY_RULESET_V6_ALPHA1_ID,
     )
     arguments.extend(("--replay", str(replay_path)))
     arguments.extend(("--trace", str(trace_path)))
@@ -146,10 +118,8 @@ def test_designer_v4_match_produces_full_spectator_artifact_set(tmp_path, monkey
     assert trace_path.is_file()
     assert trace_path.parent == replay_path.parent == result_path.parent
 
-    # v4 (Agent API v2) matches record a schema_version-2 trace; the v1
-    # reader deliberately rejects it (agent_trace.py's format-check
-    # docstring), so this is the reader the Alpha3 spectator suite itself
-    # uses for v4 traces.
+    # Agent API v2 matches record a schema_version-2 trace; the v1 reader
+    # deliberately rejects it (agent_trace.py's format-check docstring).
     document = read_trace_v2(trace_path)
     assert document.decisions
 
@@ -172,11 +142,11 @@ def test_designer_three_agent_match_runs_real_and_presents_all_entrants(tmp_path
 
     arguments = build_designer_match_arguments(
         ticks=3,
-        arena=128,
-        a_type="v4_claimer",
-        b_type="v4_scout",
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
-        c_type="v4_quorum",
+        arena=512,
+        a_type="v6_window_scout",
+        b_type="v6_watchful_keeper",
+        ruleset_id=BYTEFRAY_RULESET_V6_ALPHA1_ID,
+        c_type="v6_roaming_reacquirer",
     )
     arguments.extend(("--replay", str(replay_path)))
 

@@ -535,7 +535,7 @@ def test_results_dialog_shows_orientation_methodology_and_per_cell_orientation(t
 
         header_label = dialog.findChildren(QLabel)[0]
         assert "Entrant orientation: both" in header_label.text()
-        assert "Arena alignment: ruleset_v4_seeded_placements" in header_label.text()
+        assert "Arena alignment: ruleset_v6_alpha1_seeded_placements" in header_label.text()
 
         labels = [dialog.resultsList.item(i).text() for i in range(dialog.resultsList.count())]
         assert any("orientation=candidate_first" in label for label in labels)

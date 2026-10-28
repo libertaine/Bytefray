@@ -39,7 +39,7 @@ from pathlib import Path
 from battle_engine.agent_api import AgentValidationError
 from battle_engine.agent_capabilities import preflight_agent_capabilities
 from battle_engine.agent_parameters import resolve_entrant_parameters
-from battle_engine.agents import AgentSpec, resolve_agent
+from battle_engine.agents import AgentSpec, agent_spec_from_dir, resolve_agent
 from battle_engine.config import Config, Weights
 from battle_engine.match_service import (
     MatchEntrant,
@@ -59,16 +59,19 @@ from battle_engine.python_runtime import (
 )
 from battle_engine.results import WINNER_TIE_SENTINEL
 from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
-from battle_engine.ruleset_names import ACTIVE_SENSING_DISPLAY_NAME, CLASSIC_DISPLAY_NAME
+from battle_engine.ruleset_names import ACTIVE_SENSING_DISPLAY_NAME
 from battle_engine.ruleset_policy import (
-    BYTEFRAY_RULESET_V4_ID,
+    PRODUCT_RULESET_IDS,
     NoCompatibleRulesetError,
     resolve_omitted_ruleset_for_agents,
     resolve_ruleset_policy,
+    ruleset_argument,
 )
 from battle_engine.starters import starter_agent_resource_dir
 
 REFERENCE_OPPONENT_NAME = "reference"
+#: The bundled starter the internal reference opponent is built from.
+REFERENCE_OPPONENT_STARTER = "v6_watchful_keeper"
 DEFAULT_TICKS = 200
 TESTED_AGENT_SLOT = "A"
 OPPONENT_SLOT = "B"
@@ -124,33 +127,19 @@ def _timeout_value(value: str) -> float:
 def _reference_opponent_spec(resource_root: Path | None = None) -> AgentSpec:
     """Build an ``AgentSpec`` for the internal reference opponent.
 
-    Loaded directly from the bundled ``v4_claimer`` starter -- Bytefray's
-    Agent API v2 process-agent reference. V6 Phase 2B.12 retired Agent API
-    v1 execution, so this is the only opponent generation ``agents test``
-    can run against; there is no longer a Ruleset-dependent choice to make
-    here (see docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md).
+    Loaded directly from the bundled :data:`REFERENCE_OPPONENT_STARTER`
+    (Watchful Keeper), an Active Sensing defender: it inspects its own core,
+    scans its perimeter with SENSE and answers what it finds. Its manifest
+    is parsed like any other agent's, so its declared ``sense`` capability
+    and parameter defaults travel with it; only its name is replaced.
     """
 
     resources = resource_root or get_resource_root()
-    starter_dir = starter_agent_resource_dir("v4_claimer", resource_root=resources)
-    return AgentSpec(
-        name=REFERENCE_OPPONENT_NAME,
-        display="Bytefray v4 reference agent",
-        dir=starter_dir,
-        blob=None,
-        defaults={},
-        kind="python",
-        api_version=2,
-        version="1.0.0",
-        source_path=(starter_dir / "agent.py").resolve(),
-        entry_point="agent.py:create_agent",
-        manifest={
-            "kind": "python",
-            "api_version": 2,
-            "entrypoint": "agent.py:create_agent",
-            "version": "1.0.0",
-        },
-    )
+    starter_dir = starter_agent_resource_dir(REFERENCE_OPPONENT_STARTER, resource_root=resources)
+    spec = agent_spec_from_dir(starter_dir)
+    if spec is None:
+        raise FileNotFoundError(f"reference opponent manifest missing under {starter_dir}")
+    return replace(spec, name=REFERENCE_OPPONENT_NAME, display="Bytefray reference agent")
 
 
 def _resolve_python_entrant(
@@ -249,7 +238,7 @@ class DevelopmentTestOutcome:
     ticks_requested: int
     match_result: NativeMatchResult
     summary_path: Path
-    ruleset_id: str = BYTEFRAY_RULESET_V4_ID
+    ruleset_id: str = BYTEFRAY_RULESET_V6_ALPHA1_ID
     trace_path: Path | None = None
 
 
@@ -362,7 +351,7 @@ def test_agent(
 
 
 def _preflight_capabilities(specs: Sequence[AgentSpec], ruleset_id: str | None) -> None:
-    policy = resolve_ruleset_policy(ruleset_id or BYTEFRAY_RULESET_V4_ID)
+    policy = resolve_ruleset_policy(ruleset_id or BYTEFRAY_RULESET_V6_ALPHA1_ID)
     for spec in specs:
         try:
             preflight_agent_capabilities(
@@ -573,7 +562,7 @@ def _test_agent(
         ticks_requested=effective_ticks,
         match_result=match_result,
         summary_path=summary_path,
-        ruleset_id=ruleset_id or BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=ruleset_id or BYTEFRAY_RULESET_V6_ALPHA1_ID,
         trace_path=trace_path if trace_path is not None and trace_path.exists() else None,
     )
 
@@ -833,7 +822,7 @@ def _test_agents(
         seed=effective_seed,
         ticks_requested=effective_ticks,
         match_result=match_result,
-        ruleset_id=ruleset_id or BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=ruleset_id or BYTEFRAY_RULESET_V6_ALPHA1_ID,
         trace_path=trace_path if trace_path is not None and trace_path.exists() else None,
     )
 
@@ -1030,16 +1019,14 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--ruleset",
-        choices=[BYTEFRAY_RULESET_V4_ID, BYTEFRAY_RULESET_V6_ALPHA1_ID],
+        type=ruleset_argument(PRODUCT_RULESET_IDS),
+        choices=sorted(PRODUCT_RULESET_IDS),
         default=None,
         help=(
-            f"gameplay Ruleset identity. Stable {BYTEFRAY_RULESET_V4_ID} "
-            f"({CLASSIC_DISPLAY_NAME}) is selected when this flag is omitted. "
-            f"Experimental {BYTEFRAY_RULESET_V6_ALPHA1_ID} is "
-            f"{ACTIVE_SENSING_DISPLAY_NAME} and requires explicit selection. "
-            "Entrants must be compatible Agent API v2 Python agents. "
-            "Affects gameplay semantics "
-            "and is recorded in the match's result/replay artifacts."
+            f"gameplay Ruleset identity. {BYTEFRAY_RULESET_V6_ALPHA1_ID} "
+            f"({ACTIVE_SENSING_DISPLAY_NAME}) is the only Ruleset and is used "
+            "when this flag is omitted. Entrants must be compatible Agent API "
+            "v2 Python agents. Recorded in the match's result/replay artifacts."
         ),
     )
     return parser
@@ -1054,8 +1041,7 @@ def main(argv: list[str] | None = None) -> int:
     # keep test_agent()'s own unsupervised default unless they opt in.
     effective_timeout = DEFAULT_AGENT_TIMEOUT if args.timeout is None else args.timeout
     # Omitted selection is resolved from entrant metadata at the CLI boundary.
-    # Omission retains stable bytefray-rules-4; experimental Alpha 1 requires
-    # explicit selection. Incompatible historical metadata fails closed
+    # Omission resolves to Active Sensing. Incompatible historical metadata fails closed
     # before test_agent() can create a run directory.
     #
     # The default reference opponent is deliberately not part of this

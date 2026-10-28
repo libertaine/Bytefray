@@ -17,6 +17,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+import pytest
 from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
 
 from tools.research.v6.e2 import matrix
@@ -30,6 +31,13 @@ from tools.research.v6.e2.analyze_e2 import (
 from tools.research.v6.e2.preregistration import load_preregistration
 from tools.research.v6.e2.run_e2 import condition_root
 from tools.research.v6.experiment_harness import ResearchExperimentConfig, run_experiment
+
+# E2's C-V4 condition is the retired Classic Ruleset (bytefray-rules-4), which
+# can no longer execute. Tests that run it are kept for the record and skipped;
+# reproduce them on Bytefray 5.1.0-alpha.1.
+requires_classic = pytest.mark.skip(
+    reason="executes E2's C-V4 condition (bytefray-rules-4), retired from execution; reproduce on Bytefray 5.1.0-alpha.1"
+)
 
 S, D, G = "e2_sniper", "e2_disrupt_guard", "e2_guarded_painter"
 ORIENTATIONS = ("candidate_first", "opponent_first")
@@ -180,6 +188,7 @@ def test_capture_summary_aggregates_per_agent() -> None:
     assert summary["analyzer_engine_inconsistencies"] == 0 and summary["decisive_wins"] == 0
 
 
+@requires_classic
 def test_analysis_refuses_to_interpret_treatment_without_a_passing_gate(tmp_path: Path) -> None:
     control = condition_root(tmp_path, "C-V4", "F2")
     run_experiment(

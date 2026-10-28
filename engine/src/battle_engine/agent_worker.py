@@ -84,7 +84,7 @@ from battle_engine.python_runtime import (
     diagnose_load_failure,
     diagnose_reset_failure,
 )
-from battle_engine.rules import BYTEFRAY_RULESET_V4_ID
+from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
 from battle_engine.ruleset_policy import resolve_ruleset_policy
 
 WORKER_SUBCOMMAND = "_worker"
@@ -211,7 +211,7 @@ class AgentWorkerHandle:
         return WorkerCallResult(status, response)
 
     def load(
-        self, spec: AgentSpec, *, timeout: float, ruleset_id: str = BYTEFRAY_RULESET_V4_ID
+        self, spec: AgentSpec, *, timeout: float, ruleset_id: str = BYTEFRAY_RULESET_V6_ALPHA1_ID
     ) -> WorkerCallResult:
         return self._call(
             {
@@ -430,7 +430,7 @@ def _handle_load(state: _WorkerState, request: dict[str, Any], out: Any) -> None
         manifest=payload.get("manifest", {}),
     )
     try:
-        ruleset_id = request.get("ruleset_id", BYTEFRAY_RULESET_V4_ID)
+        ruleset_id = request.get("ruleset_id", BYTEFRAY_RULESET_V6_ALPHA1_ID)
         # Direct controllers also use injected characterization policies.
         # Loading callbacks with no requirements needs no registry lookup;
         # NativeMatchService still owns executable identity validation.

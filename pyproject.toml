@@ -118,8 +118,6 @@ app = [
 battle_engine = [
   "data/agent_template_v2/*",
   "data/agent_template_v2_annotated/*",
-  "data/starter_agents/v4_*/*",
-  "data/starter_agents/v5_*/*",
   "data/starter_agents/v6_*/*",
 ]
 

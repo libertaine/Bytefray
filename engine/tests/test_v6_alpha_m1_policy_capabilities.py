@@ -11,7 +11,6 @@ from pathlib import Path
 from types import MappingProxyType, SimpleNamespace
 
 import pytest
-from battle_engine import cli
 from battle_engine.agent_api import AgentManifestError
 from battle_engine.agent_capabilities import (
     AgentCapabilityMismatchError,
@@ -47,8 +46,8 @@ from battle_engine.ruleset_policy import (
     PROCESS_RULESET_IDS,
     PUBLIC_EXPERIMENTAL_RULESET_IDS,
     PUBLIC_STABLE_RULESET_IDS,
-    RULESET_V4,
     RULESET_V6_ALPHA1,
+    RULESET_V6_RESEARCH_SCALE,
     agent_supported_by_ruleset,
     resolve_omitted_ruleset_for_agents,
     resolve_ruleset_policy,
@@ -58,6 +57,9 @@ from battle_engine.ruleset_policy import (
 )
 
 CAPABILITIES = {"version": 1, "required": ["sense"]}
+# A passive (non-sensing) Ruleset to provoke a capability mismatch with:
+# every product Ruleset offers ``sense`` since the Classic retirement.
+PASSIVE = RULESET_V6_RESEARCH_SCALE.ruleset_id
 SOURCE = '''
 from battle_engine.agent_api import AgentAction, ActionKindV2, ProcessDeclaration
 class Agent:
@@ -107,7 +109,7 @@ def test_literal_t8_mechanics_distinct_identity_and_lifecycle() -> None:
     assert PUBLIC_EXPERIMENTAL_RULESET_IDS == {ALPHA}
     assert ALPHA in PROCESS_RULESET_IDS
     assert ALPHA not in ACTIVE_RESEARCH_RULESET_IDS | PUBLIC_STABLE_RULESET_IDS
-    assert RULESET_V4.sensing_mode == "passive"
+    assert RULESET_V6_RESEARCH_SCALE.sensing_mode == "passive"
 
 
 @pytest.mark.parametrize("block", [
@@ -142,7 +144,7 @@ def test_optional_metadata_and_policy_owned_availability(tmp_path: Path) -> None
         assert agent_supported_by_ruleset(agent, policy.ruleset_id) == (policy.sensing_mode == "active")
         assert agent_supported_by_ruleset(agent.manifest, policy.ruleset_id) == (policy.sensing_mode == "active")
     ordinary = write_agent(tmp_path, "ordinary")
-    assert resolve_omitted_ruleset_for_agents(None, (ordinary,)) == RULESET_V4.ruleset_id
+    assert resolve_omitted_ruleset_for_agents(None, (ordinary,)) == ALPHA
     assert agent_supported_by_ruleset(ordinary, ALPHA)
 
 
@@ -169,7 +171,7 @@ def test_mismatch_precedes_all_imports_and_artifact_mutation(tmp_path: Path, tim
     source = f"from pathlib import Path\nPath({str(marker)!r}).touch()\n" + SOURCE
     a = write_agent(tmp_path, "ordinary", source=source)
     b = write_agent(tmp_path, "sensor", declared=True, source=source)
-    req = replace(request(tmp_path, a, b, None), agent_call_timeout=timeout)
+    req = replace(request(tmp_path, a, b, PASSIVE), agent_call_timeout=timeout)
     # Existing output must survive a rejected preflight too.
     req.replay_path.write_bytes(b"prior replay")
     req.trace_path.write_bytes(b"prior trace")
@@ -179,7 +181,10 @@ def test_mismatch_precedes_all_imports_and_artifact_mutation(tmp_path: Path, tim
     assert req.trace_path.read_bytes() == b"prior trace"
     assert not marker.exists() and not (tmp_path / "result.json").exists()
     with pytest.raises(PythonEntrantInitializationError) as error:
-        ProcessMatchController.from_python_entrants(req.config, req.entrants, req.max_ticks, agent_call_timeout=timeout)
+        ProcessMatchController.from_python_entrants(
+            req.config, req.entrants, req.max_ticks, agent_call_timeout=timeout,
+            ruleset_policy=RULESET_V6_RESEARCH_SCALE,
+        )
     assert error.value.diagnostic.code == "agent_capability_unsupported"
     assert not marker.exists()
 
@@ -189,7 +194,7 @@ def test_validate_preflight_and_explicit_active_context(tmp_path: Path, timeout:
     spec = write_agent(tmp_path, "sensor", declared=True)
     trace = tmp_path / "invalid_trace.jsonl"
     with pytest.raises(AgentValidationFailedError) as error:
-        validate_agent(spec.name, data_root=tmp_path, timeout=timeout, trace_path=trace)
+        validate_agent(spec.name, data_root=tmp_path, timeout=timeout, trace_path=trace, ruleset_id=PASSIVE)
     assert error.value.diagnostic.code == "agent_capability_unsupported"
     assert not trace.exists()
     result = validate_agent(spec.name, data_root=tmp_path, timeout=timeout, ruleset_id=ALPHA)
@@ -204,13 +209,13 @@ def test_worker_load_checks_transported_manifest_before_import(tmp_path: Path) -
                                ({"capabilities": None}, "agent_manifest_invalid")]:
         payload = {**agent_spec_to_payload(spec), "manifest": manifest}
         out = io.StringIO()
-        _handle_load(_WorkerState(), {"spec": payload, "agent_id": "A"}, out)
+        _handle_load(_WorkerState(), {"spec": payload, "agent_id": "A", "ruleset_id": PASSIVE}, out)
         assert json.loads(out.getvalue())["diagnostic"]["code"] == expected
         assert not marker.exists()
     handle = AgentWorkerHandle(agent_id="A", slot=0)
     handle.start()
     try:
-        response = handle.load(spec, timeout=30.0)
+        response = handle.load(spec, timeout=30.0, ruleset_id=PASSIVE)
         assert response.status is WorkerCallStatus.FAILED
         assert response.payload["diagnostic"]["code"] == "agent_capability_unsupported"
         assert not marker.exists()
@@ -233,11 +238,11 @@ def test_seeded_placement_and_identity_are_independent_of_t8(tmp_path: Path) -> 
     a, b = write_agent(tmp_path, "a"), write_agent(tmp_path, "b")
     req = request(tmp_path, a, b)
     assert canonical_match_id(req) != canonical_match_id(replace(req, ruleset_id=T8.ruleset_id))
-    assert canonical_match_id(replace(req, ruleset_id=None)) == canonical_match_id(replace(req, ruleset_id=RULESET_V4.ruleset_id))
+    assert canonical_match_id(replace(req, ruleset_id=None)) == canonical_match_id(replace(req, ruleset_id=ALPHA))
     def starts(ruleset_id: str) -> tuple[int, ...]:
         return resolve_direct_match_starts(ruleset_id=ruleset_id, arena_size=512, entrant_count=2,
                                           supplied_starts=(None, None), seed=Config().seed)
-    assert starts(ALPHA) == starts(T8.ruleset_id) == starts(RULESET_V4.ruleset_id)
+    assert starts(ALPHA) == starts(T8.ruleset_id) == starts(RULESET_V6_RESEARCH_SCALE.ruleset_id)
 
 
 def test_repeated_matches_and_workers_have_identical_canonical_artifacts(tmp_path: Path) -> None:
@@ -305,9 +310,10 @@ def test_development_test_reports_capability_mismatch_before_output(tmp_path: Pa
     with pytest.raises(AgentTestError) as error:
         if group:
             run_group_test((GroupEntrantSpec("A", "ordinary"), GroupEntrantSpec("B", "sensor")),
-                           data_root=tmp_path, run_dir=output)
+                           data_root=tmp_path, run_dir=output, ruleset_id=PASSIVE)
         else:
-            run_agent_test("sensor", opponent="ordinary", data_root=tmp_path, run_dir=output)
+            run_agent_test("sensor", opponent="ordinary", data_root=tmp_path, run_dir=output,
+                           ruleset_id=PASSIVE)
     assert error.value.diagnostic.code == "agent_capability_unsupported"
     assert not output.exists()
 
@@ -323,20 +329,3 @@ def test_product_execution_has_no_research_import_dependency(tmp_path: Path, mon
     monkeypatch.setattr(builtins, "__import__", guarded_import)
     result = NativeMatchService().run(request(tmp_path / "product", a, b))
     assert result.ticks_run == 4
-
-
-@pytest.mark.parametrize("explicit", [False, True])
-def test_run_cli_reports_mismatch_without_import_or_artifacts(tmp_path: Path, monkeypatch, capsys, explicit: bool) -> None:
-    marker = tmp_path / "imported"
-    write_agent(tmp_path, "sensor", declared=True,
-                source=f"from pathlib import Path\nPath({str(marker)!r}).touch()\n" + SOURCE)
-    write_agent(tmp_path, "ordinary")
-    monkeypatch.setattr(cli, "_data_root", lambda: tmp_path)
-    output = tmp_path / "rejected" / "replay.jsonl"
-    args = ["--a-type", "sensor", "--b-type", "ordinary", "--ticks", "1", "--replay", str(output)]
-    if explicit:
-        args += ["--ruleset", RULESET_V4.ruleset_id]
-    assert cli.main(args) == 2
-    error = capsys.readouterr().err
-    assert "required capabilities: sense" in error and "Traceback" not in error
-    assert not marker.exists() and not output.exists()

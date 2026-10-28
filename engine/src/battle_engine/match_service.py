@@ -9,7 +9,8 @@ V6 Phase 2B.12 retired VM/blob execution and Agent API v1 execution
 used to route a homogeneous match to one of three dispatch arms (VM,
 unsupervised/supervised Agent API v1 Python, or the Agent API v2 process
 controller); only the process-controller arm remains reachable now, since
-``resolve_ruleset_policy`` accepts only ``bytefray-rules-4``.
+every Ruleset ``resolve_ruleset_policy`` accepts executes Agent API v2
+process agents only.
 """
 
 from __future__ import annotations
@@ -59,7 +60,6 @@ from battle_engine.result_model import (
 )
 from battle_engine.results import WINNER_TIE_SENTINEL
 from battle_engine.ruleset_policy import (
-    BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_ALPHA1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
@@ -179,8 +179,8 @@ class MatchRequest:
     ``--trace`` leaves it ``None`` exactly as before.
 
     ``ruleset_id`` remains an explicit selector and provenance input.
-    ``None`` now resolves to the sole executable identity,
-    ``BYTEFRAY_RULESET_V4_ID``. The resolved identity is threaded into the
+    ``None`` resolves to the one product Ruleset,
+    ``BYTEFRAY_RULESET_V6_ALPHA1_ID`` (Active Sensing). The resolved identity is threaded into the
     canonical match/result identity and replay/result metadata.
     """
 
@@ -304,10 +304,8 @@ class RulesetRuntimeUnsupportedError(ValueError):
     requested, and is checked first. This error rejects an otherwise-
     homogeneous composition whose single runtime kind the *requested
     Ruleset* itself does not support. V6 Phase 2B.12 retired VM/blob
-    execution entirely, so ``bytefray-rules-4`` -- the sole remaining
-    Ruleset -- is the only ``ruleset_id`` this can ever be raised for now,
-    and only for a non-Python entrant kind, which no Ruleset executes any
-    longer. Raised by ``NativeMatchService.run`` before any entrant
+    execution entirely, so this can only be raised for a non-Python
+    entrant kind, which no Ruleset executes any longer. Raised by ``NativeMatchService.run`` before any entrant
     executes and before any replay/result artifact is written.
     """
 
@@ -362,7 +360,7 @@ class OverlappingCoreError(ValueError):
 
     RC2's engine-side fail-closed guard for v2.0.0-rc1's release-blocking
     defect, originally written for the then-permanent ``bytefray-rules-2``
-    identity and now protecting ``bytefray-rules-4`` (see
+    identity and now protecting Active Sensing and the research Rulesets (see
     :data:`_CORE_PLACEMENT_GUARDED_RULESET_IDS`): every entrant's
     ``CORE_SIZE``-wide core window (``python_runtime.core_addresses``, using
     ordinary modular arena wraparound) must be disjoint from every other
@@ -416,15 +414,12 @@ class OverlappingCoreError(ValueError):
 # V6 Phase 2B.12 Scope C removed ``bytefray-rules-2`` itself alongside its
 # executable registration (docs/research/v6/
 # V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md): the guard it was written for
-# can no longer execute at all. ``bytefray-rules-4`` keeps the guard: it
-# shares alpha2's exact seeded-placement gameplay, and a behavioral
-# divergence here (silently allowing overlapping cores under the stable
-# identity) would be exactly the kind of gameplay difference the promotion
-# must not introduce.
+# can no longer execute at all. The Classic retirement removed
+# ``bytefray-rules-4`` the same way. Active Sensing keeps the guard: it shares
+# the seeded-placement, vulnerable-core gameplay the guard protects.
 _CORE_PLACEMENT_GUARDED_RULESET_IDS: frozenset[str] = frozenset(
     {
         BYTEFRAY_RULESET_V6_ALPHA1_ID,
-        BYTEFRAY_RULESET_V4_ID,
         # V6 Phase 4B: the variable-arena research Ruleset shares
         # `core_placement="seeded"` and the same vulnerable-core semantics
         # as stable v4 (it executes on the identical Agent API v2 process
@@ -478,8 +473,8 @@ def _validate_v2_core_placement(
 ) -> None:
     """Fail closed before execution if a guarded Ruleset's cores overlap.
 
-    Scoped to exactly :data:`_CORE_PLACEMENT_GUARDED_RULESET_IDS` -- today
-    only ``bytefray-rules-4`` -- the RC2 guard this function implements
+    Scoped to exactly :data:`_CORE_PLACEMENT_GUARDED_RULESET_IDS` -- the
+    RC2 guard this function implements
     (see :class:`OverlappingCoreError`). Every other Ruleset identity is
     unaffected: this function returns immediately for them, exactly as it
     did not exist before this fix.
@@ -619,8 +614,8 @@ def _resolve_ruleset_id(request: MatchRequest) -> str:
     (dispatch), ``canonical_match_id`` (identity hashing), and
     ``_finalize_native_artifacts`` (persisted ``ruleset_id`` fields) all
     call this instead of each independently repeating ``request.ruleset_id
-    or BYTEFRAY_RULESET_V4_ID``, so the dispatched, hashed, and persisted
-    identity can never drift apart for the same request.
+    or BYTEFRAY_RULESET_V6_ALPHA1_ID``, so the dispatched, hashed, and
+    persisted identity can never drift apart for the same request.
 
     V6 Phase 2B.12 re-pointed the omitted-``ruleset_id`` default from the
     retired ``BYTEFRAY_RULESET_ID`` (bytefray-rules-1) to the retained
@@ -629,10 +624,12 @@ def _resolve_ruleset_id(request: MatchRequest) -> str:
     deliberately changes ``match_id``/``result_id``/``replay_id`` for every
     caller that constructs a ``MatchRequest`` without an explicit
     ``ruleset_id`` -- an intended, recorded consequence, not an oversight;
-    see the completion report's identity-derivation section.
+    see the completion report's identity-derivation section. The Classic
+    retirement re-pointed it again, to Active Sensing, with the same
+    deliberate identity consequence for requests that omit ``ruleset_id``.
     """
 
-    return request.ruleset_id or BYTEFRAY_RULESET_V4_ID
+    return request.ruleset_id or BYTEFRAY_RULESET_V6_ALPHA1_ID
 
 
 def _effective_ruleset_policy(request: MatchRequest) -> RulesetPolicy:
@@ -1218,8 +1215,8 @@ class NativeMatchService:
     V6 Phase 2B.12 retired VM/blob execution and Agent API v1 execution
     (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md): every
     entrant this service accepts must now be a Python (Agent API v2)
-    entrant with a resolved ``python_spec``, and ``resolve_ruleset_policy``
-    accepts only ``bytefray-rules-4``, so the three-way runtime dispatch
+    entrant with a resolved ``python_spec``, and every Ruleset
+    ``resolve_ruleset_policy`` accepts runs process agents, so the three-way runtime dispatch
     this method used to perform (VM / Agent API v1 Python / Agent API v2
     process) has collapsed to the one remaining arm.
     """
@@ -1247,7 +1244,7 @@ class NativeMatchService:
         # and threaded through to whichever runtime executes, rather than
         # each runtime resolving it itself. ``request.ruleset_id`` selects
         # the Ruleset (v2.0.0-alpha.1 additive selector); ``None`` resolves
-        # to the retained control ``BYTEFRAY_RULESET_V4_ID`` exactly as
+        # to the product Ruleset ``BYTEFRAY_RULESET_V6_ALPHA1_ID`` exactly as
         # every caller that omits it does. ``resolve_ruleset_policy`` fails
         # closed for any unrecognized or retired ID instead of silently
         # executing under a different identity. ``_effective_ruleset_policy``
@@ -1294,7 +1291,7 @@ class NativeMatchService:
             )
 
         # RC2 fail-closed guard (v2.0.0-rc1's release-blocking defect,
-        # inherited by the stable v4 control -- see
+        # inherited by Active Sensing -- see
         # ``_CORE_PLACEMENT_GUARDED_RULESET_IDS``): an invalid guarded-
         # Ruleset request whose entrants' vulnerable cores overlap must
         # never silently seed core ownership in entrant order and eliminate

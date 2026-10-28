@@ -19,8 +19,8 @@ below is derived from a replay a real deterministic match produced -- never
 from a hand-built record -- and asserts exact values rather than mere
 non-emptiness.
 
-Every match here runs under the permanent stable Ruleset ``bytefray-rules-4``
-with no process mortality and no objective-target oracle, which is also R3's
+Every match here runs under ``bytefray-rules-6-research-scale``, the
+field-for-field copy of retired stable ``bytefray-rules-4``, with no process mortality and no objective-target oracle, which is also R3's
 own experimental condition.
 """
 
@@ -30,7 +30,10 @@ from typing import Any
 from battle_engine.agents import resolve_agent
 from battle_engine.config import Config
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
-from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
+from battle_engine.ruleset_policy import (
+    # Retired Classic's field-for-field research copy.
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID as RESEARCH_CONTROL_ID,
+)
 
 from tools.research.v5.analyzer import analyze_match
 
@@ -198,7 +201,7 @@ def _run(
         max_ticks=max_ticks,
         replay_path=replay_path,
         verbose=False,
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=RESEARCH_CONTROL_ID,
     )
     result = NativeMatchService().run(request)
     assert result.result_path is not None
@@ -446,7 +449,7 @@ def _run_far(tmp_path: Path) -> dict[str, Any]:
         max_ticks=MAX_TICKS,
         replay_path=replay_path,
         verbose=False,
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=RESEARCH_CONTROL_ID,
     )
     result = NativeMatchService().run(request)
     assert result.result_path is not None

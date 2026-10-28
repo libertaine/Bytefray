@@ -34,7 +34,10 @@ from app.services.designer_workflows import (
 )
 from app.services.engine import RunConfig
 from app.services.osutil import get_default_paths
-from app.services.ruleset_options import agent_row_supported_by_ruleset
+from app.services.ruleset_options import (
+    NO_COMPATIBLE_AGENTS_EXPLANATION,
+    agent_row_supported,
+)
 from app.widgets.agent_combo import (
     repopulate_additional_agent_combo,
     repopulate_paired_agent_combos,
@@ -43,10 +46,6 @@ from app.widgets.agent_combo import (
 )
 from app.widgets.agent_parameters import AgentParameterForm
 from app.widgets.json_editor import JsonEditor
-from app.widgets.ruleset_combo import (
-    populate_ruleset_combo,
-    selected_ruleset_id,
-)
 
 # Placeholder shown in the Replay Browser's path label before any replay has
 # been chosen -- deliberately not a real path (so accidentally treating it as
@@ -65,8 +64,7 @@ _NO_REPLAY_SELECTED = "No replay selected yet."
 # action. Reading the dataclass here means the displayed starting values
 # cannot drift from the engine again. Weights are per-match configuration
 # and explicitly *not* Ruleset identity (see ``rules.py``'s "Configuration
-# values are not Ruleset identity"), so this one default set is correct for
-# every Ruleset the Designer offers.
+# values are not Ruleset identity").
 ENGINE_DEFAULT_WEIGHTS = Weights()
 
 _Number = TypeVar("_Number", float, int)
@@ -119,8 +117,8 @@ class AdvancedPanel(QWidget):
         # driven by AgentDesigner's own _last_replay.
         self._session_replay_path: Path | None = None
         self._all_rows: list[AgentRow] = []
-        # Whether the selected Ruleset has any compatible discovered agent;
-        # recomputed by _refilter_agents and respected by setBusy.
+        # Whether any discovered agent can run; recomputed by
+        # _refilter_agents and respected by setBusy.
         self._has_eligible_agents = False
         # Held so the three inputs to "may this match be launched" -- an
         # eligible roster, a running match, and valid agent parameters -- are
@@ -136,16 +134,10 @@ class AdvancedPanel(QWidget):
         setup = QWidget()
         form = QFormLayout(setup)
 
-        # Ruleset is the controlling selector (UX-14/UX-15): it is
-        # established before Agent A/B so a first-time user learns the same
-        # "Ruleset determines which Agents can participate" rule Simple
-        # already teaches, rather than the reverse.
-        self.ruleset = QComboBox()
-        populate_ruleset_combo(self.ruleset)
-        self.rulesetExplanation = QLabel()
-        self.rulesetExplanation.setWordWrap(True)
-        form.addRow("Ruleset", self.ruleset)
-        form.addRow("", self.rulesetExplanation)
+        # Shown only when no discovered agent can run.
+        self.compatibilityExplanation = QLabel()
+        self.compatibilityExplanation.setWordWrap(True)
+        form.addRow("", self.compatibilityExplanation)
 
         self.agentA = QComboBox()
         self.agentB = QComboBox()
@@ -199,7 +191,7 @@ class AdvancedPanel(QWidget):
         self.ticks.setValue(600)
         self.ticks.setToolTip(
             "Maximum number of simulation ticks before the match ends, "
-            "subject to the selected Ruleset's win condition. "
+            "subject to the Ruleset's win condition. "
             f"GUI limit: {self.ticks.minimum()}-{self.ticks.maximum()}; the "
             "engine itself only requires a positive tick limit (at least 1) "
             "and has no maximum."
@@ -414,7 +406,6 @@ class AdvancedPanel(QWidget):
         self.btnRandomizeSeed.clicked.connect(self.randomize_seed)
         self.btnChooseReplay.clicked.connect(self._choose_replay)
         self.btnOpenReplay.clicked.connect(self._open_replay_browser)
-        self.ruleset.currentIndexChanged.connect(self._on_ruleset_changed)
         self.agentA.currentIndexChanged.connect(self._on_agent_a_changed)
         self.btnAddAgent.clicked.connect(self._add_agent_slot)
         self.btnRemoveAgentC.clicked.connect(self._remove_agent_slot)
@@ -426,7 +417,7 @@ class AdvancedPanel(QWidget):
         for schema_form in (self.schemaA, self.schemaB, self.schemaC):
             schema_form.changed.connect(self._update_run_enabled)
             schema_form.changed.connect(self._mark_earlier_result)
-        for combo in (self.ruleset, self.agentA, self.agentB, self.agentC):
+        for combo in (self.agentA, self.agentB, self.agentC):
             combo.currentIndexChanged.connect(self._mark_earlier_result)
         for editor in (self.editorA, self.editorB, self.editorC):
             editor.text.textChanged.connect(self._mark_earlier_result)
@@ -452,14 +443,11 @@ class AdvancedPanel(QWidget):
                 "the recorded match. Current edits apply to the next run."
             )
 
-    def _on_ruleset_changed(self, _index: int) -> None:
-        self._refilter_agents()
-
     def _on_agent_a_changed(self, _index: int) -> None:
         sync_compatible_b_choices(self.agentA, self.agentB)
         if self._agent_c_visible:
             sync_compatible_b_choices(self.agentA, self.agentC)
-        self._update_ruleset_explanation()
+        self._update_compatibility_explanation()
 
     # ---- Phase E1: schema-driven agent parameters ----
     def _on_agent_selection_changed(self, _index: int) -> None:
@@ -497,7 +485,7 @@ class AdvancedPanel(QWidget):
         the pre-existing free-form JSON editor when it does not.
 
         The form is only re-targeted when the *agent* changed. Repopulating
-        the combos (a Ruleset change, a catalog refresh) re-enters here with
+        the combos (a catalog refresh) re-enters here with
         the same selection, and rebuilding then would silently discard the
         values a user had already set.
         """
@@ -542,39 +530,26 @@ class AdvancedPanel(QWidget):
         )
 
     def _refilter_agents(self) -> None:
-        """Populate every visible roster slot from the Ruleset's compatible agents.
+        """Populate every visible roster slot from the agents that can run.
 
-        The Ruleset is the controlling selector (UX-15/UX-16): changing it
-        never happens as a side effect of an agent choice, only the
-        reverse. ``repopulate_paired_agent_combos`` is the same shared
-        helper Simple uses (UX-19 parity) for Agent A/B: it preserves each
-        combo's own selection when it remains eligible and steers Agent B
-        to a deterministic opponent distinct from Agent A otherwise. Agent
-        C (UX-32/UX-33), when present, is refiltered from the identical
-        ``eligible`` roster via ``repopulate_additional_agent_combo``, so
-        it can never offer a Ruleset-incompatible choice the same way
-        Agent A/B cannot. ``sync_compatible_b_choices`` remains a
-        defense-in-depth catalog filter and generalizes to Agent C by
-        applying the same helper against Agent A.
+        ``repopulate_paired_agent_combos`` is the same shared helper Simple
+        uses (UX-19 parity) for Agent A/B: it preserves each combo's own
+        selection when it remains eligible and steers Agent B to a
+        deterministic opponent distinct from Agent A otherwise. Agent C
+        (UX-32/UX-33), when present, is refiltered from the identical
+        ``eligible`` roster via ``repopulate_additional_agent_combo``, so it
+        can never offer an incompatible choice the same way Agent A/B
+        cannot. ``sync_compatible_b_choices`` remains a defense-in-depth
+        catalog filter and generalizes to Agent C by applying the same
+        helper against Agent A.
 
         Duplicate *agents* across slots remain a legal, unrestricted
         choice (only per-slot entrant identity must be unique, which the
-        Agent A/B/C letters already guarantee) -- so a Ruleset with only
-        one compatible discovered agent still leaves the whole roster
-        launchable, not just the minimum two slots. There is accordingly
-        no "reduce the roster" step here: Advanced's roster ceiling (3) is
-        fixed by the CLI contract, not derived per-Ruleset, so a Ruleset
-        change can only ever replace incompatible *selections* within the
-        roster the user already has, never shrink how many slots are
-        offered.
+        Agent A/B/C letters already guarantee) -- so a catalog with only one
+        compatible agent still leaves the whole roster launchable.
         """
 
-        ruleset_id = selected_ruleset_id(self.ruleset)
-        eligible = [
-            row
-            for row in self._all_rows
-            if agent_row_supported_by_ruleset(row, ruleset_id)
-        ]
+        eligible = [row for row in self._all_rows if agent_row_supported(row)]
         repopulate_paired_agent_combos(self.agentA, self.agentB, eligible)
         sync_compatible_b_choices(self.agentA, self.agentB)
         if self._agent_c_visible:
@@ -587,23 +562,19 @@ class AdvancedPanel(QWidget):
             sync_compatible_b_choices(self.agentA, self.agentC)
 
         self._has_eligible_agents = bool(eligible)
-        self._update_ruleset_explanation()
+        self._update_compatibility_explanation()
         # After the selections settle, not before: each slot's parameter
         # surface follows whichever agent it actually ended up on.
         self._sync_parameter_surfaces()
 
-    def _update_ruleset_explanation(self) -> None:
+    def _update_compatibility_explanation(self) -> None:
+        # The combos above are already filtered to rows that can run, so the
+        # only thing left to explain is an empty catalog.
+        self.compatibilityExplanation.setVisible(not self._has_eligible_agents)
         if not self._has_eligible_agents:
-            self.rulesetExplanation.setText(
-                "No compatible agents were found for this Ruleset. "
-                "Create or import a compatible agent, then refresh."
-            )
+            self.compatibilityExplanation.setText(NO_COMPATIBLE_AGENTS_EXPLANATION)
             return
-        # V6 Phase 2B.12 retired Agent API v1 and VM/blob execution: the
-        # combos above are already filtered to bytefray-rules-4-compatible
-        # rows only, so no selected agent's kind can ever disagree with the
-        # single offered Ruleset -- there is nothing left to explain here.
-        self.rulesetExplanation.clear()
+        self.compatibilityExplanation.clear()
 
     # ---- Phase 4 dynamic roster (UX-29/UX-30/UX-31) ----
     def _set_agent_c_visible(self, visible: bool) -> None:
@@ -651,7 +622,6 @@ class AdvancedPanel(QWidget):
             self.territory_bucket,
             self.seed,
             self.btnRandomizeSeed,
-            self.ruleset,
             self.schemaA,
             self.schemaB,
             self.schemaC,
@@ -792,7 +762,6 @@ class AdvancedPanel(QWidget):
         cfg = RunConfig(
             a_type=selected_agent_name(self.agentA) or "runner",
             b_type=selected_agent_name(self.agentB) or "writer",
-            ruleset_id=selected_ruleset_id(self.ruleset),
             arena=int(self.arena.value()),
             ticks=int(self.ticks.value()),
             # Phase 5B: each weight is forwarded only when the user has

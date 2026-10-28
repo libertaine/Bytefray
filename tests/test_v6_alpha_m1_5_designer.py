@@ -36,7 +36,7 @@ def _assert_default_development_artifacts(development, parameters):
     assert trace == path.with_name("trace.jsonl") and trace.is_file()
     assert verify_result_replay(path)
     result = read_result(path)
-    assert result.ruleset_id == development.selected_ruleset_id() == "bytefray-rules-6-alpha1"
+    assert result.ruleset_id == "bytefray-rules-6-alpha1"
     assert result.entrants[0]["metadata"]["parameters"] == parameters
     assert all(entrant["diagnostic"] is None for entrant in result.entrants)
     body = json.loads(path.read_text())
@@ -55,8 +55,6 @@ def test_native_windows_designer_window_selection_and_parameters(tmp_path, monke
     monkeypatch.setenv("QT_QPA_PLATFORM", "windows")
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
     monkeypatch.setenv("BYTEFRAY_AGENTS_DIR", str(tmp_path / "agents"))
-    from PySide6.QtCore import Qt
-    from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication
 
     from app.agent_designer import AgentDesigner
@@ -70,10 +68,7 @@ def test_native_windows_designer_window_selection_and_parameters(tmp_path, monke
         designer.tabs.setCurrentWidget(designer.advanced)
         app.processEvents()
         advanced = designer.advanced
-        advanced.ruleset.setFocus()
-        QTest.keyClick(advanced.ruleset, Qt.Key_Down)
-        app.processEvents()
-        assert advanced.ruleset.currentData() == "bytefray-rules-6-alpha1"
+        assert not hasattr(advanced, "ruleset")
         advanced.agentA.setCurrentIndex(advanced.agentA.findData("v6_window_scout"))
         advanced.schemaA._controls["search_interval"].setValue(2)
         advanced.schemaA._controls["move_step"].setValue(32)
@@ -115,25 +110,17 @@ def test_window_scout_copy_validate_edit_run_replay_and_repeat(tmp_path, monkeyp
     try:
         development = designer.development
         development.selectAgent("my_window_scout")
-        assert development.selected_ruleset_id() == "bytefray-rules-4"
-        assert not development.btnTest.isEnabled()
-        assert "explicitly" in development.rulesetExplanation.text()
-        # Validation is allowed here so the engine can report the capability error,
-        # before importing the selected agent.
-        QTest.mouseClick(development.btnValidate, Qt.LeftButton)
-        _wait(app, designer)
-        assert "capabilit" in development.statusLabel.text().lower()
-        development.rulesetCombo.setCurrentIndex(development.rulesetCombo.findData("bytefray-rules-6-alpha1"))
+        # Active Sensing is the only Ruleset, so a sensing starter is
+        # testable straight away.
         assert development.btnTest.isEnabled()
+        assert not development.compatibilityExplanation.isVisibleTo(development)
         QTest.mouseClick(development.btnValidate, Qt.LeftButton)
         _wait(app, designer)
         assert "Last validation: Valid" in development.statusLabel.text()
 
         advanced = designer.advanced
-        assert advanced.ruleset.currentData() == "bytefray-rules-4"
-        advanced.ruleset.setCurrentIndex(advanced.ruleset.findData("bytefray-rules-6-alpha1"))
         advanced.agentA.setCurrentIndex(advanced.agentA.findData("my_window_scout"))
-        advanced.agentB.setCurrentIndex(advanced.agentB.findData("v4_scout"))
+        advanced.agentB.setCurrentIndex(advanced.agentB.findData("v6_watchful_keeper"))
         advanced.ticks.setValue(3)
         advanced.schemaA._controls["search_interval"].setValue(2)
         advanced.schemaA._controls["move_step"].setValue(32)
@@ -218,20 +205,13 @@ def test_keeper_native_copy_validate_edit_full_match_reopen(tmp_path, monkeypatc
         development = designer.development
         designer.tabs.setCurrentWidget(development)
         development.selectAgent("personal_keeper")
-        assert development.selected_ruleset_id() == "bytefray-rules-4"
-        QTest.mouseClick(development.btnValidate, Qt.LeftButton)
-        _wait(app, designer)
-        assert "capabilit" in development.statusLabel.text().lower()
-        development.rulesetCombo.setCurrentIndex(development.rulesetCombo.findData("bytefray-rules-6-alpha1"))
         QTest.mouseClick(development.btnValidate, Qt.LeftButton)
         _wait(app, designer)
         assert "Last validation: Valid" in development.statusLabel.text()
         advanced = designer.advanced
         designer.tabs.setCurrentWidget(advanced)
-        assert advanced.ruleset.currentData() == "bytefray-rules-4"
-        advanced.ruleset.setCurrentIndex(advanced.ruleset.findData("bytefray-rules-6-alpha1"))
-        advanced.agentA.setCurrentIndex(advanced.agentA.findData("personal_keeper" if seat == "A" else "v4_scout"))
-        advanced.agentB.setCurrentIndex(advanced.agentB.findData("personal_keeper" if seat == "B" else "v4_scout"))
+        advanced.agentA.setCurrentIndex(advanced.agentA.findData("personal_keeper" if seat == "A" else "v6_watchful_keeper"))
+        advanced.agentB.setCurrentIndex(advanced.agentB.findData("personal_keeper" if seat == "B" else "v6_watchful_keeper"))
         schema = advanced.schemaA if seat == "A" else advanced.schemaB
         schema._controls["scan_interval"].setValue(3)
         schema._controls["perimeter_offset"].setValue(64)
@@ -332,20 +312,13 @@ def test_reacquirer_native_copy_validate_edit_full_match_reopen(tmp_path, monkey
         development = designer.development
         designer.tabs.setCurrentWidget(development)
         development.selectAgent("personal_reacquirer")
-        assert development.selected_ruleset_id() == "bytefray-rules-4"
-        QTest.mouseClick(development.btnValidate, Qt.LeftButton)
-        _wait(app, designer)
-        assert "capabilit" in development.statusLabel.text().lower()
-        development.rulesetCombo.setCurrentIndex(development.rulesetCombo.findData("bytefray-rules-6-alpha1"))
         QTest.mouseClick(development.btnValidate, Qt.LeftButton)
         _wait(app, designer)
         assert "Last validation: Valid" in development.statusLabel.text()
         advanced = designer.advanced
         designer.tabs.setCurrentWidget(advanced)
-        assert advanced.ruleset.currentData() == "bytefray-rules-4"
-        advanced.ruleset.setCurrentIndex(advanced.ruleset.findData("bytefray-rules-6-alpha1"))
-        advanced.agentA.setCurrentIndex(advanced.agentA.findData("personal_reacquirer" if seat == "A" else "v4_scout"))
-        advanced.agentB.setCurrentIndex(advanced.agentB.findData("personal_reacquirer" if seat == "B" else "v4_scout"))
+        advanced.agentA.setCurrentIndex(advanced.agentA.findData("personal_reacquirer" if seat == "A" else "v6_watchful_keeper"))
+        advanced.agentB.setCurrentIndex(advanced.agentB.findData("personal_reacquirer" if seat == "B" else "v6_watchful_keeper"))
         schema = advanced.schemaA if seat == "A" else advanced.schemaB
         for name, value in edited.items():
             schema._controls[name].setValue(value)
@@ -427,15 +400,12 @@ def test_scout_native_manifest_default_development_test(tmp_path, monkeypatch):
         development = designer.development
         designer.tabs.setCurrentWidget(development)
         development.selectAgent("personal_scout")
-        assert development.selected_ruleset_id() == "bytefray-rules-4"
-        assert not development.btnTest.isEnabled()
-        development.rulesetCombo.setCurrentIndex(development.rulesetCombo.findData("bytefray-rules-6-alpha1"))
+        assert development.btnTest.isEnabled()
         QTest.mouseClick(development.btnValidate, Qt.LeftButton)
         _wait(app, designer)
         assert "Last validation: Valid" in development.statusLabel.text()
         advanced = designer.advanced
         designer.tabs.setCurrentWidget(advanced)
-        advanced.ruleset.setCurrentIndex(advanced.ruleset.findData("bytefray-rules-6-alpha1"))
         advanced.agentA.setCurrentIndex(advanced.agentA.findData("personal_scout"))
         advanced.schemaA._controls["search_interval"].setValue(2)
         advanced.schemaA._controls["move_step"].setValue(32)

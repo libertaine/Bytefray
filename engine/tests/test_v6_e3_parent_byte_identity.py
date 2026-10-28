@@ -10,15 +10,15 @@ matrix below were recorded against the unmodified runtime at ``9d34b01``
 and committed *before* any disruption code changed. Every later build must
 reproduce them byte for byte.
 
-The matrix is the E3 representative set, run under both E3 parents and
-under stable V4 (which is gameplay-identical to the K=1 parent but carries
-its own identity):
+The matrix is the E3 representative set, run under both E3 parents. It
+also ran under stable V4 (gameplay-identical to the K=1 parent but carrying
+its own identity) until Classic was retired from execution; those exact golden rows remain below. Only their live re-execution is
+skipped; reproduce them at v5.1.0-alpha.1:
 
 * ``bytefray-rules-6-research-capture-hold-k2`` -- the E2 parent of the
   primary E3 treatment (K=2);
 * ``bytefray-rules-6-research-scale`` -- the K=1 parent of the companion
   treatment;
-* ``bytefray-rules-4`` -- the stable product Ruleset.
 
 Pairings, all with the tracked E2 research fixtures
 (``tools/research/v6/e2/fixtures/agents``, LF-only by ``.gitattributes``, so
@@ -410,6 +410,8 @@ def test_frozen_corpus_exercises_whole_tick_disruption() -> None:
 def test_parent_disruption_is_byte_identical_to_the_pre_e3_freeze(
     tmp_path: Path, frozen: FrozenMatch
 ) -> None:
+    if frozen.ruleset_id == V4_ID:
+        pytest.skip("Frozen Classic golden; live reproduction requires v5.1.0-alpha.1.")
     observed = run_corpus_match(
         tmp_path, frozen.ruleset_id, frozen.seat_a, frozen.seat_b, frozen.seed
     )

@@ -24,13 +24,12 @@ from battle_engine.paths import get_data_root
 from battle_engine.placement import resolve_direct_match_starts
 from battle_engine.python_runtime import PythonEntrantInitializationError
 from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
-from battle_engine.ruleset_names import ACTIVE_SENSING_DISPLAY_NAME, CLASSIC_DISPLAY_NAME
+from battle_engine.ruleset_names import ACTIVE_SENSING_DISPLAY_NAME
 from battle_engine.ruleset_policy import (
-    BYTEFRAY_RULESET_V4_ID,
-    PUBLIC_EXPERIMENTAL_RULESET_IDS,
-    PUBLIC_STABLE_RULESET_IDS,
+    PRODUCT_RULESET_IDS,
     NoCompatibleRulesetError,
     resolve_omitted_ruleset_for_agents,
+    ruleset_argument,
 )
 from battle_engine.starters import (
     describe_bootstrap_errors,
@@ -255,14 +254,13 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     )
     p.add_argument(
         "--ruleset",
-        choices=sorted(PUBLIC_STABLE_RULESET_IDS | PUBLIC_EXPERIMENTAL_RULESET_IDS),
+        type=ruleset_argument(PRODUCT_RULESET_IDS),
+        choices=sorted(PRODUCT_RULESET_IDS),
         default=None,
         help=(
-            f"gameplay Ruleset identity. {BYTEFRAY_RULESET_V4_ID} "
-            f"({CLASSIC_DISPLAY_NAME}) is the default when this flag is omitted. "
-            f"{BYTEFRAY_RULESET_V6_ALPHA1_ID} is {ACTIVE_SENSING_DISPLAY_NAME}: "
-            "experimental, it requires explicit selection. Affects "
-            "gameplay semantics and is recorded in the match's result/replay "
+            f"gameplay Ruleset identity. {BYTEFRAY_RULESET_V6_ALPHA1_ID} "
+            f"({ACTIVE_SENSING_DISPLAY_NAME}) is the only Ruleset and is used "
+            "when this flag is omitted. Recorded in the match's result/replay "
             "artifacts."
         ),
     )
@@ -271,13 +269,13 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     p.add_argument(
         "--a-type",
         type=str,
-        default="v4_claimer",
+        default="v6_window_scout",
         help="Agent name for side A (folder under /agents/<name>)",
     )
     p.add_argument(
         "--b-type",
         type=str,
-        default="v4_scout",
+        default="v6_watchful_keeper",
         help="Agent name for side B (folder under /agents/<name>)",
     )
     p.add_argument(
@@ -454,8 +452,7 @@ def main(argv: Iterable[str] | None = None) -> int:
             # `result: none` / `replay: none`).
             blob = spec.blob.name if spec.blob else "none"
             print(f" - {name:20} {disp:20} {agent_runtime_label(spec):8} blob={blob}")
-        print("\n[Python] agents use Agent API v2; bytefray-rules-4 is the default.")
-        print("Window Scout requires explicit --ruleset bytefray-rules-6-alpha1 (experimental sensing).")
+        print(f"\n[Python] agents use Agent API v2 and run under {BYTEFRAY_RULESET_V6_ALPHA1_ID}.")
         return 0
 
     # Build current Config correctly against Config.weights
@@ -543,9 +540,9 @@ def main(argv: Iterable[str] | None = None) -> int:
         arena_size=cfg.arena_size,
         entrant_count=entrant_count,
         supplied_starts=supplied_starts,
-        # The same seed this match actually runs under, so a v4 alpha2
-        # match's seed-derived core placement is reproducible from nothing
-        # but its recorded inputs. Inert for every other Ruleset.
+        # The same seed this match actually runs under, so seed-derived
+        # core placement is reproducible from nothing but its recorded
+        # inputs.
         seed=cfg.seed,
     )
     args.a_start, args.b_start = resolved_starts[0], resolved_starts[1]

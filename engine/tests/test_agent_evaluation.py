@@ -794,8 +794,8 @@ def test_artifact_paths_are_relative_to_evaluation_directory(tmp_path):
 
 
 def test_cli_dry_run_prints_matrix_and_runs_nothing(tmp_path, monkeypatch, capsys):
-    """Pinned to explicit --ruleset bytefray-rules-4 -- the sole remaining
-    Ruleset since V6 Phase 2B.12 -- so the matrix-size math (2 seeds x 1
+    """Pinned to explicit --ruleset bytefray-rules-6-alpha1 -- the only
+    product Ruleset since the Classic retirement -- so the matrix-size math (2 seeds x 1
     opponent x 1 orientation, no placement multiplication: unlike the
     retired v2 methodology, v4's own dry-run preview does not multiply by a
     standard-placement count) stays simple and stable -- this test is about
@@ -809,7 +809,7 @@ def test_cli_dry_run_prints_matrix_and_runs_nothing(tmp_path, monkeypatch, capsy
     exit_code = main(
         [
             "cand", "--opponents", "opp", "--seeds", "1,2", "--dry-run",
-            "--single-orientation", "--ruleset", "bytefray-rules-4",
+            "--single-orientation", "--ruleset", "bytefray-rules-6-alpha1",
         ]
     )
     assert exit_code == 0
@@ -821,7 +821,8 @@ def test_cli_dry_run_prints_matrix_and_runs_nothing(tmp_path, monkeypatch, capsy
 def test_cli_dry_run_omitted_ruleset_defaults_to_the_retained_control(
     tmp_path, monkeypatch, capsys
 ):
-    """V6 Phase 2B.12 retired every Ruleset but bytefray-rules-4: an
+    """V6 Phase 2B.12 retired every Ruleset but bytefray-rules-4, and the
+    Classic retirement replaced that with bytefray-rules-6-alpha1: an
     omitted --ruleset now resolves to it (the v2-methodology dry-run
     preview format -- ``ruleset: ...``/``placements: ...``/``cells/
     opponent: ...``, this test's own retired predecessor -- is no longer
@@ -834,7 +835,7 @@ def test_cli_dry_run_omitted_ruleset_defaults_to_the_retained_control(
     )
     assert exit_code == 0
     captured = capsys.readouterr()
-    assert "Arena alignment: ruleset_v4_seeded_placements" in captured.out
+    assert "Arena alignment: ruleset_v6_alpha1_seeded_placements" in captured.out
     # 2 seeds x 1 opponent x 1 orientation; v4's dry-run preview does not
     # multiply by a standard-placement count the way v2's used to.
     assert "matches: 2" in captured.out
@@ -872,7 +873,7 @@ def test_cli_default_seed_is_standard_v4_seeds_when_ruleset_omitted(
     """V6 Phase 2B.12 retired bytefray-rules-1 (whose own evaluation default
     was the single ``Config().seed``) and bytefray-rules-2 (whose own
     default was the 5-seed ``STANDARD_V2_SEEDS``): an omitted --ruleset now
-    always resolves to bytefray-rules-4, so its 8-seed
+    always resolves to bytefray-rules-6-alpha1, so its 8-seed
     ``STANDARD_V4_SEEDS`` default applies regardless of whether --ruleset
     was passed explicitly -- there is no longer a second Ruleset default to
     distinguish "omitted" from "explicit" here."""
@@ -884,7 +885,7 @@ def test_cli_default_seed_is_standard_v4_seeds_when_ruleset_omitted(
     exit_code = main(["cand", "--opponents", "opp", "--dry-run"])
     assert exit_code == 0
     captured = capsys.readouterr()
-    assert "Arena alignment: ruleset_v4_seeded_placements" in captured.out
+    assert "Arena alignment: ruleset_v6_alpha1_seeded_placements" in captured.out
     assert f"seeds: {', '.join(str(seed) for seed in STANDARD_V4_SEEDS)}" in captured.out
 
 
@@ -893,8 +894,8 @@ def test_cli_dry_run_json_prints_structured_matrix_preview(tmp_path, monkeypatch
     never the human matrix text ``--dry-run`` alone prints -- so a script
     passing ``--json`` never has to special-case the dry-run combination.
 
-    Pinned to explicit --ruleset bytefray-rules-4 (the sole remaining
-    Ruleset since V6 Phase 2B.12) for the same reason as
+    Pinned to explicit --ruleset bytefray-rules-6-alpha1 (the only product
+    Ruleset since the Classic retirement) for the same reason as
     test_cli_dry_run_prints_matrix_and_runs_nothing: this test is about the
     JSON structure, not about which Ruleset is the product default.
     """
@@ -905,7 +906,7 @@ def test_cli_dry_run_json_prints_structured_matrix_preview(tmp_path, monkeypatch
     exit_code = main(
         [
             "cand", "--opponents", "opp", "--seeds", "1,2", "--dry-run",
-            "--single-orientation", "--json", "--ruleset", "bytefray-rules-4",
+            "--single-orientation", "--json", "--ruleset", "bytefray-rules-6-alpha1",
         ]
     )
     assert exit_code == 0
@@ -933,7 +934,7 @@ def test_cli_json_full_run_omitted_ruleset_never_includes_capture(
     evaluation -- capture's methodology was defined specifically for that
     Ruleset's gameplay and was not redesigned for the retained
     bytefray-rules-4 control (Sec 51's "no Ruleset 4 gameplay changes"
-    boundary): an omitted --ruleset now always resolves to bytefray-rules-4,
+    boundary): an omitted --ruleset now always resolves to bytefray-rules-6-alpha1,
     so ``capture`` can no longer be populated for any new evaluation at
     all -- unlike this test's own retired predecessor, which pinned
     ``--ruleset bytefray-rules-1`` specifically to prove the *opposite* case
@@ -1001,7 +1002,7 @@ def test_cli_group_run_is_retired_and_fails_closed_with_no_traceback(
         [
             "cand",
             "--ruleset",
-            "bytefray-rules-4",
+            "bytefray-rules-6-alpha1",
             "--group",
             "--opponents",
             "opp_a,opp_b",

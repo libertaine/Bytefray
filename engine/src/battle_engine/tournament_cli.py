@@ -12,9 +12,11 @@ from battle_engine.agents import resolve_agent
 from battle_engine.config import Config, Weights
 from battle_engine.match_service import MatchEntrant
 from battle_engine.paths import get_data_root
+from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
 from battle_engine.ruleset_policy import (
-    BYTEFRAY_RULESET_V4_ID,
+    PRODUCT_RULESET_IDS,
     resolve_omitted_ruleset_for_agents,
+    ruleset_argument,
 )
 from battle_engine.starters import describe_bootstrap_errors, ensure_starter_agents
 from battle_engine.tournament_service import (
@@ -53,12 +55,13 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--territory-bucket", type=_positive, default=64)
     parser.add_argument(
         "--ruleset",
-        choices=[BYTEFRAY_RULESET_V4_ID],
+        type=ruleset_argument(PRODUCT_RULESET_IDS),
+        choices=sorted(PRODUCT_RULESET_IDS),
         default=None,
         help=(
-            f"gameplay Ruleset identity. {BYTEFRAY_RULESET_V4_ID} is the "
-            "only Ruleset Agent API v2 (process) rosters can run under, and "
-            "is selected automatically when this flag is omitted. Each "
+            f"gameplay Ruleset identity. {BYTEFRAY_RULESET_V6_ALPHA1_ID} is the "
+            "only Ruleset Agent API v2 (process) rosters run under, and is used "
+            "when this flag is omitted. Each "
             "scheduled pairing is placed from its own derived match seed "
             "rather than from the roster-wide seat spacing. Affects "
             "gameplay semantics and is recorded in each match's "

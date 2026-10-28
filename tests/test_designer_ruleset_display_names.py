@@ -1,12 +1,11 @@
-"""Designer shows Ruleset display names; selection still runs on identities.
+"""Designer shows the Ruleset's display name, not release or program labels.
 
-The component-identity reset (docs/COMPONENT_VERSIONING.md) replaced the
-"Ruleset v4" / "V6 alpha1" labels with the shared display names "Classic" and
-"Active Sensing (Alpha)". These pin what a person actually sees on each
-Designer surface, and that the canonical identity is still what each combo
-stores, selects and exposes on hover. Selection semantics themselves are
-pinned by test_designer_ruleset_compatibility.py and
-test_v6_alpha_m1_5_designer.py.
+The component-identity reset (docs/COMPONENT_VERSIONING.md) gave the Ruleset
+the shared display name "Active Sensing (Alpha)". Active Sensing is now the
+only Ruleset, so no Designer surface offers a Ruleset control; these pin the
+places a person still sees the name, and that development-only labels
+("V6", program codes) stay out of view. Compatibility gating is pinned by
+test_designer_agent_compatibility.py and test_v6_alpha_m1_5_designer.py.
 
 Marked ``gui`` like the other Designer tests.
 """
@@ -17,9 +16,6 @@ import os
 
 import pytest
 
-CLASSIC = "bytefray-rules-4"
-ALPHA = "bytefray-rules-6-alpha1"
-
 
 def _make_app():
     pytest.importorskip("PySide6")
@@ -27,15 +23,6 @@ def _make_app():
     from PySide6.QtWidgets import QApplication
 
     return QApplication.instance() or QApplication([])
-
-
-def _items(combo) -> list[tuple[str, str, str]]:
-    from PySide6.QtCore import Qt
-
-    return [
-        (combo.itemText(index), str(combo.itemData(index)), str(combo.itemData(index, Qt.ToolTipRole)))
-        for index in range(combo.count())
-    ]
 
 
 def _row(name: str, *, sensing: bool):
@@ -47,53 +34,18 @@ def _row(name: str, *, sensing: bool):
     return AgentRow(name, f"/agents/{name}", None, meta, agent_id=name)
 
 
-BOTH = [
-    ("Classic — Recommended", CLASSIC, f"Ruleset ID: {CLASSIC}"),
-    ("Active Sensing (Alpha)", ALPHA, f"Ruleset ID: {ALPHA}"),
-]
-
-
 @pytest.mark.gui
-def test_simple_and_advanced_show_display_names_and_default_to_classic(tmp_path):
-    _make_app()
-    from app.views.advanced import AdvancedPanel
-    from app.views.simple import SimplePanel
-
-    simple = SimplePanel(catalog=None)
-    advanced = AdvancedPanel(catalog=None, data_root=tmp_path)
-    try:
-        assert _items(simple.ruleset) == BOTH[:1]
-        assert _items(advanced.ruleset) == BOTH
-        for combo in (simple.ruleset, advanced.ruleset):
-            assert combo.currentData() == CLASSIC
-            assert "Classic (bytefray-rules-4)" in combo.toolTip()
-        advanced.ruleset.setCurrentIndex(advanced.ruleset.findData(ALPHA))
-        assert advanced.ruleset.currentData() == ALPHA
-        assert advanced.ruleset.currentText() == "Active Sensing (Alpha)"
-    finally:
-        simple.deleteLater()
-        advanced.deleteLater()
-
-
-@pytest.mark.gui
-def test_development_names_active_sensing_without_switching_rulesets():
+def test_development_names_active_sensing_in_its_guide():
     _make_app()
     from app.views.development import AgentDevelopmentPanel
 
     panel = AgentDevelopmentPanel()
     try:
-        assert _items(panel.rulesetCombo) == BOTH
         panel.setAgents([_row("my_keeper", sensing=True)])
         panel.selectAgent("my_keeper")
-        # A sensing agent never repairs the selection into the experiment.
-        assert panel.selected_ruleset_id() == CLASSIC
-        assert not panel.btnTest.isEnabled()
-        assert panel.rulesetExplanation.text() == (
-            "Select Active Sensing (Alpha) explicitly to use this agent."
-        )
-        panel.rulesetCombo.setCurrentIndex(panel.rulesetCombo.findData(ALPHA))
-        assert panel.selected_ruleset_id() == ALPHA
-        assert panel.rulesetExplanation.text() == ""
+        # A sensing agent is testable straight away: there is nothing to switch.
+        assert panel.btnTest.isEnabled()
+        assert panel.compatibilityExplanation.text() == ""
         assert panel.btnSensingGuide.text() == "Active Sensing (Alpha) sensing guide…"
         assert panel.btnSensingGuide.accessibleName() == "Active Sensing (Alpha) sensing guide"
         dialog = panel.showSensingGuide()
@@ -124,8 +76,8 @@ def test_new_agent_and_evaluation_carry_no_release_or_program_labels(tmp_path):
         assert labels["watchful_keeper"] == "Watchful Keeper — personal copy"
         assert labels["roaming_reacquirer"] == "Roaming Reacquirer — personal copy"
         assert not any("V6" in label for label in labels.values())
-        # Evaluation keeps its Classic-only scope.
-        assert _items(evaluation.pairwiseRulesetCombo) == BOTH[:1]
+        # Evaluation has no Ruleset choice to make.
+        assert not hasattr(evaluation, "pairwiseRulesetCombo")
     finally:
         new_agent.deleteLater()
         evaluation.deleteLater()

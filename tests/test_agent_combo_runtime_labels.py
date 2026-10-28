@@ -230,7 +230,7 @@ def test_empty_catalog_shows_placeholder_and_no_crash_on_sync():
 
 
 @pytest.mark.gui
-def test_simple_panel_filters_from_ruleset_and_emits_real_identifiers():
+def test_simple_panel_filters_compatible_agents_and_emits_real_identifiers():
     _make_app()
     from app.views.simple import SimplePanel
 
@@ -238,7 +238,8 @@ def test_simple_panel_filters_from_ruleset_and_emits_real_identifiers():
     panel.setAgents(_rows())
     panel.agentA.setCurrentIndex(0)  # alpha [Python]
 
-    assert panel.ruleset.findData("bytefray-rules-1") == -1
+    # The Designer offers no Ruleset control; every launch runs Active Sensing.
+    assert not hasattr(panel, "ruleset")
     assert [panel.agentB.itemData(i) for i in range(panel.agentB.count())] == [
         "alpha",
         "beta",
@@ -252,7 +253,7 @@ def test_simple_panel_filters_from_ruleset_and_emits_real_identifiers():
     assert len(captured) == 1
     assert captured[0].a_type == "alpha"
     assert captured[0].b_type == "beta"
-    assert captured[0].ruleset_id == "bytefray-rules-4"
+    assert not hasattr(captured[0], "ruleset_id")
 
 
 @pytest.mark.gui
@@ -310,7 +311,7 @@ def test_simple_one_agent_allows_self_match_and_empty_state_prevents_launch():
     assert panel.agentA.itemText(0) == "(none found)"
     assert panel.agentB.itemText(0) == "(none found)"
     assert not panel.btnRun.isEnabled()
-    assert "No compatible agents" in panel.rulesetExplanation.text()
+    assert "No compatible agents" in panel.compatibilityExplanation.text()
 
     panel._emit_run()
     assert captured == []
@@ -319,7 +320,7 @@ def test_simple_one_agent_allows_self_match_and_empty_state_prevents_launch():
 
 @pytest.mark.gui
 def test_advanced_panel_matches_simple_panel_behavior(tmp_path):
-    """Advanced applies the same stable-v4/API-v2 filter as Simple."""
+    """Advanced applies the same Agent API v2 filter as Simple."""
 
     _make_app()
     from app.views.advanced import AdvancedPanel
@@ -338,7 +339,7 @@ def test_advanced_panel_matches_simple_panel_behavior(tmp_path):
     assert len(captured) == 1
     assert captured[0].a_type == "alpha"
     assert captured[0].b_type == "beta"
-    assert captured[0].ruleset_id == "bytefray-rules-4"
+    assert not hasattr(captured[0], "ruleset_id")
 
 
 # ---------------------------------------------------------------------------

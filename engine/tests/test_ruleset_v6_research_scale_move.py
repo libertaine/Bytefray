@@ -60,6 +60,7 @@ from battle_engine.placement import resolve_direct_match_starts
 from battle_engine.replay import MatchResult, ReplayHeader, TickSnapshot, iter_replay
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
     OMITTED_RULESET_CANDIDATES,
@@ -508,13 +509,13 @@ def test_rejects_arena_size_above_research_range(tmp_path: Path, arena_size: int
         EvaluationService().run(request)
 
 
-def test_stable_v4_remains_isolated_at_512(tmp_path: Path) -> None:
+def test_active_sensing_remains_isolated_at_512(tmp_path: Path) -> None:
     _write_api_v2_agent(tmp_path, "candidate")
     _write_api_v2_agent(tmp_path, "opponent")
     request = _research_move_request(
-        tmp_path, arena_size=1024, ruleset_id=BYTEFRAY_RULESET_V4_ID
+        tmp_path, arena_size=1024, ruleset_id=BYTEFRAY_RULESET_V6_ALPHA1_ID
     )
-    with pytest.raises(EvaluationConfigurationError, match="incompatible with the stable v4"):
+    with pytest.raises(EvaluationConfigurationError, match="incompatible with the bytefray-rules-6-alpha1"):
         EvaluationService().run(request)
 
 

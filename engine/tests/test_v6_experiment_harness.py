@@ -14,6 +14,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID
+
 from tools.research.v6.experiment_harness import (
     ANALYZER_VERSION,
     E2_FIXTURE_SOURCE_DIR,
@@ -150,6 +152,9 @@ def test_smoke_experiment_runner(tmp_path: Path) -> None:
     out_dir = tmp_path / "exp_run"
     config = ResearchExperimentConfig(
         experiment_id="test_smoke",
+        # The harness's own default is the retired bytefray-rules-4, so a
+        # run on this line names its field-for-field research copy.
+        ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
         arena_sizes=(512,),
         field=("v4_claimer", "v5_core_defender"),
         seeds=(1,),

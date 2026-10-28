@@ -46,8 +46,8 @@ from battle_engine.match_service import (
     NativeMatchService,
 )
 from battle_engine.rules import (
-    BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_ALPHA1_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
 )
 from battle_engine.sensing_demo import (
     STATIONARY_OPPONENT_FIXTURE_NAME,
@@ -183,8 +183,8 @@ def test_stationary_opponent_agent_logic() -> None:
     assert action.operand == 91
 
 
-def test_capability_preflight_rejection_under_v4(tmp_path: Path) -> None:
-    """Verify capability preflight fails closed before match execution under v4."""
+def test_capability_preflight_rejection_under_a_passive_ruleset(tmp_path: Path) -> None:
+    """Verify capability preflight fails closed before match execution under a passive Ruleset."""
     scout_dir = resolve_teaching_agent_dir(WINDOW_SCOUT_STARTER_NAME)
     opponent_dir = resolve_teaching_agent_dir(STATIONARY_OPPONENT_FIXTURE_NAME)
     scout_spec = agent_spec_from_dir(scout_dir)
@@ -203,7 +203,7 @@ def test_capability_preflight_rejection_under_v4(tmp_path: Path) -> None:
         max_ticks=10,
         replay_path=replay_path,
         trace_path=trace_path,
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     )
 
     with pytest.raises(AgentCapabilityMismatchError) as exc_info:
@@ -492,12 +492,8 @@ def test_starter_registry_invariants() -> None:
     """Verify v6_window_scout is registered in starters.py with valid digest."""
     assert "v6_window_scout" in STARTER_AGENT_NAMES
     assert "v6_window_scout" in CURRENT_STARTER_DIGESTS
-    # test_v5_alpha1_phase_e_starter_refresh.py invariant
-    assert STARTER_AGENT_NAMES[-1] == "v5_dual_team"
-    # M2 Revision03 inserts Keeper after Scout, preserving terminal dual-team.
-    assert STARTER_AGENT_NAMES[-4:] == (
-        "v6_window_scout", "v6_watchful_keeper", "v6_roaming_reacquirer", "v5_dual_team",
-    )
+    # The Classic retirement left exactly the three Active Sensing starters.
+    assert STARTER_AGENT_NAMES == ("v6_window_scout", "v6_watchful_keeper", "v6_roaming_reacquirer")
 
 
 def test_sensing_action_cost_and_quota_consumption(tmp_path: Path) -> None:
@@ -769,31 +765,6 @@ def test_demo_runner_rejects_drifted_or_incomplete_capture(tmp_path: Path, monke
 
     payload = json.loads(demo_result.demo_path.read_text(encoding="utf-8"))
     assert payload["status"] == "unverified"
-
-
-def test_stable_v4_execution_unaffected(tmp_path: Path) -> None:
-    """Verify standard stable v4 match executes cleanly with no regression."""
-    scout_dir = resolve_teaching_agent_dir("v4_scout")
-    defender_dir = resolve_teaching_agent_dir("v4_local_defender")
-    scout_spec = agent_spec_from_dir(scout_dir)
-    defender_spec = agent_spec_from_dir(defender_dir)
-    assert scout_spec is not None and defender_spec is not None
-
-    request = MatchRequest(
-        config=Config(arena_size=512, instr_per_tick=8, seed=42),
-        entrants=(
-            MatchEntrant.python("A", "v4_scout", 0, scout_spec),
-            MatchEntrant.python("B", "v4_local_defender", 91, defender_spec),
-        ),
-        max_ticks=10,
-        replay_path=tmp_path / "replay.jsonl",
-        trace_path=tmp_path / "trace.jsonl",
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
-    )
-
-    result = NativeMatchService().run(request)
-    assert result.ticks_run > 0
-    assert result.winner is not None
 
 
 def test_window_scout_behavior_when_opponent_at_different_location_and_window_empty(tmp_path: Path) -> None:

@@ -133,8 +133,8 @@ def _independent_single_seed_v4_evaluation_id(root: Path) -> tuple[str, dict]:
             "supervision": "unsupervised",
             "tracing": "untraced",
         },
-        "rules_compatibility_id": "bytefray-rules-4",
-        "arena_alignment_mode": "ruleset_v4_seeded_placements",
+        "rules_compatibility_id": "bytefray-rules-6-alpha1",
+        "arena_alignment_mode": "ruleset_v6_alpha1_seeded_placements",
         "orientation_mode": "candidate_first_only",
         "placements": [{"seed": 1, "subject_start": 380, "opponent_start": 263}],
     }
@@ -188,7 +188,7 @@ def test_v2_artifact_records_effective_conditions_and_rules_id(two_agents: Path)
     # doesn't itself go stale on the next legitimate, reviewed bump.
     assert data["schema_version"] == 7
     assert data["identity_version"] == 7
-    assert data["rules_compatibility_id"] == "bytefray-rules-4"
+    assert data["rules_compatibility_id"] == "bytefray-rules-6-alpha1"
     conditions = data["effective_conditions"]
     assert conditions["tick_limit"] == 10
     assert conditions["arena_size"] == 512
@@ -223,13 +223,13 @@ def test_evaluation_cells_always_execute_under_ruleset_v1(two_agents: Path):
     service = EvaluationService()
     result = service.run(_request(two_agents))
     data = json.loads(result.state_path.read_text(encoding="utf-8"))
-    assert data["rules_compatibility_id"] == "bytefray-rules-4"
+    assert data["rules_compatibility_id"] == "bytefray-rules-6-alpha1"
     assert EVALUATION_RULES_COMPATIBILITY_ID == "bytefray-rules-1"
     assert data["cells"]
     for cell in data["cells"]:
         cell_dir = result.state_path.parent / cell["artifact_dir"]
         match_result_data = json.loads((cell_dir / "result.json").read_text(encoding="utf-8"))
-        assert match_result_data["ruleset_id"] == "bytefray-rules-4"
+        assert match_result_data["ruleset_id"] == "bytefray-rules-6-alpha1"
 
 
 def test_evaluate_cli_exposes_the_product_ruleset_choices_excluding_retired_v4_alphas(
@@ -252,11 +252,12 @@ def test_evaluate_cli_exposes_the_product_ruleset_choices_excluding_retired_v4_a
         evaluate_main(["--help"])
     out = capsys.readouterr().out
     assert (
-        "--ruleset {bytefray-rules-4,bytefray-rules-6-research-scale,bytefray-rules-6-research-scale-move,bytefray-rules-6-research-scale-move-proportional,bytefray-rules-6-research-capture-hold-k2,bytefray-rules-6-research-capture-hold-k2-disruption-slot1,bytefray-rules-6-research-disruption-slot1,bytefray-rules-6-research-capture-hold-k2-disruption-slot1-mirrored-passes,bytefray-rules-6-research-disruption-slot1-mirrored-passes,bytefray-rules-6-research-capture-hold-k2-disruption-slot1-anchor-before-core,bytefray-rules-6-research-disruption-slot1-anchor-before-core,bytefray-rules-6-research-sensing-r32,bytefray-rules-6-research-disruption-slot1-sensing-r32,bytefray-rules-6-research-sensing-active-w27,bytefray-rules-6-research-disruption-slot1-sensing-active-w27}"
+        "--ruleset {bytefray-rules-6-alpha1,bytefray-rules-6-research-scale,bytefray-rules-6-research-scale-move,bytefray-rules-6-research-scale-move-proportional,bytefray-rules-6-research-capture-hold-k2,bytefray-rules-6-research-capture-hold-k2-disruption-slot1,bytefray-rules-6-research-disruption-slot1,bytefray-rules-6-research-capture-hold-k2-disruption-slot1-mirrored-passes,bytefray-rules-6-research-disruption-slot1-mirrored-passes,bytefray-rules-6-research-capture-hold-k2-disruption-slot1-anchor-before-core,bytefray-rules-6-research-disruption-slot1-anchor-before-core,bytefray-rules-6-research-sensing-r32,bytefray-rules-6-research-disruption-slot1-sensing-r32,bytefray-rules-6-research-sensing-active-w27,bytefray-rules-6-research-disruption-slot1-sensing-active-w27}"
         in out
     )
     assert "{bytefray-rules-1" not in out
     assert "{bytefray-rules-2" not in out
+    assert "{bytefray-rules-4," not in out
     assert "bytefray-rules-4-alpha1" not in out
     assert "bytefray-rules-4-alpha2" not in out
 
@@ -305,7 +306,7 @@ def test_v2_execution_context_recorded_for_freshly_executed_cells(two_agents: Pa
     data = json.loads(result.state_path.read_text(encoding="utf-8"))
     assert len(data["execution_contexts"]) == 1
     context = data["execution_contexts"][0]
-    assert context["rules_compatibility_id"] == "bytefray-rules-4"
+    assert context["rules_compatibility_id"] == "bytefray-rules-6-alpha1"
     for cell in data["cells"]:
         assert cell["execution_context_id"] == context["context_id"]
 
