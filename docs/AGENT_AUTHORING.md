@@ -25,8 +25,9 @@ For current V5 process-agent authoring, select Agent API v2 explicitly:
 bytefray agents create my_process_agent --api-version 2 --template annotated
 ```
 
-This agent uses permanent `bytefray-rules-4` when the ruleset is omitted.
-V5 introduces no separate Ruleset 5. The examples below that omit
+This agent runs under Active Sensing (`bytefray-rules-6-alpha1`) when the
+ruleset is omitted; Classic (`bytefray-rules-4`) was retired after
+5.1.0-alpha.1. The examples below that omit
 `--api-version` retain the CLI's default of **Agent API v1**, which uses
 `bytefray-rules-2` for an omitted ruleset. Choose opponents with the same
 API generation; API v1 and v2 agents cannot share a match. See
@@ -139,14 +140,12 @@ action contract the generated files satisfy.
 
 The scaffold command supports both API generations; the commands above use
 its API v1 default. For an API v2 process agent, use `--api-version 2` or
-study the packaged `v5_*` and `v4_*` agents, which implement `reset(context)`,
+study the packaged `v6_*` agents, which implement `reset(context)`,
 `declare_processes()`, and `act(observation)` as specified in
-[AGENT_API_V2.md](AGENT_API_V2.md). Omitting `--ruleset` resolves
-automatically to `bytefray-rules-4`, the stable v4 gameplay contract, from
-your agent's own declared `api_version: 2` — the only Ruleset any process
-agent can be run under (`bytefray-rules-4-alpha1`/`bytefray-rules-4-alpha2`
-were retired from executable registration by V6 Phase 2B.10 Scope B; see
-[COMPATIBILITY.md](COMPATIBILITY.md)). API-v1 and API-v2 entrants cannot be
+[AGENT_API_V2.md](AGENT_API_V2.md). Omitting `--ruleset` resolves to
+`bytefray-rules-6-alpha1` (Active Sensing) — the only Ruleset any process
+agent can be run under (`bytefray-rules-4` and its two alphas are retired;
+see [COMPATIBILITY.md](COMPATIBILITY.md) and [releases/CLASSIC_RULESET_RETIREMENT.md](releases/CLASSIC_RULESET_RETIREMENT.md)). API-v1 and API-v2 entrants cannot be
 mixed in one match.
 
 ## Learning from the bundled agents
@@ -180,17 +179,13 @@ engage with at all:
 Neither is an optimal strategy, and both usually hold less territory than
 the pure expanders -- seeing that trade-off priced is the point.
 
-Five additional `v4_*` starters demonstrate Agent API v2 spatial behavior:
-single-process claiming, concentrated attack, local defense, scouting, and a
-two-process defender/scout split. They use absolute arena addresses for
-`READ`/`WRITE` and signed relative deltas for `MOVE`.
-
-`v4_quorum` is a sixth, more advanced `v4_*` example -- its Designer display
-name says "Advanced Example" for exactly this reason. It coordinates six
-independently-moving processes sharing one entrant-wide quota, with shared
-contact memory and role-specific offense/defense behavior. It is not a
-starting point for a first agent; read the five above first, then see its
-bundled `README.md` for what to look for in a replay.
+Three `v6_*` starters demonstrate Agent API v2 under Active Sensing:
+Window Scout (paid SENSE, delayed anonymous receipt, informed MOVE and
+WRITE), Watchful Keeper (delivered READ ownership and defensive response) and
+Roaming Reacquirer (rescanning stale contacts and searching anew). They use
+absolute arena addresses for `READ`/`WRITE`/`SENSE` and signed relative
+deltas for `MOVE`. The Classic `v4_*` and `v5_*` starters of earlier
+releases are no longer installed.
 
 Together they demonstrate patterns worth reusing directly: tracking a
 pending `READ`'s address so a later call can act on `Observation.last_read`
@@ -363,10 +358,9 @@ and tells you which phase stalled. Pass `--no-trace` to skip writing
 
 Watchful Keeper is an experimental Active Sensing starter. Create a personal copy
 with **New Agent → Watchful Keeper — personal copy**, or
-`bytefray agents create my_keeper --template watchful_keeper`. Select
-**Active Sensing (Alpha)** (`bytefray-rules-6-alpha1`; the Ruleset selector's
-tooltip shows the ID) explicitly before Validate or a match; the starter
-choice leaves the stable **Classic** (`bytefray-rules-4`) default in place. The copy preserves bundled source,
+`bytefray agents create my_keeper --template watchful_keeper`. Every
+Designer surface runs **Active Sensing (Alpha)** (`bytefray-rules-6-alpha1`),
+so there is no Ruleset to select before Validate or a match. The copy preserves bundled source,
 capabilities and presets and cannot overwrite an existing agent.
 
 Keeper stays at its observed own core. A delivered READ showing non-own

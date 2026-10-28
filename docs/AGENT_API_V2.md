@@ -5,9 +5,21 @@ API v2: both the frozen programming contract and how to use it to build an
 agent that can actually win. It is written to be read in order the first
 time and used as a reference afterwards.
 
-Agent API v2 is the stable Python contract for the permanent
-`bytefray-rules-4` identity — the only Ruleset any process agent can be
-run under today. The two v4 prerelease identities that used it before
+Agent API v2 is the stable Python contract for Active Sensing
+(`bytefray-rules-6-alpha1`) — the only Ruleset any process agent can be run
+under on this development line — and was the contract for the permanent
+`bytefray-rules-4` identity (Classic), retired after 5.1.0-alpha.1 (see
+[releases/CLASSIC_RULESET_RETIREMENT.md](releases/CLASSIC_RULESET_RETIREMENT.md)).
+
+> **Classic examples.** The strategy discussion below was written for
+> Classic and its `v4_*`/`v5_*` starters, which are no longer installed.
+> Its contract material (lifecycle, processes, quota, actions, feedback)
+> applies unchanged under Active Sensing, except that
+> `visible_enemy_anchor_addresses` is always empty: contacts arrive only as
+> SENSE receipts in `previous_sense_anchors`. Read the passages that rely on
+> passive visibility as history.
+
+The two v4 prerelease identities that used it before
 promotion, `bytefray-rules-4-alpha1` and `bytefray-rules-4-alpha2`, were
 retired from executable registration by V6 Phase 2B.10 Scope B; their
 historical artifacts remain fully readable (see
@@ -683,16 +695,16 @@ one, and `v5_dual_team` derives both its shares from one.
 
 ```bash
 # One value. Repeat --a-param for more; -b-/-c- for the other slots.
-bytefray run --a-type v5_core_defender --b-type v5_region_attacker \
-    --a-param inspections_per_tick=8
+bytefray run --a-type v6_watchful_keeper --b-type v6_window_scout \
+    --a-param scan_interval=8
 
 # A declared preset.
-bytefray run --a-type v5_core_defender --b-type v5_region_attacker \
-    --a-preset vigilant
+bytefray run --a-type v6_watchful_keeper --b-type v6_window_scout \
+    --a-preset standard
 
 # A preset with one value overridden -- the override wins.
-bytefray run --a-type v5_scout_striker --b-type v5_core_defender \
-    --a-preset persistent --a-param search_stride_divisor=2
+bytefray run --a-type v6_window_scout --b-type v6_watchful_keeper \
+    --a-preset standard --a-param search_interval=2
 ```
 
 The pre-existing `BYTEFRAY_AGENT_A_PARAMS_JSON` environment variable (a JSON

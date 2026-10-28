@@ -2,10 +2,11 @@
 
 ## Canonical writer
 
-Native Ruleset-v1/v2 matches use `battle2.replay` schema version 3. Every v4
-Ruleset identity -- the stable `bytefray-rules-4` (`v4.0.0-rc1` Phase 2) and
-both prerelease alphas, `bytefray-rules-4-alpha1`/`-alpha2` -- uses schema
-version 4 so process state is present without changing the historical v3
+Native Ruleset-v1/v2 matches use `battle2.replay` schema version 3. Every
+process-agent Ruleset identity -- Active Sensing `bytefray-rules-6-alpha1`,
+the research identities, and the retired `bytefray-rules-4` (`v4.0.0-rc1`
+Phase 2) and its prerelease alphas, `bytefray-rules-4-alpha1`/`-alpha2` --
+uses schema version 4 so process state is present without changing the historical v3
 wire shape; the schema did not bump at promotion, since nothing about its
 wire shape changed. One authoritative
 finalization path (`match_service._finalize_native_artifacts`) converts VM and

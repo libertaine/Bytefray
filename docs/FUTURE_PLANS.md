@@ -283,9 +283,13 @@ ruleset identity, never a silent modification of an existing one.
 
 Current status across the repository:
 
-- **`bytefray-rules-4`** — **Active Stable Production Control.** Shipped in
-  v4.0.0 (promoted from alpha2). The sole executable V4 ruleset and current
-  default for matches and tournaments.
+- **`bytefray-rules-6-alpha1`** — **Active Sensing (Alpha); the only
+  product Ruleset.** The default for matches, tournaments, evaluations and
+  agent development since Classic's retirement.
+- **`bytefray-rules-4`** — **Retired from execution after 5.1.0-alpha.1.**
+  Shipped in v4.0.0 (promoted from alpha2) as Classic, the stable default
+  through 5.1.0-alpha.1. Historical artifacts remain readable; see
+  [releases/CLASSIC_RULESET_RETIREMENT.md](releases/CLASSIC_RULESET_RETIREMENT.md).
 - **`bytefray-rules-1`** — **Historical Stable Ruleset (shipped v1.0.0).**
   Frozen 1.0 gameplay. Audited in V6 Phase 2B.11 (Scope C) for retirement
   from active execution registration. Retained indefinitely as a permanent
@@ -300,7 +304,7 @@ Current status across the repository:
 - **`bytefray-rules-4-alpha1`, `bytefray-rules-4-alpha2`** — **Retired from
   execution in V6 Phase 2B.10.** Prerelease identities retired after proving
   that `bytefray-rules-4` reproduces alpha2's exact gameplay via frozen
-  golden characterization (`engine/tests/test_v4_stable_ruleset_equivalence.py`).
+  golden characterization (that test retired with Classic; see the 5.1.0-alpha.1 tag).
   Historical artifacts remain fully readable and replayable.
 - **`bytefray-rules-6-research-scale`** — **Active Research Ruleset.**
   Remains the retained variable-arena research control from the completed V6
