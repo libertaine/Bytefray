@@ -1,4 +1,4 @@
-"""M1-6B Linux execution witness; no product runtime modifications."""
+"""Native Linux replay and current Active Sensing Designer execution witness."""
 
 import hashlib
 import importlib.metadata
@@ -18,7 +18,8 @@ os.environ.update(
     BYTEFRAY_ROOT=str(BASE / "designer-data"),
     BYTEFRAY_LINUX_WITNESS=str(EV / "viewer_states.jsonl"),
 )
-from battle_engine.result_model import read_result
+from battle_engine.result_model import read_result, verify_result_replay
+from battle_engine.ruleset_names import ACTIVE_SENSING_DISPLAY_NAME
 from battle_engine.sensing_demo import run_sensing_demo
 from battle_engine.sensing_playback import verify_demonstration
 from PySide6.QtCore import QProcess, Qt, QTimer, qVersion
@@ -27,6 +28,7 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QDialogButtonBox
 
 from app.agent_designer import AgentDesigner
+from app.services.ruleset_options import DESIGNER_RULESET_ID
 from app.views.development import NewAgentDialog
 
 app = QApplication([])
@@ -104,7 +106,7 @@ def window_for(pid):
                 "--pid",
                 str(pid),
                 "--name",
-                "Experimental sensing replay",
+                f"{ACTIVE_SENSING_DISPLAY_NAME} replay",
             ],
             capture_output=True,
             text=True,
@@ -342,8 +344,9 @@ try:
     d = AgentDesigner()
     d.show()
     pump()
-    assert d.isVisible() and d.development.selected_ruleset_id() == "bytefray-rules-4"
-    assert d.advanced.ruleset.currentData() == "bytefray-rules-4"
+    assert d.isVisible() and DESIGNER_RULESET_ID == "bytefray-rules-6-alpha1"
+    assert not hasattr(d.development, "rulesetCombo")
+    assert not hasattr(d.advanced, "ruleset")
     capture_qt("01_designer_default.png", d)
     d.tabs.setCurrentWidget(d.development)
 
@@ -362,20 +365,17 @@ try:
     pump()
     assert (d.data_root / "agents/my_window_scout/agent.py").is_file()
     d.development.selectAgent("my_window_scout")
-    assert not d.development.btnTest.isEnabled()
-    QTest.mouseClick(d.development.btnValidate, Qt.LeftButton)
-    wait_process(d)
-    assert "capabilit" in d.development.statusLabel.text().lower()
-    record("designer_stable_rejection", status=d.development.statusLabel.text())
-    capture_qt("02_capability_rejection.png", d)
-    d.development.rulesetCombo.setCurrentIndex(
-        d.development.rulesetCombo.findData("bytefray-rules-6-alpha1")
-    )
+    assert d.development.btnTest.isEnabled()
+    record("designer_sensing_agent_selected", agent="my_window_scout", test_enabled=True)
+    capture_qt("02_sensing_agent_selected.png", d)
     advanced = d.advanced
     d.tabs.setCurrentWidget(advanced)
-    advanced.ruleset.setCurrentIndex(advanced.ruleset.findData("bytefray-rules-6-alpha1"))
+    assert advanced.agentA.findData("my_window_scout") >= 0
+    assert advanced.agentB.findData("v6_watchful_keeper") >= 0
     advanced.agentA.setCurrentIndex(advanced.agentA.findData("my_window_scout"))
-    advanced.agentB.setCurrentIndex(advanced.agentB.findData("v4_scout"))
+    advanced.agentB.setCurrentIndex(advanced.agentB.findData("v6_watchful_keeper"))
+    assert advanced.agentA.currentData() == "my_window_scout"
+    assert advanced.agentB.currentData() == "v6_watchful_keeper"
     advanced.ticks.setValue(5)
     advanced.tabs.setCurrentIndex(1)
     advanced.schemaA._controls["search_interval"].setValue(2)
@@ -394,6 +394,7 @@ try:
     wait_process(d)
     first_path = Path(d._last_result_path)
     first = read_result(first_path)
+    assert verify_result_replay(first_path)
     assert first.ruleset_id == "bytefray-rules-6-alpha1"
     assert first.entrants[0]["metadata"]["parameters"] == {"search_interval": 2, "move_step": 32}
     record(
@@ -439,6 +440,8 @@ try:
     wait_process(d)
     second_path = Path(d._last_result_path)
     second = read_result(second_path)
+    assert verify_result_replay(second_path)
+    assert second.ruleset_id == "bytefray-rules-6-alpha1"
     assert second_path != first_path and second.result_id != first.result_id
     assert second.entrants[0]["metadata"]["parameters"] == {"search_interval": 3, "move_step": 16}
     assert before == {
