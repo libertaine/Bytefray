@@ -81,8 +81,9 @@ jobs:
         # coverage from a runner that's already provisioned for this job.
         # Phase 2B.12 removed test_supervised_runtime.py with the retired
         # API-v1 controller. API-v2 supervision is covered by validation,
-        # development-test forfeits, process-runtime integration, and the
-        # Active Sensing direct/worker parity tests instead.
+        # development-test forfeits, process-runtime integration (including
+        # cleanup of already-started workers after a later startup failure),
+        # and the Active Sensing direct/worker parity tests instead.
         run: >-
           python -m pytest
           engine/tests/test_process_containment.py

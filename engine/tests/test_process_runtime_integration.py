@@ -17,11 +17,13 @@ from fractions import Fraction
 from pathlib import Path
 
 import pytest
+from _hang_safety import hang_safety_timeout
 from battle_engine.agent_api import ProcessDeclaration
 from battle_engine.agent_evaluation import EvaluationRequest, EvaluationService
 from battle_engine.agent_test import DevelopmentTestOutcome
 from battle_engine.agent_test import test_agent as run_agent_test
 from battle_engine.agent_validation import AgentValidationFailedError, validate_agent
+from battle_engine.agent_worker import AgentWorkerHandle
 from battle_engine.agents import resolve_agent
 from battle_engine.cli import main as run_cli
 from battle_engine.config import Config
@@ -43,6 +45,7 @@ from battle_engine.replay import (
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V6_ALPHA1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+    RULESET_V6_ALPHA1,
 )
 
 
@@ -337,6 +340,67 @@ def test_v4_production_schema4_roundtrip_determinism_and_supervision(
     ]
     assert len(supervised_ticks[0].processes) == 3
     assert all(agent.metadata["api_version"] == 2 for agent in supervised_result.agents)
+
+
+RESET_HANGS_SOURCE = """
+import time
+
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
+
+class Agent:
+    def reset(self, context):
+        time.sleep(3600)
+    def declare_processes(self):
+        return [ProcessDeclaration("hung", 31, 1.0)]
+    def act(self, observation):
+        return AgentAction(ActionKindV2.MOVE, 0)
+
+def create_agent():
+    return Agent()
+"""
+
+
+def test_supervised_startup_failure_closes_already_started_workers(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A later entrant's failed startup must not leave an earlier worker running.
+
+    API-v2 equivalent of the retired API-v1 supervised-runtime suite's
+    ``test_initialization_failure_cleans_up_already_started_workers``: the
+    first entrant loads, resets and declares in its own worker; the second
+    entrant's reset hangs past the call timeout. Every worker the controller
+    started, including the healthy first one, must have exited by the time
+    the initialization error reaches the caller.
+    """
+
+    _write_agent(tmp_path, "passive", PASSIVE_SOURCE)
+    _write_agent(tmp_path, "reset_hangs", RESET_HANGS_SOURCE)
+    entrants = (
+        MatchEntrant.python("A", "passive", 0, resolve_agent(tmp_path, "passive")),
+        MatchEntrant.python("B", "reset_hangs", 256, resolve_agent(tmp_path, "reset_hangs")),
+    )
+    started: list[AgentWorkerHandle] = []
+    original_start = AgentWorkerHandle.start
+
+    def recording_start(handle: AgentWorkerHandle) -> None:
+        started.append(handle)
+        original_start(handle)
+
+    monkeypatch.setattr(AgentWorkerHandle, "start", recording_start)
+
+    with hang_safety_timeout(60), pytest.raises(PythonEntrantInitializationError) as caught:
+        ProcessMatchController.from_python_entrants(
+            Config(seed=1, arena_size=512, instr_per_tick=8),
+            entrants,
+            5,
+            ruleset_policy=RULESET_V6_ALPHA1,
+            agent_call_timeout=1.0,
+        )
+
+    diagnostic = caught.value.diagnostic
+    assert (diagnostic.agent_id, diagnostic.slot, diagnostic.stage) == ("B", 1, "reset")
+    assert [(handle.agent_id, handle.slot) for handle in started] == [("A", 0), ("B", 1)]
+    assert all(handle.exit_code is not None for handle in started)
 
 
 COUNTER_WRITER_SOURCE = """
