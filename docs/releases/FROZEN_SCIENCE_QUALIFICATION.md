@@ -125,7 +125,9 @@ On `ubuntu-latest` and `windows-latest`:
    modification, every inventory entry exists, and the snapshot's **own**
    `load_protocol(verify=True)` and `verify_inherited_sources()` pass.
 4. `run-historical` runs the inventory with the invocations it was qualified
-   with, with temporary directories outside the snapshot:
+   with, with short temporary directories outside the snapshot (`/tmp` on
+   Linux, as the recorded native POSIX qualification used: a Seal 07 native
+   test binds an `AF_UNIX` socket under `tmp_path`, limited to 108 bytes):
    - the 29 E9 v2 modules (1,338 cases) with the command the snapshot's
      `tools/research/v6/e9/v2/qualification_run.py` builds for every E9 v2
      attempt: `-X utf8`, `addopts=-q`, no cache provider, plugin autoload

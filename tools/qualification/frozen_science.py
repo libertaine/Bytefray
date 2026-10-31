@@ -262,12 +262,15 @@ def run_historical(source: Path, work: Path, policy: dict[str, Any] | None = Non
             outcome[entry["node_id"]] = check_preservation_pins(source, entry)
         except FrozenScienceError as exc:
             problems.append(f"{entry['node_id']}: {exc}")
-    for run in inventory["runs"]:
+    for index, run in enumerate(inventory["runs"]):
         name = run["name"]
         report = work / f"{name}.xml"
-        (work / name).mkdir(parents=True, exist_ok=False)
+        # Short temp paths, as the recorded native POSIX qualification used
+        # (/tmp/<attempt>/temp): AF_UNIX socket paths are limited to 108 bytes.
+        temp = work / f"t{index}"
+        temp.mkdir(parents=True, exist_ok=False)
         command = [sys.executable, "-X", "utf8", "-m", "pytest", *run["selection"], *run["pytest_args"],
-                   "--basetemp", str(work / name / "temp"), "--junitxml", str(report)]
+                   "--basetemp", str(temp / "temp"), "--junitxml", str(report)]
         for node in run["deselect"]:
             command += ["--deselect", node]
         print(f"[{name}] {' '.join(command)}", flush=True)

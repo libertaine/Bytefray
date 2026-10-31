@@ -101,16 +101,22 @@ jobs:
           python -m pip freeze
       - name: Verify snapshot identity and its own frozen E9 boundary
         run: python current/tools/qualification/frozen_science.py verify-snapshot --source snapshot
+      - name: Choose a short work root
+        # The native POSIX Seal 07 test binds an AF_UNIX socket under its
+        # tmp_path (108-byte limit); the recorded qualification used /tmp.
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then work=/tmp/e9h; else work="$RUNNER_TEMP/e9h"; fi
+          echo "E9_WORK=$work" >> "$GITHUB_ENV"
       - name: Run the original inventory with its recorded invocations
         # E9 v2 modules run through the qualification_run.py command and its
         # entropy/match-execution guard; every run must report exactly its
         # pinned case count with no failure and no error.
         run: >-
           python current/tools/qualification/frozen_science.py run-historical
-          --source snapshot --work "$RUNNER_TEMP/e9-historical"
+          --source snapshot --work "$E9_WORK"
       - name: Upload the JUnit reports
         if: ${{ always() }}
         uses: actions/upload-artifact@v6
         with:
           name: e9-historical-junit-${{ matrix.platform }}
-          path: ${{ runner.temp }}/e9-historical/*.xml
+          path: ${{ env.E9_WORK }}/*.xml
