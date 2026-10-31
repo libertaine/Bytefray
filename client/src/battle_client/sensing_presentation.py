@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from battle_engine.rules import BYTEFRAY_RULESET_V4_ID, BYTEFRAY_RULESET_V6_ALPHA1_ID
+from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
 from battle_engine.ruleset_names import ACTIVE_SENSING_DISPLAY_NAME, ruleset_name_with_id
 from battle_engine.sensing_playback import ExchangePhase
 
@@ -346,9 +346,7 @@ ALPHA1_SENSING_GUIDE: tuple[str, ...] = (
     ),
     (
         "This summary is informational. The Ruleset and the recorded artifacts remain authoritative; "
-        f"{ruleset_name_with_id(BYTEFRAY_RULESET_V4_ID)} stays the default, and "
-        f"{ACTIVE_SENSING_DISPLAY_NAME} is {BYTEFRAY_RULESET_V6_ALPHA1_ID} and must be selected "
-        "explicitly."
+        f"{ruleset_name_with_id(BYTEFRAY_RULESET_V6_ALPHA1_ID)} is Bytefray's Ruleset."
     ),
 )
 

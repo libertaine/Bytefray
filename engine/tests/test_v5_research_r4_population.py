@@ -11,6 +11,9 @@ prevents it, and the one additive analyzer field R4 introduced.
 import json
 from pathlib import Path
 
+import pytest
+
+from tools.research.v5 import r4_population
 from tools.research.v5.analyzer import analyze_match
 from tools.research.v5.r4_population import (
     ARENA_SIZE,
@@ -29,6 +32,15 @@ from tools.research.v5.r4_runner import build_evaluation_pairings
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PHASE0_CORPUS = REPO_ROOT / "runs" / "v5_phase0_corpus"
+RETAINED_STARTER_DIR = REPO_ROOT / "engine" / "src" / "battle_engine" / "data" / "starter_agents"
+
+
+@pytest.fixture(autouse=True)
+def _retained_canonical_members(monkeypatch: pytest.MonkeyPatch) -> None:
+    # The Classic retirement stopped installing v4_quorum into agents/, but
+    # kept its package byte for byte. The R4 tool itself is left unchanged:
+    # reproducing R4 requires 5.1.0-alpha.1, as its frozen records pin.
+    monkeypatch.setattr(r4_population, "CANONICAL_AGENTS_DIR", RETAINED_STARTER_DIR)
 
 
 def test_development_and_evaluation_seeds_are_disjoint() -> None:

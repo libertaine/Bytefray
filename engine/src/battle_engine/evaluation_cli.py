@@ -59,7 +59,7 @@ from battle_engine.evaluation_presets import (
 from battle_engine.evaluation_service import EvaluationService
 from battle_engine.paths import get_data_root
 from battle_engine.ruleset_policy import (
-    BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
@@ -74,7 +74,28 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID,
+    ruleset_argument,
 )
+
+# Every Ruleset `agents evaluate --ruleset` accepts: Active Sensing, then the
+# explicitly selected research identities.
+_EVALUATE_RULESET_CHOICES = [
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID,
+]
 
 
 def rerun_command(
@@ -189,30 +210,15 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--ruleset",
-        choices=[
-            BYTEFRAY_RULESET_V4_ID,
-            BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
-            BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_ID,
-            BYTEFRAY_RULESET_V6_RESEARCH_SCALE_MOVE_PROPORTIONAL_ID,
-            BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
-            BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
-            BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
-            BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
-            BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
-            BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
-            BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
-            BYTEFRAY_RULESET_V6_RESEARCH_SENSING_R32_ID,
-            BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID,
-            BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID,
-            BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID,
-        ],
+        type=ruleset_argument(_EVALUATE_RULESET_CHOICES),
+        choices=_EVALUATE_RULESET_CHOICES,
         default=None,
         help=(
-            f"gameplay Ruleset identity. {BYTEFRAY_RULESET_V4_ID} is selected "
-            "automatically when this flag is omitted (and no --preset "
-            f"supplies one). {BYTEFRAY_RULESET_V4_ID} runs Agent API v2 "
+            f"gameplay Ruleset identity. {BYTEFRAY_RULESET_V6_ALPHA1_ID} "
+            "(Active Sensing) is selected automatically when this flag is "
+            "omitted (and no --preset supplies one). It runs Agent API v2 "
             "process entrants through the same production match service "
-            "under the stable v4 seeded-placement methodology: arena pinned "
+            "under the seeded-placement methodology: arena pinned "
             f"to {STANDARD_V4_ARENA_SIZE}, {len(STANDARD_V4_SEEDS)} "
             "deterministic placement samples by default, both orientations "
             "paired over the same seat-bound geometry. See "
@@ -220,10 +226,10 @@ def _parser() -> argparse.ArgumentParser:
             f"docs/research/v4/V4_RC1_PHASE1_EVALUATION_METHODOLOGY.md. "
             f"{BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID} is the V6 Phase 4B "
             "variable-arena research identity: behaviorally identical to "
-            f"{BYTEFRAY_RULESET_V4_ID} (same scheduler, seeded placement, "
+            "the retired stable bytefray-rules-4 (same scheduler, seeded placement, "
             "process selection, scoring, quota, and termination), but "
             "--arena-size may be set to any value in the Phase 4A research "
-            "range instead of being pinned to the stable-v4 control arena. "
+            "range instead of being pinned to the 512-cell control arena. "
             "Not selected automatically for any request; must be named "
             "explicitly. See "
             "docs/research/v6/V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md. "
@@ -1093,7 +1099,7 @@ def main(argv: list[str] | None = None) -> int:
         if ruleset_id is None and preset is not None:
             ruleset_id = preset.ruleset_id
         if ruleset_id is None:
-            ruleset_id = BYTEFRAY_RULESET_V4_ID
+            ruleset_id = BYTEFRAY_RULESET_V6_ALPHA1_ID
 
         if args.seeds is not None or args.seed_range is not None:
             seeds = _resolve_seeds(args)
@@ -1103,7 +1109,7 @@ def main(argv: list[str] | None = None) -> int:
             seeds = tuple(range(preset.seed_range[0], preset.seed_range[1] + 1))
         else:
             # v4.0.0-rc1 Phase 1 (research report Sec H.1 item 2): the
-            # stable v4 methodology's own standard sample set -- an
+            # seeded-placement methodology's own standard sample set -- an
             # explicit --seeds/--seed-range or --preset seed selection
             # always overrides this (see the branches above, checked
             # first).

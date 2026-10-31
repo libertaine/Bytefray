@@ -8,10 +8,16 @@ from __future__ import annotations
 import hashlib
 import json
 import pathlib
+import subprocess
+import sys
 import tempfile
 
 from battle_client.sensing_presentation import load_sensing_presentation
 from battle_client.session import ReplaySession
+from battle_engine.agent_capabilities import (
+    AgentCapabilityMismatchError,
+    preflight_agent_capabilities,
+)
 from battle_engine.agent_validation import (
     AgentValidationFailedError,
     validate_agent,
@@ -20,6 +26,7 @@ from battle_engine.rules import (
     BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_ALPHA1_ID,
 )
+from battle_engine.ruleset_policy import UnknownRulesetError
 from battle_engine.sensing_demo import (
     run_sensing_demo,
 )
@@ -110,18 +117,57 @@ def run_negative_cases(tmp_path: pathlib.Path) -> None:
     assert "Optional demonstration invalid" in pres.notice
     print("[Negative Case 3] Invalid sidecar: factual replay preserved without false teaching claim.")
 
-    # 4. Capability Mismatch
+    # 4. Retired Ruleset: rejected before capability preflight or execution.
+    rejected_dir = tmp_path / "retired_validation"
+    rejected_trace = rejected_dir / "trace.jsonl"
+    assert not rejected_dir.exists(), "Retirement case needs a fresh output path"
     try:
-        validate_agent("v6_window_scout", ruleset_id=BYTEFRAY_RULESET_V4_ID)
-        raise AssertionError("Expected AgentValidationFailedError on ruleset v4")
+        validate_agent(
+            "v6_window_scout", ruleset_id=BYTEFRAY_RULESET_V4_ID, trace_path=rejected_trace
+        )
+        raise AssertionError("Expected retired Classic validation to fail")
     except AgentValidationFailedError as exc:
-        assert exc.diagnostic.code == "agent_capability_unsupported"
-        print("[Negative Case 4] Capability mismatch: SENSE correctly rejected on ruleset v4.")
+        # Unavailable selection is an expected configuration failure (§6.3 of
+        # agent_validation.md); the CLI rejects during argument parsing.
+        assert exc.diagnostic.code == "ruleset_unavailable"
+        assert exc.diagnostic.stage == "configuration"
+        assert exc.diagnostic.exception_type == "UnknownRulesetError"
+        assert isinstance(exc.__cause__, UnknownRulesetError)
+        assert exc.__cause__.ruleset_id == BYTEFRAY_RULESET_V4_ID
+        assert "'bytefray-rules-4' is retired and cannot run new matches" in exc.diagnostic.message
+    assert not rejected_dir.exists(), "Rejected validation must not create execution artifacts"
+    rejected = subprocess.run(
+        [
+            sys.executable, "-m", "battle_engine", "agents", "validate", "v6_window_scout",
+            "--ruleset", BYTEFRAY_RULESET_V4_ID, "--trace-path", str(rejected_trace),
+        ],
+        capture_output=True, text=True, check=False,
+    )
+    assert rejected.returncode == 2, rejected
+    assert rejected.stdout == "", rejected.stdout
+    assert "'bytefray-rules-4' is retired and cannot run new matches" in rejected.stderr
+    assert "agent_capability_unsupported" not in rejected.stderr
+    assert "Traceback" not in rejected.stderr
+    assert not rejected_dir.exists(), "Rejected CLI must not create execution artifacts"
+    print("[Negative Case 4] Classic retired: library diagnostic, CLI exit 2, no artifacts verified.")
 
     # 5. Compatible Capability Selection
     validation_res = validate_agent("v6_window_scout", ruleset_id=BYTEFRAY_RULESET_V6_ALPHA1_ID)
     assert validation_res.api_version == 2
     print("[Verification 5] Window Scout confirmed compatible under bytefray-rules-6-alpha1.")
+
+    # 6. Isolated capability preflight with no available capabilities. This
+    # exercises the mismatch contract without registering or executing a policy.
+    try:
+        preflight_agent_capabilities(
+            {"capabilities": {"version": 1, "required": ["sense"]}},
+            available=(), ruleset_id=BYTEFRAY_RULESET_V6_ALPHA1_ID,
+        )
+        raise AssertionError("Expected capability preflight to reject missing sense")
+    except AgentCapabilityMismatchError as exc:
+        assert exc.code == "agent_capability_unsupported"
+        assert "does not provide required capabilities: sense" in str(exc)
+    print("[Negative Case 6] Isolated capability preflight: missing SENSE fails closed.")
 
 
 if __name__ == "__main__":

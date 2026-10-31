@@ -24,8 +24,8 @@ from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchS
 from battle_engine.placement import resolve_direct_match_starts
 from battle_engine.replay import KillDeathEvent, MatchResult, TickSnapshot, iter_replay
 from battle_engine.ruleset_policy import (
-    BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
 )
 
 from tools.research.v6.e2.capture_analyzer import analyze_replay, first_mover_seat
@@ -249,8 +249,8 @@ def test_scripted_interrupted_streak_counts_onsets_recoveries_and_one_completion
     assert telemetry["winner_at_zero_core"] is False
 
 
-def test_same_script_under_v4_is_an_immediate_k1_capture(data_root: Path) -> None:
-    replay = run(data_root, "streak_attacker", "streak_victim", ruleset_id=BYTEFRAY_RULESET_V4_ID)
+def test_same_script_under_the_k1_control_is_an_immediate_capture(data_root: Path) -> None:
+    replay = run(data_root, "streak_attacker", "streak_victim", ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID)
     result, events = engine_record(replay)
     assert (result.winner, result.ticks) == ("A", 1)
     assert events == [(1, "kill", "B", "A")]
@@ -334,7 +334,7 @@ def test_seed_23_core_wrapping_the_arena_end_is_rebuilt_from_its_start(data_root
 
     # The same geometry under V4: A never loses a cell and owns all eight,
     # including the two past the arena end.
-    v4 = analyze_replay(run(data_root, "v4_probe", "v4_probe_twin", ruleset_id=BYTEFRAY_RULESET_V4_ID, seed=23))
+    v4 = analyze_replay(run(data_root, "v4_probe", "v4_probe_twin", ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID, seed=23))
     assert (v4["entrants"]["A"]["core_size"], v4["entrants"]["A"]["final_owned"]) == (8, 8)
     assert v4["consistent_with_engine"] is True
 

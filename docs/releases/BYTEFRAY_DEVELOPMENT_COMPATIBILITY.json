@@ -1,0 +1,137 @@
+{
+  "schema": "bytefray.release_compatibility",
+  "schema_version": 1,
+  "status": "proposed",
+  "status_note": "Proposed record for the development line after 5.1.0-alpha.1, which retired Classic (bytefray-rules-4) and made Active Sensing the only Ruleset. The application version is a placeholder: docs/COMPONENT_VERSIONING.md section 4.1 classes removing an executable stable Ruleset and changing the default Ruleset as MAJOR, and the project lead decides the release number. Nothing on this line is qualified for release.",
+  "policy": "docs/COMPONENT_VERSIONING.md",
+  "application": {
+    "name": "Bytefray",
+    "version": "6.0.0-alpha.1",
+    "python_package_version": "6.0.0a1",
+    "git_tag": "v6.0.0-alpha.1",
+    "previous_release": "5.1.0-alpha.1",
+    "python": ["3.10", "3.11", "3.12", "3.13", "3.14"]
+  },
+  "rulesets": {
+    "default": "bytefray-rules-6-alpha1",
+    "offered": [
+      {
+        "id": "bytefray-rules-6-alpha1",
+        "display_name": "Active Sensing (Alpha)",
+        "stability": "experimental",
+        "selection": "the only Ruleset; used when no Ruleset is chosen"
+      }
+    ],
+    "surfaces": {
+      "bytefray run": ["bytefray-rules-6-alpha1"],
+      "bytefray agents test": ["bytefray-rules-6-alpha1"],
+      "bytefray agents validate": ["bytefray-rules-6-alpha1"],
+      "bytefray agents evaluate": ["bytefray-rules-6-alpha1"],
+      "bytefray tournament": ["bytefray-rules-6-alpha1"],
+      "Designer Simple": ["bytefray-rules-6-alpha1"],
+      "Designer Advanced": ["bytefray-rules-6-alpha1"],
+      "Designer Development": ["bytefray-rules-6-alpha1"],
+      "Designer Evaluation": ["bytefray-rules-6-alpha1"]
+    },
+    "research_only": {
+      "count": 14,
+      "selection": "`bytefray agents evaluate --ruleset <exact id>` or the Python API",
+      "promise": "Research reproduction only. Not a product feature; no stability or compatibility promise."
+    },
+    "historical_readable_not_executable": [
+      "bytefray-rules-1",
+      "bytefray-rules-2",
+      "bytefray-rules-2-alpha1",
+      "bytefray-rules-2-alpha11",
+      "bytefray-rules-3-alpha1",
+      "bytefray-rules-4",
+      "bytefray-rules-4-alpha1",
+      "bytefray-rules-4-alpha2"
+    ]
+  },
+  "agent_api": {
+    "executable": [2],
+    "retired_from_execution": [1],
+    "manifest_capabilities": {"version": 1, "known": ["sense"]}
+  },
+  "formats": {
+    "replay": {"schema": "battle2.replay", "writes": 4, "reads": [2, 3, 4]},
+    "result": {"schema": "battle2.result", "writes": 2, "reads": [1, 2]},
+    "trace": {"schema": "bytefray.agent_trace", "writes": 2, "reads": [1, 2]},
+    "evaluation": {"schema": "bytefray.evaluation", "writes": 7, "identity": 7},
+    "tournament": {"schema": "battle2.tournament", "writes": 1},
+    "agent_package": {"schema": "bytefray.agent_package", "writes": 1}
+  },
+  "spectator": {
+    "application": {
+      "name": "Bytefray Spectator",
+      "version": "0.1.0-alpha.1",
+      "release_status": "the build bundled with the 5.1.0-alpha.1 Windows installer; unchanged on this line",
+      "source": {
+        "repository": "libertaine/Bytefray-Spectator",
+        "branch": "designer-integration",
+        "commit": "14089a7bf624a5974346306a277e307ea8f48c07"
+      },
+      "windows_build": {
+        "file": "bytefray-spectator.exe",
+        "sha256": "8a3bd1a48430a0edd1faf8ca5c5b287ed1ecd06975c4e683f273562d428fd602",
+        "engine": "Godot 4.7.2.stable"
+      },
+      "distribution": "pinned by `tools/spectator_companion.json`, as in 5.1.0-alpha.1. `BYTEFRAY_SPECTATOR` overrides it or turns Spectator off. Source and wheel installs find Spectator through `BYTEFRAY_SPECTATOR`, `<data root>/spectator/` or `bytefray-spectator` on `PATH`"
+    },
+    "presentation_protocol": {
+      "manifest_schema": "bytefray.spectator.manifest",
+      "bytefray_writes": 2,
+      "spectator_reads": [1, 2],
+      "provenance": "bytefray_match",
+      "documents": {
+        "broadcast": {"schema": "bytefray.spectator.broadcast", "schema_version": 1},
+        "agent_a": {"schema": "bytefray.spectator.agent_view", "schema_version": 1}
+      }
+    },
+    "supported_matches": {
+      "rulesets": ["bytefray-rules-6-alpha1"],
+      "entrants": ["A", "B"],
+      "perspectives": ["broadcast", "agent_a"]
+    },
+    "designer_launch": {
+      "prefers_spectator": ["View Last Match", "Development test replay", "Evaluation replays"],
+      "always_pygame": ["Tournament results", "Replay History", "Advanced replay file browser"]
+    }
+  },
+  "platforms": [
+    {
+      "platform": "Windows 11 AMD64",
+      "bytefray": "Primary target. Automated suites pass on this line; not release-qualified.",
+      "spectator": "0.1.0-alpha.1, unchanged."
+    },
+    {
+      "platform": "Linux x86_64",
+      "bytefray": "Headless-first wheel. Not qualified on this line.",
+      "spectator": "Not qualified on this line."
+    },
+    {
+      "platform": "macOS",
+      "bytefray": "Not qualified.",
+      "spectator": "Not built or qualified."
+    },
+    {
+      "platform": "Windows ARM64",
+      "bytefray": "Not supported (AMD64 packaging only).",
+      "spectator": "Not built."
+    }
+  ],
+  "limitations": [
+    "Active Sensing (Alpha) is the only Ruleset. Classic (`bytefray-rules-4`) is retired: a request for it is rejected as retired, never remapped. Bytefray 5.1.0-alpha.1 still runs Classic.",
+    "Active Sensing requires an arena larger than 64 cells.",
+    "The bundled starter agents are the three Active Sensing starters (Window Scout, Watchful Keeper, Roaming Reacquirer). The V4 and V5 starters are no longer installed; copies already in a data folder are left alone and still run, but their passive contact finding never engages under Active Sensing.",
+    "Bytefray Spectator presents only completed two-entrant (A, B) matches; every other match opens in the Pygame viewer.",
+    "The Pygame viewer's passive Director, Fight Night and perspective modes apply only to historical and research replays; Active Sensing replays use the Agent A, Agent B and Omniscient views."
+  ],
+  "unsupported": [
+    "New Classic (`bytefray-rules-4`) matches, development tests, evaluations or tournaments.",
+    "Executing Agent API v1 agents, VM/blob agents or Redcode/pMARS warriors; their recorded artifacts stay readable.",
+    "New matches under the historical Rulesets listed as readable but not executable. The two retired research Rulesets remain executable for research reproduction only.",
+    "Spectator for three-entrant matches, tournaments or Replay History launches."
+  ]
+}

@@ -99,7 +99,7 @@ def test_v2_round_trip_via_adapt_any(tmp_path: Path):
     assert summary.candidate_id == "candidate"
     assert summary.lifecycle_state.value == "finished"
     assert summary.lifecycle_state.confidence == FieldConfidence.RECORDED
-    assert summary.rules_compatibility_id.value == "bytefray-rules-4"
+    assert summary.rules_compatibility_id.value == "bytefray-rules-6-alpha1"
     assert len(summary.cells) == 1
     cell = summary.cells[0]
     assert cell.opponent_index.confidence == FieldConfidence.RECORDED

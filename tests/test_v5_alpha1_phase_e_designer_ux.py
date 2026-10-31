@@ -1,4 +1,4 @@
-"""V5 Alpha 1 Phase E1-E3 -- Designer parameter UX, seed control, ruleset sync.
+"""V5 Alpha 1 Phase E1-E3 -- Designer parameter UX, seed control, roster sync.
 
 Phase D defined the parameter contract and proved it end to end from the CLI.
 It changed no Designer file at all, so the whole contract was invisible in the
@@ -31,9 +31,6 @@ import os
 from pathlib import Path
 
 import pytest
-
-BYTEFRAY_RULESET_V2_ID = "bytefray-rules-2"
-BYTEFRAY_RULESET_V4_ID = "bytefray-rules-4"
 
 
 def _make_app():
@@ -369,8 +366,6 @@ def test_a_value_the_schema_rejects_blocks_the_run_button(tmp_path):
                                "minimum": 4_000_000_000}})
     panel = _panel(tmp_path, [_row("huge_a", schema=schema), _row("huge_b", schema=schema)])
     try:
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
-
         problems = panel.parameter_validation_errors()
         assert problems, "a clamped control below the declared minimum must be reported"
         assert "below the declared minimum" in problems[0]
@@ -384,8 +379,6 @@ def test_a_valid_selection_leaves_the_run_button_enabled(tmp_path):
     _make_app()
     panel = _panel(tmp_path, _schema_rows())
     try:
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
-
         assert panel.parameter_validation_errors() == []
         assert panel.btnRun.isEnabled()
     finally:
@@ -409,8 +402,6 @@ def test_run_is_not_emitted_while_a_parameter_is_invalid(tmp_path, monkeypatch):
     emitted: list = []
     panel.runRequested.connect(emitted.append)
     try:
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
-
         panel._emit_run()
 
         assert emitted == []
@@ -433,7 +424,6 @@ def test_a_schema_agent_shows_controls_and_a_legacy_agent_keeps_its_json_box(tmp
         [_row("typed", schema=schema), _row("legacy", api_version=1)],
     )
     try:
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
         panel.agentA.setCurrentIndex(panel.agentA.findData("typed"))
 
         assert panel.schemaA.has_schema()
@@ -463,7 +453,6 @@ def test_stale_free_form_json_never_travels_with_a_schema_agent(tmp_path):
     emitted: list = []
     panel.runRequested.connect(emitted.append)
     try:
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
         panel.agentA.setCurrentIndex(panel.agentA.findData("legacy"))
         panel.editorA.text.setPlainText(json.dumps({"nonsense": 1}))
         panel.agentA.setCurrentIndex(panel.agentA.findData("typed"))
@@ -484,7 +473,6 @@ def test_free_form_json_still_reaches_a_legacy_agent(tmp_path):
     emitted: list = []
     panel.runRequested.connect(emitted.append)
     try:
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V2_ID))
         panel.editorA.text.setPlainText(json.dumps({"byte": 7}))
 
         panel._emit_run()
@@ -496,14 +484,12 @@ def test_free_form_json_still_reaches_a_legacy_agent(tmp_path):
 
 @pytest.mark.gui
 def test_a_v2_agent_without_a_schema_keeps_the_free_form_path(tmp_path):
-    """The six ``v4_*`` starters are Agent API v2 and declare no parameters.
-    They must not be forced through a schema they never opted into."""
+    """An Agent API v2 agent may declare no parameters. It must not be
+    forced through a schema it never opted into."""
 
     _make_app()
-    panel = _panel(tmp_path, [_row("v4_scout"), _row("v4_claimer")])
+    panel = _panel(tmp_path, [_row("plain_a"), _row("plain_b")])
     try:
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
-
         assert not panel.schemaA.has_schema()
         assert not panel.editorA.isHidden()
     finally:
@@ -527,7 +513,6 @@ def test_all_three_entrant_slots_generate_their_own_controls(tmp_path):
     emitted: list = []
     panel.runRequested.connect(emitted.append)
     try:
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
         panel.btnAddAgent.click()
 
         assert panel.schemaA.has_schema()
@@ -560,7 +545,6 @@ def test_mixed_schema_and_legacy_entrants_each_use_their_own_surface(tmp_path):
     emitted: list = []
     panel.runRequested.connect(emitted.append)
     try:
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
         panel.agentA.setCurrentIndex(panel.agentA.findData("typed"))
         panel.agentB.setCurrentIndex(panel.agentB.findData("plain"))
 
@@ -590,7 +574,6 @@ def test_a_hidden_third_slot_sends_no_parameters(tmp_path):
     emitted: list = []
     panel.runRequested.connect(emitted.append)
     try:
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
         panel.btnAddAgent.click()
         panel.schemaC.presets.setCurrentIndex(panel.schemaC.presets.findData("quiet"))
         panel.btnRemoveAgentC.click()
@@ -604,8 +587,8 @@ def test_a_hidden_third_slot_sends_no_parameters(tmp_path):
 
 
 @pytest.mark.gui
-def test_changing_the_ruleset_does_not_discard_parameter_edits(tmp_path):
-    """A Ruleset change repopulates the agent combos, which re-enters the
+def test_a_catalog_refresh_does_not_discard_parameter_edits(tmp_path):
+    """A catalog refresh repopulates the agent combos, which re-enters the
     parameter sync with the same selection. Rebuilding the form there would
     silently throw away values the user had already set."""
 
@@ -615,7 +598,6 @@ def test_changing_the_ruleset_does_not_discard_parameter_edits(tmp_path):
         tmp_path, [_row("typed_a", schema=schema), _row("typed_b", schema=schema)]
     )
     try:
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
         panel.schemaA._controls["reach"].setValue(42)
 
         panel.setAgents(list(panel._all_rows))  # a catalog refresh
@@ -634,7 +616,6 @@ def test_selecting_a_different_agent_rebuilds_the_controls(tmp_path):
         tmp_path, [_row("first", schema=first), _row("second", schema=second)]
     )
     try:
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
         panel.agentA.setCurrentIndex(panel.agentA.findData("first"))
         assert list(panel.schemaA.effective_values()) == ["alpha"]
 
@@ -738,42 +719,36 @@ def test_the_agent_lab_test_seed_can_also_be_randomized(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# E3 -- ruleset synchronization
+# E3 -- roster synchronization
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.gui
-def test_the_dead_two_combo_ruleset_wrapper_is_gone(tmp_path):
-    """``sync_ruleset_choices`` had no caller anywhere in the product or its
-    tests; Simple and Advanced both drive the opposite direction, filtering
-    agents *by* the selected Ruleset."""
+def test_the_ruleset_combo_module_is_gone(tmp_path):
+    """Active Sensing is the only Ruleset, so the Designer's Ruleset combo
+    helpers have no caller and no longer exist."""
 
-    import app.widgets.ruleset_combo as module
+    import importlib.util
 
-    assert not hasattr(module, "sync_ruleset_choices")
-    assert hasattr(module, "sync_ruleset_choices_for_metadata")
+    assert importlib.util.find_spec("app.widgets.ruleset_combo") is None
 
 
 @pytest.mark.gui
-def test_the_designer_never_offers_a_rejected_research_ruleset(tmp_path):
+def test_advanced_offers_no_ruleset_control(tmp_path):
     _make_app()
     panel = _panel(tmp_path, _schema_rows())
     try:
-        offered = {panel.ruleset.itemData(i) for i in range(panel.ruleset.count())}
-        # V6 Phase 2B.10 removed the v4 alphas; Phase 2B.12 also retires
-        # Rulesets 1/2 from new execution. The Designer therefore exposes
-        # only the stable executable v4 Ruleset.
-        assert offered == {BYTEFRAY_RULESET_V4_ID, "bytefray-rules-6-alpha1"}
-        assert not any("r1" in str(item) or "r2" in str(item) for item in offered)
+        assert not hasattr(panel, "ruleset")
     finally:
         panel.deleteLater()
 
 
 @pytest.mark.gui
-def test_changing_entrants_cannot_leave_an_incompatible_ruleset_selected(tmp_path):
-    """Advanced's invariant: the Ruleset is the controlling selector, so the
-    roster is filtered to what it supports and an agent choice can never
-    invalidate it."""
+def test_changing_entrants_cannot_select_an_incompatible_agent(tmp_path):
+    """The roster is filtered to agents the Designer's Ruleset can run, so
+    no agent choice can produce a match the engine would reject."""
+
+    from app.services.ruleset_options import agent_row_supported
 
     _make_app()
     panel = _panel(
@@ -781,31 +756,22 @@ def test_changing_entrants_cannot_leave_an_incompatible_ruleset_selected(tmp_pat
         [_row("typed", schema=_schema(ALL_TYPES_SCHEMA)), _row("legacy", api_version=1)],
     )
     try:
-        for index in range(panel.ruleset.count()):
-            panel.ruleset.setCurrentIndex(index)
-            ruleset_id = panel.ruleset.itemData(index)
-            for combo in (panel.agentA, panel.agentB):
-                for slot in range(combo.count()):
-                    combo.setCurrentIndex(slot)
-                    row = panel._row_for_slot(combo)
-                    if row is None:
-                        continue
-                    from app.services.ruleset_options import agent_row_supported_by_ruleset
-
-                    assert agent_row_supported_by_ruleset(row, ruleset_id), (
-                        f"{row.agent_id} was offered under {ruleset_id}"
-                    )
+        for combo in (panel.agentA, panel.agentB):
+            for slot in range(combo.count()):
+                combo.setCurrentIndex(slot)
+                row = panel._row_for_slot(combo)
+                if row is None:
+                    continue
+                assert agent_row_supported(row), f"{row.agent_id} was offered"
     finally:
         panel.deleteLater()
 
 
 @pytest.mark.gui
-def test_an_agent_api_v2_roster_offers_the_stable_v4_ruleset(tmp_path):
+def test_an_agent_api_v2_roster_can_run(tmp_path):
     _make_app()
     panel = _panel(tmp_path, _schema_rows())
     try:
-        panel.ruleset.setCurrentIndex(panel.ruleset.findData(BYTEFRAY_RULESET_V4_ID))
-
         assert panel.agentA.count() == 2
         assert panel.btnRun.isEnabled()
     finally:

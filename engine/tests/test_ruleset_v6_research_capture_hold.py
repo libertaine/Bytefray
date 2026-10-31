@@ -70,6 +70,7 @@ from battle_engine.ruleset_policy import (
     _RULESET_POLICIES,
     ACTIVE_RESEARCH_RULESET_IDS,
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
@@ -84,15 +85,10 @@ from battle_engine.ruleset_policy import (
     RULESET_V6_RESEARCH_SCALE,
     RulesetPolicy,
     resolve_omitted_ruleset_for_agents,
-    resolve_omitted_ruleset_id,
     resolve_ruleset_policy,
 )
 
-from app.services.ruleset_options import (
-    DESIGNER_RULESET_OPTIONS,
-    EVALUATION_RULESET_OPTIONS,
-    SIMPLE_RULESET_OPTIONS,
-)
+from app.services.ruleset_options import DESIGNER_RULESET_ID
 
 E2_ID = BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID
 RS_ID = BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID
@@ -330,16 +326,15 @@ def test_e2_is_never_automatic() -> None:
     assert E2_ID not in OMITTED_RULESET_CANDIDATES
     assert E2_ID not in PUBLIC_STABLE_RULESET_IDS
     roster = [{"agent_id": "x", "kind": "python", "api_version": 2}]
-    assert resolve_omitted_ruleset_for_agents(None, roster) == BYTEFRAY_RULESET_V4_ID
-    assert resolve_omitted_ruleset_id(None, ["python"]) == BYTEFRAY_RULESET_V4_ID
-    assert resolve_evaluation_ruleset_id(None) == BYTEFRAY_RULESET_V4_ID
+    assert resolve_omitted_ruleset_for_agents(None, roster) == BYTEFRAY_RULESET_V6_ALPHA1_ID
+    assert resolve_evaluation_ruleset_id(None) == BYTEFRAY_RULESET_V6_ALPHA1_ID
 
 
 def test_e2_is_not_selectable_from_product_run_surfaces(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    assert _ruleset_choices(agent_test._parser()) == [BYTEFRAY_RULESET_V4_ID]
-    assert _ruleset_choices(tournament_cli._parser()) == [BYTEFRAY_RULESET_V4_ID]
+    assert _ruleset_choices(agent_test._parser()) == [BYTEFRAY_RULESET_V6_ALPHA1_ID]
+    assert _ruleset_choices(tournament_cli._parser()) == [BYTEFRAY_RULESET_V6_ALPHA1_ID]
     # `bytefray run` builds its parser inside parse_args.
     with pytest.raises(SystemExit) as excinfo:
         cli.parse_args(["--ruleset", E2_ID])
@@ -348,8 +343,7 @@ def test_e2_is_not_selectable_from_product_run_surfaces(
 
 
 def test_e2_is_absent_from_every_designer_ruleset_option() -> None:
-    for options in (SIMPLE_RULESET_OPTIONS, EVALUATION_RULESET_OPTIONS, DESIGNER_RULESET_OPTIONS):
-        assert [option.ruleset_id for option in options] == [BYTEFRAY_RULESET_V4_ID]
+    assert DESIGNER_RULESET_ID == BYTEFRAY_RULESET_V6_ALPHA1_ID
 
 
 def test_e2_is_explicitly_selectable_from_agents_evaluate() -> None:

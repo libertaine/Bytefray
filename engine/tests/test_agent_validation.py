@@ -22,6 +22,7 @@ from battle_engine.config import Config
 from battle_engine.match_service import MatchEntrant
 from battle_engine.process_runtime import ProcessMatchController
 from battle_engine.python_runtime import PythonEntrantInitializationError
+from battle_engine.ruleset_policy import UnknownRulesetError
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -453,7 +454,7 @@ def test_reset_failure_diagnostic_matches_real_match_exactly(tmp_path):
     entrant = MatchEntrant.python("A", "example", 0, spec)
     with pytest.raises(PythonEntrantInitializationError) as caught:
         ProcessMatchController.from_python_entrants(
-            Config(arena_size=64, instr_per_tick=8), (entrant,), 1
+            Config(arena_size=128, instr_per_tick=8), (entrant,), 1
         )
     real_diagnostic = caught.value.diagnostic
 
@@ -691,6 +692,153 @@ def test_cli_missing_positional_argument_exits_two():
         main([])
 
     assert caught.value.code == 2
+
+
+@pytest.mark.parametrize("timeout", [None, 5.0])
+@pytest.mark.parametrize("existing_trace", [False, True])
+def test_retired_classic_precedes_capability_preflight_import_and_trace(
+    tmp_path, monkeypatch, timeout, existing_trace
+):
+    marker = tmp_path / "imported"
+    _write_agent(
+        tmp_path, "sensor",
+        manifest={"capabilities": {"version": 1, "required": ["sense"]}},
+        source=f"from pathlib import Path\nPath({str(marker)!r}).touch()\n" + VALID_SOURCE,
+    )
+    output = tmp_path / "rejected"
+    trace = output / "trace.jsonl"
+    if existing_trace:
+        output.mkdir()
+        trace.write_bytes(b"prior trace")
+
+    def unexpected_preflight(*args, **kwargs):
+        pytest.fail("Retired Ruleset reached capability preflight")
+
+    monkeypatch.setattr(
+        "battle_engine.agent_validation.preflight_agent_capabilities", unexpected_preflight
+    )
+    with pytest.raises(AgentValidationFailedError) as caught:
+        validate_agent(
+            "sensor", data_root=tmp_path, ruleset_id="bytefray-rules-4",
+            timeout=timeout, trace_path=trace,
+        )
+    diagnostic = caught.value.diagnostic
+    assert diagnostic.code == "ruleset_unavailable"
+    assert diagnostic.stage == "configuration"
+    assert diagnostic.exception_type == "UnknownRulesetError"
+    assert isinstance(caught.value.__cause__, UnknownRulesetError)
+    assert caught.value.__cause__.ruleset_id == "bytefray-rules-4"
+    assert "'bytefray-rules-4' is retired and cannot run new matches" in diagnostic.message
+    assert not marker.exists()
+    if existing_trace:
+        assert trace.read_bytes() == b"prior trace"
+        assert list(output.iterdir()) == [trace]
+    else:
+        assert not output.exists()
+
+
+def test_cli_retired_classic_rejects_before_agent_discovery(tmp_path):
+    data_root = tmp_path / "absent-data"
+    trace = data_root / "rejected" / "trace.jsonl"
+    result = _run(
+        "agents", "validate", "undiscovered-agent", "--ruleset", "bytefray-rules-4",
+        "--trace-path", str(trace), cwd=tmp_path,
+        env=dict(os.environ, BYTEFRAY_ROOT=str(data_root)),
+    )
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "'bytefray-rules-4' is retired and cannot run new matches" in result.stderr
+    assert "agent_unknown" not in result.stderr
+    assert "agent_capability_unsupported" not in result.stderr
+    assert "Traceback" not in result.stderr
+    assert not data_root.exists()
+
+
+@pytest.mark.parametrize("timeout", [None, 5.0])
+def test_unknown_ruleset_is_configuration_failure_before_preflight_and_import(
+    tmp_path, monkeypatch, timeout
+):
+    marker = tmp_path / "imported"
+    _write_agent(
+        tmp_path, "example",
+        source=f"from pathlib import Path\nPath({str(marker)!r}).touch()\n" + VALID_SOURCE,
+    )
+    output = tmp_path / "rejected"
+
+    def unexpected_preflight(*args, **kwargs):
+        pytest.fail("Unknown Ruleset reached capability preflight")
+
+    monkeypatch.setattr(
+        "battle_engine.agent_validation.preflight_agent_capabilities", unexpected_preflight
+    )
+    with pytest.raises(AgentValidationFailedError) as caught:
+        validate_agent(
+            "example", data_root=tmp_path, ruleset_id="unregistered-ruleset",
+            timeout=timeout, trace_path=output / "trace.jsonl",
+        )
+    diagnostic = caught.value.diagnostic
+    assert diagnostic.code == "ruleset_unavailable"
+    assert diagnostic.stage == "configuration"
+    assert diagnostic.agent_id == "example"
+    assert diagnostic.exception_type == "UnknownRulesetError"
+    assert isinstance(caught.value.__cause__, UnknownRulesetError)
+    assert caught.value.__cause__.ruleset_id == "unregistered-ruleset"
+    assert diagnostic.message == "Unknown Ruleset ID: 'unregistered-ruleset'"
+    assert not marker.exists() and not output.exists()
+
+
+def test_cli_unknown_ruleset_rejects_before_agent_discovery(tmp_path):
+    data_root = tmp_path / "absent-data"
+    result = _run(
+        "agents", "validate", "undiscovered-agent", "--ruleset", "unregistered-ruleset",
+        "--trace-path", str(data_root / "trace.jsonl"), cwd=tmp_path,
+        env=dict(os.environ, BYTEFRAY_ROOT=str(data_root)),
+    )
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "invalid choice: 'unregistered-ruleset'" in result.stderr
+    assert "agent_unknown" not in result.stderr
+    assert "Traceback" not in result.stderr
+    assert not data_root.exists()
+
+
+@pytest.mark.parametrize("target, cause", [
+    ("resolve_ruleset_policy", RuntimeError("orchestration failed")),
+    ("resolve_ruleset_policy", LookupError("unexpected lookup failure")),
+    ("preflight_agent_capabilities", UnknownRulesetError("unexpected-preflight")),
+])
+def test_unexpected_orchestration_failure_remains_internal(
+    tmp_path, monkeypatch, capsys, target, cause
+):
+    _write_agent(tmp_path, "example")
+    output = tmp_path / "rejected"
+
+    def fail(*args, **kwargs):
+        raise cause
+
+    monkeypatch.setattr(f"battle_engine.agent_validation.{target}", fail)
+    with pytest.raises(AgentValidationFailedError) as caught:
+        validate_agent(
+            "example", data_root=tmp_path, ruleset_id="bytefray-rules-6-alpha1",
+            trace_path=output / "trace.jsonl",
+        )
+    diagnostic = caught.value.diagnostic
+    assert diagnostic.code == "validation_internal_error"
+    assert diagnostic.stage == "internal"
+    assert diagnostic.exception_type == type(cause).__name__
+    assert diagnostic.message == str(cause)
+    assert caught.value.__cause__ is cause
+    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
+    assert main([
+        "example", "--ruleset", "bytefray-rules-6-alpha1",
+        "--trace-path", str(output / "trace.jsonl"),
+    ]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "code: validation_internal_error" in captured.err
+    assert "stage: internal" in captured.err
+    assert "Traceback" not in captured.err
+    assert not output.exists()
 
 
 def test_end_to_end_create_then_validate_subprocess(tmp_path):

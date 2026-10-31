@@ -67,8 +67,8 @@ from app.services.designer_workflows import (
 )
 from app.services.replay_integrity import result_replay_request
 from app.services.ruleset_options import (
-    EVALUATION_RULESET_OPTIONS,
-    RULESET_DESCRIPTION,
+    INCOMPATIBLE_SELECTION_EXPLANATION,
+    agents_supported,
 )
 from app.widgets.evaluation_visuals import (
     COLOR_LOSS,
@@ -80,11 +80,6 @@ from app.widgets.evaluation_visuals import (
     plain_rate_bar_data,
     rate_stat_bar_data,
     win_rate_bar_data,
-)
-from app.widgets.ruleset_combo import (
-    populate_ruleset_combo,
-    selected_ruleset_id,
-    sync_ruleset_choices_for_metadata,
 )
 
 
@@ -133,12 +128,12 @@ class EvaluationDialog(QDialog):
         self._agents = list(python_agents)
         self._presets = dict(presets) if presets else {}
         self._data_root = data_root
-        self._has_compatible_ruleset = True
-        # discovery id -> that agent's compatibility metadata, used to offer
-        # only Rulesets that support the whole selected pairwise roster. A
-        # caller that supplies none (an older programmatic caller, a test
-        # double) keeps the previous unfiltered behavior rather than having
-        # every Ruleset silently disabled by absent metadata.
+        self._roster_compatible = True
+        # discovery id -> that agent's compatibility metadata, used to allow
+        # Run only for a pairwise roster that can run. A caller that supplies
+        # none (an older programmatic caller, a test double) keeps the
+        # previous unfiltered behavior rather than having Run silently
+        # disabled by absent metadata.
         self._agent_metadata = dict(agent_metadata) if agent_metadata else {}
 
         layout = QVBoxLayout(self)
@@ -197,15 +192,11 @@ class EvaluationDialog(QDialog):
         self.rulesetValue.setAccessibleName("Group evaluation ruleset")
         form.addRow(self.rulesetLabel, self.rulesetValue)
 
-        self.pairwiseRulesetLabel = QLabel("Ruleset")
-        self.pairwiseRulesetCombo = QComboBox()
-        populate_ruleset_combo(
-            self.pairwiseRulesetCombo, EVALUATION_RULESET_OPTIONS
-        )
-        self.pairwiseRulesetCombo.setToolTip(RULESET_DESCRIPTION)
-        self.pairwiseRulesetCombo.setAccessibleName("Pairwise evaluation ruleset")
-        self.pairwiseRulesetLabel.setBuddy(self.pairwiseRulesetCombo)
-        form.addRow(self.pairwiseRulesetLabel, self.pairwiseRulesetCombo)
+        # Shown only when the selected pairwise roster cannot run.
+        self.compatibilityExplanation = QLabel()
+        self.compatibilityExplanation.setWordWrap(True)
+        self.compatibilityExplanation.setVisible(False)
+        form.addRow(self.compatibilityExplanation)
 
         layout.addLayout(form)
 
@@ -235,7 +226,7 @@ class EvaluationDialog(QDialog):
         self.ticksSpin.setValue(200)
         self.ticksSpin.setToolTip(
             "Maximum number of simulation ticks before each evaluation cell's "
-            "match ends, subject to the selected Ruleset's win condition. "
+            "match ends, subject to the Ruleset's win condition. "
             "The engine itself only requires a positive tick limit (at least "
             "1) and has no maximum; the field's own upper bound is a "
             "practical GUI limit, not a gameplay rule."
@@ -305,12 +296,12 @@ class EvaluationDialog(QDialog):
         self.candidateCombo.currentIndexChanged.connect(self._update_group_preview)
         self.baselineCombo.currentIndexChanged.connect(self._update_group_preview)
         self.opponentsList.itemSelectionChanged.connect(self._update_group_preview)
-        # Every control that changes the pairwise roster re-narrows the
-        # Ruleset choices to those the whole roster can actually run under.
-        self.candidateCombo.currentIndexChanged.connect(self._sync_pairwise_ruleset)
-        self.baselineCombo.currentIndexChanged.connect(self._sync_pairwise_ruleset)
-        self.opponentsList.itemSelectionChanged.connect(self._sync_pairwise_ruleset)
-        self._sync_pairwise_ruleset()
+        # Every control that changes the pairwise roster re-checks whether
+        # the whole roster can run.
+        self.candidateCombo.currentIndexChanged.connect(self._sync_pairwise_compatibility)
+        self.baselineCombo.currentIndexChanged.connect(self._sync_pairwise_compatibility)
+        self.opponentsList.itemSelectionChanged.connect(self._sync_pairwise_compatibility)
+        self._sync_pairwise_compatibility()
         self.seedsEdit.textChanged.connect(self._update_group_preview)
         self.seedRangeEdit.textChanged.connect(self._update_group_preview)
         self.ticksSpin.valueChanged.connect(self._update_group_preview)
@@ -323,8 +314,8 @@ class EvaluationDialog(QDialog):
 
         The candidate, the baseline when one is chosen, and every selected
         opponent -- the complete roster, not just the candidate, so an
-        incompatible opponent narrows the Ruleset choices exactly as an
-        incompatible candidate does.
+        incompatible opponent blocks Run exactly as an incompatible
+        candidate does.
         """
 
         ids = [self.candidate_id(), self.baseline_id(), *self.opponent_ids()]
@@ -334,8 +325,8 @@ class EvaluationDialog(QDialog):
             if agent_id is not None and agent_id in self._agent_metadata
         ]
 
-    def _sync_pairwise_ruleset(self) -> None:
-        """Offer only Rulesets compatible with the selected pairwise roster.
+    def _sync_pairwise_compatibility(self) -> None:
+        """Record whether the selected pairwise roster can run.
 
         Never writes ``runButton`` itself: ``_update_group_preview`` remains
         the single owner of that enablement, and reads the compatibility
@@ -343,10 +334,11 @@ class EvaluationDialog(QDialog):
         """
 
         if not self._agent_metadata:
-            self._has_compatible_ruleset = True
+            self._roster_compatible = True
             return
-        self._has_compatible_ruleset = sync_ruleset_choices_for_metadata(
-            self.pairwiseRulesetCombo, self._pairwise_roster_metadata()
+        self._roster_compatible = agents_supported(self._pairwise_roster_metadata())
+        self.compatibilityExplanation.setText(
+            "" if self._roster_compatible else INCOMPATIBLE_SELECTION_EXPLANATION
         )
         self._update_group_preview()
 
@@ -357,8 +349,7 @@ class EvaluationDialog(QDialog):
         self.baselineCombo.setVisible(not group)
         self.rulesetLabel.setVisible(group)
         self.rulesetValue.setVisible(group)
-        self.pairwiseRulesetLabel.setVisible(not group)
-        self.pairwiseRulesetCombo.setVisible(not group)
+        self.compatibilityExplanation.setVisible(not group and not self._roster_compatible)
         self.opponentsLabel.setText(
             "Roster members (select at least two; focus is included automatically)"
             if group
@@ -376,10 +367,10 @@ class EvaluationDialog(QDialog):
 
     def _update_group_preview(self) -> None:
         if self.mode() != EVALUATION_MODE_GROUP:
-            # Pairwise runs are gated only by whether the selected roster has
-            # a Ruleset it can actually run under; group mode keeps its own
-            # plan-validation gating below, unchanged.
-            self.runButton.setEnabled(self._has_compatible_ruleset)
+            # Pairwise runs are gated only by whether the selected roster can
+            # run; group mode keeps its own plan-validation gating below.
+            self.compatibilityExplanation.setVisible(not self._roster_compatible)
+            self.runButton.setEnabled(self._roster_compatible)
             self.previewText.clear()
             return
         if self._data_root is None:
@@ -444,25 +435,6 @@ class EvaluationDialog(QDialog):
             self.ticksSpin.setValue(preset.ticks)
         if preset.orientation is not None:
             self.bothOrientationsCheck.setChecked(preset.orientation == PRESET_ORIENTATION_BOTH)
-        # A preset that names its own Ruleset is surfaced into the selector
-        # rather than silently overridden: the launch path now always passes
-        # --ruleset explicitly, and an explicit CLI --ruleset takes
-        # precedence over a preset's own value (see agent_evaluation.py's
-        # `if ruleset_id is None and preset is not None`). Showing it here
-        # keeps the preset faithful *and* visible. A preset that names no
-        # Ruleset leaves the user's current selection alone -- there is no
-        # preset intention to preserve in that case.
-        if preset.ruleset_id is not None:
-            index = self.pairwiseRulesetCombo.findData(preset.ruleset_id)
-            if index >= 0:
-                self.pairwiseRulesetCombo.setCurrentIndex(index)
-
-    def pairwise_ruleset_id(self) -> str:
-        """The Ruleset to pass explicitly for a pairwise evaluation.
-
-        Group-mode creation is retired; historical group artifacts remain readable.
-        """
-        return selected_ruleset_id(self.pairwiseRulesetCombo)
 
     def preset_name(self) -> str | None:
         if self.presetCombo is None or self.mode() == EVALUATION_MODE_GROUP:

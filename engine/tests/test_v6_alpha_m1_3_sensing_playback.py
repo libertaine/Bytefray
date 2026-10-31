@@ -25,6 +25,7 @@ from battle_engine.match_service import (
 from battle_engine.rules import (
     BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_ALPHA1_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
 )
 from battle_engine.sensing_demo import (
     run_sensing_demo,
@@ -1067,7 +1068,7 @@ def test_step7_failed_write_causes_not_verified(teaching_demo_artifacts: Path, t
 
 
 def test_backward_compatibility_non_active_ruleset_rejected(tmp_path: Path) -> None:
-    """Verify that passing a non-active ruleset (e.g. bytefray-rules-4) raises ExchangeReconstructionError."""
+    """Verify that passing a non-active ruleset (e.g. the passive research control) raises ExchangeReconstructionError."""
     v4_dir = tmp_path / "v4_match"
     v4_dir.mkdir(parents=True, exist_ok=True)
     replay_file = v4_dir / "replay.jsonl"
@@ -1098,7 +1099,7 @@ def test_backward_compatibility_non_active_ruleset_rejected(tmp_path: Path) -> N
     service = NativeMatchService()
     req = MatchRequest(
         config=Config(arena_size=512, instr_per_tick=8, seed=0),
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
         entrants=(
             MatchEntrant.python("A", "stationary", 0, spec),
             MatchEntrant.python("B", "stationary", 200, spec),

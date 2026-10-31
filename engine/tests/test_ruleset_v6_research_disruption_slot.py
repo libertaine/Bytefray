@@ -82,6 +82,7 @@ from battle_engine.ruleset_policy import (
     _RULESET_POLICIES,
     ACTIVE_RESEARCH_RULESET_IDS,
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
@@ -103,15 +104,10 @@ from battle_engine.ruleset_policy import (
     RULESET_V6_RESEARCH_SCALE,
     RulesetPolicy,
     resolve_omitted_ruleset_for_agents,
-    resolve_omitted_ruleset_id,
     resolve_ruleset_policy,
 )
 
-from app.services.ruleset_options import (
-    DESIGNER_RULESET_OPTIONS,
-    EVALUATION_RULESET_OPTIONS,
-    SIMPLE_RULESET_OPTIONS,
-)
+from app.services.ruleset_options import DESIGNER_RULESET_ID
 from tools.research.v6.experiment_harness import prepare_benchmark_data_root
 
 PRIMARY_ID = BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID
@@ -345,7 +341,7 @@ def test_lifecycle_sets_partition_every_executable_policy() -> None:
     assert set().union(*executable_lifecycles.values()) == set(_RULESET_POLICIES)
     assert HISTORICAL_READONLY_RULESET_IDS.isdisjoint(_RULESET_POLICIES)
     assert set(E3_IDS) <= ACTIVE_RESEARCH_RULESET_IDS
-    assert PUBLIC_STABLE_RULESET_IDS == frozenset({BYTEFRAY_RULESET_V4_ID})
+    assert PUBLIC_STABLE_RULESET_IDS == frozenset()
 
 
 @pytest.mark.parametrize("ruleset_id", E3_IDS)
@@ -388,11 +384,10 @@ def test_e3_is_never_automatic() -> None:
     for ruleset_id in E3_IDS:
         assert ruleset_id not in OMITTED_RULESET_CANDIDATES
         assert ruleset_id not in PUBLIC_STABLE_RULESET_IDS
-    assert OMITTED_RULESET_CANDIDATES == (BYTEFRAY_RULESET_V4_ID,)
+    assert OMITTED_RULESET_CANDIDATES == (BYTEFRAY_RULESET_V6_ALPHA1_ID,)
     roster = [{"agent_id": "x", "kind": "python", "api_version": 2}]
-    assert resolve_omitted_ruleset_for_agents(None, roster) == BYTEFRAY_RULESET_V4_ID
-    assert resolve_omitted_ruleset_id(None, ["python"]) == BYTEFRAY_RULESET_V4_ID
-    assert resolve_evaluation_ruleset_id(None) == BYTEFRAY_RULESET_V4_ID
+    assert resolve_omitted_ruleset_for_agents(None, roster) == BYTEFRAY_RULESET_V6_ALPHA1_ID
+    assert resolve_evaluation_ruleset_id(None) == BYTEFRAY_RULESET_V6_ALPHA1_ID
 
 
 @pytest.mark.parametrize("ruleset_id", E3_IDS)
@@ -400,8 +395,8 @@ def test_e3_is_not_selectable_from_product_run_surfaces(
     ruleset_id: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
     # `agents test` and the tournament CLI expose stable v4 only.
-    assert _ruleset_choices(agent_test._parser()) == [BYTEFRAY_RULESET_V4_ID]
-    assert _ruleset_choices(tournament_cli._parser()) == [BYTEFRAY_RULESET_V4_ID]
+    assert _ruleset_choices(agent_test._parser()) == [BYTEFRAY_RULESET_V6_ALPHA1_ID]
+    assert _ruleset_choices(tournament_cli._parser()) == [BYTEFRAY_RULESET_V6_ALPHA1_ID]
     for parser in (agent_test._parser(), tournament_cli._parser()):
         with pytest.raises(SystemExit) as excinfo:
             parser.parse_args(["x", "--ruleset", ruleset_id])
@@ -414,8 +409,7 @@ def test_e3_is_not_selectable_from_product_run_surfaces(
 
 
 def test_e3_is_absent_from_every_designer_ruleset_option() -> None:
-    for options in (SIMPLE_RULESET_OPTIONS, EVALUATION_RULESET_OPTIONS, DESIGNER_RULESET_OPTIONS):
-        assert [option.ruleset_id for option in options] == [BYTEFRAY_RULESET_V4_ID]
+    assert DESIGNER_RULESET_ID == BYTEFRAY_RULESET_V6_ALPHA1_ID
 
 
 def test_e3_is_explicitly_selectable_from_agents_evaluate() -> None:

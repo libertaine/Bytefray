@@ -1,4 +1,12 @@
-"""V6 E2 K=1 byte-identity freeze for stable ``bytefray-rules-4``.
+"""Passive preservation of the 15 pre-E2 Classic K=1 capture records.
+
+Recovered unchanged from f127be70e7ed88449c1b737f4675e1453ec8de45.
+Per-record hashes pin the complete original values; no retired match executes.
+Live byte-identity reproduction requires the published historical binary/tree.
+
+Original live-guard provenance follows (historical):
+
+V6 E2 K=1 byte-identity freeze for stable ``bytefray-rules-4``.
 
 docs/research/v6/V6_E2_CAPTURE_HOLD_DESIGN_REVIEW.md Sec J.1 requires that
 ``RulesetPolicy.capture_hold_ticks == 1`` -- the value every existing
@@ -46,29 +54,15 @@ something to re-bless.
 from __future__ import annotations
 
 import hashlib
-import shutil
-from dataclasses import dataclass
-from pathlib import Path
+import json
+from dataclasses import asdict, dataclass
 
 import pytest
-from battle_engine.agents import resolve_agent
-from battle_engine.config import Config
-from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
-from battle_engine.placement import resolve_direct_match_starts
-from battle_engine.replay import KillDeathEvent, TickSnapshot, iter_replay
-from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
-STARTER_AGENTS = REPO_ROOT / "engine" / "src" / "battle_engine" / "data" / "starter_agents"
 
 ARENA_SIZE = 512
 PROBE_NAME_A = "k1_probe_alpha"
 PROBE_NAME_B = "k1_probe_beta"
 
-# ``CompetentGlobalSniperProbe`` (test_v4_exploit_characterization.py),
-# inlined verbatim in behavior. Written with explicit LF bytes so the
-# entrant source digest -- and therefore every identity below -- is the
-# same on every platform.
 PROBE_SOURCE = """\
 from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 
@@ -120,9 +114,6 @@ class FrozenMatch:
         return f"{self.seat_a}-vs-{self.seat_b}-s{self.seed}"
 
 
-# Recorded against the unmodified single-tick capture implementation (see
-# module docstring). ``capture_events`` rows are
-# ``(tick, event_type, victim, killer)`` for every ``kill``/``death`` event.
 FROZEN_V4_K1_CORPUS: tuple[FrozenMatch, ...] = (
     FrozenMatch(
         seat_a='k1_probe_alpha',
@@ -322,85 +313,6 @@ FROZEN_V4_K1_CORPUS: tuple[FrozenMatch, ...] = (
 )
 
 
-def _write_probe(root: Path, name: str) -> None:
-    agent_dir = root / "agents" / name
-    agent_dir.mkdir(parents=True, exist_ok=True)
-    (agent_dir / "agent.yaml").write_bytes(
-        (
-            f'{{"name": "{name}", "kind": "python", "api_version": 2, '
-            '"entrypoint": "agent.py:create_agent", "version": "1.0.0"}\n'
-        ).encode()
-    )
-    (agent_dir / "agent.py").write_bytes(PROBE_SOURCE.encode())
-
-
-def _install_agent(root: Path, name: str) -> None:
-    if (root / "agents" / name).exists():
-        return
-    if name in (PROBE_NAME_A, PROBE_NAME_B):
-        _write_probe(root, name)
-        return
-    shutil.copytree(
-        STARTER_AGENTS / name,
-        root / "agents" / name,
-        ignore=shutil.ignore_patterns("__pycache__"),
-    )
-
-
-def run_corpus_match(
-    root: Path, seat_a: str, seat_b: str, seed: int, max_ticks: int
-) -> tuple[FrozenMatch, Path]:
-    """Run one corpus match under stable V4 and describe it as a FrozenMatch."""
-
-    for name in (seat_a, seat_b):
-        _install_agent(root, name)
-    spec_a = resolve_agent(root, seat_a)
-    spec_b = resolve_agent(root, seat_b)
-    starts = resolve_direct_match_starts(
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
-        arena_size=ARENA_SIZE,
-        entrant_count=2,
-        supplied_starts=[None, None],
-        seed=seed,
-    )
-    replay_path = root / "runs" / f"{seat_a}-vs-{seat_b}-s{seed}" / "replay.jsonl"
-    replay_path.parent.mkdir(parents=True, exist_ok=True)
-    request = MatchRequest(
-        config=Config(seed=seed, arena_size=ARENA_SIZE, instr_per_tick=8),
-        entrants=(
-            MatchEntrant.python("A", seat_a, starts[0], spec_a),
-            MatchEntrant.python("B", seat_b, starts[1], spec_b),
-        ),
-        max_ticks=max_ticks,
-        replay_path=replay_path,
-        verbose=False,
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
-    )
-    result = NativeMatchService().run(request)
-    assert result.result_id is not None and result.match_id is not None
-    capture_events = tuple(
-        (record.tick, event.event_type, event.victim, event.killer)
-        for record in iter_replay(replay_path)
-        if isinstance(record, TickSnapshot)
-        for event in record.events
-        if isinstance(event, KillDeathEvent)
-    )
-    observed = FrozenMatch(
-        seat_a=seat_a,
-        seat_b=seat_b,
-        seed=seed,
-        max_ticks=max_ticks,
-        winner=result.winner,
-        ticks=result.ticks_run,
-        termination_reason=result.termination_reason.value,
-        capture_events=capture_events,
-        replay_sha256=hashlib.sha256(replay_path.read_bytes()).hexdigest(),
-        result_id=result.result_id,
-        match_id=result.match_id,
-    )
-    return observed, replay_path
-
-
 def corpus_cases() -> tuple[tuple[str, str, int, int], ...]:
     """The fixed matrix: (seat_a, seat_b, seed, max_ticks)."""
 
@@ -436,19 +348,27 @@ def test_frozen_corpus_exercises_attributed_core_capture() -> None:
     }
 
 
-@pytest.mark.parametrize("frozen", FROZEN_V4_K1_CORPUS, ids=lambda case: case.label)
-def test_v4_k1_capture_is_byte_identical_to_the_pre_e2_freeze(
-    tmp_path: Path, frozen: FrozenMatch
-) -> None:
-    observed, _ = run_corpus_match(
-        tmp_path, frozen.seat_a, frozen.seat_b, frozen.seed, frozen.max_ticks
-    )
-    assert (observed.winner, observed.ticks, observed.termination_reason) == (
-        frozen.winner,
-        frozen.ticks,
-        frozen.termination_reason,
-    )
-    assert observed.capture_events == frozen.capture_events
-    assert observed.match_id == frozen.match_id
-    assert observed.result_id == frozen.result_id
-    assert observed.replay_sha256 == frozen.replay_sha256
+FROZEN_RECORD_SHA256 = (
+    'c8b5ec73727b44f15a88bb3b13df86720134d9b715e6d620693621c618fd0e61',
+    'ed0dab62a4a3433e5f29a9a2a2d59fb5e47a37909934e12b57cfc04552d31198',
+    '921052e1ae2c18da62030087d41d3550a61ff02b9912b00d107bcd1a01298a1d',
+    '546e7a4ee2eb82f3033824a51306c4c7cef3425489091531f53fd15df2b29366',
+    '1da94e1ec22c2bdbe584b8d3d15a2ae7f6a4c4714cf7778c01740ad8d7b1110d',
+    'a86b003c539cb2a7ec9ab6e01b2d39dba30487c73306e1e8465cea2bbd17e238',
+    '4cd574bb6f3b4c745ea3e4e719da238027c7d4333d70dd4bcd3b886b144b5a4d',
+    'e87e1d4f2197b85fe8612f0dc7b4d528820e2624ca9656be99da4ca94147aae9',
+    'd5fbe656456759f02f9dda2bc543c3fdf13ee8f25d32cafcd66eae0f4ccf22c2',
+    '1d3f759036d7b06c9b4d21c7f5f2f751861ef5c24490503fc02a358199c70dcd',
+    '99669a3c289e2e5b477d17ced0f907b4471ceb544882a7886f0e74bfb82d7065',
+    '5a77a350370405acd2549322e7300cff0ac39291d833287a5b7a66a960134747',
+    'a0935630479055f769257ab3ec0c886f0232bdec783aab4934c09800540ea92f',
+    'a35dba5371b3cbd97e01e343d5017d36f3dbdaf3b435b611f7c7dfe154f5a5da',
+    'a8c96fa1bac9434e0dee2c1e99bc0f0a54670670b3388346edf0a894b4308aa2',
+)
+
+
+@pytest.mark.parametrize("index,frozen", tuple(enumerate(FROZEN_V4_K1_CORPUS)),
+                         ids=[case.label for case in FROZEN_V4_K1_CORPUS])
+def test_original_k1_capture_record_is_preserved(index: int, frozen: FrozenMatch) -> None:
+    encoded = json.dumps(asdict(frozen), sort_keys=True, separators=(",", ":")).encode()
+    assert hashlib.sha256(encoded).hexdigest() == FROZEN_RECORD_SHA256[index]

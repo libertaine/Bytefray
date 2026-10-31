@@ -37,7 +37,8 @@ from battle_engine.replay import TickSnapshot, iter_replay
 from battle_engine.rules import BYTEFRAY_RULESET_ID
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ID,
-    BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     UnknownRulesetError,
     resolve_ruleset_policy,
 )
@@ -226,7 +227,8 @@ def test_chunked_quota_mid_chunk_death() -> None:
     ]
 
 
-V4_INTERLEAVED = BYTEFRAY_RULESET_V4_ID
+# The product Ruleset, which keeps the K=2 rotating scheduler stable v4 introduced.
+V4_INTERLEAVED = BYTEFRAY_RULESET_V6_ALPHA1_ID
 
 
 @dataclass
@@ -315,7 +317,7 @@ def test_ruleset_policy_dispatch_modes() -> None:
     with pytest.raises(UnknownRulesetError):
         resolve_ruleset_policy(BYTEFRAY_RULESET_V2_ID)
 
-    policy_v4 = resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ID)
+    policy_v4 = resolve_ruleset_policy(BYTEFRAY_RULESET_V6_ALPHA1_ID)
     assert policy_v4.scheduler_mode == "chunked"
     assert policy_v4.scheduler_chunk_size == 2
     assert policy_v4.scheduler_rotate_start is True
@@ -484,7 +486,7 @@ def create_agent():
         entrants=entrants1,
         max_ticks=2,
         replay_path=tmp_path / "run1" / "replay.jsonl",
-        ruleset_id=V4_INTERLEAVED,
+        ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
         scheduler_chunk_size=2,
         scheduler_rotate_start=True,
         verbose=False)
@@ -502,7 +504,7 @@ def create_agent():
         entrants=entrants2,
         max_ticks=2,
         replay_path=tmp_path / "run2" / "replay.jsonl",
-        ruleset_id=V4_INTERLEAVED,
+        ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
         scheduler_chunk_size=2,
         scheduler_rotate_start=True,
         verbose=False)

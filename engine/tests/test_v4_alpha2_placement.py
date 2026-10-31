@@ -25,7 +25,7 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V3_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
-    BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
 )
 
 ARENA_SIZES = (256, 512, 1024)
@@ -382,7 +382,7 @@ def test_stable_v4_requires_a_seed_rather_than_inventing_one() -> None:
 
     with pytest.raises(ValueError, match="requires an explicit seed"):
         resolve_direct_match_starts(
-            ruleset_id=BYTEFRAY_RULESET_V4_ID,
+            ruleset_id=BYTEFRAY_RULESET_V6_ALPHA1_ID,
             arena_size=512,
             entrant_count=2,
             supplied_starts=[None, None],
@@ -401,7 +401,7 @@ def test_explicit_starts_survive_stable_v4_placement_untouched() -> None:
     shares this exact seeded-placement gameplay)."""
 
     assert resolve_direct_match_starts(
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=BYTEFRAY_RULESET_V6_ALPHA1_ID,
         arena_size=512,
         entrant_count=2,
         supplied_starts=[0, 256],
@@ -409,7 +409,7 @@ def test_explicit_starts_survive_stable_v4_placement_untouched() -> None:
     ) == (0, 256)
     # A partially-supplied layout fills only the omitted seat.
     resolved = resolve_direct_match_starts(
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=BYTEFRAY_RULESET_V6_ALPHA1_ID,
         arena_size=512,
         entrant_count=2,
         supplied_starts=[0, None],

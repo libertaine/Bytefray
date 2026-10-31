@@ -138,7 +138,6 @@ def test_configuration_dialog_inputs_have_programmatic_labels(tmp_path: Path) ->
             ("Seed", development.seedSpin),
             ("Ticks", development.ticksSpin),
             ("Timeout (s)", development.timeoutSpin),
-            ("Ruleset", development.rulesetCombo),
         ):
             _assert_buddy(development, text, control)
         assert development.btnRandomizeSeed.accessibleName() == (
@@ -325,9 +324,8 @@ def test_primary_designer_pages_have_keyboard_only_focus_paths(
         _tab_reaches(
             app,
             designer,
-            designer.simple.ruleset,
+            designer.simple.agentA,
             {
-                designer.simple.agentA,
                 designer.simple.agentB,
                 designer.simple.gridSize,
                 designer.simple.ticks,
@@ -341,9 +339,8 @@ def test_primary_designer_pages_have_keyboard_only_focus_paths(
         _tab_reaches(
             app,
             designer,
-            designer.advanced.ruleset,
+            designer.advanced.agentA,
             {
-                designer.advanced.agentA,
                 designer.advanced.agentB,
                 designer.advanced.btnAddAgent,
                 designer.advanced.arena,
@@ -373,7 +370,6 @@ def test_primary_designer_pages_have_keyboard_only_focus_paths(
                 designer.development.btnRandomizeSeed,
                 designer.development.ticksSpin,
                 designer.development.timeoutSpin,
-                designer.development.rulesetCombo,
                 designer.development.btnTest,
                 designer.development.btnEvaluate,
             },

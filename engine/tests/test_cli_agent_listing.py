@@ -69,8 +69,9 @@ def test_listing_explains_the_single_current_runtime_contract(
 
     assert cli_main(["agents"]) == 0
     out = capsys.readouterr().out
-    assert "[Python] agents use Agent API v2; bytefray-rules-4 is the default." in out
-    assert "Window Scout requires explicit --ruleset bytefray-rules-6-alpha1" in out
+    assert "[Python] agents use Agent API v2 and run under bytefray-rules-6-alpha1." in out
+    assert "requires explicit --ruleset" not in out
+    assert "bytefray-rules-4" not in out
     assert "Ruleset v1" not in out
     assert "Ruleset v2" not in out
     assert "[VM]" not in out

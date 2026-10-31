@@ -10,7 +10,6 @@ project_root = os.path.abspath(".")
 engine_src   = os.path.join(project_root, "engine", "src")
 client_src   = os.path.join(project_root, "client", "src")
 branding_dir = os.path.join(project_root, "app", "assets", "branding")
-starter_agents_dir = os.path.join(engine_src, "battle_engine", "data", "starter_agents")
 
 # Derived from the product's canonical scaffold inventory, never re-listed by
 # name here -- see the equivalent block in tools/bytefray.spec for the two
@@ -24,7 +23,7 @@ if engine_src not in sys.path:
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 from battle_engine.agent_scaffold import TEMPLATE_DIRECTORIES_BY_API_VERSION
-from tools.packaging_data import collect_data_tree
+from tools.packaging_data import collect_data_tree, collect_starter_agents
 from tools.windows_version_info import executable_version_info
 
 # Installed builds take their data root from the installer's record; see the hook.
@@ -56,7 +55,7 @@ hiddenimports = collect_submodules("battle_engine") + collect_submodules("battle
 # to before (FIND-06, V5 Alpha 1 Post-Release Hardening Audit).
 datas = []
 datas += collect_data_tree(branding_dir, "assets/branding")
-datas += collect_data_tree(starter_agents_dir, "battle_engine/data/starter_agents")
+datas += collect_starter_agents(engine_src, "battle_engine/data/starter_agents")
 for template_dir_name in agent_template_dirs:
     template_dir = os.path.join(engine_src, "battle_engine", "data", template_dir_name)
     if not os.path.isdir(template_dir):

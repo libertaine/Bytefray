@@ -413,6 +413,20 @@ for review.
 
 ### 8.1 Resource path and construction
 
+> **Amendment (Classic retirement, after 5.1.0-alpha.1).** The template-based
+> construction below describes the original Agent API v1 design. On the
+> current line the reference opponent is the bundled Active Sensing starter
+> `v6_watchful_keeper` (`REFERENCE_OPPONENT_STARTER` in
+> `battle_engine.agent_test`), located with
+> `starter_agent_resource_dir(...)` and parsed with `agent_spec_from_dir`
+> like any other package, so its declared `sense` capability and parameter
+> defaults travel with it. Only its `name` (`"reference"`) and `display`
+> (`"Bytefray reference agent"`) are replaced. It is still loaded directly
+> from the package resources and never copied into the writable catalog,
+> and the match runs under `bytefray-rules-6-alpha1` when `--ruleset` is
+> omitted. Everything else in §8 (naming, failure classification) is
+> unchanged.
+
 The reference opponent reuses the **exact same bundled resource**
 `bytefray agents create` copies from — `battle_engine/data/agent_template/`
 (`agent.yaml` + `agent.py`, §2's `agent_scaffold.py` citation) — located

@@ -9,7 +9,6 @@ client_src = os.path.join(project_root, "client", "src")
 script_path = os.path.join(engine_src, "battle_engine", "__main__.py")
 icon_path = os.path.join(project_root, "assets", "branding", "bytefray-icon.ico")
 branding_dir = os.path.join(project_root, "app", "assets", "branding")
-starter_agents_dir = os.path.join(engine_src, "battle_engine", "data", "starter_agents")
 
 # The scaffold template directories are READ FROM THE PRODUCT's own canonical
 # inventory rather than re-listed here by name. This spec used to enumerate
@@ -31,7 +30,7 @@ if engine_src not in sys.path:
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 from battle_engine.agent_scaffold import TEMPLATE_DIRECTORIES_BY_API_VERSION
-from tools.packaging_data import collect_data_tree
+from tools.packaging_data import collect_data_tree, collect_starter_agents
 from tools.windows_version_info import executable_version_info
 
 # Installed builds take their data root from the installer's record; see the hook.
@@ -57,7 +56,7 @@ datas = []
 # tools/packaging_data.py; the wheel and sdist have always filtered bytecode
 # at their own packaging boundary.
 datas += collect_data_tree(branding_dir, "assets/branding")
-datas += collect_data_tree(starter_agents_dir, "battle_engine/data/starter_agents")
+datas += collect_starter_agents(engine_src, "battle_engine/data/starter_agents")
 for template_dir_name in agent_template_dirs:
     template_dir = os.path.join(engine_src, "battle_engine", "data", template_dir_name)
     if not os.path.isdir(template_dir):

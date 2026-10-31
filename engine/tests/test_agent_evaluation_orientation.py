@@ -257,7 +257,7 @@ def test_schema_and_identity_v4_round_trip(tmp_path):
     assert data["schema_version"] == 7
     assert data["identity_version"] == 7
     assert data["orientation_mode"] == ORIENTATION_MODE_BOTH == "both"
-    assert data["arena_alignment_mode"] == "ruleset_v4_seeded_placements"
+    assert data["arena_alignment_mode"] == "ruleset_v6_alpha1_seeded_placements"
     cell_orientations = {cell["orientation"] for cell in data["cells"]}
     assert cell_orientations == {"candidate_first", "opponent_first"}
 
@@ -269,8 +269,8 @@ def test_rules_compatibility_id_unchanged_by_orientation(tmp_path):
     single = service.run(_request(root, output_dir=root / "single", both_orientations=False))
     data_both = json.loads(both.state_path.read_text(encoding="utf-8"))
     data_single = json.loads(single.state_path.read_text(encoding="utf-8"))
-    assert data_both["rules_compatibility_id"] == "bytefray-rules-4"
-    assert data_single["rules_compatibility_id"] == "bytefray-rules-4"
+    assert data_both["rules_compatibility_id"] == "bytefray-rules-6-alpha1"
+    assert data_single["rules_compatibility_id"] == "bytefray-rules-6-alpha1"
     assert data_both["rules_compatibility_id"] == data_single["rules_compatibility_id"]
 
 
@@ -744,13 +744,13 @@ def test_cli_default_run_reports_both_orientations_methodology(tmp_path, monkeyp
     _write_python_agent(tmp_path, "opp")
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
     exit_code = main(
-        ["cand", "--opponents", "opp", "--seeds", "1", "--dry-run", "--ruleset", "bytefray-rules-4"]
+        ["cand", "--opponents", "opp", "--seeds", "1", "--dry-run", "--ruleset", "bytefray-rules-6-alpha1"]
     )
     assert exit_code == 0
     out = capsys.readouterr().out
     assert "matches: 2" in out
     assert "Entrant orientation: both" in out
-    assert "Arena alignment: ruleset_v4_seeded_placements" in out
+    assert "Arena alignment: ruleset_v6_alpha1_seeded_placements" in out
     assert "translation robustness not evaluated" in out
 
 
@@ -763,7 +763,7 @@ def test_cli_single_orientation_flag_reproduces_legacy_matrix_and_label(tmp_path
     exit_code = main(
         [
             "cand", "--opponents", "opp", "--seeds", "1", "--dry-run",
-            "--single-orientation", "--ruleset", "bytefray-rules-4",
+            "--single-orientation", "--ruleset", "bytefray-rules-6-alpha1",
         ]
     )
     assert exit_code == 0
@@ -771,7 +771,7 @@ def test_cli_single_orientation_flag_reproduces_legacy_matrix_and_label(tmp_path
     assert "matches: 1" in out
     assert "candidate-first only" in out
     assert "does not generalize across entrant order" in out
-    assert "Arena alignment: ruleset_v4_seeded_placements" in out
+    assert "Arena alignment: ruleset_v6_alpha1_seeded_placements" in out
 
 
 def test_methodology_lines_never_claim_unbiased_or_fully_robust():
@@ -859,5 +859,5 @@ def test_evaluations_show_prints_methodology_lines(tmp_path, capsys):
     assert exit_code == 0
     out = capsys.readouterr().out
     assert "Entrant orientation: both" in out
-    assert "Arena alignment: ruleset_v4_seeded_placements" in out
+    assert "Arena alignment: ruleset_v6_alpha1_seeded_placements" in out
     assert "orientation_mode: both" in out

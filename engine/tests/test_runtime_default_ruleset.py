@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""An omitted direct-runtime Ruleset resolves to stable v4, not alpha1.
+"""An omitted direct-runtime Ruleset resolves to the product Ruleset, not alpha1.
 
 ``ProcessMatchController`` takes an optional ``ruleset_policy``. Both of its
 construction paths -- ``__init__`` and ``from_python_entrants`` -- defaulted
@@ -18,8 +18,10 @@ That is a baseline-contamination hazard for the V5 research program
 specifically: a V5 experiment that omitted the policy would measure itself
 against alpha1 rather than against the released control.
 
-This module locks the corrected contract. Note what it deliberately does
-*not* do: it changes no Ruleset's behaviour. ``RULESET_V4`` is untouched,
+This module locks the corrected contract. Since the Classic retirement the
+omitted default is Active Sensing (``RULESET_V6_ALPHA1``), which shares
+stable v4's seeded placement and round-robin process selection. Note what
+this module deliberately does *not* do: it changes no Ruleset's behaviour,
 and the frozen alpha1/alpha2 field values reconstructed below (see
 ``_FROZEN_ALPHA1_POLICY``/``_FROZEN_ALPHA2_POLICY``) still reproduce their
 "historical semantics still reproduce" tests exactly as they did before.
@@ -57,8 +59,8 @@ from battle_engine.process_runtime import (
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
-    BYTEFRAY_RULESET_V4_ID,
-    RULESET_V4,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
+    RULESET_V6_ALPHA1,
     RulesetPolicy,
 )
 
@@ -152,8 +154,8 @@ def _intra_entrant_order(
 # ---------------------------------------------------------------------------
 
 
-def test_direct_construction_with_omitted_policy_is_stable_v4() -> None:
-    """``ProcessMatchController(...)`` with no policy resolves to stable v4."""
+def test_direct_construction_with_omitted_policy_is_active_sensing() -> None:
+    """``ProcessMatchController(...)`` with no policy resolves to Active Sensing."""
 
     controller = ProcessMatchController(
         Config(arena_size=512, instr_per_tick=8, seed=3, weights=Weights()),
@@ -161,16 +163,16 @@ def test_direct_construction_with_omitted_policy_is_stable_v4() -> None:
         max_ticks=1,
     )
 
-    assert controller.ruleset_policy is RULESET_V4
-    assert controller.ruleset_policy.ruleset_id == BYTEFRAY_RULESET_V4_ID
+    assert controller.ruleset_policy is RULESET_V6_ALPHA1
+    assert controller.ruleset_policy.ruleset_id == BYTEFRAY_RULESET_V6_ALPHA1_ID
 
 
-def test_explicit_none_policy_also_resolves_to_stable_v4() -> None:
+def test_explicit_none_policy_also_resolves_to_active_sensing() -> None:
     """``ruleset_policy=None`` is the same omitted selection as leaving it out.
 
     ``__init__`` accepts ``RulesetPolicy | None``, so a caller threading an
     optional policy through can pass ``None`` explicitly; that must land on the
-    same stable identity rather than on frozen alpha1.
+    same product identity rather than on frozen alpha1.
     """
 
     controller = ProcessMatchController(
@@ -180,11 +182,11 @@ def test_explicit_none_policy_also_resolves_to_stable_v4() -> None:
         ruleset_policy=None,
     )
 
-    assert controller.ruleset_policy is RULESET_V4
+    assert controller.ruleset_policy is RULESET_V6_ALPHA1
 
 
-def test_from_python_entrants_omitted_policy_default_is_stable_v4() -> None:
-    """``from_python_entrants``'s own signature default is stable v4.
+def test_from_python_entrants_omitted_policy_default_is_active_sensing() -> None:
+    """``from_python_entrants``'s own signature default is Active Sensing.
 
     Asserted on the signature rather than through a live load because that
     classmethod spawns supervised agent worker processes. The default is a
@@ -196,22 +198,23 @@ def test_from_python_entrants_omitted_policy_default_is_stable_v4() -> None:
         ProcessMatchController.from_python_entrants
     ).parameters["ruleset_policy"].default
 
-    assert default is RULESET_V4
-    assert default.ruleset_id == BYTEFRAY_RULESET_V4_ID
+    assert default is RULESET_V6_ALPHA1
+    assert default.ruleset_id == BYTEFRAY_RULESET_V6_ALPHA1_ID
     assert default.process_selection != _FROZEN_ALPHA1_POLICY.process_selection
 
 
-def test_omitted_policy_executes_stable_v4_gameplay_not_alpha1() -> None:
+def test_omitted_policy_executes_round_robin_gameplay_not_alpha1() -> None:
     """The corrected default is observable in gameplay, not just in a field.
 
-    An omitted policy must produce stable v4's round-robin intra-entrant
-    rotation, and must not reproduce alpha1's declaration-order priority.
+    An omitted policy must produce the round-robin intra-entrant rotation
+    stable v4 introduced and Active Sensing keeps, and must not reproduce
+    alpha1's declaration-order priority.
     """
 
     omitted = _intra_entrant_order(None, omit=True)
 
     assert omitted == _STABLE_V4_ROUND_ROBIN_ORDER
-    assert omitted == _intra_entrant_order(RULESET_V4)
+    assert omitted == _intra_entrant_order(RULESET_V6_ALPHA1)
     assert omitted != _ALPHA1_PRIORITY_ORDER
 
 
@@ -247,24 +250,24 @@ def test_explicit_alpha2_policy_still_executes_alpha2_semantics() -> None:
     [
         (_FROZEN_ALPHA1_POLICY, _ALPHA1_PRIORITY_ORDER),
         (_FROZEN_ALPHA2_POLICY, _STABLE_V4_ROUND_ROBIN_ORDER),
-        (RULESET_V4, _STABLE_V4_ROUND_ROBIN_ORDER),
+        (RULESET_V6_ALPHA1, _STABLE_V4_ROUND_ROBIN_ORDER),
     ],
 )
-def test_every_v4_identity_keeps_its_own_execution_order(
+def test_every_identity_keeps_its_own_execution_order(
     policy: RulesetPolicy, expected: list[tuple[str, str]]
 ) -> None:
-    """Each v4 identity's policy object stays behaviourally itself.
+    """Each policy object stays behaviourally itself.
 
     Guards the direction the default fix must never leak in: correcting an
     omitted selection must not change what a policy object -- alpha1's,
-    alpha2's, or the stable control's -- executes as when passed
+    alpha2's, or the product Ruleset's -- executes as when passed
     explicitly.
     """
 
     assert _intra_entrant_order(policy) == expected
 
 
-def test_alpha1_and_stable_v4_remain_behaviourally_distinguishable() -> None:
+def test_alpha1_and_the_product_default_remain_behaviourally_distinguishable() -> None:
     """The two policies the old default confused are genuinely different.
 
     If this ever fails, the tests above stop proving anything -- they would be
@@ -273,6 +276,6 @@ def test_alpha1_and_stable_v4_remain_behaviourally_distinguishable() -> None:
 
     assert _ALPHA1_PRIORITY_ORDER != _STABLE_V4_ROUND_ROBIN_ORDER
     assert (
-        _FROZEN_ALPHA1_POLICY.process_selection != RULESET_V4.process_selection
-        or _FROZEN_ALPHA1_POLICY.core_placement != RULESET_V4.core_placement
+        _FROZEN_ALPHA1_POLICY.process_selection != RULESET_V6_ALPHA1.process_selection
+        or _FROZEN_ALPHA1_POLICY.core_placement != RULESET_V6_ALPHA1.core_placement
     )

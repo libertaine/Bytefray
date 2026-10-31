@@ -44,14 +44,14 @@ def _argument_value(command: list[str], flag: str) -> str:
 
 @pytest.mark.gui
 @pytest.mark.parametrize(
-    ("panel_name", "agent_a", "agent_b", "ruleset_id"),
+    ("panel_name", "agent_a", "agent_b"),
     [
-        ("simple", "v4_claimer", "v4_scout", "bytefray-rules-4"),
-        ("advanced", "v5_scout_striker", "v5_region_attacker", "bytefray-rules-4"),
+        ("simple", "v6_window_scout", "v6_watchful_keeper"),
+        ("advanced", "v6_roaming_reacquirer", "v6_window_scout"),
     ],
 )
 def test_designer_panels_launch_starter_agents_by_discovery_id(
-    monkeypatch, tmp_path, panel_name, agent_a, agent_b, ruleset_id
+    monkeypatch, tmp_path, panel_name, agent_a, agent_b
 ):
     """The combo's canonical discovery ids must cross the Designer boundary."""
     pytest.importorskip("PySide6")
@@ -66,8 +66,6 @@ def test_designer_panels_launch_starter_agents_by_discovery_id(
     captured = _capture_match_launch(monkeypatch, designer)
     panel = getattr(designer, panel_name)
 
-    panel.ruleset.setCurrentIndex(panel.ruleset.findData(ruleset_id))
-
     panel.agentA.setCurrentIndex(panel.agentA.findData(agent_a))
     panel.agentB.setCurrentIndex(panel.agentB.findData(agent_b))
     panel._emit_run()
@@ -76,7 +74,8 @@ def test_designer_panels_launch_starter_agents_by_discovery_id(
     assert captured["label"] == "RunMatch"
     assert _argument_value(captured["command"], "--a-type") == agent_a
     assert _argument_value(captured["command"], "--b-type") == agent_b
-    assert _argument_value(captured["command"], "--ruleset") == ruleset_id
+    # Every Designer launch names the one Ruleset explicitly.
+    assert _argument_value(captured["command"], "--ruleset") == "bytefray-rules-6-alpha1"
     assert "could not resolve agents" not in panel.log.toPlainText()
     designer.deleteLater()
 
@@ -389,17 +388,17 @@ def test_advanced_run_exports_agent_params_json_to_child_env(monkeypatch, tmp_pa
     monkeypatch.setattr(designer, "_start_process", _fake_start_process)
 
     cfg = RunConfig(
-        a_type="v4_claimer",
-        b_type="v4_scout",
+        a_type="v6_window_scout",
+        b_type="v6_watchful_keeper",
         arena=256,
         ticks=100,
-        a_params={"byte": 7, "stride": 3},
+        a_params={"search_interval": 7},
         b_params=None,
     )
     designer._on_advanced_run(cfg)
 
     env = captured["env"]
-    assert env.value("BYTEFRAY_AGENT_A_PARAMS_JSON") == json.dumps({"byte": 7, "stride": 3})
+    assert env.value("BYTEFRAY_AGENT_A_PARAMS_JSON") == json.dumps({"search_interval": 7})
     assert env.contains("BYTEFRAY_AGENT_B_PARAMS_JSON") is False
 
     designer.deleteLater()
@@ -407,16 +406,14 @@ def test_advanced_run_exports_agent_params_json_to_child_env(monkeypatch, tmp_pa
 
 @pytest.mark.gui
 @pytest.mark.parametrize("run_method", ["_on_simple_run", "_on_advanced_run"])
-def test_designer_run_requests_trace_only_for_v4_rulesets(
+def test_designer_run_always_requests_a_trace(
     monkeypatch, tmp_path, run_method
 ):
-    """Both match panels request trace output for the sole current Ruleset.
+    """Both match panels request trace output for every match.
 
-    The permanent stable v4 identity's Designer matches request
-    ``--trace <run-dir>/trace.jsonl`` alongside ``--replay`` so the Alpha3
-    spectator suite (Perspective Cam, Spectator Director, Fight Night) is
-    naturally available after "Open Replay". Retired Rulesets have no live
-    Designer launch path in Phase 2B.12.
+    Designer matches request ``--trace <run-dir>/trace.jsonl`` alongside
+    ``--replay``: Active Sensing replays need the trace for their delivered
+    information views and for Spectator export.
     """
     pytest.importorskip("PySide6")
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -431,10 +428,9 @@ def test_designer_run_requests_trace_only_for_v4_rulesets(
     captured = _capture_match_launch(monkeypatch, designer)
 
     cfg = RunConfig(
-        a_type="v4_claimer",
-        b_type="v4_scout",
-        ruleset_id="bytefray-rules-4",
-        arena=64,
+        a_type="v6_window_scout",
+        b_type="v6_watchful_keeper",
+        arena=512,
         ticks=10,
     )
     getattr(designer, run_method)(cfg)

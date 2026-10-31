@@ -32,7 +32,7 @@ from battle_engine.match_service import (
 from battle_engine.process_runtime import ProcessMatchController
 
 
-def _config(arena_size=32, instr_per_tick=8, seed=1337):
+def _config(arena_size=128, instr_per_tick=8, seed=1337):
     return Config(arena_size=arena_size, instr_per_tick=instr_per_tick, seed=seed)
 
 

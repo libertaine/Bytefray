@@ -394,17 +394,15 @@ def test_designer_evaluate_with_invalid_preset_on_disk_still_opens(monkeypatch, 
 
 
 # ---------------------------------------------------------------------------
-# v3.0.0-alpha2: pairwise Ruleset selector and its preset interaction
+# Ruleset and preset interaction
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.gui
-def test_pairwise_defaults_to_stable_v4_and_group_is_retired(tmp_path):
-    """Pairwise uses stable v4; group mode is visibly non-runnable."""
+def test_pairwise_offers_no_ruleset_choice_and_group_is_retired(tmp_path):
+    """Pairwise runs the one Ruleset; group mode is visibly non-runnable."""
 
     _make_app()
-    from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
-
     from app.services.designer_workflows import EVALUATION_MODE_GROUP
     from app.views.evaluation import EvaluationDialog
 
@@ -414,20 +412,14 @@ def test_pairwise_defaults_to_stable_v4_and_group_is_retired(tmp_path):
         default_output=tmp_path / "out",
     )
     try:
-        # V5 Alpha 1 Phase 1: with no ``agent_metadata`` supplied, the
-        # compatibility-repair pass (``_sync_pairwise_ruleset``) never runs
-        # (nothing to derive a Ruleset from), so the pairwise selector shows
-        # the Designer's own canonical fresh-session default -- now the
-        # stable v4 identity, not v2 (see DEFAULT_DESIGNER_RULESET_ID).
-        assert dialog.pairwise_ruleset_id() == BYTEFRAY_RULESET_V4_ID
-        assert dialog.pairwiseRulesetCombo.isVisibleTo(dialog)
+        assert not hasattr(dialog, "pairwiseRulesetCombo")
         assert not dialog.rulesetValue.isVisibleTo(dialog)
+        assert dialog.runButton.isEnabled()
 
         index = dialog.modeCombo.findData(EVALUATION_MODE_GROUP)
         dialog.modeCombo.setCurrentIndex(index)
         # Historical group artifacts remain readable, but new group
         # evaluation execution is retired.
-        assert not dialog.pairwiseRulesetCombo.isVisibleTo(dialog)
         assert dialog.rulesetValue.isVisibleTo(dialog)
         assert "retired" in dialog.rulesetValue.text().lower()
         assert not dialog.runButton.isEnabled()
@@ -448,42 +440,17 @@ def test_retired_preset_ruleset_is_rejected_before_the_dialog(tmp_path):
         "v1compat",
         {"opponents": ["opponent"], "seeds": [1], "ruleset": BYTEFRAY_RULESET_ID},
     )
-    with pytest.raises(EvaluationPresetError, match="ruleset.*bytefray-rules-4"):
+    with pytest.raises(EvaluationPresetError, match="'bytefray-rules-1' is retired"):
         load_preset(tmp_path, "v1compat")
 
 
 @pytest.mark.gui
-def test_preset_without_a_ruleset_leaves_the_selection_alone(tmp_path):
-    """Nothing to preserve, so the user's own choice -- here, the Designer's
-    own canonical fresh-session default, since no ``agent_metadata`` was
-    supplied to derive anything else -- governs."""
+def test_designer_names_the_ruleset_in_the_evaluation_argv(monkeypatch, tmp_path):
+    """End-to-end: an evaluation launch names Active Sensing explicitly
+    rather than relying on the engine's omitted-Ruleset default."""
 
     _make_app()
-    from battle_engine.evaluation_presets import load_preset
-    from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
-
-    _write_preset(tmp_path, "plain", {"opponents": ["opponent"], "seeds": [1]})
-    from app.views.evaluation import EvaluationDialog
-
-    dialog = EvaluationDialog(
-        [("Candidate", "candidate"), ("Opponent", "opponent")],
-        default_candidate="candidate",
-        default_output=tmp_path / "out",
-        presets={"plain": load_preset(tmp_path, "plain")},
-    )
-    try:
-        dialog.presetCombo.setCurrentIndex(dialog.presetCombo.findData("plain"))
-        assert dialog.pairwise_ruleset_id() == BYTEFRAY_RULESET_V4_ID
-    finally:
-        dialog.deleteLater()
-
-
-@pytest.mark.gui
-def test_designer_sends_the_dialogs_pairwise_ruleset(monkeypatch, tmp_path):
-    """End-to-end: the selection reaches the launched argv."""
-
-    _make_app()
-    from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
+    from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V6_ALPHA1_ID
 
     from app.agent_designer import AgentDesigner
     from app.services.agent_catalog import AgentRow
@@ -544,9 +511,6 @@ def test_designer_sends_the_dialogs_pairwise_ruleset(monkeypatch, tmp_path):
             def preset_name(self):
                 return None
 
-            def pairwise_ruleset_id(self):
-                return BYTEFRAY_RULESET_V4_ID
-
         monkeypatch.setattr("app.agent_designer.EvaluationDialog", _AcceptingDialog)
 
         launched: list[list[str]] = []
@@ -564,6 +528,6 @@ def test_designer_sends_the_dialogs_pairwise_ruleset(monkeypatch, tmp_path):
         designer._on_evaluate()
 
         command = launched[0]
-        assert command[command.index("--ruleset") + 1] == BYTEFRAY_RULESET_V4_ID
+        assert command[command.index("--ruleset") + 1] == BYTEFRAY_RULESET_V6_ALPHA1_ID
     finally:
         designer.deleteLater()

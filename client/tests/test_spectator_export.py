@@ -21,7 +21,7 @@ from battle_client import spectator_export as sx
 from battle_engine.agents import agent_spec_from_dir
 from battle_engine.config import Config
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
-from battle_engine.rules import BYTEFRAY_RULESET_V4_ID, BYTEFRAY_RULESET_V6_ALPHA1_ID
+from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID, BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID
 
 STARTS = (0, 91, 300)
 B_CORE = tuple(range(91, 99))
@@ -318,9 +318,11 @@ def test_a_foreign_trace_is_refused(tie_match, tmp_path):
 
 
 def test_unsupported_rulesets_and_rosters(tmp_path):
-    v4 = _match(tmp_path / "v4", [[("read", 0)], [("read", 91)]], ruleset=BYTEFRAY_RULESET_V4_ID)
+    # Any Ruleset but Active Sensing is unsupported; the passive research
+    # control stands in for the historical ones, which can no longer run.
+    passive = _match(tmp_path / "passive", [[("read", 0)], [("read", 91)]], ruleset=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID)
     three = _match(tmp_path / "three", [[("read", 0)], [("read", 91)], [("read", 300)]])
-    for match, code in ((v4, sx.UNSUPPORTED_RULESET), (three, sx.UNSUPPORTED_ROSTER)):
+    for match, code in ((passive, sx.UNSUPPORTED_RULESET), (three, sx.UNSUPPORTED_ROSTER)):
         support = sx.spectator_support(match / "result.json")
         assert (support.supported, support.code) == (False, code)
         with pytest.raises(sx.SpectatorExportError) as caught:

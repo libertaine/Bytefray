@@ -55,7 +55,6 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
-    RULESET_V4,
     RULESET_V6_RESEARCH_CAPTURE_HOLD_K2,
     RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1,
     RULESET_V6_RESEARCH_DISRUPTION_SLOT1,
@@ -293,7 +292,7 @@ def test_policies_under_test() -> None:
 
 @pytest.mark.parametrize(
     "policy",
-    [RULESET_V4, RULESET_V6_RESEARCH_SCALE, WHOLE_TICK, PRIMARY, COMPANION],
+    [RULESET_V6_RESEARCH_SCALE, WHOLE_TICK, PRIMARY, COMPANION],
     ids=_policy_id,
 )
 def test_the_one_tick_disruption_window_is_unchanged(policy: RulesetPolicy) -> None:

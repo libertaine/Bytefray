@@ -251,7 +251,7 @@ def test_creating_over_a_materialized_starter_is_rejected(tmp_path):
     ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
 
     with pytest.raises(AgentScaffoldError, match="already exists"):
-        create_agent("v4_claimer", data_root=tmp_path, resource_root=_resource_root())
+        create_agent("v6_window_scout", data_root=tmp_path, resource_root=_resource_root())
 
 
 def test_creating_over_an_unmaterialized_starter_name_succeeds(tmp_path):

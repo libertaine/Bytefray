@@ -328,6 +328,10 @@ def test_every_registered_starter_reaches_the_frozen_tree(spec_path: Path, monke
         f"{spec_path.name} places no file in the frozen tree for registered "
         f"starter agents: {missing}"
     )
+    assert packaged == set(STARTER_AGENT_NAMES), (
+        f"{spec_path.name} bundles unregistered or retired starters: "
+        f"{sorted(packaged - set(STARTER_AGENT_NAMES))}"
+    )
 
 
 SCAFFOLD_TEMPLATE_DIRECTORIES = sorted(

@@ -1,0 +1,34 @@
+# Dependency environment for the read-only historical E9 verification
+# (.github/workflows/frozen-science.yml), installed as
+#   pip install -e "<snapshot>[dev]" -c tools/qualification/e9_historical_constraints.txt
+# on CPython 3.13.
+#
+# These are the tool versions the V6 research line was qualified with: the
+# recorded research .venv (docs/research/v6/V6_PHASE0_BASELINE.md, section 3:
+# CPython 3.13.14, pytest 9.1.1, mypy 2.3.1, ruff 0.16.3, PyYAML 6.0.3), the
+# same pins the 5.1.0-alpha.1 build later recorded in
+# tools/windows-build-constraints.txt. Kept separate from that release file so
+# a future product dependency update cannot move the frozen-science baseline.
+#
+# pytest is pinned below 9.2: pytest 9.2.0 makes the protected Seal 07 test
+# test_v6_e9_v2_gate8_seal07.py::test_s7_regular_missing_unreadable_and_opened_identity
+# fail (its os.fstat stub lacks st_size) on the snapshot and the current tree
+# alike; it passes unchanged under the qualified 9.1.1. Protected tests are
+# never edited to follow an unreviewed tooling upgrade.
+colorama==0.4.6
+iniconfig==2.3.0
+librt==0.15.0
+ast_serialize==0.8.0
+mypy==2.3.1
+mypy_extensions==1.1.0
+packaging==26.3
+pathspec==1.1.1
+pluggy==1.6.0
+Pygments==2.21.0
+pytest==9.1.1
+PyYAML==6.0.3
+ruff==0.16.3
+setuptools==84.0.0
+types-PyYAML==6.0.12.20260815
+typing_extensions==4.16.0
+wheel==0.48.0

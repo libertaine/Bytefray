@@ -349,11 +349,17 @@ def test_dirty_checkout_still_packages_the_neighbouring_resources(
         "battle_engine/data/agent_template_v2/agent.yaml",
         "battle_engine/data/agent_template_v2_annotated/agent.py",
         "battle_engine/data/agent_template_v2_annotated/agent.yaml",
-        "battle_engine/data/starter_agents/v4_claimer/agent.yaml",
+        "battle_engine/data/starter_agents/v6_window_scout/agent.yaml",
         "assets/branding/bytefray-icon.png",
     }
     assert required <= produced, (
         f"filtering removed legitimate resources: {sorted(required - produced)}"
+    )
+    # The retired V4/V5 starters stay in the repository as research fixtures
+    # but are no longer collected into the frozen build.
+    assert not any(
+        path.startswith(("battle_engine/data/starter_agents/v4_", "battle_engine/data/starter_agents/v5_"))
+        for path in produced
     )
 
 

@@ -8,7 +8,7 @@ tests actually protected -- artifact atomicity on success and on every
 class of failure, duplicate-entrant-id rejection, and fail-closed Ruleset
 resolution -- are dispatch-boundary properties of ``NativeMatchService``
 itself, not VM-specific, so they are converted to exercise the retained
-process path (bundled ``v4_claimer`` starter, Agent API v2) instead of
+process path (bundled ``v6_watchful_keeper`` starter, Agent API v2) instead of
 being dropped. The direct legacy-Kernel-vs-service comparison and the
 VM-specific termination-reason enumeration were removed outright: both
 literally compared against ``Kernel``, which no longer exists, and
@@ -29,15 +29,16 @@ from battle_engine.match_service import (
     NativeMatchService,
     UnsupportedMatchCompositionError,
 )
-from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID, UnknownRulesetError
+from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V6_ALPHA1_ID, UnknownRulesetError
 
 
 def _config() -> Config:
-    # bytefray-rules-4 fixes the entrant action quota at Q=8
+    # Active Sensing fixes the entrant action quota at Q=8, and the bundled
+    # starters' reach needs an arena larger than 128 cells.
     # (ProcessMatchController.from_python_entrants); every VM-era arbitrary
     # instr_per_tick this file used to pass is replaced with that pin.
     return Config(
-        arena_size=128,
+        arena_size=512,
         instr_per_tick=8,
         seed=73,
         win_mode="score_fallback",
@@ -46,7 +47,7 @@ def _config() -> Config:
 
 
 def _real_v2_entrants(data_root: Path) -> tuple[MatchEntrant, ...]:
-    """Two real, resolvable Agent API v2 entrants: the bundled ``v4_claimer``
+    """Two real, resolvable Agent API v2 entrants: the bundled ``v6_watchful_keeper``
     starter installed twice under different discovery ids, so a match can
     actually run end to end without authoring a throwaway agent by hand.
     """
@@ -55,7 +56,7 @@ def _real_v2_entrants(data_root: Path) -> tuple[MatchEntrant, ...]:
     from battle_engine.starters import ensure_starter_agents
 
     ensure_starter_agents(data_root=data_root)
-    spec = resolve_agent(data_root, "v4_claimer")
+    spec = resolve_agent(data_root, "v6_watchful_keeper")
     return (
         MatchEntrant.python("A", "claimer-a", 0, spec),
         MatchEntrant.python("B", "claimer-b", 64, spec),
@@ -78,7 +79,7 @@ def test_duplicate_entrant_ids_are_rejected(tmp_path):
     from battle_engine.starters import ensure_starter_agents
 
     ensure_starter_agents(data_root=tmp_path)
-    spec = resolve_agent(tmp_path, "v4_claimer")
+    spec = resolve_agent(tmp_path, "v6_watchful_keeper")
     entrants = (
         MatchEntrant.python("A", "first", 0, spec),
         MatchEntrant.python("A", "second", 32, spec),
@@ -116,7 +117,7 @@ def test_unknown_ruleset_id_fails_closed_before_any_runtime_executes(tmp_path, m
 
     with pytest.raises(UnknownRulesetError):
         NativeMatchService().run(
-            MatchRequest(_config(), entrants, 5, replay, False, ruleset_id=BYTEFRAY_RULESET_V4_ID)
+            MatchRequest(_config(), entrants, 5, replay, False, ruleset_id=BYTEFRAY_RULESET_V6_ALPHA1_ID)
         )
 
     assert not replay.exists()

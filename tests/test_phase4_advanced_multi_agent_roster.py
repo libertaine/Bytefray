@@ -23,8 +23,6 @@ import os
 
 import pytest
 
-BYTEFRAY_RULESET_V4_ID = "bytefray-rules-4"
-
 
 def _make_app():
     pytest.importorskip("PySide6")
@@ -361,19 +359,22 @@ def test_designer_forwards_three_agent_roster_into_the_launched_command(monkeypa
     captured = _capture_match_launch(monkeypatch, designer)
 
     panel = designer.advanced
-    panel.agentA.setCurrentIndex(panel.agentA.findData("v4_claimer"))
-    panel.agentB.setCurrentIndex(panel.agentB.findData("v4_scout"))
+    panel.agentA.setCurrentIndex(panel.agentA.findData("v6_window_scout"))
+    panel.agentB.setCurrentIndex(panel.agentB.findData("v6_watchful_keeper"))
     panel.btnAddAgent.click()
     import json as _json
 
-    panel.editorC.text.setPlainText(_json.dumps({"aggression": 0.5}))
+    # Agent C uses a schema form for the remaining packaged starters.
+    # Choose a known schema and submit its actual launch overrides.
+    panel.agentC.setCurrentIndex(panel.agentC.findData("v6_window_scout"))
+    panel.schemaC._controls["search_interval"].setValue(7)
     panel._emit_run()
 
     assert captured["started"] is True
-    assert _argument_value(captured["command"], "--a-type") == "v4_claimer"
-    assert _argument_value(captured["command"], "--b-type") == "v4_scout"
+    assert _argument_value(captured["command"], "--a-type") == "v6_window_scout"
+    assert _argument_value(captured["command"], "--b-type") == "v6_watchful_keeper"
     assert _argument_value(captured["command"], "--c-type") == panel.agentC.currentData()
-    assert captured["env"].value("BYTEFRAY_AGENT_C_PARAMS_JSON") == _json.dumps({"aggression": 0.5})
+    assert captured["env"].value("BYTEFRAY_AGENT_C_PARAMS_JSON") == _json.dumps({"search_interval": 7})
     assert "could not resolve agents" not in panel.log.toPlainText()
     designer.deleteLater()
 

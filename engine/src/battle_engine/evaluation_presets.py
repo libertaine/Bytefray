@@ -41,7 +41,8 @@ import yaml
 
 from battle_engine.paths import contained_path, get_data_root
 from battle_engine.result_model import stable_id
-from battle_engine.rules import BYTEFRAY_RULESET_V4_ID
+from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
+from battle_engine.ruleset_policy import describe_unavailable_ruleset, is_retired_ruleset_id
 
 SCHEMA_NAME = "bytefray.evaluation_preset"
 SCHEMA_VERSION = 1
@@ -76,14 +77,11 @@ _ALLOWED_FIELDS = {
 }
 _REQUIRED_FIELDS = {"schema", "schema_version"}
 
-# V6 Phase 2B.12 (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md):
-# repointed at the retained control after this tuple was found to name only
-# retired identities (`bytefray-rules-1`/`bytefray-rules-2`) -- and, since
-# v2.0.0-beta2, to have already drifted from `agent_evaluation`'s own
-# `--ruleset` choices, which have included the control since v4.0.0-rc1
-# Phase 2. A finite tuple (not a bare constant) so a future evaluation
-# Ruleset (e.g. `bytefray-rules-6`) has one obvious place to be added.
-_VALID_RULESETS = (BYTEFRAY_RULESET_V4_ID,)
+# The Rulesets a preset's `ruleset` field may name. Since the Classic
+# retirement that is Active Sensing alone; a preset naming the retired
+# `bytefray-rules-4` is rejected, never remapped. A finite tuple (not a bare
+# constant) so a future evaluation Ruleset has one obvious place to be added.
+_VALID_RULESETS = (BYTEFRAY_RULESET_V6_ALPHA1_ID,)
 
 _NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
 
@@ -343,6 +341,10 @@ def load_preset_file(path: Path, *, name: str | None = None) -> EvaluationPreset
     ruleset_id = data.get("ruleset")
     if ruleset_id is not None:
         _require_type(ruleset_id, str, "ruleset", path)
+        if is_retired_ruleset_id(ruleset_id):
+            raise EvaluationPresetError(
+                f"{path}: 'ruleset': {describe_unavailable_ruleset(ruleset_id, _VALID_RULESETS)}"
+            )
         if ruleset_id not in _VALID_RULESETS:
             raise EvaluationPresetError(
                 f"{path}: 'ruleset' must be one of {_VALID_RULESETS!r}, got {ruleset_id!r}."
@@ -442,7 +444,7 @@ def _print_show(preset: EvaluationPreset) -> None:
     else:
         print(
             "seeds: (not set by this preset -- explicit override, or the ordinary "
-            "default for the resolved Ruleset: 8 standard seeds for bytefray-rules-4)"
+            "default for the resolved Ruleset: 8 standard seeds for bytefray-rules-6-alpha1)"
         )
     print(f"ticks: {preset.ticks if preset.ticks is not None else '(not set -- ordinary default)'}")
     _unset = "(not set -- ordinary default)"
@@ -454,7 +456,7 @@ def _print_show(preset: EvaluationPreset) -> None:
     print(f"orientation: {preset.orientation or '(not set -- ordinary default: both)'}")
     print(
         "ruleset: "
-        f"{preset.ruleset_id or '(not set -- ordinary default: bytefray-rules-4, evaluation entrants are always Python)'}"
+        f"{preset.ruleset_id or '(not set -- ordinary default: bytefray-rules-6-alpha1, evaluation entrants are always Python)'}"
     )
     print(
         "This preset supplies a partial EvaluationRequest: any field it does not set falls "

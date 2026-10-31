@@ -40,7 +40,13 @@ from __future__ import annotations
 
 from pathlib import Path, PurePosixPath
 
-__all__ = ["BYTECODE_SUFFIXES", "CACHE_DIRECTORY_NAME", "collect_data_tree", "is_python_bytecode"]
+__all__ = [
+    "BYTECODE_SUFFIXES",
+    "CACHE_DIRECTORY_NAME",
+    "collect_data_tree",
+    "collect_starter_agents",
+    "is_python_bytecode",
+]
 
 #: Directory name CPython writes cached bytecode into.
 CACHE_DIRECTORY_NAME = "__pycache__"
@@ -133,4 +139,29 @@ def collect_data_tree(
             f"Required packaging resource directory {str(source)!r} contains no "
             "packageable files; the frozen build would ship an empty resource."
         )
+    return entries
+
+
+def collect_starter_agents(engine_src: str | Path, destination: str) -> list[tuple[str, str]]:
+    """Expand only the installed starter roster into ``datas`` entries.
+
+    ``starter_agents/`` also holds the retired V4/V5 starters, kept in the
+    repository unchanged as the V5/V6 research benchmark population but no
+    longer installed or shipped. Collecting the whole directory would ship
+    them, so this reads ``battle_engine.starters.STARTER_AGENT_NAMES`` --
+    the same registry the wheel check enforces -- and collects each listed
+    starter, required, and nothing else.
+    """
+
+    import importlib
+    import sys
+
+    src = str(engine_src)
+    if src not in sys.path:
+        sys.path.insert(0, src)
+    names = importlib.import_module("battle_engine.starters").STARTER_AGENT_NAMES
+    base = Path(src) / "battle_engine" / "data" / "starter_agents"
+    entries: list[tuple[str, str]] = []
+    for name in names:
+        entries += collect_data_tree(base / name, f"{destination}/{name}", required=True)
     return entries

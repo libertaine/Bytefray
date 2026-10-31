@@ -474,7 +474,7 @@ def test_validate_uses_discovery_id_not_display_name_when_they_differ(monkeypatc
         designer._on_validate_agent()
         _wait_for_finished(designer)
 
-        assert captured_args == [["validate_disc_id", "--ruleset", "bytefray-rules-4", "--timeout", str(designer.development.selected_timeout())]]
+        assert captured_args == [["validate_disc_id", "--ruleset", "bytefray-rules-6-alpha1", "--timeout", str(designer.development.selected_timeout())]]
         assert "Validate Friendly Display Name" not in captured_args[0]
     finally:
         designer.deleteLater()

@@ -184,28 +184,6 @@ def test_frozen_interleave_fixtures_confirm_alpha1_was_immune_to_control_interle
     assert first.reproducibility == second.reproducibility
 
 
-def test_live_stable_v4_control_is_immune_to_interceding_execution(tmp_path):
-    first_header, first_replay = _run_control(tmp_path, seed=9, label="control-first")
-    _run_control(tmp_path, seed=13, label="interceding")
-    second_header, second_replay = _run_control(tmp_path, seed=9, label="control-second")
-
-    assert first_header.match_id == second_header.match_id
-    assert first_header.result_id == second_header.result_id
-    assert first_header.reproducibility == second_header.reproducibility
-    assert first_replay == second_replay
-
-
-
-# ---------------------------------------------------------------------------
-# Bytefray V6 Phase 2B.1 -- regression coverage for _bootstrap_agent()'s
-# starter-source validity check, the same defect and fix as in
-# test_v4_stable_ruleset_equivalence.py (which carries the full battery of
-# cases; docs/research/v6/V6_PHASE1_REPOSITORY_DIET_AUDIT.md Sec 8.2).
-# Isolated tmp_path fixtures only -- never the real gitignored agents/
-# catalog. Unaffected by the Phase 2B.10 conversion above.
-# ---------------------------------------------------------------------------
-
-
 def test_bootstrap_agent_skips_stale_cache_only_source_and_falls_through(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):

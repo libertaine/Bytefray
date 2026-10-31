@@ -54,7 +54,6 @@ from battle_engine.replay import (
 )
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
-    RULESET_V4,
     RULESET_V6_RESEARCH_CAPTURE_HOLD_K2,
     RULESET_V6_RESEARCH_SCALE,
     RulesetPolicy,
@@ -512,14 +511,15 @@ def test_opponent_forfeit_while_self_completes_is_all_agents_dead_tie() -> None:
     assert _outcome(played) == ("tie", "all_agents_dead", 2)
 
 
-def test_v4_already_credits_a_capturer_that_forfeits_later_in_the_capture_tick() -> None:
-    # The V4 precedent the E2 case above is consistent with: B takes A's
-    # last four core cells on tick 2 and then forfeits in the same tick.
-    # V4 captures A at that tick's end and credits B, although B is dead.
+def test_the_k1_control_already_credits_a_capturer_that_forfeits_later_in_the_capture_tick() -> None:
+    # The V4 precedent the E2 case above is consistent with, shown on the
+    # field-identical research control: B takes A's last four core cells on
+    # tick 2 and then forfeits in the same tick. The control captures A at
+    # that tick's end and credits B, although B is dead.
     played = _play(
         {"B": {1: _zero("A")[:4], 2: [*_zero("A")[4:], _FORFEIT]}},
         max_ticks=5,
-        policy=RULESET_V4,
+        policy=RULESET_V6_RESEARCH_SCALE,
     )
 
     tick1, tick2 = played.ticks
@@ -558,7 +558,7 @@ def test_tick_limit_at_streak_one_survives_and_score_decides() -> None:
 
 
 @pytest.mark.parametrize(
-    "policy", [RULESET_V4, RULESET_V6_RESEARCH_SCALE], ids=lambda policy: policy.ruleset_id
+    "policy", [RULESET_V6_RESEARCH_SCALE], ids=lambda policy: policy.ruleset_id
 )
 def test_k1_capture_is_immediate_and_attributed_from_its_own_tick(policy: RulesetPolicy) -> None:
     assert policy.capture_hold_ticks == 1

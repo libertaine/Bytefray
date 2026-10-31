@@ -74,6 +74,7 @@ from battle_engine.ruleset_policy import (
     ACTIVE_RESEARCH_RULESET_IDS,
     ACTIVE_SENSING_HALF_WIDTH,
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_R32_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID,
@@ -88,15 +89,10 @@ from battle_engine.ruleset_policy import (
     RULESET_V6_RESEARCH_SENSING_R32,
     RulesetPolicy,
     resolve_omitted_ruleset_for_agents,
-    resolve_omitted_ruleset_id,
     resolve_ruleset_policy,
 )
 
-from app.services.ruleset_options import (
-    DESIGNER_RULESET_OPTIONS,
-    EVALUATION_RULESET_OPTIONS,
-    SIMPLE_RULESET_OPTIONS,
-)
+from app.services.ruleset_options import DESIGNER_RULESET_ID
 
 PRIMARY_ID = BYTEFRAY_RULESET_V6_RESEARCH_SENSING_ACTIVE_W27_ID
 COMPANION_ID = BYTEFRAY_RULESET_V6_RESEARCH_DISRUPTION_SLOT1_SENSING_ACTIVE_W27_ID
@@ -330,17 +326,16 @@ def test_the_window_needs_an_arena_wider_than_54(tmp_path: Path, policy: Ruleset
 def test_e8_is_never_automatic() -> None:
     for ruleset_id in E8_IDS:
         assert ruleset_id not in OMITTED_RULESET_CANDIDATES and ruleset_id not in PUBLIC_STABLE_RULESET_IDS
-    assert OMITTED_RULESET_CANDIDATES == (BYTEFRAY_RULESET_V4_ID,)
+    assert OMITTED_RULESET_CANDIDATES == (BYTEFRAY_RULESET_V6_ALPHA1_ID,)
     assert resolve_omitted_ruleset_for_agents(None, [{"agent_id": "x", "kind": "python", "api_version": 2}]) == (
-        BYTEFRAY_RULESET_V4_ID)
-    assert resolve_omitted_ruleset_id(None, ["python"]) == BYTEFRAY_RULESET_V4_ID
-    assert resolve_evaluation_ruleset_id(None) == BYTEFRAY_RULESET_V4_ID
+        BYTEFRAY_RULESET_V6_ALPHA1_ID)
+    assert resolve_evaluation_ruleset_id(None) == BYTEFRAY_RULESET_V6_ALPHA1_ID
 
 
 @pytest.mark.parametrize("ruleset_id", E8_IDS)
 def test_e8_is_not_selectable_from_product_run_surfaces(ruleset_id: str, capsys: pytest.CaptureFixture[str]) -> None:
-    assert _ruleset_choices(agent_test._parser()) == [BYTEFRAY_RULESET_V4_ID]
-    assert _ruleset_choices(tournament_cli._parser()) == [BYTEFRAY_RULESET_V4_ID]
+    assert _ruleset_choices(agent_test._parser()) == [BYTEFRAY_RULESET_V6_ALPHA1_ID]
+    assert _ruleset_choices(tournament_cli._parser()) == [BYTEFRAY_RULESET_V6_ALPHA1_ID]
     for parser in (agent_test._parser(), tournament_cli._parser()):
         with pytest.raises(SystemExit) as excinfo:
             parser.parse_args(["x", "--ruleset", ruleset_id])
@@ -352,8 +347,7 @@ def test_e8_is_not_selectable_from_product_run_surfaces(ruleset_id: str, capsys:
 
 
 def test_e8_is_absent_from_every_designer_ruleset_option() -> None:
-    for options in (SIMPLE_RULESET_OPTIONS, EVALUATION_RULESET_OPTIONS, DESIGNER_RULESET_OPTIONS):
-        assert [option.ruleset_id for option in options] == [BYTEFRAY_RULESET_V4_ID]
+    assert DESIGNER_RULESET_ID == BYTEFRAY_RULESET_V6_ALPHA1_ID
 
 
 def test_e8_is_explicitly_selectable_from_agents_evaluate() -> None:
@@ -455,7 +449,12 @@ def test_only_t8_and_t8l_accept_sense(tmp_path: Path, ruleset_id: str) -> None:
 
 
 @pytest.mark.parametrize("worker", [False, True], ids=["direct", "worker"])
-@pytest.mark.parametrize("ruleset_id", [BYTEFRAY_RULESET_V4_ID, C8_ID, C8L_ID, *E8_IDS])
+@pytest.mark.parametrize("ruleset_id", [
+    pytest.param(BYTEFRAY_RULESET_V4_ID, marks=pytest.mark.skip(
+        reason="Frozen Classic SENSE admission case; reproduce at v5.1.0-alpha.1."
+    )),
+    C8_ID, C8L_ID, *E8_IDS,
+])
 def test_a_loaded_ungated_sense_package_is_refused_outside_t8_and_t8l(tmp_path: Path, ruleset_id: str,
                                                                     worker: bool) -> None:
     _write_agent(tmp_path, "senser", UNGATED_SENSE_SOURCE)

@@ -93,7 +93,9 @@ def test_every_scaffold_template_is_smoke_tested_from_the_frozen_cli() -> None:
     for template in TEMPLATE_DIRECTORIES:
         if template != "blank":  # the blank template is the default (no --template)
             assert f"'--template', '{template}'" in SOURCE, template
-    assert "under Classic exited $LASTEXITCODE; expected the capability refusal (2)" in SOURCE
+    assert "under the default Ruleset failed with exit code $LASTEXITCODE" in SOURCE
+    assert "--ruleset bytefray-rules-4' exited $LASTEXITCODE; expected the retired-Ruleset refusal (2)" in SOURCE
+    assert "under Classic" not in SOURCE
 
 
 def test_frozen_spectator_commands_run_redirected_under_a_non_ansi_path() -> None:

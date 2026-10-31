@@ -85,20 +85,17 @@ def surface_rulesets() -> dict[str, list[str]]:
         set(rp._RULESET_POLICIES) | rp.HISTORICAL_READONLY_RULESET_IDS | {"bytefray-rules-1"}
     )
 
-    def ids(chosen: Iterable[Any]) -> list[str]:
-        return [option.ruleset_id for option in chosen]
-
     return {
         "bytefray run": _accepted(lambda value: cli.parse_args(["--ruleset", value]), candidates),
         "bytefray agents test": sorted(_choices(agent_test._parser())),
         "bytefray agents validate": sorted(_choices(agent_validation._parser())),
         "bytefray agents evaluate": sorted(_choices(evaluation_cli._parser())),
         "bytefray tournament": sorted(_choices(tournament_cli._parser())),
-        "Designer Simple": ids(options.SIMPLE_RULESET_OPTIONS),
-        # Advanced and Development both populate from the default option set.
-        "Designer Advanced": ids(options.DESIGNER_RULESET_OPTIONS),
-        "Designer Development": ids(options.DESIGNER_RULESET_OPTIONS),
-        "Designer Evaluation": ids(options.EVALUATION_RULESET_OPTIONS),
+        # Every Designer workflow launches under the one Designer Ruleset.
+        "Designer Simple": [options.DESIGNER_RULESET_ID],
+        "Designer Advanced": [options.DESIGNER_RULESET_ID],
+        "Designer Development": [options.DESIGNER_RULESET_ID],
+        "Designer Evaluation": [options.DESIGNER_RULESET_ID],
     }
 
 
@@ -122,7 +119,7 @@ def runtime_problems(record: dict[str, Any]) -> list[str]:
     from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
     from battle_engine.ruleset_names import RULESET_DISPLAY_NAMES
 
-    from app.services.ruleset_options import DEFAULT_DESIGNER_RULESET_ID
+    from app.services.ruleset_options import DESIGNER_RULESET_ID
 
     problems: list[str] = []
 
@@ -154,7 +151,7 @@ def runtime_problems(record: dict[str, Any]) -> list[str]:
     rulesets = record["rulesets"]
     product = rp.PUBLIC_STABLE_RULESET_IDS | rp.PUBLIC_EXPERIMENTAL_RULESET_IDS
     expect("default ruleset (omitted --ruleset)", rulesets["default"], rp.OMITTED_RULESET_CANDIDATES[0])
-    expect("default ruleset (Designer)", rulesets["default"], DEFAULT_DESIGNER_RULESET_ID)
+    expect("default ruleset (Designer)", rulesets["default"], DESIGNER_RULESET_ID)
     offered = {entry["id"]: entry for entry in rulesets["offered"]}
     expect("offered rulesets", set(offered), product)
     for ruleset_id, entry in offered.items():
@@ -223,7 +220,7 @@ def runtime_problems(record: dict[str, Any]) -> list[str]:
     )
     # Evaluations resolve their version from the Ruleset's methodology; the
     # module-level SCHEMA_VERSION is only the historical Ruleset-1 recipe. Every
-    # Ruleset evaluate accepts (Classic and research) must use the v4-derived
+    # Ruleset evaluate accepts (Active Sensing and research) must use the v4-derived
     # seeded methodology, which the resolvers map to one version whichever
     # v4-derived flag is set, so passing is_v4_methodology stands for all of them.
     for ruleset_id in actual_surfaces["bytefray agents evaluate"]:

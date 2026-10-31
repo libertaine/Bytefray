@@ -18,7 +18,7 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V2_ID,
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
-    BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
     UnknownRulesetError,
     agent_supported_by_ruleset,
     resolve_ruleset_policy,
@@ -40,9 +40,9 @@ from battle_engine.ruleset_policy import (
         # v4.0.0-rc1 Phase 2: the permanent stable identity -- VM/blob +
         # stable v4 rejected, API v1 + stable v4 rejected, API v2 + stable
         # v4 accepted.
-        ({"kind": "blob"}, BYTEFRAY_RULESET_V4_ID, False),
-        ({"kind": "python", "api_version": 1}, BYTEFRAY_RULESET_V4_ID, False),
-        ({"kind": "python", "api_version": 2}, BYTEFRAY_RULESET_V4_ID, True),
+        ({"kind": "blob"}, BYTEFRAY_RULESET_V6_ALPHA1_ID, False),
+        ({"kind": "python", "api_version": 1}, BYTEFRAY_RULESET_V6_ALPHA1_ID, False),
+        ({"kind": "python", "api_version": 2}, BYTEFRAY_RULESET_V6_ALPHA1_ID, True),
     ],
 )
 def test_agent_supported_by_ruleset_uses_runtime_and_api_metadata(
@@ -81,9 +81,9 @@ def test_agent_supported_by_ruleset_fails_closed_for_retired_alpha_identities(
 @pytest.mark.parametrize(
     ("ruleset_id", "api_version"),
     [
-        (BYTEFRAY_RULESET_V4_ID, 1),
-        (BYTEFRAY_RULESET_V4_ID, None),
-        (BYTEFRAY_RULESET_V4_ID, True),
+        (BYTEFRAY_RULESET_V6_ALPHA1_ID, 1),
+        (BYTEFRAY_RULESET_V6_ALPHA1_ID, None),
+        (BYTEFRAY_RULESET_V6_ALPHA1_ID, True),
     ],
 )
 def test_native_match_service_rejects_api_mismatch_before_runtime(
@@ -134,7 +134,7 @@ def test_native_match_service_rejects_retired_runtime_before_artifacts(
         max_ticks=1,
         replay_path=replay,
         verbose=False,
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=BYTEFRAY_RULESET_V6_ALPHA1_ID,
     )
 
     with pytest.raises(UnsupportedMatchCompositionError, match="only Python entrants"):

@@ -1,8 +1,12 @@
 # Bytefray Architecture
 
 This document describes the current V6 architecture after the Phase 2B
-runtime retirements. `bytefray-rules-4`, Agent API v2, and the spatial
-process runtime are the only executable match path. Historical VM/Agent API
+runtime retirements and the post-5.1.0-alpha.1 retirement of Classic
+(`bytefray-rules-4`; see
+[docs/releases/CLASSIC_RULESET_RETIREMENT.md](docs/releases/CLASSIC_RULESET_RETIREMENT.md)).
+Active Sensing (`bytefray-rules-6-alpha1`), Agent API v2, and the spatial
+process runtime are the only product match path; the research-only identities
+reuse the same runtime. Historical VM/Agent API
 v1 types, readers, fixtures, and compatibility facades remain where required,
 but they are not selectable runtimes. The current architecture includes
 `NativeMatchService`, canonical `battle2.replay` schema 4 output, the headless
@@ -72,8 +76,8 @@ limit, and a replay path) and returns a typed
 1. rejects empty or non-Python compositions, missing Python specs, or
    duplicate entrant IDs (`UnsupportedMatchCompositionError`) before
    anything runs, then fails closed on any Ruleset/runtime/API mismatch;
-2. resolves an omitted Ruleset to the sole executable identity,
-   `bytefray-rules-4`, and routes every accepted Agent API v2 request through
+2. resolves an omitted Ruleset to the sole product identity,
+   `bytefray-rules-6-alpha1`, and routes every accepted Agent API v2 request through
    `ProcessMatchController.from_python_entrants(...).run()`
    (`battle_engine.process_runtime`). With no call timeout, the controller
    invokes agent callbacks in-process; with a timeout, the same controller
@@ -126,11 +130,14 @@ there is no separate research-only gameplay implementation.
 `battle_engine.agents` discovers directories below `agents/`. A directory
 is valid when it has `agent.yaml` (JSON syntax also accepted; YAML via
 PyYAML) or `agent.py`; discovery may still classify historical manifest
-shapes that no Ruleset executes. `battle_engine.starters` validates the ten
-current Agent API v2 starters (`v4_*` and `v5_*`) bundled under
-`battle_engine/data/starter_agents` and installs or safely refreshes them in
+shapes that no Ruleset executes. `battle_engine.starters` validates the
+three Active Sensing starters (`v6_window_scout`, `v6_watchful_keeper`,
+`v6_roaming_reacquirer`) packaged from `battle_engine/data/starter_agents` and
+installs or safely refreshes them in
 the writable `get_data_root()/agents` catalog without overwriting customized
-copies.
+copies. The Classic `v4_*`/`v5_*` starter directories remain in the source
+tree only as the research benchmark population; they are excluded from the
+wheel, the sdist and the frozen executables, and never installed.
 
 `battle_engine.builtins` assembles the native `runner`, `writer`,
 `bomber`, `flooder`, `spiral`, and `seeker` VM programs into bytecode. This
@@ -387,8 +394,10 @@ engine, not part of `battle_engine.core`.
 - **`app/agent_designer.py` is the actual, sole supported Agent Designer
   entry point.** It is a PySide6 `QMainWindow` application with three tabs
   (Simple, Advanced, and Agent Development) built from `app.services.*` and
-  `app.views.*`. Simple/Advanced expose only Ruleset 4-compatible Agent API
-  v2 Python agents for new matches; retained historical VM/API-v1 catalog
+  `app.views.*`. No tab offers a Ruleset control: every launch names
+  `app.services.ruleset_options.DESIGNER_RULESET_ID` (Active Sensing)
+  explicitly. Simple/Advanced expose only Agent API v2 Python agents that
+  Ruleset can run for new matches; retained historical VM/API-v1 catalog
   rows may be visible for inspection but are disabled for execution. The
   tabs build a `bytefray run` child command through the shared launcher and
   execute it with Qt's `QProcess`; Qt never imports or executes user-agent
@@ -751,14 +760,13 @@ Evaluation was Python-agent-only in v0.6, inheriting `agents test`'s
 Python-only requirement by construction (its per-cell executor is
 `agents test`) rather than introducing a second, VM-flavored executor. V6 later
 retired VM/blob execution everywhere, including tournaments; current
-evaluation accepts only Ruleset 4-compatible Agent API v2 agents.
+evaluation accepts only Agent API v2 agents that Active Sensing can run.
 
 ## Default Agent Build-Out (v0.6.1)
 
 This subsection records the v0.6.1 roster as historical delivery context.
-V6 retired and removed those Agent API v1 starters; the current ten `v4_*`/
-`v5_*` Agent API v2 starters are described in the Engine package section
-above. At v0.6.1, where v0.3–v0.6 built the authoring,
+V6 retired and removed those Agent API v1 starters; the current Active
+Sensing starters are described in the Engine package section above. At v0.6.1, where v0.3–v0.6 built the authoring,
 debugging, and evaluation *tools*, v0.6.1 addresses first-run *content*:
 before v0.6.1, the only Python (Agent API v1) agent behavior a new user
 ever saw was `battle_engine/data/agent_template`'s scaffold/reference

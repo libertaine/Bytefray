@@ -319,7 +319,7 @@ def test_historical_rulesets_render_readably_not_only_ruleset_4() -> None:
     for ruleset_id, expected in (
         ("bytefray-rules-1", "Ruleset v1"),
         ("bytefray-rules-2", "Ruleset v2"),
-        ("bytefray-rules-4", "Classic"),
+        ("bytefray-rules-4", "Ruleset v4"),
         ("bytefray-rules-6-alpha1", "Active Sensing (Alpha)"),
         ("bytefray-rules-4-alpha1", "Ruleset v4 alpha1"),
         ("bytefray-rules-4-alpha2", "Ruleset v4 alpha2"),

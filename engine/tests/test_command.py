@@ -98,15 +98,15 @@ def test_successful_headless_match_invocation(tmp_path):
         "--ticks",
         "3",
         "--arena",
-        "128",
+        "512",
         "--seed",
         "17",
         "--a-type",
-        "v4_claimer",
+        "v6_window_scout",
         "--b-type",
-        "v4_scout",
+        "v6_watchful_keeper",
         "--b-start",
-        "64",
+        "256",
         "--replay",
         str(replay),
         "--quiet",
@@ -136,7 +136,7 @@ def _run_with_root(data_root: Path, cwd: Path, *arguments: str):
 
 @pytest.mark.parametrize(
     ("agents", "matches"),
-    [(["v4_claimer", "v4_scout"], 1), (["v4_claimer", "v4_scout", "v4_local_defender"], 3)],
+    [(["v6_window_scout", "v6_watchful_keeper"], 1), (["v6_window_scout", "v6_watchful_keeper", "v6_roaming_reacquirer"], 3)],
 )
 def test_tournament_cli_current_round_robin_and_output(tmp_path, agents, matches):
     output = tmp_path / "tournament"
@@ -167,14 +167,14 @@ def test_tournament_cli_multi_round_resume_has_stable_ids(tmp_path):
     output = tmp_path / "resume"
     arguments = (
         "tournament",
-        "v4_claimer",
-        "v4_scout",
+        "v6_window_scout",
+        "v6_watchful_keeper",
         "--rounds",
         "2",
         "--ticks",
         "1",
         "--arena",
-        "128",
+        "512",
         "--seed",
         "44",
         "--output",
@@ -208,7 +208,7 @@ def test_tournament_cli_python_division_and_retired_starter_rejection(tmp_path):
         "--ticks",
         "1",
         "--arena",
-        "64",
+        "128",
         "--output",
         str(python_output),
         "--quiet",
@@ -239,7 +239,7 @@ def test_single_match_output_names_canonical_and_compatibility_artifacts(tmp_pat
         "--ticks",
         "1",
         "--arena",
-        "128",
+        "512",
         "--replay",
         str(replay),
         cwd=tmp_path,
@@ -307,7 +307,7 @@ def test_cli_runs_python_vs_python_match(tmp_path):
             "--quota",
             "8",
             "--arena",
-            "64",
+            "128",
             "--replay",
             str(replay),
             "--quiet",
@@ -359,7 +359,7 @@ def test_cli_trace_flag_writes_artifact_without_changing_match_identity(tmp_path
                 "--quota",
                 "8",
                 "--arena",
-                "64",
+                "128",
                 "--seed",
                 "5",
                 "--replay",
@@ -513,7 +513,7 @@ def test_agents_command_initializes_starters_idempotently(tmp_path):
     assert first.returncode == 0, first.stderr
     manifests = sorted(path.parent.name for path in (data_root / "agents").glob("*/agent.yaml"))
     assert manifests == sorted(STARTER_AGENT_NAMES)
-    customized = data_root / "agents" / "v4_claimer" / "agent.py"
+    customized = data_root / "agents" / "v6_window_scout" / "agent.py"
     marker = "\n# user customization: keep\n"
     customized.write_text(customized.read_text(encoding="utf-8") + marker, encoding="utf-8")
 
@@ -529,14 +529,14 @@ def test_agents_command_initializes_starters_idempotently(tmp_path):
     assert customized.read_text(encoding="utf-8").endswith(marker)
 
 
-def test_fixed_v4_quota_and_fractional_scores_reach_replay_and_summary(tmp_path):
+def test_fixed_quota_and_fractional_scores_reach_replay_and_summary(tmp_path):
     replay = tmp_path / "fractional" / "replay.jsonl"
     result = _run(
         "run",
         "--ticks",
         "1",
         "--arena",
-        "128",
+        "512",
         "--quota",
         "8",
         "--alive-w",
@@ -546,11 +546,11 @@ def test_fixed_v4_quota_and_fractional_scores_reach_replay_and_summary(tmp_path)
         "--territory-w",
         "0",
         "--a-type",
-        "v4_claimer",
+        "v6_window_scout",
         "--b-type",
-        "v4_scout",
+        "v6_watchful_keeper",
         "--b-start",
-        "64",
+        "256",
         "--replay",
         str(replay),
         "--quiet",

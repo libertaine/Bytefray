@@ -12,20 +12,24 @@ names, integer Agent API and format versions, Spectator's own series, and
 objective-based research names — is set by
 [COMPONENT_VERSIONING.md](COMPONENT_VERSIONING.md).
 
-## Current development line (toward 5.1)
+## Current development line (after 5.1.0-alpha.1)
 
-This branch differs from the released 5.0.0 described in the next section.
-New matches run only on Agent API v2 Python agents, under **Classic**
-(`bytefray-rules-4`, the stable default) or the explicitly selected
-experimental **Active Sensing (Alpha)** (`bytefray-rules-6-alpha1`). Fourteen
-research Rulesets remain selectable only by exact ID through
-`bytefray agents evaluate`. V6 Phases 2B.9–2B.12 retired execution of Agent API
-v1, VM/blob agents, Redcode/pMARS and every other Ruleset (see
-[Retired from execution / still recognised](#retired-from-execution--still-recognised-v6-phase-2b9-2b10-scope-b));
-their artifacts stay readable, and 5.0.0 still runs them. The display names
-are presentation only: artifacts, `--ruleset` and diagnostics use the exact
-ID. The per-surface details are in the proposed
-[5.1.0-alpha.1 compatibility record](releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md).
+This branch differs from the released 5.0.0 and the published 5.1.0-alpha.1.
+New matches run only on Agent API v2 Python agents, under **Active Sensing
+(Alpha)** (`bytefray-rules-6-alpha1`), which is also what an omitted
+`--ruleset` means. **Classic** (`bytefray-rules-4`) was retired after
+5.1.0-alpha.1 ([retirement record](releases/CLASSIC_RULESET_RETIREMENT.md)):
+naming it is rejected as retired, never remapped, and its artifacts stay
+readable. Fourteen research Rulesets remain selectable only by exact ID
+through `bytefray agents evaluate`. V6 Phases 2B.9–2B.12 retired execution of
+Agent API v1, VM/blob agents, Redcode/pMARS and every other Ruleset (see
+[Retired from execution / still recognised](#retired-from-execution--still-recognised-v6-phase-2b9-2b10-scope-b-post-51-classic));
+their artifacts stay readable, 5.0.0 still runs them, and 5.1.0-alpha.1 still
+runs Classic. The display name is presentation only: artifacts, `--ruleset`
+and diagnostics use the exact ID. The per-surface details are in the proposed
+[development compatibility record](releases/BYTEFRAY_DEVELOPMENT_COMPATIBILITY.md);
+the [5.1.0-alpha.1 record](releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md)
+describes the published preview.
 
 ## Current V5 product boundary
 
@@ -314,6 +318,11 @@ they are identical on every other axis a selector could show: all three are
 Python-only and all three require Agent API v2.
 
 ## Ruleset v4
+
+> **Retired after 5.1.0-alpha.1.** `bytefray-rules-4` (Classic) no longer
+> runs new matches on this development line; it stays recognised for
+> reading historical artifacts. The section below records its contract as
+> released. See [releases/CLASSIC_RULESET_RETIREMENT.md](releases/CLASSIC_RULESET_RETIREMENT.md).
 
 `v4.0.0-rc1` Phase 2 introduces a third v4 Ruleset identity, permanent and
 stable:
@@ -809,8 +818,24 @@ regardless of how mature adjacent functionality is:
   vulnerable-core semantics (`bytefray-rules-4-alpha2` never did). Only
   creating *new* matches under either is removed. See the table below and
   [`docs/research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md`](research/v6/V6_PHASE2B10_SCOPE_B_V4_ALPHA_RETIREMENT.md).
+- **`bytefray-rules-4` (Classic) execution** — retired after
+  5.1.0-alpha.1 (releases up to and including 5.1.0-alpha.1 run it; it was
+  the default for every CLI, Designer and evaluation surface). A request
+  naming it is rejected with a message that it is retired and which release
+  still runs it; an omitted `--ruleset` now means Active Sensing. Historical
+  results, replays and evaluations recorded under it remain readable,
+  indexable and correctly labeled. Its starter agents (`v4_*`, `v5_*`) are
+  no longer installed or packaged. See the table below and
+  [releases/CLASSIC_RULESET_RETIREMENT.md](releases/CLASSIC_RULESET_RETIREMENT.md).
 
-### Retired from execution / still recognised (V6 Phase 2B.9, 2B.10 Scope B)
+Historical seeded evaluation geometry is interpreted from the recorded Ruleset's
+immutable methodology, independently of executable registration. The history
+reader reuses the original seeded-placement algorithm to verify Classic's
+recorded identities; it does not remap them to Active Sensing or authorize new
+Classic matches. An unknown or non-seeded identity claiming schema-7 seeded
+geometry is rejected explicitly rather than assigned placeholder coordinates.
+
+### Retired from execution / still recognised (V6 Phase 2B.9, 2B.10 Scope B, post-5.1 Classic)
 
 | Identity | New execution | Historical recognition |
 | --- | --- | --- |
@@ -819,10 +844,12 @@ regardless of how mature adjacent functionality is:
 | `bytefray-rules-3-alpha1` | Rejected (`UnknownRulesetError`) | Full — same |
 | `bytefray-rules-4-alpha1` | Rejected (`UnknownRulesetError`) | Full — same, including per-entrant core-integrity/capture-tick display |
 | `bytefray-rules-4-alpha2` | Rejected (`UnknownRulesetError`) | Full — result/replay attribution, Replay History indexing/labeling (never had core-status display; not a vulnerable-core identity), plus the promotion-equivalence proof into `bytefray-rules-4` is preserved as a frozen-golden characterization |
+| `bytefray-rules-4` | Rejected as retired (`UnknownRulesetError`; CLI argument error) | Full — result/replay attribution, Replay History indexing/labeling, Replay Viewer playback |
 
-Exact re-execution of any of the five remains available through the
+Exact re-execution of any of the first five remains available through the
 `v5.0.0` release (tag, wheel, Windows installer), whose ruleset registry is
-behaviorally identical to the one this table describes.
+behaviorally identical to the one this table describes; `bytefray-rules-4`
+re-executes through `v5.1.0-alpha.1` (or `v5.0.0`).
 - **Arena translation/placement robustness in evaluation** — decided in
   v0.10 Phase 3: the standard 1.0 `agents evaluate` methodology uses a
   single, fixed arena alignment for every cell (`arena_alignment_mode:
@@ -835,7 +862,7 @@ behaviorally identical to the one this table describes.
   today via `MatchEntrant.start` but `agents evaluate` is Python-only and
   has no VM path to attach it to. See `docs/ROADMAP.md` and
   `docs/RULES.md`.
-- **Future rulesets beyond the registered v1/v2/v4 identities** —
+- **Future rulesets beyond the registered identities** —
   additional mechanics require another distinct Ruleset identity, tracked in
   [FUTURE_PLANS.md](FUTURE_PLANS.md), and is explicitly not part of
   Ruleset v1.

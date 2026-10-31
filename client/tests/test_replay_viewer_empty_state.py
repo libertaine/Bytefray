@@ -38,8 +38,8 @@ def _make_valid_replay(tmp_path, name="replay.jsonl"):
     assert (
         engine_main(
             [
-                "--ticks", "2", "--arena", "64", "--a-type", "v4_scout",
-                "--b-type", "v5_region_attacker", "--replay", str(replay), "--quiet",
+                "--ticks", "2", "--arena", "512", "--a-type", "v6_window_scout",
+                "--b-type", "v6_watchful_keeper", "--replay", str(replay), "--quiet",
             ]
         )
         == 0

@@ -189,8 +189,8 @@ def _attribute_core_capture(
     ``EntrantState`` carries the same ``agent_id`` attribute this function
     reads. V6 Phase 2B.12 removed ``PythonEntrantState`` and its sole
     producer, the Agent API v1 controllers, alongside Agent API v1
-    execution; this shared core-capture logic stayed, since the retained
-    control (``bytefray-rules-4``) still uses it (see
+    execution; this shared core-capture logic stayed, since Active Sensing
+    and the research Rulesets still use it (see
     ``process_runtime.py``'s own ``apply_core_capture`` call).
     """
 

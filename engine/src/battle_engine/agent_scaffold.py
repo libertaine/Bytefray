@@ -202,7 +202,7 @@ def create_agent(
     defaults to :data:`DEFAULT_API_VERSION` (v2 -- the process agent
     contract, ``reset``/``declare_processes``/``act``), so every caller that
     omits it -- including Agent Designer's New Agent dialog -- gets a
-    runnable agent under the stable ``bytefray-rules-4``. V6 Phase 2B.12
+    runnable agent under Active Sensing (``bytefray-rules-6-alpha1``). V6 Phase 2B.12
     retired Agent API v1 execution entirely
     (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md); Agent
     API v2 is the only generation this installation can scaffold or run.
@@ -277,8 +277,8 @@ def _parser() -> argparse.ArgumentParser:
         help=(
             f"Agent API generation to scaffold (default: {DEFAULT_API_VERSION}, "
             "the only supported generation). The process API (reset, "
-            "declare_processes, act) runs under the stable bytefray-rules-4, "
-            "selected automatically from the created agent's manifest."
+            "declare_processes, act) runs under bytefray-rules-6-alpha1 "
+            "(Active Sensing), the only Ruleset."
         ),
     )
     parser.add_argument(
@@ -289,8 +289,7 @@ def _parser() -> argparse.ArgumentParser:
             "starting-point content: 'blank' (default, a minimal skeleton) or "
             "'annotated' (a commented example). Both target the sole supported "
             "Agent API v2 generation. 'window_scout', 'watchful_keeper' and "
-            "'roaming_reacquirer' create personal sensing-starter copies requiring "
-            "explicit bytefray-rules-6-alpha1."
+            "'roaming_reacquirer' create personal copies of the sensing starters."
         ),
     )
     return parser
