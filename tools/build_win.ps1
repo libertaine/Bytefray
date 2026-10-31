@@ -343,9 +343,10 @@ try {
 # separate template omissions reached shipped executables.
 #
 # The three personal-copy templates copy an Active Sensing teaching starter,
-# whose manifest requires the `sense` capability: validation must refuse it
-# under the default Classic Ruleset (exit 2) and accept it under Active
-# Sensing (Alpha).
+# whose manifest requires the `sense` capability: validation must accept it
+# under the default Ruleset (Active Sensing since Classic retirement) and
+# under an explicit bytefray-rules-6-alpha1, and must refuse a request naming
+# the retired Classic Ruleset (exit 2) rather than remap it.
 $SmokeVariants = @(
   @{ Id = 'smoke_agent_v2';           CreateArgs = @('--api-version', '2');                            Validate = $true; Sensing = $false }
   @{ Id = 'smoke_agent_v2_annotated'; CreateArgs = @('--api-version', '2', '--template', 'annotated'); Validate = $true; Sensing = $false }
@@ -377,9 +378,13 @@ try {
     # the normal supported path, so a bundled-but-broken template fails here
     # rather than at a user's first match.
     if ($Variant.Validate -and $Variant.Sensing) {
-      & $BytefrayExe agents validate $Variant.Id 2>$null | Out-Null
+      & $BytefrayExe agents validate $Variant.Id
+      if ($LASTEXITCODE -ne 0) {
+        throw "'bytefray.exe agents validate $($Variant.Id)' under the default Ruleset failed with exit code $LASTEXITCODE"
+      }
+      & $BytefrayExe agents validate $Variant.Id --ruleset bytefray-rules-4 2>$null | Out-Null
       if ($LASTEXITCODE -ne 2) {
-        throw "'bytefray.exe agents validate $($Variant.Id)' under Classic exited $LASTEXITCODE; expected the capability refusal (2)"
+        throw "'bytefray.exe agents validate $($Variant.Id) --ruleset bytefray-rules-4' exited $LASTEXITCODE; expected the retired-Ruleset refusal (2)"
       }
       & $BytefrayExe agents validate $Variant.Id --ruleset bytefray-rules-6-alpha1
       if ($LASTEXITCODE -ne 0) {
