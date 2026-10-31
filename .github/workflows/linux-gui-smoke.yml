@@ -48,6 +48,11 @@ jobs:
 
   designer-x11-smoke:
     runs-on: ubuntu-latest
+    # Known baseline limitation, not fixed: an intermittent native crash or
+    # hang in Replay History worker-thread teardown, issue #7. A hang now
+    # fails within the hour, with every thread's stack, rather than holding
+    # the runner for the 6-hour default.
+    timeout-minutes: 60
 
     env:
       QT_OPENGL: software
@@ -101,4 +106,6 @@ jobs:
 
       - name: Exercise X11 startup, primary window creation, deterministic shutdown,
           and the Agent Development (create/validate/test) workflow
-        run: xvfb-run -a python -X faulthandler -m pytest -v --capture=tee-sys -m gui tests/
+        run: >-
+          xvfb-run -a python -X faulthandler -m pytest -v --capture=tee-sys
+          -o faulthandler_timeout=300 -m gui tests/
