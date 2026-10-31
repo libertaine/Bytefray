@@ -1,8 +1,9 @@
 # Classic retirement PR #6: CI remediation
 
-Date: 2026-10-30. **Product CI migration defects corrected. Integration
-HOLD: frozen scientific-integrity verification on the development line needs
-a project-lead decision (Section D).**
+Date: 2026-10-30. **Product CI migration defects corrected and requalified
+on GitHub. Integration HOLD: frozen scientific-integrity verification on the
+development line needs a project-lead decision (Section D). Two pre-existing
+conditions, the Designer X11 crash and Windows notice drift, also remain red.**
 
 Approved starting point: `feature/retire-classic-ruleset` at
 `15f7139b7bde79a53248455c92a110b6ee61fad2`; target
@@ -41,7 +42,8 @@ The keyboard test asserts that recorded ticks include 0, 1 and 2, then retains
 the exact observed `0 -> 1 -> 2 -> 1` assertion. The rendering test sends QUIT
 only after an actual display flip and asserts exactly one rendered frame; the
 old test also rendered one frame before exiting but never asserted it.
-Neither renderer nor gameplay code changed.
+Neither renderer nor gameplay code changed. GitHub requalification on
+`1e4eac9`: `pygame-x11-smoke` passes on Python 3.10 and 3.14.
 
 ### B. Windows workflow references a deleted test (baseline-existing; corrected)
 
@@ -66,6 +68,20 @@ these existing equivalents:
 | `test_v6_alpha_m1_policy_capabilities.py` | Active Sensing direct/worker parity and capability rejection before execution |
 
 No protection was replaced by a nonexistent path, broad exclusion or test skip.
+
+**GitHub requalification (`1e4eac9`):** both protection steps pass. The
+job then reached `tools/build_win.ps1` for the first time on this line. All
+four executables built, and the frozen payloads contained no bytecode. The
+job then failed closed in third-party notice collection:
+`tools/third_party_notices has no texts for Qt 6.12.0`. CI installs and
+builds without `-Constraints`, so it resolves the newest PySide6; release
+builds pass `tools/windows-build-constraints.txt` (PySide6 6.11.2, matching
+`tools/third_party_notices/qt-6.11.2`). The PR changes none of the notice
+tooling, constraints or build script; its `.spec` changes are the approved
+starter collection. Changing how CI builds (for example, release
+constraints on Python 3.13) is build configuration, so it is left as
+follow-up rather than changed here.
+
 One gap predates this PR: the deleted module's
 `test_initialization_failure_cleans_up_already_started_workers` has no
 identified API-v2 equivalent; it is recorded as follow-up.
@@ -96,6 +112,26 @@ progress and tee capture. No runtime dependency declaration, Designer code or
 release input changed. Removing the CI constraint requires a passing minimal
 probe and full suite on the replacement binding. Python 3.10 with PySide6
 6.12.0 remains an open compatibility problem outside this CI constraint.
+
+**GitHub requalification (`1e4eac9`): still failing, on a different,
+pre-existing crash.** With 6.11.2 installed, the GitHub job passed the former
+abort point. It then segfaulted (exit 139) in
+`test_v5_replay_history_qualification.py::test_repeated_concurrent_close_reopen_preserves_ownership`,
+inside the nested `QEventLoop.exec` of `ReplayHistoryWindow.shutdownWorker`
+(`app/views/replay_history.py`). Neither that module nor the Replay History
+code changed in this PR. Reproduction on Python 3.10.22 with Qt 6.11.2 under
+WSL2/Xvfb, using the CI command on fresh `git archive` exports:
+
+| Source | Full Designer suite, 3 runs | That test alone, 25 runs |
+| --- | --- | --- |
+| `f127be7` | 1 segfault (exit 139) in the same module, in `test_designer_rejected_calendar_keeps_query_and_reports_error`, with a worker-thread refresh active; 2 completed runs each failed only the keyboard-focus test below | 25 passed |
+| `1e4eac9` | 3 completed: 575 passed, 1 skipped, 6 deselected | 25 passed |
+
+This is an intermittent native crash in the Replay History worker-thread
+path, present at the baseline. On GitHub the earlier 6.12 abort hid it. It
+is not caused by the retirement, but its root cause (application thread
+teardown or binding) is not established and needs a follow-up issue. The
+optional `designer-x11-smoke` check remains red.
 
 Once the abort was bypassed, an existing Replay History keyboard test failed
 because Xvfb has no window manager to activate the window, so `focusWidget()`
@@ -231,8 +267,20 @@ session at `C:\Users\rasat\AppData\Local\Temp\bytefray-pr6-ci-bg225t47`.
 This session's logs, JUnit, clones and wheels are at
 `C:\Users\rasat\AppData\Local\Temp\bytefray-pr6-integrate-20261030`.
 
-GitHub requalification on the exact pushed commit is authoritative for the
-pygame, Designer, Windows and Linux matrix results.
+### GitHub requalification of `1e4eac9`
+
+CI runs 41160424755 (push) and 41160429738 (pull request); optional GUI smoke
+run 41160429587.
+
+| Check | Result | Disposition |
+| --- | --- | --- |
+| `build-linux-wheel` (x2) | Pass | |
+| `pygame-x11-smoke` 3.10, 3.14 | Pass | A closed |
+| `build-windows-exe` (x2) | Protection and junction steps pass; EXEs build; notice collection fails for Qt 6.12.0 | B closed; notice drift baseline-equivalent, follow-up |
+| `designer-x11-smoke` (optional) | Segfault, exit 139, Replay History worker teardown | Pre-existing intermittent crash (C), follow-up |
+| `test-linux-core` 3.10-3.14 and next-python (x2) | Fail; Ruff passes | Versus baseline: 0 product failures added, 17 fixed, 131 shared frozen-science failures (D), 1 pytest 9.2.0 seal07 case (F) |
+
+All 25 fixture failures (E) are gone in every Linux job.
 
 ## Scope
 
