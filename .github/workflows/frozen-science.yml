@@ -11,7 +11,10 @@ name: Frozen E9 science verification
 # - historical-e9: the pinned historical snapshot is checked out by commit,
 #   its identity and its own frozen E9 boundary are verified, and the
 #   original, unmodified E9 test inventory runs there in the recorded
-#   research environment. Any failure is an integrity failure.
+#   research environment with its recorded invocations. Any failure, error
+#   or missing case is an integrity failure. One case that asserts
+#   never-committed working-tree bytes is excluded by exact node ID and
+#   recorded as not reproducible (frozen_science_e9.json).
 
 on:
   workflow_dispatch:
@@ -79,9 +82,10 @@ jobs:
           path: current
       - name: Read the pinned historical snapshot
         id: policy
-        run: >-
-          python -c "import json; p = json.load(open('current/tools/qualification/frozen_science_e9.json'));
-          print('commit=' + p['historical_snapshot']['commit'])" >> "$GITHUB_OUTPUT"
+        # tr strips the CR Windows Python writes, so the output is an exact SHA.
+        run: |
+          commit="$(python -c "import json; print(json.load(open('current/tools/qualification/frozen_science_e9.json'))['historical_snapshot']['commit'])" | tr -d '\r')"
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
       - name: Check out the historical snapshot by commit (full history for its provenance checks)
         uses: actions/checkout@v6
         with:
@@ -93,23 +97,20 @@ jobs:
       - name: Install the snapshot in the recorded research environment
         run: |
           python -m pip install "pip==26.2.1"
-          python -m pip install -e "./snapshot[dev]" -c current/tools/qualification/e9_historical_constraints.txt
+          python -m pip install -e "./snapshot[dev]" -c current/tools/qualification/e9_historical_constraints.txt --build-constraint current/tools/qualification/e9_historical_constraints.txt
           python -m pip freeze
       - name: Verify snapshot identity and its own frozen E9 boundary
         run: python current/tools/qualification/frozen_science.py verify-snapshot --source snapshot
-      - name: Run the original E9 test inventory at the snapshot
-        working-directory: snapshot
+      - name: Run the original inventory with its recorded invocations
+        # E9 v2 modules run through the qualification_run.py command and its
+        # entropy/match-execution guard; every run must report exactly its
+        # pinned case count with no failure and no error.
         run: >-
-          python -m pytest -rfE --junitxml=../e9-historical-junit.xml
-          $(python ../current/tools/qualification/frozen_science.py modules)
-      - name: Require the complete inventory with no failure or error
-        if: ${{ always() }}
-        run: >-
-          python current/tools/qualification/frozen_science.py check-junit
-          --report e9-historical-junit.xml --platform ${{ matrix.platform }}
-      - name: Upload the JUnit report
+          python current/tools/qualification/frozen_science.py run-historical
+          --source snapshot --work "$RUNNER_TEMP/e9-historical"
+      - name: Upload the JUnit reports
         if: ${{ always() }}
         uses: actions/upload-artifact@v6
         with:
           name: e9-historical-junit-${{ matrix.platform }}
-          path: e9-historical-junit.xml
+          path: ${{ runner.temp }}/e9-historical/*.xml

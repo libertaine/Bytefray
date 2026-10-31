@@ -8,6 +8,7 @@ immutable snapshot commit. See docs/releases/FROZEN_SCIENCE_QUALIFICATION.md.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import subprocess
@@ -19,6 +20,7 @@ from tools.qualification.frozen_science import (
     FrozenScienceError,
     anchor_manifest,
     check_junit,
+    check_preservation_pins,
     guard,
     load_policy,
     manifest_digest,
@@ -71,6 +73,27 @@ def test_every_transferred_module_is_in_the_historical_inventory() -> None:
     transferred = {entry["path"] for entry in POLICY["product_ci_transfer"]["modules"]}
     transferred |= {entry["node_id"] for entry in POLICY["product_ci_transfer"]["cases"]}
     assert transferred <= historical
+
+
+def test_historical_runs_partition_the_inventory_and_exclude_only_recorded_irreproducible_cases() -> None:
+    inventory = POLICY["historical_e9_inventory"]
+    selections = [entry for run in inventory["runs"] for entry in run["selection"]]
+    assert sorted(selections) == sorted(inventory["modules"])
+    deselected = [node for run in inventory["runs"] for node in run["deselect"]]
+    recorded = [entry["node_id"] for entry in inventory["not_reproducible_from_commits"]]
+    assert deselected == recorded
+    for entry in inventory["not_reproducible_from_commits"]:
+        assert entry["node_id"].split("::", 1)[0] in inventory["modules"]
+        assert entry["reason"].strip() and entry["evidence"].strip() and entry["disposition"].strip()
+    v2 = next(run for run in inventory["runs"] if run["name"] == "e9-v2-recorded-harness")
+    assert v2["selection"] == sorted(m for m in inventory["modules"] if m.startswith("engine/tests/test_v6_e9_v2_"))
+    assert "tools.research.v6.e9.v2.qualification_guard" in v2["pytest_args"]
+    for entry in inventory["not_reproducible_from_commits"]:
+        assert len(entry["working_tree_pins"]) == 28
+        assert all(re.fullmatch(r"[0-9a-f]{64}", pin) for pin in entry["working_tree_pins"].values())
+        assert set(entry["superseded_pins"]) == {".gitattributes"}
+    # 1,507 transferred cases; exactly the recorded irreproducible ones are not executed.
+    assert sum(run["expected_collected"] for run in inventory["runs"]) == 1507 - len(recorded)
 
 
 def test_historical_inventory_is_every_e9_module_of_the_snapshot() -> None:
@@ -211,8 +234,38 @@ def test_check_junit_requires_the_exact_inventory_and_no_failure(tmp_path: Path)
         check_junit(_junit(tmp_path, 10, failures=1), 10)
     with pytest.raises(FrozenScienceError, match="integrity failure"):
         check_junit(_junit(tmp_path, 10, errors=1), 10)
+    with pytest.raises(FrozenScienceError, match="no readable JUnit report"):
+        check_junit(tmp_path / "absent.xml", 10)
 
 
 def test_policy_file_is_canonical_json() -> None:
     raw = (ROOT / "tools/qualification/frozen_science_e9.json").read_bytes()
     assert raw == (json.dumps(json.loads(raw), indent=2) + "\n").encode("utf-8")
+
+
+def test_preservation_pin_check_accepts_only_the_exact_recorded_mismatches(tmp_path: Path) -> None:
+    def sha(data: bytes) -> str:
+        return hashlib.sha256(data).hexdigest()
+
+    (tmp_path / "kept.py").write_bytes(b"kept\n")
+    (tmp_path / "working_tree.py").write_bytes(b"lf\n")
+    (tmp_path / ".gitattributes").write_bytes(b"new\n")
+    pins = {"kept.py": sha(b"kept\n"), "working_tree.py": sha(b"lf\r\n"), ".gitattributes": sha(b"old\n")}
+    (tmp_path / "manifest.json").write_text(json.dumps({"tracked_files": pins}), encoding="utf-8")
+    entry = {
+        "preservation_manifest": "manifest.json",
+        "working_tree_pins": {"working_tree.py": pins["working_tree.py"]},
+        "superseded_pins": {".gitattributes": {"pinned": pins[".gitattributes"], "current_sha256": sha(b"new\n")}},
+    }
+    assert check_preservation_pins(tmp_path, entry) == {"pins": 3, "verified": 1, "recorded_not_reproducible": 1}
+    (tmp_path / "kept.py").write_bytes(b"changed\n")
+    with pytest.raises(FrozenScienceError, match="unexpected mismatches"):
+        check_preservation_pins(tmp_path, entry)
+    (tmp_path / "kept.py").write_bytes(b"kept\n")
+    (tmp_path / "working_tree.py").write_bytes(b"lf\r\n")
+    with pytest.raises(FrozenScienceError, match="recorded but matching"):
+        check_preservation_pins(tmp_path, entry)
+    (tmp_path / "working_tree.py").write_bytes(b"lf\n")
+    (tmp_path / ".gitattributes").write_bytes(b"other\n")
+    with pytest.raises(FrozenScienceError, match="superseded"):
+        check_preservation_pins(tmp_path, entry)

@@ -75,10 +75,136 @@
       "engine/tests/test_v6_e8_runner.py::test_copied_packages_must_equal_the_family_freeze",
       "engine/tests/test_v6_e8_runner.py::test_the_preconditions_run_in_order_and_gate_every_match"
     ],
-    "expected_collected": {
-      "linux": 1507,
-      "windows": 1507
-    }
+    "runs": [
+      {
+        "name": "e9-v2-recorded-harness",
+        "basis": "The command tools/research/v6/e9/v2/qualification_run.py builds at the snapshot, which qualified every E9 v2 attempt: -X utf8, addopts=-q, no cacheprovider, the qualification_guard plugin (forbids entropy, NativeMatchService.run and ProcessMatchController.run), an external basetemp, plugin autoload disabled, PYTHONUTF8=1. The harness itself is not called because it writes attempt evidence.",
+        "selection": [
+          "engine/tests/test_v6_e9_v2_dispatch.py",
+          "engine/tests/test_v6_e9_v2_gate8_producer.py",
+          "engine/tests/test_v6_e9_v2_gate8_publication.py",
+          "engine/tests/test_v6_e9_v2_gate8_seal06.py",
+          "engine/tests/test_v6_e9_v2_gate8_seal07.py",
+          "engine/tests/test_v6_e9_v2_gate8_seal08.py",
+          "engine/tests/test_v6_e9_v2_independent_authority.py",
+          "engine/tests/test_v6_e9_v2_independent_bindings.py",
+          "engine/tests/test_v6_e9_v2_independent_consumers.py",
+          "engine/tests/test_v6_e9_v2_independent_dispatch.py",
+          "engine/tests/test_v6_e9_v2_independent_gate8_producer.py",
+          "engine/tests/test_v6_e9_v2_independent_gate8_publication.py",
+          "engine/tests/test_v6_e9_v2_independent_gate8_seal06.py",
+          "engine/tests/test_v6_e9_v2_independent_gate8_seal07.py",
+          "engine/tests/test_v6_e9_v2_independent_gate8_seal08.py",
+          "engine/tests/test_v6_e9_v2_independent_generation.py",
+          "engine/tests/test_v6_e9_v2_independent_integrity.py",
+          "engine/tests/test_v6_e9_v2_independent_inventory.py",
+          "engine/tests/test_v6_e9_v2_independent_materialization.py",
+          "engine/tests/test_v6_e9_v2_independent_prefix_cancellation.py",
+          "engine/tests/test_v6_e9_v2_independent_private.py",
+          "engine/tests/test_v6_e9_v2_independent_renewal.py",
+          "engine/tests/test_v6_e9_v2_independent_reporting.py",
+          "engine/tests/test_v6_e9_v2_independent_scientific.py",
+          "engine/tests/test_v6_e9_v2_independent_serialization.py",
+          "engine/tests/test_v6_e9_v2_independent_vectors.py",
+          "engine/tests/test_v6_e9_v2_lifecycle.py",
+          "engine/tests/test_v6_e9_v2_records.py",
+          "engine/tests/test_v6_e9_v2_scientific.py"
+        ],
+        "pytest_args": [
+          "-o",
+          "addopts=-q",
+          "-p",
+          "no:cacheprovider",
+          "-p",
+          "tools.research.v6.e9.v2.qualification_guard"
+        ],
+        "env": {
+          "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+          "PYTHONUTF8": "1"
+        },
+        "deselect": [
+          "engine/tests/test_v6_e9_v2_independent_bindings.py::test_separate_adoption_attestation_exact_review_and_unchanged_body"
+        ],
+        "expected_collected": 1337
+      },
+      {
+        "name": "e9-instrument-and-e8",
+        "basis": "The snapshot's own pytest.ini (as the V6 line's CI ran these modules), with an external basetemp.",
+        "selection": [
+          "engine/tests/test_v6_e9_engine.py",
+          "engine/tests/test_v6_e9_historical_inventory.py",
+          "engine/tests/test_v6_e9_historical_scope_verifier.py",
+          "engine/tests/test_v6_e9_instrument_analysis.py",
+          "engine/tests/test_v6_e9_instrument_behavior.py",
+          "engine/tests/test_v6_e9_instrument_constraints.py",
+          "engine/tests/test_v6_e9_instrument_recovery.py",
+          "engine/tests/test_v6_e9_instrument_runner.py",
+          "engine/tests/test_v6_e9_policy.py",
+          "engine/tests/test_v6_e9_selectors.py",
+          "engine/tests/test_v6_e9_targeted_recovery_verifier.py",
+          "engine/tests/test_v6_e8_analysis_freeze.py::test_a_re_signed_tampered_record_still_fails_to_load",
+          "engine/tests/test_v6_e8_analysis_freeze.py::test_a_tampered_record_fails_to_load",
+          "engine/tests/test_v6_e8_analysis_freeze.py::test_it_carries_every_earlier_identity",
+          "engine/tests/test_v6_e8_analysis_freeze.py::test_the_freeze_loads_and_its_identity_is_pinned",
+          "engine/tests/test_v6_e8_family_freeze.py::test_the_freeze_loads_and_its_identity_is_pinned",
+          "engine/tests/test_v6_e8_runner.py::test_a_failing_engine_source_check_stops_before_the_pre_match_gate",
+          "engine/tests/test_v6_e8_runner.py::test_copied_packages_must_equal_the_family_freeze",
+          "engine/tests/test_v6_e8_runner.py::test_the_preconditions_run_in_order_and_gate_every_match"
+        ],
+        "pytest_args": [
+          "-p",
+          "no:cacheprovider"
+        ],
+        "env": {},
+        "deselect": [],
+        "expected_collected": 169
+      }
+    ],
+    "not_reproducible_from_commits": [
+      {
+        "node_id": "engine/tests/test_v6_e9_v2_independent_bindings.py::test_separate_adoption_attestation_exact_review_and_unchanged_body",
+        "reason": "Asserts that the raw working-tree bytes of all 1,203 files pinned by v2_inherited_preservation_manifest_01.json equal their pins (except the superseded .gitattributes). 28 pins record the original research machine's Windows working tree, not committed content: 17 are CRLF renderings of the adoption-commit (2dd8f69) blobs and 11 are mixed-line-ending bytes that were never committed in that form. No checkout of any commit, on any platform, reproduces them.",
+        "evidence": "2026-10-31: in a fresh checkout of the snapshot exactly these 28 pins mismatch; the 11 mixed-EOL identities were found, read-only, only in the original research worktree D:\\Projects\\BATTLE2 (e.g. client/tests/test_canonical_reader.py: 74 CRLF of 76 line endings). The manifest file itself is protected by the current-tree guard and its bytes are unchanged.",
+        "disposition": "Excluded from the historical run by exact node ID and reported here as a reproducibility limitation, not as a pass. run-historical instead checks at the snapshot, read-only, that the working tree mismatches the preservation manifest in exactly these working_tree_pins (with exactly these pinned values) and the superseded .gitattributes (whose bytes must equal the recorded superseding SHA-256), so the other 1,174 pins are still verified and the limitation cannot silently widen.",
+        "preservation_manifest": "tools/research/v6/e9/v2_inherited_preservation_manifest_01.json",
+        "superseded_pins": {
+          ".gitattributes": {
+            "pinned": "d26332b37bbcac74a5e369317df33cbbecd4042f4ca6867770e38a54307bfd86",
+            "current_sha256": "97128feeef25cbe98af6770173d09a809b1c0f626ec2a5ac558236aaf4b99555"
+          }
+        },
+        "working_tree_pins": {
+          "client/tests/fixtures/perspective_card_knowledge/alpha1_executioner_vs_sleeper_trace.jsonl": "a13fde0ee0a9a7289181c35e98aa434b16e942fc1e1f23113bbeeaed76416332",
+          "client/tests/test_canonical_reader.py": "1fd5b69ea3a67446286539d42b3a376c462d0e78acdcf763aa2530f16505251b",
+          "client/tests/test_headless_characterization.py": "6632f49a54bb83c8741454e9d4f10d1d217ff664216fae7f5abcfd4cd3f1ec0a",
+          "client/tests/test_hud_layout.py": "df42ba9486fa39776a7ae3d4f2438b91bbffd16d1bcca861498de582430ad1ab",
+          "client/tests/test_playback_controller.py": "c927d73a494798dedef80e04539c11a04b1974fbeda269909a2ee286c7385e71",
+          "docs/archive/v4/V4_SPECTATOR_PHASE_0_5_RESEARCH.md": "5e82e8b34cc974f4f86388c5a230848c3eba64e631ecdb0ec04f918e36c0cc36",
+          "docs/archive/v4/V4_SPECTATOR_PHASE_0_RESEARCH.md": "315831f1f0a09df85593ffa270c0bc7c7df843c0215b256c8494067c1a3d47d1",
+          "engine/tests/_hang_safety.py": "eaf3f19b56eab9673bdc603f356b856eef35910ed6c0d5c8f23ce646ca843aa3",
+          "engine/tests/test_agent_evaluation_orientation.py": "da499ee2a73661e60ced62dfbbbe51903f44792212e5816e2b1dac43c2d35f49",
+          "engine/tests/test_agent_evaluation_revision_capture.py": "65c18e9807347b3bc5fabd6bf091365577827b8ae41bb6bc235f88bd3b3256ed",
+          "engine/tests/test_agent_inspect.py": "b85d9541b8c4340aa4e779e6b6e371e3d5fe3ffd94ebb67a0fc689bf5b8be451",
+          "engine/tests/test_agent_revisions.py": "ac8d6f4964a5b18009df8654798b3cd8ef6bffeec3e4c8a43a7ad07971dc1ffc",
+          "engine/tests/test_agent_revisions_cli.py": "b877ea77de431c989d1771a454bf39e7eef3552551d6733058096f9a528cfbf5",
+          "engine/tests/test_agent_trace.py": "e28612f6a75aa32b70fc67671f274081853988a7a09ef732e7b7e5cf03cc9b00",
+          "engine/tests/test_agent_workflows.py": "6087a199f263b889a87a134c92311c9580f1926f201c1192c58534a41b3f6787",
+          "engine/tests/test_evaluation_analysis.py": "bed72b178295823d108744f58e5546509b1c2b1a5cacd59a589898c17e4951cb",
+          "engine/tests/test_evaluation_artifact.py": "f08cf593ddee5236fe49aac9e04c7d305a22eb5c4e7bd3eb98d510b2affb4fb2",
+          "engine/tests/test_evaluation_cell_execution.py": "fef94cffd95b6a6257f3ce575bbc363d869c1d33384822a354f1bb062adb0343",
+          "engine/tests/test_evaluation_history.py": "85610f31d8f57f2858b09c2ef61ecf44a0b8fad6c086f221a89ff7880fd36082",
+          "engine/tests/test_evaluation_history_comparison.py": "b81d6abd56227d76695653e2c4d548713ed26f52a02d04212b36330b9d929270",
+          "engine/tests/test_evaluation_presets.py": "68af9b9bac18e4cf56f981c8a4244d10eea52a65fab71c0418533110ce92d64b",
+          "engine/tests/test_process_containment.py": "6b57f1e40ff4831195d0e28a0fcbc98d086a4d0ade79d38dbe8765ade3dc9959",
+          "engine/tests/test_ruleset_persistence.py": "aa1eab3c8ff7f51fc0020a458c82642aee1ca092722ad64b4d0cfec5d381f6ca",
+          "engine/tests/test_scheduler.py": "3af88d1894a0f7924e3b8ab40121170662d77a6ed2cb28c4cbce7d4230aa34f9",
+          "engine/tests/test_spectator_analyzer.py": "26923fffccaf88e99eb87ee36f440bf5dd2ca1a9bfe738bc4718b3eb30d5667d",
+          "engine/tests/test_v4_production_integration.py": "f78fe0fffc0f73f7270e8596205768b6955f16af30ff3719862427196c273734",
+          "engine/tests/test_v4_trace_equivalence.py": "b978606c1e117be2e6f038170ae051d7d0a0499a48522e5eaf06ab9c89c8863d",
+          "engine/tests/test_v5_post_release_h1_parameter_consistency.py": "7464d06fae57d935a41cc2ab17f057bc99ffda8a4e2e52fe24ea945ea3cafade"
+        }
+      }
+    ]
   },
   "product_ci_transfer": {
     "modules": [
@@ -246,42 +372,42 @@
     "cases": [
       {
         "node_id": "engine/tests/test_v6_e8_analysis_freeze.py::test_a_re_signed_tampered_record_still_fails_to_load",
-        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of E8 test modules test_v6_e8_family.py and test_v6_e8_sensing_context.py. V6 alpha M1-1 (b6c9a57, before Classic retirement) changed both, so the live tree cannot satisfy the pin. The expected tamper rejection is pre-empted by that earlier check.",
+        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of the E8-related test modules test_v6_e8_family.py, test_v6_e8_sensing_context.py and test_ruleset_v6_research_sensing_active.py. V6 alpha M1-1 (b6c9a57) changed all three before Classic retirement, so this case already failed at f127be7; Classic retirement (bb2c7a4) changed test_ruleset_v6_research_sensing_active.py again. The live tree cannot satisfy the pin. The expected tamper rejection is pre-empted by that earlier check.",
         "historical_verification": "Passes unmodified at the snapshot (historical-e9 job)."
       },
       {
         "node_id": "engine/tests/test_v6_e8_analysis_freeze.py::test_a_tampered_record_fails_to_load",
-        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of E8 test modules test_v6_e8_family.py and test_v6_e8_sensing_context.py. V6 alpha M1-1 (b6c9a57, before Classic retirement) changed both, so the live tree cannot satisfy the pin. The expected tamper rejection is pre-empted by that earlier check.",
+        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of the E8-related test modules test_v6_e8_family.py, test_v6_e8_sensing_context.py and test_ruleset_v6_research_sensing_active.py. V6 alpha M1-1 (b6c9a57) changed all three before Classic retirement, so this case already failed at f127be7; Classic retirement (bb2c7a4) changed test_ruleset_v6_research_sensing_active.py again. The live tree cannot satisfy the pin. The expected tamper rejection is pre-empted by that earlier check.",
         "historical_verification": "Passes unmodified at the snapshot (historical-e9 job)."
       },
       {
         "node_id": "engine/tests/test_v6_e8_analysis_freeze.py::test_it_carries_every_earlier_identity",
-        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of E8 test modules test_v6_e8_family.py and test_v6_e8_sensing_context.py. V6 alpha M1-1 (b6c9a57, before Classic retirement) changed both, so the live tree cannot satisfy the pin.",
+        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of the E8-related test modules test_v6_e8_family.py, test_v6_e8_sensing_context.py and test_ruleset_v6_research_sensing_active.py. V6 alpha M1-1 (b6c9a57) changed all three before Classic retirement, so this case already failed at f127be7; Classic retirement (bb2c7a4) changed test_ruleset_v6_research_sensing_active.py again. The live tree cannot satisfy the pin.",
         "historical_verification": "Passes unmodified at the snapshot (historical-e9 job)."
       },
       {
         "node_id": "engine/tests/test_v6_e8_analysis_freeze.py::test_the_freeze_loads_and_its_identity_is_pinned",
-        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of E8 test modules test_v6_e8_family.py and test_v6_e8_sensing_context.py. V6 alpha M1-1 (b6c9a57, before Classic retirement) changed both, so the live tree cannot satisfy the pin.",
+        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of the E8-related test modules test_v6_e8_family.py, test_v6_e8_sensing_context.py and test_ruleset_v6_research_sensing_active.py. V6 alpha M1-1 (b6c9a57) changed all three before Classic retirement, so this case already failed at f127be7; Classic retirement (bb2c7a4) changed test_ruleset_v6_research_sensing_active.py again. The live tree cannot satisfy the pin.",
         "historical_verification": "Passes unmodified at the snapshot (historical-e9 job)."
       },
       {
         "node_id": "engine/tests/test_v6_e8_family_freeze.py::test_the_freeze_loads_and_its_identity_is_pinned",
-        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of E8 test modules test_v6_e8_family.py and test_v6_e8_sensing_context.py. V6 alpha M1-1 (b6c9a57, before Classic retirement) changed both, so the live tree cannot satisfy the pin.",
+        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of the E8-related test modules test_v6_e8_family.py, test_v6_e8_sensing_context.py and test_ruleset_v6_research_sensing_active.py. V6 alpha M1-1 (b6c9a57) changed all three before Classic retirement, so this case already failed at f127be7; Classic retirement (bb2c7a4) changed test_ruleset_v6_research_sensing_active.py again. The live tree cannot satisfy the pin.",
         "historical_verification": "Passes unmodified at the snapshot (historical-e9 job)."
       },
       {
         "node_id": "engine/tests/test_v6_e8_runner.py::test_a_failing_engine_source_check_stops_before_the_pre_match_gate",
-        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of E8 test modules test_v6_e8_family.py and test_v6_e8_sensing_context.py. V6 alpha M1-1 (b6c9a57, before Classic retirement) changed both, so the live tree cannot satisfy the pin. The runner's precondition order therefore stops before the engine-source check it asserts.",
+        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of the E8-related test modules test_v6_e8_family.py, test_v6_e8_sensing_context.py and test_ruleset_v6_research_sensing_active.py. V6 alpha M1-1 (b6c9a57) changed all three before Classic retirement, so this case already failed at f127be7; Classic retirement (bb2c7a4) changed test_ruleset_v6_research_sensing_active.py again. The live tree cannot satisfy the pin. The runner's precondition order therefore stops before the engine-source check it asserts.",
         "historical_verification": "Passes unmodified at the snapshot (historical-e9 job)."
       },
       {
         "node_id": "engine/tests/test_v6_e8_runner.py::test_copied_packages_must_equal_the_family_freeze",
-        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of E8 test modules test_v6_e8_family.py and test_v6_e8_sensing_context.py. V6 alpha M1-1 (b6c9a57, before Classic retirement) changed both, so the live tree cannot satisfy the pin.",
+        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of the E8-related test modules test_v6_e8_family.py, test_v6_e8_sensing_context.py and test_ruleset_v6_research_sensing_active.py. V6 alpha M1-1 (b6c9a57) changed all three before Classic retirement, so this case already failed at f127be7; Classic retirement (bb2c7a4) changed test_ruleset_v6_research_sensing_active.py again. The live tree cannot satisfy the pin.",
         "historical_verification": "Passes unmodified at the snapshot (historical-e9 job)."
       },
       {
         "node_id": "engine/tests/test_v6_e8_runner.py::test_the_preconditions_run_in_order_and_gate_every_match",
-        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of E8 test modules test_v6_e8_family.py and test_v6_e8_sensing_context.py. V6 alpha M1-1 (b6c9a57, before Classic retirement) changed both, so the live tree cannot satisfy the pin.",
+        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of the E8-related test modules test_v6_e8_family.py, test_v6_e8_sensing_context.py and test_ruleset_v6_research_sensing_active.py. V6 alpha M1-1 (b6c9a57) changed all three before Classic retirement, so this case already failed at f127be7; Classic retirement (bb2c7a4) changed test_ruleset_v6_research_sensing_active.py again. The live tree cannot satisfy the pin.",
         "historical_verification": "Passes unmodified at the snapshot (historical-e9 job)."
       }
     ]

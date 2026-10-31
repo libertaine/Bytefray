@@ -16,12 +16,15 @@ this file:
     (``load_protocol(verify=True)`` and the E9 v2 inherited-source check)
     using the snapshot's own code.
 
-``check-junit``
-    A JUnit report from the historical E9 inventory collected exactly the
-    pinned number of cases, with no failure and no error.
+``run-historical``
+    Inside a verified snapshot checkout, run the original, unmodified
+    historical inventory with the invocations it was qualified with (the
+    E9 v2 modules through the recorded ``qualification_run.py`` command and
+    its entropy/match-execution guard), then require each JUnit report to
+    hold exactly the pinned number of cases with no failure and no error.
 
-Nothing here runs a match, draws entropy, writes research evidence or
-executes E9. E9 remains LOCKED; Requirement C remains NOT ESTABLISHED.
+Nothing here draws entropy, writes research evidence or executes an E9
+experiment. E9 remains LOCKED; Requirement C remains NOT ESTABLISHED.
 """
 
 from __future__ import annotations
@@ -30,6 +33,7 @@ import argparse
 import fnmatch
 import hashlib
 import json
+import os
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -171,9 +175,13 @@ def verify_snapshot(source: Path, policy: dict[str, Any] | None = None) -> dict[
     if dirty:
         raise FrozenScienceError(f"historical checkout has tracked modifications:\n{dirty}")
     inventory = policy["historical_e9_inventory"]
-    for module in inventory["modules"]:
-        if not (source / module).is_file():
+    for entry in inventory["modules"]:
+        module, _, test = entry.partition("::")
+        source_file = source / module
+        if not source_file.is_file():
             raise FrozenScienceError(f"historical inventory module {module} is absent at {head}")
+        if test and f"\ndef {test.split('[', 1)[0]}(" not in source_file.read_text(encoding="utf-8"):
+            raise FrozenScienceError(f"historical inventory test {entry} is absent at {head}")
     # The snapshot's own, unmodified verifiers -- not a reimplementation.
     probe = (
         "import sys\n"
@@ -196,7 +204,10 @@ def verify_snapshot(source: Path, policy: dict[str, Any] | None = None) -> dict[
 def check_junit(report: Path, expected_collected: int) -> dict[str, int]:
     """Require exactly the pinned inventory size and no failure or error."""
 
-    root = ET.parse(report).getroot()
+    try:
+        root = ET.parse(report).getroot()
+    except (OSError, ET.ParseError) as exc:
+        raise FrozenScienceError(f"no readable JUnit report at {report}: {exc}") from exc
     suites = [root] if root.tag == "testsuite" else list(root.iter("testsuite"))
     counts = {key: sum(int(s.get(key, 0)) for s in suites) for key in ("tests", "failures", "errors", "skipped")}
     if counts["tests"] != expected_collected:
@@ -208,6 +219,71 @@ def check_junit(report: Path, expected_collected: int) -> dict[str, int]:
     return counts
 
 
+def check_preservation_pins(source: Path, entry: dict[str, Any]) -> dict[str, int]:
+    """Bound a not-reproducible preservation assertion to exactly its recorded pins.
+
+    Read-only: every pin of the snapshot's preservation manifest must match
+    the checkout's raw bytes except exactly the recorded working-tree pins
+    (with exactly their recorded values) and the superseded entries (whose
+    current bytes must equal their recorded superseding SHA-256).
+    """
+
+    pins = json.loads((source / entry["preservation_manifest"]).read_bytes())["tracked_files"]
+    def current(path: str) -> str | None:
+        file = source / path
+        return _sha256(file.read_bytes()) if file.is_file() else None
+
+    mismatched = {p: d for p, d in pins.items() if current(p) != d}
+    recorded = entry["working_tree_pins"]
+    superseded = entry["superseded_pins"]
+    if set(mismatched) != set(recorded) | set(superseded):
+        unexpected = sorted(set(mismatched) - set(recorded) - set(superseded))
+        absent = sorted((set(recorded) | set(superseded)) - set(mismatched))
+        raise FrozenScienceError(
+            f"preservation pins: unexpected mismatches {unexpected}, recorded but matching {absent}"
+        )
+    if any(pins[p] != recorded[p] for p in recorded):
+        raise FrozenScienceError("preservation pins: a recorded working-tree pin differs from the manifest")
+    for path, values in superseded.items():
+        if pins[path] != values["pinned"] or current(path) != values["current_sha256"]:
+            raise FrozenScienceError(f"preservation pins: superseded {path} is not the recorded superseding bytes")
+    return {"pins": len(pins), "verified": len(pins) - len(mismatched), "recorded_not_reproducible": len(recorded)}
+
+
+def run_historical(source: Path, work: Path, policy: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Run every pinned historical invocation; fail on any count, failure or error."""
+
+    policy = policy or load_policy()
+    inventory = policy["historical_e9_inventory"]
+    outcome: dict[str, Any] = {}
+    problems: list[str] = []
+    for entry in inventory["not_reproducible_from_commits"]:
+        try:
+            outcome[entry["node_id"]] = check_preservation_pins(source, entry)
+        except FrozenScienceError as exc:
+            problems.append(f"{entry['node_id']}: {exc}")
+    for run in inventory["runs"]:
+        name = run["name"]
+        report = work / f"{name}.xml"
+        (work / name).mkdir(parents=True, exist_ok=False)
+        command = [sys.executable, "-X", "utf8", "-m", "pytest", *run["selection"], *run["pytest_args"],
+                   "--basetemp", str(work / name / "temp"), "--junitxml", str(report)]
+        for node in run["deselect"]:
+            command += ["--deselect", node]
+        print(f"[{name}] {' '.join(command)}", flush=True)
+        completed = subprocess.run(command, cwd=source, env={**os.environ, **run["env"]}, check=False)
+        try:
+            outcome[name] = {**check_junit(report, run["expected_collected"]), "exit_code": completed.returncode}
+        except FrozenScienceError as exc:
+            problems.append(f"{name}: {exc}")
+            continue
+        if completed.returncode != 0:
+            problems.append(f"{name}: pytest exited {completed.returncode}")
+    if problems:
+        raise FrozenScienceError("; ".join(problems))
+    return outcome
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     commands = parser.add_subparsers(dest="command", required=True)
@@ -215,10 +291,9 @@ def main(argv: list[str] | None = None) -> int:
     guard_cmd.add_argument("--repo", type=Path, default=ROOT)
     snap_cmd = commands.add_parser("verify-snapshot", help="verify a historical snapshot checkout")
     snap_cmd.add_argument("--source", type=Path, required=True)
-    junit_cmd = commands.add_parser("check-junit", help="check the historical inventory's JUnit report")
-    junit_cmd.add_argument("--report", type=Path, required=True)
-    junit_cmd.add_argument("--platform", choices=("linux", "windows"), required=True)
-    commands.add_parser("modules", help="print the historical E9 test inventory, one per line")
+    run_cmd = commands.add_parser("run-historical", help="run the historical inventory in a snapshot checkout")
+    run_cmd.add_argument("--source", type=Path, required=True)
+    run_cmd.add_argument("--work", type=Path, required=True, help="basetemp/report root outside the snapshot")
     args = parser.parse_args(argv)
     policy = load_policy()
     try:
@@ -226,12 +301,8 @@ def main(argv: list[str] | None = None) -> int:
             outcome: Any = guard(args.repo, policy)
         elif args.command == "verify-snapshot":
             outcome = verify_snapshot(args.source, policy)
-        elif args.command == "check-junit":
-            expected = policy["historical_e9_inventory"]["expected_collected"][args.platform]
-            outcome = check_junit(args.report, expected)
         else:
-            print("\n".join(policy["historical_e9_inventory"]["modules"]))
-            return 0
+            outcome = run_historical(args.source.resolve(), args.work.resolve(), policy)
     except FrozenScienceError as exc:
         print(f"FROZEN SCIENCE FAILURE: {exc}", file=sys.stderr)
         return 1

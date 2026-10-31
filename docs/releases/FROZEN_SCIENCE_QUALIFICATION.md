@@ -67,9 +67,11 @@ the inherited boundary (`load_protocol(verify=True)`) or, in the passing
 remainder, test E9 tooling against an engine E9 is defined to refuse.
 
 **Eight E8 tests**, each loading the E8 family freeze, whose qualification
-record pins the bytes of `test_v6_e8_family.py` and
-`test_v6_e8_sensing_context.py`. V6 alpha M1-1 (`b6c9a57`, before Classic
-retirement) changed both:
+record pins the bytes of `test_v6_e8_family.py`,
+`test_v6_e8_sensing_context.py` and `test_ruleset_v6_research_sensing_active.py`.
+V6 alpha M1-1 (`b6c9a57`) changed all three before Classic retirement, so the
+eight already failed at `f127be7`; the retirement (`bb2c7a4`) changed the
+third again:
 
 - `test_v6_e8_analysis_freeze.py`:
   `test_a_re_signed_tampered_record_still_fails_to_load`,
@@ -102,7 +104,7 @@ the history (blob bytes):
 | Seal 06 implementation manifest (`v2_implementation_manifest_final_06.json`, 293 pins; seal record 17 pins) | `e035def` | Exactly at `e035def`; Seals 07–08 later changed 4 of its files |
 | Seal 08 implementation manifest (`final_08`, 293 pins; seal record 28 pins) | `569cb9a` | Exactly at `569cb9a` and `b948540` |
 | Seals 01–05 and 07 implementation manifests | `e035def` (checkpoint) | **Not reproducible as exact trees.** They were developed uncommitted and checkpointed together; `final_07` matches 289–291 of 293 pins at any commit. Their records remain intact and are read by the original tests |
-| Inherited preservation manifest (1,203 working-tree pins at adoption) | `e035def` | Not re-derived independently here; its CRLF/`.gitattributes` supersession is asserted by the original tests at the snapshot |
+| Inherited preservation manifest (1,203 working-tree pins at adoption) | `e035def` | **Partly not reproducible.** 1,174 pins match the snapshot checkout; 28 record the original research machine's working tree, not committed content: 17 are CRLF renderings of adoption-commit (`2dd8f69`) blobs, 11 are mixed-line-ending bytes never committed in that form (found, read-only, only in the original research worktree). The manifest file itself is intact and guarded |
 
 `b948540` is the only commit at which every committed E9 contract that can
 hold simultaneously does, so it is the snapshot. Its additions over `569cb9a`
@@ -120,21 +122,46 @@ On `ubuntu-latest` and `windows-latest`:
    `.venv`, `docs/research/v6/V6_PHASE0_BASELINE.md` section 3; qualified on
    3.13.14).
 3. `verify-snapshot`: HEAD and tree equal the pinned identities, no tracked
-   modification, and the snapshot's **own** `load_protocol(verify=True)` and
-   `verify_inherited_sources()` pass.
-4. Run the original inventory with the snapshot's own `pytest.ini`.
-5. `check-junit`: exactly 1,507 cases (both platforms) and zero failures or
+   modification, every inventory entry exists, and the snapshot's **own**
+   `load_protocol(verify=True)` and `verify_inherited_sources()` pass.
+4. `run-historical` runs the inventory with the invocations it was qualified
+   with, with temporary directories outside the snapshot:
+   - the 29 E9 v2 modules (1,338 cases) with the command the snapshot's
+     `tools/research/v6/e9/v2/qualification_run.py` builds for every E9 v2
+     attempt: `-X utf8`, `addopts=-q`, no cache provider, plugin autoload
+     disabled, `PYTHONUTF8=1`, and its `qualification_guard` plugin, which
+     forbids entropy and match execution. The harness itself is not called,
+     because it writes attempt evidence;
+   - the 11 other E9 modules and the eight E8 cases (169) under the
+     snapshot's own `pytest.ini`, as the V6 line's CI ran them.
+5. Each run must report exactly its pinned case count with zero failures and
    errors. A short collection, a failure or an error fails the job.
+
+**One case is not reproducible from any commit** and is excluded by exact
+node ID, recorded under `not_reproducible_from_commits`, never counted as a
+pass:
+`test_v6_e9_v2_independent_bindings.py::test_separate_adoption_attestation_exact_review_and_unchanged_body`.
+It asserts that the raw working-tree bytes of all 1,203 inherited
+preservation pins equal their pins; 28 of them are the original machine's
+working tree (provenance table). It passed there, and the evidence it reads
+is guarded below, but it cannot be re-run anywhere else. To keep the
+limitation exact, `run-historical` checks at the snapshot, read-only, that
+the working tree mismatches the manifest in exactly the 28 recorded
+path/pin pairs (`working_tree_pins` in the policy) plus `.gitattributes`,
+whose bytes must equal the recorded superseding SHA-256; the other 1,174 pins
+are verified. The test's remaining assertions (adoption attestation, review
+archive, supersession record) are not re-run.
+
+Plain `pytest` at the snapshot also fails two further E9 v2 cases
+(`test_w12_producer_is_real_only_with_no_entropy_reference_or_mode_switch`
+asserts the guard is active; `...[outside_repository]` needs a temporary
+directory outside the checkout). Both are properties of how E9 v2 was
+qualified, not defects, and the recorded invocation satisfies them.
 
 Nothing from the current tree's product source is consulted, so product
 changes cannot be read as changes to the snapshot. Triggers: manual,
 weekly, and pushes or pull requests touching research, E-series tests, the
 policy, the root `conftest.py` or `.gitattributes`.
-
-**Local evidence (2026-10-31, Windows 11, CPython 3.13.7):** at the snapshot,
-`verify-snapshot` passes (116 engine files) and the eight E8 cases pass. On
-the current tree it refuses with an identity mismatch. The complete
-historical E9 run is recorded in the PR #6 integration report.
 
 ### 5. Seal 07 and pytest 9.2
 
@@ -169,6 +196,8 @@ path now requires changing the pinned anchor, which is visible in review.
 
 ## Limitations
 
+- One E9 v2 case asserts never-committed working-tree bytes and cannot be
+  reproduced from any commit (section 4).
 - Seals 01–05 and 07 cannot be reproduced as exact historical trees (above).
 - Qualification ran on CPython 3.13.14; CI uses the runner's 3.13 patch
   release. Locally 3.13.7 reproduced every check.
