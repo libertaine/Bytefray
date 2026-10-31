@@ -12,6 +12,7 @@ exercises the Active Sensing product paths themselves.
 from __future__ import annotations
 
 import json
+import shutil
 from fractions import Fraction
 from pathlib import Path
 
@@ -286,10 +287,18 @@ def create_agent(): return Agent()
 def test_v4_production_schema4_roundtrip_determinism_and_supervision(
     tmp_path: Path,
 ) -> None:
-    root = Path(__file__).resolve().parents[2]
+    # The Classic retirement no longer installs these starters into agents/;
+    # run their byte-for-byte retained packages from an isolated data root.
+    retained = (
+        Path(__file__).resolve().parents[2]
+        / "engine" / "src" / "battle_engine" / "data" / "starter_agents"
+    )
+    root = tmp_path / "data"
     first_path = tmp_path / "first.jsonl"
     second_path = tmp_path / "second.jsonl"
     names = ("v4_defender_scout", "v4_scout")
+    for name in names:
+        shutil.copytree(retained / name, root / "agents" / name)
 
     first_result, first_records = _run(
         _request(root, names, first_path, ticks=3, seed=23)

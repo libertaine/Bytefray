@@ -79,7 +79,18 @@ jobs:
         # fast subset (not the full suite, which already runs per-Python-
         # version on Linux) specifically to get real Windows containment
         # coverage from a runner that's already provisioned for this job.
-        run: python -m pytest engine/tests/test_process_containment.py engine/tests/test_agent_worker.py engine/tests/test_supervised_runtime.py -q
+        # Phase 2B.12 removed test_supervised_runtime.py with the retired
+        # API-v1 controller. API-v2 supervision is covered by validation,
+        # development-test forfeits, process-runtime integration, and the
+        # Active Sensing direct/worker parity tests instead.
+        run: >-
+          python -m pytest
+          engine/tests/test_process_containment.py
+          engine/tests/test_agent_worker.py
+          engine/tests/test_agent_validation.py
+          engine/tests/test_agent_test.py
+          engine/tests/test_process_runtime_integration.py
+          engine/tests/test_v6_alpha_m1_policy_capabilities.py -q
       - name: Run Windows-native agent-revision (NTFS junction) tests
         # Same rationale as above, for a second Windows-only surface: real
         # NTFS directory junctions (mklink /J, which needs no elevation,

@@ -3,33 +3,38 @@ from __future__ import annotations
 import pytest
 from battle_client import cli
 from battle_engine.cli import main as engine_main
+from battle_engine.replay import TickSnapshot, iter_replay
 
 
 @pytest.mark.gui
 def test_pygame_renders_replay_and_exits_on_quit(tmp_path, monkeypatch):
     pygame = pytest.importorskip("pygame")
-    from battle_client.renderers.pygame_renderer import PygameRenderer
 
+    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path / "data"))
     replay = tmp_path / "replay.jsonl"
     assert engine_main(
         [
-            "--ticks", "3", "--arena", "128", "--a-type", "v4_scout",
-            "--b-type", "v5_region_attacker", "--b-start", "64", "--replay", str(replay), "--quiet",
+            "--ticks", "3", "--arena", "512", "--seed", "1",
+            "--ruleset", "bytefray-rules-6-alpha1", "--a-type", "v6_window_scout",
+            "--b-type", "v6_watchful_keeper", "--replay", str(replay), "--quiet",
         ]
     ) == 0
 
-    # PygameRenderer.run() opens the window and immediately starts its
-    # event/render loop (Phase 7a Slice 3: no more blocking "press
-    # spacebar to start" gate). Queue a QUIT event right after window
-    # setup so the very first loop iteration exits cleanly.
-    original_configure_window = PygameRenderer._configure_window
+    # Quit only after a real frame reaches the display: a QUIT posted
+    # during window setup would exit before the first redraw/flip.
+    original_flip = pygame.display.flip
+    rendered_frames = 0
 
-    def configure_then_quit(self):
-        original_configure_window(self)
+    def flip_then_quit():
+        nonlocal rendered_frames
+        assert pygame.display.get_surface() is not None
+        original_flip()
+        rendered_frames += 1
         pygame.event.post(pygame.event.Event(pygame.QUIT))
 
-    monkeypatch.setattr(PygameRenderer, "_configure_window", configure_then_quit)
+    monkeypatch.setattr(pygame.display, "flip", flip_then_quit)
     assert cli.main(["--replay", str(replay), "--renderer", "pygame"]) == 0
+    assert rendered_frames == 1
     assert not pygame.get_init()
 
 
@@ -38,16 +43,20 @@ def test_pygame_step_and_seek_advance_a_real_replay(tmp_path, monkeypatch):
     pygame = pytest.importorskip("pygame")
     from battle_client.renderers.pygame_renderer import PygameRenderer
 
+    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path / "data"))
     replay = tmp_path / "replay.jsonl"
-    # "v5_region_attacker" vs "v5_region_attacker" reliably survives the full tick budget (unlike
-    # writer/runner at close range, which can end the match after tick 1),
-    # so there are enough ticks here to step forward twice and back once.
+    # Use the installed Active Sensing roster and deterministic seeded core
+    # placement in its supported arena. Verify the replay actually reaches
+    # tick 2 before testing two forward steps and one backward step.
     assert engine_main(
         [
-            "--ticks", "5", "--arena", "256", "--a-type", "v5_region_attacker",
-            "--b-type", "v5_region_attacker", "--replay", str(replay), "--quiet",
+            "--ticks", "5", "--arena", "512", "--seed", "1",
+            "--ruleset", "bytefray-rules-6-alpha1", "--a-type", "v6_window_scout",
+            "--b-type", "v6_watchful_keeper", "--replay", str(replay), "--quiet",
         ]
     ) == 0
+    ticks = [record.tick for record in iter_replay(replay) if isinstance(record, TickSnapshot)]
+    assert ticks[:3] == [0, 1, 2]
 
     seen_ticks: list[int] = []
     original_loop = PygameRenderer._loop

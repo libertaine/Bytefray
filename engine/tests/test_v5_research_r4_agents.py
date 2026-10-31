@@ -41,10 +41,13 @@ from tools.research.v5.r4_population import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+#: The Classic retirement stopped installing ``v4_quorum`` into the writable
+#: agents/ catalog but kept its package here byte for byte for research.
+RETAINED_STARTER_DIR = REPO_ROOT / "engine" / "src" / "battle_engine" / "data" / "starter_agents"
 
 #: The agents R4 authored. ``v4_quorum`` is a retained bundled agent and is
-#: deliberately not in this tuple -- it must stay reachable from product
-#: paths, and these containment assertions would be wrong for it.
+#: deliberately not in this tuple -- it is canonical, not research-authored,
+#: and these containment assertions would be wrong for it.
 R4_RESEARCH_AGENTS = (
     "v5r4_core_warden",
     "v5r4_dual_operator",
@@ -70,7 +73,7 @@ def _spec(name: str):
     research = load_research_agent_specs()
     if name in research:
         return research[name]
-    resolved = agent_spec_from_dir(REPO_ROOT / "agents" / name)
+    resolved = agent_spec_from_dir(RETAINED_STARTER_DIR / name)
     assert resolved is not None, name
     return resolved
 
@@ -154,11 +157,14 @@ def test_r4_research_agents_resolve_only_through_the_research_loader() -> None:
 
 
 def test_canonical_v4_agents_are_untouched_by_r4() -> None:
-    """R4 modified no bundled agent source; ``v4_quorum`` stays a product agent."""
+    """R4 modified no bundled agent source; ``v4_quorum`` stays retained.
 
-    catalog = discover_agents(REPO_ROOT)
-    assert "v4_quorum" in catalog
-    assert (REPO_ROOT / "agents" / "v4_quorum" / "agent.py").is_file()
+    Since the Classic retirement it is no longer an installed starter, but its
+    package remains in the repository for the research corpora.
+    """
+
+    assert "v4_quorum" not in STARTER_AGENT_NAMES
+    assert (RETAINED_STARTER_DIR / "v4_quorum" / "agent.py").is_file()
 
 
 @pytest.mark.parametrize("agent", R4_RESEARCH_AGENTS)
