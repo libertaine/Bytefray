@@ -1801,6 +1801,11 @@ def test_keyboard_navigation_action_tab_order_and_filter_focus(history_env, monk
     from PySide6.QtTest import QTest
 
     window = _opened(history_env)
+    # Xvfb has no window manager to activate a newly shown window for us.
+    # Wait for real X11 exposure/activation before inspecting keyboard focus.
+    assert QTest.qWaitForWindowExposed(window)
+    window.activateWindow()
+    assert QTest.qWaitForWindowActive(window)
     window.table.selectRow(0)
     window.table.setFocus()
     QTest.keyClick(window.table, Qt.Key_Down)
