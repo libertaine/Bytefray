@@ -39,9 +39,9 @@ Watchful Keeper, explicit Active Sensing, seed 1, arena 512 and the existing
 seeded placement resolver. Each test uses its own temporary data root.
 The keyboard test asserts that recorded ticks include 0, 1 and 2, then retains
 the exact observed `0 -> 1 -> 2 -> 1` assertion. The rendering test sends QUIT
-only after an actual display flip and asserts one rendered frame; previously,
-QUIT during window setup could bypass rendering entirely. Neither renderer
-nor gameplay code changed.
+only after an actual display flip and asserts exactly one rendered frame; the
+old test also rendered one frame before exiting but never asserted it.
+Neither renderer nor gameplay code changed.
 
 ### B. Windows workflow references a deleted test (baseline-existing; corrected)
 
@@ -66,6 +66,9 @@ these existing equivalents:
 | `test_v6_alpha_m1_policy_capabilities.py` | Active Sensing direct/worker parity and capability rejection before execution |
 
 No protection was replaced by a nonexistent path, broad exclusion or test skip.
+One gap predates this PR: the deleted module's
+`test_initialization_failure_cleans_up_already_started_workers` has no
+identified API-v2 equivalent; it is recorded as follow-up.
 
 ### C. Designer native abort: Qt binding defect (baseline-existing; constrained)
 
@@ -107,23 +110,29 @@ The E9 failures are live-tree checks of a whole-repository frozen boundary,
 and that boundary was already broken on the target before this PR:
 
 - `tools/research/v6/e9/protocol.py::load_protocol(verify=True)` checks, in
-  order, frozen snapshots, four LF-pinned *governing contracts*
-  (`ARCHITECTURE.md`, `docs/AGENT_API_V2.md`, `docs/REPLAY_SCHEMA.md`,
-  `docs/RESULT_SCHEMA.md`), qualified E9 sources, frozen E8 sources, packages,
+  order, frozen snapshots, ten LF-pinned *governing contracts* (four of them
+  product documents: `ARCHITECTURE.md`, `docs/AGENT_API_V2.md`,
+  `docs/REPLAY_SCHEMA.md`, `docs/RESULT_SCHEMA.md`), qualified E9 sources, frozen E8 sources, packages,
   the sealed E8 result and finally an LF manifest of every `engine/src` file.
   The E9 v2 records wrap any such failure as
   `inherited immutable source/package boundary failed`.
 - On `f127be7` the governing contracts still match and the check fails last,
   with `the frozen engine manifest changed` (per Linux job: 15 direct
   failures, 44 wrapped).
-- Commit `15f7139` edited all four governing contracts to describe the
+- Commit `15f7139` edited those four governing contracts to describe the
   retirement; raw and LF SHA-256 differ (for example `ARCHITECTURE.md`
   `af92256a96b2...` to `ea179aaca222...`). The same tests now fail earlier,
   with `a governing contract changed`. The failure count is unchanged
   because the later engine-manifest check already failed, and the retirement
   necessarily changes `engine/src` further.
 - The E9 v2 inherited preservation manifest pins 1,203 tracked files: 109
-  already differ at `f127be7`; at the PR head 205 differ and 8 are deleted.
+  already differ at `f127be7`, 205 differ and 8 are deleted at `15f7139`.
+  This remediation adds four more pinned files to the drift
+  (`.github/workflows/ci.yml`, `.github/workflows/linux-gui-smoke.yml`,
+  `client/tests/test_linux_pygame_smoke.py`,
+  `engine/tests/test_v5_research_r4_population.py`), so 209 differ at
+  `a5c4f6a`. The check asserting this manifest already fails on the
+  baseline, so no new test fails, but the boundary drift does grow.
 - Other shared failures are also baseline-existing: shallow-checkout
   `git show`/`rev-parse` of historical commits (E6/E8/E9 provenance, about 45
   cases), and E4/E8 freeze source checks with prior documented dispositions.
@@ -230,9 +239,14 @@ pygame, Designer, Windows and Linux matrix results.
 Active Sensing policy and gameplay, the Agent API, the
 `ruleset_unavailable / configuration` diagnostic, Replay Viewer and Spectator
 compatibility, the three-starter catalog and Classic retirement are
-unchanged. No engine or application source, research tool, frozen research
-evidence, competitive-agent prototype, historical approval report, installer
-or release configuration was modified. Native Linux desktop, Windows
+unchanged. No engine or application source, research tool, E9 test, frozen
+research evidence, competitive-agent prototype, historical approval report,
+installer or release configuration was modified. The remediation does change
+four test/workflow files that the E9 v2 preservation manifest pins (Section D).
+
+An independent review of `15f7139..a5c4f6a` returned **PASS WITH
+CONDITIONS**: no defect in the code or test changes, report corrections
+(applied here) and GitHub requalification of the exact pushed commit. Native Linux desktop, Windows
 installer, the retained Windows `0x8001010d` diagnostic and the next
 application version remain separate release gates.
 
