@@ -1,9 +1,10 @@
 # Classic retirement PR #6: CI remediation
 
-Date: 2026-10-30. **Product CI migration defects corrected and requalified
-on GitHub. Integration HOLD: frozen scientific-integrity verification on the
-development line needs a project-lead decision (Section D). Two pre-existing
-conditions, the Designer X11 crash and Windows notice drift, also remain red.**
+Date: 2026-10-30; updated 2026-10-31. **Product CI migration defects corrected
+and requalified on GitHub. Section D was decided on 2026-10-31 (Option 1:
+separate frozen-science qualification); see
+[Integration under Option 1](#integration-under-option-1-2026-10-31) below,
+which supersedes the HOLD and the B, C and F dispositions recorded here.**
 
 Approved starting point: `feature/retire-classic-ruleset` at
 `15f7139b7bde79a53248455c92a110b6ee61fad2`; target
@@ -282,6 +283,63 @@ run 41160429587.
 
 All 25 fixture failures (E) are gone in every Linux job.
 
+## Integration under Option 1 (2026-10-31)
+
+The project owner selected Option 1. Design, provenance and limitations:
+[FROZEN_SCIENCE_QUALIFICATION.md](FROZEN_SCIENCE_QUALIFICATION.md).
+
+**D. Frozen science.** Product CI checks out full history and deselects
+exactly 1,507 cases listed in `tools/qualification/frozen_science_e9.json`:
+all 40 E9 modules (1,499) and eight E8 cases. Each of the eight loads the E8
+family freeze, which pins three test modules that V6 alpha M1-1 (`b6c9a57`)
+changed, so all eight already failed at `f127be7`; the retirement (`bb2c7a4`)
+changed one of them, `test_ruleset_v6_research_sensing_active.py`, again. The other 16 failing E2–E8 functions needed only history and stay
+in product CI. `frozen-science.yml` verifies the inventory unmodified at
+snapshot `b948540` (the last V6 research commit; E9's
+`load_protocol(verify=True)` holds from `514f4e2` to `b948540` and first fails
+at `b6c9a57`) on Linux and Windows, in the recorded research environment.
+A current-tree guard keeps 795 protected research files byte-identical to
+that commit. No E9 test, record, expected value or frozen evidence changed.
+
+**B. Windows build and notices.** The release constraints already were the
+approved set. CI now builds the EXEs on CPython 3.13 with
+`-Constraints tools/windows-build-constraints.txt` (PySide6/Qt 6.11.2,
+matching `tools/third_party_notices/qt-6.11.2`); the containment tests stay
+on 3.10. A local build to completion then exposed a retirement defect that
+the earlier notice failure had hidden: `build_win.ps1` still required
+`agents validate` of an Active Sensing starter to fail "under the default
+Classic Ruleset", but the default is now Active Sensing. The smoke now
+requires the default and explicit `bytefray-rules-6-alpha1` to validate and
+`--ruleset bytefray-rules-4` to be refused as retired (exit 2);
+`test_windows_build_release_steps.py` pins the new contract.
+
+The worker-cleanup gap is closed rather than deferred:
+`test_process_runtime_integration.py::test_supervised_startup_failure_closes_already_started_workers`
+starts a healthy worker, makes the second entrant's reset hang past a 1 s
+timeout, and requires every started worker to have exited. It runs in the
+Windows protection step and on Linux, and fails if the controller's cleanup
+(`process_runtime.py`, `except BaseException: handle.close()`) is removed.
+
+**F. Seal 07.** Reproduced at the snapshot, unmodified: pytest 9.1.1 passes,
+9.2.0 fails. The test now runs only in the historical job, pinned to 9.1.1
+by `tools/qualification/e9_historical_constraints.txt`.
+
+**C. Designer X11.** Not fixed. Bounded WSL2/Xvfb comparison (Python 3.10.22,
+PySide6 6.11.2, both Replay History modules, fresh `git archive` exports):
+
+| Source | As CI runs it, 8 runs | Keyboard-focus test deselected in both |
+| --- | --- | --- |
+| `f127be7` | 8 segfaults | 1 passed, 4 segfaults, 3 hangs |
+| PR (`dd7959d`) | 6 passed, 1 segfault, 1 hang | 8 passed |
+
+Both signatures occur on the baseline at the same sites: a segfault in
+`ReplayHistoryWindow.eventFilter` or a worker thread's SQLite read, and a hang
+in `ReplayHistoryWindow.shutdownWorker`'s nested event loop (the site of the
+GitHub `dd7959d` hang, cancelled after 6 hours). The PR adds no failure here.
+Tracked in [issue #7](https://github.com/libertaine/Bytefray/issues/7). The optional job stays enabled and red, now with
+`timeout-minutes: 60` and `faulthandler_timeout=300` so a hang ends within the
+hour with every thread's stack.
+
 ## Scope
 
 Active Sensing policy and gameplay, the Agent API, the
@@ -291,6 +349,12 @@ unchanged. No engine or application source, research tool, E9 test, frozen
 research evidence, competitive-agent prototype, historical approval report,
 installer or release configuration was modified. The remediation does change
 four test/workflow files that the E9 v2 preservation manifest pins (Section D).
+The 2026-10-31 integration adds the frozen-science boundary (root
+`conftest.py`, `tools/qualification/frozen_science*`, the historical
+constraints, `frozen-science.yml`, a product boundary test), CI build
+configuration, the `build_win.ps1` post-retirement smoke, one worker-cleanup
+test and the Designer job's timeout; it changes no engine, application or
+research source, no release constraint and no installer.
 
 An independent review of `15f7139..a5c4f6a` returned **PASS WITH
 CONDITIONS**: no defect in the code or test changes, report corrections
