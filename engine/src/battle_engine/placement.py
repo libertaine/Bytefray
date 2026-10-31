@@ -31,7 +31,7 @@ import hashlib
 from collections.abc import Sequence
 
 from battle_engine.ruleset_policy import (
-    BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
     UnknownRulesetError,
     resolve_ruleset_policy,
 )
@@ -260,9 +260,9 @@ def core_placement_mode(ruleset_id: str | None) -> str:
     V6 Phase 2B.12 (docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md)
     retired Ruleset v1, the identity ``None`` used to mean here ("no Ruleset
     selected" was always v1's own zero-default placement, T-N-1-class trap):
-    an omitted Ruleset now resolves to the retained control
-    ``BYTEFRAY_RULESET_V4_ID`` everywhere else in the engine (``_resolve_
-    ruleset_id``, ``resolve_omitted_ruleset_id``), so it must resolve to
+    an omitted Ruleset now resolves to the product Ruleset
+    ``BYTEFRAY_RULESET_V6_ALPHA1_ID`` everywhere else in the engine (``_resolve_
+    ruleset_id``, ``resolve_omitted_ruleset_for_agents``), so it must resolve to
     that Ruleset's own ``"seeded"`` placement here too -- never silently
     back to the address-``0`` collision every entrant's vulnerable core
     would otherwise share (exactly the defect ``core_placement_mode``
@@ -275,7 +275,7 @@ def core_placement_mode(ruleset_id: str | None) -> str:
     """
 
     if ruleset_id is None:
-        ruleset_id = BYTEFRAY_RULESET_V4_ID
+        ruleset_id = BYTEFRAY_RULESET_V6_ALPHA1_ID
     try:
         return resolve_ruleset_policy(ruleset_id).core_placement
     except UnknownRulesetError:

@@ -28,6 +28,8 @@ from battle_engine.rules import (
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
 )
 from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V2_ID
 
@@ -306,7 +308,7 @@ def test_evaluation_request_defaults_and_derived_methodology_are_stable() -> Non
     assert request.scheduler_chunk_size is None
     assert request.scheduler_rotate_start is None
     assert request.orientation_mode == evaluation.ORIENTATION_MODE_BOTH
-    assert request.resolved_rules_compatibility_id == BYTEFRAY_RULESET_V4_ID
+    assert request.resolved_rules_compatibility_id == BYTEFRAY_RULESET_V6_ALPHA1_ID
     assert request.is_v2_methodology is False
     assert request.is_v4_methodology is True
     assert request.resolved_arena_size == 512
@@ -473,6 +475,7 @@ def test_group_version_vocabulary_remains_historical_without_enabling_execution(
         BYTEFRAY_RULESET_V2_ID,
         BYTEFRAY_RULESET_V4_ALPHA1_ID,
         BYTEFRAY_RULESET_V4_ALPHA2_ID,
+        BYTEFRAY_RULESET_V4_ID,
         "evaluation-rules-1",
     ),
 )
@@ -486,7 +489,9 @@ def test_historical_methodology_ids_are_readable_vocabulary_not_executable_choic
         output_dir=Path("out"),
         ruleset_id=retired_ruleset_id,
     )
-    with pytest.raises(evaluation.EvaluationConfigurationError, match="Unsupported evaluation"):
+    # A retired identity is named as retired; any other unsupported value is
+    # reported as unsupported. Neither is ever remapped.
+    with pytest.raises(evaluation.EvaluationConfigurationError, match="Unsupported evaluation|is retired"):
         evaluation.EvaluationService()._validate(request)
 
 
@@ -596,7 +601,7 @@ def test_scheduler_overrides_that_change_execution_must_change_evaluation_identi
         Path("out"),
         ticks=5,
         both_orientations=False,
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
         arena_size=512,
     )
     overridden = replace(request, scheduler_chunk_size=1, scheduler_rotate_start=True)

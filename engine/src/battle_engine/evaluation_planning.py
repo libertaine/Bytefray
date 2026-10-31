@@ -46,6 +46,7 @@ from battle_engine.evaluation_contracts import (
     EvaluationRequest,
     EvaluationSeatAssignment,
     is_ruleset_v2_methodology,
+    is_ruleset_v4_derived_methodology,
     is_ruleset_v4_methodology,
     is_ruleset_v6_research_capture_hold_disruption_slot_anchor_before_core_methodology,
     is_ruleset_v6_research_capture_hold_disruption_slot_methodology,
@@ -64,7 +65,7 @@ from battle_engine.evaluation_contracts import (
     resolved_identity_version,
 )
 from battle_engine.evaluation_identity import agent_identity
-from battle_engine.placement import resolve_direct_match_starts, spread_seat_starts
+from battle_engine.placement import seeded_seat_starts, spread_seat_starts
 
 # ---------------------------------------------------------------------------
 # Placement / layout geometry
@@ -188,27 +189,21 @@ def standard_layouts(entrant_count: int, arena_size: int | None = None) -> tuple
 def resolve_v4_seed_geometry(
     rules_compatibility_id: str, arena_size: int, seed: int
 ) -> tuple[int, int]:
-    """The (seat A, seat B) start addresses one v4-seeded placement sample resolves to.
+    """Reconstruct the immutable seeded evaluation geometry for a recorded ID.
 
-    A thin, single-call wrapper around `placement.resolve_direct_match_starts`
-    -- bit-for-bit the same seam `bytefray run`/`agent_test` use, called with
-    both starts omitted so the Ruleset's own seeded placement (`placement.
-    seeded_seat_starts`, shared identically by `bytefray-rules-4-alpha2` and
-    its stable promotion `bytefray-rules-4`) resolves them --
-    rather than a second, independently-maintained placement formula. Both
-    `build_matrix` and `EvaluationService._evaluation_id` call this one
-    function so the persisted schedule and the identity hash can never drift
-    from each other or from the production seam (research report Sec H.1
-    items 1/7).
+    Methodology classification includes historical identities independently
+    of executable registration. Retiring Classic must not change the geometry
+    hashed into its existing evaluations. Reuse the same immutable algorithm
+    as current match placement; interpreting metadata does not register or
+    authorize a match. Unknown and non-seeded identities fail explicitly.
     """
-
-    starts = resolve_direct_match_starts(
-        ruleset_id=rules_compatibility_id,
-        arena_size=arena_size,
-        entrant_count=2,
-        supplied_starts=[None, None],
-        seed=seed,
-    )
+    if not is_ruleset_v4_derived_methodology(rules_compatibility_id):
+        raise ValueError(
+            f"Ruleset {rules_compatibility_id!r} has no recorded seeded evaluation methodology."
+        )
+    if arena_size <= 0:
+        raise ValueError("Recorded seeded evaluation arena size must be positive.")
+    starts = seeded_seat_starts(2, arena_size, seed)
     return starts[0], starts[1]
 
 

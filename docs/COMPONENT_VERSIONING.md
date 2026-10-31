@@ -32,7 +32,7 @@ application's version number never implies them.
 | Component | Identity form | On this development line | Defined in | Changes when |
 | --- | --- | --- | --- | --- |
 | Bytefray application | SemVer `MAJOR.MINOR.PATCH[-PRERELEASE]` | `5.0.0` released; `5.1.0-alpha.1` release candidate (`5.1.0a1`) | `pyproject.toml`, `tools/installer.iss` | a user-visible product change ships (§4.1) |
-| Gameplay Ruleset | immutable ID + display name | `bytefray-rules-4` **Classic**; `bytefray-rules-6-alpha1` **Active Sensing (Alpha)** | `battle_engine.rules`, `battle_engine.ruleset_policy`, `battle_engine.ruleset_names` | any gameplay-observable change → a new ID (§4.2) |
+| Gameplay Ruleset | immutable ID + display name | `bytefray-rules-6-alpha1` **Active Sensing (Alpha)** (`bytefray-rules-4` **Classic** until its retirement after 5.1.0-alpha.1) | `battle_engine.rules`, `battle_engine.ruleset_policy`, `battle_engine.ruleset_names` | any gameplay-observable change → a new ID (§4.2) |
 | Agent API | integer `api_version` | 2 | `battle_engine.agent_api` | the agent programming contract changes incompatibly (§4.4) |
 | Agent manifest capabilities | integer `capabilities.version` | 1 (`sense`) | `battle_engine.agent_capabilities` | the capability block's shape changes |
 | Replay format | `battle2.replay` + integer | writes 4; reads 2, 3, 4 | `battle_engine.replay` | wire shape changes (§4.5) |
@@ -102,6 +102,14 @@ decision taken before this policy existed. Releases after it follow §4.1
 as written. Every retired artifact stays readable, and 5.0.0 remains
 available for re-execution.
 
+*Classic retirement.* After 5.1.0-alpha.1 this line retired
+`bytefray-rules-4` (Classic) from execution and made Active Sensing the
+default Ruleset ([retirement record](releases/CLASSIC_RULESET_RETIREMENT.md)).
+That is both "removing an executable stable Ruleset" and "changing the
+default Ruleset", so under §4.1 as written the next release is a **MAJOR**
+version. The record's placeholder (`6.0.0-alpha.1`) is not a decision; the
+designation is reserved for the project lead (§7).
+
 ### 4.2 Gameplay Rulesets
 
 A Ruleset ID names one exact set of gameplay semantics, permanently.
@@ -150,20 +158,23 @@ the Active Sensing viewer all read it.
 
 | Ruleset ID | Display name | Stability |
 | --- | --- | --- |
-| `bytefray-rules-4` | **Classic** | stable; the default everywhere |
-| `bytefray-rules-6-alpha1` | **Active Sensing (Alpha)** | experimental; explicit selection only |
+| `bytefray-rules-6-alpha1` | **Active Sensing (Alpha)** | experimental; the only product Ruleset and the default everywhere |
+
+`bytefray-rules-4` was named **Classic** through 5.1.0-alpha.1. Since its
+retirement it is a historical identity and, like the others, has no display
+name: readers show its exact ID.
 
 Rules:
 
 - **Presentation only.** A display name is never persisted, never accepted as
-  input (`--ruleset Classic` is rejected), and never used to decide
+  input (`--ruleset "Active Sensing (Alpha)"` is rejected), and never used to decide
   compatibility. Selection, filtering and capability checks run on the
   canonical ID.
 - **Product-offered identities only.** Only the public stable and public
   experimental Rulesets have names. Historical, retired and research
   identities never get one; readers show their exact ID or a label derived
-  from it (`Ruleset v4 alpha2`). That keeps `bytefray-rules-4-alpha2` from
-  ever reading as "Classic".
+  from it (`Ruleset v4 alpha2`). That keeps a historical identity from
+  ever reading as a current product Ruleset.
 - **Experimental names carry their stage**, for example "(Alpha)". The stage
   describes the Ruleset's maturity, not the application's prerelease state:
   Active Sensing can stay "(Alpha)" in a final 5.1.0. A promoted Ruleset's
@@ -285,7 +296,8 @@ pins the Ruleset IDs, the wire-format identities and the Spectator contract.
 
 | Identity | Kind | Persisted in | Disposition |
 | --- | --- | --- | --- |
-| `bytefray-rules-4`, `bytefray-rules-6-alpha1` | product Rulesets | results, replays, traces, evaluations, Spectator manifests, Replay History cache | unchanged; display names added (§4.3) |
+| `bytefray-rules-6-alpha1` | product Ruleset | results, replays, traces, evaluations, Spectator manifests, Replay History cache | unchanged; display name (§4.3) |
+| `bytefray-rules-4` | historical Ruleset (retired after 5.1.0-alpha.1) | results, replays, traces, evaluations, Spectator manifests, Replay History cache | ID unchanged; readable, not executable, display name withdrawn |
 | `bytefray-rules-1`, `-2`, `-2-alpha1`, `-2-alpha11`, `-3-alpha1`, `-4-alpha1`, `-4-alpha2` | historical Rulesets | historical artifacts | unchanged; readable, not executable, no display name |
 | 14 `bytefray-rules-6-research-*` IDs | research Rulesets | research corpora, freezes, manifests | unchanged; research-only |
 | `evaluation-rules-1` | historical alias | old evaluations | unchanged; normalized for comparison only |
@@ -294,7 +306,7 @@ pins the Ruleset IDs, the wire-format identities and the Spectator contract.
 | `battle2.replay` 4 (reads 2–4) | wire format | `replay.jsonl` | unchanged |
 | `battle2.result` 2 (reads 1–2) | wire format | `result.json` | unchanged |
 | `bytefray.agent_trace` 2 (reads 1–2) | wire format | `trace.jsonl` | unchanged |
-| `bytefray.evaluation` writes 7 / identity 7 (the Classic and research methodologies); versions 4–6 belong to retired methodologies | wire format | `evaluation.json` | unchanged; historical versions stay readable through evaluation history |
+| `bytefray.evaluation` writes 7 / identity 7 (the Active Sensing and research methodologies; Classic's until its retirement); versions 4–6 belong to retired methodologies | wire format | `evaluation.json` | unchanged; historical versions stay readable through evaluation history |
 | `battle2.tournament` 1, `bytefray.agent_package` 1, `bytefray.agent_revision` 1, `bytefray.evaluation_preset` 1, `bytefray.benchmark_population` 1 | wire formats | their artifacts | unchanged |
 | `bytefray.sensing_demo` 1, `bytefray.sensing_playback` 1 | wire formats | sensing demonstrations | unchanged |
 | `bytefray.spectator_*` 1 (events, derivation, director, perspective, aggregates, fight_night) | Pygame/analysis formats | spectator-intelligence outputs | unchanged |
@@ -332,12 +344,15 @@ release-candidate milestone bumps the runtime version) → **released**
 create a second manifest for the same release. README, CHANGELOG and release
 notes link to the record instead of restating it.
 
-Current record: [5.1.0-alpha.1 (candidate)](releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md).
+Current record: [development line after 5.1.0-alpha.1 (proposed)](releases/BYTEFRAY_DEVELOPMENT_COMPATIBILITY.md).
+Previous release: [5.1.0-alpha.1](releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md).
 
 ## 7. Decisions reserved for the project lead
 
 - Confirm the §4.1 transition note: 5.1 as the designation for the first
   release after the execution retirements.
+- Designate the first release after the Classic retirement (§4.1 classes it
+  as MAJOR; the development record carries a placeholder only).
 - Choose Spectator's first version number and when to publish it (§4.6).
 - Accept or adjust the display names and the future-ID conventions in §4.2
   and §4.8.

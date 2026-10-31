@@ -9,7 +9,7 @@ Validates the findings of docs/research/v6/V6_PHASE4E_TERRITORY_SCORING_STUDY.md
    gameplay scoring.
 4. Score-fallback timeout resolution: when combat stalls at Tmax, territory points
    decide the match, giving raw expanders decisive victory.
-5. Preserves stable v4 and Phase 4B ruleset isolation.
+5. Preserves Phase 4B ruleset isolation (stable v4 is retired).
 """
 
 from __future__ import annotations
@@ -32,8 +32,8 @@ from battle_engine.rules import (
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
 )
 from battle_engine.ruleset_policy import (
-    RULESET_V4,
     RULESET_V6_RESEARCH_SCALE,
+    UnknownRulesetError,
     resolve_ruleset_policy,
 )
 from battle_engine.scoring import ScoreMap, ScoringPolicy
@@ -253,19 +253,17 @@ def test_timeout_score_fallback_rewards_territory_expanders() -> None:
 
 
 def test_ruleset_isolation_and_stop_condition_preserved() -> None:
-    """Stable bytefray-rules-4 and Phase 4B bytefray-rules-6-research-scale remain
-
-    isolated and authoritative, with no spurious rulesets added.
+    """Phase 4B bytefray-rules-6-research-scale remains isolated and
+    authoritative, retired bytefray-rules-4 stays retired, and no spurious
+    rulesets are added.
     """
-    policy_v4 = resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ID)
+    with pytest.raises(UnknownRulesetError):
+        resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ID)
     policy_scale = resolve_ruleset_policy(BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID)
 
-    assert policy_v4 is RULESET_V4
     assert policy_scale is RULESET_V6_RESEARCH_SCALE
 
-    # Confirm movement stride and displacement on control rulesets
-    assert policy_v4.movement_stride == "fixed_64"
-    assert policy_v4.movement_displacement == "literal"
+    # Confirm movement stride and displacement on the control ruleset
     assert policy_scale.movement_stride == "fixed_64"
     assert policy_scale.movement_displacement == "literal"
 

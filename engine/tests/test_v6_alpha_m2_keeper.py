@@ -22,6 +22,7 @@ from battle_engine.data.starter_agents.v6_watchful_keeper.agent import WatchfulK
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
 from battle_engine.placement import resolve_direct_match_starts
 from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID as ALPHA
+from battle_engine.rules import BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID as PASSIVE
 from battle_engine.sensing_playback import (
     ArtifactIntegrityError,
     ExchangePhase,
@@ -172,13 +173,11 @@ def test_personal_copy_manifest_and_source_retention_and_overwrite_refusal(tmp_p
     with pytest.raises(AgentScaffoldError, match="already exists"):
         create_agent("my_keeper", data_root=tmp_path, resource_root=ROOT, template="watchful_keeper")
     assert "v6_encroaching_opponent" not in STARTER_AGENT_NAMES
-    assert STARTER_AGENT_NAMES[-4:] == (
-        "v6_window_scout", "v6_watchful_keeper", "v6_roaming_reacquirer", "v5_dual_team",
-    )
+    assert STARTER_AGENT_NAMES == ("v6_window_scout", "v6_watchful_keeper", "v6_roaming_reacquirer")
     assert starter_content_digest(KEEPER) == CURRENT_STARTER_DIGESTS["v6_watchful_keeper"]
 
 
-def test_stable_v4_mismatch_precedes_import_and_artifacts(tmp_path):
+def test_passive_ruleset_mismatch_precedes_import_and_artifacts(tmp_path):
     create_agent("keeper", data_root=tmp_path, resource_root=ROOT, template="watchful_keeper")
     source = tmp_path / "agents/keeper/agent.py"
     source.write_text("raise AssertionError('must not import before capability preflight')")
@@ -187,6 +186,7 @@ def test_stable_v4_mismatch_precedes_import_and_artifacts(tmp_path):
         NativeMatchService().run(MatchRequest(
             config=Config(arena_size=512), entrants=(MatchEntrant.python("A", "keeper", 0, spec),),
             max_ticks=1, replay_path=tmp_path / "replay.jsonl", trace_path=tmp_path / "trace.jsonl",
+            ruleset_id=PASSIVE,
         ))
     assert not any((tmp_path / name).exists() for name in ("replay.jsonl", "trace.jsonl", "result.json"))
 

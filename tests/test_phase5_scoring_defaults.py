@@ -24,6 +24,8 @@ import os
 
 import pytest
 
+from app.services.ruleset_options import DESIGNER_RULESET_ID
+
 
 def _make_app():
     pytest.importorskip("PySide6")
@@ -119,7 +121,7 @@ def test_untouched_advanced_builds_the_same_arguments_as_a_bare_two_agent_run(
             arena=cfg.arena,
             a_type=cfg.a_type,
             b_type=cfg.b_type,
-            ruleset_id=cfg.ruleset_id,
+            ruleset_id=DESIGNER_RULESET_ID,
             alive_w=cfg.alive_w,
             kill_w=cfg.kill_w,
             territory_w=cfg.territory_w,
@@ -134,7 +136,7 @@ def test_untouched_advanced_builds_the_same_arguments_as_a_bare_two_agent_run(
             "--arena", str(cfg.arena),
             "--a-type", cfg.a_type,
             "--b-type", cfg.b_type,
-            "--ruleset", cfg.ruleset_id,
+            "--ruleset", DESIGNER_RULESET_ID,
         ]
         for flag in ("--alive-w", "--kill-w", "--territory-w", "--territory-bucket"):
             assert flag not in built

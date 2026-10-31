@@ -24,7 +24,7 @@ from battle_engine.tournament_service import (
     derive_match_seed,
 )
 
-_TOURNAMENT_AGENTS = ("v4_claimer", "v4_scout", "v4_local_defender")
+_TOURNAMENT_AGENTS = ("v6_window_scout", "v6_watchful_keeper", "v6_roaming_reacquirer")
 
 
 def _entrant(agent_id: str, index: int) -> MatchEntrant:
@@ -70,7 +70,7 @@ def test_cli_status_reports_corrupted_matches(capsys):
 def _request(tmp_path, **changes):
     values = {
         "entrants": _entrants(),
-        "config": Config(arena_size=128, instr_per_tick=8),
+        "config": Config(arena_size=512, instr_per_tick=8),
         "rounds": 2,
         "max_ticks": 2,
         "output_dir": tmp_path,
@@ -130,11 +130,11 @@ def test_seed_derivation_is_stable_and_sensitive():
 def test_ruleset_id_omitted_defaults_to_stable_v4(tmp_path):
     result = TournamentService().run(_request(tmp_path, entrants=_entrants(2), rounds=1))
     envelope = json.loads((result.matches[0].artifact_dir / "result.json").read_text())
-    assert envelope["ruleset_id"] == "bytefray-rules-4"
+    assert envelope["ruleset_id"] == "bytefray-rules-6-alpha1"
 
 
-def test_cli_ruleset_omitted_defaults_to_v4_for_all_python_roster(tmp_path, monkeypatch):
-    """An API-v2 tournament with no explicit Ruleset uses stable Ruleset 4."""
+def test_cli_ruleset_omitted_defaults_to_active_sensing_for_all_python_roster(tmp_path, monkeypatch):
+    """An API-v2 tournament with no explicit Ruleset uses Active Sensing."""
     root = tmp_path / "root"
     _write_python_agent(root, "alpha_agent")
     _write_python_agent(root, "beta_agent")
@@ -151,7 +151,7 @@ def test_cli_ruleset_omitted_defaults_to_v4_for_all_python_roster(tmp_path, monk
     result_paths = sorted(output.rglob("result.json"))
     assert result_paths, "expected at least one tournament match result artifact"
     for path in result_paths:
-        assert json.loads(path.read_text())["ruleset_id"] == "bytefray-rules-4"
+        assert json.loads(path.read_text())["ruleset_id"] == "bytefray-rules-6-alpha1"
 
 
 def test_cli_help_lists_only_the_executable_ruleset(capsys):
@@ -159,7 +159,8 @@ def test_cli_help_lists_only_the_executable_ruleset(capsys):
         tournament_cli_main(["--help"])
     out = capsys.readouterr().out
     assert "--ruleset" in out
-    assert "bytefray-rules-4" in out
+    assert "bytefray-rules-6-alpha1" in out
+    assert "bytefray-rules-4" not in out
     assert "bytefray-rules-1" not in out
     assert "bytefray-rules-2" not in out
     assert "bytefray-rules-4-alpha1" not in out
@@ -171,7 +172,7 @@ def test_cli_help_lists_only_the_executable_ruleset(capsys):
 
 def test_cli_ruleset_flag_unknown_value_fails_closed(capsys):
     with pytest.raises(SystemExit) as caught:
-        tournament_cli_main(["v4_claimer", "v4_scout", "--ruleset", "bytefray-rules-99"])
+        tournament_cli_main(["v6_window_scout", "v6_watchful_keeper", "--ruleset", "bytefray-rules-99"])
     assert caught.value.code == 2
     assert "invalid choice" in capsys.readouterr().err
 

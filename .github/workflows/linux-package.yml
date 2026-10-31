@@ -119,7 +119,7 @@ jobs:
 
           ISO_ROOT="$(mktemp -d)"
           BYTEFRAY_ROOT="$ISO_ROOT" "$EXE" agents
-          BYTEFRAY_ROOT="$ISO_ROOT" "$EXE" agents validate v4_quorum
+          BYTEFRAY_ROOT="$ISO_ROOT" "$EXE" agents validate v6_window_scout
           rm -rf "$ISO_ROOT"
 
       - name: Frozen CLI smoke -- agents create (isolated BYTEFRAY_ROOT)
@@ -132,7 +132,7 @@ jobs:
           test -f "$ISO_ROOT/agents/smoke_agent/agent.py"
           rm -rf "$ISO_ROOT"
 
-      - name: Fixed-seed v4 Quorum reference match + frozen replay smoke
+      - name: Fixed-seed Active Sensing match + frozen replay smoke
         run: |
           set -euo pipefail
           EXE="$(pwd)/dist/linux/bytefray/bytefray"
@@ -140,14 +140,12 @@ jobs:
           ISO_ROOT="$(mktemp -d)"
           REPLAY_PATH="$ISO_ROOT/match.replay"
 
-          # Reference configuration qualified on Windows (Phase 1B) and the
-          # Ubuntu 26.04 prototype (see docs/archive/v4/
-          # V4_RC2_WINDOWS_PYGAME_CE_PACKAGED_QUALIFICATION.md section J and
-          # V4_RC2_LINUX_SELF_CONTAINED_PROTOTYPE.md section G): winner=A,
-          # A=16.0, B=10.0, ticks=11, termination=last_agent_standing.
+          # A current product smoke, separate from the historical V4 reference.
+          # Check the canonical result and then compare the replay's terminal
+          # winner and scores with that result.
           BYTEFRAY_ROOT="$ISO_ROOT" "$EXE" run \
-            --a-type v4_quorum --b-type v4_defender_scout --seed 42 \
-            --ticks 3000 --arena 512 --ruleset bytefray-rules-4 \
+            --a-type v6_window_scout --b-type v6_watchful_keeper --seed 42 \
+            --ticks 300 --arena 512 --ruleset bytefray-rules-6-alpha1 \
             --replay "$REPLAY_PATH" --quiet
 
           RESULT_JSON="$ISO_ROOT/result.json"
@@ -157,20 +155,26 @@ jobs:
           python3 - "$RESULT_JSON" <<'PY'
           import json, sys
           data = json.load(open(sys.argv[1]))
-          expected = {"winner": "A", "ticks": 11, "termination_reason": "last_agent_standing"}
+          expected = {"ruleset_id": "bytefray-rules-6-alpha1", "status": "completed", "ticks": 300}
           for key, value in expected.items():
               actual = data.get(key)
               assert actual == value, f"{key}: expected {value!r}, got {actual!r}"
-          score = data.get("score", {})
-          assert score.get("A") == 16.0, f"A score mismatch: {score.get('A')!r}"
-          assert score.get("B") == 10.0, f"B score mismatch: {score.get('B')!r}"
-          print("Quorum reference match result matches the qualified reference exactly.")
+          assert {e["name"] for e in data["entrants"]} == {"v6_window_scout", "v6_watchful_keeper"}
+          assert all(e["diagnostic"] is None for e in data["entrants"])
+          print("Active Sensing match completed without agent diagnostics.")
           PY
 
           REPLAY_OUTPUT="$("$VIEWER" --replay "$REPLAY_PATH" --renderer headless --tick-delay 0)"
           echo "$REPLAY_OUTPUT"
-          echo "$REPLAY_OUTPUT" | grep -q "RESULT winner=A" \
-            || { echo "::error::replay result did not reproduce the match result"; exit 1; }
+          python3 - "$RESULT_JSON" "$REPLAY_OUTPUT" <<'PY'
+          import ast, json, re, sys
+          data = json.load(open(sys.argv[1]))
+          terminal = re.search(r"RESULT winner=(\S+) score=(\{[^\n]+\})", sys.argv[2])
+          assert terminal is not None, "headless replay produced no terminal result"
+          assert terminal.group(1) == data["winner"], "replay winner differs from result"
+          assert ast.literal_eval(terminal.group(2)) == data["score"], "replay scores differ from result"
+          print("Frozen replay agrees with the canonical Active Sensing result.")
+          PY
 
           rm -rf "$ISO_ROOT"
 

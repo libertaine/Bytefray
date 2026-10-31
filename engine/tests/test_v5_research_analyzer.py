@@ -11,7 +11,10 @@ from battle_engine.config import Config
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
 from battle_engine.placement import resolve_direct_match_starts
 from battle_engine.replay import ReplayFormatError
-from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
+from battle_engine.ruleset_policy import (
+    # Retired Classic's field-for-field research copy.
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID as RESEARCH_CONTROL_ID,
+)
 
 from tools.research.v5.analyzer import analyze_match
 from tools.research.v5.corpus_runner import build_corpus_manifest
@@ -81,7 +84,7 @@ def _run_test_match(
     spec_b = resolve_agent(tmp_path, agent_b_name)
 
     starts = resolve_direct_match_starts(
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=RESEARCH_CONTROL_ID,
         arena_size=512,
         entrant_count=2,
         supplied_starts=[None, None],
@@ -98,7 +101,7 @@ def _run_test_match(
         replay_path=replay_path,
         trace_path=trace_path,
         verbose=False,
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=RESEARCH_CONTROL_ID,
     )
     res = NativeMatchService().run(req)
     assert res.result_path is not None
@@ -116,7 +119,7 @@ def test_analyzer_deterministic_output(tmp_path: Path) -> None:
 
     assert json.dumps(m1, sort_keys=True) == json.dumps(m2, sort_keys=True)
     assert m1["arena_size"] == 512
-    assert m1["ruleset_id"] == BYTEFRAY_RULESET_V4_ID
+    assert m1["ruleset_id"] == RESEARCH_CONTROL_ID
     assert m1["actual_ticks"] == 15
 
 
@@ -194,7 +197,7 @@ def test_corpus_manifest_deterministic_identity(tmp_path: Path) -> None:
         seeds=(1, 2),
         arena_size=512,
         max_ticks=1000,
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=RESEARCH_CONTROL_ID,
     )
     m2 = build_corpus_manifest(
         tmp_path,
@@ -202,7 +205,7 @@ def test_corpus_manifest_deterministic_identity(tmp_path: Path) -> None:
         seeds=(1, 2),
         arena_size=512,
         max_ticks=1000,
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=RESEARCH_CONTROL_ID,
     )
 
     assert json.dumps(m1, sort_keys=True) == json.dumps(m2, sort_keys=True)

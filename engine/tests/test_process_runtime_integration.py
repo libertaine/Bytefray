@@ -1,16 +1,29 @@
+"""The shared Agent API v2 process runtime, end to end.
+
+The runtime-property tests below were written for stable ``bytefray-rules-4``
+and now run under the research control ``bytefray-rules-6-research-scale``,
+whose policy is a field-for-field copy of retired Classic: quota, chunked
+rotating scheduling, disruption, capture/kill scoring and passive
+visibility are the same shared runtime Active Sensing executes on.
+``test_direct_cli_bootstraps_starters_and_product_paths_use_production_runtime``
+exercises the Active Sensing product paths themselves.
+"""
+
 from __future__ import annotations
 
 import json
+import shutil
 from fractions import Fraction
 from pathlib import Path
 
 import pytest
+from _hang_safety import hang_safety_timeout
 from battle_engine.agent_api import ProcessDeclaration
 from battle_engine.agent_evaluation import EvaluationRequest, EvaluationService
-from battle_engine.agent_parameters import resolve_parameters
 from battle_engine.agent_test import DevelopmentTestOutcome
 from battle_engine.agent_test import test_agent as run_agent_test
 from battle_engine.agent_validation import AgentValidationFailedError, validate_agent
+from battle_engine.agent_worker import AgentWorkerHandle
 from battle_engine.agents import resolve_agent
 from battle_engine.cli import main as run_cli
 from battle_engine.config import Config
@@ -29,8 +42,11 @@ from battle_engine.replay import (
     iter_replay,
     write_replay,
 )
-from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
-from battle_engine.starters import ensure_starter_agents
+from battle_engine.ruleset_policy import (
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
+    RULESET_V6_ALPHA1,
+)
 
 
 def _write_agent(root: Path, name: str, source: str) -> None:
@@ -61,7 +77,7 @@ def _request(
     starts: tuple[int, int] = (0, 32),
     timeout: float | None = None,
     seed: int = 17,
-    ruleset_id: str = BYTEFRAY_RULESET_V4_ID,
+    ruleset_id: str = BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
 ) -> MatchRequest:
     specs = tuple(resolve_agent(root, name) for name in names)
     entrants = tuple(
@@ -175,51 +191,11 @@ def test_non_dyadic_process_counts_validate_construct_and_run(
             (agent_id, "passive"),
             tmp_path / f"equal-{count}.jsonl",
             ticks=1,
-            ruleset_id=BYTEFRAY_RULESET_V4_ID,
+            ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
         )
     )
 
     assert result.ticks_run == 1
-    assert all(agent.diagnostic is None for agent in result.agents)
-
-
-@pytest.mark.parametrize("raider_share", (0.7, 0.33))
-def test_shipped_dual_team_schema_validation_and_match_agree(
-    tmp_path: Path, raider_share: float
-) -> None:
-    """The shipped starter's accepted parameter must run under stable v4."""
-
-    root = Path(__file__).resolve().parents[2]
-    data_root = tmp_path / "data"
-    bootstrap = ensure_starter_agents(resource_root=root, data_root=data_root)
-    assert not bootstrap.errors
-
-    dual_team = resolve_agent(data_root, "v5_dual_team")
-    quorum = resolve_agent(data_root, "v4_quorum")
-    parameters = resolve_parameters(
-        dual_team.parameter_schema,
-        overrides={"raider_share": str(raider_share)},
-    )
-    validation = validate_agent("v5_dual_team", data_root=data_root)
-
-    assert parameters == {"raider_share": raider_share}
-    assert validation.api_version == 2
-
-    result = NativeMatchService().run(
-        MatchRequest(
-            config=Config(arena_size=512, instr_per_tick=8, seed=1),
-            entrants=(
-                MatchEntrant.python("A", dual_team.name, 0, dual_team, parameters),
-                MatchEntrant.python("B", quorum.name, 256, quorum),
-            ),
-            max_ticks=2,
-            replay_path=tmp_path / f"dual-{raider_share}" / "replay.jsonl",
-            verbose=False,
-            ruleset_id=BYTEFRAY_RULESET_V4_ID,
-        )
-    )
-
-    assert result.ticks_run > 0
     assert all(agent.diagnostic is None for agent in result.agents)
 
 
@@ -260,7 +236,7 @@ def create_agent(): return Agent()
             "--ticks",
             "1",
             "--ruleset",
-            BYTEFRAY_RULESET_V4_ID,
+            BYTEFRAY_RULESET_V6_ALPHA1_ID,
             "--replay",
             str(tmp_path / "invalid-run" / "replay.jsonl"),
             "--quiet",
@@ -314,10 +290,18 @@ def create_agent(): return Agent()
 def test_v4_production_schema4_roundtrip_determinism_and_supervision(
     tmp_path: Path,
 ) -> None:
-    root = Path(__file__).resolve().parents[2]
+    # The Classic retirement no longer installs these starters into agents/;
+    # run their byte-for-byte retained packages from an isolated data root.
+    retained = (
+        Path(__file__).resolve().parents[2]
+        / "engine" / "src" / "battle_engine" / "data" / "starter_agents"
+    )
+    root = tmp_path / "data"
     first_path = tmp_path / "first.jsonl"
     second_path = tmp_path / "second.jsonl"
     names = ("v4_defender_scout", "v4_scout")
+    for name in names:
+        shutil.copytree(retained / name, root / "agents" / name)
 
     first_result, first_records = _run(
         _request(root, names, first_path, ticks=3, seed=23)
@@ -358,20 +342,65 @@ def test_v4_production_schema4_roundtrip_determinism_and_supervision(
     assert all(agent.metadata["api_version"] == 2 for agent in supervised_result.agents)
 
 
-def test_packaged_v4_starters_match_repository_population_byte_for_byte() -> None:
-    root = Path(__file__).resolve().parents[2]
-    packaged = root / "engine" / "src" / "battle_engine" / "data" / "starter_agents"
-    for name in (
-        "v4_claimer",
-        "v4_concentrated_attacker",
-        "v4_defender_scout",
-        "v4_local_defender",
-        "v4_scout",
-    ):
-        for filename in ("agent.py", "agent.yaml"):
-            assert (root / "agents" / name / filename).read_bytes() == (
-                packaged / name / filename
-            ).read_bytes()
+RESET_HANGS_SOURCE = """
+import time
+
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
+
+class Agent:
+    def reset(self, context):
+        time.sleep(3600)
+    def declare_processes(self):
+        return [ProcessDeclaration("hung", 31, 1.0)]
+    def act(self, observation):
+        return AgentAction(ActionKindV2.MOVE, 0)
+
+def create_agent():
+    return Agent()
+"""
+
+
+def test_supervised_startup_failure_closes_already_started_workers(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A later entrant's failed startup must not leave an earlier worker running.
+
+    API-v2 equivalent of the retired API-v1 supervised-runtime suite's
+    ``test_initialization_failure_cleans_up_already_started_workers``: the
+    first entrant loads, resets and declares in its own worker; the second
+    entrant's reset hangs past the call timeout. Every worker the controller
+    started, including the healthy first one, must have exited by the time
+    the initialization error reaches the caller.
+    """
+
+    _write_agent(tmp_path, "passive", PASSIVE_SOURCE)
+    _write_agent(tmp_path, "reset_hangs", RESET_HANGS_SOURCE)
+    entrants = (
+        MatchEntrant.python("A", "passive", 0, resolve_agent(tmp_path, "passive")),
+        MatchEntrant.python("B", "reset_hangs", 256, resolve_agent(tmp_path, "reset_hangs")),
+    )
+    started: list[AgentWorkerHandle] = []
+    original_start = AgentWorkerHandle.start
+
+    def recording_start(handle: AgentWorkerHandle) -> None:
+        started.append(handle)
+        original_start(handle)
+
+    monkeypatch.setattr(AgentWorkerHandle, "start", recording_start)
+
+    with hang_safety_timeout(60), pytest.raises(PythonEntrantInitializationError) as caught:
+        ProcessMatchController.from_python_entrants(
+            Config(seed=1, arena_size=512, instr_per_tick=8),
+            entrants,
+            5,
+            ruleset_policy=RULESET_V6_ALPHA1,
+            agent_call_timeout=1.0,
+        )
+
+    diagnostic = caught.value.diagnostic
+    assert (diagnostic.agent_id, diagnostic.slot, diagnostic.stage) == ("B", 1, "reset")
+    assert [(handle.agent_id, handle.slot) for handle in started] == [("A", 0), ("B", 1)]
+    assert all(handle.exit_code is not None for handle in started)
 
 
 COUNTER_WRITER_SOURCE = """
@@ -602,9 +631,11 @@ def test_v4_production_visibility_is_current_and_read_feedback_can_be_stale(
     assert processes[("B", "mover")].anchor == 8
 
 
-def test_v4_direct_cli_bootstraps_starters_and_product_paths_use_production_runtime(
+def test_direct_cli_bootstraps_starters_and_product_paths_use_production_runtime(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """``bytefray run``, ``agents test`` and evaluation all run Active Sensing."""
+
     resource_root = Path(__file__).resolve().parents[2]
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
     assert not (tmp_path / "agents").exists()
@@ -614,17 +645,11 @@ def test_v4_direct_cli_bootstraps_starters_and_product_paths_use_production_runt
         run_cli(
             [
                 "--a-type",
-                "v4_claimer",
+                "v6_window_scout",
                 "--b-type",
-                "v4_scout",
-                "--a-start",
-                "0",
-                "--b-start",
-                "32",
-                "--ruleset",
-                BYTEFRAY_RULESET_V4_ID,
+                "v6_watchful_keeper",
                 "--arena",
-                "64",
+                "512",
                 "--quota",
                 "8",
                 "--ticks",
@@ -636,28 +661,26 @@ def test_v4_direct_cli_bootstraps_starters_and_product_paths_use_production_runt
         )
         == 0
     )
-    assert all(record.schema_version == 4 for record in iter_replay(cli_replay))
-    for starter in (
-        "v4_claimer",
-        "v4_concentrated_attacker",
-        "v4_defender_scout",
-        "v4_local_defender",
-        "v4_scout",
-    ):
+    records = list(iter_replay(cli_replay))
+    assert all(record.schema_version == 4 for record in records)
+    assert isinstance(records[0], ReplayHeader)
+    assert records[0].ruleset_id == BYTEFRAY_RULESET_V6_ALPHA1_ID
+    for starter in ("v6_window_scout", "v6_watchful_keeper", "v6_roaming_reacquirer"):
         assert (tmp_path / "agents" / starter / "agent.yaml").is_file()
+    assert not (tmp_path / "agents" / "v4_claimer").exists()
 
     test_outcome = run_agent_test(
-        "v4_scout",
+        "v6_window_scout",
         data_root=tmp_path,
         resource_root=resource_root,
         run_dir=tmp_path / "agent-test",
         ticks=1,
         timeout=5.0,
         trace=False,
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
-        arena_size=64,
+        arena_size=512,
     )
     assert isinstance(test_outcome, DevelopmentTestOutcome)
+    assert test_outcome.ruleset_id == BYTEFRAY_RULESET_V6_ALPHA1_ID
     assert all(
         agent.metadata["api_version"] == 2
         for agent in test_outcome.match_result.agents
@@ -665,30 +688,21 @@ def test_v4_direct_cli_bootstraps_starters_and_product_paths_use_production_runt
 
     evaluation = EvaluationService().run(
         EvaluationRequest(
-            candidate_id="v4_claimer",
-            opponent_ids=("v4_scout",),
+            candidate_id="v6_window_scout",
+            opponent_ids=("v6_watchful_keeper",),
             seeds=(1,),
             output_dir=tmp_path / "evaluation",
             ticks=1,
             data_root=tmp_path,
             both_orientations=False,
-            ruleset_id=BYTEFRAY_RULESET_V4_ID,
-            # Stable v4's evaluation methodology pins arena_size to its own
-            # standard (512 cells, research report Sec H.1 item 3) --
-            # unlike alpha1 (v2-style methodology, arbitrary arena size),
-            # an explicit non-standard --arena-size is rejected. Omit it
-            # here so the standard methodology default applies.
             instr_per_tick=8,
         )
     )
-    # Stable v4's seeded-placement methodology produces one cell per
-    # orientation (no discrete placement_id enumeration, unlike alpha1's
-    # v2-style methodology, which produced 3 -- one per standard
-    # placement); with both_orientations=False and one opponent/seed, that
-    # is exactly one cell.
+    # The seeded-placement methodology produces one cell per orientation;
+    # with both_orientations=False and one opponent/seed that is exactly one.
     assert len(evaluation.cells) == 1
     assert all(cell.status == "completed" for cell in evaluation.cells)
     assert all(
-        cell.rules_compatibility_id == BYTEFRAY_RULESET_V4_ID
+        cell.rules_compatibility_id == BYTEFRAY_RULESET_V6_ALPHA1_ID
         for cell in evaluation.cells
     )

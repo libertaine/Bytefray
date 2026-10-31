@@ -55,7 +55,6 @@ from app.services.designer_workflows import (
     EVALUATION_MODE_PAIRWISE,
     DesignerEvaluationPlan,
     DesignerValidationError,
-    agent_kind,
     build_designer_evaluate_command,
     build_designer_evaluate_command_from_plan,
     build_designer_evaluation_plan,
@@ -72,8 +71,8 @@ from app.services.designer_workflows import (
 from app.services.engine import open_pygame_client_direct
 from app.services.replay_integrity import replay_failure_message, result_replay_request
 from app.services.ruleset_options import (
+    DESIGNER_RULESET_ID,
     validate_designer_agent_rows,
-    validate_designer_ruleset,
 )
 from app.services.tournament_results import (
     describe_tournament_not_run,
@@ -105,18 +104,6 @@ from app.widgets.spectator_launch import SpectatorLaunchController
 def _resolve_data_root() -> Path:
     """Compatibility wrapper for the shared writable data-root resolver."""
     return get_data_root()
-
-
-def _dialog_pairwise_ruleset_id(dialog: object) -> str | None:
-    """The evaluation dialog's pairwise Ruleset selection, if it has one.
-
-    Same defensive-``getattr`` fallback the ``mode``/``workers`` accessors
-    use for older dialog doubles: ``None`` is resolved by the evaluation
-    layer to stable bytefray-rules-4 for a new request.
-    """
-
-    getter = getattr(dialog, "pairwise_ruleset_id", None)
-    return getter() if callable(getter) else None
 
 
 class AgentDesigner(QMainWindow):
@@ -172,7 +159,7 @@ class AgentDesigner(QMainWindow):
         # installed or configured (app/services/spectator_viewer.py); every
         # other match keeps the Pygame viewer. Its export runs in a child
         # process, never on this GUI thread.
-        self._spectator = SpectatorLaunchController(data_root, self, self._open_classic_result_replay)
+        self._spectator = SpectatorLaunchController(data_root, self, self._open_pygame_result_replay)
         self._spectator.log.connect(self._append_spectator_log)
 
         # Tabs + panels
@@ -444,8 +431,7 @@ class AgentDesigner(QMainWindow):
         roster_rows = (rowA, rowB) + ((rowC,) if rowC else ())
         try:
             validate_homogeneous(roster_rows)
-            validate_designer_ruleset(cfg.ruleset_id, {agent_kind(row) for row in roster_rows})
-            validate_designer_agent_rows(cfg.ruleset_id, roster_rows)
+            validate_designer_agent_rows(roster_rows)
             # V5 Alpha 1 Phase E1: the authoritative pre-launch parameter
             # gate, at the one place every Advanced match is actually
             # started. The panel already blocks Run on the same canonical
@@ -480,7 +466,7 @@ class AgentDesigner(QMainWindow):
             arena=arena,
             a_type=a_type,
             b_type=b_type,
-            ruleset_id=cfg.ruleset_id,
+            ruleset_id=DESIGNER_RULESET_ID,
             c_type=c_type,
             alive_w=alive_w,
             kill_w=kill_w,
@@ -489,9 +475,7 @@ class AgentDesigner(QMainWindow):
             seed=seed,
         )
         match_arguments.extend(("--replay", str(replay_path)))
-        trace_path = designer_trace_path(replay_path, cfg.ruleset_id)
-        if trace_path is not None:
-            match_arguments.extend(("--trace", str(trace_path)))
+        match_arguments.extend(("--trace", str(designer_trace_path(replay_path))))
         try:
             command = build_match_command(match_arguments)
         except FileNotFoundError as exc:
@@ -608,8 +592,7 @@ class AgentDesigner(QMainWindow):
             return
         try:
             validate_homogeneous((rowA, rowB))
-            validate_designer_ruleset(cfg.ruleset_id, {agent_kind(rowA), agent_kind(rowB)})
-            validate_designer_agent_rows(cfg.ruleset_id, (rowA, rowB))
+            validate_designer_agent_rows((rowA, rowB))
         except (DesignerValidationError, ValueError) as exc:
             self.simple.appendLog(f"[RunMatch] {exc}\n")
             QMessageBox.warning(self, "Unsupported Match", str(exc))
@@ -628,12 +611,10 @@ class AgentDesigner(QMainWindow):
             arena=cfg.arena,
             a_type=a_type,
             b_type=b_type,
-            ruleset_id=cfg.ruleset_id,
+            ruleset_id=DESIGNER_RULESET_ID,
         )
         match_arguments.extend(("--replay", str(replay_path)))
-        trace_path = designer_trace_path(replay_path, cfg.ruleset_id)
-        if trace_path is not None:
-            match_arguments.extend(("--trace", str(trace_path)))
+        match_arguments.extend(("--trace", str(designer_trace_path(replay_path))))
         try:
             command = build_match_command(match_arguments)
         except FileNotFoundError as exc:
@@ -922,7 +903,7 @@ class AgentDesigner(QMainWindow):
             both_orientations=dialog.both_orientations(),
             mode=mode,
             workers=workers,
-            ruleset_id=_dialog_pairwise_ruleset_id(dialog),
+            ruleset_id=DESIGNER_RULESET_ID,
         )
 
     def _on_evaluation_history(self) -> None:
@@ -1111,7 +1092,7 @@ class AgentDesigner(QMainWindow):
                     both_orientations=dialog.both_orientations(),
                     preset_name=dialog.preset_name(),
                     workers=workers,
-                    ruleset_id=_dialog_pairwise_ruleset_id(dialog),
+                    ruleset_id=DESIGNER_RULESET_ID,
                 )
             else:
                 plan = self._build_evaluation_plan(dialog, output_dir)
@@ -1272,7 +1253,7 @@ class AgentDesigner(QMainWindow):
         except (FileNotFoundError, OSError) as exc:
             QMessageBox.critical(self, "Replay Launch Failed", str(exc))
 
-    def _open_classic_result_replay(self, request: ResultReplayRequest) -> None:
+    def _open_pygame_result_replay(self, request: ResultReplayRequest) -> None:
         """Spectator could not show a match: re-verify the same request and use the Pygame viewer."""
         self._open_result_replay(request, allow_spectator=False)
 
@@ -1332,7 +1313,7 @@ class AgentDesigner(QMainWindow):
 
         try:
             command = build_agents_command("validate", [
-                agent_id, "--ruleset", self.development.selected_ruleset_id(),
+                agent_id, "--ruleset", DESIGNER_RULESET_ID,
                 "--timeout", str(self.development.selected_timeout()),
             ])
         except FileNotFoundError as exc:
@@ -1402,8 +1383,8 @@ class AgentDesigner(QMainWindow):
         arguments.extend(("--ticks", str(ticks)))
         arguments.extend(("--timeout", str(timeout)))
         # Always explicit, never inherited from the CLI omitted-selection
-        # resolver. Scope C offers only stable bytefray-rules-4 here.
-        arguments.extend(("--ruleset", self.development.selected_ruleset_id()))
+        # resolver.
+        arguments.extend(("--ruleset", DESIGNER_RULESET_ID))
 
         try:
             command = build_agents_command("test", arguments)

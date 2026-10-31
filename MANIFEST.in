@@ -20,6 +20,19 @@ prune engine/src/battle_engine/data/starter_agents/strider
 prune engine/src/battle_engine/data/starter_agents/wanderer
 prune engine/src/battle_engine/data/starter_agents/writer
 
+# The Classic retirement keeps the V4/V5 starters in the repository as the
+# research benchmark population but no longer installs or ships them.
+prune engine/src/battle_engine/data/starter_agents/v4_claimer
+prune engine/src/battle_engine/data/starter_agents/v4_concentrated_attacker
+prune engine/src/battle_engine/data/starter_agents/v4_defender_scout
+prune engine/src/battle_engine/data/starter_agents/v4_local_defender
+prune engine/src/battle_engine/data/starter_agents/v4_quorum
+prune engine/src/battle_engine/data/starter_agents/v4_scout
+prune engine/src/battle_engine/data/starter_agents/v5_core_defender
+prune engine/src/battle_engine/data/starter_agents/v5_dual_team
+prune engine/src/battle_engine/data/starter_agents/v5_region_attacker
+prune engine/src/battle_engine/data/starter_agents/v5_scout_striker
+
 # The sdist is a buildable/installable source distribution, not a full
 # development checkout -- it ships engine/src, client/src, and app/, not
 # any test suite. Root tests/ (Designer/GUI tests) was previously included

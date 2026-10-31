@@ -410,9 +410,10 @@ already do for stages where they don't apply). No new diagnostic
 dataclass is introduced, and no second taxonomy of codes is invented:
 every code Phase 2 can produce is either an existing `AgentValidationError.
 code` (§4.3–4.5), an existing `python_runtime.py` code reused verbatim via
-§5's extraction (§4.6–4.7), or one of exactly two validation-only codes
-that have no real-match analog because they describe conditions a real
-match's request-building layer already prevents from reaching
+§5's extraction (§4.6–4.7), or a validation-boundary code for discovery,
+Ruleset configuration (§6.3), or unexpected orchestration failure (§6.1).
+Discovery and configuration failures describe conditions a real match's
+request-building layer already prevents from reaching
 `PythonEntrantController` at all:
 
 | Code | Stage | When |
@@ -420,6 +421,7 @@ match's request-building layer already prevents from reaching
 | `agent_unknown` | `discovery` | `resolve_agent` raises `SystemExit` (unknown/escaping ID). |
 | `agent_kind_unsupported` | `discovery` | Resolved spec's `kind != "python"`. |
 | `agent_manifest_invalid` | `discovery` | `AgentManifestError` raised by `resolve_agent` itself, before a kind is known (§4.1). |
+| `ruleset_unavailable` | `configuration` | Explicit Ruleset resolution raises `UnknownRulesetError` for an unknown or retired ID (§6.3). |
 | `agent_manifest_invalid`, `agent_api_version_unsupported`, `agent_source_invalid`, `agent_import_failed`, `agent_factory_failed`, `agent_contract_invalid` | `load` | `load_python_agent` (§4.3–4.5), identical to `PythonEntrantInitializationError`. |
 | `agent_reset_failed` | `reset` | §4.6, identical to a real match's initialization failure. |
 | `agent_action_failed`, `agent_action_invalid` | `action` | §4.7, identical to a real match's forfeit. |
@@ -435,9 +437,9 @@ precisely for that reason.
 
 ### 6.1 Unexpected internal validation failure
 
-Any exception `agent_validation.py`'s own orchestration raises that is
-**not** one of the typed exceptions above (a bug in this module, not the
-agent under test) is caught once at the top of `validate_agent`/`main` and
+Any unexpected exception from `agent_validation.py`'s own orchestration,
+outside the expected typed failure handling above and §6.3, is caught once
+at the top of `validate_agent`/`main` and
 reported as `RuntimeDiagnostic(code="validation_internal_error",
 stage="internal", message=<normalized, bounded>, exception_type=<type
 (exc).__name__>)` — never a raw traceback to stdout/stderr, matching every
@@ -451,6 +453,26 @@ existing whitespace-normalized, length-bounded formatting (via §5's
 extracted functions) or `resolve_agent`'s already-concise `SystemExit`
 text — Phase 2 introduces no new place where an exception's raw
 `str()`/traceback could leak, and needs no new normalization helper.
+
+### 6.3 Unavailable Ruleset configuration
+
+An explicit `ruleset_id` that `resolve_ruleset_policy` rejects with
+`UnknownRulesetError` is an expected request configuration failure, not an
+internal orchestration bug. `validate_agent` raises `AgentValidationFailedError`
+with code `ruleset_unavailable`, stage `configuration`, the requested `agent_id`,
+and `exception_type="UnknownRulesetError"`, chaining the original exception.
+No existing agent discovery/load/action code describes this selection error;
+this narrowly scoped code uses the existing `RuntimeDiagnostic` model and
+the request-error `configuration` stage also used by match diagnostics.
+
+Resolution remains after agent discovery/kind/API checks and before capability
+preflight, agent import, worker startup, or opening a trace. The registry's
+explicit retirement or unknown-ID message is preserved through the existing
+whitespace normalization and 240-character bound. Rejection creates no execution
+artifacts and leaves any existing trace untouched; it does not remap the ID or
+authorize historical execution. The CLI rejects invalid Ruleset arguments during
+parsing with exit 2 and no traceback. Unexpected exceptions at resolution or
+elsewhere in orchestration still use §6.1's internal diagnostic.
 
 ## 7. Deterministic dry-run fixture
 

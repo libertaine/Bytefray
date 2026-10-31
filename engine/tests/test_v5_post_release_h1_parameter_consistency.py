@@ -32,9 +32,15 @@ branch, which the remaining tests in this class already exercise.
 
 See docs/research/v5/V5_POST_RELEASE_H1_PARAMETER_CONSISTENCY.md for the
 full investigation, root-cause analysis, and reachability notes.
+
+After Classic retirement, the same parameter probes run as temporary user
+agents under Active Sensing. The historical agent sources, schemas and
+parameter assertions stay unchanged; this exercises current forwarding,
+not reproduction of a Classic scientific result.
 """
 
 import json
+import shutil
 from pathlib import Path
 
 import pytest
@@ -56,6 +62,19 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_STARTER = "v5_region_attacker"
 SCHEMA_STARTER_DEFAULTS = {"attacker_reach": 16}
 OTHER_SCHEMA_STARTER = "v5_scout_striker"
+
+
+@pytest.fixture(autouse=True)
+def _parameter_agents(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep the H1 schema probes as user agents, outside the installed roster.
+
+    These unchanged V5 sources exercise parameter delivery under the current
+    Ruleset. They do not reproduce the historical Classic scientific study.
+    """
+    source = REPO_ROOT / "engine/src/battle_engine/data/starter_agents"
+    for name in (SCHEMA_STARTER, OTHER_SCHEMA_STARTER, "v5_core_defender", "v4_local_defender"):
+        shutil.copytree(source / name, tmp_path / "agents" / name)
+    monkeypatch.setattr(__import__(__name__), "REPO_ROOT", tmp_path)
 
 
 # ---------------------------------------------------------------------------
@@ -160,7 +179,7 @@ class TestTournamentEntrantResolution:
                 entrants=(entrant, opponent),
                 max_ticks=140,
                 replay_path=Path("."),
-                ruleset_id="bytefray-rules-4",
+                ruleset_id="bytefray-rules-6-alpha1",
             )
             return canonical_match_id(request)
 
@@ -171,8 +190,8 @@ class TestTournamentEntrantResolution:
         ``MatchEntrant`` construction site rather than reported by the
         audit: ``TournamentService._placed_pair`` re-derives a fresh
         ``MatchEntrant`` for every "seeded" core-placement Ruleset -- which
-        includes ``bytefray-rules-4``, the *permanent, default* identity an
-        Agent API v2 roster resolves to -- and, before this fix, built the
+        includes the current Active Sensing default (and originally included
+        Classic) -- and, before this fix, built the
         replacement without carrying ``.parameters`` forward, silently
         reintroducing ``{}`` for every real tournament match.
         """
@@ -189,7 +208,7 @@ class TestTournamentEntrantResolution:
         entrant_b = resolve_tournament_entrant(REPO_ROOT, OTHER_SCHEMA_STARTER, start=100)
         assert dict(entrant_a.parameters) == SCHEMA_STARTER_DEFAULTS  # precondition
 
-        request = _FakeRequest(ruleset_id="bytefray-rules-4", config=Config(seed=42))
+        request = _FakeRequest(ruleset_id="bytefray-rules-6-alpha1", config=Config(seed=42))
         placed_a, placed_b = TournamentService._placed_pair(request, entrant_a, entrant_b, 999)
 
         assert dict(placed_a.parameters) == dict(entrant_a.parameters)
@@ -207,7 +226,7 @@ class TestAgentTestEntrantResolution:
             seed=42,
             ticks=20,
             data_root=REPO_ROOT,
-            ruleset_id="bytefray-rules-4",
+            ruleset_id="bytefray-rules-6-alpha1",
             run_dir=tmp_path / "run",
         )
         metadata_by_agent = {
@@ -229,7 +248,7 @@ class TestAgentTestEntrantResolution:
             seed=42,
             ticks=20,
             data_root=REPO_ROOT,
-            ruleset_id="bytefray-rules-4",
+            ruleset_id="bytefray-rules-6-alpha1",
             run_dir=tmp_path / "run",
         )
         metadata_by_agent = {
@@ -251,7 +270,7 @@ class TestAgentTestEntrantResolution:
             seed=42,
             ticks=20,
             data_root=REPO_ROOT,
-            ruleset_id="bytefray-rules-4",
+            ruleset_id="bytefray-rules-6-alpha1",
             run_dir=tmp_path / "run",
             agent_start=64,
             opponent_start=200,
@@ -273,7 +292,7 @@ class TestAgentTestEntrantResolution:
             ),
             max_ticks=20,
             replay_path=Path("."),
-            ruleset_id="bytefray-rules-4",
+            ruleset_id="bytefray-rules-6-alpha1",
         )
         assert outcome.match_result.match_id == canonical_match_id(equivalent_request)
 
@@ -292,7 +311,7 @@ class TestAgentEvaluationExpectedMatchIdMirrorsAgentTest:
             seed=42,
             ticks=20,
             data_root=REPO_ROOT,
-            ruleset_id="bytefray-rules-4",
+            ruleset_id="bytefray-rules-6-alpha1",
             run_dir=tmp_path / "run",
             agent_start=64,
             opponent_start=200,
@@ -307,7 +326,7 @@ class TestAgentEvaluationExpectedMatchIdMirrorsAgentTest:
             seed=42,
             ticks=20,
             orientation="candidate_first",
-            ruleset_id="bytefray-rules-4",
+            ruleset_id="bytefray-rules-6-alpha1",
             subject_start=64,
             opponent_start=200,
         )
@@ -374,7 +393,7 @@ class TestSupervisedRuntimeParameterForwarding:
                 max_ticks=15,
                 replay_path=replay_path,
                 trace_path=trace_path,
-                ruleset_id="bytefray-rules-4",
+                ruleset_id="bytefray-rules-6-alpha1",
                 agent_call_timeout=agent_call_timeout,
                 verbose=False,
             )
@@ -424,7 +443,7 @@ class TestSupervisedRuntimeParameterForwarding:
             ticks=5,
             timeout=10.0,
             data_root=REPO_ROOT,
-            ruleset_id="bytefray-rules-4",
+            ruleset_id="bytefray-rules-6-alpha1",
             run_dir=tmp_path / "run",
             agent_start=64,
             opponent_start=200,

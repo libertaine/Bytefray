@@ -21,11 +21,10 @@ from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchS
 from battle_engine.placement import resolve_direct_match_starts
 from battle_engine.replay import TickSnapshot, iter_replay
 from battle_engine.ruleset_policy import (
-    BYTEFRAY_RULESET_V4_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
 )
 from battle_engine.starters import STARTER_AGENT_NAMES, ensure_starter_agents
-from test_v4_exploit_characterization import _bootstrap_probe
 
 from tools.research.v6.e2 import matrix
 from tools.research.v6.experiment_harness import (
@@ -176,7 +175,7 @@ def test_hd4_twin_plays_exactly_like_its_primary(data_root: Path, agent: str) ->
 
 
 def test_rng_agents_are_seed_deterministic_and_seed_sensitive(data_root: Path) -> None:
-    kwargs = {"ruleset_id": BYTEFRAY_RULESET_V4_ID, "max_ticks": 5}
+    kwargs = {"ruleset_id": BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID, "max_ticks": 5}
     first = _ticks(_run(data_root, "e2_spread_sniper", "e2_greedy_painter", seed=7, tag="rng1", **kwargs))
     again = _ticks(_run(data_root, "e2_spread_sniper", "e2_greedy_painter", seed=7, tag="rng2", **kwargs))
     other = _ticks(_run(data_root, "e2_spread_sniper", "e2_greedy_painter", seed=8, tag="rng3", **kwargs))
@@ -190,18 +189,3 @@ def test_rng_agents_are_seed_deterministic_and_seed_sensitive(data_root: Path) -
     offsets = spread(first)
     assert offsets[0] == 0 and 16 <= offsets[1] <= 64 and 512 - 64 <= offsets[2] <= 512 - 16
     assert spread(other) != offsets
-
-
-@pytest.mark.parametrize("seed", [1, 2, 3, 42])
-def test_v4_probe_reproduces_the_frozen_characterization_probe_tick_for_tick(
-    data_root: Path, tmp_path: Path, seed: int
-) -> None:
-    for name in ("probe_alpha", "probe_beta"):
-        _bootstrap_probe(tmp_path, name)
-    kwargs = {"ruleset_id": BYTEFRAY_RULESET_V4_ID, "seed": seed, "max_ticks": 200}
-    fixture = _ticks(_run(data_root, "v4_probe", "v4_probe_twin", tag=f"fixture{seed}", **kwargs))
-    gate = _ticks(_run(tmp_path, "probe_alpha", "probe_beta", tag="gate", **kwargs))
-    assert fixture == gate
-    # The frozen V4 characterization: Seat A captures Seat B on tick 1.
-    assert [t.tick for t in fixture] == [0, 1]
-    assert [e.event_type for e in fixture[1].events] == ["kill"]

@@ -48,6 +48,9 @@ BASELINE_ATTACKER = "v4_concentrated_attacker"
 OPPONENT = "v4_local_defender"
 ARENA_SIZE = 512
 SEED = 1
+requires_classic = pytest.mark.skip(
+    reason="Frozen R3 match requires retired Classic; reproduce at v5.1.0-alpha.1."
+)
 
 
 def _run(
@@ -127,6 +130,7 @@ def test_research_agents_resolve_only_through_the_research_loader() -> None:
         assert spec.dir.resolve() == (RESEARCH_AGENTS_DIR / name).resolve()
 
 
+@requires_classic
 def test_point_control_clone_plays_an_identical_match_to_the_bundled_baseline(
     tmp_path: Path,
 ) -> None:
@@ -150,6 +154,7 @@ def test_point_control_clone_plays_an_identical_match_to_the_bundled_baseline(
     assert baseline["replay_sha256"] != clone["replay_sha256"]
 
 
+@requires_classic
 def test_sweeper_preserves_the_baseline_process_declaration(tmp_path: Path) -> None:
     """Paired equivalence: process count, id, reach and share are unchanged.
 
@@ -171,6 +176,7 @@ def test_sweeper_preserves_the_baseline_process_declaration(tmp_path: Path) -> N
         assert declarations(replay_path) == expected, name
 
 
+@requires_classic
 @pytest.mark.parametrize(
     "agent", ["v5r3_region_sweeper", "v5r3_region_sweeper_mobile"]
 )
@@ -211,6 +217,7 @@ def test_sweeper_never_bypasses_reach_or_wastes_an_action(
     assert max(actions_per_tick.values()) <= 8
 
 
+@requires_classic
 def test_sweeper_receives_only_ordinary_legal_v4_information(tmp_path: Path) -> None:
     """The legal-information boundary, proven from what the agent was handed.
 
@@ -266,6 +273,7 @@ def test_sweeper_receives_only_ordinary_legal_v4_information(tmp_path: Path) -> 
     assert shown > 0
 
 
+@requires_classic
 def test_sweeper_is_deterministic(tmp_path: Path) -> None:
     """Identical inputs, identical replay -- bytes, not just outcome."""
 
@@ -286,6 +294,7 @@ def test_sweeper_is_deterministic(tmp_path: Path) -> None:
     )
 
 
+@requires_classic
 def test_sweeper_actually_diversifies_addresses_versus_the_baseline(tmp_path: Path) -> None:
     """Guard against reporting a null produced by an inert instrument.
 

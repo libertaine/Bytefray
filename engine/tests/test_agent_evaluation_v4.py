@@ -54,6 +54,7 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
 )
 
 API_V2_SOURCE = """
@@ -128,7 +129,7 @@ def _v4_request(tmp_path: Path, **overrides) -> EvaluationRequest:
         "output_dir": tmp_path / "eval-out",
         "ticks": 5,
         "data_root": tmp_path,
-        "ruleset_id": BYTEFRAY_RULESET_V4_ID,
+        "ruleset_id": BYTEFRAY_RULESET_V6_ALPHA1_ID,
     }
     defaults.update(overrides)
     return EvaluationRequest(**defaults)
@@ -225,7 +226,7 @@ def test_placement_reconstructs_exactly_from_seed_via_the_production_seam(tmp_pa
     result = EvaluationService().run(request)
     for cell in result.cells:
         seat_a, seat_b = resolve_v4_seed_geometry(
-            BYTEFRAY_RULESET_V4_ID, STANDARD_V4_ARENA_SIZE, cell.seed
+            BYTEFRAY_RULESET_V6_ALPHA1_ID, STANDARD_V4_ARENA_SIZE, cell.seed
         )
         if cell.orientation == ORIENTATION_OPPONENT_FIRST:
             seat_a, seat_b = seat_b, seat_a
@@ -237,8 +238,8 @@ def test_pinned_seed_vectors_match_the_research_report(tmp_path: Path):
     vector the research report's own reproduction cites (Sec C.1): seed 3
     at arena 512 resolves to (495, 387).
 
-    Uses stable ``bytefray-rules-4`` rather than the retired
-    ``bytefray-rules-4-alpha2`` this test originally pinned against:
+    Uses ``bytefray-rules-6-alpha1`` rather than the retired
+    ``bytefray-rules-4-alpha2`` (and later ``bytefray-rules-4``) this test originally pinned against:
     ``resolve_v4_seed_geometry`` (like ``placement.core_placement_mode``,
     T-4) resolves its Ruleset's ``core_placement`` mode through the
     executable registry and fails *safe* to the masked ``"zero"`` default
@@ -250,7 +251,7 @@ def test_pinned_seed_vectors_match_the_research_report(tmp_path: Path):
     constant, not the ruleset id -- V6 Phase 2B.8 audit Sec E.1/J), so the
     pinned vector itself is unchanged."""
 
-    assert resolve_v4_seed_geometry(BYTEFRAY_RULESET_V4_ID, 512, 3) == (495, 387)
+    assert resolve_v4_seed_geometry(BYTEFRAY_RULESET_V6_ALPHA1_ID, 512, 3) == (495, 387)
 
 
 def test_arena_defaults_to_512_when_omitted(tmp_path: Path):
@@ -460,7 +461,7 @@ def test_cli_exit_code_reflects_real_cell_outcome(tmp_path: Path, monkeypatch, c
             "--opponents",
             "opponent",
             "--ruleset",
-            BYTEFRAY_RULESET_V4_ID,
+            BYTEFRAY_RULESET_V6_ALPHA1_ID,
             "--seeds",
             "1",
             "--ticks",
@@ -478,7 +479,7 @@ def test_cli_exit_code_reflects_real_cell_outcome(tmp_path: Path, monkeypatch, c
             "--opponents",
             "broken",
             "--ruleset",
-            BYTEFRAY_RULESET_V4_ID,
+            BYTEFRAY_RULESET_V6_ALPHA1_ID,
             "--seeds",
             "1",
             "--ticks",
@@ -550,8 +551,8 @@ def test_omitted_ruleset_with_api_v2_roster_resolves_to_stable_v4(tmp_path: Path
     # v4.0.0-rc1 Phase 2: the omitted-Ruleset default for an Agent API v2
     # roster is now the permanent stable identity, not alpha2 -- see
     # ruleset_policy.OMITTED_RULESET_CANDIDATES.
-    assert data["rules_compatibility_id"] == BYTEFRAY_RULESET_V4_ID
-    assert data["arena_alignment_mode"] == "ruleset_v4_seeded_placements"
+    assert data["rules_compatibility_id"] == BYTEFRAY_RULESET_V6_ALPHA1_ID
+    assert data["arena_alignment_mode"] == "ruleset_v6_alpha1_seeded_placements"
     assert data["schema_version"] == SCHEMA_VERSION_V4 == 7
     assert data["lifecycle_state"] == LIFECYCLE_STATE_FINISHED
     assert data["complete"] is True
@@ -560,7 +561,7 @@ def test_omitted_ruleset_with_api_v2_roster_resolves_to_stable_v4(tmp_path: Path
 
 
 def test_explicit_stable_v4_ruleset_matches_the_omitted_default(tmp_path: Path, monkeypatch):
-    """Explicit --ruleset bytefray-rules-4 must resolve to exactly the same
+    """Explicit --ruleset bytefray-rules-6-alpha1 must resolve to exactly the same
     methodology the omitted default now reaches."""
 
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
@@ -572,7 +573,7 @@ def test_explicit_stable_v4_ruleset_matches_the_omitted_default(tmp_path: Path, 
             "--opponents",
             "opponent",
             "--ruleset",
-            BYTEFRAY_RULESET_V4_ID,
+            BYTEFRAY_RULESET_V6_ALPHA1_ID,
             "--seeds",
             "1",
             "--ticks",
@@ -584,8 +585,8 @@ def test_explicit_stable_v4_ruleset_matches_the_omitted_default(tmp_path: Path, 
     )
     assert exit_code == 0
     data = json.loads((tmp_path / "out" / "evaluation.json").read_text(encoding="utf-8"))
-    assert data["rules_compatibility_id"] == BYTEFRAY_RULESET_V4_ID
-    assert data["arena_alignment_mode"] == "ruleset_v4_seeded_placements"
+    assert data["rules_compatibility_id"] == BYTEFRAY_RULESET_V6_ALPHA1_ID
+    assert data["arena_alignment_mode"] == "ruleset_v6_alpha1_seeded_placements"
     assert data["schema_version"] == SCHEMA_VERSION_V4 == 7
 
 
@@ -669,8 +670,8 @@ def test_schema_7_round_trips_through_evaluation_history(tmp_path: Path):
     summary = adapt_any(result.state_path)
     assert summary.schema.schema_version == SCHEMA_VERSION_V4 == 7
     assert summary.schema.supported is True
-    assert summary.arena_alignment_mode.value == "ruleset_v4_seeded_placements"
-    assert summary.rules_compatibility_id.value == BYTEFRAY_RULESET_V4_ID
+    assert summary.arena_alignment_mode.value == "ruleset_v6_alpha1_seeded_placements"
+    assert summary.rules_compatibility_id.value == BYTEFRAY_RULESET_V6_ALPHA1_ID
     assert summary.health.codes and summary.health.codes[0].value == "healthy"
 
     for cell in summary.cells:
@@ -753,6 +754,7 @@ def test_is_ruleset_v4_methodology_is_exactly_alpha2_and_stable_v4():
 
     assert is_ruleset_v4_methodology(BYTEFRAY_RULESET_V4_ALPHA2_ID) is True
     assert is_ruleset_v4_methodology(BYTEFRAY_RULESET_V4_ID) is True
+    assert is_ruleset_v4_methodology(BYTEFRAY_RULESET_V6_ALPHA1_ID) is True
     assert is_ruleset_v4_methodology(BYTEFRAY_RULESET_V4_ALPHA1_ID) is False
     assert is_ruleset_v4_methodology(BYTEFRAY_RULESET_V2_ID) is False
 
@@ -814,11 +816,11 @@ def test_rendered_summary_reports_v4_seeded_placements_for_stable_v4(
     _write_api_v2_agent(tmp_path, "candidate")
     _write_api_v2_agent(tmp_path, "opponent")
     console_out, data = _run_and_capture_console(
-        tmp_path, monkeypatch, capsys, ruleset_id=BYTEFRAY_RULESET_V4_ID, output_name="out"
+        tmp_path, monkeypatch, capsys, ruleset_id=BYTEFRAY_RULESET_V6_ALPHA1_ID, output_name="out"
     )
 
-    assert data["arena_alignment_mode"] == "ruleset_v4_seeded_placements"
-    assert "Arena alignment: ruleset_v4_seeded_placements" in console_out
+    assert data["arena_alignment_mode"] == "ruleset_v6_alpha1_seeded_placements"
+    assert "Arena alignment: ruleset_v6_alpha1_seeded_placements" in console_out
     assert "Arena alignment: fixed" not in console_out
 
 

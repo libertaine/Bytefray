@@ -11,31 +11,33 @@ You write the agents: they maneuver, inspect, and rewrite memory while defending
 [![Python 3.10–3.14](https://img.shields.io/badge/Python-3.10%E2%80%933.14-blue)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## Development toward Bytefray 5.1
+## Development after Bytefray 5.1.0-alpha.1
 
 [`v6-research`](https://github.com/libertaine/Bytefray/tree/v6-research) now contains
 both sealed gameplay research and an implemented **V6 Alpha 1 sensing milestone**.
 **Bytefray 5.1** brings this experimental gameplay to the application, with the
 separate [Bytefray-Spectator](https://github.com/libertaine/Bytefray-Spectator)
-companion. Its first preview, **5.1.0-alpha.1**, is a release candidate: a Windows
-installer candidate has been prepared, and publishing it awaits the project
-lead's approval.
+companion. Its first preview, **5.1.0-alpha.1**, is published. It is the last
+release that runs the Classic Ruleset: this development line has retired
+Classic, and Active Sensing (Alpha) is its only Ruleset.
 
 | Name | Current meaning |
 | --- | --- |
 | **Bytefray 5.0.0** | Latest stable application release; downloads below. See the [stable `main` branch](https://github.com/libertaine/Bytefray/tree/main). |
-| **Bytefray 5.1.0-alpha.1** | Preview release candidate (Python package `5.1.0a1`); not yet published. See the [release notes](docs/releases/BYTEFRAY_5_1_0_ALPHA_1_RELEASE_NOTES.md). |
-| **Classic** (`bytefray-rules-4`) | Permanent stable gameplay and omitted-ruleset default. |
-| **Active Sensing (Alpha)** (`bytefray-rules-6-alpha1`) | Distinct, explicitly selected experimental ruleset implemented here; bounded M1 acceptance does not establish unrestricted release readiness. |
+| **Bytefray 5.1.0-alpha.1** | Published preview (Python package `5.1.0a1`, tag `v5.1.0-alpha.1`); the last release with Classic. See the [release notes](docs/releases/BYTEFRAY_5_1_0_ALPHA_1_RELEASE_NOTES.md). |
+| **Active Sensing (Alpha)** (`bytefray-rules-6-alpha1`) | The only supported Ruleset on this development line, and the omitted-ruleset default. Its gameplay identity is unchanged from 5.1.0-alpha.1; bounded M1 acceptance does not establish unrestricted release readiness. |
+| **Classic** (`bytefray-rules-4`) | **Retired** after 5.1.0-alpha.1 ([decision record](docs/releases/CLASSIC_RULESET_RETIREMENT.md)). It cannot run new matches here; Bytefray 5.1.0-alpha.1 still runs it, and its recorded artifacts remain readable. |
 | **V6**, **`v6-research`** | Research and development program and its branch; experiments, probes and instrumentation are not all prospective product features. "V6" is not an application version. |
 | **Bytefray-Spectator** | Separate Godot application with its own release series. Version `0.1.0-alpha.1` is bundled with the 5.1 Alpha Windows installer candidate; it is not separately published. |
 
 Application versions, ruleset identities, Agent API versions and artifact schemas
-are independent. Classic and Active Sensing (Alpha) are display names: artifacts,
+are independent. Active Sensing (Alpha) is a display name: artifacts,
 `--ruleset` and diagnostics always use the exact ruleset ID. The V6 program name
 does not announce an application 6.0. See the
 [component versioning policy](docs/COMPONENT_VERSIONING.md) and the
-[5.1.0-alpha.1 compatibility record](docs/releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md).
+[development compatibility record](docs/releases/BYTEFRAY_DEVELOPMENT_COMPATIBILITY.md)
+(the [5.1.0-alpha.1 record](docs/releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md)
+describes the published preview).
 
 ### What V6 research is trying to solve
 
@@ -189,10 +191,10 @@ The standard M1 demonstration uses two entrants, a 512-cell arena, eight actions
 per entrant per tick and a 1,000-tick limit. These are its run profile, not a
 new universal arena-size requirement. Alpha 1 retains Agent API v2 and
 replay4/trace2/result2; capability metadata v1 (`required: [sense]`) and demo
-sidecar v1 are additive. Sensing agents declare that capability so incompatible
-stable-V4 runs fail preflight. Explicit selection is available in the CLI and
-Designer Advanced/Development, where it is labeled **Active Sensing (Alpha)**;
-Simple and Evaluation retain stable-V4 (**Classic**) scope.
+sidecar v1 are additive. Sensing agents declare that capability so a run under a
+Ruleset without SENSE fails preflight. Since Classic's retirement it is the only
+Ruleset: the CLI uses it when `--ruleset` is omitted, and every Designer surface
+(Simple, Advanced, Development and Evaluation) runs it without a Ruleset control.
 
 ### Teaching examples and limits
 
@@ -356,11 +358,11 @@ The wheel and source distribution are published on the GitHub Release; Bytefray 
 
 [View the Bytefray 5.0.0 release](https://github.com/libertaine/Bytefray/releases/tag/v5.0.0) · [All releases](https://github.com/libertaine/Bytefray/releases)
 
-**Preview: Bytefray 5.1.0-alpha.1 (not yet published).** When published, its
+**Preview: Bytefray 5.1.0-alpha.1.** Its
 Windows installer, `Bytefray-5.1.0-alpha.1-Windows-x64-Setup.exe`, installs for
 your Windows account only, beside Bytefray 5.0, without administrator rights,
 Python or Godot. It adds Active Sensing (Alpha), its teaching agents and the
-bundled Bytefray Spectator. See the
+bundled Bytefray Spectator, and still runs Classic. See the
 [5.1.0-alpha.1 release notes](docs/releases/BYTEFRAY_5_1_0_ALPHA_1_RELEASE_NOTES.md).
 
 ## Build agents your way
@@ -422,7 +424,7 @@ Discovered starter agents are available immediately:
 bytefray agents
 
 # Run a match between two starter agents and record a replay
-bytefray run --a-type v5_region_attacker --b-type v5_core_defender --seed 42 --ticks 200 --replay runs/demo/replay.jsonl
+bytefray run --a-type v6_window_scout --b-type v6_watchful_keeper --seed 42 --ticks 200 --replay runs/demo/replay.jsonl
 ```
 
 ### 3. Inspect the Replay
@@ -441,8 +443,8 @@ bytefray replay --replay runs/demo/replay.jsonl --renderer pygame
 
 ## Technical Snapshot
 
-This snapshot describes stable `bytefray-rules-4`; the experimental sensing
-ruleset is described above.
+This snapshot describes the shared engine mechanics that
+`bytefray-rules-6-alpha1` builds on; its sensing differences are described above.
 
 | Dimension | Specification |
 |---|---|
@@ -450,9 +452,9 @@ ruleset is described above.
 | **Dependencies** | PyYAML for core engine; optional `pygame-ce` (replays) and `PySide6` (designer) |
 | **Arena Model** | Circular array of discrete memory cells (default 4096); 1-byte value (`0..255`) + last-writer ownership |
 | **Simulation** | Discrete-tick deterministic engine; chunked quota scheduling (`K = 2`, `Q = 8`) |
-| **Stable Ruleset** | `bytefray-rules-4` (spatial multi-process, seed-derived core placement, round-robin process selection) |
+| **Ruleset** | `bytefray-rules-6-alpha1`, Active Sensing (Alpha): spatial multi-process, seed-derived core placement, round-robin process selection, paid SENSE in place of passive enemy visibility |
 | **Agent API** | Agent API v2 (`reset`, `declare_processes`, `act`) |
-| **Action Vocabulary** | `READ` (absolute address), `WRITE` (absolute address), `MOVE` (relative delta `[-64, 64]`) |
+| **Action Vocabulary** | `READ` (absolute address), `WRITE` (absolute address), `MOVE` (relative delta `[-64, 64]`), `SENSE` (scan center address) |
 | **Elimination Condition** | Core capture: an entrant is eliminated when it owns 0 cells of its 8-cell core at tick end |
 | **Artifact Formats** | `battle2.result` (schema v2 native JSON; v1 historical, including retired Redcode/pMARS records), `battle2.replay` (schema v4 JSONL) |
 | **Execution Model** | Local trusted Python execution; worker subprocesses with per-call timeouts for hang containment |
@@ -462,21 +464,22 @@ ruleset is described above.
 
 ## How Bytefray Works
 
-This overview describes `bytefray-rules-4`. For the experimental active-sensing
-differences, see [V6 Alpha 1](#v6-alpha-1-decisions-from-delivered-information) above.
+This overview describes the mechanics Active Sensing shares with the retired
+Classic Ruleset. Where they differ -- passive enemy visibility and the SENSE
+action -- see [V6 Alpha 1](#v6-alpha-1-decisions-from-delivered-information) above.
 
 ### Arena and Memory Ownership
 The arena is a circular array of discrete memory cells (default 4096 cells, wrapping at `arena_size`). Each cell stores an 8-bit integer value (`0..255`) and the identity of the entrant that wrote to it most recently. Unwritten cells have no owner.
 
 ### Cores and Elimination
-Every entrant is assigned a contiguous 8-cell core (`CORE_SIZE = 8`). In the stable ruleset, core locations are derived deterministically from the match seed with a guaranteed minimum circular separation (64 cells) between entrants.
+Every entrant is assigned a contiguous 8-cell core (`CORE_SIZE = 8`). Core locations are derived deterministically from the match seed with a guaranteed minimum circular separation (64 cells) between entrants.
 
 * **Victory Condition**: An entrant is eliminated when it owns **zero of the eight cells** of its assigned core.
 * Elimination checks occur once per tick, after all actions for that tick have executed. Holding even a single core cell keeps the entrant alive.
 * If multiple entrants remain alive when the tick limit is reached, winner resolution evaluates accumulated scores based on survival time, core kills, and territorial ownership.
 
 ### Spatial Multi-Process Execution
-In Ruleset v4, entrants act through one or more *processes*. Each process has:
+Entrants act through one or more *processes*. Each process has:
 * An **anchor**: Its current address in the circular arena. All processes begin co-located at their entrant's core base.
 * A **reach**: A circular radius around the anchor within which the process can read and write.
 * A **quota share**: The proportion of the entrant's per-tick action budget allocated to this process.
@@ -505,11 +508,12 @@ Each simulation tick resolves through five deterministic phases:
 
 1. **Entrant Scheduling**: Entrants take turns in chunked action slots (`K = 2` actions per slice) rotating starting seat order across ticks to eliminate first-player bias.
 2. **Process Selection**: Within an entrant's turn, action slots rotate across its eligible processes via round-robin selection. If a process was disrupted earlier in the tick, its remaining share redistributes evenly among remaining eligible processes.
-3. **Observation**: The engine supplies the active process with an immutable `ObservationV2`. Visibility is spatial: an agent sees enemy process anchors that fall within the reach of *any* eligible friendly process. Opponent core locations, process configurations, and strategy states are never revealed.
-4. **Action Execution**: The process returns one of three actions:
+3. **Observation**: The engine supplies the active process with an immutable `ObservationV2`. Enemy positions are never supplied passively; a process learns of anonymous contacts only through its own earlier SENSE receipts. Opponent identities, core locations, process configurations, and strategy states are never revealed.
+4. **Action Execution**: The process returns one of four actions:
    * **`WRITE(address, value)`**: Writes `value & 0xFF` to an absolute address within the process's reach and claims ownership. If the address matches an enemy process's anchor, all enemy processes on that cell are disrupted for the remainder of the tick (`D = 1`).
    * **`READ(address)`**: Reads the byte value and last-writer entrant ID at an absolute address within reach, reported in the process's subsequent observation.
    * **`MOVE(delta)`**: Adjusts the process's anchor by a signed relative displacement, clamped to `[-64, 64]` and wrapped circularly.
+   * **`SENSE(address)`**: Spends the action scanning a ±27-cell window centered within reach; the sampled anonymous anchors arrive in the process's next eligible observation.
    * *Rejection*: Actions targeting addresses beyond a process's declared reach are discarded; the action slot is consumed without effect.
 5. **Tick Resolution & Telemetry**: Core ownership is audited for eliminations. Territory and survival scores accrue, and state diffs are appended to the canonical `replay.jsonl` stream.
 
@@ -569,7 +573,7 @@ def create_agent() -> Agent:
 Execute a match with your new agent against any reference opponent:
 
 ```bash
-bytefray run --a-type my_agent --b-type v5_region_attacker --seed 42 --ticks 200
+bytefray run --a-type my_agent --b-type v6_watchful_keeper --seed 42 --ticks 200
 ```
 
 ### Validate and Test
@@ -581,7 +585,7 @@ Use Agent Lab commands to verify lifecycle compliance and test against opponents
 bytefray agents validate my_agent
 
 # Run a supervised development match with timeout protection
-bytefray agents test my_agent --opponent v5_region_attacker
+bytefray agents test my_agent --opponent v6_watchful_keeper
 ```
 
 The PySide6 Agent Designer provides a graphical workflow for creating, inspecting, validating, and development-testing agents while retaining direct access to the Python source. Agents remain plain Python, and every step above works from the CLI without it.
@@ -603,8 +607,9 @@ class AgentV2(Protocol):
 
 ### Observation Model
 
-The passive perception row below describes stable V4. Alpha 1 instead leaves
-that field empty and delivers explicit SENSE receipts as described above.
+Under Active Sensing the passive perception field below is always empty;
+contacts arrive as explicit SENSE receipts (`previous_sense_anchors`) as
+described above.
 
 Every call to `act` receives an immutable `ObservationV2`:
 
@@ -612,7 +617,7 @@ Every call to `act` receives an immutable `ObservationV2`:
 |---|---|---|
 | **Identity & Position** | `self_process_id`, `self_anchor`, `self_reach` | ID, current arena address, and reach radius of the acting process |
 | **Friendly Core** | `own_core_base`, `own_core_size` | Starting address and cell length (`8`) of your own core |
-| **Perception** | `visible_enemy_anchor_addresses` | Sorted tuple of enemy process anchors currently within reach of any friendly process |
+| **Perception** | `visible_enemy_anchor_addresses`, `previous_sense_anchors` | Passive enemy anchors (always empty under Active Sensing); sorted anonymous anchors sampled by this process's previous SENSE |
 | **Feedback** | `previous_action_applied`, `previous_read_value`, `previous_read_owner` | Outcome and read payload from this process's preceding action |
 | **Timing** | `current_tick`, `last_callback_tick`, `previous_action_tick` | Tick indices for temporal tracking and disruption inference |
 
@@ -641,10 +646,10 @@ presets:
 Parameters follow precedence: `schema defaults < preset < CLI/GUI overrides`. Overrides are passed at the command line via `--a-preset` and `--a-param`:
 
 ```bash
-bytefray run --a-type v5_region_attacker --b-type v5_core_defender --a-preset far_sighted --a-param attacker_reach=24
+bytefray run --a-type v6_window_scout --b-type v6_watchful_keeper --a-preset standard --a-param search_interval=6
 ```
 
-See [docs/AGENT_API_V2.md](docs/AGENT_API_V2.md) for the complete authoring specification and [docs/V5_STARTER_AGENTS.md](docs/V5_STARTER_AGENTS.md) for strategy patterns.
+See [docs/AGENT_API_V2.md](docs/AGENT_API_V2.md) for the complete authoring specification and the [M1-2 implementation record](docs/v6/V6_ALPHA_M1_2_IMPLEMENTATION_RECORD_01.md) for the Window Scout teaching starter.
 
 ---
 
@@ -780,28 +785,35 @@ Bytefray's codebase emphasizes strict reproducibility, version isolation, and ar
 
 Bytefray maintains independent, versioned compatibility axes across releases, rulesets, and schemas (see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)).
 
-Bytefray 5.0.0 uses permanent Ruleset 4 and introduces no Ruleset 5. This branch
-also implements experimental `bytefray-rules-6-alpha1` for a potential 5.1
-application release; its identity is independent of the application version.
+Bytefray 5.0.0 used permanent Ruleset 4 and introduced no Ruleset 5. Bytefray
+5.1.0-alpha.1 offered `bytefray-rules-4` (Classic) alongside experimental
+`bytefray-rules-6-alpha1` (Active Sensing). After that preview, Classic was
+retired: this development line runs Active Sensing only. Ruleset identities
+remain independent of the application version.
 
-### Active Gameplay Ruleset: `bytefray-rules-4`
-The current permanent stable ruleset is `bytefray-rules-4`. An omitted `--ruleset` flag for Agent API v2 entrants resolves to this ruleset automatically. It defines:
+### Active Gameplay Ruleset: `bytefray-rules-6-alpha1`
+Active Sensing (Alpha) is the only executable Ruleset. An omitted `--ruleset`
+flag resolves to it, and the Designer runs it without a Ruleset control. It defines:
 * Spatial multi-process execution with round-robin process selection.
 * Seed-derived core placement with minimum 64-cell circular separation.
 * Fixed ruleset constants: `CORE_SIZE = 8`, `Q = 8` actions/tick, `D = 1` disruption duration, move clamp `[-64, 64]`.
+* No passive enemy visibility; a paid `SENSE` action with delayed, anonymous delivery. Its inherited detection radius of 32 is inert for perception but still requires arenas larger than 64 cells.
 
 ### Historical Rulesets
 On this branch, `bytefray-rules-1`, `bytefray-rules-2`, Agent API v1 and VM/blob
-match execution are retired, as are `bytefray-rules-4-alpha1` and
-`bytefray-rules-4-alpha2`. Historical artifacts remain readable, indexable and
+match execution are retired, as are `bytefray-rules-4-alpha1`,
+`bytefray-rules-4-alpha2` and, after 5.1.0-alpha.1, `bytefray-rules-4` (Classic).
+Requests naming a retired Ruleset are rejected with a message saying so; nothing
+is silently remapped to Active Sensing. Classic's starter agents (`v4_*`, `v5_*`)
+are no longer installed or packaged. Historical artifacts remain readable, indexable and
 replayable; exact historical re-execution requires the matching released version,
-including `v5.0.0` for the earlier executable surfaces. See the
+including `v5.0.0` for the earlier executable surfaces and `v5.1.0-alpha.1`
+for Classic. See the [Classic retirement record](docs/releases/CLASSIC_RULESET_RETIREMENT.md), the
 [retirement policy](docs/COMPATIBILITY.md)
 and [runtime retirement record](docs/research/v6/V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md).
 
 Redcode/pMARS execution is also retired here and historically used a separate
-backend. Designer Simple and Evaluation offer stable V4; Advanced and Development
-also offer explicit Alpha 1 sensing. Historical tournament/group-evaluation
+backend. Historical tournament/group-evaluation
 descriptions in release documents do not restore those retired execution modes.
 
 ### Scope Discipline
@@ -812,9 +824,9 @@ Mechanics such as fixed process rosters and circular core sizes are ruleset-spec
 ## Project Status and Research
 
 ### Current Baseline and Release
-* **Stable Gameplay Baseline**: Bytefray 4.0 (`bytefray-rules-4`) remains the stable, qualified gameplay standard.
-* **Current Release**: The current stable release is **Bytefray 5.0.0** (`5.0.0`). Bytefray 5 builds directly on the stable `bytefray-rules-4` gameplay foundation while introducing:
-  * Four educational starter agents teaching core defense, area denial, and multi-process coordination (`v5_region_attacker`, `v5_scout_striker`, `v5_core_defender`, `v5_dual_team`).
+* **Gameplay on this line**: Active Sensing (Alpha) (`bytefray-rules-6-alpha1`) is the only supported Ruleset. Classic (`bytefray-rules-4`) remains the gameplay of the published 5.0.0 and 5.1.0-alpha.1 releases.
+* **Current Release**: The current stable release is **Bytefray 5.0.0** (`5.0.0`). Bytefray 5 built on the `bytefray-rules-4` gameplay foundation and introduced:
+  * Four educational starter agents teaching core defense, area denial, and multi-process coordination (`v5_region_attacker`, `v5_scout_striker`, `v5_core_defender`, `v5_dual_team`); they are Classic agents and are not installed by this development line.
   * Typed parameter schemas and presets in `agent.yaml` with dynamic GUI controls.
   * Enhanced authoring and validation tooling in `bytefray agents`.
   * Comprehensive Replay History discovery and viewer integration.
@@ -834,11 +846,12 @@ from potential 5.1 positioning.
 
 * **Agent Authoring**:
   * [Agent API v2 Reference](docs/AGENT_API_V2.md) — Authoritative Agent API v2 specification.
-  * [V5 Starter Agents Guide](docs/V5_STARTER_AGENTS.md) — Educational strategies and trade-offs.
+  * [V5 Starter Agents Guide](docs/V5_STARTER_AGENTS.md) — Historical Classic strategies (agents not installed on this line).
   * [Authoring Workflow](docs/AGENT_AUTHORING.md) — Step-by-step agent creation and validation.
   * [Agent Lab Guide](docs/AGENT_LAB.md) — Tracing, debugging, divergence analysis, and timeouts.
 * **Rules and Mechanics**:
-  * [Ruleset v4 Specification](docs/RULES_V4.md) — Normative gameplay rules for `bytefray-rules-4`.
+  * [Ruleset v4 Specification](docs/RULES_V4.md) — Retired Classic (`bytefray-rules-4`) rules; the shared mechanics Active Sensing builds on.
+  * [Classic retirement record](docs/releases/CLASSIC_RULESET_RETIREMENT.md) — What was removed after 5.1.0-alpha.1 and how to recover it.
   * [Historical Ruleset v1](docs/RULES.md) & [Ruleset v2](docs/RULES_V2.md) — Historical gameplay references.
   * [Compatibility Policy](docs/COMPATIBILITY.md) — Ruleset, schema, and API versioning contracts.
 * **Systems and Schemas**:

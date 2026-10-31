@@ -9,7 +9,8 @@ release history. As of this writing, the most recent stable release is
 `5.0.0` ("Bytefray 5.0.0"). Bytefray V5 builds
 on unchanged, stable `bytefray-rules-4` gameplay — it introduces
 agent-authoring, parameter, and Designer/UX changes, not a new gameplay
-Ruleset. See [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) for what the
+Ruleset. The current development line has retired that Ruleset and runs
+Active Sensing (`bytefray-rules-6-alpha1`) only. See [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) for what the
 current line's Ruleset, Agent API, and schema contracts do and do not
 guarantee as stable, and [docs/ROADMAP.md](docs/ROADMAP.md) for the current
 release boundary.
@@ -39,8 +40,8 @@ agent formats:
 - **Python agents** (Agent API v1 and Agent API v2) run in-process or in a
   worker subprocess with the same OS-level privileges and filesystem/network
   access as the process running Bytefray. Agent API v2 (the contract for
-  the permanent `bytefray-rules-4` identity, and historically for the two
-  retired v4 prerelease identities that preceded it) changes the Python
+  Active Sensing, and historically for the retired `bytefray-rules-4`
+  identities) changes the Python
   programming contract, not the execution/isolation model — the same
   non-sandboxed guarantees below apply identically across both API
   generations and all Ruleset identities. The

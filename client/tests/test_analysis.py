@@ -160,7 +160,7 @@ def create_agent():
     replay_path = tmp_path / "python_replay.jsonl"
     NativeMatchService().run(
         MatchRequest(
-            Config(arena_size=32, instr_per_tick=8, seed=1),
+            Config(arena_size=128, instr_per_tick=8, seed=1),
             entrants, max_ticks=2, replay_path=replay_path, verbose=False,
         )
     )
@@ -233,7 +233,7 @@ def create_agent():
     replay_path = tmp_path / "forfeit_replay.jsonl"
     NativeMatchService().run(
         MatchRequest(
-            Config(arena_size=32, instr_per_tick=8, seed=1),
+            Config(arena_size=128, instr_per_tick=8, seed=1),
             entrants, max_ticks=2, replay_path=replay_path, verbose=False,
         )
     )

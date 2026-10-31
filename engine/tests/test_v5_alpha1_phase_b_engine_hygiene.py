@@ -33,10 +33,11 @@ from battle_engine.process_runtime import (
 from battle_engine.replay import ProcessState, _process_from_dict, _process_to_dict
 from battle_engine.rules import (
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
 )
 from battle_engine.ruleset_policy import (
     PROCESS_RULESET_IDS,
-    RULESET_V4,
+    RULESET_V6_ALPHA1,
     UnknownRulesetError,
     resolve_omitted_ruleset_for_agents,
     resolve_ruleset_policy,
@@ -75,14 +76,19 @@ def test_rejected_rulesets_not_recognized_in_production() -> None:
         assert r_id not in PROCESS_RULESET_IDS
 
 
-def test_stable_v4_ruleset_functional_and_default() -> None:
-    """Stable bytefray-rules-4 resolves correctly and is registered."""
-    policy = resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ID)
-    assert policy is RULESET_V4
-    assert BYTEFRAY_RULESET_V4_ID in PROCESS_RULESET_IDS
+def test_product_ruleset_functional_and_default() -> None:
+    """Active Sensing resolves and is the default; retired Classic does not resolve."""
+    policy = resolve_ruleset_policy(BYTEFRAY_RULESET_V6_ALPHA1_ID)
+    assert policy is RULESET_V6_ALPHA1
+    assert BYTEFRAY_RULESET_V6_ALPHA1_ID in PROCESS_RULESET_IDS
+    with pytest.raises(UnknownRulesetError):
+        resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ID)
+    assert BYTEFRAY_RULESET_V4_ID not in PROCESS_RULESET_IDS
 
-    # Omitted ruleset resolves to stable V4 ID for API v2 entrants
-    assert resolve_omitted_ruleset_for_agents(None, [{"kind": "python", "api_version": 2}]) == BYTEFRAY_RULESET_V4_ID
+    # Omitted ruleset resolves to Active Sensing for API v2 entrants
+    assert resolve_omitted_ruleset_for_agents(
+        None, [{"kind": "python", "api_version": 2}]
+    ) == BYTEFRAY_RULESET_V6_ALPHA1_ID
 
 
 def test_match_request_rejects_experimental_kwargs() -> None:

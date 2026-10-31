@@ -72,7 +72,7 @@ def create_agent():
 """
 
 # Raises on its very first act() call, forfeiting immediately -- a real,
-# reproducible loss under bytefray-rules-4's alive-ticks/score-based winner
+# reproducible loss under the alive-ticks/score-based winner
 # resolution, mirroring what a VM `runner`/`writer` builtin used to lose to
 # `seeker` by. Deliberately distinct from a HALT: this exercises the same
 # "user code forfeits" path every real agent failure takes.
@@ -192,7 +192,7 @@ def test_finished_tournament_presents_canonical_winner_standings_and_matches(tmp
     assert [row.name for row in results.leaders] == ["Survivor Bot"]
     assert headline_text(results) == "Winner: Survivor Bot"
     assert status_text(results) == "Complete: 3 of 3 matches completed."
-    assert results.ruleset_ids == ("bytefray-rules-4",)
+    assert results.ruleset_ids == ("bytefray-rules-6-alpha1",)
     assert [
         (row.number, row.round_number, row.entrant_ids, row.seed, row.status)
         for row in results.matches

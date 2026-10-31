@@ -1,5 +1,14 @@
 # Bytefray Ruleset v4 Reference
 
+> **Retired after Bytefray 5.1.0-alpha.1.** `bytefray-rules-4` (Classic) no
+> longer runs new matches; Active Sensing (`bytefray-rules-6-alpha1`) is the
+> only product Ruleset. Active Sensing keeps the scheduling, process,
+> movement, disruption, capture and placement rules below and replaces
+> passive enemy visibility with a paid SENSE action. This reference stays as
+> the contract historical Classic artifacts were recorded under and as the
+> base those shared mechanics are defined against. Bytefray 5.1.0-alpha.1
+> still runs Classic. See [releases/CLASSIC_RULESET_RETIREMENT.md](releases/CLASSIC_RULESET_RETIREMENT.md).
+
 This document defines **Ruleset v4** (`bytefray-rules-4`), the permanent
 gameplay-semantics identity introduced in `v4.0.0-rc1` Phase 2 and stable as
 of that promotion. It describes the game as it plays today under Agent API

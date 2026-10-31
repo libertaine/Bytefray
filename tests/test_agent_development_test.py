@@ -1361,7 +1361,7 @@ def test_development_test_defaults_to_stable_v4_and_passes_it_explicitly(
     data_root = tmp_path / "data"
     monkeypatch.setenv("BYTEFRAY_ROOT", str(data_root))
     from battle_engine.agent_scaffold import create_agent
-    from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
+    from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V6_ALPHA1_ID
 
     import app.agent_designer as agent_designer_module
     from app.agent_designer import AgentDesigner
@@ -1371,7 +1371,6 @@ def test_development_test_defaults_to_stable_v4_and_passes_it_explicitly(
         create_agent("ruleset_default_agent", data_root=data_root)
         designer.refresh_agents(select="ruleset_default_agent")
 
-        assert designer.development.selected_ruleset_id() == BYTEFRAY_RULESET_V4_ID
 
         run_dir = tmp_path / "run"
         result_path, replay_path = _write_result_and_replay(
@@ -1384,7 +1383,7 @@ def test_development_test_defaults_to_stable_v4_and_passes_it_explicitly(
             summary_path=run_dir / "summary.json",
             winner="ruleset_default_agent",
             termination="tick_limit",
-            ruleset=BYTEFRAY_RULESET_V4_ID,
+            ruleset=BYTEFRAY_RULESET_V6_ALPHA1_ID,
         )
         captured_args: list[list[str]] = []
 
@@ -1395,24 +1394,22 @@ def test_development_test_defaults_to_stable_v4_and_passes_it_explicitly(
         monkeypatch.setattr(agent_designer_module, "build_agents_command", _capture)
 
         designer._on_test_agent()
-        # The in-flight status names the Ruleset, not only the opponent.
-        assert BYTEFRAY_RULESET_V4_ID in designer.development.testStatusLabel.text()
         _wait_for_finished(designer)
 
         args = captured_args[0]
         assert "--ruleset" in args
-        assert args[args.index("--ruleset") + 1] == BYTEFRAY_RULESET_V4_ID
+        assert args[args.index("--ruleset") + 1] == BYTEFRAY_RULESET_V6_ALPHA1_ID
         # And the completed result reports the Ruleset the tool itself named.
-        assert f"Ruleset: {BYTEFRAY_RULESET_V4_ID}" in designer.development.testStatusLabel.text()
+        assert f"Ruleset: {BYTEFRAY_RULESET_V6_ALPHA1_ID}" in designer.development.testStatusLabel.text()
     finally:
         designer.close()
 
 
 @pytest.mark.gui
-def test_development_test_does_not_offer_retired_rulesets(
+def test_development_test_offers_no_ruleset_choice(
     monkeypatch, tmp_path
 ):
-    """Rulesets 1/2 have no Designer development-test launch path."""
+    """Development tests run the one Ruleset; there is nothing to choose."""
 
     _make_app()
     data_root = tmp_path / "data"
@@ -1426,9 +1423,8 @@ def test_development_test_does_not_offer_retired_rulesets(
         create_agent("current_agent", data_root=data_root)
         designer.refresh_agents(select="current_agent")
 
-        combo = designer.development.rulesetCombo
-        assert combo.findData("bytefray-rules-1") == -1
-        assert combo.findData("bytefray-rules-2") == -1
-        assert designer.development.selected_ruleset_id() == "bytefray-rules-4"
+        assert not hasattr(designer.development, "rulesetCombo")
+        assert not hasattr(designer.development, "selected_ruleset_id")
+        assert designer.development.btnTest.isEnabled()
     finally:
         designer.close()

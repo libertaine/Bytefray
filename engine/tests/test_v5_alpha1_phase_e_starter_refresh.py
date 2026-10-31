@@ -17,6 +17,14 @@ allowlist -- is preserved exactly as before.
 
 These tests use temporary data roots exclusively and never touch the
 developer's real ``BYTEFRAY_ROOT``.
+
+The Phase C ``v5_*`` starters this suite was written against left the
+installed roster with the Classic Ruleset, so no real superseded release is
+bundled today. The refresh policy is still how a future change to a bundled
+starter reaches existing installs, so these tests exercise it against a
+synthesized earlier release of each current starter: its bundled bytes with
+an older manifest version and no parameter schema, registered as superseded
+for the duration of each test.
 """
 
 from __future__ import annotations
@@ -38,31 +46,7 @@ from battle_engine.starters import (
     starter_content_files,
 )
 
-V5_STARTERS = ("v5_region_attacker", "v5_scout_striker", "v5_core_defender", "v5_dual_team")
-V4_STARTERS = (
-    "v4_claimer",
-    "v4_concentrated_attacker",
-    "v4_defender_scout",
-    "v4_local_defender",
-    "v4_scout",
-    "v4_quorum",
-)
-PHASE_C_COMMIT = "69fc958"
-
-#: Committed byte-for-byte copy of what V5 Alpha 1 Phase C (commit
-#: ``69fc958``) actually bundled for each V5 starter -- see
-#: :data:`~battle_engine.starters.SUPERSEDED_STARTER_DIGESTS`'s comment for
-#: that commit reference. Fixed as ordinary committed test data (Phase F3),
-#: not read out of Git history at test time: a historical commit is not
-#: guaranteed reachable from every checkout that runs this suite (a shallow
-#: CI clone, a `git archive` export, an sdist-built source tree), so a test
-#: whose correctness depended on `git ls-tree`/`git cat-file` against a fixed
-#: SHA would fail in exactly those environments regardless of product
-#: correctness. Each fixture's digest is asserted against the pinned
-#: allowlist below (`test_phase_c_starter_digests_are_the_recorded_superseded_ones`),
-#: so this file is proven -- not merely trusted -- to still be that release's
-#: actual bytes.
-_PHASE_C_FIXTURE_ROOT = Path(__file__).resolve().parent / "fixtures" / "phase_c_v5_starters"
+PRIOR_VERSION = "0.9.0"
 
 
 def _resource_root() -> Path:
@@ -81,24 +65,41 @@ def _bundled_dir(name: str) -> Path:
     )
 
 
-def _seed_phase_c_starter(agents_dir: Path, name: str) -> Path:
-    """Reproduce one starter exactly as V5 Alpha 1 Phase C bundled it.
+def _seed_prior_starter(agents_dir: Path, name: str) -> Path:
+    """Write the synthesized earlier release of one bundled starter.
 
-    Copied from the committed fixture in ``_PHASE_C_FIXTURE_ROOT`` rather than
-    read out of Git history, so "an untouched 1.0.0 install" means the bytes
-    that release actually shipped -- the thing the refresh policy claims to
-    recognize -- without requiring the historical commit to be reachable from
-    the checkout running this test.
+    The bundled files, with a manifest that predates parameter schemas (an
+    older version and no ``parameters``/``presets``) and an implementation
+    that differs too, as a real earlier release's would. Deterministic, so
+    its digest is the same everywhere and can be registered as superseded.
     """
-
-    source_dir = _PHASE_C_FIXTURE_ROOT / name
-    assert source_dir.is_dir(), f"missing Phase C fixture for {name}: {source_dir}"
 
     agent_dir = agents_dir / name
     agent_dir.mkdir(parents=True, exist_ok=True)
-    for source in sorted(source_dir.iterdir()):
-        shutil.copy2(source, agent_dir / source.name)
+    for source in starter_content_files(_bundled_dir(name)):
+        target = agent_dir / source.relative_to(_bundled_dir(name))
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+    source = agent_dir / "agent.py"
+    source.write_text(source.read_text(encoding="utf-8") + "\n# Earlier release.\n", encoding="utf-8")
+    manifest = json.loads((agent_dir / "agent.yaml").read_text(encoding="utf-8"))
+    manifest.pop("parameters", None)
+    manifest.pop("presets", None)
+    manifest["version"] = PRIOR_VERSION
+    (agent_dir / "agent.yaml").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return agent_dir
+
+
+@pytest.fixture(autouse=True)
+def _prior_release_is_superseded(tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Register every synthesized earlier release as a recognized pristine copy."""
+
+    root = tmp_path_factory.mktemp("prior-release")
+    digests = {
+        name: (starter_content_digest(_seed_prior_starter(root, name)),)
+        for name in STARTER_AGENT_NAMES
+    }
+    monkeypatch.setattr(starters, "SUPERSEDED_STARTER_DIGESTS", digests)
 
 
 def _manifest(agent_dir: Path) -> dict:
@@ -229,19 +230,9 @@ def test_no_superseded_digest_is_also_a_current_one() -> None:
 
     for name, digests in SUPERSEDED_STARTER_DIGESTS.items():
         assert name in STARTER_AGENT_NAMES
+        assert digests
         assert CURRENT_STARTER_DIGESTS[name] not in digests
         assert len(set(digests)) == len(digests)
-
-
-def test_phase_c_starter_digests_are_the_recorded_superseded_ones(tmp_path: Path) -> None:
-    """The allowlist entries really are the Phase C release's content, checked
-    against the committed Phase C fixture rather than against themselves."""
-
-    for name in V5_STARTERS:
-        agent_dir = _seed_phase_c_starter(tmp_path, name)
-        assert _manifest(agent_dir)["version"] == "1.0.0"
-        assert "parameters" not in _manifest(agent_dir)
-        assert starter_content_digest(agent_dir) in SUPERSEDED_STARTER_DIGESTS[name]
 
 
 # ---------------------------------------------------------------------------
@@ -260,26 +251,26 @@ def test_missing_starter_installs_the_current_bundled_version(tmp_path: Path) ->
         assert starter_content_digest(installed) == CURRENT_STARTER_DIGESTS[name]
 
 
-def test_untouched_phase_c_starter_is_upgraded_to_the_current_version(
+def test_untouched_prior_starter_is_upgraded_to_the_current_version(
     tmp_path: Path,
 ) -> None:
-    """Case B, and the central Phase E0 outcome: a pristine 1.0.0 install
-    receives the Phase D manifest, so the Designer can discover its
+    """Case B, and the central Phase E0 outcome: a pristine earlier install
+    receives the current manifest, so the Designer can discover its
     parameters."""
 
     agents_dir = tmp_path / "agents"
-    for name in V5_STARTERS:
-        _seed_phase_c_starter(agents_dir, name)
+    for name in STARTER_AGENT_NAMES:
+        _seed_prior_starter(agents_dir, name)
 
     result = ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
 
-    assert {entry.name for entry in result.refreshed} == set(V5_STARTERS)
+    assert {entry.name for entry in result.refreshed} == set(STARTER_AGENT_NAMES)
     assert result.customized == ()
-    for name in V5_STARTERS:
+    for name in STARTER_AGENT_NAMES:
         installed = agents_dir / name
         assert starter_content_digest(installed) == CURRENT_STARTER_DIGESTS[name]
         manifest = _manifest(installed)
-        assert manifest["version"] == "1.1.0"
+        assert manifest["version"] == _manifest(_bundled_dir(name))["version"]
         assert manifest["parameters"], f"{name} did not gain its parameter schema"
 
 
@@ -305,7 +296,7 @@ def test_user_modified_old_starter_is_preserved_not_overwritten(tmp_path: Path) 
     newer) would destroy work."""
 
     agents_dir = tmp_path / "agents"
-    edited = _seed_phase_c_starter(agents_dir, "v5_region_attacker") / "agent.py"
+    edited = _seed_prior_starter(agents_dir, "v6_window_scout") / "agent.py"
     edited.write_text(
         edited.read_text(encoding="utf-8") + "\n# my own notes\n", encoding="utf-8"
     )
@@ -314,9 +305,9 @@ def test_user_modified_old_starter_is_preserved_not_overwritten(tmp_path: Path) 
     result = ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
 
     assert edited.read_text(encoding="utf-8") == mine
-    assert _manifest(agents_dir / "v5_region_attacker")["version"] == "1.0.0"
-    assert {entry.name for entry in result.customized} == {"v5_region_attacker"}
-    assert "v5_region_attacker" not in {entry.name for entry in result.refreshed}
+    assert _manifest(agents_dir / "v6_window_scout")["version"] == PRIOR_VERSION
+    assert {entry.name for entry in result.customized} == {"v6_window_scout"}
+    assert "v6_window_scout" not in {entry.name for entry in result.refreshed}
 
 
 def test_customized_starter_still_has_missing_files_restored(tmp_path: Path) -> None:
@@ -325,7 +316,7 @@ def test_customized_starter_still_has_missing_files_restored(tmp_path: Path) -> 
     starter missing its implementation is simply broken."""
 
     agents_dir = tmp_path / "agents"
-    agent_dir = _seed_phase_c_starter(agents_dir, "v5_dual_team")
+    agent_dir = _seed_prior_starter(agents_dir, "v6_roaming_reacquirer")
     manifest = agent_dir / "agent.yaml"
     manifest.write_text(
         json.dumps({**_manifest(agent_dir), "display": "My Dual Team"}), encoding="utf-8"
@@ -343,10 +334,10 @@ def test_a_starter_the_user_wrote_from_scratch_is_never_refreshed(tmp_path: Path
     can only ever be preserved -- the fail-safe direction."""
 
     agents_dir = tmp_path / "agents"
-    agent_dir = agents_dir / "v5_core_defender"
+    agent_dir = agents_dir / "v6_watchful_keeper"
     agent_dir.mkdir(parents=True)
     agent_dir.joinpath("agent.yaml").write_text(
-        json.dumps({"name": "v5_core_defender", "api_version": 2, "version": "9.9.9"}),
+        json.dumps({"name": "v6_watchful_keeper", "api_version": 2, "version": "9.9.9"}),
         encoding="utf-8",
     )
     agent_dir.joinpath("agent.py").write_text("# entirely mine\n", encoding="utf-8")
@@ -354,7 +345,7 @@ def test_a_starter_the_user_wrote_from_scratch_is_never_refreshed(tmp_path: Path
     result = ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
 
     assert _manifest(agent_dir)["version"] == "9.9.9"
-    assert "v5_core_defender" in {entry.name for entry in result.customized}
+    assert "v6_watchful_keeper" in {entry.name for entry in result.customized}
 
 
 # ---------------------------------------------------------------------------
@@ -364,9 +355,9 @@ def test_a_starter_the_user_wrote_from_scratch_is_never_refreshed(tmp_path: Path
 
 def test_refresh_is_idempotent(tmp_path: Path) -> None:
     agents_dir = tmp_path / "agents"
-    for name in V5_STARTERS:
-        _seed_phase_c_starter(agents_dir, name)
-    edited = _seed_phase_c_starter(agents_dir, "v5_core_defender") / "agent.py"
+    for name in STARTER_AGENT_NAMES:
+        _seed_prior_starter(agents_dir, name)
+    edited = _seed_prior_starter(agents_dir, "v6_watchful_keeper") / "agent.py"
     edited.write_text("# mine\n" + edited.read_text(encoding="utf-8"), encoding="utf-8")
 
     first = ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
@@ -377,35 +368,13 @@ def test_refresh_is_idempotent(tmp_path: Path) -> None:
     }
     second = ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
 
-    assert len(first.refreshed) == 3
+    assert len(first.refreshed) == len(STARTER_AGENT_NAMES) - 1
     assert second.installed == ()
     assert second.refreshed == ()
     # A customized starter stays reported every run: it is a standing
     # condition, not a one-time event.
-    assert {entry.name for entry in second.customized} == {"v5_core_defender"}
+    assert {entry.name for entry in second.customized} == {"v6_watchful_keeper"}
     assert {path: path.stat().st_mtime_ns for path in stamps} == stamps
-
-
-def test_v4_historical_starters_are_never_rewritten(tmp_path: Path) -> None:
-    """The ``v4_*`` starters carry research and replay identity. Nothing in the
-    refresh policy may touch them -- neither an edited copy nor an untouched
-    one, since their bundled content has not changed at all."""
-
-    agents_dir = tmp_path / "agents"
-    ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
-    for name in V4_STARTERS:
-        source = agents_dir / name / "agent.py"
-        source.write_text(source.read_text(encoding="utf-8") + "\n# mine\n", encoding="utf-8")
-    edited = {
-        name: (agents_dir / name / "agent.py").read_text(encoding="utf-8")
-        for name in V4_STARTERS
-    }
-
-    result = ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
-
-    assert {entry.name for entry in result.refreshed} == set()
-    for name in V4_STARTERS:
-        assert (agents_dir / name / "agent.py").read_text(encoding="utf-8") == edited[name]
 
 
 def test_bytecode_in_the_resource_tree_is_never_installed(tmp_path: Path) -> None:
@@ -429,13 +398,13 @@ def test_bytecode_in_the_resource_tree_is_never_installed(tmp_path: Path) -> Non
 
     assert result.errors == ()
     assert not any("__pycache__" in path.parts for path in result.installed)
-    assert not (data_root / "agents" / "v5_region_attacker" / "__pycache__").exists()
+    assert not (data_root / "agents" / "v6_window_scout" / "__pycache__").exists()
 
 
 def test_refresh_summary_names_what_changed_and_what_was_kept(tmp_path: Path) -> None:
     agents_dir = tmp_path / "agents"
-    _seed_phase_c_starter(agents_dir, "v5_dual_team")
-    edited = _seed_phase_c_starter(agents_dir, "v5_scout_striker") / "agent.py"
+    _seed_prior_starter(agents_dir, "v6_roaming_reacquirer")
+    edited = _seed_prior_starter(agents_dir, "v6_watchful_keeper") / "agent.py"
     edited.write_text("# mine\n" + edited.read_text(encoding="utf-8"), encoding="utf-8")
 
     summary = describe_starter_refresh(
@@ -443,8 +412,8 @@ def test_refresh_summary_names_what_changed_and_what_was_kept(tmp_path: Path) ->
     )
 
     assert summary is not None
-    assert "v5_dual_team" in summary
-    assert "v5_scout_striker" in summary
+    assert "v6_roaming_reacquirer" in summary
+    assert "v6_watchful_keeper" in summary
     assert "delete" in summary.lower()
 
 
@@ -463,28 +432,29 @@ def test_refresh_summary_is_silent_when_nothing_happened(tmp_path: Path) -> None
 
 def test_upgraded_install_exposes_the_phase_d_parameter_schema(tmp_path: Path) -> None:
     """The reason E0 exists: after refresh, the discovery layer the Agent
-    Designer reads reports the parameters and presets a Phase C install could
-    never have shown."""
+    Designer reads reports the parameters and presets a an earlier install
+    could never have shown."""
 
     agents_dir = tmp_path / "agents"
-    for name in V5_STARTERS:
-        _seed_phase_c_starter(agents_dir, name)
+    for name in STARTER_AGENT_NAMES:
+        _seed_prior_starter(agents_dir, name)
 
     before = discover_agents(tmp_path)
-    assert all(before[name].parameter_schema.is_empty for name in V5_STARTERS)
+    assert all(before[name].parameter_schema.is_empty for name in STARTER_AGENT_NAMES)
 
     ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
     after = discover_agents(tmp_path)
 
-    assert after["v5_region_attacker"].parameter_schema.declaration_order() == (
-        "attacker_reach",
+    assert after["v6_window_scout"].parameter_schema.declaration_order() == (
+        "search_interval",
+        "move_step",
     )
-    assert "far_sighted" in after["v5_region_attacker"].parameter_schema.preset_names()
-    for name in V5_STARTERS:
+    assert "standard" in after["v6_window_scout"].parameter_schema.preset_names()
+    for name in STARTER_AGENT_NAMES:
         assert not after[name].parameter_schema.is_empty
 
 
-@pytest.mark.parametrize("name", V5_STARTERS)
+@pytest.mark.parametrize("name", STARTER_AGENT_NAMES)
 def test_refreshed_starter_is_byte_identical_to_the_bundled_one(
     tmp_path: Path, name: str
 ) -> None:
@@ -493,7 +463,7 @@ def test_refreshed_starter_is_byte_identical_to_the_bundled_one(
     a newer release removed."""
 
     agents_dir = tmp_path / "agents"
-    agent_dir = _seed_phase_c_starter(agents_dir, name)
+    agent_dir = _seed_prior_starter(agents_dir, name)
     agent_dir.joinpath("stale_helper.py").write_text("# from an older release\n", encoding="utf-8")
     # The extra file makes this no longer a recognized pristine copy, so it is
     # preserved; the point of the check below is the recognized case.
@@ -538,7 +508,7 @@ def test_write_failure_mid_mirror_records_a_marker_and_resumes_on_retry(
     its first attempt -- deterministic, not timing-dependent."""
 
     agents_dir = tmp_path / "agents"
-    agent_dir = _seed_phase_c_starter(agents_dir, "v5_region_attacker")
+    agent_dir = _seed_prior_starter(agents_dir, "v6_window_scout")
     original_manifest_bytes = agent_dir.joinpath("agent.yaml").read_bytes()
 
     real_write_bytes = Path.write_bytes
@@ -560,21 +530,21 @@ def test_write_failure_mid_mirror_records_a_marker_and_resumes_on_retry(
     with pytest.raises(OSError, match="simulated interruption"):
         ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
 
-    marker = starters._refresh_marker_path(tmp_path, "v5_region_attacker")
+    marker = starters._refresh_marker_path(tmp_path, "v6_window_scout")
     assert marker.is_file(), "the marker must survive the interruption for recovery to work"
     assert agent_dir.joinpath("agent.yaml").read_bytes() == original_manifest_bytes
     hybrid_digest = starter_content_digest(agent_dir)
-    assert hybrid_digest not in SUPERSEDED_STARTER_DIGESTS["v5_region_attacker"]
-    assert hybrid_digest != CURRENT_STARTER_DIGESTS["v5_region_attacker"]
+    assert hybrid_digest not in starters.SUPERSEDED_STARTER_DIGESTS["v6_window_scout"]
+    assert hybrid_digest != CURRENT_STARTER_DIGESTS["v6_window_scout"]
 
     result = ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
 
-    assert {entry.name for entry in result.refreshed} == {"v5_region_attacker"}
+    assert {entry.name for entry in result.refreshed} == {"v6_window_scout"}
     assert result.customized == ()
     assert not marker.exists(), "the marker must be cleared once the resumed mirror completes"
-    assert starter_content_digest(agent_dir) == CURRENT_STARTER_DIGESTS["v5_region_attacker"]
+    assert starter_content_digest(agent_dir) == CURRENT_STARTER_DIGESTS["v6_window_scout"]
     manifest = _manifest(agent_dir)
-    assert manifest["version"] == "1.1.0"
+    assert manifest["version"] == _manifest(_bundled_dir("v6_window_scout"))["version"]
     assert manifest["parameters"]
 
 
@@ -584,15 +554,15 @@ def test_interruption_before_any_file_write_still_resumes_cleanly(tmp_path: Path
     first file write) must resume exactly like any other interruption."""
 
     agents_dir = tmp_path / "agents"
-    agent_dir = _seed_phase_c_starter(agents_dir, "v5_dual_team")
+    agent_dir = _seed_prior_starter(agents_dir, "v6_roaming_reacquirer")
     pristine_bytes = {
         path.name: path.read_bytes() for path in starter_content_files(agent_dir)
     }
-    bundled_digest = starter_content_digest(_bundled_dir("v5_dual_team"))
+    bundled_digest = starter_content_digest(_bundled_dir("v6_roaming_reacquirer"))
     assert bundled_digest is not None
 
-    starters._write_refresh_marker(tmp_path, "v5_dual_team", target_digest=bundled_digest)
-    marker = starters._refresh_marker_path(tmp_path, "v5_dual_team")
+    starters._write_refresh_marker(tmp_path, "v6_roaming_reacquirer", target_digest=bundled_digest)
+    marker = starters._refresh_marker_path(tmp_path, "v6_roaming_reacquirer")
     assert marker.is_file()
     # Nothing has actually changed on disk yet -- the true "before the first
     # write" interruption point.
@@ -600,9 +570,9 @@ def test_interruption_before_any_file_write_still_resumes_cleanly(tmp_path: Path
 
     result = ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
 
-    assert {entry.name for entry in result.refreshed} == {"v5_dual_team"}
+    assert {entry.name for entry in result.refreshed} == {"v6_roaming_reacquirer"}
     assert not marker.exists()
-    assert starter_content_digest(agent_dir) == CURRENT_STARTER_DIGESTS["v5_dual_team"]
+    assert starter_content_digest(agent_dir) == CURRENT_STARTER_DIGESTS["v6_roaming_reacquirer"]
 
 
 def test_stale_marker_from_a_since_superseded_bundled_release_is_discarded(
@@ -616,22 +586,22 @@ def test_stale_marker_from_a_since_superseded_bundled_release_is_discarded(
     normally against whatever is actually on disk."""
 
     agents_dir = tmp_path / "agents"
-    agent_dir = _seed_phase_c_starter(agents_dir, "v5_scout_striker")
+    agent_dir = _seed_prior_starter(agents_dir, "v6_watchful_keeper")
 
     starters._write_refresh_marker(
-        tmp_path, "v5_scout_striker", target_digest="not-the-current-bundled-digest"
+        tmp_path, "v6_watchful_keeper", target_digest="not-the-current-bundled-digest"
     )
-    marker = starters._refresh_marker_path(tmp_path, "v5_scout_striker")
+    marker = starters._refresh_marker_path(tmp_path, "v6_watchful_keeper")
     assert marker.is_file()
 
     result = ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
 
     # The marker is stale, so this falls through to ordinary classification:
-    # the on-disk content is still a recognized pristine Phase C copy, so it
+    # the on-disk content is still a recognized pristine earlier copy, so it
     # is refreshed normally -- just not via marker-driven resume.
-    assert {entry.name for entry in result.refreshed} == {"v5_scout_striker"}
+    assert {entry.name for entry in result.refreshed} == {"v6_watchful_keeper"}
     assert not marker.exists()
-    assert starter_content_digest(agent_dir) == CURRENT_STARTER_DIGESTS["v5_scout_striker"]
+    assert starter_content_digest(agent_dir) == CURRENT_STARTER_DIGESTS["v6_watchful_keeper"]
 
 
 def test_refresh_state_directory_is_never_visible_to_agent_discovery(
@@ -642,7 +612,7 @@ def test_refresh_state_directory_is_never_visible_to_agent_discovery(
     never inside it, so this holds structurally -- verified here against a
     real interrupted-and-not-yet-recovered state, not just by inspection.
 
-    Interrupts the *last* name in ``STARTER_AGENT_NAMES`` (``v5_dual_team``)
+    Interrupts the *last* name in ``STARTER_AGENT_NAMES`` (``v6_roaming_reacquirer``)
     specifically, so every other bundled starter has already been installed
     by the time the simulated failure fires -- the catalog-completeness
     assertion below would otherwise be confounded by starters the loop
@@ -650,9 +620,9 @@ def test_refresh_state_directory_is_never_visible_to_agent_discovery(
     of the marker being (correctly) invisible to discovery.
     """
 
-    assert STARTER_AGENT_NAMES[-1] == "v5_dual_team"
+    assert STARTER_AGENT_NAMES[-1] == "v6_roaming_reacquirer"
     agents_dir = tmp_path / "agents"
-    agent_dir = _seed_phase_c_starter(agents_dir, "v5_dual_team")
+    agent_dir = _seed_prior_starter(agents_dir, "v6_roaming_reacquirer")
 
     real_write_bytes = Path.write_bytes
     already_failed = False
@@ -668,7 +638,7 @@ def test_refresh_state_directory_is_never_visible_to_agent_discovery(
     with pytest.raises(OSError, match="simulated interruption"):
         ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
 
-    marker = starters._refresh_marker_path(tmp_path, "v5_dual_team")
+    marker = starters._refresh_marker_path(tmp_path, "v6_roaming_reacquirer")
     assert marker.is_file()
     assert marker.parent != agents_dir
     assert not marker.parent.is_relative_to(agents_dir)

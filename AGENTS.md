@@ -49,6 +49,16 @@ abbreviated.
 - Run the suite with `python -m pytest` — no extra flags required.
   `pytest.ini` already sets `-m "not gui"`, repo-local cache/temp dirs, and
   `testpaths` (`_legacy/tests`, `engine/tests`, `client/tests`).
+- Frozen V6/E9 science is qualified separately from the product. The root
+  `conftest.py` deselects exactly the inventory listed in
+  `tools/qualification/frozen_science_e9.json` (all E9 test modules and
+  eight E8 freeze cases), which `.github/workflows/frozen-science.yml`
+  verifies at the pinned historical snapshot commit. Protected research
+  evidence (`tools/research/v6/`, `docs/research/v6/`, the E9 tests) must stay
+  byte-identical to that snapshot; `test_frozen_science_boundary.py` enforces
+  it. Never edit a frozen test or expected hash, or grow the transfer
+  inventory, to make product CI pass. See
+  [docs/releases/FROZEN_SCIENCE_QUALIFICATION.md](docs/releases/FROZEN_SCIENCE_QUALIFICATION.md).
 - Tests marked `gui` are display-backed and intentionally excluded from the
   headless run; they're exercised by a dedicated CI workflow instead. Don't
   add plain (unmarked) tests that require a display.
@@ -126,7 +136,7 @@ abbreviated.
   API, formats, Spectator, research — per
   [docs/COMPONENT_VERSIONING.md](docs/COMPONENT_VERSIONING.md). Never
   renumber or rename an existing identity to tidy a sequence. Ruleset
-  display names ("Classic", "Active Sensing (Alpha)") live only in
+  display names ("Active Sensing (Alpha)") live only in
   `battle_engine.ruleset_names`, are presentation only, and must never be
   persisted, accepted as input or used for compatibility. Release component
   compatibility is declared once, in `docs/releases/*_COMPATIBILITY.json`,
@@ -135,7 +145,17 @@ abbreviated.
   historical ones above — see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)
   for exactly what stays frozen (API v1, Ruleset v1/v2, schema-3 replays)
   alongside what it adds.
-- **`bytefray-rules-4` is the single executable v4 Ruleset.** It was
+- **`bytefray-rules-6-alpha1` (Active Sensing) is the only product
+  Ruleset.** Classic (`bytefray-rules-4`) was retired after
+  `v5.1.0-alpha.1` (see
+  [docs/releases/CLASSIC_RULESET_RETIREMENT.md](docs/releases/CLASSIC_RULESET_RETIREMENT.md)):
+  it is passive historical metadata, a request naming it is rejected as
+  retired rather than remapped, and an omitted `--ruleset` resolves to
+  Active Sensing. Do not reintroduce Classic execution, a Classic starter
+  in the packaged roster, or a single-option Ruleset control in the
+  Designer. `bytefray-rules-6-research-scale` is field-identical to Classic
+  gameplay and remains a research-only identity; do not promote it.
+- **The retired v4 identities' history.** `bytefray-rules-4` was
   promoted at `v4.0.0-rc1` Phase 2 from `bytefray-rules-4-alpha2`, which
   differed from `bytefray-rules-4-alpha1` in exactly two gameplay
   semantics — seed-derived core placement and round-robin intra-entrant
@@ -146,13 +166,11 @@ abbreviated.
   deterministic vector that starts failing is still an implementation
   defect, never something to re-bless, but the evidence now lives as
   frozen-golden characterizations
-  (`engine/tests/test_v4_stable_ruleset_equivalence.py`,
-  `engine/tests/test_v4_historical_immutability.py`) and committed fixture
-  replays rather than live dual execution. `bytefray-rules-4` is
+  (`engine/tests/test_v4_historical_immutability.py`) and committed fixture
+  replays rather than live dual execution. `bytefray-rules-4` was
   gameplay-identical to what alpha2 used to run (never aliased to it — a
-  fully distinct dispatch/hash/persistence identity) and is what an
-  omitted `--ruleset` resolves to for an Agent API v2 roster; neither
-  alpha remains selectable anywhere. Historical alpha1/alpha2 artifacts
+  fully distinct dispatch/hash/persistence identity); none of the three
+  remains selectable anywhere. Historical alpha1/alpha2 artifacts
   remain fully readable — see
   [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)'s "Retired from execution
   / still recognised" table. See

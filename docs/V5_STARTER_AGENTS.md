@@ -1,5 +1,13 @@
 # The V5 Starter Agents
 
+> **Historical.** These are Classic (`bytefray-rules-4`) agents. Classic was
+> retired after Bytefray 5.1.0-alpha.1, and this development line no longer
+> installs or packages them; their strategies rely on passive enemy
+> visibility, which Active Sensing does not provide. The guide remains for
+> readers of 5.0.0 and 5.1.0-alpha.1. The current starters are the Active
+> Sensing teaching agents (`v6_window_scout`, `v6_watchful_keeper`,
+> `v6_roaming_reacquirer`). See [releases/CLASSIC_RULESET_RETIREMENT.md](releases/CLASSIC_RULESET_RETIREMENT.md).
+
 Bytefray 5 ships four Agent API v2 starter agents. They are a ladder,
 not a roster: each one exists to teach exactly one idea, and each is meant to
 be read straight through in a couple of minutes.

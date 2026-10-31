@@ -8,17 +8,17 @@ from battle_engine import cli, match_service
 
 def _match_arguments(replay: str | Path | None = None) -> list[str]:
     # V6 Phase 2B.12 retired the "writer"/"runner" VM builtins. The
-    # v4_claimer/v4_scout replacements are
+    # v6_window_scout/v6_watchful_keeper replacements are
     # real, discovered Agent API v2 starters that ``cli.main`` bootstraps
     # into the data root automatically via ``ensure_starter_agents`` --
     # they are also this flag's own current defaults, kept explicit here
     # for clarity.
     arguments = [
         "--ticks", "2",
-        "--arena", "128",
-        "--a-type", "v4_claimer",
-        "--b-type", "v4_scout",
-        "--b-start", "64",
+        "--arena", "512",
+        "--a-type", "v6_window_scout",
+        "--b-type", "v6_watchful_keeper",
+        "--b-start", "256",
         "--quiet",
     ]
     if replay is not None:

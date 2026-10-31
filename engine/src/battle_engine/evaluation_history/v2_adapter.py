@@ -141,7 +141,13 @@ def _recomputed_v4_placements(
     for seed in seeds:
         if not isinstance(seed, int) or isinstance(seed, bool):
             continue
-        seat_a, seat_b = resolve_v4_seed_geometry(rules_id, arena_size, seed)
+        try:
+            seat_a, seat_b = resolve_v4_seed_geometry(rules_id, arena_size, seed)
+        except ValueError as exc:
+            raise ArtifactReadError(
+                f"Cannot reconstruct recorded evaluation placements: {exc}",
+                code=HealthCode.INVALID_REQUIRED_FIELDS,
+            ) from exc
         placements.append(seeded_placement_identity_payload(seed, seat_a, seat_b))
     return placements
 

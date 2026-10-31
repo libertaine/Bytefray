@@ -4,8 +4,51 @@ This changelog records notable user- and developer-visible changes to Bytefray.
 
 ## [Unreleased]
 
-Everything below is in the **5.1.0-alpha.1** release candidate (Python
-package `5.1.0a1`). It is not yet published; see the
+### Removed — Classic Ruleset retired (compatibility break)
+
+Active Sensing (Alpha) (`bytefray-rules-6-alpha1`) is now Bytefray's only
+supported Ruleset. Classic (`bytefray-rules-4`) is retired from execution;
+Bytefray 5.1.0-alpha.1 is the last release that runs it and remains the
+recovery baseline. See the
+[retirement record](docs/releases/CLASSIC_RULESET_RETIREMENT.md) and the
+proposed [development compatibility record](docs/releases/BYTEFRAY_DEVELOPMENT_COMPATIBILITY.md).
+
+* **Engine and CLI.** `bytefray-rules-4` is no longer registered for
+  execution. An omitted `--ruleset` (`bytefray run`, `agents test`,
+  `agents validate`, `agents evaluate`, `tournament`, the match service and
+  the process runtime) now means Active Sensing. A request naming
+  `bytefray-rules-4` or another retired Ruleset is rejected with a message
+  saying it is retired and which release still runs it; nothing is silently
+  remapped. The public `resolve_omitted_ruleset_id` compatibility wrapper
+  remains; omitted selection delegates to the Active Sensing resolver and
+  explicit selectors remain unchanged for downstream validation.
+* **Designer.** Simple, Advanced, Development and Evaluation no longer show a
+  Ruleset control; every launch names Active Sensing explicitly and every
+  match requests a trace, so replays open with their delivered-information
+  views. Agents that cannot run are still listed for inspection and
+  disabled, with an explanation.
+* **Agents and packaging.** The ten Classic starters (`v4_*`, `v5_*`) are no
+  longer installed, packaged in the wheel or sdist, or collected into the
+  frozen executables; the starter roster is `v6_window_scout`,
+  `v6_watchful_keeper` and `v6_roaming_reacquirer`. Their sources stay in
+  the tree as the research benchmark population. `agents test` uses Watchful
+  Keeper as its reference opponent, and `bytefray run` defaults to Window
+  Scout against Watchful Keeper.
+* **Evaluation.** Pairwise evaluation runs under Active Sensing with the
+  pinned 512-cell arena and seeded placements (arena alignment
+  `ruleset_v6_alpha1_seeded_placements`). Presets naming a retired Ruleset
+  are rejected as retired.
+* **Unchanged.** The identity and semantics of `bytefray-rules-6-alpha1`,
+  Agent API v2, replay schema 4, result schema 2 and trace schema 2.
+  Historical Classic results and replays remain readable; Active Sensing
+  replays play in the Replay Viewer and export to Spectator as before.
+  Locked E9 research, frozen evidence and research fixtures are untouched;
+  the research-only identities (including `bytefray-rules-6-research-scale`)
+  still run for research tooling.
+
+## [5.1.0-alpha.1] - 2026-10-24
+
+Preview release (Python package `5.1.0a1`, tag `v5.1.0-alpha.1`); see the
 [release notes](docs/releases/BYTEFRAY_5_1_0_ALPHA_1_RELEASE_NOTES.md) and the
 [compatibility record](docs/releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md).
 

@@ -166,7 +166,6 @@ def test_designer_keeps_tab_shell_and_structured_quick_match_layout(monkeypatch,
     assert designer.simple.btnRun.font().bold() is True
     assert designer.simple.btnRun.focusPolicy() != Qt.FocusPolicy.NoFocus
     for text, control in (
-        ("Ruleset", designer.simple.ruleset),
         ("Agent A", designer.simple.agentA),
         ("Agent B", designer.simple.agentB),
         ("Arena Size", designer.simple.gridSize),

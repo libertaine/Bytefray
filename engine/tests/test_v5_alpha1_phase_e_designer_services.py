@@ -76,14 +76,10 @@ def test_the_catalog_carries_each_agents_parsed_schema(tmp_path):
 
     rows = {row.agent_id: row for row in AgentCatalog(tmp_path).list_agents()}
 
-    attacker = agent_parameter_schema(rows["v5_region_attacker"])
-    assert attacker.declaration_order() == ("attacker_reach",)
-    assert attacker.parameters["attacker_reach"].minimum == 10
-    assert "far_sighted" in attacker.preset_names()
-    # Every historical starter stays schema-less, so the Designer keeps
-    # showing it the free-form surface it has always had.
-    assert agent_parameter_schema(rows["v4_scout"]).is_empty
-    assert agent_parameter_schema(rows["v4_claimer"]).is_empty
+    scout = agent_parameter_schema(rows["v6_window_scout"])
+    assert scout.declaration_order() == ("search_interval", "move_step")
+    assert scout.parameters["search_interval"].minimum == 1
+    assert "standard" in scout.preset_names()
 
 
 def test_a_row_built_without_a_schema_still_answers(tmp_path):
@@ -216,7 +212,7 @@ def test_a_vm_agent_with_free_form_parameters_is_not_rejected():
 
 
 def test_an_api_v2_agent_without_a_schema_keeps_free_form_passthrough():
-    """The six ``v4_*`` starters are Agent API v2 and declare no parameters.
+    """An Agent API v2 agent may declare no parameters (a freshly scaffolded one does not).
     Phase D's resolver treats an empty schema as the historical unvalidated
     path, and the Designer must not be stricter than the engine."""
 
@@ -235,15 +231,14 @@ def test_the_shipped_starters_resolve_their_declared_presets(tmp_path):
     ensure_starter_agents(data_root=tmp_path)
     rows = {row.agent_id: row for row in AgentCatalog(tmp_path).list_agents()}
 
-    attacker = agent_parameter_schema(rows["v5_region_attacker"])
+    scout = agent_parameter_schema(rows["v6_window_scout"])
 
-    assert resolve_agent_parameters(attacker) == {"attacker_reach": 16}
-    assert resolve_agent_parameters(attacker, preset="standard") == {"attacker_reach": 16}
-    assert resolve_agent_parameters(attacker, preset="far_sighted") == {"attacker_reach": 32}
+    assert resolve_agent_parameters(scout) == {"search_interval": 4, "move_step": 64}
+    assert resolve_agent_parameters(scout, preset="standard") == {"search_interval": 4, "move_step": 64}
     # The 'standard' preset resolves to exactly the declared defaults, so
     # selecting it exports nothing and cannot move a match identity.
     assert parameter_launch_overrides(
-        attacker, resolve_agent_parameters(attacker, preset="standard")
+        scout, resolve_agent_parameters(scout, preset="standard")
     ) == {}
 
 
@@ -253,7 +248,7 @@ def test_an_unknown_preset_for_a_shipped_starter_is_refused(tmp_path):
 
     with pytest.raises(Exception, match="Unknown parameter preset"):
         resolve_agent_parameters(
-            agent_parameter_schema(rows["v5_core_defender"]), preset="nope"
+            agent_parameter_schema(rows["v6_watchful_keeper"]), preset="nope"
         )
 
 

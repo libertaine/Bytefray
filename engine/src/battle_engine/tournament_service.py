@@ -459,7 +459,7 @@ class TournamentService:
                 # V5 Alpha 1 Post-Release Hardening H1 (FIND-01 sibling):
                 # re-placement must carry the entrant's already-resolved
                 # parameters forward, or every seeded-placement Ruleset
-                # (which includes the permanent, default bytefray-rules-4)
+                # (which includes Active Sensing)
                 # would silently re-derive it back to {} here, undoing
                 # tournament_cli's own resolution before the match ever
                 # runs.

@@ -11,6 +11,11 @@ jobs:
         python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
     steps:
       - uses: actions/checkout@v6
+        with:
+          # Full history: committed research evidence is checked against the
+          # immutable commits it records (git show / rev-parse), and the
+          # protected-evidence guard reads its pinned snapshot commit.
+          fetch-depth: 0
       - uses: actions/setup-python@v6
         with: { python-version: "${{ matrix.python-version }}" }
       - run: python -m pip install -U pip
@@ -25,6 +30,9 @@ jobs:
           if name == 'PySide6' or name.startswith('PySide6.') or name == 'pygame'
           or name.startswith('pygame.')]; assert not forbidden, forbidden"
       - name: Run core and headless tests
+        # The root conftest.py deselects exactly the frozen-science inventory
+        # in tools/qualification/frozen_science_e9.json, which
+        # frozen-science.yml verifies at its historical snapshot instead.
         run: python -m pytest -q -m "not gui"
 
   # Experimental, non-blocking early warning for the *next* CPython
@@ -40,6 +48,8 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v6
         with:
           python-version: '3.15-dev'
@@ -79,7 +89,19 @@ jobs:
         # fast subset (not the full suite, which already runs per-Python-
         # version on Linux) specifically to get real Windows containment
         # coverage from a runner that's already provisioned for this job.
-        run: python -m pytest engine/tests/test_process_containment.py engine/tests/test_agent_worker.py engine/tests/test_supervised_runtime.py -q
+        # Phase 2B.12 removed test_supervised_runtime.py with the retired
+        # API-v1 controller. API-v2 supervision is covered by validation,
+        # development-test forfeits, process-runtime integration (including
+        # cleanup of already-started workers after a later startup failure),
+        # and the Active Sensing direct/worker parity tests instead.
+        run: >-
+          python -m pytest
+          engine/tests/test_process_containment.py
+          engine/tests/test_agent_worker.py
+          engine/tests/test_agent_validation.py
+          engine/tests/test_agent_test.py
+          engine/tests/test_process_runtime_integration.py
+          engine/tests/test_v6_alpha_m1_policy_capabilities.py -q
       - name: Run Windows-native agent-revision (NTFS junction) tests
         # Same rationale as above, for a second Windows-only surface: real
         # NTFS directory junctions (mklink /J, which needs no elevation,
@@ -90,9 +112,17 @@ jobs:
         # bug in that module had no CI coverage on any Windows runner,
         # only on Linux where the relevant code path never executes.
         run: python -m pytest engine/tests/test_agent_revisions.py engine/tests/test_agent_evaluation_revision_capture.py -q
+      # The EXEs are built the way a release is: CPython 3.13 with every
+      # dependency pinned by tools/windows-build-constraints.txt (the
+      # 5.1.0-alpha.1 qualified set, PySide6/Qt 6.11.2), so the bundled
+      # components are exactly those tools/third_party_notices covers. An
+      # unpinned build resolves the newest PySide6 and correctly fails notice
+      # collection. The tests above stay on the 3.10 runtime floor.
+      - uses: actions/setup-python@v6
+        with: { python-version: '3.13' }
       - name: Build EXEs
         shell: pwsh
-        run: pwsh tools/build_win.ps1
+        run: pwsh tools/build_win.ps1 -Constraints tools/windows-build-constraints.txt
       - name: Upload artifacts
         uses: actions/upload-artifact@v6
         with:

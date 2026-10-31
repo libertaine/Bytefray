@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+from copy import deepcopy
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -17,11 +19,21 @@ from typing import Any
 import battle_engine.agent_evaluation as evaluation
 import battle_engine.evaluation_planning as planning
 import pytest
-from battle_engine.evaluation_history import HealthCode
+from battle_engine.evaluation_history import ArtifactReadError, HealthCode
 from battle_engine.evaluation_history.v2_adapter import adapt_v2
 from battle_engine.evaluation_identity import build_evaluation_id
-from battle_engine.rules import BYTEFRAY_RULESET_ID, BYTEFRAY_RULESET_V4_ID
-from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V2_ID
+from battle_engine.placement import resolve_direct_match_starts
+from battle_engine.rules import (
+    BYTEFRAY_RULESET_ID,
+    BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
+)
+from battle_engine.ruleset_policy import (
+    BYTEFRAY_RULESET_V2_ID,
+    PROCESS_RULESET_IDS,
+    UnknownRulesetError,
+    resolve_ruleset_policy,
+)
 
 
 def _reference_stable_id(prefix: str, payload: dict[str, Any]) -> str:
@@ -321,10 +333,8 @@ def test_cross_version_evaluation_identity_golden_and_history_agreement(
         == expected
     )
 
-    # Only v7 is a currently executable producer recipe.  Versions 2-6 are
-    # checked as independently specified historical artifacts; calling the
-    # producer's unreachable retired-Ruleset/group branches here would turn
-    # dead execution plumbing into a compatibility promise.
+    # Reconstruct the historical v7 identity without executing its retired
+    # Ruleset. Older versions are checked as independently specified artifacts.
     if version == 7:
         request = _request_for_version(version, tmp_path / f"producer-v{version}")
         producer_id = evaluation.EvaluationService()._evaluation_id(
@@ -340,6 +350,69 @@ def test_cross_version_evaluation_identity_golden_and_history_agreement(
         _artifact_from_payload(version, payload, expected),
     )
     assert HealthCode.PLANNED_IDENTITY_INCONSISTENT not in summary.health.codes
+
+
+def test_active_sensing_identity_and_history_are_separate_from_classic(tmp_path: Path) -> None:
+    payload = deepcopy(_identity_payloads()[7])
+    payload["rules_compatibility_id"] = BYTEFRAY_RULESET_V6_ALPHA1_ID
+    payload["arena_alignment_mode"] = "ruleset_v6_alpha1_seeded_placements"
+    expected = "evaluation-v2_bd5631fe18b5eb64850236f0"
+    assert _reference_stable_id("evaluation-v2", payload) == expected
+    assert expected != EXPECTED_EVALUATION_IDS[7]
+    request = replace(
+        _request_for_version(7, tmp_path / "current"), ruleset_id=BYTEFRAY_RULESET_V6_ALPHA1_ID
+    )
+    assert replace(request, ruleset_id=None).resolved_rules_compatibility_id == BYTEFRAY_RULESET_V6_ALPHA1_ID
+    for current in (request, replace(request, ruleset_id=None)):
+        assert evaluation.EvaluationService()._evaluation_id(
+            current, _identities(local=True), _conditions_model(payload)
+        ) == expected
+    summary = _write_and_adapt(
+        tmp_path, "current-history", _artifact_from_payload(7, payload, expected)
+    )
+    assert HealthCode.PLANNED_IDENTITY_INCONSISTENT not in summary.health.codes
+
+
+def test_historical_geometry_does_not_authorize_classic_execution(tmp_path: Path) -> None:
+    request = _request_for_version(7, tmp_path / "must-not-run")
+    for _ in range(2):
+        assert planning.resolve_v4_seed_geometry(BYTEFRAY_RULESET_V4_ID, 512, 1) == (380, 263)
+        with pytest.raises(UnknownRulesetError, match="retired"):
+            resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ID)
+        with pytest.raises(evaluation.EvaluationConfigurationError, match="retired"):
+            evaluation.EvaluationService().run(request)
+        assert not request.output_dir.exists()
+
+
+@pytest.mark.parametrize("ruleset", sorted(PROCESS_RULESET_IDS))
+def test_recorded_geometry_agrees_with_every_retained_match_policy(ruleset: str) -> None:
+    for arena_size in (256, 512, 1024):
+        for seed in (0, 1, 3, 7, 42):
+            assert planning.resolve_v4_seed_geometry(ruleset, arena_size, seed) == resolve_direct_match_starts(
+                ruleset_id=ruleset, arena_size=arena_size, entrant_count=2,
+                supplied_starts=(None, None), seed=seed,
+            )
+
+
+@pytest.mark.parametrize("arena_size", [0, -1])
+def test_invalid_recorded_arena_fails_explicitly(tmp_path: Path, arena_size: int) -> None:
+    payload = deepcopy(_identity_payloads()[7])
+    payload["effective_conditions"]["arena_size"] = arena_size
+    with pytest.raises(ArtifactReadError, match="must be positive"):
+        _write_and_adapt(tmp_path, "invalid-arena", _artifact_from_payload(7, payload, EXPECTED_EVALUATION_IDS[7]))
+
+
+@pytest.mark.parametrize("ruleset", ["unknown-ruleset", BYTEFRAY_RULESET_ID, "bytefray-rules-4-alpha1"])
+def test_unsupported_recorded_seeded_methodology_is_explicitly_rejected(
+    tmp_path: Path, ruleset: str
+) -> None:
+    with pytest.raises(ValueError, match="no recorded seeded evaluation methodology"):
+        planning.resolve_v4_seed_geometry(ruleset, 512, 1)
+    payload = deepcopy(_identity_payloads()[7])
+    payload["rules_compatibility_id"] = ruleset
+    with pytest.raises(ArtifactReadError, match="Cannot reconstruct") as caught:
+        _write_and_adapt(tmp_path, "unsupported", _artifact_from_payload(7, payload, EXPECTED_EVALUATION_IDS[7]))
+    assert caught.value.code == HealthCode.INVALID_REQUIRED_FIELDS
 
 
 HISTORICAL_CONDITION_IDS = {

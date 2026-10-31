@@ -70,11 +70,12 @@ from battle_engine.python_runtime import (
     diagnose_reset_failure,
 )
 from battle_engine.ruleset_policy import (
-    PUBLIC_EXPERIMENTAL_RULESET_IDS,
-    PUBLIC_STABLE_RULESET_IDS,
-    RULESET_V4,
+    PRODUCT_RULESET_IDS,
+    RULESET_V6_ALPHA1,
     RulesetPolicy,
+    UnknownRulesetError,
     resolve_ruleset_policy,
+    ruleset_argument,
 )
 from battle_engine.supervised_runtime import diagnostic_for_worker_result
 
@@ -276,7 +277,18 @@ def _validate_agent(
             )
         )
 
-    policy = resolve_ruleset_policy(ruleset_id) if ruleset_id is not None else RULESET_V4
+    try:
+        policy = resolve_ruleset_policy(ruleset_id) if ruleset_id is not None else RULESET_V6_ALPHA1
+    except UnknownRulesetError as exc:
+        raise AgentValidationFailedError(
+            RuntimeDiagnostic(
+                code="ruleset_unavailable",
+                stage="configuration",
+                message=_safe_message(exc),
+                agent_id=agent_id,
+                exception_type=type(exc).__name__,
+            )
+        ) from exc
     try:
         preflight_agent_capabilities(
             spec, available=policy.available_capabilities, ruleset_id=policy.ruleset_id
@@ -512,7 +524,7 @@ def _validate_agent_supervised(
     try:
         load_result = handle.load(
             spec, timeout=timeout,
-            ruleset_id=(ruleset_policy or RULESET_V4).ruleset_id,
+            ruleset_id=(ruleset_policy or RULESET_V6_ALPHA1).ruleset_id,
         )
         if load_result.status is not WorkerCallStatus.OK:
             diagnostic = diagnostic_for_worker_result(
@@ -701,8 +713,10 @@ def validate_agent(
     this function's own default is not.
 
     Raises :class:`AgentValidationFailedError` at the first failing stage
-    (discovery, kind, load, reset, or act); returns a
-    :class:`ValidationResult` only if every stage succeeds. Any exception
+    (discovery, configuration, load, reset, declaration, or action); returns a
+    :class:`ValidationResult` only if every stage succeeds. An unavailable
+    explicit Ruleset is reported as ``ruleset_unavailable`` at configuration,
+    before capability preflight or execution. Any exception
     not already one of the typed validation failures (a bug in this
     module, not the agent under test) is caught once here and reported as
     a ``validation_internal_error`` diagnostic rather than propagating
@@ -741,7 +755,8 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("agent_id", help="agent's discovery id to validate")
     parser.add_argument(
-        "--ruleset", choices=sorted(PUBLIC_STABLE_RULESET_IDS | PUBLIC_EXPERIMENTAL_RULESET_IDS),
+        "--ruleset", type=ruleset_argument(PRODUCT_RULESET_IDS),
+        choices=sorted(PRODUCT_RULESET_IDS),
         default=None, help="explicit Ruleset for capability-aware dry-run validation",
     )
     parser.add_argument(

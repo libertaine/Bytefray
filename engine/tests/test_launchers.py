@@ -208,7 +208,7 @@ def test_designer_match_arguments_preserve_simple_and_advanced_options(tmp_path)
         arena=512,
         a_type="alpha",
         b_type="beta",
-        ruleset_id="bytefray-rules-4",
+        ruleset_id="bytefray-rules-6-alpha1",
         alive_w=0.25,
         kill_w=2.5,
         territory_w=0.75,
@@ -221,7 +221,7 @@ def test_designer_match_arguments_preserve_simple_and_advanced_options(tmp_path)
         "--arena", "512",
         "--a-type", "alpha",
         "--b-type", "beta",
-        "--ruleset", "bytefray-rules-4",
+        "--ruleset", "bytefray-rules-6-alpha1",
         "--alive-w", "0.25",
         "--kill-w", "2.5",
         "--territory-w", "0.75",
@@ -239,7 +239,7 @@ def test_designer_match_arguments_forward_optional_third_entrant(tmp_path):
         arena=512,
         a_type="alpha",
         b_type="beta",
-        ruleset_id="bytefray-rules-4",
+        ruleset_id="bytefray-rules-6-alpha1",
         c_type="gamma",
     )
 
@@ -249,7 +249,7 @@ def test_designer_match_arguments_forward_optional_third_entrant(tmp_path):
         "--a-type", "alpha",
         "--b-type", "beta",
         "--c-type", "gamma",
-        "--ruleset", "bytefray-rules-4",
+        "--ruleset", "bytefray-rules-6-alpha1",
     ]
 
 
@@ -261,7 +261,7 @@ def test_designer_match_arguments_omit_third_entrant_by_default():
         arena=512,
         a_type="alpha",
         b_type="beta",
-        ruleset_id="bytefray-rules-4",
+        ruleset_id="bytefray-rules-6-alpha1",
     )
 
     assert "--c-type" not in arguments
@@ -274,7 +274,6 @@ def test_engine_runner_uses_shared_match_builder_and_preserves_config(monkeypatc
     config = engine_commands.RunConfig(
         a_type="alpha",
         b_type="beta",
-        ruleset_id="bytefray-rules-4",
         arena=256,
         ticks=40,
         alive_w=0.5,
@@ -294,7 +293,8 @@ def test_engine_runner_uses_shared_match_builder_and_preserves_config(monkeypatc
         "--replay", str(paths.replay_path),
         "--a-type", "alpha",
         "--b-type", "beta",
-        "--ruleset", "bytefray-rules-4",
+        "--ruleset", "bytefray-rules-6-alpha1",
+        "--trace", str(paths.replay_path.with_name("trace.jsonl")),
         "--alive-w", "0.5",
         "--kill-w", "3.0",
         "--territory-w", "0.25",

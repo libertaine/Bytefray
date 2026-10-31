@@ -84,6 +84,7 @@ def _digest(cells) -> str:
 
 def _request(**kwargs) -> EvaluationRequest:
     base: dict = {
+        "ruleset_id": BYTEFRAY_RULESET_V4_ID,  # Explicit historical methodology.
         "candidate_id": "cand",
         "opponent_ids": ("opp-b", "opp-a", "opp-a"),
         "seeds": (1, 7, 1),

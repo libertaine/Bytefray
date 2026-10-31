@@ -71,6 +71,18 @@ FORBIDDEN_STARTER_IDS = frozenset(
         "strider",
         "wanderer",
         "writer",
+        # Retired from the installed roster with the Classic Ruleset; kept in
+        # the repository only as the research benchmark population.
+        "v4_claimer",
+        "v4_concentrated_attacker",
+        "v4_defender_scout",
+        "v4_local_defender",
+        "v4_quorum",
+        "v4_scout",
+        "v5_core_defender",
+        "v5_dual_team",
+        "v5_region_attacker",
+        "v5_scout_striker",
     }
 )
 EXPECTED_SCRIPTS = {

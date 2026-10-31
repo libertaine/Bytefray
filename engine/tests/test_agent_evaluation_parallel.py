@@ -482,7 +482,7 @@ def test_workers_flag_parses_and_threads_through_cli(matrix_agents: Path, monkey
             str(matrix_agents / "cli-out"),
             "--quiet",
             "--ruleset",
-            "bytefray-rules-4",
+            "bytefray-rules-6-alpha1",
         ]
     )
     assert exit_code == 0

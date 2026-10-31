@@ -202,7 +202,7 @@ def test_live_cli_behavior_block_present_without_baseline(tmp_path: Path, capsys
             "--ticks", "20",
             "--single-orientation",
             "--output", str(tmp_path / "eval-out"),
-            "--ruleset", "bytefray-rules-4",
+            "--ruleset", "bytefray-rules-6-alpha1",
         ]
     )
     out = capsys.readouterr().out

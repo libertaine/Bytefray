@@ -31,7 +31,6 @@ from battle_engine.config import Config
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
 from battle_engine.ruleset_names import (
     ACTIVE_SENSING_DISPLAY_NAME,
-    CLASSIC_DISPLAY_NAME,
     RULESET_DISPLAY_NAMES,
     ruleset_display_name,
     ruleset_name_with_id,
@@ -84,6 +83,7 @@ HISTORICAL_READONLY = {
     "bytefray-rules-2-alpha1",
     "bytefray-rules-2-alpha11",
     "bytefray-rules-3-alpha1",
+    "bytefray-rules-4",
     "bytefray-rules-4-alpha1",
     "bytefray-rules-4-alpha2",
 }
@@ -100,10 +100,11 @@ def test_every_ruleset_identity_constant_keeps_its_exact_spelling() -> None:
     assert constants == EXPECTED_RULESET_IDS
 
 
-def test_ruleset_lifecycle_sets_are_unchanged() -> None:
-    assert rp.PUBLIC_STABLE_RULESET_IDS == {"bytefray-rules-4"}
+def test_ruleset_lifecycle_sets_have_one_product_ruleset() -> None:
+    assert rp.PUBLIC_STABLE_RULESET_IDS == set()
     assert rp.PUBLIC_EXPERIMENTAL_RULESET_IDS == {"bytefray-rules-6-alpha1"}
-    assert rp.OMITTED_RULESET_CANDIDATES == ("bytefray-rules-4",)
+    assert rp.PRODUCT_RULESET_IDS == {"bytefray-rules-6-alpha1"}
+    assert rp.OMITTED_RULESET_CANDIDATES == ("bytefray-rules-6-alpha1",)
     assert rp.HISTORICAL_READONLY_RULESET_IDS == HISTORICAL_READONLY
     assert len(rp.ACTIVE_RESEARCH_RULESET_IDS) == 12
     assert rp.RETIRED_RESEARCH_RULESET_IDS == {
@@ -142,11 +143,13 @@ def test_wire_format_identities_are_unchanged() -> None:
     assert result_model.SUPPORTED_SCHEMA_VERSIONS == (1, 2)
     assert agent_trace.TRACE_SCHEMA == "bytefray.agent_trace"
     assert (agent_trace.TRACE_SCHEMA_VERSION, agent_trace.TRACE_SCHEMA_VERSION_V2) == (1, 2)
-    # Evaluation versions are per methodology: 4 (Ruleset 1), 5/6 (Ruleset 2), 7 (Classic, research).
+    # Evaluation versions are per methodology: 4 (Ruleset 1), 5/6 (Ruleset 2),
+    # 7 (Classic, Active Sensing, research).
     assert evaluation_contracts.SCHEMA_NAME == "bytefray.evaluation"
     assert (evaluation_contracts.SCHEMA_VERSION, evaluation_contracts.IDENTITY_VERSION) == (4, 4)
     assert (evaluation_contracts.SCHEMA_VERSION_V4, evaluation_contracts.IDENTITY_VERSION_V4) == (7, 7)
     assert evaluation_contracts.is_ruleset_v4_methodology("bytefray-rules-4")
+    assert evaluation_contracts.is_ruleset_v4_methodology("bytefray-rules-6-alpha1")
     assert (tournament_service.SCHEMA_NAME, tournament_service.SCHEMA_VERSION) == ("battle2.tournament", 1)
     assert (agent_package.PACKAGE_SCHEMA, agent_package.PACKAGE_SCHEMA_VERSION) == ("bytefray.agent_package", 1)
 
@@ -170,15 +173,13 @@ def test_spectator_presentation_contract_is_unchanged() -> None:
 
 
 def test_display_names_cover_exactly_the_product_offered_rulesets() -> None:
-    assert dict(RULESET_DISPLAY_NAMES) == {
-        "bytefray-rules-4": "Classic",
-        "bytefray-rules-6-alpha1": "Active Sensing (Alpha)",
-    }
+    assert dict(RULESET_DISPLAY_NAMES) == {"bytefray-rules-6-alpha1": "Active Sensing (Alpha)"}
     assert set(RULESET_DISPLAY_NAMES) == PRODUCT_RULESETS
-    assert (CLASSIC_DISPLAY_NAME, ACTIVE_SENSING_DISPLAY_NAME) == ("Classic", "Active Sensing (Alpha)")
-    assert len(set(RULESET_DISPLAY_NAMES.values())) == len(RULESET_DISPLAY_NAMES)
+    assert ACTIVE_SENSING_DISPLAY_NAME == "Active Sensing (Alpha)"
+    # The retired Classic identity keeps no name, so it never reads like a current choice.
+    assert ruleset_display_name("bytefray-rules-4") is None
     with pytest.raises(TypeError):
-        RULESET_DISPLAY_NAMES["bytefray-rules-4-alpha2"] = "Classic"  # type: ignore[index]
+        RULESET_DISPLAY_NAMES["bytefray-rules-4"] = "Classic"  # type: ignore[index]
 
 
 def test_experimental_names_carry_their_stability_and_stable_names_do_not() -> None:
@@ -210,7 +211,7 @@ def test_a_display_name_is_never_accepted_as_a_ruleset_identity(name: str) -> No
 
 
 def test_name_with_id_always_reveals_the_canonical_identity() -> None:
-    assert ruleset_name_with_id("bytefray-rules-4") == "Classic (bytefray-rules-4)"
+    assert ruleset_name_with_id("bytefray-rules-4") == "bytefray-rules-4"
     assert (
         ruleset_name_with_id("bytefray-rules-6-alpha1")
         == "Active Sensing (Alpha) (bytefray-rules-6-alpha1)"
@@ -222,24 +223,9 @@ def test_name_with_id_always_reveals_the_canonical_identity() -> None:
 # --------------------------------------------------------------------------
 
 
-def test_designer_options_keep_identity_order_and_default() -> None:
-    assert ruleset_options.DEFAULT_DESIGNER_RULESET_ID == "bytefray-rules-4"
-    ids = lambda options: [option.ruleset_id for option in options]
-    assert ids(ruleset_options.SIMPLE_RULESET_OPTIONS) == ["bytefray-rules-4"]
-    assert ids(ruleset_options.EVALUATION_RULESET_OPTIONS) == ["bytefray-rules-4"]
-    assert ids(ruleset_options.DESIGNER_RULESET_OPTIONS) == ["bytefray-rules-4", "bytefray-rules-6-alpha1"]
-
-
-def test_designer_labels_use_the_shared_display_names() -> None:
-    assert ruleset_options.RULESET_V4_OPTION.label == "Classic — Recommended"
-    assert ruleset_options.RULESET_V6_ALPHA1_OPTION.label == "Active Sensing (Alpha)"
-    for option in ruleset_options.DESIGNER_RULESET_OPTIONS:
-        assert option.label.startswith(RULESET_DISPLAY_NAMES[option.ruleset_id])
-        assert "V6" not in option.label
-    description = ruleset_options.RULESET_DESCRIPTION
-    assert "Classic (bytefray-rules-4)" in description
-    assert "Active Sensing (Alpha) (bytefray-rules-6-alpha1)" in description
-    assert "V6 alpha1" not in description
+def test_designer_launches_under_the_one_product_identity() -> None:
+    assert ruleset_options.DESIGNER_RULESET_ID == "bytefray-rules-6-alpha1"
+    assert {ruleset_options.DESIGNER_RULESET_ID} == PRODUCT_RULESETS
 
 
 def test_cli_ruleset_choices_and_default_are_canonical_identities(capsys: pytest.CaptureFixture[str]) -> None:
@@ -250,9 +236,9 @@ def test_cli_ruleset_choices_and_default_are_canonical_identities(capsys: pytest
         cli.parse_args(["--help"])
     # argparse wraps at hyphens, so rejoin "bytefray-rules-6-" + "alpha1".
     text = re.sub(r"-\s+", "-", " ".join(capsys.readouterr().out.split()))
-    assert "{bytefray-rules-4,bytefray-rules-6-alpha1}" in text
-    assert "bytefray-rules-4 (Classic) is the default" in text
-    assert "bytefray-rules-6-alpha1 is Active Sensing (Alpha)" in text
+    assert "{bytefray-rules-6-alpha1}" in text
+    assert "bytefray-rules-6-alpha1 (Active Sensing (Alpha)) is the only Ruleset" in text
+    assert "Classic" not in text
     assert "V6 alpha1" not in text
 
 
@@ -289,7 +275,9 @@ def _agent(root: Path, name: str, *, sensing: bool) -> AgentSpec:
     return spec
 
 
-@pytest.mark.parametrize("ruleset_id", ["bytefray-rules-4", "bytefray-rules-6-alpha1"])
+@pytest.mark.parametrize(
+    "ruleset_id", ["bytefray-rules-6-alpha1", "bytefray-rules-6-research-scale"]
+)
 def test_match_artifacts_record_the_exact_identity_and_no_display_name(tmp_path: Path, ruleset_id: str) -> None:
     sensing = ruleset_id == "bytefray-rules-6-alpha1"
     a = _agent(tmp_path, "a", sensing=sensing)

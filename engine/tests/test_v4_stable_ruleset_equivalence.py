@@ -1,4 +1,12 @@
-"""Frozen-golden characterization of ``bytefray-rules-4``, pinning the
+"""Passive preservation of the 23 original Classic promotion goldens.
+
+Recovered unchanged from f127be70e7ed88449c1b737f4675e1453ec8de45.
+Per-scenario hashes pin every digest and outcome field without running Classic.
+This preserves evidence, not live equivalence qualification.
+
+Original live-guard provenance follows (historical):
+
+Frozen-golden characterization of ``bytefray-rules-4``, pinning the
 Alpha2-vs-stable gameplay equivalence proven release-blocking at
 v4.0.0-rc1 Phase 2.
 
@@ -77,190 +85,9 @@ from __future__ import annotations
 
 import hashlib
 import json
-import shutil
-import sys
-from dataclasses import asdict, replace
-from pathlib import Path
 from typing import Any
 
 import pytest
-from battle_engine.agent_api import AgentManifestError
-from battle_engine.agents import agent_spec_from_dir, resolve_agent
-from battle_engine.config import Config
-from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
-from battle_engine.placement import resolve_direct_match_starts
-from battle_engine.replay import MatchResult, ReplayHeader, TickSnapshot, iter_replay
-from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
-STARTER_SOURCE_DIRS = (
-    REPO_ROOT / "agents",
-    REPO_ROOT / "engine" / "src" / "battle_engine" / "data" / "starter_agents",
-)
-
-
-def _is_usable_agent_source(path: Path) -> bool:
-    """Whether ``path`` is a directory ``resolve_agent`` could actually load.
-
-    Mirrors the real discovery/resolution check (``agent_spec_from_dir``,
-    the same one ``discover_agents_in``/``resolve_agent`` use) instead of a
-    bare ``is_dir()`` -- a stale, emptied local ``agents/<name>`` (e.g. only
-    a leftover ``__pycache__``) satisfies ``is_dir()`` but must not shadow
-    the correct bundled fallback. A directory whose manifest fails to parse
-    is likewise treated as unusable rather than propagating the error here:
-    this is only a source *candidate* selection, not the final load.
-    """
-
-    try:
-        return agent_spec_from_dir(path) is not None
-    except AgentManifestError:
-        return False
-
-
-def _bootstrap_agent(tmp_path: Path, name: str) -> None:
-    """Copy a real, repository-tracked agent into an isolated data root.
-
-    Never a hand-built fixture: these are the actual bundled v4 starters
-    (``engine/src/battle_engine/data/starter_agents/``) and the actual
-    adapted-Alpha2 reference agents this repository ships under
-    ``agents/`` -- copied, not rewritten, so what runs here is exactly what
-    a user's own installation would run.
-    """
-
-    dest = tmp_path / "agents" / name
-    if dest.exists():
-        return
-    for source_root in STARTER_SOURCE_DIRS:
-        source = source_root / name
-        if _is_usable_agent_source(source):
-            shutil.copytree(source, dest)
-            return
-    raise FileNotFoundError(f"no source found for agent {name!r} under {STARTER_SOURCE_DIRS}")
-
-
-def _seat_label(index: int) -> str:
-    return chr(ord("A") + index)
-
-
-def _run_stable(
-    tmp_path: Path,
-    entrant_names: tuple[str, ...],
-    *,
-    arena_size: int,
-    seed: int,
-    ticks: int,
-    run_label: str,
-) -> Path:
-    """Run one match under stable ``bytefray-rules-4``; return replay_path.
-
-    Starts are always omitted (resolved by this call through the identical
-    production ``placement.resolve_direct_match_starts`` seam ``bytefray
-    run`` uses) -- never precomputed once and reused, so this exercises
-    the real resolution path rather than assuming its output.
-    """
-
-    specs = tuple(resolve_agent(tmp_path, name) for name in entrant_names)
-    starts = resolve_direct_match_starts(
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
-        arena_size=arena_size,
-        entrant_count=len(entrant_names),
-        supplied_starts=[None] * len(entrant_names),
-        seed=seed,
-    )
-    entrants = tuple(
-        MatchEntrant.python(_seat_label(i), name, starts[i], spec)
-        for i, (name, spec) in enumerate(zip(entrant_names, specs, strict=True))
-    )
-    run_dir = tmp_path / "runs" / run_label
-    run_dir.mkdir(parents=True)
-    replay_path = run_dir / "replay.jsonl"
-    request = MatchRequest(
-        config=Config(seed=seed, arena_size=arena_size, instr_per_tick=8),
-        entrants=entrants,
-        max_ticks=ticks,
-        replay_path=replay_path,
-        verbose=False,
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
-    )
-    result = NativeMatchService().run(request)
-    assert result.result_path is not None
-    return replay_path
-
-
-def _canonical_snapshot(replay_path: Path) -> dict[str, Any]:
-    """Parse one replay into a JSON-serializable snapshot with every
-    identity-bearing field nulled out -- the exact shape the frozen alpha2
-    golden values were captured from, so the two sides are comparable."""
-
-    header: ReplayHeader | None = None
-    ticks: list[TickSnapshot] = []
-    result: MatchResult | None = None
-    for record in iter_replay(replay_path):
-        if isinstance(record, ReplayHeader):
-            header = replace(record, replay_id=None, match_id=None, result_id=None, ruleset_id=None)
-        elif isinstance(record, TickSnapshot):
-            ticks.append(record)
-        elif isinstance(record, MatchResult):
-            result = replace(record, replay_id=None, match_id=None, result_id=None)
-    assert header is not None, f"{replay_path}: no header record"
-    assert result is not None, f"{replay_path}: no terminal result record"
-    return {
-        "header": asdict(header),
-        "ticks": [asdict(tick) for tick in ticks],
-        "result": asdict(result),
-    }
-
-
-def _snapshot_digest(snapshot: dict[str, Any]) -> str:
-    encoded = json.dumps(snapshot, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
-
-
-def _raw_header(replay_path: Path) -> ReplayHeader:
-    return next(r for r in iter_replay(replay_path) if isinstance(r, ReplayHeader))
-
-
-def _raw_result(replay_path: Path) -> MatchResult:
-    return next(r for r in iter_replay(replay_path) if isinstance(r, MatchResult))
-
-
-def _assert_matches_frozen_golden(
-    replay_path: Path, scenario_key: str, *, ticks_expected: int | None = None
-) -> None:
-    expected = EXPECTED[scenario_key]
-    snapshot = _canonical_snapshot(replay_path)
-    digest = _snapshot_digest(snapshot)
-    assert digest == expected["digest"], (
-        f"{scenario_key}: stable bytefray-rules-4 gameplay diverged from the frozen "
-        "pre-retirement alpha2 golden -- tick-by-tick behavior, terminal result, or "
-        "header content no longer matches what was proven equivalent before alpha2 "
-        "was retired"
-    )
-    raw_result = _raw_result(replay_path)
-    assert raw_result.ticks == expected["ticks_run"]
-    assert raw_result.termination_reason == expected["termination_reason"]
-    assert raw_result.winner == expected["winner"]
-    assert len(snapshot["ticks"]) > 0, "corpus sanity: a match that never ticked proves nothing"
-    if ticks_expected is not None:
-        assert raw_result.ticks == ticks_expected
-
-    # Identity-bearing field: the control's own raw header must legitimately
-    # carry its own ID -- never alpha2's (which can no longer execute at all
-    # to produce a live comparison value; see the negative execution tests
-    # in test_v6_phase2b10_scope_b_retirement.py for that side of the proof).
-    raw_header = _raw_header(replay_path)
-    assert raw_header.ruleset_id == BYTEFRAY_RULESET_V4_ID
-
-
-# ---------------------------------------------------------------------------
-# EXPECTED -- frozen from bytefray-rules-4-alpha2's last passing run against
-# this exact scenario corpus, at commit 8244e6b588397206d482ddaf2245201f5f09d80d,
-# immediately before Phase 2B.10 Scope B removed alpha2's executable
-# registration. Each digest covers the complete nulled-identity replay
-# header, full tick sequence, and terminal result; the summary fields exist
-# only to make a mismatch diagnosable without recomputing the digest by
-# hand.
-# ---------------------------------------------------------------------------
 
 EXPECTED: dict[str, dict[str, Any]] = {
     "grid-256-0": {
@@ -404,240 +231,35 @@ EXPECTED: dict[str, dict[str, Any]] = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Arena size x seed grid (2 entrants, single-process short/medium-reach
-# starters -- the baseline pairing every other dimension is varied against)
-# ---------------------------------------------------------------------------
-
-BASELINE_PAIR = ("v4_claimer", "v4_scout")
-
-
-@pytest.mark.parametrize("arena_size", [256, 512, 1024])
-@pytest.mark.parametrize("seed", [0, 1, 3, 7, 42])
-def test_stable_v4_matches_frozen_golden_across_arena_and_seed_grid(
-    tmp_path: Path, arena_size: int, seed: int
-):
-    for name in BASELINE_PAIR:
-        _bootstrap_agent(tmp_path, name)
-    key = f"grid-{arena_size}-{seed}"
-    replay_path = _run_stable(
-        tmp_path, BASELINE_PAIR, arena_size=arena_size, seed=seed, ticks=300, run_label=key
-    )
-    _assert_matches_frozen_golden(replay_path, key)
-
-
-# ---------------------------------------------------------------------------
-# Entrant count: 3 and 4 (2 is already covered by the grid above)
-# ---------------------------------------------------------------------------
-
-
-def test_stable_v4_matches_frozen_golden_with_three_entrants(tmp_path: Path):
-    names = ("v4_claimer", "v4_scout", "v4_local_defender")
-    for name in names:
-        _bootstrap_agent(tmp_path, name)
-    replay_path = _run_stable(tmp_path, names, arena_size=512, seed=7, ticks=300, run_label="three-entrant")
-    _assert_matches_frozen_golden(replay_path, "three-entrant")
+FROZEN_RECORD_SHA256 = {
+    "grid-256-0": "be98104e8a1595c47286e4bc108f941ddfa7cfa303d19198b4e18df437bc8746",
+    "grid-256-1": "f9e2b49240d61bd5c00ec8f069fc5bfaf91fb717d8ac0603445cf34897f77bcb",
+    "grid-256-3": "a7fccffc68ce54d7a57e1aa7edc2ebcad78896ed76995f3c114da66c233b1b91",
+    "grid-256-7": "837305d129d2785314b22a486c47450b20625bfcc08cf1c5813138b868bc1571",
+    "grid-256-42": "0cf6b9b7c2ef1f46900f38a66024c60cdf33cce34cb74a5b0bce737729a6ddd6",
+    "grid-512-0": "a3006b5fd89f791a49c9585567a5b1a6bed587d3290facd314738b4499a72af5",
+    "grid-512-1": "68adbd97ed658bcdbfe2ab0419392e9d1894f8ad53e003f2c2594d3e4313566a",
+    "grid-512-3": "c413ee825d6b0e90f9291b946ef98b377e536e9c59e506bdb519ec0866cb6baa",
+    "grid-512-7": "751b38487ccd3292036338f810554caf194da39e07a8d14bc5cdcb6f0d466db8",
+    "grid-512-42": "1a130ff1bf5e51588ba85bdfaac93bc46af7f6fc065cf139536438468af433db",
+    "grid-1024-0": "b0794ca6ec4a8b54089990da5fe42fabadad8e961526f68411b7222ad3fb8bc3",
+    "grid-1024-1": "b4d96cae5cc6b969cc5a05149993fdeb9935b800ffa8711302d061c53f54e0e5",
+    "grid-1024-3": "df1f3c817725559bc5c155e9839ad80ac8f2d5599f008b9339fa9d16019d76dd",
+    "grid-1024-7": "575a87f45dc33f99b3a3e38209e0a9320afc8f8d2d09edb2c653e34739fccaa6",
+    "grid-1024-42": "2448a50685c9a2801a54bf74fd5fd0fe02a1d833887a4bb5ae9d0a872048002e",
+    "three-entrant": "18e7d161c016090b46382a9c21a0cb722a285ce6f769306972e7f0fbf102ebbc",
+    "four-entrant": "1f6620164b17faa2c07c0ba0659eb9bb973966d6edbed331d4cf63de763b23bf",
+    "hydra-nemesis-512-0": "60437a4952f7b83c6b25fc3d65cae3194fb4e5a65ae0d804e64158692b4f8657",
+    "hydra-nemesis-512-7": "2beb3fb8de0cfeb1ec5b5b62472f8c6665110ac340c31d4a27834daeb3d47070",
+    "hydra-nemesis-1024-0": "da920f89a04ad755b8251a97e0eacb01531587806d813241e81e9eb9fd335f97",
+    "hydra-nemesis-1024-7": "cae688cae3416aa00ee775390ee0b354d6d6e79b0b45be8d1b08adf2aa7ba876",
+    "multiproc-vs-singleproc": "ea9a24e5f2701dc39cc0e5d0b7173d3c81ad3069e4bd3af6f610a22680761e1f",
+    "ticklimit": "08703575e23f081efe726f57b6b2cf1f20c0e66175bd287161f3e5d3cfdafce4"
+}
 
 
-def test_stable_v4_matches_frozen_golden_with_four_entrants_including_a_multi_process_agent(
-    tmp_path: Path,
-):
-    """v4_defender_scout (multi-process: a reach-2 defender and a reach-8
-    scout sharing one entrant's quota) is included specifically to exercise
-    quota allocation/redistribution across multiple own processes at N=4."""
-
-    names = ("v4_claimer", "v4_scout", "v4_local_defender", "v4_defender_scout")
-    for name in names:
-        _bootstrap_agent(tmp_path, name)
-    replay_path = _run_stable(tmp_path, names, arena_size=512, seed=0, ticks=300, run_label="four-entrant")
-    _assert_matches_frozen_golden(replay_path, "four-entrant")
-
-
-# ---------------------------------------------------------------------------
-# Multi-process, disruption, and large-reach coverage: the adapted Alpha2
-# reference agents named by the original governing task.
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.parametrize("arena_size", [512, 1024])
-@pytest.mark.parametrize("seed", [0, 7])
-def test_stable_v4_matches_frozen_golden_for_hydra_vs_nemesis(tmp_path: Path, arena_size: int, seed: int):
-    """hydra_alpha2 (4 processes, 3 at global/large reach) vs nemesis_alpha2
-    (3 processes, including a process literally named "disruptor") --
-    real, adapted-Alpha2 multi-process agents exercising large reach,
-    process eligibility/selection order under real contention, and
-    disruption, at two arena scales."""
-
-    names = ("hydra_alpha2", "nemesis_alpha2")
-    for name in names:
-        _bootstrap_agent(tmp_path, name)
-    key = f"hydra-nemesis-{arena_size}-{seed}"
-    replay_path = _run_stable(tmp_path, names, arena_size=arena_size, seed=seed, ticks=1000, run_label=key)
-    _assert_matches_frozen_golden(replay_path, key)
-
-
-def test_stable_v4_matches_frozen_golden_with_multi_process_vs_single_process_attacker(tmp_path: Path):
-    """v4_defender_scout (multi-process) vs v4_concentrated_attacker
-    (single-process, reach=4) -- a second, independent multi-process
-    pairing distinct from hydra/nemesis, at a generous tick budget so
-    contact and likely core capture are both exercised."""
-
-    names = ("v4_defender_scout", "v4_concentrated_attacker")
-    for name in names:
-        _bootstrap_agent(tmp_path, name)
-    replay_path = _run_stable(
-        tmp_path, names, arena_size=512, seed=3, ticks=1000, run_label="multiproc-vs-singleproc"
-    )
-    _assert_matches_frozen_golden(replay_path, "multiproc-vs-singleproc")
-
-
-# ---------------------------------------------------------------------------
-# Termination-reason coverage: tick-limit specifically (the grid above and
-# the hydra/nemesis pairing already produce a mix of last_agent_standing/
-# all_agents_dead/tick_limit matches organically; this pins tick_limit
-# deliberately so it is never left to chance).
-# ---------------------------------------------------------------------------
-
-
-def test_stable_v4_matches_frozen_golden_at_tick_limit_termination(tmp_path: Path):
-    """Two short-reach defenders at a tiny tick budget essentially never
-    find each other -- forces TICK_LIMIT termination deterministically, so
-    that termination reason/tick count are compared under this specific
-    path too, not only under decisive-outcome matches."""
-
-    _bootstrap_agent(tmp_path, "v4_local_defender")
-    # Two independent copies under different discovery ids, since a match
-    # cannot field the same agent id in two seats.
-    twin_dir = tmp_path / "agents" / "v4_local_defender_twin"
-    shutil.copytree(tmp_path / "agents" / "v4_local_defender", twin_dir)
-    (twin_dir / "agent.yaml").write_text(
-        (twin_dir / "agent.yaml").read_text(encoding="utf-8").replace(
-            "v4_local_defender", "v4_local_defender_twin"
-        ),
-        encoding="utf-8",
-    )
-
-    replay_path = _run_stable(
-        tmp_path,
-        ("v4_local_defender", "v4_local_defender_twin"),
-        arena_size=1024,
-        seed=1,
-        ticks=15,
-        run_label="ticklimit",
-    )
-    _assert_matches_frozen_golden(replay_path, "ticklimit", ticks_expected=15)
-
-
-# ---------------------------------------------------------------------------
-# Bytefray V6 Phase 2B.1 -- regression coverage for _bootstrap_agent()'s
-# starter-source validity check (docs/research/v6/V6_PHASE1_REPOSITORY_DIET
-# _AUDIT.md Sec 8.2). Every case below would have passed silently on a
-# stale/emptied higher-priority source directory before this fix, exactly
-# reproducing the V6 Phase 0 failure at the site Phase 1 traced it to --
-# entirely against isolated tmp_path fixtures, never the developer's real
-# gitignored agents/ catalog. Unaffected by the Phase 2B.10 conversion:
-# these never touch ruleset execution.
-# ---------------------------------------------------------------------------
-
-
-def test_bootstrap_agent_skips_stale_cache_only_source_and_falls_through(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
-    """A higher-priority source candidate that satisfies ``is_dir()`` but
-    holds only a stale ``__pycache__`` (the exact Phase 0 shape) must not
-    shadow a genuinely valid lower-priority fallback."""
-
-    primary_root = tmp_path / "sources" / "primary"
-    (primary_root / "v4_fake" / "__pycache__").mkdir(parents=True)
-    (primary_root / "v4_fake" / "__pycache__" / "agent.cpython-313.pyc").write_bytes(b"\x00")
-
-    secondary_root = tmp_path / "sources" / "secondary"
-    (secondary_root / "v4_fake").mkdir(parents=True)
-    (secondary_root / "v4_fake" / "agent.yaml").write_text('{"name": "v4_fake"}', encoding="utf-8")
-    (secondary_root / "v4_fake" / "agent.py").write_text(
-        "def create_agent(**_kwargs):\n    raise NotImplementedError\n", encoding="utf-8"
-    )
-
-    monkeypatch.setattr(
-        sys.modules[__name__], "STARTER_SOURCE_DIRS", (primary_root, secondary_root)
-    )
-
-    data_root = tmp_path / "data_root"
-    _bootstrap_agent(data_root, "v4_fake")
-
-    installed = data_root / "agents" / "v4_fake"
-    assert (installed / "agent.yaml").is_file()
-    assert (installed / "agent.py").is_file()
-
-
-def test_bootstrap_agent_prefers_a_valid_first_candidate(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
-    """The ordinary case is unaffected by the fix: a genuinely valid
-    higher-priority source is still preferred over a valid fallback."""
-
-    primary_root = tmp_path / "sources" / "primary"
-    (primary_root / "v4_fake").mkdir(parents=True)
-    (primary_root / "v4_fake" / "agent.yaml").write_text(
-        '{"name": "v4_fake", "note": "primary"}', encoding="utf-8"
-    )
-
-    secondary_root = tmp_path / "sources" / "secondary"
-    (secondary_root / "v4_fake").mkdir(parents=True)
-    (secondary_root / "v4_fake" / "agent.yaml").write_text(
-        '{"name": "v4_fake", "note": "secondary"}', encoding="utf-8"
-    )
-
-    monkeypatch.setattr(
-        sys.modules[__name__], "STARTER_SOURCE_DIRS", (primary_root, secondary_root)
-    )
-
-    data_root = tmp_path / "data_root"
-    _bootstrap_agent(data_root, "v4_fake")
-
-    installed_manifest = (data_root / "agents" / "v4_fake" / "agent.yaml").read_text(
-        encoding="utf-8"
-    )
-    assert "primary" in installed_manifest
-
-
-def test_bootstrap_agent_raises_when_no_candidate_is_usable(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
-    """Every candidate invalid (one empty, one entirely absent) must still
-    fail loudly rather than silently copying unusable content."""
-
-    primary_root = tmp_path / "sources" / "primary"
-    (primary_root / "v4_fake").mkdir(parents=True)
-    secondary_root = tmp_path / "sources" / "secondary"  # never created
-
-    monkeypatch.setattr(
-        sys.modules[__name__], "STARTER_SOURCE_DIRS", (primary_root, secondary_root)
-    )
-
-    with pytest.raises(FileNotFoundError):
-        _bootstrap_agent(tmp_path / "data_root", "v4_fake")
-
-
-def test_bootstrap_agent_never_touches_an_existing_destination(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
-    """A destination that already has content -- whatever its origin -- is
-    never inspected or overwritten; only a wholly missing destination
-    triggers a source copy. This is the pre-existing safety property the
-    fix must not weaken."""
-
-    primary_root = tmp_path / "sources" / "primary"
-    (primary_root / "v4_fake").mkdir(parents=True)
-    (primary_root / "v4_fake" / "agent.yaml").write_text('{"name": "v4_fake"}', encoding="utf-8")
-
-    monkeypatch.setattr(sys.modules[__name__], "STARTER_SOURCE_DIRS", (primary_root,))
-
-    data_root = tmp_path / "data_root"
-    dest = data_root / "agents" / "v4_fake"
-    dest.mkdir(parents=True)
-    (dest / "agent.yaml").write_text('{"name": "v4_fake", "user_edited": true}', encoding="utf-8")
-
-    _bootstrap_agent(data_root, "v4_fake")
-
-    assert "user_edited" in (dest / "agent.yaml").read_text(encoding="utf-8")
+@pytest.mark.parametrize("scenario", tuple(EXPECTED))
+def test_original_promotion_record_is_preserved(scenario: str) -> None:
+    assert len(EXPECTED) == 23
+    encoded = json.dumps(EXPECTED[scenario], sort_keys=True, separators=(",", ":")).encode()
+    assert hashlib.sha256(encoded).hexdigest() == FROZEN_RECORD_SHA256[scenario]

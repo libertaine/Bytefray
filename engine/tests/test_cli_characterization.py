@@ -69,7 +69,7 @@ def test_engine_cli_starts_and_displays_current_help():
     assert "usage: bytefray run" in result.stdout
     assert "--list-agents" in result.stdout
     assert "--quota" in result.stdout
-    assert "--ruleset {bytefray-rules-4,bytefray-rules-6-alpha1}" in result.stdout
+    assert "--ruleset {bytefray-rules-6-alpha1}" in result.stdout
     for retired_surface in (
         "--mode",
         "redcode94",
@@ -83,8 +83,8 @@ def test_engine_cli_starts_and_displays_current_help():
         "--rounds",
         "bytefray-rules-1",
         "bytefray-rules-2",
-        "bytefray-rules-4-alpha1",
-        "bytefray-rules-4-alpha2",
+        "bytefray-rules-4",
+        "Classic",
     ):
         assert retired_surface not in result.stdout
 
@@ -97,15 +97,15 @@ def test_cli_creates_current_replay_and_summary_json(tmp_path):
         "--ticks",
         "3",
         "--arena",
-        "128",
+        "512",
         "--seed",
         "7",
         "--a-type",
-        "v4_claimer",
+        "v6_window_scout",
         "--b-type",
-        "v4_scout",
+        "v6_watchful_keeper",
         "--b-start",
-        "64",
+        "256",
         "--replay",
         str(replay),
         "--quiet",
@@ -118,20 +118,20 @@ def test_cli_creates_current_replay_and_summary_json(tmp_path):
     assert records[0]["schema"] == "battle2.replay"
     assert records[0]["schema_version"] == 4
     assert records[0]["record_type"] == "header"
-    assert records[0]["ruleset_id"] == "bytefray-rules-4"
+    assert records[0]["ruleset_id"] == "bytefray-rules-6-alpha1"
     assert records[-1]["record_type"] == "result"
     assert canonical["schema"] == "battle2.result"
-    assert canonical["ruleset_id"] == "bytefray-rules-4"
+    assert canonical["ruleset_id"] == "bytefray-rules-6-alpha1"
     assert canonical["replay"]["sha256"]
     assert summary["version"] == 2
     assert summary["mode"] == "b2"
     assert summary["seed"] == 7
     assert summary["params"]["ticks_requested"] == 3
-    assert summary["agents"] == {"A": "v4_claimer", "B": "v4_scout"}
+    assert summary["agents"] == {"A": "v6_window_scout", "B": "v6_watchful_keeper"}
     assert set(summary["score"]) == {"A", "B"}
 
 
-def test_run_omitted_ruleset_resolves_current_v4_for_api_v2_agents(
+def test_run_omitted_ruleset_resolves_active_sensing_for_api_v2_agents(
     tmp_path, monkeypatch
 ):
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
@@ -160,7 +160,7 @@ def test_run_omitted_ruleset_resolves_current_v4_for_api_v2_agents(
     )
     assert result.returncode == 0, result.stderr
     canonical = json.loads((replay.parent / "result.json").read_text())
-    assert canonical["ruleset_id"] == "bytefray-rules-4"
+    assert canonical["ruleset_id"] == "bytefray-rules-6-alpha1"
 
 
 def test_run_omitted_ruleset_rejects_api_v1_without_artifacts(tmp_path, monkeypatch):
@@ -203,6 +203,7 @@ def test_run_omitted_ruleset_rejects_api_v1_without_artifacts(tmp_path, monkeypa
         "bytefray-rules-2",
         "bytefray-rules-4-alpha1",
         "bytefray-rules-4-alpha2",
+        "bytefray-rules-4",
     ),
 )
 def test_retired_ruleset_flags_fail_at_argument_parsing(tmp_path, retired_id):
@@ -218,12 +219,14 @@ def test_retired_ruleset_flags_fail_at_argument_parsing(tmp_path, retired_id):
         cwd=tmp_path,
     )
     assert result.returncode == 2
-    assert "invalid choice" in result.stderr
+    # Named as retired, never remapped to the current Ruleset.
+    assert f"Ruleset '{retired_id}' is retired" in result.stderr
+    assert "5.1.0-alpha.1 still runs it" in result.stderr
     assert "Traceback" not in result.stderr
     assert not replay.exists()
 
 
-def test_ruleset_flag_explicit_v4_python_succeeds(tmp_path, monkeypatch):
+def test_ruleset_flag_explicit_active_sensing_python_succeeds(tmp_path, monkeypatch):
     monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
     _write_python_agent(tmp_path, "alpha_agent", api_version=2)
     _write_python_agent(tmp_path, "beta_agent", api_version=2)
@@ -244,7 +247,7 @@ def test_ruleset_flag_explicit_v4_python_succeeds(tmp_path, monkeypatch):
         "--b-start",
         "64",
         "--ruleset",
-        "bytefray-rules-4",
+        "bytefray-rules-6-alpha1",
         "--replay",
         str(replay),
         "--quiet",
@@ -252,7 +255,7 @@ def test_ruleset_flag_explicit_v4_python_succeeds(tmp_path, monkeypatch):
     )
     assert result.returncode == 0, result.stderr
     canonical = json.loads((replay.parent / "result.json").read_text())
-    assert canonical["ruleset_id"] == "bytefray-rules-4"
+    assert canonical["ruleset_id"] == "bytefray-rules-6-alpha1"
 
 
 def test_ruleset_flag_unknown_value_fails_closed(tmp_path):
@@ -284,5 +287,5 @@ def test_trace_flag_accepts_an_explicit_path():
 def test_trace_flag_omitted_is_none_in_parsed_arguments():
     from battle_engine.cli import parse_args
 
-    args = parse_args(["--a-type", "v4_claimer", "--b-type", "v4_scout"])
+    args = parse_args(["--a-type", "v6_window_scout", "--b-type", "v6_watchful_keeper"])
     assert args.trace is None

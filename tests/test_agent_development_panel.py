@@ -610,27 +610,23 @@ def test_match_selectors_and_development_receive_their_intended_catalogs(
             designer.simple.agentA.itemData(index)
             for index in range(designer.simple.agentA.count())
         }
-        v4_ids = {
+        v2_ids = {
             row.agent_id
             for row in catalog_rows
             if row.meta.get("kind") == "python" and row.meta.get("api_version") == 2
-            and not row.meta.get("capabilities", {}).get("required", [])
         }
-        assert v4_ids, "expected at least one Agent API v2 starter agent"
+        assert v2_ids, "expected at least one Agent API v2 starter agent"
         assert dev_ids == python_ids
         assert dev_ids.isdisjoint(non_python_ids)
-        assert simple_ids == v4_ids
+        assert simple_ids == v2_ids
 
-        # Advanced defaults to the same stable-v4 Ruleset Simple starts on
-        # (DEFAULT_DESIGNER_RULESET_ID, the same canonical choice every
-        # ``populate_ruleset_combo`` call starts on), so its initial roster
-        # is the same v4-compatible set -- not the whole discovered catalog.
+        # Advanced filters through the same compatibility check as Simple,
+        # so its roster is the same Agent API v2 set.
         advanced_ids = {
             designer.advanced.agentA.itemData(index)
             for index in range(designer.advanced.agentA.count())
         }
-        assert advanced_ids == v4_ids
-
-        assert designer.advanced.ruleset.count() == 2
+        assert advanced_ids == v2_ids
+        assert not hasattr(designer.advanced, "ruleset")
     finally:
         designer.deleteLater()

@@ -20,6 +20,7 @@ from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ALPHA1_ID,
     BYTEFRAY_RULESET_V4_ALPHA2_ID,
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ANCHOR_BEFORE_CORE_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_CAPTURE_HOLD_K2_DISRUPTION_SLOT1_MIRRORED_PASSES_ID,
@@ -178,6 +179,12 @@ STANDARD_V2_SEEDS: tuple[int, ...] = (1, 2, 3, 4, 5)
 # "seeded" names what changed -- fixed/imposed placement becomes
 # Ruleset-derived, deterministic placement.
 EVALUATION_ARENA_ALIGNMENT_MODE_V4_SEEDED = "ruleset_v4_seeded_placements"
+
+# Active Sensing's own label for the same 512-cell seeded-placement
+# methodology stable v4 used. Distinct for the reason every research identity
+# below has its own: an Active Sensing artifact must never pass for a Classic
+# one from the mode label alone.
+EVALUATION_ARENA_ALIGNMENT_MODE_V6_ALPHA1_SEEDED = "ruleset_v6_alpha1_seeded_placements"
 
 # A third, additive identity/schema recipe (research report Sec H.1 item 6),
 # used only by an evaluation whose resolved Ruleset is
@@ -386,8 +393,15 @@ _V2_METHODOLOGY_RULESET_IDS: frozenset[str] = frozenset(
 #: place. Alpha2 remains in this *classification* table so historical schema-7
 #: artifacts retain their methodology attribution; new-run validation rejects
 #: that retired identity before execution.
+#:
+#: Since the Classic retirement, Active Sensing (`BYTEFRAY_RULESET_V6_ALPHA1_ID`)
+#: is the one product Ruleset evaluated under this methodology -- 512-cell
+#: arena, seed-derived placement, the standard seed set, identity/schema 7 --
+#: and the only member a new evaluation can select. `bytefray-rules-4` and its
+#: alpha2 source stay listed for historical artifact classification only;
+#: `EvaluationService._validate` rejects both before execution.
 _V4_METHODOLOGY_RULESET_IDS: frozenset[str] = frozenset(
-    {BYTEFRAY_RULESET_V4_ALPHA2_ID, BYTEFRAY_RULESET_V4_ID}
+    {BYTEFRAY_RULESET_V4_ALPHA2_ID, BYTEFRAY_RULESET_V4_ID, BYTEFRAY_RULESET_V6_ALPHA1_ID}
 )
 
 
@@ -408,9 +422,9 @@ def resolve_evaluation_ruleset_id(ruleset_id: str | None) -> str:
     meaning exactly that -- never the current control. This function's
     *new-request* omitted-``--ruleset`` default is a different concern
     (which methodology a *new* evaluation with no explicit selection
-    actually runs under), and now resolves to the retained control
-    ``BYTEFRAY_RULESET_V4_ID`` instead, since ``bytefray-rules-1`` can no
-    longer execute at all. An explicit ``--ruleset`` is still returned
+    actually runs under). It resolved to ``bytefray-rules-4`` until the
+    Classic retirement and now resolves to Active Sensing,
+    ``BYTEFRAY_RULESET_V6_ALPHA1_ID``. An explicit ``--ruleset`` is still returned
     unchanged (normalized), including a historical explicit selection such
     as ``bytefray-rules-4-alpha2`` for reproducing a prerelease methodology
     -- ``EvaluationService._validate`` is what rejects a now-unsupported
@@ -418,7 +432,7 @@ def resolve_evaluation_ruleset_id(ruleset_id: str | None) -> str:
     """
 
     if ruleset_id is None:
-        return BYTEFRAY_RULESET_V4_ID
+        return BYTEFRAY_RULESET_V6_ALPHA1_ID
     return normalize_ruleset_id(ruleset_id)
 
 
@@ -802,6 +816,8 @@ def resolved_arena_alignment_mode(
 def arena_alignment_mode_for_ruleset(rules_compatibility_id: str, group: bool = False) -> str:
     """Consolidated descriptor that resolves the canonical arena_alignment_mode
     directly from a rules_compatibility_id, eliminating per-ruleset positional-boolean errors."""
+    if rules_compatibility_id == BYTEFRAY_RULESET_V6_ALPHA1_ID:
+        return EVALUATION_ARENA_ALIGNMENT_MODE_V6_ALPHA1_SEEDED
     return resolved_arena_alignment_mode(
         is_v2_methodology=is_ruleset_v2_methodology(rules_compatibility_id),
         group=group,

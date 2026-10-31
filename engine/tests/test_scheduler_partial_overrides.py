@@ -23,7 +23,7 @@ from battle_engine.match_service import (
     canonical_match_id,
 )
 from battle_engine.ruleset_policy import (
-    BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     resolve_ruleset_policy,
 )
 
@@ -76,18 +76,18 @@ def _make_match_request(
         ),
         max_ticks=10,
         replay_path=tmp_path / "replay.bfr",
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
         scheduler_chunk_size=scheduler_chunk_size,
         scheduler_rotate_start=scheduler_rotate_start,
     )
 
 
-def test_v4_without_overrides_preserves_policy_and_match_id(tmp_path: Path) -> None:
+def test_control_without_overrides_preserves_policy_and_match_id(tmp_path: Path) -> None:
     req = _make_match_request(tmp_path)
     assert req.scheduler_chunk_size is None
     assert req.scheduler_rotate_start is None
 
-    base_policy = resolve_ruleset_policy(BYTEFRAY_RULESET_V4_ID)
+    base_policy = resolve_ruleset_policy(BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID)
     effective = _effective_ruleset_policy(req)
     assert effective.scheduler_chunk_size == base_policy.scheduler_chunk_size == 2
     assert effective.scheduler_rotate_start == base_policy.scheduler_rotate_start is True
@@ -138,7 +138,7 @@ def test_evaluation_request_partial_overrides(tmp_path: Path) -> None:
         seeds=(1,),
         output_dir=tmp_path / "out1",
         ticks=10,
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     )
     assert req_base.scheduler_chunk_size is None
     assert req_base.scheduler_rotate_start is None
@@ -151,7 +151,7 @@ def test_evaluation_request_partial_overrides(tmp_path: Path) -> None:
         seeds=(1,),
         output_dir=tmp_path / "out2",
         ticks=10,
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
         scheduler_chunk_size=4,
     )
     assert service._scheduler_override(req_chunk) == {
@@ -166,7 +166,7 @@ def test_evaluation_request_partial_overrides(tmp_path: Path) -> None:
         seeds=(1,),
         output_dir=tmp_path / "out3",
         ticks=10,
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
+        ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
         scheduler_rotate_start=False,
     )
     assert service._scheduler_override(req_rotate) == {

@@ -15,18 +15,14 @@ from PySide6.QtWidgets import (
 from app.services.agent_catalog import AgentRow
 from app.services.engine import RunConfig
 from app.services.ruleset_options import (
-    SIMPLE_RULESET_OPTIONS,
-    agent_row_supported_by_ruleset,
+    NO_COMPATIBLE_AGENTS_EXPLANATION,
+    agent_row_supported,
 )
 from app.widgets.agent_combo import (
     repopulate_paired_agent_combos,
     selected_agent_name,
 )
 from app.widgets.designer_presentation import MatchOutputView
-from app.widgets.ruleset_combo import (
-    populate_ruleset_combo,
-    selected_ruleset_id,
-)
 
 GRID_PRESETS = {
     "Small (256)": 256,
@@ -61,28 +57,22 @@ class SimplePanel(QWidget):
         grid.setHorizontalSpacing(12)
         grid.setVerticalSpacing(4)
 
-        ruleset_label = QLabel("Ruleset")
-        self.ruleset = QComboBox()
-        populate_ruleset_combo(self.ruleset, SIMPLE_RULESET_OPTIONS)
-        ruleset_label.setBuddy(self.ruleset)
-        grid.addWidget(ruleset_label, 0, 0)
-        grid.addWidget(self.ruleset, 1, 0, 1, 4)
-
-        self.rulesetExplanation = QLabel()
-        self.rulesetExplanation.setWordWrap(True)
-        grid.addWidget(self.rulesetExplanation, 2, 0, 1, 4)
+        # Shown only when no discovered agent can run.
+        self.compatibilityExplanation = QLabel()
+        self.compatibilityExplanation.setWordWrap(True)
+        grid.addWidget(self.compatibilityExplanation, 0, 0, 1, 4)
 
         agent_a_label = QLabel("Agent A")
         self.agentA = QComboBox()
         agent_a_label.setBuddy(self.agentA)
-        grid.addWidget(agent_a_label, 3, 0)
-        grid.addWidget(self.agentA, 4, 0, 1, 2)
+        grid.addWidget(agent_a_label, 1, 0)
+        grid.addWidget(self.agentA, 2, 0, 1, 2)
 
         agent_b_label = QLabel("Agent B")
         self.agentB = QComboBox()
         agent_b_label.setBuddy(self.agentB)
-        grid.addWidget(agent_b_label, 3, 2)
-        grid.addWidget(self.agentB, 4, 2, 1, 2)
+        grid.addWidget(agent_b_label, 1, 2)
+        grid.addWidget(self.agentB, 2, 2, 1, 2)
 
         arena_size_label = QLabel("Arena Size")
         self.gridSize = QComboBox()
@@ -95,8 +85,8 @@ class SimplePanel(QWidget):
             "conflict sooner."
         )
         arena_size_label.setBuddy(self.gridSize)
-        grid.addWidget(arena_size_label, 5, 0)
-        grid.addWidget(self.gridSize, 6, 0, 1, 2)
+        grid.addWidget(arena_size_label, 3, 0)
+        grid.addWidget(self.gridSize, 4, 0, 1, 2)
 
         ticks_label = QLabel("Ticks")
         self.ticks = QComboBox()
@@ -104,8 +94,8 @@ class SimplePanel(QWidget):
             self.ticks.addItem(str(t), userData=t)
         self.ticks.setCurrentIndex(1)
         ticks_label.setBuddy(self.ticks)
-        grid.addWidget(ticks_label, 5, 2)
-        grid.addWidget(self.ticks, 6, 2, 1, 2)
+        grid.addWidget(ticks_label, 3, 2)
+        grid.addWidget(self.ticks, 4, 2, 1, 2)
         grid.setColumnStretch(0, 2)
         grid.setColumnStretch(1, 2)
         grid.setColumnStretch(2, 1)
@@ -114,10 +104,7 @@ class SimplePanel(QWidget):
 
         # UX-28: Simple stays deliberately 2-agent (UX-27) -- this is the
         # one small, unobtrusive pointer to where a larger roster is
-        # actually configured, not a feature Simple itself gains. Every
-        # Ruleset Simple offers supports a third agent in Advanced (Phase 4
-        # roster ceiling is CLI-derived, not Ruleset-derived), so the hint
-        # can say "Advanced" plainly rather than hedge per Ruleset.
+        # actually configured, not a feature Simple itself gains.
         self.multiAgentHint = QLabel(
             "Simple runs 2-agent matches. Use Advanced to add a third agent."
         )
@@ -171,7 +158,6 @@ class SimplePanel(QWidget):
         self.btnRefresh.clicked.connect(self.refreshAgentsRequested.emit)
         self.agentA.currentIndexChanged.connect(self._on_agent_a_changed)
         self.agentB.currentIndexChanged.connect(self._update_matchup_summary)
-        self.ruleset.currentIndexChanged.connect(self._on_ruleset_changed)
         self._update_matchup_summary()
 
     # API consumed by MainWindow
@@ -182,29 +168,19 @@ class SimplePanel(QWidget):
     def _on_agent_a_changed(self, _index: int) -> None:
         self._update_matchup_summary()
 
-    def _on_ruleset_changed(self, _index: int) -> None:
-        self._refilter_agents()
-
     def _refilter_agents(self) -> None:
-        """Populate both selectors from the current Ruleset's eligible rows."""
+        """Populate both selectors from the agents that can run."""
 
-        ruleset_id = selected_ruleset_id(self.ruleset)
-        eligible = [
-            row
-            for row in self._all_rows
-            if agent_row_supported_by_ruleset(row, ruleset_id)
-        ]
+        eligible = [row for row in self._all_rows if agent_row_supported(row)]
         repopulate_paired_agent_combos(self.agentA, self.agentB, eligible)
 
         self._has_eligible_agents = bool(eligible)
         self.btnRun.setEnabled(self._has_eligible_agents)
+        self.compatibilityExplanation.setVisible(not self._has_eligible_agents)
         if eligible:
-            self.rulesetExplanation.clear()
+            self.compatibilityExplanation.clear()
         else:
-            self.rulesetExplanation.setText(
-                "No compatible agents were found for this Ruleset. "
-                "Create or import a compatible Python agent, then refresh."
-            )
+            self.compatibilityExplanation.setText(NO_COMPATIBLE_AGENTS_EXPLANATION)
         self._update_matchup_summary()
 
     def _update_matchup_summary(self, _index: int | None = None) -> None:
@@ -217,7 +193,6 @@ class SimplePanel(QWidget):
             self.agentB,
             self.gridSize,
             self.ticks,
-            self.ruleset,
         ):
             w.setEnabled(not busy)
         self.btnRun.setEnabled(not busy and self._has_eligible_agents)
@@ -237,16 +212,15 @@ class SimplePanel(QWidget):
         agent_a = selected_agent_name(self.agentA)
         agent_b = selected_agent_name(self.agentB)
         if agent_a is None or agent_b is None:
-            message = "No compatible agents are available for the selected Ruleset."
+            message = NO_COMPATIBLE_AGENTS_EXPLANATION
             self.appendLog(f"[RunMatch] {message}\n")
-            self.rulesetExplanation.setText(message)
+            self.compatibilityExplanation.setText(message)
             return
         arena = GRID_PRESETS[self.gridSize.currentText()]
         ticks = int(self.ticks.currentText())
         cfg = RunConfig(
             a_type=agent_a,
             b_type=agent_b,
-            ruleset_id=selected_ruleset_id(self.ruleset),
             arena=arena,
             ticks=ticks,
         )

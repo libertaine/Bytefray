@@ -57,6 +57,13 @@ from tools.research.v6.e2.requalification import (
 from tools.research.v6.e2.run_e2 import execute, freeze_root, treatment_unlock
 from tools.research.v6.experiment_harness import REPO_ROOT, ResearchExperimentConfig, run_experiment
 
+# E2's C-V4 condition is the retired Classic Ruleset (bytefray-rules-4), which
+# can no longer execute. Tests that run it are kept for the record and skipped;
+# reproduce them on Bytefray 5.1.0-alpha.1.
+requires_classic = pytest.mark.skip(
+    reason="executes E2's C-V4 condition (bytefray-rules-4), retired from execution; reproduce on Bytefray 5.1.0-alpha.1"
+)
+
 EXPECTED = {f.field_id: f.expected_matches for f in matrix.FIELDS}
 
 
@@ -187,6 +194,7 @@ def _tick0_diffs(replay: Path) -> list[tuple[int, int, str | None]]:
     return [(d.address, d.length, d.owner) for d in tick0.memory_diffs]
 
 
+@requires_classic
 def test_requalification_passes_identical_controls_including_a_wrapped_core(controls: tuple[Path, Path]) -> None:
     v4, rs = controls
     # Precondition: seed 23 really seeds Seat A's core across the arena end.
@@ -231,6 +239,7 @@ def _tampered_copy(rs: Path, tmp_path: Path, seed: int, tick: int, edit: Any) ->
     return target
 
 
+@requires_classic
 def test_requalification_fails_on_an_analyzer_failure(controls: tuple[Path, Path], tmp_path: Path) -> None:
     v4, rs = controls
 
@@ -245,6 +254,7 @@ def test_requalification_fails_on_an_analyzer_failure(controls: tuple[Path, Path
     assert report["conditions"]["C-V4"]["failures"] == 0
 
 
+@requires_classic
 def test_requalification_fails_on_engine_disagreement_and_telemetry_difference(
     controls: tuple[Path, Path], tmp_path: Path
 ) -> None:
@@ -264,6 +274,7 @@ def test_requalification_fails_on_engine_disagreement_and_telemetry_difference(
     assert report["telemetry_equivalence"]["differences"] == 1
 
 
+@requires_classic
 def test_corpus_integrity_checks_cells_artifacts_and_provenance(controls: tuple[Path, Path]) -> None:
     v4, _ = controls
     recorded = json.loads((v4 / "provenance.json").read_text(encoding="utf-8"))

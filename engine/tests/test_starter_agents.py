@@ -102,7 +102,7 @@ def test_empty_data_root_receives_all_starters_and_creates_agents_directory(tmp_
 
 def test_existing_starter_and_custom_files_are_never_modified(tmp_path):
     data_root = tmp_path / "data"
-    existing = data_root / "agents" / "v5_region_attacker" / "agent.yaml"
+    existing = data_root / "agents" / "v6_roaming_reacquirer" / "agent.yaml"
     custom = data_root / "agents" / "my_custom_agent" / "notes.txt"
     existing.parent.mkdir(parents=True)
     custom.parent.mkdir(parents=True)
@@ -191,21 +191,21 @@ def test_malformed_starter_is_isolated_valid_starters_still_install(tmp_path):
     installed -- for a single bad manifest anywhere in the roster."""
 
     resources = tmp_path / "resources"
-    _write_synthetic_roster(resources, malformed=frozenset({"v5_region_attacker"}))
+    _write_synthetic_roster(resources, malformed=frozenset({"v6_roaming_reacquirer"}))
 
     result = ensure_starter_agents(resource_root=resources, data_root=tmp_path / "data")
 
     installed_names = {path.parent.name for path in result.installed}
-    assert installed_names == set(STARTER_AGENT_NAMES) - {"v5_region_attacker"}
-    assert not (tmp_path / "data" / "agents" / "v5_region_attacker").exists()
+    assert installed_names == set(STARTER_AGENT_NAMES) - {"v6_roaming_reacquirer"}
+    assert not (tmp_path / "data" / "agents" / "v6_roaming_reacquirer").exists()
     assert len(result.errors) == 1
-    assert result.errors[0].name == "v5_region_attacker"
+    assert result.errors[0].name == "v6_roaming_reacquirer"
     assert "malformed manifest" in result.errors[0].message
 
 
 def test_existing_unrelated_agent_untouched_when_a_starter_is_malformed(tmp_path):
     resources = tmp_path / "resources"
-    _write_synthetic_roster(resources, malformed=frozenset({"v5_region_attacker"}))
+    _write_synthetic_roster(resources, malformed=frozenset({"v6_roaming_reacquirer"}))
     data_root = tmp_path / "data"
     custom = data_root / "agents" / "my_custom_agent" / "notes.txt"
     custom.parent.mkdir(parents=True)
@@ -222,13 +222,13 @@ def test_requesting_malformed_starter_after_partial_bootstrap_fails_clearly(tmp_
     name does -- fail-closed, never a silent fallback."""
 
     resources = tmp_path / "resources"
-    _write_synthetic_roster(resources, malformed=frozenset({"v5_region_attacker"}))
+    _write_synthetic_roster(resources, malformed=frozenset({"v6_roaming_reacquirer"}))
     data_root = tmp_path / "data"
 
     ensure_starter_agents(resource_root=resources, data_root=data_root)
 
-    with pytest.raises(SystemExit, match="Unknown agent 'v5_region_attacker'"):
-        resolve_agent(data_root, "v5_region_attacker")
+    with pytest.raises(SystemExit, match="Unknown agent 'v6_roaming_reacquirer'"):
+        resolve_agent(data_root, "v6_roaming_reacquirer")
 
 
 def test_unrelated_match_proceeds_despite_unused_malformed_starter(monkeypatch, tmp_path, capsys):
@@ -236,7 +236,7 @@ def test_unrelated_match_proceeds_despite_unused_malformed_starter(monkeypatch, 
     starter the requested match never references must not block it."""
 
     resources = tmp_path / "resources"
-    _write_synthetic_roster(resources, malformed=frozenset({"v4_scout"}))
+    _write_synthetic_roster(resources, malformed=frozenset({"v6_watchful_keeper"}))
     data_root = tmp_path / "data"
     monkeypatch.setattr("battle_engine.starters.get_resource_root", lambda: resources)
     monkeypatch.setenv("BYTEFRAY_ROOT", str(data_root))
@@ -244,8 +244,8 @@ def test_unrelated_match_proceeds_despite_unused_malformed_starter(monkeypatch, 
 
     result = cli.main(
         [
-            "--a-type", "v4_claimer",
-            "--b-type", "v5_dual_team",
+            "--a-type", "v6_window_scout",
+            "--b-type", "v6_roaming_reacquirer",
             "--ticks", "2",
             "--replay", str(data_root / "runs" / "unrelated-match.jsonl"),
             "--quiet",
@@ -254,7 +254,7 @@ def test_unrelated_match_proceeds_despite_unused_malformed_starter(monkeypatch, 
 
     assert result == 0
     assert (data_root / "runs" / "unrelated-match.jsonl").is_file()
-    assert "v4_scout" in capsys.readouterr().err
+    assert "v6_watchful_keeper" in capsys.readouterr().err
 
 
 def test_agents_list_warns_but_does_not_fail_on_malformed_starter(monkeypatch, tmp_path, capsys):
@@ -262,7 +262,7 @@ def test_agents_list_warns_but_does_not_fail_on_malformed_starter(monkeypatch, t
     starter is reported, valid starters are still discovered, exit is 0."""
 
     resources = tmp_path / "resources"
-    _write_synthetic_roster(resources, malformed=frozenset({"v4_scout"}))
+    _write_synthetic_roster(resources, malformed=frozenset({"v6_watchful_keeper"}))
     data_root = tmp_path / "data"
     monkeypatch.setattr("battle_engine.starters.get_resource_root", lambda: resources)
     monkeypatch.setenv("BYTEFRAY_ROOT", str(data_root))
@@ -271,8 +271,8 @@ def test_agents_list_warns_but_does_not_fail_on_malformed_starter(monkeypatch, t
 
     assert result == 0
     captured = capsys.readouterr()
-    assert "v4_scout" in captured.err
-    assert "v5_region_attacker" in captured.out
+    assert "v6_watchful_keeper" in captured.err
+    assert "v6_roaming_reacquirer" in captured.out
 
 
 def test_tournament_proceeds_despite_unused_malformed_starter(monkeypatch, tmp_path, capsys):
@@ -280,7 +280,7 @@ def test_tournament_proceeds_despite_unused_malformed_starter(monkeypatch, tmp_p
     ``bytefray run`` -- an unused malformed starter must not block it."""
 
     resources = tmp_path / "resources"
-    _write_synthetic_roster(resources, malformed=frozenset({"v4_scout"}))
+    _write_synthetic_roster(resources, malformed=frozenset({"v6_watchful_keeper"}))
     data_root = tmp_path / "data"
     monkeypatch.setattr("battle_engine.starters.get_resource_root", lambda: resources)
     monkeypatch.setenv("BYTEFRAY_ROOT", str(data_root))
@@ -288,7 +288,7 @@ def test_tournament_proceeds_despite_unused_malformed_starter(monkeypatch, tmp_p
 
     result = tournament_cli.main(
         [
-            "v4_claimer", "v5_dual_team",
+            "v6_window_scout", "v6_roaming_reacquirer",
             "--rounds", "1",
             "--ticks", "3",
             "--quota", "8",
@@ -297,7 +297,7 @@ def test_tournament_proceeds_despite_unused_malformed_starter(monkeypatch, tmp_p
     )
 
     assert result == 0
-    assert "v4_scout" in capsys.readouterr().err
+    assert "v6_watchful_keeper" in capsys.readouterr().err
 
 
 def test_every_starter_parses_and_designer_catalog_discovers_it(tmp_path):
@@ -320,8 +320,8 @@ def test_manifest_only_starters_run_with_existing_builtin_implementations(
 
     result = cli.main(
         [
-            "--a-type", "v4_claimer",
-            "--b-type", "v5_dual_team",
+            "--a-type", "v6_window_scout",
+            "--b-type", "v6_roaming_reacquirer",
             "--ticks", "2",
             "--replay", str(tmp_path / "runs" / "starter-match.jsonl"),
             "--quiet",

@@ -29,7 +29,7 @@ AGENT_API_VERSION = 2
 # (``agent_package._check_compatibility`` gates only ``compatible``, never
 # ``valid``) but is refused at import with ``PackageCompatibilityError``. No
 # automatic migration is offered: a v1 agent implements ``reset``/``act``
-# against ``Observation``, while ``bytefray-rules-4`` requires the v2
+# against ``Observation``, while every current Ruleset requires the v2
 # ``declare_processes`` contract -- that is a rewrite, not a remap.
 SUPPORTED_AGENT_API_VERSIONS = frozenset({2})
 

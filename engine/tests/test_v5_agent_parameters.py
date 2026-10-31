@@ -16,20 +16,21 @@ Four things are qualified here, in this order:
    agent through the production delivery path and actually changes what the
    agent does, that an invalid value fails before agent code runs, and that
    effective values reach match identity and the persisted artifacts.
-4. **The V5 starters** -- that their declared defaults reproduce Phase C's
-   behaviour exactly, and that a representative non-default value moves the
-   behaviour the parameter claims to control.
+4. **The CLI surface** -- ``--a-param``/``--a-preset`` and the Designer's
+   environment path, end to end.
 
-Point 4 is the one that matters most. A parameter system that parses
-beautifully but silently changes how the shipped starters play would be a
-regression dressed as a feature.
+The V5 starters this module also used to qualify were retired from the
+installed roster with the Classic Ruleset; their parameter behaviour was
+qualified under Classic and is not re-qualified here.
 """
 
+import hashlib
 import json
 from pathlib import Path
 from typing import ClassVar
 
 import pytest
+from _fixture_agents import ARENA_SIZE, QUOTA, Match, _fixture_spec, gameplay_digest
 from battle_engine.agent_api import AgentManifestError
 from battle_engine.agent_parameters import (
     EMPTY_PARAMETER_SCHEMA,
@@ -44,16 +45,7 @@ from battle_engine.match_service import (
     NativeMatchService,
     canonical_match_id,
 )
-from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
-from test_v5_starter_agents import (
-    ARENA_SIZE,
-    QUOTA,
-    V5_STARTER_NAMES,
-    Match,
-    _fixture_spec,
-    _starter_spec,
-    gameplay_digest,
-)
+from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
 
 # --------------------------------------------------------------------------
 # The Phase C semantic baseline
@@ -70,19 +62,9 @@ BASELINE_STARTS = (64, 200)
 BASELINE_SEED = 11
 BASELINE_TICKS = 140
 
-#: Gameplay digests captured from the Phase C starter sources at commit
-#: 69fc958, BEFORE any Phase D edit existed, using the identical harness this
-#: module imports. ``gameplay_digest`` hashes decisions, observations,
-#: applied results and process declarations -- never ``wall_time_ms``, which
-#: is wall-clock noise and differs between two runs of the same match.
-#:
-#: These are what make "defaults preserve Phase C behaviour" a measurement
-#: rather than an assertion. If a future change to a starter's source or to
-#: parameter resolution moves any of them, that change altered how a shipped
-#: starter plays: justify it, do not re-baseline it.
-#:
-#: Recorded as the leading 16 hex characters of the SHA-256, which is what
-#: was captured pre-change; the run under test is truncated identically.
+
+# Passive Phase-C provenance: captured before Phase D at 69fc958, recovered
+# unchanged from f127be70. No Classic match is executed by these guards.
 PHASE_C_DIGEST_PREFIXES = {
     "v5_region_attacker__fixture_idle_target": "85f15ca0cf4ecbc7",
     "v5_region_attacker__fixture_drifting_target": "181c2339b4e14b80",
@@ -97,6 +79,29 @@ PHASE_C_DIGEST_PREFIXES = {
     "v5_dual_team__fixture_drifting_target": "22de396bd189c022",
     "v5_dual_team__fixture_core_presser": "dc640753befb48f2",
 }
+
+PHASE_C_RECORD_SHA256 = {
+    "v5_region_attacker__fixture_idle_target": "79950713fe99eca02c1f36772dfe5b609b97f12bc23f832f35842c44daf64f23",
+    "v5_region_attacker__fixture_drifting_target": "6de72ab59f2ed557016c08c0dd15bceab21e3ec4323b293e830218c4d4754095",
+    "v5_region_attacker__fixture_core_presser": "2bfc8cf3c3ec97fc4138fc288d07a7c5e39112a7287b785a2c6143ca898feae2",
+    "v5_scout_striker__fixture_idle_target": "831d946341fe21c595f7723f62cb4a36f3d4b568df36f18338aa91689ea2b1fe",
+    "v5_scout_striker__fixture_drifting_target": "4636c726485fa9570aeeafc1b33bda261703d078a40cf821bc186d05bae4cee7",
+    "v5_scout_striker__fixture_core_presser": "c9f6e3e9c4edb3fa044d7b2871410ef5bbc7ef405acc13c0eec9fdca5bfdc168",
+    "v5_core_defender__fixture_idle_target": "b7fd3d90d65deef6fc9c6ede07ca75e88bdc517d7e83902f1c1bc5a5212f67f7",
+    "v5_core_defender__fixture_drifting_target": "2fe2aa38843b080108448860dcf9f11c185a401a09151d72617a830a8c0ff177",
+    "v5_core_defender__fixture_core_presser": "44377be1f7d7b133fe0562c3412d17352774697b852f85de312e8a122ff7113c",
+    "v5_dual_team__fixture_idle_target": "9fc45b2f40b9c733b4259d8255d8528b08b5019a1e304e7c07a270d01703c921",
+    "v5_dual_team__fixture_drifting_target": "c11efdb33bf1ac0e368217ab2d515bd0dac611ef66d1852afbcfe4a51ff5d6a4",
+    "v5_dual_team__fixture_core_presser": "5105238ab243adfbe02b9375c6f4753173169b304bc1c92340852e6f917d4e6e"
+}
+
+
+@pytest.mark.parametrize("case", tuple(PHASE_C_DIGEST_PREFIXES))
+def test_original_phase_c_digest_prefix_is_preserved(case: str) -> None:
+    assert len(PHASE_C_DIGEST_PREFIXES) == 12
+    encoded = json.dumps(PHASE_C_DIGEST_PREFIXES[case], separators=(",", ":")).encode()
+    assert hashlib.sha256(encoded).hexdigest() == PHASE_C_RECORD_SHA256[case]
+
 
 
 # --------------------------------------------------------------------------
@@ -216,7 +221,7 @@ def _run(tmp_path: Path, label: str, a_spec, b_spec, a_params=None) -> Match:
             replay_path=replay_path,
             trace_path=trace_path,
             verbose=False,
-            ruleset_id=BYTEFRAY_RULESET_V4_ID,
+            ruleset_id=BYTEFRAY_RULESET_V6_ALPHA1_ID,
         )
     )
     return Match(replay_path, trace_path, BASELINE_STARTS)
@@ -511,7 +516,7 @@ def test_unknown_preset_fails_and_lists_the_declared_ones(tmp_path: Path) -> Non
 
 
 def test_legacy_agent_without_a_schema_keeps_free_form_passthrough() -> None:
-    """The §10 compatibility policy, stated as an executable rule.
+    """The Ãƒâ€šÃ‚Â§10 compatibility policy, stated as an executable rule.
 
     An agent that never opted into a schema must not start failing because a
     stricter system arrived around it: unknown keys are still accepted and
@@ -614,7 +619,7 @@ def test_effective_parameters_participate_in_match_identity(tmp_path: Path) -> N
             ),
             max_ticks=8,
             replay_path=tmp_path / "id.jsonl",
-            ruleset_id=BYTEFRAY_RULESET_V4_ID,
+            ruleset_id=BYTEFRAY_RULESET_V6_ALPHA1_ID,
         )
 
     bare = canonical_match_id(request(None))
@@ -663,189 +668,7 @@ def test_result_metadata_records_effective_values_but_never_the_schema(
 
 
 # --------------------------------------------------------------------------
-# 4. The V5 starters
-# --------------------------------------------------------------------------
-
-#: What each starter exposes, and one non-default value whose effect is
-#: asserted below. Kept here rather than read out of the manifests so the
-#: test states an expectation instead of restating whatever is on disk.
-STARTER_PARAMETERS = {
-    "v5_region_attacker": ("attacker_reach",),
-    "v5_scout_striker": ("contact_memory_ticks", "search_stride_divisor"),
-    "v5_core_defender": ("inspections_per_tick",),
-    "v5_dual_team": ("raider_share",),
-}
-
-STARTER_PRESETS = {
-    "v5_region_attacker": ("standard", "far_sighted"),
-    "v5_scout_striker": ("standard", "persistent"),
-    "v5_core_defender": ("standard", "vigilant"),
-    "v5_dual_team": ("standard", "raid_heavy"),
-}
-
-
-@pytest.mark.parametrize("name", V5_STARTER_NAMES)
-def test_v5_starter_declares_exactly_the_documented_parameters(name: str) -> None:
-    schema = _starter_spec(name).parameter_schema
-    assert schema.declaration_order() == STARTER_PARAMETERS[name]
-    assert schema.preset_names() == STARTER_PRESETS[name]
-
-
-@pytest.mark.parametrize("name", V5_STARTER_NAMES)
-def test_v5_starter_defaults_and_every_preset_resolve(name: str) -> None:
-    schema = _starter_spec(name).parameter_schema
-    assert resolve_parameters(schema) == schema.defaults()
-    for preset in schema.preset_names():
-        resolved = resolve_parameters(schema, preset=preset)
-        assert set(resolved) == set(schema.defaults())
-
-
-@pytest.mark.parametrize("name", V5_STARTER_NAMES)
-def test_v5_starter_standard_preset_equals_the_declared_defaults(name: str) -> None:
-    """A ``standard`` preset must never quietly mean something else."""
-
-    schema = _starter_spec(name).parameter_schema
-    assert resolve_parameters(schema, preset="standard") == schema.defaults()
-
-
-@pytest.mark.parametrize("name", V5_STARTER_NAMES)
-@pytest.mark.parametrize("fixture", BASELINE_FIXTURES)
-def test_v5_starter_defaults_reproduce_the_phase_c_gameplay_digest(
-    tmp_path: Path, name: str, fixture: str
-) -> None:
-    """The Phase D guarantee, measured against the pre-change baseline.
-
-    Run with parameters resolved from the declared schema -- the production
-    path, not a bypass -- and the decisions, observations, applied results
-    and process declarations must hash to exactly what the Phase C sources
-    produced before any Phase D edit existed.
-    """
-
-    spec = _starter_spec(name)
-    opponent = _fixture_spec(tmp_path / f"{name}_{fixture}", fixture)
-    match = _run(
-        tmp_path,
-        f"{name}_{fixture}",
-        spec,
-        opponent,
-        resolve_parameters(spec.parameter_schema),
-    )
-    assert (
-        gameplay_digest(match)[:16]
-        == PHASE_C_DIGEST_PREFIXES[f"{name}__{fixture}"]
-    )
-
-
-@pytest.mark.parametrize(
-    ("name", "fixture", "overrides", "probe", "expect_change"),
-    [
-        # Reach is declared from the parameter, so the declaration record is
-        # direct evidence rather than an inference from behaviour.
-        (
-            "v5_region_attacker",
-            "fixture_idle_target",
-            {"attacker_reach": 32},
-            lambda m: m.declarations("A")[0]["reach"],
-            True,
-        ),
-        # Inspection is the whole lesson: with the reserved duty at zero the
-        # defender stops READing entirely and can no longer tell a cell it
-        # still owns from one it has lost.
-        (
-            "v5_core_defender",
-            "fixture_core_presser",
-            {"inspections_per_tick": 0},
-            lambda m: sum(1 for d in m.decisions("A") if d["action"]["kind"] == "read"),
-            True,
-        ),
-        # The quota split really is the shares: 0.75/0.25 of Q=8 is 6/2.
-        (
-            "v5_dual_team",
-            "fixture_core_presser",
-            {"raider_share": 0.75},
-            lambda m: tuple(
-                sorted(
-                    (p, sum(1 for d in m.decisions("A") if d["process_id"] == p))
-                    for p in ("keeper", "raider")
-                )
-            ),
-            True,
-        ),
-        # A shorter stride covers less ground per action, so the searcher
-        # spends far more of the match moving.
-        (
-            "v5_scout_striker",
-            "fixture_idle_target",
-            {"search_stride_divisor": 8},
-            lambda m: sum(1 for d in m.decisions("A") if d["action"]["kind"] == "move"),
-            True,
-        ),
-        # A memory of zero ticks means a contact is never attacked once it
-        # leaves sensor range.
-        (
-            "v5_scout_striker",
-            "fixture_drifting_target",
-            {"contact_memory_ticks": 0},
-            lambda m: len(m.written_addresses("A")),
-            True,
-        ),
-    ],
-)
-def test_v5_starter_non_default_value_moves_the_intended_behaviour(
-    tmp_path: Path,
-    name: str,
-    fixture: str,
-    overrides: dict,
-    probe,
-    expect_change: bool,
-) -> None:
-    spec = _starter_spec(name)
-    label = f"{name}_{'_'.join(overrides)}"
-    opponent = _fixture_spec(tmp_path / label, fixture)
-
-    default = _run(
-        tmp_path, f"{label}_default", spec, opponent, resolve_parameters(spec.parameter_schema)
-    )
-    altered = _run(
-        tmp_path,
-        f"{label}_altered",
-        spec,
-        opponent,
-        resolve_parameters(spec.parameter_schema, overrides=overrides),
-    )
-    assert (probe(default) != probe(altered)) is expect_change
-
-
-@pytest.mark.parametrize("name", V5_STARTER_NAMES)
-def test_v5_starter_stays_legal_and_deterministic_under_a_preset(
-    tmp_path: Path, name: str
-) -> None:
-    """A preset changes behaviour; it must never change legality."""
-
-    spec = _starter_spec(name)
-    preset = STARTER_PRESETS[name][1]
-    opponent = _fixture_spec(tmp_path / f"{name}_legal", "fixture_core_presser")
-    params = resolve_parameters(spec.parameter_schema, preset=preset)
-
-    first = _run(tmp_path, f"{name}_preset_1", spec, opponent, params)
-    second = _run(tmp_path, f"{name}_preset_2", spec, opponent, params)
-
-    assert gameplay_digest(first) == gameplay_digest(second)
-    assert {s for s in first.statuses("A") if s} == {"APPLIED"}
-
-
-@pytest.mark.parametrize("name", V5_STARTER_NAMES)
-def test_v5_starter_rejects_an_out_of_range_value(name: str) -> None:
-    schema = _starter_spec(name).parameter_schema
-    key = STARTER_PARAMETERS[name][0]
-    declared = schema.parameters[key]
-    assert declared.maximum is not None
-    with pytest.raises(AgentParameterError):
-        resolve_parameters(schema, overrides={key: declared.maximum + 1})
-
-
-# --------------------------------------------------------------------------
-# 5. The CLI surface
+# 4. The CLI surface
 # --------------------------------------------------------------------------
 
 
@@ -881,7 +704,7 @@ def _cli_run(tmp_path: Path, extra: list[str]) -> Path:
                 "--seed",
                 "1",
                 "--ruleset",
-                BYTEFRAY_RULESET_V4_ID,
+                BYTEFRAY_RULESET_V6_ALPHA1_ID,
                 "--replay",
                 str(replay),
                 "--quiet",
@@ -1094,27 +917,3 @@ def test_cli_rejects_bad_parameters_before_running_a_match(
     assert "Unknown agent" not in message
     # ...and no match may have been published.
     assert not (tmp_path / "cli" / "result.json").exists()
-
-
-# --------------------------------------------------------------------------
-# 6. V4 compatibility
-# --------------------------------------------------------------------------
-
-
-@pytest.mark.parametrize(
-    "name",
-    (
-        "v4_claimer",
-        "v4_concentrated_attacker",
-        "v4_defender_scout",
-        "v4_local_defender",
-        "v4_scout",
-        "v4_quorum",
-    ),
-)
-def test_historical_v4_starters_declare_no_schema_and_still_load(name: str) -> None:
-    """Phase D is additive: no historical agent was retrofitted."""
-
-    spec = _starter_spec(name)
-    assert spec.parameter_schema.is_empty
-    assert resolve_parameters(spec.parameter_schema) == {}

@@ -39,7 +39,7 @@ from app.services.osutil import DefaultPaths
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-V4 = "bytefray-rules-4"
+AS = "bytefray-rules-6-alpha1"
 
 #: A minimal Agent API v2 agent that accepts (and ignores) arbitrary
 #: construction params, so a params payload can be routed to it without the
@@ -116,7 +116,6 @@ def test_two_entrant_command_and_environment_are_unchanged(tmp_path: Path) -> No
     config = engine_commands.RunConfig(
         a_type="alpha",
         b_type="beta",
-        ruleset_id=V4,
         arena=256,
         ticks=40,
         seed=99,
@@ -135,7 +134,8 @@ def test_two_entrant_command_and_environment_are_unchanged(tmp_path: Path) -> No
         "--replay", str(paths.replay_path),
         "--a-type", "alpha",
         "--b-type", "beta",
-        "--ruleset", V4,
+        "--ruleset", AS,
+        "--trace", str(paths.replay_path.with_name("trace.jsonl")),
         "--seed", "99",
     ]
     assert "--c-type" not in command
@@ -157,7 +157,7 @@ def test_absent_or_empty_agent_c_is_treated_as_two_entrants(
 
     paths = _paths(tmp_path)
     config = engine_commands.RunConfig(
-        a_type="alpha", b_type="beta", ruleset_id=V4, c_type=absent
+        a_type="alpha", b_type="beta", c_type=absent
     )
 
     command, env = engine_commands.build_engine_command(config, paths)
@@ -175,8 +175,7 @@ def test_orphan_c_params_never_reach_a_two_entrant_match(tmp_path: Path) -> None
 
     paths = _paths(tmp_path)
     config = engine_commands.RunConfig(
-        a_type="alpha", b_type="beta", ruleset_id=V4,
-        c_type=None, c_params={"stale": True},
+        a_type="alpha", b_type="beta", c_type=None, c_params={"stale": True},
     )
 
     _command, env = engine_commands.build_engine_command(config, paths)
@@ -194,7 +193,7 @@ def test_third_entrant_without_params_reaches_the_command(tmp_path: Path) -> Non
 
     paths = _paths(tmp_path)
     config = engine_commands.RunConfig(
-        a_type="alpha", b_type="beta", ruleset_id=V4, c_type="gamma"
+        a_type="alpha", b_type="beta", c_type="gamma"
     )
 
     command, env = engine_commands.build_engine_command(config, paths)
@@ -213,8 +212,7 @@ def test_third_entrant_with_params_reaches_command_and_environment(
 
     paths = _paths(tmp_path)
     config = engine_commands.RunConfig(
-        a_type="alpha", b_type="beta", ruleset_id=V4,
-        c_type="gamma", c_params={"aggression": 0.5},
+        a_type="alpha", b_type="beta", c_type="gamma", c_params={"aggression": 0.5},
     )
 
     command, env = engine_commands.build_engine_command(config, paths)
@@ -234,7 +232,7 @@ def test_per_entrant_parameters_stay_assigned_to_their_own_entrant(
 
     paths = _paths(tmp_path)
     config = engine_commands.RunConfig(
-        a_type="alpha", b_type="beta", ruleset_id=V4, c_type="gamma",
+        a_type="alpha", b_type="beta", c_type="gamma",
         a_params={"slot": "A"},
         b_params={"slot": "B"},
         c_params={"slot": "C"},
@@ -271,7 +269,7 @@ def test_generated_three_entrant_command_produces_a_real_three_entrant_match(
     paths = _paths(tmp_path)
     config = engine_commands.RunConfig(
         a_type="nop_a", b_type="nop_b", c_type="nop_c",
-        ruleset_id=V4, arena=512, ticks=20,
+        arena=512, ticks=20,
         a_params={"slot": "A"}, b_params={"slot": "B"}, c_params={"slot": "C"},
     )
 
@@ -304,7 +302,7 @@ def test_generated_two_entrant_command_still_produces_two_entrants(
     _seed_agents(data_root, "nop_a", "nop_b")
     paths = _paths(tmp_path)
     config = engine_commands.RunConfig(
-        a_type="nop_a", b_type="nop_b", ruleset_id=V4, arena=512, ticks=20
+        a_type="nop_a", b_type="nop_b", arena=512, ticks=20
     )
 
     command, env = engine_commands.build_engine_command(config, paths)

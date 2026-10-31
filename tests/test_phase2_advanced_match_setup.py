@@ -1,20 +1,16 @@
-"""Phase 2 (RC2->final): Ruleset-driven match setup, focused coverage.
+"""Advanced match setup: roster derivation, focused coverage.
 
-Advanced previously taught the backward mental model "Agents -> Ruleset":
-Agent A/B were populated from the whole discovered catalog and the Ruleset
-combo was narrowed/auto-selected from whatever agents happened to be picked.
-This phase inverts that so Advanced matches Simple's existing "Ruleset ->
-Agents" model: the Ruleset is selected first, and Agent A/B list only the
-agents that Ruleset supports (UX-14 through UX-19).
+Agent A/B list only the agents the Designer's Ruleset can run (UX-15
+through UX-19). Phase 2 (RC2->final) originally put a Ruleset selector
+ahead of the agent rows; Active Sensing is now the only Ruleset, so that
+selector is gone and the roster is filtered by the same compatibility
+check every other Designer surface uses.
 
-The bulk of the behavioral coverage for that inversion lives alongside the
-pre-existing suites it directly supersedes
-(``tests/test_designer_ruleset_compatibility.py``'s Advanced section and
-``tests/test_agent_combo_runtime_labels.py``'s cross-panel tests). This
-module adds the remaining Phase 2 focused-test items that had no prior
-home: structural layout ordering, round-trip stability, the
-identifier-vs-display-text distinction for Advanced specifically, and
-unrelated-field preservation across a Ruleset change.
+The bulk of the behavioral coverage lives in
+``tests/test_designer_agent_compatibility.py`` and
+``tests/test_agent_combo_runtime_labels.py``. This module adds round-trip
+stability, the identifier-vs-display-text distinction for Advanced
+specifically, and unrelated-field preservation across a catalog refresh.
 
 Marked ``gui`` like the other Designer tests: excluded from the default
 headless run, exercised by the dedicated display-backed workflow.
@@ -25,8 +21,6 @@ from __future__ import annotations
 import os
 
 import pytest
-
-BYTEFRAY_RULESET_V4_ID = "bytefray-rules-4"
 
 
 def _make_app():
@@ -44,30 +38,6 @@ def _row(name: str, kind: str, api_version: int | None = None):
     if api_version is not None:
         meta["api_version"] = api_version
     return AgentRow(name, f"/agents/{name}", None, meta, agent_id=name)
-
-
-# ---------------------------------------------------------------------------
-# UX-14: structural layout ordering
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.gui
-def test_advanced_ruleset_row_precedes_agent_rows_structurally(tmp_path):
-    """Ruleset must sit before Agent A/B in the actual QFormLayout row
-    order, not merely appear that way on screen by coincidence."""
-
-    _make_app()
-    from app.views.advanced import AdvancedPanel
-
-    panel = AdvancedPanel(catalog=None, data_root=tmp_path)
-    try:
-        form = panel.ruleset.parentWidget().layout()
-        ruleset_row, _ = form.getWidgetPosition(panel.ruleset)
-        agent_a_row, _ = form.getWidgetPosition(panel.agentA)
-        agent_b_row, _ = form.getWidgetPosition(panel.agentB)
-        assert ruleset_row < agent_a_row < agent_b_row
-    finally:
-        panel.deleteLater()
 
 
 # ---------------------------------------------------------------------------
@@ -114,8 +84,7 @@ def test_advanced_current_roster_refresh_is_deterministic(tmp_path):
 def test_advanced_run_config_uses_discovery_ids_not_display_text(tmp_path):
     """Two agents sharing a display name must still resolve to their own
     discovery ids in the emitted RunConfig -- the presentation label never
-    leaks into the submitted identifier, and the Ruleset id is the
-    canonical string, not its combo label."""
+    leaks into the submitted identifier."""
 
     _make_app()
     from app.services.agent_catalog import AgentRow
@@ -150,7 +119,6 @@ def test_advanced_run_config_uses_discovery_ids_not_display_text(tmp_path):
         assert len(captured) == 1
         assert captured[0].a_type == "alpha_id"
         assert captured[0].b_type == "beta_id"
-        assert captured[0].ruleset_id == BYTEFRAY_RULESET_V4_ID
         assert "Friendly" not in captured[0].a_type
         assert "Friendly" not in captured[0].b_type
     finally:

@@ -1,9 +1,14 @@
-"""The 5.1.0-alpha.1 compatibility record agrees with the code.
+"""The development line's compatibility record agrees with the code.
 
-docs/releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.json is the single
-authoritative compatibility declaration (docs/COMPONENT_VERSIONING.md). These
-run tools/release_compatibility.py's checks, and the negative controls prove
-those checks actually catch a disagreement rather than passing vacuously.
+docs/releases/BYTEFRAY_DEVELOPMENT_COMPATIBILITY.json is the single
+authoritative compatibility declaration for this line
+(docs/COMPONENT_VERSIONING.md). These run tools/release_compatibility.py's
+checks, and the negative controls prove those checks actually catch a
+disagreement rather than passing vacuously.
+
+The published 5.1.0-alpha.1 record describes a release that still runs
+Classic, so it no longer agrees with this tree's code by design; only its
+generated page is still checked against its own JSON.
 """
 
 from __future__ import annotations
@@ -22,7 +27,9 @@ from tools.release_compatibility import (
     runtime_problems,
 )
 
-RECORD = Path(__file__).resolve().parents[2] / "docs" / "releases" / "BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.json"
+RELEASES = Path(__file__).resolve().parents[2] / "docs" / "releases"
+RECORD = RELEASES / "BYTEFRAY_DEVELOPMENT_COMPATIBILITY.json"
+PUBLISHED_5_1_RECORD = RELEASES / "BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.json"
 
 
 @pytest.fixture(scope="module")
@@ -38,16 +45,23 @@ def test_generated_summary_is_current(record: dict) -> None:
     markdown = companion_markdown(RECORD).read_text(encoding="utf-8")
     assert generated_block(markdown) == render_markdown(record), (
         "Rerun: python tools/release_compatibility.py "
-        "docs/releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.json --write"
+        "docs/releases/BYTEFRAY_DEVELOPMENT_COMPATIBILITY.json --write"
     )
 
 
-def test_record_is_a_candidate_and_names_the_bundled_spectator_build(record: dict) -> None:
-    """The release-candidate milestone moved the record from proposed to
-    candidate (docs/COMPONENT_VERSIONING.md §6). Publication, which would make
-    it released, is a separate project-lead decision."""
+def test_published_5_1_record_page_still_matches_its_own_record() -> None:
+    markdown = companion_markdown(PUBLISHED_5_1_RECORD).read_text(encoding="utf-8")
+    assert generated_block(markdown) == render_markdown(load_record(PUBLISHED_5_1_RECORD))
 
-    assert record["status"] == "candidate"
+
+def test_record_is_proposed_retires_classic_and_names_the_bundled_spectator_build(record: dict) -> None:
+    """A development line's record stays proposed until a release candidate
+    exists (docs/COMPONENT_VERSIONING.md §6)."""
+
+    assert record["status"] == "proposed"
+    assert record["rulesets"]["default"] == "bytefray-rules-6-alpha1"
+    assert [entry["id"] for entry in record["rulesets"]["offered"]] == ["bytefray-rules-6-alpha1"]
+    assert "bytefray-rules-4" in record["rulesets"]["historical_readable_not_executable"]
     viewer = record["spectator"]["application"]
     assert viewer["version"] == "0.1.0-alpha.1"
     assert viewer["source"]["commit"] == "14089a7bf624a5974346306a277e307ea8f48c07"
@@ -81,12 +95,16 @@ def _tampered(record: dict, change) -> list[str]:
 @pytest.mark.parametrize(
     "change",
     [
-        lambda r: r["rulesets"].__setitem__("default", "bytefray-rules-6-alpha1"),
-        lambda r: r["rulesets"]["offered"][0].__setitem__("display_name", "Ruleset v4"),
-        lambda r: r["rulesets"]["offered"][1].__setitem__("stability", "stable"),
-        lambda r: r["rulesets"]["surfaces"]["Designer Simple"].append("bytefray-rules-6-alpha1"),
-        lambda r: r["rulesets"]["surfaces"]["bytefray tournament"].append("bytefray-rules-6-alpha1"),
-        lambda r: r["rulesets"]["historical_readable_not_executable"].append("bytefray-rules-4"),
+        lambda r: r["rulesets"].__setitem__("default", "bytefray-rules-4"),
+        lambda r: r["rulesets"]["offered"][0].__setitem__("display_name", "Classic"),
+        lambda r: r["rulesets"]["offered"][0].__setitem__("stability", "stable"),
+        lambda r: r["rulesets"]["offered"].append(
+            {"id": "bytefray-rules-4", "display_name": "Classic", "stability": "stable", "selection": "x"}
+        ),
+        lambda r: r["rulesets"]["surfaces"]["Designer Simple"].append("bytefray-rules-4"),
+        lambda r: r["rulesets"]["surfaces"]["bytefray tournament"].append("bytefray-rules-4"),
+        lambda r: r["rulesets"]["historical_readable_not_executable"].remove("bytefray-rules-4"),
+        lambda r: r["rulesets"]["historical_readable_not_executable"].append("bytefray-rules-6-alpha1"),
         lambda r: r["agent_api"].__setitem__("executable", [1, 2]),
         lambda r: r["agent_api"].__setitem__("retired_from_execution", [2]),
         lambda r: r["agent_api"].__setitem__("retired_from_execution", []),
@@ -97,11 +115,9 @@ def _tampered(record: dict, change) -> list[str]:
         lambda r: r["formats"]["trace"].__setitem__("reads", [2]),
         lambda r: r["spectator"]["presentation_protocol"].__setitem__("bytefray_writes", 3),
         lambda r: r["spectator"]["supported_matches"].__setitem__("entrants", ["A", "B", "C"]),
-        lambda r: r["application"].__setitem__("python_package_version", "5.1.0-alpha.1"),
+        lambda r: r["application"].__setitem__("python_package_version", "6.0.0-alpha.1"),
         # A candidate must describe the version this tree builds.
-        lambda r: (r["application"].__setitem__("version", "5.1.0-alpha.2"),
-                   r["application"].__setitem__("python_package_version", "5.1.0a2"),
-                   r["application"].__setitem__("git_tag", "v5.1.0-alpha.2")),
+        lambda r: r.__setitem__("status", "candidate"),
         lambda r: r.__setitem__("status", "published"),
         # The named Spectator build is the one tools/spectator_companion.json pins.
         lambda r: r["spectator"]["application"].__setitem__("version", "0.1.0"),

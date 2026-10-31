@@ -1,0 +1,365 @@
+# Classic retirement PR #6: CI remediation
+
+Date: 2026-10-30; updated 2026-10-31. **Product CI migration defects corrected
+and requalified on GitHub. Section D was decided on 2026-10-31 (Option 1:
+separate frozen-science qualification); see
+[Integration under Option 1](#integration-under-option-1-2026-10-31) below,
+which supersedes the HOLD and the B, C and F dispositions recorded here.**
+
+Approved starting point: `feature/retire-classic-ruleset` at
+`15f7139b7bde79a53248455c92a110b6ee61fad2`; target
+`development/post-5.1-alpha` at `f127be70e7ed88449c1b737f4675e1453ec8de45`
+(also the `v5.1.0-alpha.1` tag). This report supplements, without replacing,
+[the independent approval](CLASSIC_RULESET_RETIREMENT_FINAL_APPROVAL.md).
+
+## Baseline comparison
+
+The target's own CI already failed: [run 40400795204](https://github.com/libertaine/Bytefray/actions/runs/40400795204)
+on `f127be7` (also run 40209820059 on the `v5.1.0-alpha.1` tag) fails every
+`test-linux-core` job and `build-windows-exe`. No `CI` run on the V6 lineage
+has passed `test-linux-core`. Failed test identities, collapsed across the
+Linux matrix, compare as follows with the PR's
+[run 40615092333](https://github.com/libertaine/Bytefray/actions/runs/40615092333):
+
+| Set | Tests | Disposition |
+| --- | --- | --- |
+| Failing on both | 131 | Baseline-existing; frozen-science verification (D) |
+| Fixed by the PR | 17 | E2-E8 research identities absent from product ruleset choices |
+| New in the PR | 26 | 25 fixture migration defects (E); 1 tool upgrade (F) |
+
+## Failure causes and corrections
+
+### A. Linux pygame smoke fixtures (PR-introduced; corrected)
+
+Both Python 3.10 and 3.14 jobs in
+[GUI run 40615092421](https://github.com/libertaine/Bytefray/actions/runs/40615092421)
+failed before opening a replay: `v4_scout` and `v5_region_attacker` are no
+longer installed starters.
+
+`client/tests/test_linux_pygame_smoke.py` now uses Window Scout versus
+Watchful Keeper, explicit Active Sensing, seed 1, arena 512 and the existing
+seeded placement resolver. Each test uses its own temporary data root.
+The keyboard test asserts that recorded ticks include 0, 1 and 2, then retains
+the exact observed `0 -> 1 -> 2 -> 1` assertion. The rendering test sends QUIT
+only after an actual display flip and asserts exactly one rendered frame; the
+old test also rendered one frame before exiting but never asserted it.
+Neither renderer nor gameplay code changed. GitHub requalification on
+`1e4eac9`: `pygame-x11-smoke` passes on Python 3.10 and 3.14.
+
+### B. Windows workflow references a deleted test (baseline-existing; corrected)
+
+The Windows protection step fails identically on the baseline and the PR:
+`engine/tests/test_supervised_runtime.py` does not exist. Git history
+identifies `3caf143e332ce9ad627442409a7239a4e7025581` (V6 Phase 2B.12) as its
+deletion, before Classic retirement; the job has therefore not reached the
+EXE build on this line. That module tested the retired API-v1
+`SupervisedPythonEntrantController`. API-v2 matches supervise calls through
+`ProcessMatchController` and `AgentWorkerHandle`.
+
+The workflow retains the complete containment and worker modules and selects
+these existing equivalents:
+
+| Module | Protection exercised |
+| --- | --- |
+| `test_process_containment.py` | Windows Job Object binding and parent-lifetime containment |
+| `test_agent_worker.py` | Actual worker lifecycle, reset/action hangs, abrupt exit, recovery and parent death |
+| `test_agent_validation.py` | Supervised reset/action diagnostics, successful-call parity and trace handling |
+| `test_agent_test.py` | Production development-test supervision, canonical artifacts and hung-agent forfeit |
+| `test_process_runtime_integration.py` | API-v2 native match integration, supervised execution and replay determinism |
+| `test_v6_alpha_m1_policy_capabilities.py` | Active Sensing direct/worker parity and capability rejection before execution |
+
+No protection was replaced by a nonexistent path, broad exclusion or test skip.
+
+**GitHub requalification (`1e4eac9`):** both protection steps pass. The
+job then reached `tools/build_win.ps1` for the first time on this line. All
+four executables built, and the frozen payloads contained no bytecode. The
+job then failed closed in third-party notice collection:
+`tools/third_party_notices has no texts for Qt 6.12.0`. CI installs and
+builds without `-Constraints`, so it resolves the newest PySide6; release
+builds pass `tools/windows-build-constraints.txt` (PySide6 6.11.2, matching
+`tools/third_party_notices/qt-6.11.2`). The PR changes none of the notice
+tooling, constraints or build script; its `.spec` changes are the approved
+starter collection. Changing how CI builds (for example, release
+constraints on Python 3.13) is build configuration, so it is left as
+follow-up rather than changed here.
+
+One gap predates this PR: the deleted module's
+`test_initialization_failure_cleans_up_already_started_workers` has no
+identified API-v2 equivalent; it is recorded as follow-up.
+
+### C. Designer native abort: Qt binding defect (baseline-existing; constrained)
+
+The original job completed 108 cases, then aborted with exit 134 in
+`test_process_failed_to_start_shows_tool_failure_and_recovers`. Bounded Xvfb
+diagnosis (Ubuntu WSL2, 2026-10-27) established:
+
+- Python 3.10.22, PySide6/Shiboken 6.12.0: the full approved Designer suite
+  reproduces exit 134 at the same test.
+- The single test, with uncaptured stderr, reports
+  `Fatal Python error: none_dealloc: deallocating None` at
+  `QApplication.processEvents()`. It also aborts alone on the pre-retirement
+  `f127be7` snapshot.
+- A minimal process importing only Qt and calling `processEvents()` loses
+  one `None` reference per call after warm-up (batches of 10/100/1,000 calls
+  change the reference count by -10/-100/-1,000), without any Designer,
+  agent, replay, fixture or pytest code.
+- On PySide6/Shiboken 6.11.2 the minimal probe has no reference loss through
+  10,000 calls, and the original Designer test passes unchanged.
+
+This is a native binding defect, independent of test order and of Classic
+retirement. The Designer CI installation is constrained to `PySide6==6.11.2`;
+the full `tests/` selection remains enabled, with faulthandler, verbose
+progress and tee capture. No runtime dependency declaration, Designer code or
+release input changed. Removing the CI constraint requires a passing minimal
+probe and full suite on the replacement binding. Python 3.10 with PySide6
+6.12.0 remains an open compatibility problem outside this CI constraint.
+
+**GitHub requalification (`1e4eac9`): still failing, on a different,
+pre-existing crash.** With 6.11.2 installed, the GitHub job passed the former
+abort point. It then segfaulted (exit 139) in
+`test_v5_replay_history_qualification.py::test_repeated_concurrent_close_reopen_preserves_ownership`,
+inside the nested `QEventLoop.exec` of `ReplayHistoryWindow.shutdownWorker`
+(`app/views/replay_history.py`). Neither that module nor the Replay History
+code changed in this PR. Reproduction on Python 3.10.22 with Qt 6.11.2 under
+WSL2/Xvfb, using the CI command on fresh `git archive` exports:
+
+| Source | Full Designer suite, 3 runs | That test alone, 25 runs |
+| --- | --- | --- |
+| `f127be7` | 1 segfault (exit 139) in the same module, in `test_designer_rejected_calendar_keeps_query_and_reports_error`, with a worker-thread refresh active; 2 completed runs each failed only the keyboard-focus test below | 25 passed |
+| `1e4eac9` | 3 completed: 575 passed, 1 skipped, 6 deselected | 25 passed |
+
+This is an intermittent native crash in the Replay History worker-thread
+path, present at the baseline. On GitHub the earlier 6.12 abort hid it. It
+is not caused by the retirement, but its root cause (application thread
+teardown or binding) is not established and needs a follow-up issue. The
+optional `designer-x11-smoke` check remains red.
+
+Once the abort was bypassed, an existing Replay History keyboard test failed
+because Xvfb has no window manager to activate the window, so `focusWidget()`
+returned `None`; it fails alone on approved and pre-retirement source. The
+test now waits for exposure, requests activation and waits for activation
+before inspecting focus. Every traversal, Copy Seed, Return, filter-focus and
+replay-launch assertion is preserved; product focus behavior is unchanged.
+
+### D. Frozen scientific-integrity verification (baseline-existing; HOLD)
+
+The E9 failures are live-tree checks of a whole-repository frozen boundary,
+and that boundary was already broken on the target before this PR:
+
+- `tools/research/v6/e9/protocol.py::load_protocol(verify=True)` checks, in
+  order, frozen snapshots, ten LF-pinned *governing contracts* (four of them
+  product documents: `ARCHITECTURE.md`, `docs/AGENT_API_V2.md`,
+  `docs/REPLAY_SCHEMA.md`, `docs/RESULT_SCHEMA.md`), qualified E9 sources, frozen E8 sources, packages,
+  the sealed E8 result and finally an LF manifest of every `engine/src` file.
+  The E9 v2 records wrap any such failure as
+  `inherited immutable source/package boundary failed`.
+- On `f127be7` the governing contracts still match and the check fails last,
+  with `the frozen engine manifest changed` (per Linux job: 15 direct
+  failures, 44 wrapped).
+- Commit `15f7139` edited those four governing contracts to describe the
+  retirement; raw and LF SHA-256 differ (for example `ARCHITECTURE.md`
+  `af92256a96b2...` to `ea179aaca222...`). The same tests now fail earlier,
+  with `a governing contract changed`. The failure count is unchanged
+  because the later engine-manifest check already failed, and the retirement
+  necessarily changes `engine/src` further.
+- The E9 v2 inherited preservation manifest pins 1,203 tracked files: 109
+  already differ at `f127be7`, 205 differ and 8 are deleted at `15f7139`.
+  This remediation adds four more pinned files to the drift
+  (`.github/workflows/ci.yml`, `.github/workflows/linux-gui-smoke.yml`,
+  `client/tests/test_linux_pygame_smoke.py`,
+  `engine/tests/test_v5_research_r4_population.py`), so 209 differ at
+  `a5c4f6a`. The check asserting this manifest already fails on the
+  baseline, so no new test fails, but the boundary drift does grow.
+- Other shared failures are also baseline-existing: shallow-checkout
+  `git show`/`rev-parse` of historical commits (E6/E8/E9 provenance, about 45
+  cases), and E4/E8 freeze source checks with prior documented dispositions.
+
+Nothing here alters a frozen protocol, record, digest or historical evidence;
+the frozen records and E9's fail-closed behavior are intact. However, the
+development tree no longer satisfies E9's frozen source boundary, and this PR
+adds four governing-contract changes. Preserving files does not show that the
+boundary holds. Making `test-linux-core` pass would require one of these
+decisions, none of which this remediation takes:
+
+1. **Separate frozen-science verification from product CI.** Product CI would
+   stop running live-tree frozen-boundary checks that cannot hold after the
+   freeze. A separate job would run them at their frozen commits with full
+   history, or assert that E9 refuses to load from the development tree.
+   This changes what development CI proves and needs explicit approval.
+2. **Restore the four governing contracts to their frozen bytes** and record
+   the retirement elsewhere. This removes the PR-introduced governing drift
+   but does not make CI pass; the engine-manifest failure remains.
+3. **Merge with documented red `test-linux-core`**, accepting the baseline
+   comparison above. This contradicts the merge requirement that required
+   product CI passes.
+
+E9 remains LOCKED; Requirement C remains NOT ESTABLISHED. No E9 test was
+modified, skipped or executed as research; no expected hash was changed.
+
+### E. Retained v4 packages resolved from the runtime catalog (PR-introduced; corrected)
+
+On a clean checkout, `discover_agents(REPO_ROOT)` seeds the git-ignored
+`agents/` catalog from the installed starter list. Before retirement that
+included `v4_quorum`, `v4_defender_scout` and `v4_scout`; now it seeds only
+the three Active Sensing starters. Twenty-five cases that resolve those
+retained packages through `agents/` therefore fail in CI:
+`test_v5_research_r4_agents.py` (21, including the catalog assertion),
+`test_v5_research_r4_population.py` (3) and
+`test_process_runtime_integration.py::test_v4_production_schema4_roundtrip_determinism_and_supervision`
+(1). Local review missed
+them because a stale ignored `agents/` copy in the review worktree still held
+the retired starters.
+
+The retirement keeps these packages byte for byte under
+`engine/src/battle_engine/data/starter_agents/` for exactly this research use,
+and already migrated these tests to run under
+`bytefray-rules-6-research-scale`. The corrections are test-only:
+
+- R4 agent tests resolve `v4_quorum` from the retained package directory, and
+  the catalog assertion now asserts retention without installation.
+- R4 population tests point the R4 tool's canonical directory at the retained
+  packages through a fixture. `tools/research/v5/r4_population.py` is
+  unchanged: reproducing R4 requires `5.1.0-alpha.1`, as the retirement
+  overview records.
+- The schema-4 roundtrip copies the two retained packages into an isolated
+  temporary data root.
+
+The frozen Phase 0 `v4_quorum` fingerprint `d220a583...` is still asserted
+and passes; no expected value, fingerprint or research record changed.
+
+### F. `pytest` 9.2.0 and a Seal 07 test (environmental; not corrected)
+
+`test_v6_e9_v2_gate8_seal07.py::test_s7_regular_missing_unreadable_and_opened_identity`
+replaces `os.fstat` with a stub lacking `st_size`. Under unpinned `pytest`
+9.2.0 (the PR run; the baseline ran 9.1.1) this raises `AttributeError`.
+Locally it passes on both `f127be7` and the PR source under 9.1.1 and fails
+on both under 9.2.0. It is a protected E9 test and was not edited. A CI
+`pytest<9.2` constraint would address it but does not change Section D.
+
+## Verification ledger
+
+This is remediation self-verification, not independent approval or release
+qualification. Overlapping collections are not additive.
+
+Local runs (2026-10-30) used a disposable `--depth 1` clone of the PR branch
+with the remediation applied, a dedicated Python 3.13.14 venv installed
+editable from that clone (pytest 9.2.0), and external temp/cache paths.
+
+| Check | Result |
+| --- | --- |
+| Corrected R4 agent/population and process-runtime modules | 54 passed, 2 pre-existing skips (Phase 0 corpus absent) |
+| Windows protection selection from `ci.yml` | 224 passed |
+| Windows NTFS-junction step from `ci.yml` | 59 passed, 7 skips (no local symlink privilege) |
+| Approved bounded collection (K1, promotion, Phase-C, schema-7, E3 passive) | 396 passed, 1 location artefact (below), 397/397 after rerun |
+| Packaging, starters, wheel, v4 historical immutability, evaluation v2/v4, `client/tests` | 888 passed, 9 skips (offline wheel build; symlink privilege) |
+| Helper `run_negative_cases` direct call and module entry point | Passed |
+| Ruff; engine / client / helper mypy | Passed |
+| Wheel and sdist build; `tools/check_wheel.py` | Passed; exactly the three Active Sensing starters in each |
+| Seal 07 test, pytest 9.1.1 / 9.2.0, baseline and PR | Pass / fail on both |
+
+The bounded artefact: a clone under `%TEMP%` makes the test's
+`Path.cwd().parent / "unauthorized_external_destination"` fall inside the
+system temp directory, which the validator authorizes; rerun from the D:
+worktree, with identical `engine/src`, it passes. Earlier WSL2/Xvfb evidence
+for A and C (2 + 2 pygame passes on Python 3.10.22/3.14.8; complete Designer
+suite 575 passed on 3.10.22/Qt 6.11.2) is retained at
+`/home/rasat/.cache/bytefray-pr6-ci-5aaihqgp`; Windows evidence from that
+session at `C:\Users\rasat\AppData\Local\Temp\bytefray-pr6-ci-bg225t47`.
+This session's logs, JUnit, clones and wheels are at
+`C:\Users\rasat\AppData\Local\Temp\bytefray-pr6-integrate-20261030`.
+
+### GitHub requalification of `1e4eac9`
+
+CI runs 41160424755 (push) and 41160429738 (pull request); optional GUI smoke
+run 41160429587.
+
+| Check | Result | Disposition |
+| --- | --- | --- |
+| `build-linux-wheel` (x2) | Pass | |
+| `pygame-x11-smoke` 3.10, 3.14 | Pass | A closed |
+| `build-windows-exe` (x2) | Protection and junction steps pass; EXEs build; notice collection fails for Qt 6.12.0 | B closed; notice drift baseline-equivalent, follow-up |
+| `designer-x11-smoke` (optional) | Segfault, exit 139, Replay History worker teardown | Pre-existing intermittent crash (C), follow-up |
+| `test-linux-core` 3.10-3.14 and next-python (x2) | Fail; Ruff passes | Versus baseline: 0 product failures added, 17 fixed, 131 shared frozen-science failures (D), 1 pytest 9.2.0 seal07 case (F) |
+
+All 25 fixture failures (E) are gone in every Linux job.
+
+## Integration under Option 1 (2026-10-31)
+
+The project owner selected Option 1. Design, provenance and limitations:
+[FROZEN_SCIENCE_QUALIFICATION.md](FROZEN_SCIENCE_QUALIFICATION.md).
+
+**D. Frozen science.** Product CI checks out full history and deselects
+exactly 1,507 cases listed in `tools/qualification/frozen_science_e9.json`:
+all 40 E9 modules (1,499) and eight E8 cases. Each of the eight loads the E8
+family freeze, which pins three test modules that V6 alpha M1-1 (`b6c9a57`)
+changed, so all eight already failed at `f127be7`; the retirement (`bb2c7a4`)
+changed one of them, `test_ruleset_v6_research_sensing_active.py`, again. The other 16 failing E2–E8 functions needed only history and stay
+in product CI. `frozen-science.yml` verifies the inventory unmodified at
+snapshot `b948540` (the last V6 research commit; E9's
+`load_protocol(verify=True)` holds from `514f4e2` to `b948540` and first fails
+at `b6c9a57`) on Linux and Windows, in the recorded research environment.
+A current-tree guard keeps 795 protected research files byte-identical to
+that commit. No E9 test, record, expected value or frozen evidence changed.
+
+**B. Windows build and notices.** The release constraints already were the
+approved set. CI now builds the EXEs on CPython 3.13 with
+`-Constraints tools/windows-build-constraints.txt` (PySide6/Qt 6.11.2,
+matching `tools/third_party_notices/qt-6.11.2`); the containment tests stay
+on 3.10. A local build to completion then exposed a retirement defect that
+the earlier notice failure had hidden: `build_win.ps1` still required
+`agents validate` of an Active Sensing starter to fail "under the default
+Classic Ruleset", but the default is now Active Sensing. The smoke now
+requires the default and explicit `bytefray-rules-6-alpha1` to validate and
+`--ruleset bytefray-rules-4` to be refused as retired (exit 2);
+`test_windows_build_release_steps.py` pins the new contract.
+
+The worker-cleanup gap is closed rather than deferred:
+`test_process_runtime_integration.py::test_supervised_startup_failure_closes_already_started_workers`
+starts a healthy worker, makes the second entrant's reset hang past a 1 s
+timeout, and requires every started worker to have exited. It runs in the
+Windows protection step and on Linux, and fails if the controller's cleanup
+(`process_runtime.py`, `except BaseException: handle.close()`) is removed.
+
+**F. Seal 07.** Reproduced at the snapshot, unmodified: pytest 9.1.1 passes,
+9.2.0 fails. The test now runs only in the historical job, pinned to 9.1.1
+by `tools/qualification/e9_historical_constraints.txt`.
+
+**C. Designer X11.** Not fixed. Bounded WSL2/Xvfb comparison (Python 3.10.22,
+PySide6 6.11.2, both Replay History modules, fresh `git archive` exports):
+
+| Source | As CI runs it, 8 runs | Keyboard-focus test deselected in both |
+| --- | --- | --- |
+| `f127be7` | 8 segfaults | 1 passed, 4 segfaults, 3 hangs |
+| PR (`dd7959d`) | 6 passed, 1 segfault, 1 hang | 8 passed |
+
+Both signatures occur on the baseline at the same sites: a segfault in
+`ReplayHistoryWindow.eventFilter` or a worker thread's SQLite read, and a hang
+in `ReplayHistoryWindow.shutdownWorker`'s nested event loop (the site of the
+GitHub `dd7959d` hang, cancelled after 6 hours). The PR adds no failure here.
+Tracked in [issue #7](https://github.com/libertaine/Bytefray/issues/7). The optional job stays enabled and red, now with
+`timeout-minutes: 60` and `faulthandler_timeout=300` so a hang ends within the
+hour with every thread's stack.
+
+## Scope
+
+Active Sensing policy and gameplay, the Agent API, the
+`ruleset_unavailable / configuration` diagnostic, Replay Viewer and Spectator
+compatibility, the three-starter catalog and Classic retirement are
+unchanged. No engine or application source, research tool, E9 test, frozen
+research evidence, competitive-agent prototype, historical approval report,
+installer or release configuration was modified. The remediation does change
+four test/workflow files that the E9 v2 preservation manifest pins (Section D).
+The 2026-10-31 integration adds the frozen-science boundary (root
+`conftest.py`, `tools/qualification/frozen_science*`, the historical
+constraints, `frozen-science.yml`, a product boundary test), CI build
+configuration, the `build_win.ps1` post-retirement smoke, one worker-cleanup
+test and the Designer job's timeout; it changes no engine, application or
+research source, no release constraint and no installer.
+
+An independent review of `15f7139..a5c4f6a` returned **PASS WITH
+CONDITIONS**: no defect in the code or test changes, report corrections
+(applied here) and GitHub requalification of the exact pushed commit. Native Linux desktop, Windows
+installer, the retained Windows `0x8001010d` diagnostic and the next
+application version remain separate release gates.
+
+**E9 remains LOCKED. Requirement C remains NOT ESTABLISHED.**

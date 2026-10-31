@@ -5,11 +5,12 @@ Covers docs/research/v6/V6_PHASE4_GAMEPLAY_RESEARCH_METHODOLOGY.md Sec 10.2
 and the Phase 4B implementation task's Sec 30 test list. This file proves,
 with real live execution (never a hand-built fixture), that:
 
-1. The research Ruleset is registered, executable, and behaviorally
-   equivalent to stable ``bytefray-rules-4`` at the control arena (512) --
-   scheduler, seeded placement, process order, scores, and the full replay
-   event stream are identical except where Ruleset identity is
-   intentionally part of persisted/canonical identity.
+1. The research Ruleset is registered and executable, and shares the
+   scheduler and seeded placement of the product Ruleset at the control
+   arena (512). Its live replay equivalence with the retired stable
+   ``bytefray-rules-4`` was proven while Classic could still execute; its
+   field-level equality with Classic's frozen record is checked in
+   ``test_ruleset_policy.py``.
 2. It is evaluable at arena sizes stable v4 forbids, within the Phase 4A
    research range, and rejects out-of-range values clearly rather than
    clamping.
@@ -18,21 +19,14 @@ with real live execution (never a hand-built fixture), that:
    evaluation/schedule/match identities.
 4. It routes through the seeded-placement/identity-v7/schema-v7 machinery
    (never legacy identity version 2, fixed placements, or ``(0, 0)``
-   coordinates), while stable v4's own 512-cell lock and identity remain
-   completely untouched.
-
-See ``test_v4_stable_ruleset_equivalence.py`` for the pattern this file's
-live-comparison helpers are modeled on, and ``test_ruleset_policy.py`` for
-the ``RulesetPolicy``-field-equality regression guard (checked there, not
-duplicated here).
+   coordinates), while the product Ruleset's own 512-cell lock and identity
+   remain completely untouched.
 """
 
 from __future__ import annotations
 
 import shutil
-from dataclasses import asdict, replace
 from pathlib import Path
-from typing import Any
 
 import pytest
 from battle_engine.agent_api import AgentManifestError
@@ -63,12 +57,13 @@ from battle_engine.evaluation_contracts import (
 from battle_engine.evaluation_planning import resolve_v4_seed_geometry
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
 from battle_engine.placement import resolve_direct_match_starts
-from battle_engine.replay import MatchResult, ReplayHeader, TickSnapshot, iter_replay
+from battle_engine.replay import ReplayHeader, iter_replay
 from battle_engine.ruleset_policy import (
     BYTEFRAY_RULESET_V4_ID,
+    BYTEFRAY_RULESET_V6_ALPHA1_ID,
     BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
     PROCESS_RULESET_IDS,
-    RULESET_V4,
+    RULESET_V6_ALPHA1,
     RULESET_V6_RESEARCH_SCALE,
     resolve_ruleset_policy,
 )
@@ -152,32 +147,6 @@ def _run_under_ruleset(
     result = NativeMatchService().run(request)
     assert result.result_path is not None
     return replay_path
-
-
-def _nulled_identity_snapshot(replay_path: Path) -> dict[str, Any]:
-    """Parse one replay into a JSON-serializable snapshot with every
-    identity-bearing field (including ``ruleset_id`` itself) nulled out --
-    the exact fields two runs under *different* Ruleset identities are
-    expected to disagree on, so the remainder is a pure gameplay
-    comparison."""
-
-    header: ReplayHeader | None = None
-    ticks: list[TickSnapshot] = []
-    result: MatchResult | None = None
-    for record in iter_replay(replay_path):
-        if isinstance(record, ReplayHeader):
-            header = replace(record, replay_id=None, match_id=None, result_id=None, ruleset_id=None)
-        elif isinstance(record, TickSnapshot):
-            ticks.append(record)
-        elif isinstance(record, MatchResult):
-            result = replace(record, replay_id=None, match_id=None, result_id=None)
-    assert header is not None, f"{replay_path}: no header record"
-    assert result is not None, f"{replay_path}: no terminal result record"
-    return {
-        "header": asdict(header),
-        "ticks": [asdict(tick) for tick in ticks],
-        "result": asdict(result),
-    }
 
 
 def _raw_header(replay_path: Path) -> ReplayHeader:
@@ -279,7 +248,7 @@ def test_research_scale_live_match_executes_successfully(tmp_path: Path) -> None
 # ---------------------------------------------------------------------------
 
 
-def test_scheduler_call_order_is_identical_to_stable_v4() -> None:
+def test_scheduler_call_order_is_identical_to_active_sensing() -> None:
     from dataclasses import dataclass
 
     @dataclass
@@ -288,13 +257,13 @@ def test_scheduler_call_order_is_identical_to_stable_v4() -> None:
         alive: bool = True
 
     states = [_FakeState("A"), _FakeState("B"), _FakeState("C")]
-    v4_calls: list[str] = []
+    product_calls: list[str] = []
     research_calls: list[str] = []
-    RULESET_V4.run_scheduler(states, 3, lambda s, slot: v4_calls.append(f"{s.name}{slot}"), tick=1)
+    RULESET_V6_ALPHA1.run_scheduler(states, 3, lambda s, slot: product_calls.append(f"{s.name}{slot}"), tick=1)
     RULESET_V6_RESEARCH_SCALE.run_scheduler(
         states, 3, lambda s, slot: research_calls.append(f"{s.name}{slot}"), tick=1
     )
-    assert research_calls == v4_calls
+    assert research_calls == product_calls
 
 
 # ---------------------------------------------------------------------------
@@ -303,8 +272,8 @@ def test_scheduler_call_order_is_identical_to_stable_v4() -> None:
 
 
 @pytest.mark.parametrize("seed", [1, 2, 3, 4, 5, 6, 7, 8])
-def test_seeded_placement_at_a512_matches_stable_v4_byte_for_byte(seed: int) -> None:
-    v4_starts = resolve_v4_seed_geometry(BYTEFRAY_RULESET_V4_ID, STANDARD_V4_ARENA_SIZE, seed)
+def test_seeded_placement_at_a512_matches_active_sensing_byte_for_byte(seed: int) -> None:
+    v4_starts = resolve_v4_seed_geometry(BYTEFRAY_RULESET_V6_ALPHA1_ID, STANDARD_V4_ARENA_SIZE, seed)
     research_starts = resolve_v4_seed_geometry(
         BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID, STANDARD_V4_ARENA_SIZE, seed
     )
@@ -427,11 +396,11 @@ def test_research_scale_accepts_every_phase4b_arena_size(tmp_path: Path, arena_s
         assert 0 <= cell.opponent_start < arena_size
 
 
-def test_stable_v4_still_rejects_non_512_arena_after_allow_list_change(tmp_path: Path) -> None:
+def test_active_sensing_still_rejects_non_512_arena_after_allow_list_change(tmp_path: Path) -> None:
     _write_api_v2_agent(tmp_path, "candidate")
     _write_api_v2_agent(tmp_path, "opponent")
     request = _research_request(
-        tmp_path, ruleset_id=BYTEFRAY_RULESET_V4_ID, arena_size=1024
+        tmp_path, ruleset_id=BYTEFRAY_RULESET_V6_ALPHA1_ID, arena_size=1024
     )
     with pytest.raises(EvaluationConfigurationError, match="incompatible with the"):
         EvaluationService().run(request)
@@ -498,7 +467,7 @@ def test_arena_size_is_identity_bearing_for_evaluation_and_schedule_ids(
 
 
 def test_ruleset_id_is_identity_bearing_at_the_same_arena_size(tmp_path: Path) -> None:
-    """A=512 under stable v4 vs. under the research Ruleset must also
+    """A=512 under Active Sensing vs. under the research Ruleset must also
     produce different evaluation ids -- Ruleset identity, not merely arena
     size, is part of MatchIdentity."""
 
@@ -507,7 +476,7 @@ def test_ruleset_id_is_identity_bearing_at_the_same_arena_size(tmp_path: Path) -
     v4_result = EvaluationService().run(
         _research_request(
             tmp_path,
-            ruleset_id=BYTEFRAY_RULESET_V4_ID,
+            ruleset_id=BYTEFRAY_RULESET_V6_ALPHA1_ID,
             arena_size=None,
             output_dir=tmp_path / "v4",
         )
@@ -535,61 +504,6 @@ def test_identity_is_stable_for_the_same_arena_seed_and_config(tmp_path: Path) -
         assert cell_a.schedule_id == cell_b.schedule_id
         assert cell_a.subject_start == cell_b.subject_start
         assert cell_a.opponent_start == cell_b.opponent_start
-
-
-# ---------------------------------------------------------------------------
-# 7. A=512 behavioral equivalence gate: real agents, live execution, full
-#    replay/result comparison (excluding expected Ruleset-ID/header
-#    identity differences).
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.parametrize("seed", [1, 3, 7])
-@pytest.mark.parametrize(
-    "entrant_names",
-    [
-        ("v4_claimer", "v5_core_defender"),
-        ("v5_scout_striker", "v4_local_defender"),
-    ],
-)
-def test_research_scale_is_behaviorally_identical_to_stable_v4_at_a512(
-    tmp_path: Path, entrant_names: tuple[str, str], seed: int
-) -> None:
-    for name in entrant_names:
-        _bootstrap_agent(tmp_path, name)
-
-    v4_replay = _run_under_ruleset(
-        tmp_path,
-        entrant_names,
-        ruleset_id=BYTEFRAY_RULESET_V4_ID,
-        arena_size=512,
-        seed=seed,
-        ticks=300,
-        run_label=f"v4-{'-'.join(entrant_names)}-{seed}",
-    )
-    research_replay = _run_under_ruleset(
-        tmp_path,
-        entrant_names,
-        ruleset_id=BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID,
-        arena_size=512,
-        seed=seed,
-        ticks=300,
-        run_label=f"research-{'-'.join(entrant_names)}-{seed}",
-    )
-
-    v4_snapshot = _nulled_identity_snapshot(v4_replay)
-    research_snapshot = _nulled_identity_snapshot(research_replay)
-
-    # Gameplay -- placement geometry, tick-by-tick events/memory writes,
-    # scoring, territory, kills/deaths, and the terminal result -- must be
-    # byte-for-byte identical once Ruleset-ID/header identity fields are
-    # excluded.
-    assert research_snapshot == v4_snapshot
-
-    # Ruleset-ID-bearing identity fields are expected, and required, to
-    # differ: each replay must honestly attribute its own Ruleset.
-    assert _raw_header(v4_replay).ruleset_id == BYTEFRAY_RULESET_V4_ID
-    assert _raw_header(research_replay).ruleset_id == BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID
 
 
 # ---------------------------------------------------------------------------

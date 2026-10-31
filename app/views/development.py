@@ -59,11 +59,10 @@ from app.services.agent_catalog import AgentRow
 from app.services.agent_source import load_agent_source
 from app.services.agent_workflows import DevelopmentTestPresentation, ValidationPresentation
 from app.services.designer_workflows import random_match_seed
-from app.services.ruleset_options import RULESET_DESCRIPTION, agent_row_metadata
-from app.widgets.ruleset_combo import (
-    populate_ruleset_combo,
-    selected_ruleset_id,
-    sync_ruleset_choices_for_metadata,
+from app.services.ruleset_options import (
+    INCOMPATIBLE_SELECTION_EXPLANATION,
+    agent_row_metadata,
+    agents_supported,
 )
 
 _INVALID_STYLE = "color: #b00020;"
@@ -190,8 +189,8 @@ class AgentDevelopmentPanel(QWidget):
 
     Only ``kind: python`` agents are shown. Creation emits Agent API v2;
     discovery and validation may still identify an older package so the UI
-    can report its incompatibility, but development-test and evaluation are
-    enabled only when the current Ruleset supports the selection.
+    can report its incompatibility, but development-test is enabled only when
+    the selected agents can run.
     """
 
     refreshAgentsRequested = Signal()
@@ -210,9 +209,9 @@ class AgentDevelopmentPanel(QWidget):
         self._catalog = catalog
         self._rows: list[AgentRow] = []
         self._busy = False
-        # Whether the selected agent/opponent pairing has any compatible
-        # Ruleset; recomputed by _sync_ruleset and gating Test.
-        self._has_compatible_ruleset = True
+        # Whether the selected agent/opponent pairing can run; recomputed by
+        # _sync_compatibility and gating Test.
+        self._selection_compatible = True
         self._current_agent_id: str | None = None
         self._current_agent_name: str | None = None
         self._last_validation: ValidationPresentation | None = None
@@ -358,31 +357,17 @@ class AgentDevelopmentPanel(QWidget):
         options_row.addWidget(self.timeoutSpin)
         test_layout.addLayout(options_row)
 
-        # Ruleset is explicit and visible rather than inherited from a CLI
-        # default. Stable bytefray-rules-4 is the sole offered identity.
         # Historical Python rows may remain visible for inspection, but the
-        # compatibility synchronizer leaves them with no executable choice
-        # and disables Test.
-        ruleset_row = QHBoxLayout()
-        self.rulesetLabel = QLabel("Ruleset")
-        self.rulesetCombo = QComboBox()
-        self.rulesetLabel.setBuddy(self.rulesetCombo)
-        populate_ruleset_combo(self.rulesetCombo)
-        self.rulesetCombo.setToolTip(RULESET_DESCRIPTION)
-        self.rulesetCombo.setAccessibleName("Development test ruleset")
-        self.rulesetCombo.setAccessibleDescription(RULESET_DESCRIPTION)
-        ruleset_row.addWidget(self.rulesetLabel)
-        ruleset_row.addWidget(self.rulesetCombo, 1)
-        test_layout.addLayout(ruleset_row)
-        self.rulesetExplanation = QLabel()
-        self.rulesetExplanation.setWordWrap(True)
-        test_layout.addWidget(self.rulesetExplanation)
+        # compatibility check disables Test for them and says why.
+        self.compatibilityExplanation = QLabel()
+        self.compatibilityExplanation.setWordWrap(True)
+        self.compatibilityExplanation.setVisible(False)
+        test_layout.addWidget(self.compatibilityExplanation)
         workflow_hint = QLabel(
             "For Window Scout, Watchful Keeper or Roaming Reacquirer: create a personal "
-            f"copy with New Agent, explicitly select {ACTIVE_SENSING_DISPLAY_NAME} here, and "
-            f"Validate. Edit the agent's parameters in Advanced, select "
-            f"{ACTIVE_SENSING_DISPLAY_NAME} there, then Run and Open Replay. "
-            "Development Test runs a full match using manifest defaults."
+            "copy with New Agent and Validate. Edit the agent's parameters in Advanced, "
+            "then Run and Open Replay. Development Test runs a full match against the "
+            "Reference opponent (Watchful Keeper) using manifest defaults."
         )
         workflow_hint.setWordWrap(True)
         test_layout.addWidget(workflow_hint)
@@ -472,10 +457,8 @@ class AgentDevelopmentPanel(QWidget):
         self.btnSensingGuide.clicked.connect(self.showSensingGuide)
         self.agentCombo.currentIndexChanged.connect(self._on_combo_changed)
         # An explicitly selected opponent is a real entrant, so it
-        # participates in Ruleset compatibility exactly like the tested
-        # agent does.
+        # participates in compatibility exactly like the tested agent does.
         self.opponentCombo.currentIndexChanged.connect(self._on_opponent_changed)
-        self.rulesetCombo.currentIndexChanged.connect(self._on_ruleset_changed)
 
         self.opponentCombo.addItem("Reference", None)
         self._update_enablement()
@@ -545,15 +528,6 @@ class AgentDevelopmentPanel(QWidget):
 
     def selected_timeout(self) -> float:
         return self.timeoutSpin.value()
-
-    def selected_ruleset_id(self) -> str:
-        """The Ruleset identity to pass explicitly to ``bytefray agents test``.
-
-        Always a concrete identity, never ``None``: this tab must not let the
-        CLI's omitted-selection resolver decide which Ruleset a development
-        test ran under.
-        """
-        return selected_ruleset_id(self.rulesetCombo)
 
     def last_test_trace_path(self) -> Path | None:
         """The last completed test's trace path, or ``None`` if unavailable."""
@@ -688,7 +662,6 @@ class AgentDevelopmentPanel(QWidget):
         self.btnRandomizeSeed.setEnabled(not busy)
         self.ticksSpin.setEnabled(not busy)
         self.timeoutSpin.setEnabled(not busy)
-        self.rulesetCombo.setEnabled(not busy)
         self._update_enablement()
 
     def python_agent_names(self) -> list[tuple[str, str]]:
@@ -704,9 +677,8 @@ class AgentDevelopmentPanel(QWidget):
     def python_agent_metadata(self) -> dict[str, object]:
         """Every discovered Python agent's compatibility metadata by id.
 
-        Lets the Evaluate dialog ask the same Ruleset-compatibility question
-        this tab and the engine do, instead of offering Rulesets that the
-        selected roster cannot actually run under.
+        Lets the Evaluate dialog ask the same compatibility question this tab
+        and the engine do, instead of launching a roster that cannot run.
         """
         return {_agent_row_id(row): agent_row_metadata(row) for row in self._rows}
 
@@ -758,11 +730,7 @@ class AgentDevelopmentPanel(QWidget):
 
     def showTesting(self, agent_id: str, opponent_label: str) -> None:
         self.testStatusLabel.setStyleSheet(_NEUTRAL_STYLE)
-        # Name the Ruleset while the test is in flight, so the effective
-        # gameplay semantics are visible without waiting for the result.
-        self.testStatusLabel.setText(
-            f"Testing {agent_id} vs {opponent_label} under {self.selected_ruleset_id()}…"
-        )
+        self.testStatusLabel.setText(f"Testing {agent_id} vs {opponent_label}…")
         self.btnOpenTestReplay.setEnabled(False)
         self.btnInspectTrace.setEnabled(False)
 
@@ -814,9 +782,8 @@ class AgentDevelopmentPanel(QWidget):
             lines = ["Last development test: Complete", f"Agent: {presentation.agent_id}"]
             if presentation.opponent:
                 lines.append(f"Opponent: {presentation.opponent}")
-            # The Ruleset the tool itself reported, not the one the combo
-            # requested -- so a user can always see which gameplay semantics
-            # produced this result.
+            # The Ruleset the tool itself reported, so a user can always see
+            # which gameplay semantics produced this result.
             lines.append(f"Ruleset: {presentation.ruleset_id or 'not reported'}")
             if presentation.seed is not None:
                 lines.append(f"Seed: {presentation.seed}")
@@ -855,8 +822,7 @@ class AgentDevelopmentPanel(QWidget):
         """The explicitly selected opponent's row, or ``None`` for Reference.
 
         The internal reference opponent deliberately imposes no additional
-        Ruleset constraint: ``agents test`` supplies the current Agent API
-        v2 reference opponent.
+        constraint: ``agents test`` supplies a compatible reference opponent.
         """
 
         opponent_id = self.selected_opponent_id()
@@ -866,18 +832,19 @@ class AgentDevelopmentPanel(QWidget):
             (row for row in self._rows if _agent_row_id(row) == opponent_id), None
         )
 
-    def _sync_ruleset(self) -> None:
-        """Offer only Rulesets compatible with the selected entrants.
+    def _sync_compatibility(self) -> None:
+        """Record whether the selected entrants can run, and say so if not.
 
-        Only the *Ruleset* choices narrow here. The catalog may still show a
-        discovered historical package for inspection/validation, but no
-        executable Ruleset is offered for incompatible metadata.
+        The catalog may still show a discovered historical package for
+        inspection/validation; Test stays disabled for it.
         """
 
         rows = [row for row in (self.selectedAgentRow(), self._opponent_row()) if row is not None]
-        self._has_compatible_ruleset = sync_ruleset_choices_for_metadata(
-            self.rulesetCombo, [agent_row_metadata(row) for row in rows], self.rulesetExplanation
+        self._selection_compatible = agents_supported(agent_row_metadata(row) for row in rows)
+        self.compatibilityExplanation.setText(
+            "" if self._selection_compatible else INCOMPATIBLE_SELECTION_EXPLANATION
         )
+        self.compatibilityExplanation.setVisible(not self._selection_compatible)
 
     def _update_enablement(self) -> None:
         row = self.selectedAgentRow()
@@ -885,11 +852,11 @@ class AgentDevelopmentPanel(QWidget):
         can_open_folder = has_agent and Path(row.path).is_dir() if row else False
         self.btnOpenFolder.setEnabled(can_open_folder and not self._busy)
         self.btnExportAgent.setEnabled(has_agent and not self._busy)
-        # Testing is disabled outright when the selected pairing has no
-        # compatible Ruleset, rather than launching a run the engine would
-        # reject as a configuration error.
+        # Testing is disabled outright when the selected pairing cannot run,
+        # rather than launching a run the engine would reject as a
+        # configuration error.
         self.btnTest.setEnabled(
-            has_agent and not self._busy and self._has_compatible_ruleset
+            has_agent and not self._busy and self._selection_compatible
         )
         self.btnValidate.setEnabled(has_agent and not self._busy)
         self.btnEvaluate.setEnabled(has_agent and not self._busy)
@@ -913,17 +880,11 @@ class AgentDevelopmentPanel(QWidget):
             self.testStatusLabel.setText("No agent selected.")
 
     def _on_opponent_changed(self, _index: int | None = None) -> None:
-        self._sync_ruleset()
-        self._update_enablement()
-
-    def _on_ruleset_changed(self, _index: int | None = None) -> None:
-        self._last_validation = None
-        self.statusLabel.setText("Ruleset changed; validate again under the explicitly selected Ruleset.")
-        self._sync_ruleset()
+        self._sync_compatibility()
         self._update_enablement()
 
     def _on_combo_changed(self, _index: int | None = None) -> None:
-        self._sync_ruleset()
+        self._sync_compatibility()
         self._update_enablement()
         row = self.selectedAgentRow()
         self.reloadSource()

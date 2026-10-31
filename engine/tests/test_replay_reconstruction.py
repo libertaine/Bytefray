@@ -81,7 +81,7 @@ def _reconstruct_ticks(replay_path):
     return header, reconstructed
 
 
-def _config(arena_size=64, instr_per_tick=8, seed=1337):
+def _config(arena_size=128, instr_per_tick=8, seed=1337):
     return Config(arena_size=arena_size, instr_per_tick=instr_per_tick, seed=seed)
 
 
@@ -211,7 +211,7 @@ def _run_simple_match(tmp_path):
     )
     replay_path = tmp_path / "replay.jsonl"
     result = NativeMatchService().run(
-        MatchRequest(_config(arena_size=64), entrants, max_ticks=2, replay_path=replay_path, verbose=False)
+        MatchRequest(_config(arena_size=96), entrants, max_ticks=2, replay_path=replay_path, verbose=False)
     )
     return result
 
@@ -471,7 +471,7 @@ def test_match_id_is_stable_across_different_absolute_checkout_paths(tmp_path):
     )
     first = NativeMatchService().run(
         MatchRequest(
-            _config(arena_size=32),
+            _config(arena_size=96),
             entrants_one,
             max_ticks=2,
             replay_path=tmp_path / "one" / "nested" / "deep" / "replay.jsonl",
@@ -480,7 +480,7 @@ def test_match_id_is_stable_across_different_absolute_checkout_paths(tmp_path):
     )
     second = NativeMatchService().run(
         MatchRequest(
-            _config(arena_size=32),
+            _config(arena_size=96),
             entrants_two,
             max_ticks=2,
             replay_path=tmp_path / "two" / "replay.jsonl",
@@ -501,19 +501,19 @@ def test_match_id_changes_with_meaningful_config_or_code_changes(tmp_path):
     )
     baseline = NativeMatchService().run(
         MatchRequest(
-            _config(arena_size=32), base_entrants, max_ticks=2,
+            _config(arena_size=96), base_entrants, max_ticks=2,
             replay_path=tmp_path / "baseline" / "replay.jsonl", verbose=False,
         )
     )
     different_seed = NativeMatchService().run(
         MatchRequest(
-            _config(arena_size=32, seed=99), base_entrants, max_ticks=2,
+            _config(arena_size=96, seed=99), base_entrants, max_ticks=2,
             replay_path=tmp_path / "seed" / "replay.jsonl", verbose=False,
         )
     )
     different_code = NativeMatchService().run(
         MatchRequest(
-            _config(arena_size=32),
+            _config(arena_size=96),
             (
                 MatchEntrant.python("A", "a", 0, writer_spec),
                 MatchEntrant.python("B", "b", 16, passive_spec),
@@ -539,8 +539,9 @@ def test_canonical_match_id_changes_if_ruleset_identity_changes(monkeypatch, tmp
     V6 Phase 2B.12 re-pointed the omitted-``ruleset_id`` default from the
     retired ``BYTEFRAY_RULESET_ID`` to the retained control
     ``BYTEFRAY_RULESET_V4_ID`` (docs/research/v6/
-    V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md, trap F-1); that is now the
-    constant this monkeypatch targets.
+    V6_PHASE2B12_SCOPE_C_RUNTIME_RETIREMENT.md, trap F-1); the Classic
+    retirement re-pointed it to ``BYTEFRAY_RULESET_V6_ALPHA1_ID``, which is
+    now the constant this monkeypatch targets.
     """
 
     spec = _python_spec(tmp_path, "passive", PASSIVE_SOURCE)
@@ -549,13 +550,13 @@ def test_canonical_match_id_changes_if_ruleset_identity_changes(monkeypatch, tmp
         MatchEntrant.python("B", "b", 16, spec),
     )
     request = MatchRequest(
-        _config(arena_size=32), entrants, max_ticks=2,
+        _config(arena_size=96), entrants, max_ticks=2,
         replay_path=tmp_path / "replay.jsonl", verbose=False,
     )
     baseline_id = canonical_match_id(request)
 
     monkeypatch.setattr(
-        "battle_engine.match_service.BYTEFRAY_RULESET_V4_ID", "bytefray-rules-6-hypothetical"
+        "battle_engine.match_service.BYTEFRAY_RULESET_V6_ALPHA1_ID", "bytefray-rules-6-hypothetical"
     )
     changed_id = canonical_match_id(request)
 
@@ -578,13 +579,13 @@ def test_result_id_changes_when_outcome_differs_for_same_match_id(tmp_path):
     )
     first = NativeMatchService().run(
         MatchRequest(
-            _config(arena_size=32), entrants, max_ticks=2,
+            _config(arena_size=96), entrants, max_ticks=2,
             replay_path=tmp_path / "a" / "replay.jsonl", verbose=False,
         )
     )
     second = NativeMatchService().run(
         MatchRequest(
-            _config(arena_size=32), entrants, max_ticks=2,
+            _config(arena_size=96), entrants, max_ticks=2,
             replay_path=tmp_path / "b" / "replay.jsonl", verbose=False,
         )
     )

@@ -60,8 +60,6 @@ from battle_engine.evaluation_planning import build_matrix
 from battle_engine.evaluation_service import EvaluationService
 from battle_engine.launchers import build_agents_command, build_tournament_command
 from battle_engine.result_model import read_result
-from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
-from battle_engine.ruleset_policy import BYTEFRAY_RULESET_V4_ID
 
 from app.services.agent_catalog import AgentRow
 
@@ -315,35 +313,15 @@ def match_artifact_paths(replay_path: Path) -> tuple[Path, Path]:
     return replay.with_name("result.json"), replay
 
 
-# Ruleset identities for which a normal Designer match automatically
-# records the Alpha3 spectator trace alongside its replay -- originally
-# every v4 identity (alpha1, alpha2, and the permanent stable identity, as
-# of v4.0.0-rc1 Phase 2). v1 and v2 deliberately keep their existing
-# artifact set unchanged: a normal v4 Designer match should automatically
-# be spectator-capable, without a new opt-in control (Alpha3 follow-up
-# Phase 2).
-#
-# V6 Phase 2B.10 Scope B removed alpha1/alpha2: this table gates whether a
-# match *about to launch* also writes a trace file, so it is
-# execution-only -- no historical reader consults it (only
-# ``app/agent_designer.py`` calls :func:`designer_trace_path` below, always
-# with an about-to-run match's own configured Ruleset). Neither alpha can
-# launch a new Designer match at all any longer, so their membership here
-# was dead.
-DESIGNER_AUTO_TRACE_RULESET_IDS: frozenset[str] = frozenset({BYTEFRAY_RULESET_V4_ID, BYTEFRAY_RULESET_V6_ALPHA1_ID})
-
-
-def designer_trace_path(replay_path: Path, ruleset_id: str) -> Path | None:
+def designer_trace_path(replay_path: Path) -> Path:
     """The sibling spectator-trace artifact path for one Designer match run.
 
-    Mirrors :func:`match_artifact_paths`: the trace is a sibling of
-    ``replay_path`` inside the same unique run directory, so it can never
-    collide across independent Designer runs. Returns ``None`` for a
-    Ruleset outside :data:`DESIGNER_AUTO_TRACE_RULESET_IDS`, leaving that
-    match's artifact set exactly as it was before this policy existed.
+    Every Designer match records the development trace alongside its
+    replay: Active Sensing replays need it for their delivered-information
+    views and for Spectator export. Mirrors :func:`match_artifact_paths`:
+    the trace is a sibling of ``replay_path`` inside the same unique run
+    directory, so it can never collide across independent Designer runs.
     """
-    if ruleset_id not in DESIGNER_AUTO_TRACE_RULESET_IDS:
-        return None
     replay = replay_path.expanduser().resolve()
     return replay.with_name("trace.jsonl")
 
@@ -550,7 +528,7 @@ def build_designer_evaluation_plan(
 
     New group evaluation was tied to retired Ruleset 2 and is rejected.
     Historical group artifacts remain readable by the presentation adapters
-    below. Pairwise evaluation resolves to stable Ruleset 4 when omitted.
+    below. Pairwise evaluation resolves to Active Sensing when omitted.
     """
 
     if mode not in (EVALUATION_MODE_PAIRWISE, EVALUATION_MODE_GROUP):

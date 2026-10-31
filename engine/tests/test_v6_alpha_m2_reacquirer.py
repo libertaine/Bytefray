@@ -37,6 +37,7 @@ from battle_engine.data.starter_agents.v6_roaming_reacquirer.agent import (
 from battle_engine.match_service import MatchEntrant, MatchRequest, NativeMatchService
 from battle_engine.placement import resolve_direct_match_starts
 from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID as ALPHA
+from battle_engine.rules import BYTEFRAY_RULESET_V6_RESEARCH_SCALE_ID as PASSIVE
 from battle_engine.sensing_playback import (
     ArtifactIntegrityError,
     ExchangePhase,
@@ -345,11 +346,11 @@ def test_personal_copy_manifest_source_retention_overwrite_and_registration(tmp_
     with pytest.raises(AgentScaffoldError, match="already exists"):
         create_agent("my_reacquirer", data_root=tmp_path, resource_root=ROOT, template="roaming_reacquirer")
     assert "v6_relocating_opponent" not in STARTER_AGENT_NAMES
-    assert STARTER_AGENT_NAMES[-4:] == ("v6_window_scout", "v6_watchful_keeper", "v6_roaming_reacquirer", "v5_dual_team")
+    assert STARTER_AGENT_NAMES == ("v6_window_scout", "v6_watchful_keeper", "v6_roaming_reacquirer")
     assert starter_content_digest(REACQUIRER) == CURRENT_STARTER_DIGESTS["v6_roaming_reacquirer"]
 
 
-def test_stable_v4_mismatch_precedes_import_and_artifacts_on_every_route(tmp_path):
+def test_passive_ruleset_mismatch_precedes_import_and_artifacts_on_every_route(tmp_path):
     create_agent("reacquirer", data_root=tmp_path, resource_root=ROOT, template="roaming_reacquirer")
     marker = tmp_path / "imported"
     source = tmp_path / "agents/reacquirer/agent.py"
@@ -360,20 +361,21 @@ def test_stable_v4_mismatch_precedes_import_and_artifacts_on_every_route(tmp_pat
         NativeMatchService().run(MatchRequest(
             config=Config(arena_size=512), entrants=(MatchEntrant.python("A", "reacquirer", 0, spec),),
             max_ticks=1, replay_path=tmp_path / "replay.jsonl", trace_path=tmp_path / "trace.jsonl",
+            ruleset_id=PASSIVE,
         ))
     assert not any((tmp_path / name).exists() for name in ("replay.jsonl", "trace.jsonl", "result.json"))
     with pytest.raises(AgentValidationFailedError) as error:
-        validate_agent("reacquirer", data_root=tmp_path, trace_path=tmp_path / "validate.jsonl")
+        validate_agent("reacquirer", data_root=tmp_path, trace_path=tmp_path / "validate.jsonl", ruleset_id=PASSIVE)
     assert error.value.diagnostic.code == "agent_capability_unsupported"
     assert not (tmp_path / "validate.jsonl").exists()
     out = io.StringIO()
-    _handle_load(_WorkerState(), {"spec": agent_spec_to_payload(spec), "agent_id": "A"}, out)
+    _handle_load(_WorkerState(), {"spec": agent_spec_to_payload(spec), "agent_id": "A", "ruleset_id": PASSIVE}, out)
     assert json.loads(out.getvalue())["diagnostic"]["code"] == "agent_capability_unsupported"
     assert not marker.exists()
     handle = AgentWorkerHandle(agent_id="A", slot=0)
     handle.start()
     try:
-        assert handle.load(spec, timeout=30.0).status is WorkerCallStatus.FAILED
+        assert handle.load(spec, timeout=30.0, ruleset_id=PASSIVE).status is WorkerCallStatus.FAILED
         assert not marker.exists()
         assert handle.load(spec, timeout=30.0, ruleset_id=ALPHA).status is WorkerCallStatus.OK
     finally:
