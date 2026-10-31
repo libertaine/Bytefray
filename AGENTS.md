@@ -49,6 +49,16 @@ abbreviated.
 - Run the suite with `python -m pytest` — no extra flags required.
   `pytest.ini` already sets `-m "not gui"`, repo-local cache/temp dirs, and
   `testpaths` (`_legacy/tests`, `engine/tests`, `client/tests`).
+- Frozen V6/E9 science is qualified separately from the product. The root
+  `conftest.py` deselects exactly the inventory listed in
+  `tools/qualification/frozen_science_e9.json` (all E9 test modules and
+  eight E8 freeze cases), which `.github/workflows/frozen-science.yml`
+  verifies at the pinned historical snapshot commit. Protected research
+  evidence (`tools/research/v6/`, `docs/research/v6/`, the E9 tests) must stay
+  byte-identical to that snapshot; `test_frozen_science_boundary.py` enforces
+  it. Never edit a frozen test or expected hash, or grow the transfer
+  inventory, to make product CI pass. See
+  [docs/releases/FROZEN_SCIENCE_QUALIFICATION.md](docs/releases/FROZEN_SCIENCE_QUALIFICATION.md).
 - Tests marked `gui` are display-backed and intentionally excluded from the
   headless run; they're exercised by a dedicated CI workflow instead. Don't
   add plain (unmarked) tests that require a display.

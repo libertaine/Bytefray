@@ -1,0 +1,115 @@
+name: Frozen E9 science verification
+
+# Read-only qualification of frozen V6/E9 science, separate from product CI
+# (ci.yml). It never runs an E9 experiment: E9 remains LOCKED and
+# Requirement C remains NOT ESTABLISHED. Governing record:
+# tools/qualification/frozen_science_e9.json; design and provenance:
+# docs/releases/FROZEN_SCIENCE_QUALIFICATION.md.
+#
+# - protected-evidence-guard: the current tree has not modified protected
+#   V6/E9 research evidence, compared with the immutable snapshot commit.
+# - historical-e9: the pinned historical snapshot is checked out by commit,
+#   its identity and its own frozen E9 boundary are verified, and the
+#   original, unmodified E9 test inventory runs there in the recorded
+#   research environment. Any failure is an integrity failure.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"
+  push:
+    branches:
+      - main
+      - "development/**"
+    paths:
+      - ".github/workflows/frozen-science.yml"
+      - ".gitattributes"
+      - "conftest.py"
+      - "docs/research/**"
+      - "engine/tests/_e8_*.py"
+      - "engine/tests/_e9_*.py"
+      - "engine/tests/test_v6_e*.py"
+      - "tools/qualification/frozen_science*"
+      - "tools/qualification/e9_historical_constraints.txt"
+      - "tools/research/**"
+  pull_request:
+    paths:
+      - ".github/workflows/frozen-science.yml"
+      - ".gitattributes"
+      - "conftest.py"
+      - "docs/research/**"
+      - "engine/tests/_e8_*.py"
+      - "engine/tests/_e9_*.py"
+      - "engine/tests/test_v6_e*.py"
+      - "tools/qualification/frozen_science*"
+      - "tools/qualification/e9_historical_constraints.txt"
+      - "tools/research/**"
+
+permissions:
+  contents: read
+
+jobs:
+  protected-evidence-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.13" }
+      - name: Compare protected evidence with the immutable snapshot commit
+        run: python tools/qualification/frozen_science.py guard
+
+  historical-e9:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, platform: linux }
+          - { os: windows-latest, platform: windows }
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: current
+      - name: Read the pinned historical snapshot
+        id: policy
+        run: >-
+          python -c "import json; p = json.load(open('current/tools/qualification/frozen_science_e9.json'));
+          print('commit=' + p['historical_snapshot']['commit'])" >> "$GITHUB_OUTPUT"
+      - name: Check out the historical snapshot by commit (full history for its provenance checks)
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.policy.outputs.commit }}
+          path: snapshot
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.13" }
+      - name: Install the snapshot in the recorded research environment
+        run: |
+          python -m pip install "pip==26.2.1"
+          python -m pip install -e "./snapshot[dev]" -c current/tools/qualification/e9_historical_constraints.txt
+          python -m pip freeze
+      - name: Verify snapshot identity and its own frozen E9 boundary
+        run: python current/tools/qualification/frozen_science.py verify-snapshot --source snapshot
+      - name: Run the original E9 test inventory at the snapshot
+        working-directory: snapshot
+        run: >-
+          python -m pytest -rfE --junitxml=../e9-historical-junit.xml
+          $(python ../current/tools/qualification/frozen_science.py modules)
+      - name: Require the complete inventory with no failure or error
+        if: ${{ always() }}
+        run: >-
+          python current/tools/qualification/frozen_science.py check-junit
+          --report e9-historical-junit.xml --platform ${{ matrix.platform }}
+      - name: Upload the JUnit report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: e9-historical-junit-${{ matrix.platform }}
+          path: e9-historical-junit.xml

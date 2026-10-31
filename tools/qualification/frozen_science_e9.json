@@ -1,0 +1,305 @@
+{
+  "schema": "bytefray.qualification.frozen_science",
+  "version": 1,
+  "status": {
+    "E9": "LOCKED",
+    "requirement_C": "NOT ESTABLISHED"
+  },
+  "scope": "Read-only verification of frozen V6/E9 science. Never runs an E9 experiment.",
+  "historical_snapshot": {
+    "commit": "b948540aa9ef34134ff7e3c633c3acfc9f97da96",
+    "tree": "b75337919c51f1f5d68bc89823d3d1a048b0fd21",
+    "description": "research(v6): preserve E9 blocked operational attempt (2026-10-09), the last V6 research commit; parent of b6c9a57, the first product commit (V6 alpha M1-1) after which load_protocol(verify=True) fails",
+    "e9_protocol_freeze_record_commit": "6294efc7afea9d576742aaae0572d73ba904ac6b",
+    "boundary_verifies_from": "514f4e22e9300d92ce23afaa418e39b06dac277e",
+    "boundary_first_fails_at": "b6c9a57fa2a980cc2f6a4f0733046913b8d7e35b"
+  },
+  "environment": {
+    "python": "3.13",
+    "qualified_python": "3.13.14",
+    "constraints": "tools/qualification/e9_historical_constraints.txt",
+    "install": "pip install -e <snapshot>[dev] -c tools/qualification/e9_historical_constraints.txt",
+    "platforms": [
+      "ubuntu-latest",
+      "windows-latest"
+    ]
+  },
+  "historical_e9_inventory": {
+    "modules": [
+      "engine/tests/test_v6_e9_engine.py",
+      "engine/tests/test_v6_e9_historical_inventory.py",
+      "engine/tests/test_v6_e9_historical_scope_verifier.py",
+      "engine/tests/test_v6_e9_instrument_analysis.py",
+      "engine/tests/test_v6_e9_instrument_behavior.py",
+      "engine/tests/test_v6_e9_instrument_constraints.py",
+      "engine/tests/test_v6_e9_instrument_recovery.py",
+      "engine/tests/test_v6_e9_instrument_runner.py",
+      "engine/tests/test_v6_e9_policy.py",
+      "engine/tests/test_v6_e9_selectors.py",
+      "engine/tests/test_v6_e9_targeted_recovery_verifier.py",
+      "engine/tests/test_v6_e9_v2_dispatch.py",
+      "engine/tests/test_v6_e9_v2_gate8_producer.py",
+      "engine/tests/test_v6_e9_v2_gate8_publication.py",
+      "engine/tests/test_v6_e9_v2_gate8_seal06.py",
+      "engine/tests/test_v6_e9_v2_gate8_seal07.py",
+      "engine/tests/test_v6_e9_v2_gate8_seal08.py",
+      "engine/tests/test_v6_e9_v2_independent_authority.py",
+      "engine/tests/test_v6_e9_v2_independent_bindings.py",
+      "engine/tests/test_v6_e9_v2_independent_consumers.py",
+      "engine/tests/test_v6_e9_v2_independent_dispatch.py",
+      "engine/tests/test_v6_e9_v2_independent_gate8_producer.py",
+      "engine/tests/test_v6_e9_v2_independent_gate8_publication.py",
+      "engine/tests/test_v6_e9_v2_independent_gate8_seal06.py",
+      "engine/tests/test_v6_e9_v2_independent_gate8_seal07.py",
+      "engine/tests/test_v6_e9_v2_independent_gate8_seal08.py",
+      "engine/tests/test_v6_e9_v2_independent_generation.py",
+      "engine/tests/test_v6_e9_v2_independent_integrity.py",
+      "engine/tests/test_v6_e9_v2_independent_inventory.py",
+      "engine/tests/test_v6_e9_v2_independent_materialization.py",
+      "engine/tests/test_v6_e9_v2_independent_prefix_cancellation.py",
+      "engine/tests/test_v6_e9_v2_independent_private.py",
+      "engine/tests/test_v6_e9_v2_independent_renewal.py",
+      "engine/tests/test_v6_e9_v2_independent_reporting.py",
+      "engine/tests/test_v6_e9_v2_independent_scientific.py",
+      "engine/tests/test_v6_e9_v2_independent_serialization.py",
+      "engine/tests/test_v6_e9_v2_independent_vectors.py",
+      "engine/tests/test_v6_e9_v2_lifecycle.py",
+      "engine/tests/test_v6_e9_v2_records.py",
+      "engine/tests/test_v6_e9_v2_scientific.py",
+      "engine/tests/test_v6_e8_analysis_freeze.py::test_a_re_signed_tampered_record_still_fails_to_load",
+      "engine/tests/test_v6_e8_analysis_freeze.py::test_a_tampered_record_fails_to_load",
+      "engine/tests/test_v6_e8_analysis_freeze.py::test_it_carries_every_earlier_identity",
+      "engine/tests/test_v6_e8_analysis_freeze.py::test_the_freeze_loads_and_its_identity_is_pinned",
+      "engine/tests/test_v6_e8_family_freeze.py::test_the_freeze_loads_and_its_identity_is_pinned",
+      "engine/tests/test_v6_e8_runner.py::test_a_failing_engine_source_check_stops_before_the_pre_match_gate",
+      "engine/tests/test_v6_e8_runner.py::test_copied_packages_must_equal_the_family_freeze",
+      "engine/tests/test_v6_e8_runner.py::test_the_preconditions_run_in_order_and_gate_every_match"
+    ],
+    "expected_collected": {
+      "linux": 1507,
+      "windows": 1507
+    }
+  },
+  "product_ci_transfer": {
+    "modules": [
+      {
+        "path": "engine/tests/test_v6_e9_engine.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_historical_inventory.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_historical_scope_verifier.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_instrument_analysis.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_instrument_behavior.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_instrument_constraints.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_instrument_recovery.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_instrument_runner.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_policy.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_selectors.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_targeted_recovery_verifier.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_dispatch.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_gate8_producer.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_gate8_publication.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_gate8_seal06.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_gate8_seal07.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_gate8_seal08.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_authority.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_bindings.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_consumers.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_dispatch.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_gate8_producer.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_gate8_publication.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_gate8_seal06.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_gate8_seal07.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_gate8_seal08.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_generation.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_integrity.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_inventory.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_materialization.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_prefix_cancellation.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_private.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_renewal.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_reporting.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_scientific.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_serialization.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_independent_vectors.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_lifecycle.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_records.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      },
+      {
+        "path": "engine/tests/test_v6_e9_v2_scientific.py",
+        "reason": "Original E9 qualification module. Its subject, tools/research/v6/e9, and the module itself are byte-identical to the snapshot (protected-evidence guard), and its E9 contracts govern the frozen snapshot's engine, packages and governing documents, which product development legitimately changes. Verified unmodified at the snapshot instead."
+      }
+    ],
+    "cases": [
+      {
+        "node_id": "engine/tests/test_v6_e8_analysis_freeze.py::test_a_re_signed_tampered_record_still_fails_to_load",
+        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of E8 test modules test_v6_e8_family.py and test_v6_e8_sensing_context.py. V6 alpha M1-1 (b6c9a57, before Classic retirement) changed both, so the live tree cannot satisfy the pin. The expected tamper rejection is pre-empted by that earlier check.",
+        "historical_verification": "Passes unmodified at the snapshot (historical-e9 job)."
+      },
+      {
+        "node_id": "engine/tests/test_v6_e8_analysis_freeze.py::test_a_tampered_record_fails_to_load",
+        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of E8 test modules test_v6_e8_family.py and test_v6_e8_sensing_context.py. V6 alpha M1-1 (b6c9a57, before Classic retirement) changed both, so the live tree cannot satisfy the pin. The expected tamper rejection is pre-empted by that earlier check.",
+        "historical_verification": "Passes unmodified at the snapshot (historical-e9 job)."
+      },
+      {
+        "node_id": "engine/tests/test_v6_e8_analysis_freeze.py::test_it_carries_every_earlier_identity",
+        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of E8 test modules test_v6_e8_family.py and test_v6_e8_sensing_context.py. V6 alpha M1-1 (b6c9a57, before Classic retirement) changed both, so the live tree cannot satisfy the pin.",
+        "historical_verification": "Passes unmodified at the snapshot (historical-e9 job)."
+      },
+      {
+        "node_id": "engine/tests/test_v6_e8_analysis_freeze.py::test_the_freeze_loads_and_its_identity_is_pinned",
+        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of E8 test modules test_v6_e8_family.py and test_v6_e8_sensing_context.py. V6 alpha M1-1 (b6c9a57, before Classic retirement) changed both, so the live tree cannot satisfy the pin.",
+        "historical_verification": "Passes unmodified at the snapshot (historical-e9 job)."
+      },
+      {
+        "node_id": "engine/tests/test_v6_e8_family_freeze.py::test_the_freeze_loads_and_its_identity_is_pinned",
+        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of E8 test modules test_v6_e8_family.py and test_v6_e8_sensing_context.py. V6 alpha M1-1 (b6c9a57, before Classic retirement) changed both, so the live tree cannot satisfy the pin.",
+        "historical_verification": "Passes unmodified at the snapshot (historical-e9 job)."
+      },
+      {
+        "node_id": "engine/tests/test_v6_e8_runner.py::test_a_failing_engine_source_check_stops_before_the_pre_match_gate",
+        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of E8 test modules test_v6_e8_family.py and test_v6_e8_sensing_context.py. V6 alpha M1-1 (b6c9a57, before Classic retirement) changed both, so the live tree cannot satisfy the pin. The runner's precondition order therefore stops before the engine-source check it asserts.",
+        "historical_verification": "Passes unmodified at the snapshot (historical-e9 job)."
+      },
+      {
+        "node_id": "engine/tests/test_v6_e8_runner.py::test_copied_packages_must_equal_the_family_freeze",
+        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of E8 test modules test_v6_e8_family.py and test_v6_e8_sensing_context.py. V6 alpha M1-1 (b6c9a57, before Classic retirement) changed both, so the live tree cannot satisfy the pin.",
+        "historical_verification": "Passes unmodified at the snapshot (historical-e9 job)."
+      },
+      {
+        "node_id": "engine/tests/test_v6_e8_runner.py::test_the_preconditions_run_in_order_and_gate_every_match",
+        "reason": "Loads the E8 family freeze, whose qualification record pins the bytes of E8 test modules test_v6_e8_family.py and test_v6_e8_sensing_context.py. V6 alpha M1-1 (b6c9a57, before Classic retirement) changed both, so the live tree cannot satisfy the pin.",
+        "historical_verification": "Passes unmodified at the snapshot (historical-e9 job)."
+      }
+    ]
+  },
+  "protected_evidence": {
+    "anchor_commit": "b948540aa9ef34134ff7e3c633c3acfc9f97da96",
+    "anchor_tree": "b75337919c51f1f5d68bc89823d3d1a048b0fd21",
+    "scopes": {
+      "prefixes": [
+        "tools/research/v6/",
+        "docs/research/v6/"
+      ],
+      "patterns": [
+        "engine/tests/test_v6_e9*.py",
+        "engine/tests/_e9_*.py"
+      ]
+    },
+    "files": 795,
+    "sha256_manifest": "1c59ecd294d4b3e0fe24b855e6a89fd80d41fe455d7a276701906c110d8ad8c0"
+  }
+}
