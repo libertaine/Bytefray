@@ -101,9 +101,17 @@ jobs:
         # bug in that module had no CI coverage on any Windows runner,
         # only on Linux where the relevant code path never executes.
         run: python -m pytest engine/tests/test_agent_revisions.py engine/tests/test_agent_evaluation_revision_capture.py -q
+      # The EXEs are built the way a release is: CPython 3.13 with every
+      # dependency pinned by tools/windows-build-constraints.txt (the
+      # 5.1.0-alpha.1 qualified set, PySide6/Qt 6.11.2), so the bundled
+      # components are exactly those tools/third_party_notices covers. An
+      # unpinned build resolves the newest PySide6 and correctly fails notice
+      # collection. The tests above stay on the 3.10 runtime floor.
+      - uses: actions/setup-python@v6
+        with: { python-version: '3.13' }
       - name: Build EXEs
         shell: pwsh
-        run: pwsh tools/build_win.ps1
+        run: pwsh tools/build_win.ps1 -Constraints tools/windows-build-constraints.txt
       - name: Upload artifacts
         uses: actions/upload-artifact@v6
         with:
