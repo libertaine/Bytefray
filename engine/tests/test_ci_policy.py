@@ -83,3 +83,10 @@ def test_designer_pipeline_preserves_pytest_failure() -> None:
     assert "-m gui tests/" in test["run"]
     assert "faulthandler_timeout=300" in test["run"]
     assert job["timeout-minutes"] == "60"
+
+
+def test_quality_environment_includes_replay_for_mypy_imports() -> None:
+    steps = workflow("ci.yml")["jobs"]["quality-package"]["steps"]
+    install = next(s["run"] for s in steps if s.get("name") == "Install qualified quality and build environment")
+    assert ".[dev,replay]" in install
+    assert "--build-constraint tools/product-ci-constraints.txt" in install
