@@ -62,6 +62,7 @@ from battle_engine.replay_history import (
 )
 from PySide6.QtCore import (
     QAbstractTableModel,
+    QCoreApplication,
     QDate,
     QDateTime,
     QEvent,
@@ -183,6 +184,11 @@ def _local_date_bound(date: QDate, *, end: bool) -> datetime:
 #: one repaint per interval keeps a long rebuild from spending the GUI thread
 #: on status text it will immediately overwrite.
 PROGRESS_THROTTLE_MS = 120
+
+#: Longest the GUI thread blocks in one QThread.wait() while joining a worker
+#: before it services timers and painting again. A join returns as soon as the
+#: thread has finished; this bounds UI latency, not shutdown time.
+SHUTDOWN_JOIN_SLICE_MS = 10
 
 # ----------------------------------------------------------------------
 # Worker payloads
@@ -1593,8 +1599,8 @@ class ReplayHistoryWindow(QDialog):
         Order matters and is the whole reason this is not a one-liner: the
         cancel flag reaches a running scan immediately, the queued
         ``shutdown`` closes SQLite on the thread that opened it, and only then
-        does the thread's event loop stop. A local event loop keeps timers and
-        painting alive during shutdown; the final join follows completion.
+        does the thread's event loop stop. The join services timers and
+        painting between short waits (see :meth:`shutdownWorker`).
         ``terminate()`` is never used because it would abandon an open
         database connection mid-transaction.
         """
@@ -1627,18 +1633,23 @@ class ReplayHistoryWindow(QDialog):
         # Keep painting/timers alive while owning threads finish. Shutdown
         # guards reject late DTOs and launches; no running QThread is destroyed.
         # Close the reader first so the writer can checkpoint on last close.
+        #
+        # The join never connects to or disconnects from the worker thread's
+        # signals (issue #7). It used to wait in a local event loop quit by
+        # ``thread.finished`` and then disconnect that slot, while the worker
+        # thread was still inside QThread's finish (emitting ``finished``,
+        # then deleting its worker): the GUI thread could block in
+        # ``disconnect`` holding the GIL against the finishing thread, a
+        # permanent hang, and destroying the loop instead could crash. A
+        # bounded QThread.wait() releases the GIL and returns once the thread,
+        # including its deferred worker deletion, has fully finished.
         for thread, shutdown in (
             (self._reader_thread, self.readerShutdownRequested),
             (self._thread, self.shutdownRequested),
         ):
             shutdown.emit()
-            if thread.isRunning():
-                loop = QEventLoop()
-                thread.finished.connect(loop.quit)
-                if thread.isRunning():
-                    loop.exec(QEventLoop.ExcludeUserInputEvents)
-                thread.finished.disconnect(loop.quit)
-                thread.wait()
+            while not thread.wait(SHUTDOWN_JOIN_SLICE_MS):
+                QCoreApplication.processEvents(QEventLoop.ExcludeUserInputEvents)
 
 
 class _MessagePage(QWidget):
