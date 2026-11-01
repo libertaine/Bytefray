@@ -1,5 +1,11 @@
 # Windows Development Notes
 
+Current development: Python 3.11–3.14; primary development/build Python 3.13.
+Stable 3.15 is advisory, unqualified. Python 3.10 is retired from new development.
+See [Python support and qualification policy](CI.md); published release records
+retain their historical support declarations.
+
+
 Notes specific to developing Bytefray on Windows, where behavior otherwise
 matches [CONTRIBUTING.md](../CONTRIBUTING.md) and the root
 [README.md](../README.md) quick start.

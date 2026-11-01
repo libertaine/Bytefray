@@ -1,6 +1,6 @@
 # Bytefray Linux installation
 
-Bytefray supports Python 3.10 through 3.14. Two Linux distribution paths
+Bytefray supports Python 3.11 through 3.14. Two Linux distribution paths
 exist in principle: a self-contained binary archive (no local Python
 required) and a Python wheel/source install. No AppImage, Debian, or Flatpak
 artifact is provided. Not every release's asset list includes a

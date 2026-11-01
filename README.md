@@ -8,7 +8,7 @@ Bytefray is a deterministic shared-memory programming game where Python agents c
 
 You write the agents: they maneuver, inspect, and rewrite memory while defending their own core. Matches between Python agents can be replayed and analyzed, and deterministic execution makes the same configuration reproducible.
 
-[![Python 3.10–3.14](https://img.shields.io/badge/Python-3.10%E2%80%933.14-blue)](pyproject.toml)
+[![Python 3.11–3.14](https://img.shields.io/badge/Python-3.11%E2%80%933.14-blue)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## Development after Bytefray 5.1.0-alpha.1
@@ -379,7 +379,7 @@ Use the PySide6 Agent Designer to create agents from templates, configure parame
 
 ### 1. Installation
 
-Bytefray requires Python 3.10–3.14. After downloading the wheel or source
+Bytefray requires Python 3.11–3.14. After downloading the wheel or source
 distribution from **Downloads** above, install it into a virtual environment:
 
 ```bash
@@ -448,7 +448,7 @@ This snapshot describes the shared engine mechanics that
 
 | Dimension | Specification |
 |---|---|
-| **Runtime** | Python 3.10–3.14 (CPython; qualified on Windows AMD64 and Linux x86_64) |
+| **Runtime** | Python 3.11–3.14 (CPython; qualified on Windows AMD64 and Linux x86_64) |
 | **Dependencies** | PyYAML for core engine; optional `pygame-ce` (replays) and `PySide6` (designer) |
 | **Arena Model** | Circular array of discrete memory cells (default 4096); 1-byte value (`0..255`) + last-writer ownership |
 | **Simulation** | Discrete-tick deterministic engine; chunked quota scheduling (`K = 2`, `Q = 8`) |
@@ -660,7 +660,7 @@ A match is driven by an explicit seed and deterministic engine rules. Agents tha
 ### Concrete Guarantees and Limits
 
 * **Same-Environment Byte-Identical Artifacts**: Given the same match seed, ruleset identity, entrant configurations, parameters, and arena dimensions, repeated executions on the same environment produce identical match outcomes, identical event timelines, and byte-identical `replay.jsonl` and `result.json` records.
-* **Cross-Platform Semantic Equivalence**: Simulation state transitions, scheduling, seeded core placement (`seeded_seat_starts`), and winner resolution rely on discrete integer arithmetic. Continuous integration validates deterministic regression vectors across Windows AMD64 and Linux x86_64, and across Python 3.10 through 3.14.
+* **Cross-Platform Semantic Equivalence**: Simulation state transitions, scheduling, seeded core placement (`seeded_seat_starts`), and winner resolution rely on discrete integer arithmetic. Continuous integration validates deterministic regression vectors across Windows AMD64 and Linux x86_64, and across Python 3.11 through 3.14.
 * **Deterministic Trace Identity**: Diagnostic traces (`trace.jsonl`) generated during supervised test runs capture identical decision sequences across runs with matching seeds.
 
 ### The Deterministic Agent Contract
@@ -777,7 +777,7 @@ Bytefray's codebase emphasizes strict reproducibility, version isolation, and ar
 * **Typed Protocols & Immutable Data**: Agent interactions use strict dataclasses and typed protocols (`AgentV2`, `MatchContextV2`, `ObservationV2`, `AgentAction`). Observations and match contexts are immutable or read-only proxies.
 * **Independent Compatibility Axes**: Release versions, Agent API versions, Ruleset identities, and artifact wire schemas are decoupled and versioned independently (see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)). A ruleset change does not force an API or schema bump.
 * **Deterministic Artifact Hashing**: Match identities (`match_id`, `result_id`, `replay_id`) derive deterministically from canonical SHA-256 hashes of agent source, configuration, and ruleset identity—independent of absolute checkout paths or filesystem timestamps.
-* **Multi-Platform CI Qualification**: Continuous integration qualifies headless execution and determinism regression suites across Python 3.10, 3.11, 3.12, 3.13, and 3.14 on both Linux and Windows.
+* **Multi-Platform CI Qualification**: Continuous integration qualifies headless execution and determinism regression suites on Linux using the [tiered Python 3.11–3.14 matrix](docs/CI.md). Windows CI retains process-containment, worker-cleanup and NTFS-junction tests on Python 3.13, plus release-style EXE builds; it does not run the full suite on every interpreter.
 
 ---
 
@@ -868,7 +868,7 @@ from potential 5.1 positioning.
 
 ## Development and Testing
 
-Bytefray requires Python 3.10–3.14. Clone the repository and install development dependencies in a virtual environment:
+Bytefray requires Python 3.11–3.14. Clone the repository and install development dependencies in a virtual environment:
 
 ```bash
 python -m venv .venv

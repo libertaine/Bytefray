@@ -1,0 +1,23 @@
+name: Pre-release qualification
+# No publication, tag, installer or version mutation. Dispatch on the exact candidate ref.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  product-and-windows:
+    uses: ./.github/workflows/ci.yml
+    with:
+      full: true
+  gui:
+    uses: ./.github/workflows/linux-gui-smoke.yml
+    with:
+      full: true
+  linux-package:
+    uses: ./.github/workflows/linux-package.yml
+  manual-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo 'Candidate SHA: ${{ github.sha }}' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Automated checks do not authorize release. Run frozen-science.yml on this same SHA; retain its guard and historical verification. Native Linux desktop, Windows installer, retained 0x8001010d diagnostic, version/release compatibility and project-lead approval remain mandatory.' >> "$GITHUB_STEP_SUMMARY"

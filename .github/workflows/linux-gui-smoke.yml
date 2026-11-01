@@ -1,38 +1,30 @@
-name: Optional Linux GUI smoke
+name: Linux GUI smoke
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/linux-gui-smoke.yml"
-      - "app/**"
-      - "client/**"
-      - "engine/src/**"
-      - "pyproject.toml"
-      - "tests/**"
-      - "pytest.ini"
+  workflow_call:
+    inputs:
+      full:
+        type: boolean
+        default: false
   pull_request:
-    paths:
-      - ".github/workflows/linux-gui-smoke.yml"
-      - "app/**"
-      - "client/**"
-      - "engine/src/**"
-      - "pyproject.toml"
-      - "tests/**"
-      - "pytest.ini"
+  push:
+    branches: [main, 'development/**']
+  schedule:
+    - cron: '41 5 * * 1'
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-gui-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}-${{ github.event_name != 'pull_request' && github.run_id || 'pr' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   pygame-x11-smoke:
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.python-version == '3.15' }}
     strategy:
       fail-fast: false
       matrix:
-        # 3.10 is the package's floor; 3.14 is the RC2 pygame-ce migration's
-        # own regression target -- this is the exact scenario that surfaced
-        # the classic-Pygame/Python 3.14 Linux wheel gap during RC1 manual
-        # testing, so it stays covered here going forward.
-        python-version: ['3.10', '3.14']
+        python-version: ${{ fromJSON(inputs.full && '["3.11", "3.14"]' || (github.event_name == 'schedule' && '["3.13", "3.14", "3.15"]' || '["3.13"]')) }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
@@ -42,9 +34,26 @@ jobs:
         run: sudo apt-get install --no-install-recommends xvfb
       - run: python -m pip install -U pip
       - name: Install replay and test dependencies
-        run: python -m pip install -e ".[replay,dev]"
+        env:
+          FORWARD: ${{ matrix.python-version == '3.15' }}
+        run: |
+          if [ "$FORWARD" = true ]; then
+            python -m pip install --upgrade -e '.[replay,dev]'
+          else
+            python -m pip install -e '.[replay,dev]' -c tools/product-ci-constraints.txt --build-constraint tools/product-ci-constraints.txt
+          fi
       - name: Exercise one display-backed replay frame and deterministic quit
-        run: xvfb-run -a python -m pytest -q -m gui client/tests/test_linux_pygame_smoke.py
+        run: xvfb-run -a python -m pytest -ra -m gui client/tests/test_linux_pygame_smoke.py --junitxml=pygame.xml
+
+      - name: Forward Python GUI advisory outcome
+        if: always() && matrix.python-version == '3.15'
+        run: |
+          echo '::warning::Python 3.15 Pygame advisory result: ${{ job.status }}'
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: pygame-${{ matrix.python-version }}
+          path: pygame.xml
 
   designer-x11-smoke:
     runs-on: ubuntu-latest
@@ -54,6 +63,11 @@ jobs:
     # the runner for the 6-hour default.
     timeout-minutes: 60
 
+    continue-on-error: ${{ matrix.binding == 'latest' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(inputs.full && '[{"python":"3.11","binding":"qualified"},{"python":"3.13","binding":"qualified"},{"python":"3.14","binding":"qualified"}]' || (github.event_name == 'schedule' && '[{"python":"3.11","binding":"qualified"},{"python":"3.13","binding":"qualified"},{"python":"3.13","binding":"latest"}]' || '[{"python":"3.13","binding":"qualified"}]')) }}
     env:
       QT_OPENGL: software
       QT_DEBUG_PLUGINS: "1"
@@ -66,7 +80,7 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
+          python-version: ${{ matrix.python }}
 
       - name: Install Qt X11 runtime libraries
         run: |
@@ -91,7 +105,17 @@ jobs:
         # on CPython 3.10 and aborts even without Designer code. Keep the
         # complete X11 suite on the verified binding pending an upstream fix.
         # See docs/releases/CLASSIC_RULESET_RETIREMENT_CI_REMEDIATION.md.
-        run: python -m pip install -e '.[designer,dev]' 'PySide6==6.11.2'
+        env:
+          BINDING: ${{ matrix.binding }}
+        run: |
+          if [ "$BINDING" = qualified ]; then
+            python -m pip install 'pip==26.2.1'
+            python -m pip install -e '.[designer,dev]' -c tools/product-ci-constraints.txt --build-constraint tools/product-ci-constraints.txt
+          else
+            python -m pip install --upgrade pip
+            python -m pip install --upgrade -e '.[designer,dev]'
+          fi
+          python -m pip freeze
 
       - name: Inspect Qt XCB dependencies
         run: |
@@ -106,6 +130,19 @@ jobs:
 
       - name: Exercise X11 startup, primary window creation, deterministic shutdown,
           and the Agent Development (create/validate/test) workflow
+        shell: bash
         run: >-
           xvfb-run -a python -X faulthandler -m pytest -v --capture=tee-sys
-          -o faulthandler_timeout=300 -m gui tests/
+          -o faulthandler_timeout=300 -ra -m gui tests/ --junitxml=designer.xml 2>&1 | tee designer.log
+      - name: Advisory Designer outcome
+        if: always() && matrix.binding == 'latest'
+        run: |
+          echo '::warning::Unpinned Designer advisory result: ${{ job.status }}; issue #7 remains open.'
+          echo 'Unpinned Designer: ${{ job.status }}' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: designer-${{ matrix.python }}-${{ matrix.binding }}
+          path: |
+            designer.xml
+            designer.log

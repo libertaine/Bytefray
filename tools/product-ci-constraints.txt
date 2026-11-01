@@ -1,0 +1,39 @@
+# Primary product/quality CI: CPython 3.13, Linux x86_64.
+# Derived from the qualified 5.1.0-alpha.1 dependency set; independent of the
+# immutable Windows release-build and frozen E9 environments. Pinning prevents
+# tool/binding drift from changing ordinary PR qualification. Constraints do not
+# install packages: replay, designer and build tools remain explicit job inputs.
+# No Windows-only PE or executable build dependencies are required on Linux.
+# PySide6 6.11.2 is the qualified binding; no upgrade is authorized here.
+# Use both -c and --build-constraint for pip; PIP_BUILD_CONSTRAINT for python -m build.
+# Floor/user and weekly newest-dependency jobs intentionally do NOT use this file.
+ast_serialize==0.8.0
+build==1.6.0
+colorama==0.4.6
+iniconfig==2.3.0
+librt==0.15.0
+mypy==2.3.1
+mypy_extensions==1.1.0
+packaging==26.3
+pathspec==1.1.1
+pluggy==1.6.0
+pygame-ce==2.5.8
+Pygments==2.21.0
+pyproject_hooks==1.2.0
+PySide6==6.11.2
+PySide6_Addons==6.11.2
+PySide6_Essentials==6.11.2
+pytest==9.1.1
+PyYAML==6.0.3
+ruff==0.16.3
+setuptools==84.0.0
+shiboken6==6.11.2
+types-PyYAML==6.0.12.20260815
+typing_extensions==4.16.0
+pip==26.2.1
+wheel==0.48.0
+# Platform-neutral PyInstaller stack for manual Linux executable qualification.
+# PE parsing / pywin32-ctypes remain exclusively in Windows build constraints.
+altgraph==0.17.5
+pyinstaller==6.22.2
+pyinstaller-hooks-contrib==2026.6

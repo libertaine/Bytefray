@@ -8,6 +8,7 @@ name: Linux Package (Ubuntu 24.04 release baseline)
 # uses -- it does not reimplement a second, CI-only build path.
 on:
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   linux-package:
@@ -16,10 +17,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Select build Python (3.14)
+      - name: Select primary build Python (3.13)
         uses: actions/setup-python@v6
         with:
-          python-version: "3.14"
+          python-version: "3.13"
 
       # A bare ubuntu-24.04 runner lacks the Qt/EGL runtime libraries a real
       # desktop install would already have, so PySide6.QtGui fails to import
@@ -62,6 +63,8 @@ jobs:
         env:
           BYTEFRAY_LINUX_BUILD_VENV: .venv-ci-linux-build
           BYTEFRAY_LINUX_BUILD_PYTHON: python
+          PIP_CONSTRAINT: ${{ github.workspace }}/tools/product-ci-constraints.txt
+          PIP_BUILD_CONSTRAINT: ${{ github.workspace }}/tools/product-ci-constraints.txt
         run: bash tools/build_linux.sh
 
       - name: Record installed package versions
