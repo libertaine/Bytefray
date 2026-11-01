@@ -4,6 +4,16 @@ This changelog records notable user- and developer-visible changes to Bytefray.
 
 ## [Unreleased]
 
+### Development Python and CI policy
+
+- Retire Python 3.10 for new development; minimum 3.11, primary development
+  and build 3.13, other qualified versions 3.12/3.14. Stable 3.15 is advisory
+  with no arbitrary package upper bound. Published Alpha metadata is unchanged.
+- Adopt lean PR qualification with full 3.13/replay coverage, exact reduced
+  3.11 compatibility coverage, dedicated quality/package checks and preserved
+  Windows/X11 checks. Add weekly breadth and manual pre-release qualification.
+  See [CI policy](docs/CI.md). E9 remains LOCKED; Requirement C NOT ESTABLISHED.
+
 ### Removed — Classic Ruleset retired (compatibility break)
 
 Active Sensing (Alpha) (`bytefray-rules-6-alpha1`) is now Bytefray's only

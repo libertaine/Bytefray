@@ -1,5 +1,11 @@
 # Installation Guide
 
+Current development: Python 3.11–3.14; primary development/build Python 3.13.
+Stable 3.15 is advisory, unqualified. Python 3.10 is retired from new development.
+See [Python support and qualification policy](docs/CI.md); published release records
+retain their historical support declarations.
+
+
 ## Windows: Bytefray 5.1 Alpha (preview)
 
 The 5.1 Alpha installer, `Bytefray-<version>-Windows-x64-Setup.exe` (see

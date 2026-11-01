@@ -10,7 +10,8 @@
     "python_package_version": "6.0.0a1",
     "git_tag": "v6.0.0-alpha.1",
     "previous_release": "5.1.0-alpha.1",
-    "python": ["3.10", "3.11", "3.12", "3.13", "3.14"]
+    "python": ["3.11", "3.12", "3.13", "3.14"],
+    "python_policy": {"minimum": "3.11", "primary_development_build": "3.13", "other_qualified": ["3.12", "3.14"], "advisory_unqualified": ["3.15"], "review": "annually in October", "qualification_note": "Support tiers are the approved CI policy; current run results and release qualification are recorded separately."}
   },
   "rulesets": {
     "default": "bytefray-rules-6-alpha1",

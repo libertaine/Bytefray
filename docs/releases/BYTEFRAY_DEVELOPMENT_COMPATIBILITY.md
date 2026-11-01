@@ -31,7 +31,7 @@ The decision and its scope are recorded in
 | Component | Declaration |
 | --- | --- |
 | Status | **proposed** — Proposed record for the development line after 5.1.0-alpha.1, which retired Classic (bytefray-rules-4) and made Active Sensing the only Ruleset. The application version is a placeholder: docs/COMPONENT_VERSIONING.md section 4.1 classes removing an executable stable Ruleset and changing the default Ruleset as MAJOR, and the project lead decides the release number. Nothing on this line is qualified for release. |
-| Application | Bytefray 6.0.0-alpha.1 (Python package `6.0.0a1`, tag `v6.0.0-alpha.1`); previous release 5.1.0-alpha.1; Python 3.10, 3.11, 3.12, 3.13, 3.14 |
+| Application | Bytefray 6.0.0-alpha.1 (Python package `6.0.0a1`, tag `v6.0.0-alpha.1`); previous release 5.1.0-alpha.1; Python 3.11, 3.12, 3.13, 3.14 |
 | Default Ruleset | Active Sensing (Alpha) (`bytefray-rules-6-alpha1`) |
 | Offered Rulesets | Active Sensing (Alpha) (`bytefray-rules-6-alpha1`) — experimental, the only Ruleset; used when no Ruleset is chosen |
 | Research Rulesets | 14, selectable only by `bytefray agents evaluate --ruleset <exact id>` or the Python API. Research reproduction only. Not a product feature; no stability or compatibility promise. |

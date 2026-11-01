@@ -111,3 +111,16 @@ list is easy to add later if a real reason shows up.
 4. If you think a whole rule code doesn't belong in this project at all:
    don't just add it to `ignore` — update this file's rationale too, so
    the next person doesn't have to re-derive why.
+
+## November 2026 Python 3.11 target
+
+The development floor is now 3.11 (`target-version = "py311"`). The earlier
+3.10 discussion above is historical. Raising the target exposes 28 UP017
+UTC-alias suggestions and one FURB162 ISO-Z parsing suggestion across 16
+existing files. The CI/support-policy maintenance change records these as
+exact per-file/rule debt in pyproject.toml instead of refactoring product
+sources or modifying protected research bytes. All other rules remain active,
+and these rules remain active in other/new files. The existing explicit
+return-type PYI034 suppressions remain as inherited typing debt, not an
+active Python-3.10 support promise. A separate reviewed cleanup may modernize
+non-frozen sources; protected research stays byte-identical.

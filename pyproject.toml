@@ -10,13 +10,12 @@ name = "bytefray"
 version = "5.1.0a1"
 description = "Bytefray: a programmable-agent arena, inspired by Core War, with deterministic VM and Python agents."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { file = "LICENSE" }
 authors = [{ name = "Rod Satterfield" }]
 keywords = ["corewar", "ai-agents", "pygame", "simulation"]
 classifiers = [
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -135,7 +134,7 @@ battle_engine = [
 # -------------------- Ruff --------------------
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 # _legacy/core.py, agents.py, main.py, renderers.py, agents_tooling/, and
 # Historical pre-v0.3 implementation fixtures remain outside the active
 # package and are excluded from lint; their characterization tests stay active.
@@ -184,3 +183,24 @@ ignore = [
 # `mypy client/src/battle_client`.
 [tool.mypy]
 mypy_path = ["engine/src", "client/src"]
+
+# Python 3.11 target exposes inherited syntax-only debt. Preserve product and
+# protected research bytes in this CI-only PR; exact files/rules, no broad ignore.
+# See docs/RUFF_DEBT.md, November 2026 support-policy change.
+[tool.ruff.lint.per-file-ignores]
+"app/services/replay_history_presentation.py" = ["UP017"]
+"engine/src/battle_engine/agent_package.py" = ["UP017"]
+"engine/src/battle_engine/agent_revisions.py" = ["UP017"]
+"engine/src/battle_engine/agent_test.py" = ["UP017"]
+"engine/src/battle_engine/evaluation_artifact.py" = ["UP017"]
+"engine/src/battle_engine/evaluation_history/models.py" = ["UP017"]
+"engine/src/battle_engine/replay_history/discovery.py" = ["UP017"]
+"engine/src/battle_engine/replay_history/index.py" = ["UP017"]
+"engine/src/battle_engine/replay_history/service.py" = ["UP017"]
+"engine/src/battle_engine/result_model.py" = ["UP017"]
+"engine/tests/test_replay_history.py" = ["UP017"]
+"engine/tests/test_v5_replay_history_presentation.py" = ["UP017"]
+"tests/test_v5_replay_history_qualification.py" = ["FURB162"]
+"tools/research/v6/e6/run_e6.py" = ["UP017"]
+"tools/research/v6/e8/run_e8.py" = ["UP017"]
+"tools/research/v6/experiment_harness.py" = ["UP017"]

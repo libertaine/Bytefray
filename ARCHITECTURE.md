@@ -501,14 +501,16 @@ excluded from the Python wheel.
 
 `pytest.ini` sets `testpaths` to `_legacy/tests`, `engine/tests`, and
 `client/tests`, and excludes tests marked `gui` from ordinary headless
-runs. `.github/workflows/ci.yml` runs three jobs: `test-linux-core`
-(headless suite on Python 3.10–3.13, plus a check that importing
-`battle_engine.launchers`/`app.services.engine_commands` never pulls in
-`PySide6`/`pygame`), `build-linux-wheel` (build + `tools/check_wheel.py`),
-and `build-windows-exe` (`tools/build_win.ps1`). An optional workflow
-(`.github/workflows/linux-gui-smoke.yml`) covers Linux X11/Xvfb GUI
-startup smoke — a startup check, not a substitute for manual interactive
-testing.
+runs. [The CI policy](docs/CI.md) defines the Python 3.11–3.14 tiers:
+full product/replay qualification on primary Python 3.13 every PR, exact
+reduced 3.11 compatibility coverage, additional push interpreters, and the
+full weekly/release matrix. The quality/package job runs Ruff, required
+mypy checks, launcher import isolation, wheel/sdist inspection and installed
+wheel smoke. Windows retains process containment, worker cleanup, NTFS
+junction checks and pinned EXE/notices builds. The Linux X11/Xvfb workflow
+runs Pygame and the complete Designer GUI selection with qualified PySide6
+6.11.2 and preserved issue #7 diagnostics. Automated smoke does not replace
+manual native desktop or installer qualification.
 
 ## Dependency direction as implemented
 

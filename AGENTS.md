@@ -67,7 +67,7 @@ abbreviated.
   `[tool.mypy]` in `pyproject.toml` and
   [docs/WINDOWS_DEV_NOTES.md](docs/WINDOWS_DEV_NOTES.md) for why a plain
   `mypy .` doesn't resolve imports correctly on some platforms).
-- Lint with `ruff check .` — required by `ci.yml`'s `test-linux-core` job.
+- Lint with `ruff check .` — required by `ci.yml`'s `quality-package` job.
   Three rule codes (`BLE001`, `S110`, `TRY004`) are ignored project-wide
   because they conflict with a deliberate, documented `except Exception:
   pass` pattern used in several compatibility/optional-feature code paths;
@@ -85,10 +85,11 @@ abbreviated.
 
 ## Supported environments
 
-- Runtime Python support is **3.10 through 3.14**; CI validates all five.
-  Some legacy *release-build* tooling pins Python 3.11 for reproducible
-  PyInstaller executables — that does not raise the package's runtime
-  minimum.
+- Development supports Python **3.11 through 3.14**. Primary development and
+  build Python is **3.13**; 3.12 and 3.14 are other qualified versions.
+  Stable 3.15 is advisory/unqualified; there is no arbitrary upper bound.
+  Python 3.10 is retired for new development; the published Alpha record
+  stays immutable. Review support annually in October. See [docs/CI.md](docs/CI.md).
 - Core install requires only PyYAML. GUI/dev functionality is opt-in via
   extras: `replay` (pygame-ce, providing the `pygame` import namespace),
   `designer` (PySide6), `dev`, `windows-build`; `gui` is a compatibility
@@ -108,10 +109,14 @@ abbreviated.
 - Wheels contain **Python packages and package-local assets only**. Repo-level
   `agents/` directories are runtime/user data, not package data. SDK archives
   and historical builds are deliberately excluded from the Python wheel.
-- CI runs the headless suite on Python 3.10–3.14, validates the pure wheel,
-  and builds the four Windows executables. An optional workflow covers Linux
-  X11/Xvfb GUI startup smoke — a startup check, not a substitute for manual
-  interactive testing.
+- CI runs the full product suite with replay dependencies on Python 3.13
+  every PR and the exact reduced research inventory on 3.11. Pushes to
+  main/development add 3.12 reduced and 3.14 full; weekly and manual release
+  qualification run the full 3.11–3.14 matrix. Quality/package checks include
+  Ruff, engine/client/helper mypy, wheel and sdist inspection. Windows 3.13
+  preserves containment, junction and EXE/notices checks. Linux X11 smoke
+  runs on 3.13 with qualified PySide6 6.11.2; issue #7 remains unresolved.
+  Automated checks do not replace manual native desktop/installer qualification.
 
 ## Compatibility requirements
 

@@ -7,10 +7,10 @@ AI tooling of any kind — see [AI tooling](#ai-tooling) at the end.
 
 ## Supported Python versions
 
-Bytefray supports Python **3.10 through 3.13**; CI validates all four. A few
-release-build tools (PyInstaller-based Windows packaging) pin Python 3.11
-for reproducible executables, but that does not change the package's
-runtime minimum.
+Development supports Python **3.11–3.14**, with **3.13** primary for
+development and builds. Stable 3.15 is advisory and unqualified; Python 3.10
+is retired for new development. Published release compatibility records stay
+unchanged. See [CI tiers and annual October review](docs/CI.md).
 
 ## Setting up a development environment
 
@@ -135,7 +135,7 @@ below.
 - Keep PRs focused: one logical change per PR, with tests covering new or
   changed behavior.
 - Run the test suite (and `ruff`/`mypy` for changed areas) before opening a
-  PR; CI runs the headless suite on Python 3.10–3.13, builds and validates
+  PR; CI uses the [tiered Python 3.11–3.14 matrix](docs/CI.md), builds and validates
   the pure wheel, and builds the Windows executables.
 - Reference the issue a PR addresses, if one exists.
 - Update [CHANGELOG.md](CHANGELOG.md) for user-visible changes.
