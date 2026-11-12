@@ -336,10 +336,13 @@ bytefray agents diverge runs/agents_test/my_agent/2024-.../ runs/agents_test/my_
 ```
 
 It reports `status: identical` (with no divergence) or the first
-`(tick, agent)` where the two traces' actions/diagnostics differ — timing
-fields (`wall_time_ms`) and header metadata are never compared, so two
-runs that made the identical decisions are never reported as diverged
-just because one happened to run faster.
+disagreement — for a current (schema-2) trace, the first callback whose
+tick/entrant/process/callback identity, observation, action, applied
+result or diagnostic differs. Timing fields (`wall_time_ms`) and header
+metadata are never compared, so two runs that made the identical
+decisions are never reported as diverged just because one happened to run
+faster. See [AGENT_LAB.md](AGENT_LAB.md#comparing-two-runs) for the exact
+rules for schema-1 and schema-2 traces.
 
 **`--timeout SECONDS`** (both commands, default `5.0`, range `0.1`–`300.0`)
 bounds every `load`/`reset()`/`act()` call. When a call exceeds it, that

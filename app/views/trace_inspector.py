@@ -2,8 +2,9 @@
 
 Agent Lab v0.5 (``docs/specs/agent_lab.md`` §11). Deliberately modest --
 no source editor, no general debugger, just tick/agent navigation over an
-already-written ``bytefray.agent_trace`` v1 file
-(:mod:`battle_engine.agent_trace`). Parsing and formatting are entirely
+already-written ``bytefray.agent_trace`` file of schema 1 or schema 2
+(:mod:`battle_engine.agent_trace`; schema-2 decision blocks also name the
+entrant process and its per-tick callback number). Parsing and formatting are entirely
 delegated to that Qt-free module (reusing the same formatting functions
 :mod:`battle_engine.agent_inspect` uses for the CLI, so the GUI and CLI
 never drift into two descriptions of the same record) -- this module only
@@ -16,13 +17,18 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from battle_engine.agent_inspect import _format_decision, _format_reset
+from battle_engine.agent_inspect import (
+    DecisionView,
+    decision_views,
+    format_reset,
+    trace_tick_range,
+)
 from battle_engine.agent_trace import (
-    DecisionRecord,
+    AnyTraceDocument,
     ResetRecord,
-    TraceDocument,
+    TraceDocumentV2,
     TraceFormatError,
-    read_trace,
+    read_any_trace,
 )
 from PySide6.QtGui import QFontDatabase
 from PySide6.QtWidgets import (
@@ -46,10 +52,12 @@ class TraceInspectorDialog(QDialog):
         self.setWindowTitle(f"Inspect Trace — {trace_path.name}")
         self.resize(640, 480)
 
-        self._document: TraceDocument | None = None
+        self._document: AnyTraceDocument | None = None
+        self._views: tuple[DecisionView, ...] = ()
         self._error: str | None = None
         try:
-            self._document = read_trace(trace_path)
+            self._document = read_any_trace(trace_path)
+            self._views = decision_views(self._document)
         except TraceFormatError as exc:
             self._error = str(exc)
 
@@ -59,11 +67,17 @@ class TraceInspectorDialog(QDialog):
             layout.addWidget(QLabel(f"Could not read trace: {self._error}"))
             return
 
-        header_label = QLabel(
+        header_text = (
             f"seed={self._document.header.match_seed}  "
             f"supervised={self._document.header.supervised}  "
             f"agents={', '.join(f'{slot}={name}' for slot, name in sorted(self._document.header.agents.items()))}"
         )
+        if isinstance(self._document, TraceDocumentV2):
+            processes = ", ".join(
+                f"{d.agent_id}/{d.process_id}" for d in self._document.declarations
+            )
+            header_text = f"schema=v2  {header_text}  processes={processes or 'none'}"
+        header_label = QLabel(header_text)
         header_label.setWordWrap(True)
         layout.addWidget(header_label)
 
@@ -71,7 +85,7 @@ class TraceInspectorDialog(QDialog):
         self.tickLabel = QLabel("Tick")
         self.tickSpin = QSpinBox()
         self.tickLabel.setBuddy(self.tickSpin)
-        tick_range = self._document.tick_range()
+        tick_range = trace_tick_range(self._views)
         low, high = tick_range if tick_range is not None else (0, 0)
         self.tickSpin.setRange(low, high)
         self.tickSpin.setValue(low)
@@ -116,13 +130,13 @@ class TraceInspectorDialog(QDialog):
     def _current_agent_slot(self) -> str | None:
         return self.agentCombo.currentData()
 
-    def _matching_decisions(self) -> tuple[DecisionRecord, ...]:
+    def _matching_decisions(self) -> tuple[DecisionView, ...]:
         assert self._document is not None
         agent = self._current_agent_slot()
-        decisions = self._document.for_agent(agent) if agent else self._document.decisions
+        views = tuple(v for v in self._views if v.agent_id == agent) if agent else self._views
         if self.failuresOnlyCheck.isChecked():
-            decisions = tuple(d for d in decisions if d.diagnostic is not None)
-        return decisions
+            views = tuple(v for v in views if v.failure)
+        return views
 
     def _refresh(self) -> None:
         assert self._document is not None
@@ -136,7 +150,7 @@ class TraceInspectorDialog(QDialog):
         if not decisions and not resets:
             self.detailText.setPlainText(f"No decisions recorded at tick {tick}.")
             return
-        blocks = [_format_reset(r) for r in resets] + [_format_decision(d) for d in decisions]
+        blocks = [format_reset(self._document, r) for r in resets] + [d.format() for d in decisions]
         self.detailText.setPlainText("\n\n".join(blocks))
 
     def _go_previous(self) -> None:

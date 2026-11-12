@@ -42,25 +42,57 @@ other, and reading a trace never re-runs your agent's code.
 plain filesystem path — either a run directory (they look for
 `trace.jsonl` inside it) or a direct path to a trace file.
 
+### Trace schemas
+
+The trace header's `schema_version` decides how a file is read:
+
+| Schema | Written by | Records |
+|---|---|---|
+| **2** | Every current match: `agents test`, `bytefray run --trace`, Designer development tests | `header`, `reset`, `declaration`, `decision_v2`, `binding` (Agent API v2) |
+| **1** | `agents validate --trace-path`, and traces kept from earlier releases | `header`, `reset`, `decision` (Agent API v1 shape) |
+
+`inspect`, `diverge` and the Designer's Trace Inspector read both. Each
+schema is parsed by its own reader and shown in its own format; a schema-2
+decision is never converted into the schema-1 shape. Any other version is
+rejected with `code: trace_schema_unsupported` (exit `2`).
+
 ## Inspecting one run
 
 ```bash
-# Summary: schema, seed, tick range, decision/reset counts, failures
+# Summary: schema, seed, ruleset, tick range, process/decision/reset counts, failures
 bytefray agents inspect runs/agents_test/my_agent/<run-label>
 ```
 
+For a current (schema-2) match:
+
 ```text
 trace: <data_root>/runs/agents_test/my_agent/<run-label>/trace.jsonl
-schema: bytefray.agent_trace v1
+schema: bytefray.agent_trace v2
 match_seed: 1337
 supervised: True
 agent_call_timeout: 5
-agents: A=my_agent, B=reference
-ticks: 1-117
-decisions: 936
+agents: A=my_agent, B=v6_watchful_keeper
+ruleset: bytefray-rules-6-alpha1
+replay_binding: present (not verified; inspect does not read the replay)
+  match_id: match_2d20efe4ba3f49ad57d97fb8
+  replay_sha256: 7f77b98e89d5940f1dcbb9fc8a2bd909235453735b6f503c80db665034b89591
+  entrant_identities: A, B
+ticks: 1-5
+decisions: 80
+processes: 2
+  A/main: reach=128 share=1
+  B/main: reach=128 share=1
 resets: 2
+  reset A: sensing_window=27
+  reset B: sensing_window=27
 failures: 0
 ```
+
+The Ruleset and replay identity come from the trace's final `binding`
+record. `inspect` only reports them: it does not open `replay.jsonl`, so
+it never claims the binding has been verified. A trace without a binding
+record (for example, from a match that did not finish) is still
+inspectable and says `replay_binding: none`.
 
 ```bash
 # What both agents decided on exactly tick 37
@@ -69,13 +101,87 @@ bytefray agents inspect runs/agents_test/my_agent/<run-label> --tick 37
 # Just my_agent's decisions in a window around tick 37
 bytefray agents inspect runs/agents_test/my_agent/<run-label> --around 37 --window 5 --agent A
 
-# Only records carrying a failure diagnostic
+# Only one of my_agent's processes (schema 2)
+bytefray agents inspect runs/agents_test/my_agent/<run-label> --tick 37 --agent A --process scout
+
+# Only failures
 bytefray agents inspect runs/agents_test/my_agent/<run-label> --failures
 ```
 
-A decision record shows the full `Observation` the agent received, and
-either the `AgentAction` it returned or the diagnostic that explains why
-it didn't:
+`--agent` matches the entrant id (`A`, `B`, ...). `--process` matches a
+process id; process ids are local to an entrant, so combine it with
+`--agent` when two entrants use the same name (both starters call theirs
+`main`). `--process` on a schema-1 trace is an error
+(`code: trace_option_unsupported`, exit `2`): schema-1 decisions have no
+process identity.
+
+### Schema-2 decisions (Active Sensing)
+
+Each `decision_v2` record is one `act()` callback to one entrant process.
+A process is usually called several times in a tick, so every block is
+identified by **tick, entrant, process and callback number**: `callback: 2`
+is that process's second callback in that tick, counted in trace order.
+
+```text
+tick: 3
+agent: B
+process: main
+callback: 1
+wall_time_ms: 0.125
+  observation.current_tick: 3
+  observation.last_callback_tick: 2
+  observation.previous_action_tick: 2
+  observation.self_process_id: main
+  observation.self_anchor: 780
+  observation.self_reach: 128
+  observation.own_core_base: 780
+  observation.own_core_size: 8
+  observation.visible_enemy_anchor_addresses: []
+  observation.previous_action_applied: True
+  observation.previous_read_value: None
+  observation.previous_read_owner: None
+  observation.previous_sense_anchors: []
+  action: read operand=784 value=None
+  applied.status: APPLIED
+  applied.normalized_address: 784
+  applied.read_value: 206
+  applied.read_owner: B
+  applied.sensed_anchors: (absent)
+```
+
+- `observation.*` is the full `ObservationV2` the process received,
+  including the previous READ's feedback (`previous_read_value`,
+  `previous_read_owner`) and the visible enemy anchors.
+- `action` is what the agent requested (`action: none` if it returned
+  nothing usable); `applied.*` is what the engine did with it, starting
+  with `applied.status` (`APPLIED`, `REJECTED_INVALID`,
+  `REJECTED_OUT_OF_REACH`, `EXCEPTION`). A diagnostic, when present, follows
+  as `diagnostic.code`/`stage`/`message`.
+- The two sensing fields keep three different states apart, exactly as the
+  trace file does:
+
+  | Shown as | Meaning for `applied.sensed_anchors` | Meaning for `observation.previous_sense_anchors` |
+  |---|---|---|
+  | `(absent)` | Not a SENSE record | No SENSE reflection was due on this callback |
+  | `None` | SENSE refused as out of reach | Reflection of a refused SENSE |
+  | `[]` | SENSE applied and found nothing | Reflection of an empty SENSE |
+  | `[12, 30]` | Anchors the SENSE found | Reflection of those anchors |
+
+**Failures** for schema 2 (`--failures` and the summary's `failures:` list)
+are resets with a diagnostic, callbacks with a diagnostic, and callbacks
+whose `applied.status` is not `APPLIED` (for example an out-of-reach
+rejection, which carries no diagnostic).
+
+**Tick meaning** is the same as for schema 1: `tick` is
+`observation.current_tick`, the tick the canonical replay uses for the
+result of that callback.
+
+### Schema-1 decisions
+
+A schema-1 trace (for example, from `agents validate --trace-path`) prints
+exactly as before. A decision record shows the full API-v1 `Observation`,
+and either the `AgentAction` returned or the diagnostic that explains why
+not:
 
 ```text
 tick: 37
@@ -110,16 +216,76 @@ bytefray agents diverge \
   runs/agents_test/my_agent/2024-01-02T000000-vs-reference
 ```
 
-No divergence:
+Both traces must have the same schema version. Comparing a schema-1 trace
+with a schema-2 trace is refused with `code: trace_schema_mismatch`
+(exit `2`) rather than producing a meaningless comparison. As before, exit
+`0` means the comparison ran — whether or not it found a divergence — and
+exit `2` means it could not run (missing, malformed, unsupported or
+mismatched traces).
+
+### Schema-2 divergence
+
+`diverge` walks both traces' `decision_v2` callbacks in file order,
+position by position:
+
+1. **Callback identity and order.** At each position the two callbacks
+   must have the same tick, entrant, process and callback number. If they
+   do not, the result is one of `callback missing from trace a`/`b`,
+   `callback identity differs` (for example a different process id),
+   `callback order differs` (both callbacks exist in the other trace, at
+   another position), or `trace a`/`b ends after N callbacks`.
+2. **Content.** With the same identity, the callbacks must have equal
+   `observation`, `action`, `applied` result and diagnostic. The reason
+   names what differs, for example `reason: action differs` or
+   `reason: observation, action, applied_result differ`. The sensing
+   fields' absent/`None`/`[]` states are all different values.
+
+Never compared: `wall_time_ms`, the diagnostic `message` (free text that
+can contain exception text or host paths; its `code`, `stage`,
+`exception_type`, `agent_id`, `slot`, `tick` and `action_slot` *are*
+compared), the header (seed, names, timeout), and the `reset`,
+`declaration` and `binding` records. Process declarations still matter
+indirectly: a different process set or share changes the callback
+sequence, and a different reach changes `observation.self_reach`.
 
 ```text
-status: identical
-trace_a: .../2024-01-01.../trace.jsonl
-trace_b: .../2024-01-02.../trace.jsonl
-No divergence found: every matched decision agrees.
+status: diverged
+trace_a: .../trace.jsonl
+trace_b: .../trace.jsonl
+position: 1
+callback_a: tick=1 agent=A process=main callback=1
+callback_b: tick=1 agent=A process=main callback=1
+reason: observation, action, applied_result differ
+--- trace a ---
+tick: 1
+...
+  observation.self_anchor: 1340
+...
+  action: sense operand=1431 value=None
+--- trace b ---
+tick: 1
+...
+  observation.self_anchor: 45
+...
+  action: sense operand=136 value=None
 ```
 
-First disagreement:
+`position` counts callbacks from 1 in file order. Two runs with the same
+agents, seed and Ruleset report `status: identical`
+(`No divergence found: all N callbacks agree in identity, order and
+compared content.`) even though their timings differ.
+
+### Schema-1 divergence
+
+Unchanged. Only the `action`/`diagnostic` at a matched
+`(tick, agent, action_slot)` key are compared. `wall_time_ms` and header
+metadata (agent display names, seed, timeout) are never compared, so two
+runs that made the identical decisions are never reported as diverged
+merely because one happened to run faster or was invoked with a
+differently-named opponent. A decision present in one trace but missing
+from the other at the same key (including one trace simply being shorter)
+is itself reported as a divergence — never silently ignored — at the
+first tick/agent where that happens.
 
 ```text
 status: diverged
@@ -138,15 +304,16 @@ tick: 12
   action: write operand=250 value=200
 ```
 
-**What counts as a divergence**: only the `action`/`diagnostic` at a
-matched `(tick, agent, action_slot)` key. `wall_time_ms` and header
-metadata (agent display names, seed, timeout) are never compared, so two
-runs that made the identical decisions are never reported as diverged
-merely because one happened to run faster or was invoked with a
-differently-named opponent. A decision present in one trace but missing
-from the other at the same key (including one trace simply being shorter)
-is itself reported as a divergence — never silently ignored — at the
-first tick/agent where that happens.
+### Limitations
+
+- `diverge` reports only the *first* divergence, not a full diff.
+- It compares decisions, not arena state. Use the replays for that.
+- `inspect` reports the replay binding but does not verify it against
+  `replay.jsonl`. `battle_engine.spectator_derivation.verify_pair` performs
+  that check.
+- The Designer's Trace Inspector shows schema-2 process and callback
+  identity in each decision block but has no process filter; use
+  `agents inspect --process` for that.
 
 ## Timeout semantics
 
@@ -215,7 +382,8 @@ directory the failing command printed, or at the `trace.jsonl` file
 directly.
 
 **A trace file fails to parse** — `agents inspect`/`diverge` exit `2`
-with `code: trace_format_invalid` and an exact `file:line` location. A
+with `code: trace_format_invalid` and the location of the problem (a
+`file:line`, or the record's position after the header). A
 trace is only ever malformed if something outside Bytefray's own writer
 touched it (hand-edited, copied mid-write, or from an incompatible
 schema version) — the writer itself flushes one complete JSON line per
@@ -223,11 +391,19 @@ record, never a torn partial write under a normal process kill (see
 `battle_engine.agent_trace.TraceWriter`'s docstring for exactly what is
 and isn't guaranteed).
 
-**"Could not read trace: unsupported trace schema version"** — the trace
-was written by a newer/older Bytefray than the one reading it. Trace
+**`code: trace_schema_unsupported` / "unsupported trace schema version"**
+— the trace's header names a schema version other than 1 or 2, so it was
+written by a different Bytefray version than the one reading it. Trace
 files are not intended to outlive the Bytefray version that wrote them
-across a schema bump; re-run `agents test`/`agents validate` to produce a
-fresh one.
+across a schema bump; inspect it with the version that wrote it, or re-run
+`agents test`/`agents validate` to produce a fresh one. (Before schema-2
+support, inspecting any current match trace failed this way with
+`trace_format_invalid`.)
+
+**`code: trace_schema_mismatch`** — `diverge` was given one schema-1 and
+one schema-2 trace. A typical cause is comparing an `agents validate
+--trace-path` trace (schema 1) with an `agents test` trace (schema 2);
+compare two `agents test` runs instead.
 
 **A supervised run is much slower than I expected** — see "Performance
 tradeoff" above; this is expected for the supervised path. If you don't

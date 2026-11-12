@@ -28,7 +28,10 @@ identifiers -- see ``AGENTS.md``'s "Compatibility requirements"):
   any ``schema_version`` other than :data:`TRACE_SCHEMA_VERSION` outright
   (:func:`_parse_header`) rather than guessing at forward/backward
   compatibility -- a version bump is a deliberate, visible break, not a
-  silent reinterpretation.
+  silent reinterpretation. :func:`read_trace` reads schema 1 only and
+  :func:`read_trace_v2` schema 2 only; :func:`read_any_trace` (Agent Lab
+  tooling) validates the header and hands the file to exactly the reader
+  its version names, with no fallback and no conversion between versions.
 - Record order is append order, always: a trace file is written strictly
   sequentially by one writer and read back the same way; nothing in this
   module reorders, sorts, or buffers records out of the order they were
@@ -652,6 +655,10 @@ class TraceDocumentV2:
         return tuple(r for r in self.records if isinstance(r, DeclarationRecord))
 
     @property
+    def resets(self) -> tuple[ResetRecord, ...]:
+        return tuple(r for r in self.records if isinstance(r, ResetRecord))
+
+    @property
     def binding(self) -> BindingRecord | None:
         for r in reversed(self.records):
             if isinstance(r, BindingRecord):
@@ -756,17 +763,290 @@ def first_divergence(a: TraceDocument, b: TraceDocument) -> Divergence | None:
     return None
 
 
+# ---------------------------------------------------------------------------
+# Version-aware reading (Agent Lab tooling; issue #10)
+# ---------------------------------------------------------------------------
+
+#: Every ``schema_version`` :func:`read_any_trace` can dispatch to a reader for.
+TRACE_SUPPORTED_SCHEMA_VERSIONS: Final = (TRACE_SCHEMA_VERSION, TRACE_SCHEMA_VERSION_V2)
+
+#: A parsed trace of either supported schema version, never converted between them.
+AnyTraceDocument = TraceDocument | TraceDocumentV2
+
+
+class TraceVersionError(TraceFormatError):
+    """A well-formed trace header names a schema version no reader here supports."""
+
+
+def trace_schema_version(path: Path) -> int:
+    """Validate a trace's header record and return its ``schema_version``.
+
+    Reads only up to the first non-blank line, which must be the header
+    (:class:`TraceHeader` is the first record of every trace file). A header
+    without ``schema``/``schema_version`` keeps :func:`_parse_header`'s
+    historical schema-1 defaults. Executes no agent code.
+    """
+
+    if not path.is_file():
+        raise TraceFormatError(f"Trace file not found: {path}")
+    line = ""
+    line_no = 0
+    try:
+        with path.open(encoding="utf-8") as handle:
+            for line_no, raw_line in enumerate(handle, start=1):
+                line = raw_line.strip()
+                if line:
+                    break
+    except OSError as exc:
+        raise TraceFormatError(f"Could not read trace file {path}: {exc}") from exc
+    except UnicodeDecodeError as exc:
+        raise TraceFormatError(f"{path}: trace is not UTF-8 text: {exc}") from exc
+    if not line:
+        raise TraceFormatError(f"{path}: missing header record (file is empty)")
+    try:
+        payload = json.loads(line)
+    except json.JSONDecodeError as exc:
+        raise TraceFormatError(f"{path}:{line_no}: invalid JSON: {exc}") from exc
+    if not isinstance(payload, Mapping):
+        raise TraceFormatError(f"{path}:{line_no}: record must be a JSON object")
+    record_type = payload.get("record_type")
+    if record_type != "header":
+        raise TraceFormatError(
+            f"{path}:{line_no}: missing header record: the first record must be the "
+            f"trace header, found record_type {record_type!r}"
+        )
+    schema = payload.get("schema", TRACE_SCHEMA)
+    if schema != TRACE_SCHEMA:
+        raise TraceFormatError(
+            f"{path}:{line_no}: unsupported trace schema {schema!r} (expected {TRACE_SCHEMA!r})"
+        )
+    version = payload.get("schema_version", TRACE_SCHEMA_VERSION)
+    if isinstance(version, bool) or not isinstance(version, int):
+        raise TraceFormatError(
+            f"{path}:{line_no}: 'schema_version' must be an integer, got {version!r}"
+        )
+    if version not in TRACE_SUPPORTED_SCHEMA_VERSIONS:
+        supported = ", ".join(str(v) for v in TRACE_SUPPORTED_SCHEMA_VERSIONS)
+        raise TraceVersionError(
+            f"{path}:{line_no}: unsupported trace schema version {version} "
+            f"(supported: {supported}); this trace was written by a different "
+            "Bytefray version -- inspect it with that version or re-run the match"
+        )
+    return version
+
+
+def _is_int(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _is_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _check_inspectable(document: AnyTraceDocument) -> None:
+    """Reject the field types the version readers accept but Agent Lab cannot order or format.
+
+    The version-specific readers check field presence, not type. Tooling sorts
+    and filters by tick and formats timings numerically, so a non-integer tick
+    or non-numeric timing is reported here as a malformed record instead of
+    surfacing later as an uncontrolled exception.
+    """
+
+    path = document.path
+    header = document.header
+    if header.agent_call_timeout is not None and not _is_number(header.agent_call_timeout):
+        raise TraceFormatError(f"{path}: header 'agent_call_timeout' must be a number or null")
+    for ordinal, record in enumerate(document.records, start=1):
+        where = f"{path}: record {ordinal} after the header ({record.record_type})"
+        if isinstance(record, ResetRecord) and not _is_number(record.wall_time_ms):
+            raise TraceFormatError(f"{where}: 'wall_time_ms' must be a number")
+        if isinstance(record, DecisionRecord):
+            if not _is_int(record.tick) or not _is_int(record.action_slot):
+                raise TraceFormatError(f"{where}: 'tick' and 'action_slot' must be integers")
+            if not _is_number(record.wall_time_ms):
+                raise TraceFormatError(f"{where}: 'wall_time_ms' must be a number")
+        if isinstance(record, DecisionRecordV2):
+            if not _is_int(record.observation.current_tick):
+                raise TraceFormatError(f"{where}: 'observation.current_tick' must be an integer")
+            if not isinstance(record.agent_id, str) or not isinstance(record.process_id, str):
+                raise TraceFormatError(f"{where}: 'agent_id' and 'process_id' must be strings")
+            if not all(_is_int(a) for a in record.observation.visible_enemy_anchor_addresses):
+                raise TraceFormatError(
+                    f"{where}: 'observation.visible_enemy_anchor_addresses' must be integers"
+                )
+
+
+def read_any_trace(path: Path) -> AnyTraceDocument:
+    """Parse a schema-1 or schema-2 trace with exactly the reader its header names.
+
+    Dispatch is explicit: :func:`trace_schema_version` validates the header,
+    then schema 1 goes to :func:`read_trace` and schema 2 to
+    :func:`read_trace_v2`, each of which re-checks the version itself. There
+    is no fallback to the other version's reader, and records are never
+    converted between versions. Executes no agent code.
+    """
+
+    version = trace_schema_version(path)
+    try:
+        document: AnyTraceDocument = (
+            read_trace(path) if version == TRACE_SCHEMA_VERSION else read_trace_v2(path)
+        )
+    except TraceFormatError:
+        raise
+    except (KeyError, TypeError, ValueError, AttributeError) as exc:
+        raise TraceFormatError(
+            f"{path}: malformed schema-{version} trace record: {type(exc).__name__}: {exc}"
+        ) from exc
+    _check_inspectable(document)
+    return document
+
+
+# ---------------------------------------------------------------------------
+# Schema-2 first divergence
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class CallbackKey:
+    """Deterministic identity of one schema-2 ``act()`` callback.
+
+    ``occurrence`` is 1-based: this is the n-th callback the entrant's
+    process received during ``tick``, counted in trace append order. A
+    process can be called several times in one tick, so ``(tick, agent_id,
+    process_id)`` alone is not unique.
+    """
+
+    tick: int
+    agent_id: str
+    process_id: str
+    occurrence: int
+
+
+def callback_keys(decisions: tuple[DecisionRecordV2, ...]) -> tuple[CallbackKey, ...]:
+    """The :class:`CallbackKey` of each decision, in the same (append) order."""
+
+    counts: dict[tuple[int, str, str], int] = {}
+    keys: list[CallbackKey] = []
+    for decision in decisions:
+        base = (decision.observation.current_tick, decision.agent_id, decision.process_id)
+        counts[base] = counts.get(base, 0) + 1
+        keys.append(CallbackKey(base[0], base[1], base[2], counts[base]))
+    return tuple(keys)
+
+
+def _stable_diagnostic(diagnostic: TraceDiagnostic | None) -> tuple[object, ...] | None:
+    """A diagnostic without ``message``, whose free text can carry host paths or exception text."""
+
+    if diagnostic is None:
+        return None
+    return (
+        diagnostic.code,
+        diagnostic.stage,
+        diagnostic.exception_type,
+        diagnostic.agent_id,
+        diagnostic.slot,
+        diagnostic.tick,
+        diagnostic.action_slot,
+    )
+
+
+def _semantic_differences(a: DecisionRecordV2, b: DecisionRecordV2) -> tuple[str, ...]:
+    differences: list[str] = []
+    if a.observation != b.observation:
+        differences.append("observation")
+    if a.action != b.action:
+        differences.append("action")
+    if a.applied_result != b.applied_result:
+        differences.append("applied_result")
+    if _stable_diagnostic(a.diagnostic) != _stable_diagnostic(b.diagnostic):
+        differences.append("diagnostic")
+    return tuple(differences)
+
+
+@dataclass(frozen=True)
+class DivergenceV2:
+    """The first callback position at which two schema-2 traces disagree.
+
+    ``position`` is 1-based over each trace's ``decision_v2`` records in
+    append order. ``fields`` names the differing semantic fields when both
+    traces have the same callback identity at that position; it is empty when
+    the identity or order itself differs, or one trace has ended.
+    """
+
+    position: int
+    reason: str
+    key_a: CallbackKey | None
+    key_b: CallbackKey | None
+    record_a: DecisionRecordV2 | None
+    record_b: DecisionRecordV2 | None
+    fields: tuple[str, ...] = ()
+
+
+def first_divergence_v2(a: TraceDocumentV2, b: TraceDocumentV2) -> DivergenceV2 | None:
+    """Find the first ``decision_v2`` callback at which two schema-2 traces disagree.
+
+    Walks both traces' decisions in append order, position by position. At
+    each position the callbacks must first have the same :class:`CallbackKey`
+    (tick, entrant, process, occurrence); a mismatch is reported as a missing
+    callback, a differing identity, or a differing order. With equal keys, the
+    callbacks agree when their ``observation``, ``action``, ``applied_result``
+    and diagnostic (every field except ``message``) are equal, with the
+    absent/``null``/empty distinction of the sensing fields preserved.
+    ``wall_time_ms``, the diagnostic ``message``, the header, ``reset``,
+    ``declaration`` and ``binding`` records are never compared. Returns
+    ``None`` only when both traces have the same callbacks and all agree.
+    """
+
+    decisions_a, decisions_b = a.decisions, b.decisions
+    keys_a, keys_b = callback_keys(decisions_a), callback_keys(decisions_b)
+    present_a, present_b = set(keys_a), set(keys_b)
+    for index in range(max(len(keys_a), len(keys_b))):
+        position = index + 1
+        key_a = keys_a[index] if index < len(keys_a) else None
+        key_b = keys_b[index] if index < len(keys_b) else None
+        record_a = decisions_a[index] if key_a is not None else None
+        record_b = decisions_b[index] if key_b is not None else None
+        if key_a is None:
+            reason = f"trace a ends after {len(keys_a)} callbacks; trace b continues"
+        elif key_b is None:
+            reason = f"trace b ends after {len(keys_b)} callbacks; trace a continues"
+        elif key_a != key_b:
+            if key_a in present_b and key_b in present_a:
+                reason = "callback order differs"
+            elif key_a not in present_b and key_b not in present_a:
+                reason = "callback identity differs"
+            elif key_a not in present_b:
+                reason = "callback missing from trace b"
+            else:
+                reason = "callback missing from trace a"
+        else:
+            assert record_a is not None and record_b is not None
+            fields = _semantic_differences(record_a, record_b)
+            if not fields:
+                continue
+            verb = "differs" if len(fields) == 1 else "differ"
+            return DivergenceV2(
+                position, f"{', '.join(fields)} {verb}", key_a, key_b, record_a, record_b, fields
+            )
+        return DivergenceV2(position, reason, key_a, key_b, record_a, record_b)
+    return None
+
+
 __all__ = [
     "ABSENT",
     "TRACE_SCHEMA",
     "TRACE_SCHEMA_VERSION",
     "TRACE_SCHEMA_VERSION_V2",
+    "TRACE_SUPPORTED_SCHEMA_VERSIONS",
     "Absent",
+    "AnyTraceDocument",
     "BindingRecord",
+    "CallbackKey",
     "DecisionRecord",
     "DecisionRecordV2",
     "DeclarationRecord",
     "Divergence",
+    "DivergenceV2",
     "ResetRecord",
     "TraceAction",
     "TraceActionV2",
@@ -779,8 +1059,13 @@ __all__ = [
     "TraceObservationV2",
     "TraceRecord",
     "TraceResultV2",
+    "TraceVersionError",
     "TraceWriter",
+    "callback_keys",
     "first_divergence",
+    "first_divergence_v2",
+    "read_any_trace",
     "read_trace",
     "read_trace_v2",
+    "trace_schema_version",
 ]
