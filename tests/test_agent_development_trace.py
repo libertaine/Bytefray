@@ -266,6 +266,90 @@ def test_trace_inspector_dialog_opens_and_navigates(tmp_path):
         dialog.deleteLater()
 
 
+def _write_trace_v2(path: Path) -> None:
+    """A schema-2 (Agent API v2) trace: two processes, repeated callbacks, one rejection."""
+
+    from battle_engine.agent_trace import (
+        TRACE_SCHEMA_VERSION_V2,
+        DecisionRecordV2,
+        DeclarationRecord,
+        ResetRecord,
+        TraceActionV2,
+        TraceHeader,
+        TraceObservationV2,
+        TraceResultV2,
+        TraceWriter,
+    )
+
+    def callback(tick: int, agent_id: str, process_id: str, status: str = "APPLIED") -> DecisionRecordV2:
+        return DecisionRecordV2(
+            agent_id=agent_id, process_id=process_id, wall_time_ms=0.1,
+            observation=TraceObservationV2(
+                current_tick=tick, last_callback_tick=tick - 1, previous_action_tick=tick - 1,
+                self_process_id=process_id, self_anchor=100, self_reach=128, own_core_base=100,
+                own_core_size=8, visible_enemy_anchor_addresses=(), previous_action_applied=False,
+                previous_read_value=None, previous_read_owner=None,
+            ),
+            action=TraceActionV2(kind="sense", operand=150),
+            applied_result=TraceResultV2(status=status, normalized_address=150, sensed_anchors=()),
+        )
+
+    with TraceWriter(path) as writer:
+        writer.write_header(
+            TraceHeader(match_seed=1337, agents={"A": "example", "B": "reference"}, supervised=True,
+                        agent_call_timeout=5.0, schema_version=TRACE_SCHEMA_VERSION_V2)
+        )
+        for agent_id in ("A", "B"):
+            writer.write_reset(ResetRecord(agent_id=agent_id, wall_time_ms=1.0, sensing_window=27))
+        writer.write_declaration(DeclarationRecord(agent_id="A", process_id="main", reach=128, share=0.5))
+        writer.write_declaration(DeclarationRecord(agent_id="A", process_id="scout", reach=64, share=0.5))
+        writer.write_declaration(DeclarationRecord(agent_id="B", process_id="main", reach=128, share=1.0))
+        for record in (
+            callback(2, "A", "main"), callback(2, "A", "main"), callback(2, "A", "scout"),
+            callback(2, "B", "main"), callback(4, "A", "scout", status="REJECTED_OUT_OF_REACH"),
+            callback(4, "B", "main"),
+        ):
+            writer.write_decision_v2(record)
+
+
+@pytest.mark.gui
+def test_trace_inspector_dialog_reads_schema_2_traces_with_process_identity(tmp_path):
+    _make_app()
+    from app.views.trace_inspector import TraceInspectorDialog
+
+    trace_path = tmp_path / "trace.jsonl"
+    _write_trace_v2(trace_path)
+
+    dialog = TraceInspectorDialog(trace_path)
+    try:
+        assert dialog._document is not None
+        assert dialog.tickSpin.minimum() == 2
+        assert dialog.tickSpin.maximum() == 4
+        # The agent selector starts on the first entrant, exactly as for schema 1.
+        assert dialog.agentCombo.currentData() == "A"
+        lines = dialog.detailText.toPlainText().splitlines()
+        assert lines[:3] == ["reset agent: A", "wall_time_ms: 1.000", "sensing_window: 27"]
+        assert [line for line in lines if line.startswith(("tick: ", "process: ", "callback: "))] == [
+            "tick: 2", "process: main", "callback: 1",
+            "tick: 2", "process: main", "callback: 2",
+            "tick: 2", "process: scout", "callback: 1",
+        ]
+        assert "  applied.sensed_anchors: []" in lines
+        assert "  observation.previous_sense_anchors: (absent)" in lines
+        assert "agent: B" not in lines
+
+        dialog.agentCombo.setCurrentIndex(dialog.agentCombo.findData("B"))
+        assert "agent: B" in dialog.detailText.toPlainText().splitlines()
+        dialog.agentCombo.setCurrentIndex(dialog.agentCombo.findData("A"))
+
+        dialog.failuresOnlyCheck.setChecked(True)
+        dialog._go_next()
+        assert dialog.tickSpin.value() == 4
+        assert "applied.status: REJECTED_OUT_OF_REACH" in dialog.detailText.toPlainText()
+    finally:
+        dialog.deleteLater()
+
+
 @pytest.mark.gui
 def test_trace_inspector_dialog_handles_malformed_trace_without_crashing(tmp_path):
     _make_app()

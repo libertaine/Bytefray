@@ -4,6 +4,23 @@ This changelog records notable user- and developer-visible changes to Bytefray.
 
 ## [Unreleased]
 
+### Fixed — Agent Lab reads Agent API v2 traces
+
+- `bytefray agents inspect`, `bytefray agents diverge` and the Designer's
+  Trace Inspector now read schema-2 traces, which every current match
+  writes. Before this, they rejected all current traces with
+  `trace_format_invalid` ([#10](https://github.com/libertaine/Bytefray/issues/10)).
+  Schema-1 traces read and compare exactly as before.
+- Schema-2 output shows process identity, per-tick callback numbers,
+  READ/SENSE feedback and applied results. It keeps absent, `null` and
+  empty sensing fields distinct. New `inspect --process` filter.
+- Schema-2 `diverge` compares callbacks in order by tick, entrant, process
+  and callback number. `wall_time_ms` and the diagnostic message are
+  ignored. Mixed schema-1/schema-2 pairs exit `2` with
+  `trace_schema_mismatch`, and unknown versions with
+  `trace_schema_unsupported`. No trace, replay or Agent API format changed.
+  See [Agent Lab](docs/AGENT_LAB.md).
+
 ### Development Python and CI policy
 
 - Retire Python 3.10 for new development; minimum 3.11, primary development
