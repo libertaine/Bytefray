@@ -70,7 +70,9 @@ jobs:
           git rev-parse HEAD
 
       - name: Repetitions
-        shell: bash
+        # Plain bash: GitHub's default "bash -e -o pipefail" stopped run
+        # 43329267401 after the first repetition of every job.
+        shell: bash --noprofile --norc {0}
         run: |
           set -u
           case "$CELL" in
