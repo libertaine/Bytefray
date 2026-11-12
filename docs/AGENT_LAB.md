@@ -240,6 +240,18 @@ position by position:
    `reason: observation, action, applied_result differ`. The sensing
    fields' absent/`None`/`[]` states are all different values.
 
+**Read `position` first, `reason` second.** `position` is always the first
+callback at which the traces stop agreeing. The reason describes what is
+different *at that position*, which is not always the root cause. Callback
+numbers count a process's calls within a tick in order, so if one trace
+lacks a callback in the middle of a tick, the later callbacks of that
+process are renumbered. They then line up with the other trace under the
+same identity, and the reason is a content difference (usually
+`observation, action, applied_result differ`), not `callback missing`.
+`callback missing` is reported only when the absent callback is the last
+one for that process in that tick, or the following identity no longer
+matches. Compare the two printed records to see which one happened.
+
 Never compared: `wall_time_ms`, the diagnostic `message` (free text that
 can contain exception text or host paths; its `code`, `stage`,
 `exception_type`, `agent_id`, `slot`, `tick` and `action_slot` *are*
@@ -247,6 +259,13 @@ compared), the header (seed, names, timeout), and the `reset`,
 `declaration` and `binding` records. Process declarations still matter
 indirectly: a different process set or share changes the callback
 sequence, and a different reach changes `observation.self_reach`.
+
+The trace specification (`docs/specs/v4_api_v2_trace.md` §8) leaves
+diagnostics out of a trace's *semantic identity* because their text is
+host-specific. `diverge` is a debugging aid, not an identity check: it
+compares only a diagnostic's structured fields, which are deterministic,
+and ignores its message. A changed failure code is therefore reported
+while a changed host path is not.
 
 ```text
 status: diverged
@@ -382,8 +401,9 @@ directory the failing command printed, or at the `trace.jsonl` file
 directly.
 
 **A trace file fails to parse** — `agents inspect`/`diverge` exit `2`
-with `code: trace_format_invalid` and the location of the problem (a
-`file:line`, or the record's position after the header). A
+with `code: trace_format_invalid` and a description of the problem, which
+usually includes a `file:line` or the record's position after the header.
+A few low-level type errors name only the file. A
 trace is only ever malformed if something outside Bytefray's own writer
 touched it (hand-edited, copied mid-write, or from an incompatible
 schema version) — the writer itself flushes one complete JSON line per

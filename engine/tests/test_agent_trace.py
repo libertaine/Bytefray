@@ -559,6 +559,10 @@ def test_malformed_schema_1_records_raise_trace_format_error(
         ('"sensing_window": 27', '"sensing_window": "wide"', "'sensing_window' must be an integer or null"),
         ('"status": "APPLIED"', '"statuz": "APPLIED"', "missing required field 'status'"),
         ('"replay_sha256"', '"replay_sha"', "missing required field 'replay_sha256'"),
+        ('"entrant_identities": ["A", "B"]', '"entrant_identities": [1, 2]', "binding fields must be strings"),
+        ('"ruleset_id": "bytefray-rules-6-alpha1"', '"ruleset_id": 6', "binding fields must be strings"),
+        ('"agents": {"A": "alpha", "B": "bravo"}', '"agents": [[1, "a"], ["b", "c"]]', "'agents' must map"),
+        ('"agents": {"A": "alpha", "B": "bravo"}', '"agents": {"A": 5}', "'agents' must map"),
     ],
 )
 def test_malformed_schema_2_records_raise_trace_format_error(
@@ -571,6 +575,18 @@ def test_malformed_schema_2_records_raise_trace_format_error(
 
     with pytest.raises(TraceFormatError, match=message):
         read_any_trace(path)
+
+
+def test_deeply_nested_json_is_a_trace_format_error(tmp_path: Path) -> None:
+    nested = "[" * 100_000 + "]" * 100_000
+    as_header = tmp_path / "header.jsonl"
+    as_header.write_text(nested + "\n", encoding="utf-8")
+    as_record = tmp_path / "record.jsonl"
+    as_record.write_text(_V2_HEADER + nested + "\n", encoding="utf-8")
+
+    for path in (as_header, as_record):
+        with pytest.raises(TraceFormatError):
+            read_any_trace(path)
 
 
 def test_callback_keys_number_repeated_process_callbacks_within_a_tick() -> None:
@@ -660,6 +676,22 @@ def test_v2_missing_callback_is_detected(tmp_path: Path) -> None:
     assert divergence.key_b == CallbackKey(2, "A", "main", 1)
     assert divergence.reason == "callback missing from trace b"
     assert divergence.fields == ()
+
+
+def test_v2_callback_missing_mid_tick_is_found_at_its_position(tmp_path: Path) -> None:
+    # Dropping a process's first callback in a tick renumbers its later ones,
+    # so the gap shows up as a content difference at the right position.
+    shorter = standard_decisions()
+    del shorter[0]  # tick 1, A/main, callback 1 (of 2)
+
+    divergence = _divergence(tmp_path, standard_decisions(), shorter)
+
+    assert divergence is not None
+    assert divergence.position == 1
+    assert divergence.key_a == divergence.key_b == CallbackKey(1, "A", "main", 1)
+    assert divergence.record_a is not None and divergence.record_b is not None
+    assert divergence.record_b == standard_decisions()[1]
+    assert "action" in divergence.fields
 
 
 def test_v2_extra_trailing_callbacks_are_reported(tmp_path: Path) -> None:

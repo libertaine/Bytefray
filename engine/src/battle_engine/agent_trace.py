@@ -807,6 +807,8 @@ def trace_schema_version(path: Path) -> int:
         payload = json.loads(line)
     except json.JSONDecodeError as exc:
         raise TraceFormatError(f"{path}:{line_no}: invalid JSON: {exc}") from exc
+    except RecursionError as exc:
+        raise TraceFormatError(f"{path}:{line_no}: invalid JSON: nested too deeply") from exc
     if not isinstance(payload, Mapping):
         raise TraceFormatError(f"{path}:{line_no}: record must be a JSON object")
     record_type = payload.get("record_type")
@@ -856,8 +858,17 @@ def _check_inspectable(document: AnyTraceDocument) -> None:
     header = document.header
     if header.agent_call_timeout is not None and not _is_number(header.agent_call_timeout):
         raise TraceFormatError(f"{path}: header 'agent_call_timeout' must be a number or null")
+    if not all(isinstance(k, str) and isinstance(v, str) for k, v in header.agents.items()):
+        raise TraceFormatError(f"{path}: header 'agents' must map entrant ids to names (strings)")
     for ordinal, record in enumerate(document.records, start=1):
         where = f"{path}: record {ordinal} after the header ({record.record_type})"
+        if isinstance(record, BindingRecord) and not (
+            isinstance(record.match_id, str)
+            and isinstance(record.replay_sha256, str)
+            and isinstance(record.ruleset_id, str)
+            and all(isinstance(e, str) for e in record.entrant_identities)
+        ):
+            raise TraceFormatError(f"{where}: binding fields must be strings")
         if isinstance(record, ResetRecord) and not _is_number(record.wall_time_ms):
             raise TraceFormatError(f"{where}: 'wall_time_ms' must be a number")
         if isinstance(record, DecisionRecord):
@@ -893,7 +904,7 @@ def read_any_trace(path: Path) -> AnyTraceDocument:
         )
     except TraceFormatError:
         raise
-    except (KeyError, TypeError, ValueError, AttributeError) as exc:
+    except (KeyError, TypeError, ValueError, AttributeError, RecursionError) as exc:
         raise TraceFormatError(
             f"{path}: malformed schema-{version} trace record: {type(exc).__name__}: {exc}"
         ) from exc

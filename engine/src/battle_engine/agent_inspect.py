@@ -428,7 +428,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--process",
         default=None,
-        help="schema-2 traces only: restrict to one process id (combine with --agent)",
+        help=(
+            "schema-2 traces only: restrict decisions to one process id (combine with "
+            "--agent); failed resets belong to an entrant, not a process, so --failures "
+            "still lists them unless --agent narrows them"
+        ),
     )
     parser.add_argument(
         "--failures",

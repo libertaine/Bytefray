@@ -511,6 +511,22 @@ def test_v2_diverge_malformed_trace_exits_2(tmp_path: Path, capsys) -> None:
     assert "code: trace_format_invalid" in capsys.readouterr().err
 
 
+def test_v2_malformed_binding_exits_2_before_any_summary_output(tmp_path: Path, capsys) -> None:
+    good = write_trace_v2(tmp_path / "a.jsonl", standard_decisions())
+    bad = tmp_path / "b.jsonl"
+    bad.write_text(
+        good.read_text(encoding="utf-8").replace(
+            '"entrant_identities": ["A", "B"]', '"entrant_identities": [1, 2]'
+        ),
+        encoding="utf-8",
+    )
+
+    assert inspect_main([str(bad)]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "code: trace_format_invalid" in captured.err
+
+
 # ---------------------------------------------------------------------------
 # Schema 2: real V6 starter matches (end-to-end product regression)
 # ---------------------------------------------------------------------------
