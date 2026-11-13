@@ -21,6 +21,21 @@ This changelog records notable user- and developer-visible changes to Bytefray.
   `trace_schema_unsupported`. No trace, replay or Agent API format changed.
   See [Agent Lab](docs/AGENT_LAB.md).
 
+### Fixed — Validation traces describe the Agent API v2 dry run
+
+- `bytefray agents validate --trace-path` now writes a schema-2 trace
+  ([#11](https://github.com/libertaine/Bytefray/issues/11)). It records the
+  synthetic reset and its sensing window, the declared processes, and the
+  observation, process and action of the one `act()` callback. It used to
+  recast the observation into API v1 fields (`register_a`, `alive`, ...)
+  that the agent never saw.
+- The trace records only what validation does. Nothing is applied to an
+  arena (`applied: none`), and there is no replay binding. It is not a
+  short match trace. See [Validation traces](docs/AGENT_LAB.md#validation-traces).
+- Applies to new traces only. Existing schema-1 validation traces remain
+  readable and are not rewritten. Validation results, output and exit codes
+  are unchanged. No schema version was added.
+
 ### Development Python and CI policy
 
 - Retire Python 3.10 for new development; minimum 3.11, primary development

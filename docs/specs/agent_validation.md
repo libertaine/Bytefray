@@ -566,6 +566,62 @@ documented inputs instead of a real match's seed/slot.
   therefore always produce byte-identical `dry_run_action` output — this
   is asserted directly by a test (§11).
 
+### 7.1 Validation trace (schema 2, issue #11)
+
+The fixture above is the original Agent API v1 design. The current fixture
+is `build_validation_context()`/`build_validation_observation()`, which
+builds a `MatchContextV2` and an `ObservationV2`.
+
+`--trace-path` (and `validate_agent(trace_path=...)`) writes a
+`bytefray.agent_trace` **schema-2** trace using the existing schema-2
+records and `TraceWriter` methods. No record type or field is added. The
+trace records what validation did and nothing more:
+
+1. `header`: `schema_version: 2`, `match_seed` = `VALIDATION_SEED`,
+   `agents: {"A": "validate"}`, and `supervised`/`agent_call_timeout` from
+   the requested mode.
+2. `reset`: the `reset()` call and its diagnostic on failure.
+   `sensing_window` is the window in the dry-run context: the explicit
+   Ruleset's window, or absent when no `--ruleset` was given (the context
+   then carries `None`). Absence follows the omission rule a match reset
+   record uses.
+3. `declaration`: one record per declaration, in order, written only after
+   `ProcessMatchController._validate_declarations` accepts them.
+4. `decision_v2`: the single `act()` callback, written by the serializer a
+   match uses for every callback
+   (`ProcessMatchController._emit_decision_trace`). `process_id` is the
+   first declaration's id. The observation is the `ObservationV2` actually
+   supplied. `previous_sense_anchors` is absent because no reflection is
+   owed. `action` is the validated action, or `None` when the callback
+   failed. `diagnostic` is the validation diagnostic.
+   `applied_result` is always `None`.
+
+Validation never writes a `binding` record and never records an applied
+result. There is no match, replay or arena to bind or apply to. It writes
+no scheduler activity beyond the one callback. A failure before the
+callback leaves only the records reached so far:
+
+| Failure | Records after the header |
+|---|---|
+| discovery, kind, API version, Ruleset configuration, capability preflight | no trace file at all; these fail before the trace is opened (unchanged) |
+| load | none (header only) |
+| reset (including timeout or worker failure) | `reset` with diagnostic |
+| declaration | `reset`. There is no declaration-failure record in schema 2; the diagnostic is the command's own report. |
+| act: exception, invalid action, timeout, worker exit | `reset`, `declaration`…, `decision_v2` with `action: null`, `applied_result: null`, diagnostic |
+
+Validation outcomes, diagnostics, printed output and exit codes are
+unchanged. Only the trace file's schema changed. Existing schema-1
+validation traces are still read by `read_any_trace` and are never
+rewritten.
+
+The observation fields `self_anchor`, `own_core_base` (`0`),
+`own_core_size` (`8`) and `visible_enemy_anchor_addresses` (`()`) are
+harness values, not arena state. A real match derives the core and anchor
+from placement and the Ruleset's spawn rule. A validation trace and a match
+trace therefore differ at their first callback, in observation and in
+`applied_result`. Both being schema 2 does not make them interchangeable
+(docs/AGENT_LAB.md, "Validation traces").
+
 ## 8. Semantic boundary (what "valid" does and does not mean)
 
 Passing validation means exactly:
