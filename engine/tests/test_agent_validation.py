@@ -7,13 +7,31 @@ import sys
 from pathlib import Path
 
 import pytest
-from battle_engine.agent_api import ActionKindV2, AgentAction
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
+from battle_engine.agent_inspect import diverge_main, inspect_main
 from battle_engine.agent_scaffold import create_agent as scaffold_create_agent
+from battle_engine.agent_trace import (
+    ABSENT,
+    TRACE_SCHEMA_VERSION,
+    TRACE_SCHEMA_VERSION_V2,
+    DecisionRecordV2,
+    DeclarationRecord,
+    ResetRecord,
+    TraceActionV2,
+    TraceDocument,
+    TraceDocumentV2,
+    TraceObservationV2,
+    first_divergence_v2,
+    read_any_trace,
+    read_trace_v2,
+)
 from battle_engine.agent_validation import (
     VALIDATION_AGENT_ID,
+    VALIDATION_SEED,
     AgentValidationFailedError,
     ValidationResult,
     build_validation_context,
+    build_validation_observation,
     main,
     validate_agent,
 )
@@ -22,7 +40,7 @@ from battle_engine.config import Config
 from battle_engine.match_service import MatchEntrant
 from battle_engine.process_runtime import ProcessMatchController
 from battle_engine.python_runtime import PythonEntrantInitializationError
-from battle_engine.ruleset_policy import UnknownRulesetError
+from battle_engine.ruleset_policy import RULESET_V6_ALPHA1, UnknownRulesetError
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -550,9 +568,10 @@ def test_supervised_trace_path_writes_a_trace(tmp_path):
     validate_agent("example", data_root=tmp_path, timeout=5.0, trace_path=trace_path)
 
     assert trace_path.exists()
-    from battle_engine.agent_trace import read_trace
+    from battle_engine.agent_trace import read_trace_v2
 
-    document = read_trace(trace_path)
+    # Issue #11: a new validation trace is schema 2 (schema 1 before it).
+    document = read_trace_v2(trace_path)
     assert document.header.supervised is True
     assert len(document.decisions) == 1
     assert document.decisions[0].diagnostic is None
@@ -873,3 +892,534 @@ def test_bare_agents_and_agents_create_are_unchanged(tmp_path):
     created = _run("agents", "create", "example", cwd=tmp_path, env=env)
     assert created.returncode == 0
     assert "agent: example" in created.stdout
+
+
+# --------------------------------------------------------------------------
+# Schema-2 validation traces (issue #11)
+#
+# `--trace-path` writes a schema-2 trace that records what the dry run did:
+# the synthetic reset (with the sensing window its context carried), the
+# validated process declarations, and the one act() callback. Nothing is
+# applied to an arena (applied_result is None) and no match runs (no
+# binding record).
+# --------------------------------------------------------------------------
+
+TWO_PROCESS_SOURCE = """
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
+
+class Agent:
+    def reset(self, context):
+        pass
+
+    def declare_processes(self):
+        return [ProcessDeclaration("scout", 3, 0.25), ProcessDeclaration("guard", 1, 0.75)]
+
+    def act(self, observation):
+        return AgentAction(ActionKindV2.READ, observation.self_anchor + observation.self_reach)
+
+def create_agent():
+    return Agent()
+"""
+
+# Senses under an explicit Active Sensing Ruleset; reads when the dry-run
+# context carries no sensing window.
+SENSING_SOURCE = """
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
+
+class Agent:
+    def reset(self, context):
+        self.window = context.sensing_window
+
+    def declare_processes(self):
+        return [ProcessDeclaration("probe", 64, 1.0)]
+
+    def act(self, observation):
+        if self.window is None:
+            return AgentAction(ActionKindV2.READ, observation.self_anchor)
+        return AgentAction(ActionKindV2.SENSE, observation.self_anchor + 5)
+
+def create_agent():
+    return Agent()
+"""
+
+SENSING_MANIFEST: dict[str, object] = {"capabilities": {"version": 1, "required": ["sense"]}}
+
+DECLARATION_RAISES_SOURCE = """
+class Agent:
+    def reset(self, context):
+        pass
+
+    def declare_processes(self):
+        raise RuntimeError("declare boom")
+
+    def act(self, observation):
+        return None
+
+def create_agent():
+    return Agent()
+"""
+
+DECLARATION_INVALID_SOURCE = """
+from battle_engine.agent_api import ProcessDeclaration
+
+class Agent:
+    def reset(self, context):
+        pass
+
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 0.5)]
+
+    def act(self, observation):
+        return None
+
+def create_agent():
+    return Agent()
+"""
+
+ACT_RAISES_SOURCE = """
+from battle_engine.agent_api import ProcessDeclaration
+
+class Agent:
+    def reset(self, context):
+        pass
+
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
+    def act(self, observation):
+        raise RuntimeError("act boom")
+
+def create_agent():
+    return Agent()
+"""
+
+ACT_HANGS_SOURCE = """
+from battle_engine.agent_api import ProcessDeclaration
+
+class Agent:
+    def reset(self, context):
+        pass
+
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
+    def act(self, observation):
+        while True:
+            pass
+
+def create_agent():
+    return Agent()
+"""
+
+ACT_EXITS_WORKER_SOURCE = """
+import os
+from battle_engine.agent_api import ProcessDeclaration
+
+class Agent:
+    def reset(self, context):
+        pass
+
+    def declare_processes(self):
+        return [ProcessDeclaration("main", 1, 1.0)]
+
+    def act(self, observation):
+        os._exit(7)
+
+def create_agent():
+    return Agent()
+"""
+
+# Byte-for-byte what `bytefray agents validate scaffold --trace-path` wrote
+# at 3e597fa, before issue #11: a historical schema-1 validation trace.
+HISTORICAL_SCHEMA1_VALIDATION_TRACE = (
+    '{"agent_call_timeout": 5.0, "agents": {"A": "validate"}, "match_seed": 1337, '
+    '"record_type": "header", "schema": "bytefray.agent_trace", "schema_version": 1, '
+    '"supervised": true}\n'
+    '{"agent_id": "A", "diagnostic": null, "record_type": "reset", '
+    '"wall_time_ms": 0.1278999261558056}\n'
+    '{"action": {"kind": "write", "operand": 0, "value": 165}, "action_slot": 0, '
+    '"agent_id": "A", "diagnostic": null, "observation": {"agent_id": "A", "alive": true, '
+    '"last_read": null, "pc": 0, "register_a": 0, "register_p": 0, "tick": 1, '
+    '"zero_flag": false}, "record_type": "decision", "tick": 1, '
+    '"wall_time_ms": 0.12440001592040062}\n'
+)
+
+TRACE_MODES = pytest.mark.parametrize("timeout", [None, 5.0], ids=["unsupervised", "supervised"])
+
+
+def _validate_with_trace(
+    tmp_path: Path,
+    source: str,
+    *,
+    timeout: float | None,
+    name: str = "subject",
+    manifest: dict[str, object] | None = None,
+    ruleset_id: str | None = None,
+    trace_name: str = "trace.jsonl",
+) -> tuple[ValidationResult | AgentValidationFailedError, Path]:
+    if not (tmp_path / "agents" / name).exists():
+        _write_agent(tmp_path, name, source=source, manifest=manifest)
+    trace_path = tmp_path / trace_name
+    outcome: ValidationResult | AgentValidationFailedError
+    try:
+        outcome = validate_agent(
+            name, data_root=tmp_path, timeout=timeout, trace_path=trace_path,
+            ruleset_id=ruleset_id,
+        )
+    except AgentValidationFailedError as exc:
+        outcome = exc
+    return outcome, trace_path
+
+
+def _raw_records(trace_path: Path) -> list[dict[str, object]]:
+    return [json.loads(line) for line in trace_path.read_text(encoding="utf-8").splitlines()]
+
+
+def _assert_schema2_validation_header(document: TraceDocumentV2, timeout: float | None) -> None:
+    header = document.header
+    assert header.schema == "bytefray.agent_trace"
+    assert header.schema_version == TRACE_SCHEMA_VERSION_V2
+    assert header.match_seed == VALIDATION_SEED
+    assert dict(header.agents) == {VALIDATION_AGENT_ID: "validate"}
+    assert header.supervised is (timeout is not None)
+    assert header.agent_call_timeout == timeout
+    assert document.binding is None
+
+
+@TRACE_MODES
+def test_validation_trace_success_is_schema2_and_records_the_dry_run(tmp_path, timeout):
+    outcome, trace_path = _validate_with_trace(tmp_path, VALID_SOURCE, timeout=timeout)
+    assert isinstance(outcome, ValidationResult)
+
+    document = read_trace_v2(trace_path)
+    _assert_schema2_validation_header(document, timeout)
+    assert [type(r) for r in document.records] == [ResetRecord, DeclarationRecord, DecisionRecordV2]
+
+    (reset,) = document.resets
+    assert reset.agent_id == VALIDATION_AGENT_ID
+    assert reset.diagnostic is None
+    assert document.declarations == (DeclarationRecord(VALIDATION_AGENT_ID, "main", 1, 1.0),)
+
+    (decision,) = document.decisions
+    assert decision.agent_id == VALIDATION_AGENT_ID
+    assert decision.process_id == "main"
+    assert decision.action == TraceActionV2(kind="read", operand=0, value=None)
+    assert decision.applied_result is None
+    assert decision.diagnostic is None
+    assert outcome.dry_run_action == AgentAction(ActionKindV2.READ, 0)
+
+    # No schema-1 projection and nothing fabricated on disk.
+    raw = _raw_records(trace_path)
+    assert [r["record_type"] for r in raw] == ["header", "reset", "declaration", "decision_v2"]
+    assert raw[0]["schema_version"] == 2
+    assert raw[3]["applied_result"] is None
+    raw_observation = raw[3]["observation"]
+    assert isinstance(raw_observation, dict)
+    for field in ("register_a", "register_p", "zero_flag", "alive", "pc", "action_slot"):
+        assert field not in raw[3] and field not in raw_observation
+    assert "previous_sense_anchors" not in raw_observation
+
+
+@TRACE_MODES
+def test_validation_trace_preserves_the_api_v2_observation_supplied(tmp_path, timeout):
+    outcome, trace_path = _validate_with_trace(tmp_path, TWO_PROCESS_SOURCE, timeout=timeout)
+    assert isinstance(outcome, ValidationResult)
+    document = read_trace_v2(trace_path)
+    (decision,) = document.decisions
+
+    supplied = build_validation_observation(2, ProcessDeclaration("scout", 3, 0.25))
+    observation = decision.observation
+    assert observation == TraceObservationV2(
+        current_tick=supplied.current_tick,
+        last_callback_tick=supplied.last_callback_tick,
+        previous_action_tick=supplied.previous_action_tick,
+        self_process_id=supplied.self_process_id,
+        self_anchor=supplied.self_anchor,
+        self_reach=supplied.self_reach,
+        own_core_base=supplied.own_core_base,
+        own_core_size=supplied.own_core_size,
+        visible_enemy_anchor_addresses=supplied.visible_enemy_anchor_addresses,
+        previous_action_applied=supplied.previous_action_applied,
+        previous_read_value=supplied.previous_read_value,
+        previous_read_owner=supplied.previous_read_owner,
+    )
+    # No SENSE preceded the dry-run callback, so no reflection is owed.
+    assert observation.previous_sense_anchors is ABSENT
+    # The agent saw its own reach: READ at anchor + reach.
+    assert decision.action == TraceActionV2(kind="read", operand=3, value=None)
+
+
+@TRACE_MODES
+def test_validation_trace_records_every_declared_process_and_the_called_one(tmp_path, timeout):
+    outcome, trace_path = _validate_with_trace(tmp_path, TWO_PROCESS_SOURCE, timeout=timeout)
+    assert isinstance(outcome, ValidationResult)
+    document = read_trace_v2(trace_path)
+
+    assert document.declarations == (
+        DeclarationRecord(VALIDATION_AGENT_ID, "scout", 3, 0.25),
+        DeclarationRecord(VALIDATION_AGENT_ID, "guard", 1, 0.75),
+    )
+    # Validation makes exactly one callback, for the first declared process.
+    (decision,) = document.decisions
+    assert decision.process_id == "scout"
+    assert decision.observation.self_process_id == "scout"
+    assert decision.observation.self_reach == 3
+
+
+@TRACE_MODES
+def test_validation_trace_records_the_active_sensing_window(tmp_path, timeout):
+    outcome, trace_path = _validate_with_trace(
+        tmp_path, SENSING_SOURCE, timeout=timeout, manifest=SENSING_MANIFEST,
+        ruleset_id=RULESET_V6_ALPHA1.ruleset_id,
+    )
+    assert isinstance(outcome, ValidationResult)
+    document = read_trace_v2(trace_path)
+
+    (reset,) = document.resets
+    assert RULESET_V6_ALPHA1.sensing_window is not None
+    assert reset.sensing_window == RULESET_V6_ALPHA1.sensing_window
+    assert _raw_records(trace_path)[1]["sensing_window"] == RULESET_V6_ALPHA1.sensing_window
+    (decision,) = document.decisions
+    assert decision.action == TraceActionV2(kind="sense", operand=5, value=None)
+    # Validation does not perform the SENSE, so there is no sensed result.
+    assert decision.applied_result is None
+    assert decision.observation.visible_enemy_anchor_addresses == ()
+
+
+@TRACE_MODES
+def test_validation_trace_without_explicit_ruleset_omits_the_sensing_window(tmp_path, timeout):
+    outcome, trace_path = _validate_with_trace(
+        tmp_path, SENSING_SOURCE, timeout=timeout, manifest=SENSING_MANIFEST
+    )
+    assert isinstance(outcome, ValidationResult)
+    document = read_trace_v2(trace_path)
+
+    # The ruleset-free dry-run context carries no sensing window, so the
+    # trace field is absent (not null), as for any reset without one.
+    assert build_validation_context().sensing_window is None
+    (reset,) = document.resets
+    assert reset.sensing_window is ABSENT
+    assert "sensing_window" not in _raw_records(trace_path)[1]
+    (decision,) = document.decisions
+    assert decision.action == TraceActionV2(kind="read", operand=0, value=None)
+
+
+@TRACE_MODES
+def test_validation_trace_invalid_action(tmp_path, timeout):
+    outcome, trace_path = _validate_with_trace(tmp_path, INVALID_ACTION_SOURCE, timeout=timeout)
+    assert isinstance(outcome, AgentValidationFailedError)
+    assert outcome.diagnostic.code == "agent_action_invalid"
+    document = read_trace_v2(trace_path)
+
+    _assert_schema2_validation_header(document, timeout)
+    assert len(document.declarations) == 1
+    (decision,) = document.decisions
+    assert decision.process_id == "main"
+    assert decision.action is None
+    assert decision.applied_result is None
+    assert decision.diagnostic is not None
+    assert decision.diagnostic.code == "agent_action_invalid"
+    assert decision.diagnostic.stage == "action"
+    assert decision.diagnostic.tick == 1
+
+
+@TRACE_MODES
+def test_validation_trace_action_exception(tmp_path, timeout):
+    outcome, trace_path = _validate_with_trace(tmp_path, ACT_RAISES_SOURCE, timeout=timeout)
+    assert isinstance(outcome, AgentValidationFailedError)
+    document = read_trace_v2(trace_path)
+
+    (decision,) = document.decisions
+    assert decision.action is None
+    assert decision.applied_result is None
+    assert decision.diagnostic is not None
+    assert decision.diagnostic.code == outcome.diagnostic.code == "agent_action_failed"
+    assert decision.diagnostic.exception_type == "RuntimeError"
+
+
+@TRACE_MODES
+def test_validation_trace_reset_failure_has_no_callback(tmp_path, timeout):
+    outcome, trace_path = _validate_with_trace(tmp_path, BROKEN_RESET_SOURCE, timeout=timeout)
+    assert isinstance(outcome, AgentValidationFailedError)
+    assert outcome.diagnostic.stage == "reset"
+    document = read_trace_v2(trace_path)
+
+    _assert_schema2_validation_header(document, timeout)
+    (reset,) = document.records
+    assert isinstance(reset, ResetRecord)
+    assert reset.diagnostic is not None
+    assert reset.diagnostic.code == outcome.diagnostic.code
+    assert document.declarations == ()
+    assert document.decisions == ()
+
+
+@TRACE_MODES
+@pytest.mark.parametrize(
+    "source", [DECLARATION_RAISES_SOURCE, DECLARATION_INVALID_SOURCE], ids=["raises", "invalid"]
+)
+def test_validation_trace_declaration_failure_stops_after_reset(tmp_path, timeout, source):
+    outcome, trace_path = _validate_with_trace(tmp_path, source, timeout=timeout)
+    assert isinstance(outcome, AgentValidationFailedError)
+    assert outcome.diagnostic.stage == "declaration"
+    document = read_trace_v2(trace_path)
+
+    # Reset succeeded and is recorded; no declaration was accepted and no
+    # callback was made, so neither is recorded. The diagnostic is the
+    # command's own failure report (schema 2 has no declaration-failure record).
+    (reset,) = document.records
+    assert isinstance(reset, ResetRecord)
+    assert reset.diagnostic is None
+
+
+def test_validation_trace_records_supervised_act_timeout(tmp_path):
+    from _hang_safety import hang_safety_timeout
+
+    with hang_safety_timeout(60):
+        outcome, trace_path = _validate_with_trace(tmp_path, ACT_HANGS_SOURCE, timeout=1.0)
+    assert isinstance(outcome, AgentValidationFailedError)
+    document = read_trace_v2(trace_path)
+
+    (decision,) = document.decisions
+    assert decision.process_id == "main"
+    assert decision.action is None
+    assert decision.applied_result is None
+    assert decision.diagnostic is not None
+    assert decision.diagnostic.code == outcome.diagnostic.code == "agent_action_timeout"
+
+
+def test_validation_trace_records_supervised_worker_exit(tmp_path):
+    from _hang_safety import hang_safety_timeout
+
+    with hang_safety_timeout(60):
+        outcome, trace_path = _validate_with_trace(tmp_path, ACT_EXITS_WORKER_SOURCE, timeout=5.0)
+    assert isinstance(outcome, AgentValidationFailedError)
+    document = read_trace_v2(trace_path)
+
+    (decision,) = document.decisions
+    assert decision.action is None
+    assert decision.applied_result is None
+    assert decision.diagnostic is not None
+    assert decision.diagnostic.code == outcome.diagnostic.code == "agent_worker_exited"
+    assert decision.diagnostic.stage == "action"
+
+
+def test_validation_trace_supervised_and_unsupervised_callbacks_agree(tmp_path):
+    _, unsupervised = _validate_with_trace(
+        tmp_path, TWO_PROCESS_SOURCE, timeout=None, trace_name="unsupervised.jsonl"
+    )
+    _, supervised = _validate_with_trace(
+        tmp_path, TWO_PROCESS_SOURCE, timeout=5.0, trace_name="supervised.jsonl"
+    )
+    a, b = read_trace_v2(unsupervised), read_trace_v2(supervised)
+    assert len(a.decisions) == len(b.decisions) == 1
+    assert first_divergence_v2(a, b) is None
+    assert a.declarations == b.declarations
+    assert [r.sensing_window for r in a.resets] == [r.sensing_window for r in b.resets]
+
+
+@TRACE_MODES
+def test_validation_trace_is_inspectable(tmp_path, capsys, timeout):
+    _, trace_path = _validate_with_trace(
+        tmp_path, SENSING_SOURCE, timeout=timeout, manifest=SENSING_MANIFEST,
+        ruleset_id=RULESET_V6_ALPHA1.ruleset_id,
+    )
+    assert inspect_main([str(trace_path)]) == 0
+    summary = capsys.readouterr().out
+    assert "schema: bytefray.agent_trace v2" in summary
+    assert "agents: A=validate" in summary
+    assert "replay_binding: none" in summary
+    assert "ticks: 1-1" in summary
+    assert "  A/probe: reach=64 share=1" in summary
+    assert f"  reset A: sensing_window={RULESET_V6_ALPHA1.sensing_window}" in summary
+    assert "failures: 0" in summary
+
+    assert inspect_main([str(trace_path), "--tick", "1", "--process", "probe"]) == 0
+    detail = capsys.readouterr().out
+    assert "process: probe" in detail
+    assert "  action: sense operand=5 value=None" in detail
+    assert "  applied: none" in detail
+
+
+def test_failed_validation_trace_is_inspectable_as_a_failure(tmp_path, capsys):
+    _, trace_path = _validate_with_trace(tmp_path, ACT_RAISES_SOURCE, timeout=5.0)
+    assert inspect_main([str(trace_path)]) == 0
+    summary = capsys.readouterr().out
+    assert "failures: 1" in summary
+    assert "  tick 1 A/main callback 1: agent_action_failed" in summary
+
+
+def test_repeated_validation_traces_do_not_diverge(tmp_path, capsys):
+    _, first = _validate_with_trace(tmp_path, TWO_PROCESS_SOURCE, timeout=5.0, trace_name="a.jsonl")
+    _, second = _validate_with_trace(tmp_path, TWO_PROCESS_SOURCE, timeout=5.0, trace_name="b.jsonl")
+    # Only incidental timing may differ between the two files.
+    first_raw, second_raw = _raw_records(first), _raw_records(second)
+    for record in first_raw + second_raw:
+        record.pop("wall_time_ms", None)
+    assert first_raw == second_raw
+
+    assert diverge_main([str(first), str(second)]) == 0
+    assert "status: identical" in capsys.readouterr().out
+
+
+def test_validation_traces_of_different_agents_diverge(tmp_path, capsys):
+    _, reader = _validate_with_trace(
+        tmp_path, VALID_SOURCE, timeout=None, name="reader", trace_name="reader.jsonl"
+    )
+    _, scout = _validate_with_trace(
+        tmp_path, TWO_PROCESS_SOURCE, timeout=None, name="scout", trace_name="scout.jsonl"
+    )
+    assert diverge_main([str(reader), str(scout)]) == 0
+    out = capsys.readouterr().out
+    assert "status: diverged" in out
+    assert "callback identity differs" in out
+
+
+def test_historical_schema1_validation_trace_remains_readable(tmp_path, capsys):
+    trace_path = tmp_path / "historical.jsonl"
+    trace_path.write_text(HISTORICAL_SCHEMA1_VALIDATION_TRACE, encoding="utf-8")
+
+    document = read_any_trace(trace_path)
+    assert isinstance(document, TraceDocument)
+    assert document.header.schema_version == TRACE_SCHEMA_VERSION
+    (decision,) = document.decisions
+    assert decision.action is not None and decision.action.kind == "write"
+
+    assert inspect_main([str(trace_path)]) == 0
+    assert "schema: bytefray.agent_trace v1" in capsys.readouterr().out
+    assert inspect_main([str(trace_path), "--tick", "1"]) == 0
+    assert "  action: write operand=0 value=165" in capsys.readouterr().out
+    copy = tmp_path / "historical-copy.jsonl"
+    copy.write_text(HISTORICAL_SCHEMA1_VALIDATION_TRACE, encoding="utf-8")
+    assert diverge_main([str(trace_path), str(copy)]) == 0
+    assert "status: identical" in capsys.readouterr().out
+    # Reading never rewrites a historical trace.
+    assert trace_path.read_text(encoding="utf-8") == HISTORICAL_SCHEMA1_VALIDATION_TRACE
+
+
+def test_historical_and_new_validation_traces_are_not_compared(tmp_path, capsys):
+    historical = tmp_path / "historical.jsonl"
+    historical.write_text(HISTORICAL_SCHEMA1_VALIDATION_TRACE, encoding="utf-8")
+    _, current = _validate_with_trace(tmp_path, VALID_SOURCE, timeout=None)
+
+    assert diverge_main([str(historical), str(current)]) == 2
+    assert "code: trace_schema_mismatch" in capsys.readouterr().err
+
+
+def test_cli_validation_trace_is_schema2_and_exit_codes_are_unchanged(
+    tmp_path, monkeypatch, capsys
+):
+    monkeypatch.setenv("BYTEFRAY_ROOT", str(tmp_path))
+    _write_agent(tmp_path, "good", source=VALID_SOURCE)
+    _write_agent(tmp_path, "bad", source=INVALID_ACTION_SOURCE)
+    good_trace, bad_trace = tmp_path / "good.jsonl", tmp_path / "bad.jsonl"
+
+    assert main(["good", "--trace-path", str(good_trace)]) == 0
+    assert f"trace: {good_trace}" in capsys.readouterr().out
+    assert main(["bad", "--trace-path", str(bad_trace)]) == 2
+    assert "code: agent_action_invalid" in capsys.readouterr().err
+
+    for path in (good_trace, bad_trace):
+        document = read_any_trace(path)
+        assert isinstance(document, TraceDocumentV2)
+        assert document.header.supervised is True
+        assert document.binding is None

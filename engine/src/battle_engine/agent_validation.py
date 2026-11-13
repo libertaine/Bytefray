@@ -21,6 +21,16 @@ one action the current runtime action contract accepts. It does not mean
 the agent is strategically sound, competitive, free of later-tick
 failures, safe from hangs/timeouts, sandboxed, or able to complete a real
 match.
+
+``--trace-path`` writes a ``bytefray.agent_trace`` schema-2 trace of the dry
+run (issue #11; earlier releases wrote schema 1): a header, the ``reset``
+record with the sensing window the synthetic context supplied, one
+``declaration`` record per validated process, and one ``decision_v2``
+record for the single ``act()`` callback. The trace describes only what
+validation does. Nothing is applied to an arena, so ``applied_result`` is
+always ``None``; no match runs, so there is no ``binding`` record. The
+header's ``agents`` map names the synthetic entrant ``A=validate``. See
+``docs/specs/agent_validation.md`` §7.1.
 """
 
 from __future__ import annotations
@@ -46,10 +56,13 @@ from battle_engine.agent_api import (
 )
 from battle_engine.agent_capabilities import preflight_agent_capabilities
 from battle_engine.agent_trace import (
+    ABSENT,
+    TRACE_SCHEMA_VERSION_V2,
+    Absent,
+    DeclarationRecord,
     ResetRecord,
-    TraceAction,
+    TraceActionV2,
     TraceHeader,
-    TraceObservation,
     TraceWriter,
 )
 from battle_engine.agent_worker import AgentWorkerHandle, WorkerCallStatus
@@ -325,26 +338,61 @@ def _open_validation_trace_writer(
     writer.write_header(
         TraceHeader(
             match_seed=VALIDATION_SEED,
+            # "validate", not the agent's name: the entrant is the synthetic
+            # dry-run fixture, and this is how a reader tells the trace apart
+            # from a match trace (which also has a binding record).
             agents={VALIDATION_AGENT_ID: "validate"},
             supervised=timeout is not None,
             agent_call_timeout=timeout,
+            schema_version=TRACE_SCHEMA_VERSION_V2,
         )
     )
     return writer
 
 
+def _validation_sensing_window(ruleset_policy: RulesetPolicy | None) -> int | None:
+    """The ``sensing_window`` the dry run's reset context carries (see :func:`build_validation_context`)."""
+
+    return ruleset_policy.sensing_window if ruleset_policy else None
+
+
 def _trace_validation_reset(
-    trace_writer: TraceWriter | None, start: float, diagnostic: RuntimeDiagnostic | None
+    trace_writer: TraceWriter | None,
+    start: float,
+    diagnostic: RuntimeDiagnostic | None,
+    sensing_window: int | None,
 ) -> None:
     if trace_writer is None:
         return
+    # Same omission rule as a match's reset record: the window the context
+    # carried, or absent when the context carried none.
+    trace_window: int | Absent = ABSENT if sensing_window is None else sensing_window
     trace_writer.write_reset(
         ResetRecord(
             agent_id=VALIDATION_AGENT_ID,
             wall_time_ms=(time.perf_counter() - start) * 1000,
             diagnostic=_to_trace_diagnostic(diagnostic),
+            sensing_window=trace_window,
         )
     )
+
+
+def _trace_declarations(
+    trace_writer: TraceWriter | None, declarations: list[ProcessDeclaration]
+) -> None:
+    """One record per validated declaration, in declared order, as a match writes them."""
+
+    if trace_writer is None:
+        return
+    for declaration in declarations:
+        trace_writer.write_declaration(
+            DeclarationRecord(
+                agent_id=VALIDATION_AGENT_ID,
+                process_id=declaration.id,
+                reach=declaration.reach,
+                share=declaration.share,
+            )
+        )
 
 
 def _validate_agent_unsupervised(
@@ -388,9 +436,9 @@ def _validate_agent_unsupervised(
         # propagate rather than being reported as an ordinary validation
         # failure, matching the current process runtime's identical narrowing.
         diagnostic = diagnose_reset_failure(exc, agent_id=VALIDATION_AGENT_ID, slot=VALIDATION_SLOT)
-        _trace_validation_reset(trace_writer, reset_start, diagnostic)
+        _trace_validation_reset(trace_writer, reset_start, diagnostic, context.sensing_window)
         raise AgentValidationFailedError(diagnostic) from exc
-    _trace_validation_reset(trace_writer, reset_start, None)
+    _trace_validation_reset(trace_writer, reset_start, None, context.sensing_window)
 
     try:
         declared = instance.declare_processes()
@@ -417,6 +465,7 @@ def _validate_agent_unsupervised(
         )
     except PythonEntrantInitializationError as exc:
         raise AgentValidationFailedError(exc.diagnostic) from exc
+    _trace_declarations(trace_writer, declarations)
 
     # Stage 5: one deterministic act(), validated by the real action
     # validator -- not a reimplementation.
@@ -458,13 +507,7 @@ def _validate_agent_unsupervised(
         _trace_decision(trace_writer, observation, act_start, None, diagnostic)
         raise AgentValidationFailedError(diagnostic) from exc
 
-    _trace_decision(
-        trace_writer,
-        observation,
-        act_start,
-        TraceAction(kind=validated_action.kind.value, operand=validated_action.operand, value=validated_action.value),
-        None,
-    )
+    _trace_decision(trace_writer, observation, act_start, validated_action, None)
     return ValidationResult(
         agent_id=agent_id, api_version=api_version, dry_run_action=validated_action
     )
@@ -474,34 +517,36 @@ def _trace_decision(
     trace_writer: TraceWriter | None,
     observation: ObservationV2,
     start: float,
-    action: TraceAction | None,
+    action: AgentAction | None,
     diagnostic: RuntimeDiagnostic | None,
 ) -> None:
+    """Record the one dry-run ``act()`` callback as a ``decision_v2`` record.
+
+    Written by the same serializer a match uses for every callback, so the
+    observation is mirrored field for field. ``action`` is the validated
+    action, or ``None`` when the callback failed (a match records a failed
+    callback the same way). ``applied_result`` is always ``None``: validation
+    never applies an action to an arena, so there is no outcome to record.
+    ``previous_sense_anchors`` is absent because no SENSE preceded the
+    callback, so no reflection is owed.
+    """
+
     if trace_writer is None:
         return
-    from battle_engine.agent_trace import DecisionRecord
-
-    tick = observation.current_tick
-    trace_observation = TraceObservation(
-        tick=tick,
-        agent_id=VALIDATION_AGENT_ID,
-        pc=observation.self_anchor,
-        register_a=0,
-        register_p=0,
-        zero_flag=False,
-        last_read=observation.previous_read_value,
-        alive=True,
+    trace_action = (
+        None
+        if action is None
+        else TraceActionV2(kind=action.kind.value, operand=action.operand, value=action.value)
     )
-    trace_writer.write_decision(
-        DecisionRecord(
-            tick=tick,
-            agent_id=VALIDATION_AGENT_ID,
-            action_slot=0,
-            wall_time_ms=(time.perf_counter() - start) * 1000,
-            observation=trace_observation,
-            action=action,
-            diagnostic=_to_trace_diagnostic(diagnostic),
-        )
+    ProcessMatchController._emit_decision_trace(
+        trace_writer,
+        VALIDATION_AGENT_ID,
+        observation.self_process_id,
+        start,
+        observation,
+        trace_action,
+        _to_trace_diagnostic(diagnostic),
+        None,
     )
 
 
@@ -540,6 +585,7 @@ def _validate_agent_supervised(
         assert load_result.payload is not None
         api_version = load_result.payload["metadata"]["api_version"]
 
+        sensing_window = _validation_sensing_window(ruleset_policy)
         reset_start = time.perf_counter()
         reset_result = handle.reset(
             match_seed=VALIDATION_SEED,
@@ -549,7 +595,7 @@ def _validate_agent_supervised(
             action_budget=1,
             timeout=timeout,
             detection_radius=ruleset_policy.detection_radius if ruleset_policy else None,
-            sensing_window=ruleset_policy.sensing_window if ruleset_policy else None,
+            sensing_window=sensing_window,
         )
         if reset_result.status is not WorkerCallStatus.OK:
             diagnostic = diagnostic_for_worker_result(
@@ -560,9 +606,9 @@ def _validate_agent_supervised(
                 timeout=timeout,
                 exit_code=handle.exit_code,
             )
-            _trace_validation_reset(trace_writer, reset_start, diagnostic)
+            _trace_validation_reset(trace_writer, reset_start, diagnostic, sensing_window)
             raise AgentValidationFailedError(diagnostic)
-        _trace_validation_reset(trace_writer, reset_start, None)
+        _trace_validation_reset(trace_writer, reset_start, None, sensing_window)
 
         if api_version != 2:
             raise AgentValidationFailedError(
@@ -616,6 +662,7 @@ def _validate_agent_supervised(
                 )
             )
             raise AgentValidationFailedError(diagnostic) from exc
+        _trace_declarations(trace_writer, declarations)
 
         observation = build_validation_observation(
             api_version,
@@ -678,13 +725,7 @@ def _validate_agent_supervised(
             )
             _trace_decision(trace_writer, observation, act_start, None, diagnostic)
             raise AgentValidationFailedError(diagnostic) from exc
-        _trace_decision(
-            trace_writer,
-            observation,
-            act_start,
-            TraceAction(**action_payload),
-            None,
-        )
+        _trace_decision(trace_writer, observation, act_start, validated_action, None)
         return ValidationResult(
             agent_id=agent_id, api_version=api_version, dry_run_action=validated_action
         )
@@ -774,7 +815,12 @@ def _parser() -> argparse.ArgumentParser:
         "--trace-path",
         type=Path,
         default=None,
-        help="write a bytefray.agent_trace v1 file for this dry run (default: none)",
+        help=(
+            "write a bytefray.agent_trace schema-2 file for this dry run "
+            "(default: none). It records the synthetic reset, the declared "
+            "processes and the one act() callback; nothing is applied to an "
+            "arena and it has no replay binding."
+        ),
     )
     return parser
 
