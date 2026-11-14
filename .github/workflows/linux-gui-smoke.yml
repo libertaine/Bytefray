@@ -57,10 +57,13 @@ jobs:
 
   designer-x11-smoke:
     runs-on: ubuntu-latest
-    # Known baseline limitation, not fixed: an intermittent native crash or
-    # hang in Replay History worker-thread teardown, issue #7. A hang now
-    # fails within the hour, with every thread's stack, rather than holding
-    # the runner for the 6-hour default.
+    # Issue #7 (intermittent crash/hang near Replay History workers) had two
+    # causes: test-built Designer windows finalized by Python's cyclic
+    # collector on a worker QThread (tests/conftest.py now finalizes each
+    # test's Qt objects on the GUI thread), and a shutdown join that could
+    # deadlock (app/views/replay_history.py). This job remains the full
+    # regression signal. A hang fails within the hour, with every thread's
+    # stack, rather than holding the runner for the 6-hour default.
     timeout-minutes: 60
 
     continue-on-error: ${{ matrix.binding == 'latest' }}
