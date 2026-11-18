@@ -34,6 +34,7 @@ from battle_engine.agent_scaffold import (
 from battle_engine.agent_test import DEFAULT_AGENT_TIMEOUT, DEFAULT_TICKS
 from battle_engine.config import Config
 from battle_engine.ruleset_names import ACTIVE_SENSING_DISPLAY_NAME
+from battle_engine.starters import PRACTICE_OPPONENT_NAME
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFontDatabase
 from PySide6.QtWidgets import (
@@ -64,6 +65,11 @@ from app.services.ruleset_options import (
     agent_row_metadata,
     agents_supported,
 )
+
+#: The Opponent list's first entry: no explicit opponent, so ``agents test`` uses
+#: its internal reference, the bundled practice opponent (6.0.0-alpha.1). It
+#: names that agent; "Reference" alone did not say which agent it was.
+DEFAULT_OPPONENT_LABEL = f"Practice Hunter ({PRACTICE_OPPONENT_NAME}) — default"
 
 _INVALID_STYLE = "color: #b00020;"
 _TOOL_FAILURE_STYLE = "color: #b06000;"
@@ -367,7 +373,8 @@ class AgentDevelopmentPanel(QWidget):
             "For Window Scout, Watchful Keeper or Roaming Reacquirer: create a personal "
             "copy with New Agent and Validate. Edit the agent's parameters in Advanced, "
             "then Run and Open Replay. Development Test runs a full match against the "
-            "Reference opponent (Watchful Keeper) using manifest defaults."
+            f"practice opponent, Practice Hunter ({PRACTICE_OPPONENT_NAME}), unless you "
+            "choose another opponent, using manifest defaults."
         )
         workflow_hint.setWordWrap(True)
         test_layout.addWidget(workflow_hint)
@@ -460,7 +467,7 @@ class AgentDevelopmentPanel(QWidget):
         # participates in compatibility exactly like the tested agent does.
         self.opponentCombo.currentIndexChanged.connect(self._on_opponent_changed)
 
-        self.opponentCombo.addItem("Reference", None)
+        self.opponentCombo.addItem(DEFAULT_OPPONENT_LABEL, None)
         self._update_enablement()
 
     # ---- API consumed by AgentDesigner ----
@@ -481,7 +488,7 @@ class AgentDevelopmentPanel(QWidget):
         self._on_combo_changed()
 
     def _refresh_opponent_combo(self) -> None:
-        """Repopulate the opponent combo: 'Reference' plus every Python agent.
+        """Repopulate the opponent combo: the default practice opponent plus every Python agent.
 
         The CLI permits testing an agent against itself
         (``docs/specs/agent_designer_workflow.md`` Sec 23 item 3); this
@@ -491,7 +498,7 @@ class AgentDevelopmentPanel(QWidget):
         prev_data = self.opponentCombo.currentData()
         self.opponentCombo.blockSignals(True)
         self.opponentCombo.clear()
-        self.opponentCombo.addItem("Reference", None)
+        self.opponentCombo.addItem(DEFAULT_OPPONENT_LABEL, None)
         for label, row in zip(_agent_labels(self._rows), self._rows, strict=True):
             self.opponentCombo.addItem(label, _agent_row_id(row))
         index = 0
@@ -819,10 +826,11 @@ class AgentDevelopmentPanel(QWidget):
 
     # ---- Internal ----
     def _opponent_row(self) -> AgentRow | None:
-        """The explicitly selected opponent's row, or ``None`` for Reference.
+        """The explicitly selected opponent's row, or ``None`` for the default.
 
-        The internal reference opponent deliberately imposes no additional
-        constraint: ``agents test`` supplies a compatible reference opponent.
+        The default (the bundled practice opponent, ``agents test``'s internal
+        reference) deliberately imposes no additional constraint: ``agents test``
+        supplies a compatible reference opponent.
         """
 
         opponent_id = self.selected_opponent_id()

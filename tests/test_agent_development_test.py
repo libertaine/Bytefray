@@ -312,7 +312,7 @@ def test_show_test_stopped_is_distinct_from_other_outcomes():
 
 
 @pytest.mark.gui
-def test_opponent_combo_defaults_to_reference_and_lists_python_agents(monkeypatch, tmp_path):
+def test_opponent_combo_defaults_to_the_practice_opponent_and_lists_python_agents(monkeypatch, tmp_path):
     _make_app()
     data_root = tmp_path / "data"
     monkeypatch.setenv("BYTEFRAY_ROOT", str(data_root))
@@ -326,7 +326,7 @@ def test_opponent_combo_defaults_to_reference_and_lists_python_agents(monkeypatc
         create_agent("agent_two", data_root=data_root)
         designer.refresh_agents(select="agent_one")
 
-        assert designer.development.opponentCombo.itemText(0) == "Reference"
+        assert designer.development.opponentCombo.itemText(0) == "Practice Hunter (v6_practice_hunter) — default"
         assert designer.development.selected_opponent_id() is None
         names = [
             designer.development.opponentCombo.itemText(i)
@@ -1426,5 +1426,38 @@ def test_development_test_offers_no_ruleset_choice(
         assert not hasattr(designer.development, "rulesetCombo")
         assert not hasattr(designer.development, "selected_ruleset_id")
         assert designer.development.btnTest.isEnabled()
+    finally:
+        designer.close()
+
+
+@pytest.mark.gui
+def test_development_test_text_names_the_practice_opponent(monkeypatch, tmp_path):
+    """G7 defect (6.0.0-alpha.1): the Development Test guidance and the Opponent
+    list must name the agent the test really runs against -- the practice
+    opponent -- never the retired "Reference opponent (Watchful Keeper)" text
+    or a bare "Reference" entry."""
+
+    _make_app()
+    data_root = tmp_path / "data"
+    monkeypatch.setenv("BYTEFRAY_ROOT", str(data_root))
+    from battle_engine.agent_test import REFERENCE_OPPONENT_NAME
+    from PySide6.QtWidgets import QLabel
+
+    from app.agent_designer import AgentDesigner
+
+    designer = AgentDesigner()
+    try:
+        panel = designer.development
+        texts = [label.text() for label in panel.findChildren(QLabel)]
+        guide = next(text for text in texts if "Development Test runs a full match" in text)
+        assert f"Practice Hunter ({REFERENCE_OPPONENT_NAME})" in guide
+        assert "(Watchful Keeper)" not in guide and "Reference opponent" not in guide
+        combo = panel.opponentCombo
+        labels = [combo.itemText(i) for i in range(combo.count())]
+        assert "Reference" not in labels
+        assert REFERENCE_OPPONENT_NAME in combo.itemText(0)
+        # The default entry still means "no explicit opponent": selection and
+        # execution are unchanged (agents test picks its internal reference).
+        assert combo.itemData(0) is None and panel.selected_opponent_id() is None
     finally:
         designer.close()
