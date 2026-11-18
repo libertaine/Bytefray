@@ -90,7 +90,48 @@ def _design(argv: list[str]) -> int:
     return int(module.main())
 
 
+#: Agent commands that resolve agent ids, and so must see the bundled starters
+#: even as the very first command in a fresh data folder (6.0.0-alpha.1).
+_SEEDING_AGENT_COMMANDS = ("validate", "test", "evaluate")
+
+
+def _names_a_bundled_starter(arguments: list[str]) -> bool:
+    """True when the arguments name a bundled starter (also inside a comma list),
+    so seeding happens only when it is needed and never for --help."""
+
+    from battle_engine.starters import STARTER_AGENT_NAMES
+
+    if {"-h", "--help"} & set(arguments):
+        return False
+    names = {name for argument in arguments for name in argument.split(",")}
+    return bool(names & set(STARTER_AGENT_NAMES))
+
+
+def _seed_starter_agents() -> int | None:
+    """Install the bundled starters, as ``bytefray agents`` and ``run`` already do.
+
+    Non-destructive: existing user files always win. Returns an exit code only
+    when the starters cannot be initialized at all."""
+
+    from battle_engine.paths import get_data_root
+    from battle_engine.starters import describe_bootstrap_errors, ensure_starter_agents
+
+    try:
+        bootstrap = ensure_starter_agents(data_root=get_data_root())
+    except (FileNotFoundError, OSError) as exc:
+        print(f"ERROR: Could not initialize starter agents: {exc}", file=sys.stderr)
+        return 2
+    warning = describe_bootstrap_errors(bootstrap)
+    if warning:
+        print(f"WARNING: {warning}", file=sys.stderr)
+    return None
+
+
 def _agents(argv: list[str]) -> int:
+    if argv and argv[0] in _SEEDING_AGENT_COMMANDS and _names_a_bundled_starter(argv[1:]):
+        failed = _seed_starter_agents()
+        if failed is not None:
+            return failed
     if argv and argv[0] == "create":
         from battle_engine.agent_scaffold import main as scaffold_main
 

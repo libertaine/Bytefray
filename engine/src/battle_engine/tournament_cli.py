@@ -9,7 +9,7 @@ from pathlib import Path
 from battle_engine.agent_api import AgentValidationError
 from battle_engine.agent_parameters import resolve_entrant_parameters
 from battle_engine.agents import resolve_agent
-from battle_engine.config import Config, Weights
+from battle_engine.config import PRODUCT_ARENA_SIZE, Config, Weights
 from battle_engine.match_service import MatchEntrant
 from battle_engine.paths import get_data_root
 from battle_engine.rules import BYTEFRAY_RULESET_V6_ALPHA1_ID
@@ -42,7 +42,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--rounds", type=_positive, default=1)
     parser.add_argument("--seed", type=int, default=1337)
     parser.add_argument("--ticks", type=_positive, default=3000)
-    parser.add_argument("--arena", type=_positive, default=4096)
+    parser.add_argument("--arena", type=_positive, default=PRODUCT_ARENA_SIZE)
     parser.add_argument("--quota", type=_positive, default=8)
     parser.add_argument(
         "--win-mode",

@@ -9,6 +9,7 @@ from typing import Any
 from battle_engine.agent_api import AgentValidationError
 from battle_engine.agent_parameters import EMPTY_PARAMETER_SCHEMA, resolve_parameters
 from battle_engine.agents import agent_runtime_label, discover_agents, resolve_agent
+from battle_engine.config import PRODUCT_ARENA_SIZE
 from battle_engine.core import Config, Weights
 from battle_engine.match_service import (
     MatchEntrant,
@@ -237,7 +238,9 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
 
     # Config overrides
     p.add_argument("--seed", type=int)
-    p.add_argument("--arena", type=int)
+    p.add_argument(
+        "--arena", type=int, help=f"arena size in cells (default: {PRODUCT_ARENA_SIZE})"
+    )
     p.add_argument("--quota", type=_positive_int, help="instructions per agent per tick")
     p.add_argument("--alive-w", type=float)
     p.add_argument("--kill-w", type=float)
@@ -459,8 +462,9 @@ def main(argv: Iterable[str] | None = None) -> int:
     cfg_kwargs: dict[str, Any] = {}
     if args.seed is not None:
         cfg_kwargs["seed"] = args.seed
-    if args.arena is not None:
-        cfg_kwargs["arena_size"] = args.arena
+    # A new product match defaults to the product arena (6.0.0-alpha.1), not
+    # Config's historical 4096; an explicit --arena always wins.
+    cfg_kwargs["arena_size"] = args.arena if args.arena is not None else PRODUCT_ARENA_SIZE
     if args.win_mode:
         cfg_kwargs["win_mode"] = args.win_mode
     if args.quota is not None:
@@ -666,6 +670,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         print(
             f"Winner: {effective_winner}; "
             f"ruleset: {resolved_ruleset_id}; "
+            f"arena: {cfg.arena_size}; "
             f"result: {match_result.result_path}; "
             f"replay: {replay_path}; "
             f"summary: {summary_path}"

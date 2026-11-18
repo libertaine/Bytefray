@@ -130,7 +130,9 @@ def test_scaffolded_agent_tests_successfully_against_reference(tmp_path):
     assert outcome.opponent_name == REFERENCE_OPPONENT_NAME
     assert outcome.seed == Config().seed
     assert outcome.ticks_requested == 200
-    assert outcome.match_result.ticks_run == 200
+    # The reference opponent is the practice opponent (6.0.0-alpha.1): it plays
+    # to win, so the idle template is normally captured well before tick 200.
+    assert 1 <= outcome.match_result.ticks_run <= 200
     assert outcome.match_result.replay_path.is_file()
     assert outcome.match_result.result_path.is_file()
     assert outcome.summary_path.is_file()
@@ -738,7 +740,8 @@ def test_cli_success_output_and_exit_code(tmp_path, monkeypatch, capsys):
     assert exit_code == 0
     assert captured.err == ""
     assert "agent: example" in captured.out
-    assert "opponent: reference" in captured.out
+    assert f"opponent: {REFERENCE_OPPONENT_NAME}" in captured.out
+    assert REFERENCE_OPPONENT_NAME == "v6_practice_hunter"
     assert "winner:" in captured.out
     assert "result:" in captured.out
     assert "replay:" in captured.out
@@ -1155,3 +1158,17 @@ def test_custom_bytefray_root_is_honored(monkeypatch, tmp_path):
 
     assert exit_code == 0
     assert (tmp_path / "runs" / "agents_test" / "example").exists()
+
+
+def test_the_reference_opponent_is_the_practice_opponent_and_contests_the_match(tmp_path):
+    """W3/W8 (6.0.0-alpha.1): the default opponent searches and attacks, and the
+    result, trace and presentation name it by its own id, never "reference"."""
+
+    scaffold_create_agent("example", data_root=tmp_path, resource_root=ROOT)
+    outcome = run_development_test("example", data_root=tmp_path, resource_root=ROOT)
+    assert outcome.opponent_name == "v6_practice_hunter"
+    result = json.loads(outcome.match_result.result_path.read_text(encoding="utf-8"))
+    names = json.dumps(result)
+    assert "v6_practice_hunter" in names and '"reference"' not in names
+    stats = json.loads(outcome.summary_path.read_text(encoding="utf-8"))["agent_stats"]
+    assert stats["B"]["mem_writes"] > 0

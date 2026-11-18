@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any
 
 from battle_engine.agent_test import DEFAULT_TICKS
-from battle_engine.config import Config
+from battle_engine.config import PRODUCT_ARENA_SIZE, Config
 from battle_engine.evaluation_contracts import (
     EVALUATION_ARENA_ALIGNMENT_MODE,
     ORIENTATION_CANDIDATE_FIRST,
@@ -327,7 +327,7 @@ def _parser() -> argparse.ArgumentParser:
         type=_positive_int,
         default=None,
         help=(
-            f"arena size in cells (default: {Config().arena_size}, unless set by "
+            f"arena size in cells (default: {PRODUCT_ARENA_SIZE} under Active Sensing, unless set by "
             "--preset). A controlled experimental variable: it changes the standard "
             "placement/layout coordinates (which are fractions of arena size) and "
             "therefore the evaluation_id, but is NOT a Ruleset change. See "
@@ -498,7 +498,11 @@ def _print_experimental_conditions(request: EvaluationRequest) -> None:
     """
 
     defaults = Config()
-    if request.resolved_arena_size != defaults.arena_size:
+    # Always shown (6.0.0-alpha.1), so a test and an evaluation of the same agent
+    # can be compared; marked only when it differs from the product arena.
+    if request.resolved_arena_size == PRODUCT_ARENA_SIZE:
+        print(f"arena size: {request.resolved_arena_size}")
+    else:
         print(f"arena size: {request.resolved_arena_size} (non-default)")
     if request.resolved_instr_per_tick != defaults.instr_per_tick:
         print(f"action budget/tick: {request.resolved_instr_per_tick} (non-default)")
@@ -756,8 +760,9 @@ def _print_evidence(analysis: Any) -> None:
                 f"[{100.0 * interval.lower:.0f}%, {100.0 * interval.upper:.0f}%]  "
                 f"exact two-sided p={paired.exact_p_value:.3g}"
             )
-        print(f"  {analysis.opponent_consistency}")
-        print(f"  {analysis.orientation_consistency}")
+        # Two different checks; labelled so identical wording is not read as a duplicate.
+        print(f"  across opponents: {analysis.opponent_consistency}")
+        print(f"  across orientations: {analysis.orientation_consistency}")
 
 
 def _fmt_fraction_pct(value: float | None) -> str:
@@ -926,7 +931,12 @@ def _print_group_analysis(result: EvaluationResult, request: EvaluationRequest) 
             print(f"    unattributed: {matrix.unattributed_captures}")
 
 
-def _print_result(result: EvaluationResult, request: EvaluationRequest) -> None:
+def _print_result(
+    result: EvaluationResult, request: EvaluationRequest, *, methodology: bool = True
+) -> None:
+    """``methodology=False`` when ``_print_matrix`` has just printed the same
+    orientation and alignment lines, so a run does not print them twice."""
+
     print(f"evaluation: {result.evaluation_id}")
     # v2.0.0-beta2 Phase 2: skip the 1v1-only "Entrant orientation:" line
     # for a group evaluation -- see _print_matrix's identical guard.
@@ -934,9 +944,10 @@ def _print_result(result: EvaluationResult, request: EvaluationRequest) -> None:
         request.orientation_mode,
         arena_alignment_mode=request.resolved_arena_alignment_mode,
     )
-    if not request.group:
+    if methodology and not request.group:
         print(orientation_line)
-    print(alignment_line)
+    if methodology:
+        print(alignment_line)
     for aggregate in result.aggregates:
         if aggregate.orientation_scope != "all":
             continue
@@ -1228,7 +1239,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.json:
             print(json.dumps(_result_to_json(result, request), indent=2, sort_keys=True))
         else:
-            _print_result(result, request)
+            _print_result(result, request, methodology=False)
     return 1 if (result.failed_cells or result.corrupted_cells or result.drift_cells) else 0
 
 

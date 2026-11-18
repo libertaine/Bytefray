@@ -921,8 +921,8 @@ def create_agent():
     return Agent()
 """
 
-# Senses under an explicit Active Sensing Ruleset; reads when the dry-run
-# context carries no sensing window.
+# Senses when the reset context carries a sensing window (Active Sensing, the
+# default whether or not a Ruleset is named); reads otherwise.
 SENSING_SOURCE = """
 from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
 
@@ -1187,21 +1187,64 @@ def test_validation_trace_records_the_active_sensing_window(tmp_path, timeout):
 
 
 @TRACE_MODES
-def test_validation_trace_without_explicit_ruleset_omits_the_sensing_window(tmp_path, timeout):
+def test_validation_without_explicit_ruleset_uses_active_sensing(tmp_path, timeout):
+    """An omitted Ruleset means Active Sensing for the dry run too, as for preflight:
+    the trace records its sensing window and the agent's SENSE validates. (Before
+    6.0.0-alpha.1 the dry run fell back to a context without a sensing window.)"""
+
     outcome, trace_path = _validate_with_trace(
         tmp_path, SENSING_SOURCE, timeout=timeout, manifest=SENSING_MANIFEST
     )
     assert isinstance(outcome, ValidationResult)
+    assert outcome.dry_run_action == AgentAction(ActionKindV2.SENSE, 5)
     document = read_trace_v2(trace_path)
 
-    # The ruleset-free dry-run context carries no sensing window, so the
-    # trace field is absent (not null), as for any reset without one.
-    assert build_validation_context().sensing_window is None
     (reset,) = document.resets
-    assert reset.sensing_window is ABSENT
-    assert "sensing_window" not in _raw_records(trace_path)[1]
+    assert RULESET_V6_ALPHA1.sensing_window is not None
+    assert reset.sensing_window == RULESET_V6_ALPHA1.sensing_window
     (decision,) = document.decisions
-    assert decision.action == TraceActionV2(kind="read", operand=0, value=None)
+    assert decision.action == TraceActionV2(kind="sense", operand=5, value=None)
+
+
+# Always senses, with no READ fallback: the shape of a first-time user's hunter
+# (the independent Alpha review's repro/naive_hunter_agent.py, reduced).
+ALWAYS_SENSES_SOURCE = """
+from battle_engine.agent_api import ActionKindV2, AgentAction, ProcessDeclaration
+
+class Agent:
+    def reset(self, context):
+        self.arena = context.arena_size
+
+    def declare_processes(self):
+        return [ProcessDeclaration(id="main", reach=128, share=1.0)]
+
+    def act(self, observation):
+        return AgentAction(ActionKindV2.SENSE, operand=(observation.self_anchor + 55) % self.arena)
+
+def create_agent():
+    return Agent()
+"""
+
+
+@TRACE_MODES
+@pytest.mark.parametrize("manifest", [None, SENSING_MANIFEST], ids=["no-capabilities", "requires-sense"])
+def test_a_sense_agent_validates_without_ruleset(tmp_path, timeout, manifest):
+    _write_agent(tmp_path, "hunter", source=ALWAYS_SENSES_SOURCE, manifest=manifest)
+    omitted = validate_agent("hunter", data_root=tmp_path, timeout=timeout)
+    explicit = validate_agent(
+        "hunter", data_root=tmp_path, timeout=timeout, ruleset_id=RULESET_V6_ALPHA1.ruleset_id
+    )
+    assert omitted.dry_run_action == explicit.dry_run_action
+    assert omitted.dry_run_action is not None and omitted.dry_run_action.kind == ActionKindV2.SENSE
+
+
+def test_cli_validate_accepts_sense_without_ruleset(tmp_path):
+    _write_agent(tmp_path, "hunter", source=ALWAYS_SENSES_SOURCE)
+    env = dict(os.environ)
+    env["BYTEFRAY_ROOT"] = str(tmp_path)
+    result = _run("agents", "validate", "hunter", env=env)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "agent_action_invalid" not in result.stdout + result.stderr
 
 
 @TRACE_MODES
@@ -1423,3 +1466,16 @@ def test_cli_validation_trace_is_schema2_and_exit_codes_are_unchanged(
         assert isinstance(document, TraceDocumentV2)
         assert document.header.supervised is True
         assert document.binding is None
+
+
+@pytest.mark.parametrize("command", [("agents", "validate", "v6_window_scout"),
+                                     ("agents", "test", "v6_window_scout", "--ticks", "5")])
+def test_a_bundled_starter_resolves_as_the_first_command_in_a_fresh_data_root(tmp_path, command):
+    """6.0.0-alpha.1 (W8): validate and test install the bundled agents first,
+    as `bytefray agents` and `bytefray run` already did."""
+
+    env = dict(os.environ)
+    env["BYTEFRAY_ROOT"] = str(tmp_path / "fresh")
+    result = _run(*command, env=env)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "agent_unknown" not in result.stdout + result.stderr

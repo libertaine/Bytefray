@@ -80,7 +80,7 @@ class SimplePanel(QWidget):
             self.gridSize.addItem(k)
         self.gridSize.setCurrentIndex(1)  # Medium
         self.gridSize.setToolTip(
-            "How large a square arena the match runs in. A larger arena gives "
+            "How large a circular arena the match runs in. A larger arena gives "
             "agents more room to maneuver and hide; a smaller one forces "
             "conflict sooner."
         )

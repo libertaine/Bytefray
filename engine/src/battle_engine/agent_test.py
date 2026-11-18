@@ -40,7 +40,7 @@ from battle_engine.agent_api import AgentValidationError
 from battle_engine.agent_capabilities import preflight_agent_capabilities
 from battle_engine.agent_parameters import resolve_entrant_parameters
 from battle_engine.agents import AgentSpec, agent_spec_from_dir, resolve_agent
-from battle_engine.config import Config, Weights
+from battle_engine.config import PRODUCT_ARENA_SIZE, Config, Weights
 from battle_engine.match_service import (
     MatchEntrant,
     MatchRequest,
@@ -67,11 +67,14 @@ from battle_engine.ruleset_policy import (
     resolve_ruleset_policy,
     ruleset_argument,
 )
-from battle_engine.starters import starter_agent_resource_dir
+from battle_engine.starters import PRACTICE_OPPONENT_NAME, starter_agent_resource_dir
 
-REFERENCE_OPPONENT_NAME = "reference"
-#: The bundled starter the internal reference opponent is built from.
-REFERENCE_OPPONENT_STARTER = "v6_watchful_keeper"
+#: The bundled starter the internal reference opponent is built from: the
+#: practice opponent, which searches, attacks and repairs (6.0.0-alpha.1; it was
+#: the Watchful Keeper teaching starter, which never captured). Results, traces
+#: and Spectator presentations name it by its own id, not as "reference".
+REFERENCE_OPPONENT_STARTER = PRACTICE_OPPONENT_NAME
+REFERENCE_OPPONENT_NAME = PRACTICE_OPPONENT_NAME
 DEFAULT_TICKS = 200
 TESTED_AGENT_SLOT = "A"
 OPPONENT_SLOT = "B"
@@ -128,10 +131,10 @@ def _reference_opponent_spec(resource_root: Path | None = None) -> AgentSpec:
     """Build an ``AgentSpec`` for the internal reference opponent.
 
     Loaded directly from the bundled :data:`REFERENCE_OPPONENT_STARTER`
-    (Watchful Keeper), an Active Sensing defender: it inspects its own core,
-    scans its perimeter with SENSE and answers what it finds. Its manifest
-    is parsed like any other agent's, so its declared ``sense`` capability
-    and parameter defaults travel with it; only its name is replaced.
+    (Practice Hunter), the practice opponent: it searches with SENSE, takes
+    over the cores it finds and repairs its own. Its manifest is parsed like
+    any other agent's, so its declared ``sense`` capability travels with it
+    and it is named by its own id.
     """
 
     resources = resource_root or get_resource_root()
@@ -139,7 +142,7 @@ def _reference_opponent_spec(resource_root: Path | None = None) -> AgentSpec:
     spec = agent_spec_from_dir(starter_dir)
     if spec is None:
         raise FileNotFoundError(f"reference opponent manifest missing under {starter_dir}")
-    return replace(spec, name=REFERENCE_OPPONENT_NAME, display="Bytefray reference agent")
+    return replace(spec, name=REFERENCE_OPPONENT_NAME)
 
 
 def _resolve_python_entrant(
@@ -240,6 +243,7 @@ class DevelopmentTestOutcome:
     summary_path: Path
     ruleset_id: str = BYTEFRAY_RULESET_V6_ALPHA1_ID
     trace_path: Path | None = None
+    arena_size: int = PRODUCT_ARENA_SIZE
 
 
 @dataclass(frozen=True)
@@ -435,7 +439,7 @@ def _test_agent(
     _config_defaults = Config()
     match_config = Config(
         seed=effective_seed,
-        arena_size=_config_defaults.arena_size if arena_size is None else arena_size,
+        arena_size=PRODUCT_ARENA_SIZE if arena_size is None else arena_size,
         instr_per_tick=(
             _config_defaults.instr_per_tick if instr_per_tick is None else instr_per_tick
         ),
@@ -564,6 +568,7 @@ def _test_agent(
         summary_path=summary_path,
         ruleset_id=ruleset_id or BYTEFRAY_RULESET_V6_ALPHA1_ID,
         trace_path=trace_path if trace_path is not None and trace_path.exists() else None,
+        arena_size=match_config.arena_size,
     )
 
 
@@ -751,7 +756,7 @@ def _test_agents(
         # v3 Phase 3 extends this to `weights.kill` identically.
         config=Config(
             seed=effective_seed,
-            arena_size=_config_defaults.arena_size if arena_size is None else arena_size,
+            arena_size=PRODUCT_ARENA_SIZE if arena_size is None else arena_size,
             instr_per_tick=(
                 _config_defaults.instr_per_tick if instr_per_tick is None else instr_per_tick
             ),
@@ -897,6 +902,7 @@ def _print_completed_match(outcome: DevelopmentTestOutcome) -> None:
     print(f"opponent: {outcome.opponent_name}")
     print(f"ruleset: {outcome.ruleset_id}")
     print(f"seed: {outcome.seed}")
+    print(f"arena: {outcome.arena_size}")
     print(f"ticks: {match_result.ticks_run}/{outcome.ticks_requested}")
     print(f"winner: {winner}")
     print(f"termination: {match_result.termination_reason.value}")

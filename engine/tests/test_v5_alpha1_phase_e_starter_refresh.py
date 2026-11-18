@@ -40,6 +40,7 @@ from battle_engine.starters import (
     CURRENT_STARTER_DIGESTS,
     STARTER_AGENT_NAMES,
     SUPERSEDED_STARTER_DIGESTS,
+    TEACHING_STARTER_NAMES,
     describe_starter_refresh,
     ensure_starter_agents,
     starter_content_digest,
@@ -271,7 +272,8 @@ def test_untouched_prior_starter_is_upgraded_to_the_current_version(
         assert starter_content_digest(installed) == CURRENT_STARTER_DIGESTS[name]
         manifest = _manifest(installed)
         assert manifest["version"] == _manifest(_bundled_dir(name))["version"]
-        assert manifest["parameters"], f"{name} did not gain its parameter schema"
+        if name in TEACHING_STARTER_NAMES:  # the practice opponent declares no parameters
+            assert manifest["parameters"], f"{name} did not gain its parameter schema"
 
 
 def test_starter_already_at_the_current_version_is_a_no_op(tmp_path: Path) -> None:
@@ -450,7 +452,7 @@ def test_upgraded_install_exposes_the_phase_d_parameter_schema(tmp_path: Path) -
         "move_step",
     )
     assert "standard" in after["v6_window_scout"].parameter_schema.preset_names()
-    for name in STARTER_AGENT_NAMES:
+    for name in TEACHING_STARTER_NAMES:  # the practice opponent declares no parameters
         assert not after[name].parameter_schema.is_empty
 
 
@@ -612,17 +614,18 @@ def test_refresh_state_directory_is_never_visible_to_agent_discovery(
     never inside it, so this holds structurally -- verified here against a
     real interrupted-and-not-yet-recovered state, not just by inspection.
 
-    Interrupts the *last* name in ``STARTER_AGENT_NAMES`` (``v6_roaming_reacquirer``)
-    specifically, so every other bundled starter has already been installed
+    Interrupts the *last* name in ``STARTER_AGENT_NAMES`` (``v6_practice_hunter``
+    since 6.0.0-alpha.1) specifically, so every other bundled starter has already been installed
     by the time the simulated failure fires -- the catalog-completeness
     assertion below would otherwise be confounded by starters the loop
     simply had not reached yet, which is a property of iteration order, not
     of the marker being (correctly) invisible to discovery.
     """
 
-    assert STARTER_AGENT_NAMES[-1] == "v6_roaming_reacquirer"
+    last = STARTER_AGENT_NAMES[-1]
+    assert last == "v6_practice_hunter"
     agents_dir = tmp_path / "agents"
-    agent_dir = _seed_prior_starter(agents_dir, "v6_roaming_reacquirer")
+    agent_dir = _seed_prior_starter(agents_dir, last)
 
     real_write_bytes = Path.write_bytes
     already_failed = False
@@ -638,7 +641,7 @@ def test_refresh_state_directory_is_never_visible_to_agent_discovery(
     with pytest.raises(OSError, match="simulated interruption"):
         ensure_starter_agents(resource_root=_resource_root(), data_root=tmp_path)
 
-    marker = starters._refresh_marker_path(tmp_path, "v6_roaming_reacquirer")
+    marker = starters._refresh_marker_path(tmp_path, last)
     assert marker.is_file()
     assert marker.parent != agents_dir
     assert not marker.parent.is_relative_to(agents_dir)

@@ -346,7 +346,9 @@ def test_personal_copy_manifest_source_retention_overwrite_and_registration(tmp_
     with pytest.raises(AgentScaffoldError, match="already exists"):
         create_agent("my_reacquirer", data_root=tmp_path, resource_root=ROOT, template="roaming_reacquirer")
     assert "v6_relocating_opponent" not in STARTER_AGENT_NAMES
-    assert STARTER_AGENT_NAMES == ("v6_window_scout", "v6_watchful_keeper", "v6_roaming_reacquirer")
+    assert STARTER_AGENT_NAMES == (
+        "v6_window_scout", "v6_watchful_keeper", "v6_roaming_reacquirer", "v6_practice_hunter"
+    )  # three teaching starters, then the 6.0 practice opponent
     assert starter_content_digest(REACQUIRER) == CURRENT_STARTER_DIGESTS["v6_roaming_reacquirer"]
 
 

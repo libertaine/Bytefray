@@ -493,7 +493,9 @@ def test_starter_registry_invariants() -> None:
     assert "v6_window_scout" in STARTER_AGENT_NAMES
     assert "v6_window_scout" in CURRENT_STARTER_DIGESTS
     # The Classic retirement left exactly the three Active Sensing starters.
-    assert STARTER_AGENT_NAMES == ("v6_window_scout", "v6_watchful_keeper", "v6_roaming_reacquirer")
+    assert STARTER_AGENT_NAMES == (
+        "v6_window_scout", "v6_watchful_keeper", "v6_roaming_reacquirer", "v6_practice_hunter"
+    )  # three teaching starters, then the 6.0 practice opponent
 
 
 def test_sensing_action_cost_and_quota_consumption(tmp_path: Path) -> None:

@@ -53,7 +53,7 @@ from battle_engine.agent_test import GroupEntrantSpec, _resolve_default_paramete
 from battle_engine.agent_test import test_agent as run_development_test
 from battle_engine.agent_test import test_agents as run_group_development_test
 from battle_engine.agents import resolve_agent
-from battle_engine.config import Config
+from battle_engine.config import PRODUCT_ARENA_SIZE, Config
 from battle_engine.evaluation_artifact import expected_cell_match_id
 from battle_engine.match_service import MatchEntrant
 from battle_engine.tournament_cli import _resolve_entrant as resolve_tournament_entrant
@@ -261,6 +261,7 @@ class TestAgentTestEntrantResolution:
         convention (unlike `bytefray tournament`'s agent-name convention),
         so this is a genuine like-for-like canonical_match_id comparison.
         """
+        from battle_engine.config import PRODUCT_ARENA_SIZE
         from battle_engine.config import Config as _Config
         from battle_engine.match_service import MatchRequest, canonical_match_id
 
@@ -279,7 +280,8 @@ class TestAgentTestEntrantResolution:
         spec_a = resolve_agent(REPO_ROOT, SCHEMA_STARTER)
         spec_b = resolve_agent(REPO_ROOT, OTHER_SCHEMA_STARTER)
         equivalent_request = MatchRequest(
-            config=_Config(seed=42),
+            # `bytefray run` creates new matches at the product arena (6.0.0-alpha.1).
+            config=_Config(seed=42, arena_size=PRODUCT_ARENA_SIZE),
             entrants=(
                 MatchEntrant.python(
                     "A", SCHEMA_STARTER, 64, spec_a,
@@ -329,6 +331,9 @@ class TestAgentEvaluationExpectedMatchIdMirrorsAgentTest:
             ruleset_id="bytefray-rules-6-alpha1",
             subject_start=64,
             opponent_start=200,
+            # Evaluation always passes its resolved arena; `agents test`'s omitted
+            # arena is the product arena since 6.0.0-alpha.1.
+            arena_size=PRODUCT_ARENA_SIZE,
         )
         assert expected == outcome.match_result.match_id
 

@@ -1,0 +1,15 @@
+{
+  "name": "v6_practice_hunter",
+  "display": "V6 Practice Hunter (Practice Opponent)",
+  "description": "Practice opponent, not a teaching starter: searches with SENSE, attacks delivered contacts and repairs its own core. No balance claim.",
+  "kind": "python",
+  "api_version": 2,
+  "entrypoint": "agent.py:create_agent",
+  "version": "1.0.0",
+  "capabilities": {
+    "version": 1,
+    "required": [
+      "sense"
+    ]
+  }
+}

@@ -551,7 +551,7 @@ def test_default_test_success_shows_completed_result_and_enables_replay(monkeypa
 
         designer._on_test_agent()
         assert designer.development.btnTest.isEnabled() is False  # running state
-        assert "Testing default_test_agent vs reference" in designer.development.testStatusLabel.text()
+        assert "Testing default_test_agent vs v6_practice_hunter" in designer.development.testStatusLabel.text()
 
         _wait_for_finished(designer)
 

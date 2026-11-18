@@ -35,14 +35,21 @@ from battle_engine.paths import get_data_root, get_resource_root
 #
 # ensure_starter_agents() installs when absent, refreshes when provably an
 # untouched older bundled copy, and otherwise preserves, into the writable
-# agents/ catalog. The three remaining starters are the Active Sensing
-# teaching starters; a redesign gets a new ID rather than silently replacing
-# an old one.
+# agents/ catalog. The first three are the Active Sensing teaching starters
+# (one mechanic each, against controlled fixtures); the fourth is the practice
+# opponent, which plays to win and is the reference opponent for
+# ``bytefray agents test``. A redesign gets a new ID rather than silently
+# replacing an old one.
 STARTER_AGENT_NAMES = (
     "v6_window_scout",
     "v6_watchful_keeper",
     "v6_roaming_reacquirer",
+    "v6_practice_hunter",
 )
+#: The three teaching starters, unchanged since 5.1.0-alpha.1.
+TEACHING_STARTER_NAMES = STARTER_AGENT_NAMES[:3]
+#: The bundled practice opponent: searches, attacks and repairs. No balance claim.
+PRACTICE_OPPONENT_NAME = "v6_practice_hunter"
 
 
 def _starter_resource_dir(resource_root: Path) -> Path:
@@ -221,6 +228,7 @@ CURRENT_STARTER_DIGESTS: Mapping[str, str] = {
     "v6_window_scout": "9d8a90ff209c2a9f13d5f3615cc67923204a095fdde6de9e183ca4ef8be10ce7",
     "v6_watchful_keeper": "35b945ad33f34168ea4374dad05fa61fe5b20d08cc15ca2e9af293ebb0c8016e",
     "v6_roaming_reacquirer": "65866988dd2dfdddd9782a8040d932dc84f05cec9b5d6feab3fb6a73c9697f21",
+    "v6_practice_hunter": "6e47e865d86bfc7dc4999fefa38d6c6b8537edf0b4d2cd3a85424142204d878f",
 }
 
 
