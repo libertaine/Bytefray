@@ -6,26 +6,32 @@ See [Python support and qualification policy](docs/CI.md); published release rec
 retain their historical support declarations.
 
 
-## Windows: Bytefray 5.1 Alpha (preview)
+## Windows: Bytefray 6 Alpha (preview)
 
-The 5.1 Alpha installer, `Bytefray-<version>-Windows-x64-Setup.exe` (see
+The 6 Alpha installer, `Bytefray-<version>-Windows-x64-Setup.exe` (see
 [README.md](README.md) and the release notes in `docs/releases/` for the
-current preview), is a separate product from the stable installer described
-in the next section, and the two can be installed side by side:
+current preview), is a separate product from Bytefray 5.1 Alpha and from the
+stable installer described in the next section. All three can be installed
+side by side:
 
 - It installs **for the current Windows account only**, without
-  administrator rights, into `%LOCALAPPDATA%\Programs\Bytefray 5.1 Alpha`:
+  administrator rights, into `%LOCALAPPDATA%\Programs\Bytefray 6 Alpha`:
   the four applications under `bin\` as below, plus
   `bin\bytefray-spectator\`, the bundled Bytefray Spectator.
-- Its data folder is `%LOCALAPPDATA%\Bytefray 5.1 Alpha` (agents, `runs\`,
-  caches). The installer records it in `bin\bytefray-install.json`, and every
-  installed application uses that folder even if `BYTEFRAY_ROOT` is set, for
+- Its data folder is `%LOCALAPPDATA%\Bytefray 6 Alpha` (agents, `runs\`,
+  caches). It starts empty: nothing is copied or migrated from 5.0 or
+  5.1 Alpha. To use an agent you wrote for 5.1 Alpha, copy its folder into
+  `agents\` yourself (Classic-era agents run under Active Sensing but never
+  sense). The installer records the folder in `bin\bytefray-install.json`,
+  and every installed application uses it even if `BYTEFRAY_ROOT` is set, for
   example by the stable installer. Run the installer with
   `/BYTEFRAYDATAROOT=<folder>` to choose another folder; an upgrade keeps the
-  folder chosen before.
+  folder chosen before. Setup refuses an installation or data folder that
+  overlaps one belonging to Bytefray 5.0 or 5.1 Alpha.
 - It writes no environment variable and nothing for all users, and it never
-  touches the stable installation, its data or its shortcuts.
-- Its Start Menu folder is **Bytefray 5.1 Alpha**. Uninstall it from
+  touches the 5.0 or 5.1 Alpha installations, their data or their shortcuts.
+  Bytefray 5.1 Alpha stays the release that runs Classic.
+- Its Start Menu folder is **Bytefray 6 Alpha**. Uninstall it from
   Settings → Apps; that removes the programs and shortcuts and keeps the data
   folder.
 - Agent Designer finds the bundled Spectator automatically.

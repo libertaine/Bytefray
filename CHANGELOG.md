@@ -2,7 +2,68 @@
 
 This changelog records notable user- and developer-visible changes to Bytefray.
 
-## [Unreleased]
+## [6.0.0-alpha.1] - unreleased (release candidate)
+
+A small Windows Alpha that **retires Classic** (see "Removed" below) and makes
+the first-use path show a contest. It installs beside Bytefray 5.0 and
+5.1 Alpha and migrates nothing; 5.1.0-alpha.1 stays the release that runs
+Classic. See the [release notes](docs/releases/BYTEFRAY_6_0_0_ALPHA_1_RELEASE_NOTES.md)
+and the [compatibility record](docs/releases/BYTEFRAY_6_0_0_ALPHA_1_COMPATIBILITY.md).
+The date is set at publication.
+
+### Changed — application version 6.0.0-alpha.1 and a separate Windows product
+
+- Version `6.0.0-alpha.1` (Python package `6.0.0a1`): removing an executable
+  stable Ruleset and changing the default Ruleset is MAJOR under
+  [COMPONENT_VERSIONING.md](docs/COMPONENT_VERSIONING.md) §4.1.
+- The Windows installer is a new product, **Bytefray 6 Alpha**: its own AppId,
+  installation folder, Start Menu folder, data folder
+  (`%LOCALAPPDATA%\Bytefray 6 Alpha`) and Microsoft runtime terms ID
+  (`BYTEFRAY-6.0-MSVC-RUNTIME-TERMS-1`). It no longer upgrades 5.1 Alpha in
+  place. Setup refuses installation or data folders that overlap Bytefray 5.0
+  or 5.1 Alpha, and copies nothing from them. Windows file version
+  `6.0.0.1010`.
+- The compatibility record is now the 6.0.0-alpha.1 **candidate** record, and
+  `tools/release_compatibility.py` also checks `tools/installer.iss` against
+  it, including that no earlier release's AppId or folders are reused.
+
+### Added — a practice opponent
+
+- `v6_practice_hunter` (Practice Hunter), a bundled practice opponent that
+  searches with `SENSE`, takes over the cores it finds and repairs its own,
+  using only what any agent observes. It is the reference opponent of
+  `bytefray agents test` (named by its id, no longer `reference`) and the
+  default B side in Designer. The three teaching agents are unchanged. No
+  balance claim.
+
+### Changed — 512-cell arena for new product matches
+
+- `bytefray run`, `bytefray agents test`, `bytefray tournament`, the
+  `agents validate` dry run and Designer now create new matches at 512 cells,
+  as `agents evaluate` already did. **Compatibility:** scripts that relied on
+  the 4,096-cell command-line default must pass `--arena 4096`. Saved matches,
+  replays, recorded evaluations, research protocols and fixtures are
+  unchanged (`Config`'s own default stays 4,096).
+- `run`, `agents test` and `agents evaluate` print the arena on every result.
+
+### Fixed
+
+- `bytefray agents validate <id>` accepts `SENSE` without `--ruleset`: an
+  omitted Ruleset now means Active Sensing for the dry run as well as for
+  preflight.
+- Replay History shutdown joins its worker threads with bounded waits instead
+  of a local event loop tied to `QThread.finished`, which could hang the GUI
+  thread ([#7](https://github.com/libertaine/Bytefray/issues/7)). The Designer
+  GUI tests finalize each test's Qt objects on the GUI thread, and Windows CI
+  runs the Replay History GUI tests offscreen.
+- `agents validate`, `agents test` and `agents evaluate` install the bundled
+  agents first, so they work as the first command in a new data folder.
+- `agents evaluate` no longer prints the orientation and alignment lines twice,
+  and labels its two consistency checks.
+- Designer's arena tooltip says "circular".
+- The Spectator pin and records cite the public Spectator commit `f62b0cb`
+  (tree-identical to the build commit `14089a7`).
+
 
 ### Fixed — Agent Lab reads Agent API v2 traces
 
@@ -53,7 +114,7 @@ supported Ruleset. Classic (`bytefray-rules-4`) is retired from execution;
 Bytefray 5.1.0-alpha.1 is the last release that runs it and remains the
 recovery baseline. See the
 [retirement record](docs/releases/CLASSIC_RULESET_RETIREMENT.md) and the
-proposed [development compatibility record](docs/releases/BYTEFRAY_DEVELOPMENT_COMPATIBILITY.md).
+[6.0.0-alpha.1 compatibility record](docs/releases/BYTEFRAY_6_0_0_ALPHA_1_COMPATIBILITY.md).
 
 * **Engine and CLI.** `bytefray-rules-4` is no longer registered for
   execution. An omitted `--ruleset` (`bytefray run`, `agents test`,
