@@ -561,15 +561,22 @@ def test_repeated_concurrent_close_reopen_preserves_ownership(browser, tmp_path,
         writer_entered, reader_entered, release = threading.Event(), threading.Event(), threading.Event()
         original_finish = ReplayHistoryService._finish_generation
         original_resolve = ReplayHistoryService.resolve_replay
+        # A worker-thread assertion cannot fail this test, so each blocked
+        # worker records whether the GUI timer released it or it timed out.
+        released: list[bool] = []
 
-        def finish(service, generation, writer_entered=writer_entered, release=release, original_finish=original_finish):
+        def finish(service, generation, writer_entered=writer_entered, release=release,
+                   original_finish=original_finish, released=released):
             writer_entered.set()
-            assert release.wait(5)
+            released.append(release.wait(5))
+            assert released[-1]
             original_finish(service, generation)
 
-        def resolve(service, location, reader_entered=reader_entered, release=release, original_resolve=original_resolve):
+        def resolve(service, location, reader_entered=reader_entered, release=release,
+                    original_resolve=original_resolve, released=released):
             reader_entered.set()
-            assert release.wait(5)
+            released.append(release.wait(5))
+            assert released[-1]
             return original_resolve(service, location)
 
         with monkeypatch.context() as patch:
@@ -583,6 +590,7 @@ def test_repeated_concurrent_close_reopen_preserves_ownership(browser, tmp_path,
             QTimer.singleShot(20, release.set)
             window.close()
         assert not window._thread.isRunning() and not window._reader_thread.isRunning()
+        assert released == [True, True], "the GUI timer did not release both workers during the join"
         assert all(record["closed"] for record in services), services
         latest = services[-2:]
         assert latest[0]["owner"] != latest[1]["owner"]
