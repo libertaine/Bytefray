@@ -19,3 +19,4 @@ engine/tests/conftest.py -text
 
 # Shown on the installer's License page (tools/installer.iss LicenseFile): UTF-8 with BOM, CRLF.
 docs/releases/BYTEFRAY_5_1_0_ALPHA_1_MICROSOFT_RUNTIME_TERMS.txt text eol=crlf
+docs/releases/BYTEFRAY_6_0_0_ALPHA_1_MICROSOFT_RUNTIME_TERMS.txt text eol=crlf

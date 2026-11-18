@@ -1,8 +1,8 @@
-"""tools/installer.iss installs Bytefray 5.1 Alpha beside Bytefray 5.0 and keeps user data.
+"""tools/installer.iss installs Bytefray 6 Alpha beside Bytefray 5.0 and 5.1 Alpha and keeps user data.
 
 Bytefray 5.0's installer (AppId {A5B86D38-...-BA7720000002}) is a per-machine
 installation that sets BYTEFRAY_ROOT machine-wide and removes it on uninstall.
-The 5.1 Alpha line must never share that identity, write that variable or
+The 6 Alpha line must never share that identity (or 5.1 Alpha's), write that variable or
 touch anything per-machine, and its own install, upgrade and uninstall steps
 may remove only files it owns. The real installer run is qualified separately
 (docs/releases/5_1_ALPHA1_WINDOWS_INSTALLER_QUALIFICATION.md); these checks keep
@@ -19,6 +19,7 @@ SCRIPT = (ROOT / "tools" / "installer.iss").read_text(encoding="utf-8")
 # Everything except ;-comment lines (the header explains what the script avoids).
 STATEMENTS = "\n".join(line for line in SCRIPT.splitlines() if not line.lstrip().startswith(";"))
 STABLE_APP_ID = "A5B86D38-9A6C-4D7F-9B4E-BA7720000002"
+PREVIOUS_ALPHA_APP_ID = "30F5713B-F69B-44F1-A759-AC43E33C0889"
 APPLICATION_FOLDERS = (
     "bytefray",
     "bytefray-cli",
@@ -43,9 +44,9 @@ def _define(name: str) -> str:
 def test_own_product_identity_beside_the_stable_release() -> None:
     guid = _define("AppGuid")
     assert re.fullmatch(r"[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}", guid)
-    assert guid != STABLE_APP_ID
+    assert guid not in (STABLE_APP_ID, PREVIOUS_ALPHA_APP_ID)
     assert "AppId={{{#AppGuid}}" in _section("Setup")
-    assert _define("AppName") == "Bytefray 5.1 Alpha"
+    assert _define("AppName") == "Bytefray 6 Alpha"
     setup = "\n".join(_section("Setup"))
     assert "DefaultDirName={autopf}\\{#AppName}" in setup
     assert "DefaultGroupName={#AppName}" in setup
@@ -221,7 +222,7 @@ def test_folder_comparisons_resolve_aliases_and_links() -> None:
 
 
 def test_data_folder_is_separate_kept_and_reused_on_upgrade() -> None:
-    assert _define("DataFolderName") == "Bytefray 5.1 Alpha"
+    assert _define("DataFolderName") == "Bytefray 6 Alpha"
     assert "ExpandConstant('{param:BYTEFRAYDATAROOT|}')" in SCRIPT
     assert "GetPreviousData('DataRoot', '')" in SCRIPT
     assert "SetPreviousData(PreviousDataKey, 'DataRoot', DataRoot())" in SCRIPT
@@ -241,8 +242,8 @@ def test_every_application_and_the_spectator_companion_are_installed() -> None:
     documents = re.findall(r'^Source: "\.\.\\([^"]+)"; DestDir: "\{app\}\\docs"', files, re.MULTILINE)
     # Windows path syntax on every host (the suite also runs on Linux).
     assert sorted(PureWindowsPath(document).name for document in documents) == sorted(
-        ("README.md", "LICENSE", "CHANGELOG.md", "BYTEFRAY_5_1_0_ALPHA_1_RELEASE_NOTES.md",
-         "BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md", "BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.json")
+        ("README.md", "LICENSE", "CHANGELOG.md", "BYTEFRAY_6_0_0_ALPHA_1_RELEASE_NOTES.md",
+         "BYTEFRAY_6_0_0_ALPHA_1_COMPATIBILITY.md", "BYTEFRAY_6_0_0_ALPHA_1_COMPATIBILITY.json")
     )
     for document in documents:  # sources are relative to tools/
         assert (ROOT / document.replace("\\", "/")).is_file(), document
@@ -251,7 +252,7 @@ def test_every_application_and_the_spectator_companion_are_installed() -> None:
 def test_shortcuts_point_into_the_installed_layout() -> None:
     icons = _section("Icons")
     designer = "{app}\\bin\\bytefray-agent-designer\\bytefray-agent-designer.exe"
-    assert any(line.startswith('Name: "{group}\\Bytefray Agent Designer (5.1 Alpha)"') and designer in line for line in icons)
+    assert any(line.startswith('Name: "{group}\\Bytefray Agent Designer (6 Alpha)"') and designer in line for line in icons)
     assert any("{autodesktop}" in line and "Tasks: desktopicon" in line for line in icons)
     for line in icons:
         target = re.search(r'Filename: "\{app\}\\bin\\([^\\]+)\\', line)
@@ -265,3 +266,27 @@ def test_installer_file_name_and_metadata_use_the_public_version() -> None:
     assert "VersionInfoVersion={#FileVersion}" in setup
     assert "VersionInfoTextVersion={#AppVersion}" in setup
     assert "ArchitecturesAllowed=x64os" in setup
+
+
+def test_folders_belonging_to_bytefray_5_0_or_5_1_alpha_are_refused() -> None:
+    """6 Alpha shares, migrates and modifies nothing of 5.0 or 5.1 Alpha: its program
+    folder and its data folder must lie outside every folder those releases own."""
+
+    assert f"{{{PREVIOUS_ALPHA_APP_ID}}}_is1" in SCRIPT
+    holds = SCRIPT[SCRIPT.index("function HoldsAnotherInstallation") : SCRIPT.index("{ True when Folder overlaps")]
+    assert (
+        "RegQueryStringValue(HKCU, PreviousAlphaUninstallKey(), 'InstallLocation', Location) and Overlaps(Location, App)"
+        in holds
+    )
+    earlier = SCRIPT[SCRIPT.index("function OverlapsEarlierRelease") : SCRIPT.index("{ The first junction")]
+    for clue in (
+        r"Overlaps(ExpandConstant('{localappdata}\Bytefray 5.1 Alpha'), Folder)",
+        r"Overlaps(GetEnv('ProgramData') + '\Bytefray', Folder)",
+        "RegQueryStringValue(HKCU, PreviousAlphaUninstallKey(), 'InstallLocation', Location) and Overlaps(Location, Folder)",
+        "RegQueryStringValue(HKCU, PreviousAlphaUninstallKey(), 'Inno Setup CodeFile: DataRoot', Location)",
+        "RegQueryStringValue(HKLM, StableUninstallKey(), 'InstallLocation', Location) and Overlaps(Location, Folder)",
+    ):
+        assert clue in earlier, clue
+    assert "  else if OverlapsEarlierRelease(App) or OverlapsEarlierRelease(DataRoot()) then" in SCRIPT
+    # Only read: nothing of 5.1 Alpha is ever written, deleted or migrated.
+    assert not re.search(r"(DeleteFile|RemoveDir|DelTree|FileCopy|RenameFile)\([^)]*5\.1", STATEMENTS)

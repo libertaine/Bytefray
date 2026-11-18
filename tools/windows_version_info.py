@@ -42,9 +42,9 @@ _LEVELS = {"a": 1, "b": 2, "rc": 3, None: 9}
 _SEMVER_STAGES = {"a": "alpha", "b": "beta", "rc": "rc"}
 _VS_FF_PRERELEASE = 0x2
 
-# 1: the 5.1.0a1 rebuild that ships one Microsoft-signed Visual C++ runtime
-# (tools/msvc_runtime.json) and the installer's runtime terms page.
-BUILD_REVISION = 1
+# 0: the first 6.0.0a1 Windows build. (5.1.0a1 shipped as revision 1, the
+# rebuild that introduced one Microsoft-signed Visual C++ runtime.)
+BUILD_REVISION = 0
 
 
 def project_version(project_root: str | Path) -> str:

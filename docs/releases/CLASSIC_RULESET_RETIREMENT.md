@@ -129,7 +129,7 @@ readable on this line.
 - **Version number.** [COMPONENT_VERSIONING.md](../COMPONENT_VERSIONING.md)
   §4.1 classes removing an executable stable Ruleset and changing the
   default Ruleset as MAJOR. The proposed
-  [development record](BYTEFRAY_DEVELOPMENT_COMPATIBILITY.md) carries
+  [development record](BYTEFRAY_6_0_0_ALPHA_1_COMPATIBILITY.md) carries
   `6.0.0-alpha.1` only as a placeholder.
 - **Installer inputs.** `tools/installer.iss` and `tools/build_win.ps1` still
   name the 5.1 compatibility record and 5.1 product identity; they change

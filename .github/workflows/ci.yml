@@ -136,7 +136,7 @@ jobs:
           or name.startswith('pygame.')]; assert not forbidden, forbidden"
       - name: Verify current compatibility record and protected evidence
         run: |
-          python tools/release_compatibility.py docs/releases/BYTEFRAY_DEVELOPMENT_COMPATIBILITY.json --check
+          python tools/release_compatibility.py docs/releases/BYTEFRAY_6_0_0_ALPHA_1_COMPATIBILITY.json --check
           python tools/qualification/frozen_science.py guard
       - name: Build wheel and source distribution with qualified backend
         env:

@@ -28,6 +28,22 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 RECORD_SCHEMA = ("bytefray.release_compatibility", 1)
 RECORD_STATUSES = ("proposed", "candidate", "released")
 SPECTATOR_COMPANION = REPO_ROOT / "tools" / "spectator_companion.json"
+INSTALLER_SCRIPT = REPO_ROOT / "tools" / "installer.iss"
+#: Product identities earlier Windows installers used. A new release installs
+#: beside them (its own AppId, installation folder, Start Menu folder and data
+#: folder), so reusing any of them would upgrade or share an earlier release.
+EARLIER_INSTALLER_IDENTITIES = {
+    "Bytefray 5.0": {
+        "AppGuid": "A5B86D38-9A6C-4D7F-9B4E-BA7720000002",
+        "AppName": "Bytefray",
+        "DataFolderName": "Bytefray",
+    },
+    "Bytefray 5.1 Alpha": {
+        "AppGuid": "30F5713B-F69B-44F1-A759-AC43E33C0889",
+        "AppName": "Bytefray 5.1 Alpha",
+        "DataFolderName": "Bytefray 5.1 Alpha",
+    },
+}
 BEGIN_MARKER = "<!-- BEGIN GENERATED: tools/release_compatibility.py -->"
 END_MARKER = "<!-- END GENERATED -->"
 SEMVER = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:-(alpha|beta|rc)\.(\d+))?$")
@@ -99,6 +115,42 @@ def surface_rulesets() -> dict[str, list[str]]:
     }
 
 
+def installer_defines(script: str) -> dict[str, str]:
+    """The ``#define NAME "value"`` lines of ``tools/installer.iss``."""
+
+    return dict(re.findall(r'^#define (\w+) "([^"]*)"$', script, re.MULTILINE))
+
+
+def installer_problems(app: dict[str, Any], script: str | None = None) -> list[str]:
+    """Where ``tools/installer.iss`` disagrees with the record's application identity,
+    or reuses an identity an earlier release installed (it must install side by side)."""
+
+    if script is None:
+        script = INSTALLER_SCRIPT.read_text(encoding="utf-8")
+    defines = installer_defines(script)
+    problems: list[str] = []
+
+    def expect(label: str, declared: object, actual: object) -> None:
+        if declared != actual:
+            problems.append(f"installer {label}: record says {declared!r}, installer.iss has {actual!r}")
+
+    expect("AppVersion", app["version"], defines.get("AppVersion"))
+    expect("ReleaseTag", app["version"], defines.get("ReleaseTag"))
+    expect("PackageVersion", app["python_package_version"], defines.get("PackageVersion"))
+    numeric = SEMVER.match(app["version"])
+    file_version = defines.get("FileVersion", "")
+    if numeric is not None:
+        expect("FileVersion major.minor.patch", ".".join(numeric.groups()[:3]), ".".join(file_version.split(".")[:3]))
+    guid = defines.get("AppGuid", "").upper()
+    for release, identity in EARLIER_INSTALLER_IDENTITIES.items():
+        if guid == identity["AppGuid"]:
+            problems.append(f"installer AppGuid is {release}'s; a new release must install side by side")
+        for name in ("AppName", "DataFolderName"):
+            if defines.get(name, "").casefold() == identity[name].casefold():
+                problems.append(f"installer {name} {defines.get(name)!r} is {release}'s")
+    return problems
+
+
 def runtime_problems(record: dict[str, Any]) -> list[str]:
     """Every claim in ``record`` the code contradicts (empty when consistent)."""
 
@@ -142,6 +194,7 @@ def runtime_problems(record: dict[str, Any]) -> list[str]:
             r'^version = "([^"]+)"$', (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"), re.MULTILINE
         )
         expect("pyproject.toml version", app["python_package_version"], declared and declared.group(1))
+        problems.extend(installer_problems(app))
     classifiers = re.findall(
         r'"Programming Language :: Python :: (3\.\d+)"',
         (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"),
@@ -333,7 +386,13 @@ def render_markdown(record: dict[str, Any]) -> str:
     )
     spectator_text = (
         f"{viewer['name']} {viewer['version']}: {viewer['release_status']}. Source "
-        f"`{source['repository']}` `{source['branch']}` `{source['commit'][:7]}`; Windows build "
+        f"`{source['repository']}` `{source['branch']}` `{source['commit'][:7]}`"
+        + (
+            f" (tree identical to public `{source['public_branch']}` `{source['public_commit'][:7]}`)"
+            if source.get("public_commit")
+            else ""
+        )
+        + "; Windows build "
         f"`{build['file']}` SHA-256 `{build['sha256']}` ({build['engine']}). "
         f"{distribution[0].upper()}{distribution[1:]}"
     )

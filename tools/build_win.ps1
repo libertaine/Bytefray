@@ -248,7 +248,7 @@ if ($LASTEXITCODE -ne 0) { throw "Third-party notice collection failed with exit
 # The Microsoft runtime terms the installer's License page shows, and the record of
 # the replacement, installed beside the other notices (after collection, which
 # rewrites dist\windows\licenses). tools/installer.iss requires the record.
-$MsvcTerms = Join-Path $RepoRoot "docs\releases\BYTEFRAY_5_1_0_ALPHA_1_MICROSOFT_RUNTIME_TERMS.txt"
+$MsvcTerms = Join-Path $RepoRoot "docs\releases\BYTEFRAY_6_0_0_ALPHA_1_MICROSOFT_RUNTIME_TERMS.txt"
 if ($MsvcRuntimeDir) {
   $MsvcNotices = Join-Path $DistDir "licenses\microsoft-visual-cpp-runtime"
   New-Item -ItemType Directory -Force -Path $MsvcNotices | Out-Null
@@ -482,8 +482,8 @@ foreach ($Artifact in $Artifacts) {
 # recursively, so nothing else in the installation folder can be lost. The
 # documents are the sources installer.iss copies into docs\
 # (engine/tests/test_windows_installer_side_by_side.py keeps the two in step).
-$InstalledDocuments = @("README.md", "LICENSE", "CHANGELOG.md", "docs\releases\BYTEFRAY_5_1_0_ALPHA_1_RELEASE_NOTES.md",
-  "docs\releases\BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md", "docs\releases\BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.json")
+$InstalledDocuments = @("README.md", "LICENSE", "CHANGELOG.md", "docs\releases\BYTEFRAY_6_0_0_ALPHA_1_RELEASE_NOTES.md",
+  "docs\releases\BYTEFRAY_6_0_0_ALPHA_1_COMPATIBILITY.md", "docs\releases\BYTEFRAY_6_0_0_ALPHA_1_COMPATIBILITY.json")
 $FileList = Join-Path $DistDir "bytefray-files.txt"
 function Format-ListedFile([string]$Source, [string]$Installed) {
   "{0}  {1}" -f (Get-FileHash -LiteralPath $Source -Algorithm SHA256).Hash.ToLowerInvariant(), $Installed

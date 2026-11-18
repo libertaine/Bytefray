@@ -1,8 +1,8 @@
 {
   "schema": "bytefray.release_compatibility",
   "schema_version": 1,
-  "status": "proposed",
-  "status_note": "Proposed record for the development line after 5.1.0-alpha.1, which retired Classic (bytefray-rules-4) and made Active Sensing the only Ruleset. The application version is a placeholder: docs/COMPONENT_VERSIONING.md section 4.1 classes removing an executable stable Ruleset and changing the default Ruleset as MAJOR, and the project lead decides the release number. Nothing on this line is qualified for release.",
+  "status": "candidate",
+  "status_note": "Release-candidate record for Bytefray 6.0.0-alpha.1, the first release after 5.1.0-alpha.1. It retired Classic (bytefray-rules-4) and made Active Sensing the only Ruleset, which docs/COMPONENT_VERSIONING.md section 4.1 classes as MAJOR; the project lead designated 6.0.0-alpha.1 on 2026-11-16. It installs beside Bytefray 5.0 and 5.1 Alpha with its own product identity and data folder, and migrates nothing. Not yet qualified or published.",
   "policy": "docs/COMPONENT_VERSIONING.md",
   "application": {
     "name": "Bytefray",
@@ -71,7 +71,11 @@
       "source": {
         "repository": "libertaine/Bytefray-Spectator",
         "branch": "designer-integration",
-        "commit": "14089a7bf624a5974346306a277e307ea8f48c07"
+        "commit": "14089a7bf624a5974346306a277e307ea8f48c07",
+        "public_commit": "f62b0cb30a1b8dc95bfc58c76be6637c4ac3bbbc",
+        "public_branch": "main",
+        "tree": "9563b1b3de84a387cccd40bf911dfed59ab70e36",
+        "provenance_note": "The build commit 14089a7 is not on GitHub; its tree is byte-identical to the public commit f62b0cb on main."
       },
       "windows_build": {
         "file": "bytefray-spectator.exe",

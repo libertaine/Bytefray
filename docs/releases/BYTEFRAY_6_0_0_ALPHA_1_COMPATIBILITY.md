@@ -1,25 +1,26 @@
-# Bytefray Development Line — Component Compatibility
+# Bytefray 6.0.0-alpha.1 — Component Compatibility
 
-**Status: proposed.** This record describes the development line after
-`5.1.0-alpha.1`, on which Classic (`bytefray-rules-4`) was retired and Active
-Sensing (`bytefray-rules-6-alpha1`) became Bytefray's only Ruleset. It is not
-a release. Its application version is a placeholder: by
-[COMPONENT_VERSIONING.md](../COMPONENT_VERSIONING.md) §4.1, removing an
-executable stable Ruleset and changing the default Ruleset is a MAJOR change,
-and the project lead decides the release number. The published
-`5.1.0-alpha.1` keeps its own record,
+**Status: candidate.** This record describes Bytefray 6.0.0-alpha.1, the
+first release after `5.1.0-alpha.1`. On this line Classic (`bytefray-rules-4`)
+was retired and Active Sensing (`bytefray-rules-6-alpha1`) became Bytefray's
+only Ruleset. By [COMPONENT_VERSIONING.md](../COMPONENT_VERSIONING.md) §4.1,
+removing an executable stable Ruleset and changing the default Ruleset is a
+MAJOR change; the project lead designated `6.0.0-alpha.1` on 2026-11-16. It is
+not yet qualified or published. The published `5.1.0-alpha.1` keeps its own
+record,
 [`BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md`](BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md),
-and remains the release that runs Classic.
+and remains the release that runs Classic. The Windows installer installs
+6 Alpha beside Bytefray 5.0 and 5.1 Alpha and migrates nothing from them.
 
 The authoritative record is
-[`BYTEFRAY_DEVELOPMENT_COMPATIBILITY.json`](BYTEFRAY_DEVELOPMENT_COMPATIBILITY.json).
+[`BYTEFRAY_6_0_0_ALPHA_1_COMPATIBILITY.json`](BYTEFRAY_6_0_0_ALPHA_1_COMPATIBILITY.json).
 `tools/release_compatibility.py` checks every claim in it the code can
 confirm and generates the summary below;
 `engine/tests/test_release_compatibility_record.py` runs that check. Edit the
 JSON, then run:
 
 ```bash
-python tools/release_compatibility.py docs/releases/BYTEFRAY_DEVELOPMENT_COMPATIBILITY.json --write
+python tools/release_compatibility.py docs/releases/BYTEFRAY_6_0_0_ALPHA_1_COMPATIBILITY.json --write
 ```
 
 The decision and its scope are recorded in
@@ -30,7 +31,7 @@ The decision and its scope are recorded in
 <!-- BEGIN GENERATED: tools/release_compatibility.py -->
 | Component | Declaration |
 | --- | --- |
-| Status | **proposed** — Proposed record for the development line after 5.1.0-alpha.1, which retired Classic (bytefray-rules-4) and made Active Sensing the only Ruleset. The application version is a placeholder: docs/COMPONENT_VERSIONING.md section 4.1 classes removing an executable stable Ruleset and changing the default Ruleset as MAJOR, and the project lead decides the release number. Nothing on this line is qualified for release. |
+| Status | **candidate** — Release-candidate record for Bytefray 6.0.0-alpha.1, the first release after 5.1.0-alpha.1. It retired Classic (bytefray-rules-4) and made Active Sensing the only Ruleset, which docs/COMPONENT_VERSIONING.md section 4.1 classes as MAJOR; the project lead designated 6.0.0-alpha.1 on 2026-11-16. It installs beside Bytefray 5.0 and 5.1 Alpha with its own product identity and data folder, and migrates nothing. Not yet qualified or published. |
 | Application | Bytefray 6.0.0-alpha.1 (Python package `6.0.0a1`, tag `v6.0.0-alpha.1`); previous release 5.1.0-alpha.1; Python 3.11, 3.12, 3.13, 3.14 |
 | Default Ruleset | Active Sensing (Alpha) (`bytefray-rules-6-alpha1`) |
 | Offered Rulesets | Active Sensing (Alpha) (`bytefray-rules-6-alpha1`) — experimental, the only Ruleset; used when no Ruleset is chosen |
@@ -41,7 +42,7 @@ The decision and its scope are recorded in
 | Result format | `battle2.result` writes 2; reads 1, 2 |
 | Trace format | `bytefray.agent_trace` writes 2; reads 1, 2 |
 | Other persisted formats | `bytefray.evaluation` writes 7 (identity 7); `battle2.tournament` writes 1; `bytefray.agent_package` writes 1 |
-| Spectator application | Bytefray Spectator 0.1.0-alpha.1: the build bundled with the 5.1.0-alpha.1 Windows installer; unchanged on this line. Source `libertaine/Bytefray-Spectator` `designer-integration` `14089a7`; Windows build `bytefray-spectator.exe` SHA-256 `8a3bd1a48430a0edd1faf8ca5c5b287ed1ecd06975c4e683f273562d428fd602` (Godot 4.7.2.stable). Pinned by `tools/spectator_companion.json`, as in 5.1.0-alpha.1. `BYTEFRAY_SPECTATOR` overrides it or turns Spectator off. Source and wheel installs find Spectator through `BYTEFRAY_SPECTATOR`, `<data root>/spectator/` or `bytefray-spectator` on `PATH` |
+| Spectator application | Bytefray Spectator 0.1.0-alpha.1: the build bundled with the 5.1.0-alpha.1 Windows installer; unchanged on this line. Source `libertaine/Bytefray-Spectator` `designer-integration` `14089a7` (tree identical to public `main` `f62b0cb`); Windows build `bytefray-spectator.exe` SHA-256 `8a3bd1a48430a0edd1faf8ca5c5b287ed1ecd06975c4e683f273562d428fd602` (Godot 4.7.2.stable). Pinned by `tools/spectator_companion.json`, as in 5.1.0-alpha.1. `BYTEFRAY_SPECTATOR` overrides it or turns Spectator off. Source and wheel installs find Spectator through `BYTEFRAY_SPECTATOR`, `<data root>/spectator/` or `bytefray-spectator` on `PATH` |
 | Spectator presentation protocol | `bytefray.spectator.manifest`: Bytefray writes 2, Spectator reads 1, 2; provenance `bytefray_match`; documents broadcast `bytefray.spectator.broadcast` v1, agent_a `bytefray.spectator.agent_view` v1 |
 | Spectator match support | `bytefray-rules-6-alpha1` with entrants A, B; perspectives broadcast, agent_a |
 | Designer viewer dispatch | Prefers Spectator: View Last Match, Development test replay, Evaluation replays. Always Pygame: Tournament results, Replay History, Advanced replay file browser |

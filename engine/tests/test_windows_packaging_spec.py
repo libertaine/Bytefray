@@ -63,9 +63,9 @@ def test_installer_versions_match_package_and_release_tag() -> None:
     """Prevent a new package from silently producing an old-version installer.
 
     The installer shows and names itself with the public SemVer spelling
-    (``AppVersion``, ``ReleaseTag``: ``5.1.0-alpha.1``), carries the PEP 440
-    package spelling (``PackageVersion``: ``5.1.0a1``) and stamps the numeric
-    Windows form (``FileVersion``: ``5.1.0.101``). All of them must describe
+    (``AppVersion``, ``ReleaseTag``: ``6.0.0-alpha.1``), carries the PEP 440
+    package spelling (``PackageVersion``: ``6.0.0a1``) and stamps the numeric
+    Windows form (``FileVersion``: ``6.0.0.1010``). All of them must describe
     the one version pyproject.toml declares (docs/COMPONENT_VERSIONING.md §4.1).
     """
 

@@ -27,7 +27,7 @@ Agent API v1, VM/blob agents, Redcode/pMARS and every other Ruleset (see
 their artifacts stay readable, 5.0.0 still runs them, and 5.1.0-alpha.1 still
 runs Classic. The display name is presentation only: artifacts, `--ruleset`
 and diagnostics use the exact ID. The per-surface details are in the proposed
-[development compatibility record](releases/BYTEFRAY_DEVELOPMENT_COMPATIBILITY.md);
+[development compatibility record](releases/BYTEFRAY_6_0_0_ALPHA_1_COMPATIBILITY.md);
 the [5.1.0-alpha.1 record](releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md)
 describes the published preview.
 

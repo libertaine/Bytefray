@@ -50,12 +50,12 @@ def test_numeric_versions_sort_like_the_releases() -> None:
 
 def test_the_rebuild_replaces_the_first_alpha_1_windows_build() -> None:
     """The first 5.1.0-alpha.1 build recorded 5.1.0.101 with its uninstall entry;
-    the installer refuses to install over a higher recorded build, so this
-    rebuild must be higher and every later version higher still."""
+    the installer refuses to install over a higher recorded build, so its
+    rebuild (revision 1) had to be higher and every later version higher still."""
 
-    current = wvi.windows_file_version("5.1.0a1")
-    assert wvi.BUILD_REVISION == 1 and current == (5, 1, 0, 1011)
-    assert (5, 1, 0, 101) < current < wvi.windows_file_version("5.1.0a2", revision=0)
+    rebuild = wvi.windows_file_version("5.1.0a1", revision=1)
+    assert rebuild == (5, 1, 0, 1011)
+    assert (5, 1, 0, 101) < rebuild < wvi.windows_file_version("5.1.0a2", revision=0)
     assert max(wvi.windows_file_version("5.1.0rc99", revision=9)) < 2**16
 
 
@@ -150,3 +150,12 @@ def test_redirected_output_never_crashes_on_an_unencodable_path(tmp_path: Path) 
     )
     assert result.returncode == 0, result.stderr.decode("utf-8", "replace")
     assert (match / "result.json").is_file()
+
+
+def test_the_first_6_0_0_alpha_1_windows_build_is_revision_0() -> None:
+    """The revision returns to 0 when the package version changes; 6.0.0a1 is a
+    separate product from 5.1 Alpha (its own AppId), and later 6.0 rebuilds raise it."""
+
+    assert wvi.BUILD_REVISION == 0
+    assert wvi.windows_file_version("6.0.0a1") == (6, 0, 0, 1010)
+    assert wvi.windows_file_version("6.0.0a1") > wvi.windows_file_version("5.1.0a1", revision=1)
