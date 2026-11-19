@@ -1,0 +1,29 @@
+name: Pre-release qualification
+# Default-branch workflow_dispatch registration stub only.
+# GitHub requires a workflow_dispatch file to exist on the default branch (main)
+# before it can be dispatched on a release-candidate branch with --ref.
+# Do not call reusable workflows here: main tracks Bytefray 5.0 and its older
+# workflows are not reusable workflow_call targets for 6.x qualification.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  default-branch-bootstrap-stub:
+    name: Default-branch registration stub (not release qualification)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refuse default-branch qualification
+        run: |
+          {
+            echo "## Default-branch workflow registration stub"
+            echo ""
+            echo "- **Ref:** \`${GITHUB_REF}\`"
+            echo "- **SHA:** \`${GITHUB_SHA}\`"
+            echo "- **Status:** NOT A RELEASE QUALIFICATION RUN"
+            echo ""
+            echo "This file on \`main\` exists only so GitHub registers \`release-qualification.yml\` for manual \`workflow_dispatch\` against release-candidate branches."
+            echo "Dispatch with \`--ref <candidate-branch>\` to execute the candidate branch's full pre-release qualification workflow."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::Default-branch workflow_dispatch registration stub only (ref=${GITHUB_REF}, sha=${GITHUB_SHA}). This run does not qualify Bytefray 6.0 or any release candidate. Dispatch release-qualification.yml with --ref <candidate-branch>." >&2
+          exit 1
