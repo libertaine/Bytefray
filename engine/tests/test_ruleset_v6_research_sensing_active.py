@@ -489,14 +489,20 @@ def test_a_loaded_ungated_sense_package_is_refused_outside_t8_and_t8l(tmp_path: 
 
 @pytest.mark.parametrize("worker", [False, True], ids=["direct", "worker"])
 def test_agents_validate_refuses_an_ungated_sense_and_accepts_a_gated_one(tmp_path: Path, worker: bool) -> None:
-    # A dry run belongs to no Ruleset: it has no window, so SENSE is invalid there.
+    # A dry run under a Ruleset without a sensing window refuses SENSE. Since
+    # 6.0.0-alpha.1 an omitted Ruleset means Active Sensing for the dry run too
+    # (it used to mean "no Ruleset", which refused SENSE everywhere), so the
+    # non-sensing case names a research Ruleset explicitly.
     _write_agent(tmp_path, "ungated", UNGATED_SENSE_SOURCE)
     _write_agent(tmp_path, "gated", GATED_SENSE_SOURCE)
     timeout = WORKER_TIMEOUT if worker else None
     with hang_safety_timeout(120):
         with pytest.raises(AgentValidationFailedError) as excinfo:
-            validate_agent("ungated", data_root=tmp_path, timeout=timeout)
+            validate_agent("ungated", data_root=tmp_path, timeout=timeout, ruleset_id=C8_ID)
         assert excinfo.value.diagnostic.code == "agent_action_invalid"
+        validate_agent("gated", data_root=tmp_path, timeout=timeout, ruleset_id=C8_ID)
+        # The omitted (product) Ruleset is Active Sensing: both validate.
+        validate_agent("ungated", data_root=tmp_path, timeout=timeout)
         validate_agent("gated", data_root=tmp_path, timeout=timeout)
 
 

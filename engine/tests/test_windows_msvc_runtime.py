@@ -26,7 +26,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PIN = json.loads((ROOT / "tools" / "msvc_runtime.json").read_text(encoding="utf-8"))
 BUILD = (ROOT / "tools" / "build_win.ps1").read_text(encoding="utf-8")
 SCRIPT = (ROOT / "tools" / "installer.iss").read_text(encoding="utf-8")
-TERMS_PATH = ROOT / "docs" / "releases" / "BYTEFRAY_5_1_0_ALPHA_1_MICROSOFT_RUNTIME_TERMS.txt"
+TERMS_PATH = ROOT / "docs" / "releases" / "BYTEFRAY_6_0_0_ALPHA_1_MICROSOFT_RUNTIME_TERMS.txt"
 APPLICATIONS = ("bytefray", "bytefray-cli", "bytefray-agent-designer", "bytefray-replay-viewer")
 
 
@@ -182,7 +182,7 @@ def test_an_unattended_installation_must_accept_the_terms_explicitly() -> None:
     prepare = SCRIPT[SCRIPT.index("function PrepareToInstall") : SCRIPT.index("function JsonString")]
     # The first refusal, before any folder is examined.
     assert prepare.index("if not TermsAccepted() then") < prepare.index("else if HasUnresolvedLink(App)")
-    notes = (ROOT / "docs" / "releases" / "BYTEFRAY_5_1_0_ALPHA_1_RELEASE_NOTES.md").read_text(encoding="utf-8")
+    notes = (ROOT / "docs" / "releases" / "BYTEFRAY_6_0_0_ALPHA_1_RELEASE_NOTES.md").read_text(encoding="utf-8")
     assert f"/ACCEPTMICROSOFTRUNTIMETERMS={_define('MsvcTermsId')}" in notes
 
 

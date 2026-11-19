@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from collections import Counter
 
+from battle_engine.starters import PRACTICE_OPPONENT_NAME
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QComboBox
 
@@ -105,16 +106,30 @@ def repopulate_paired_agent_combos(
     """
 
     eligible_ids = {row.agent_id or row.name for row in eligible}
+    previous_a = selected_agent_name(combo_a)
     previous_b = selected_agent_name(combo_b)
     populate_agent_combo(combo_a, eligible)
     populate_agent_combo(combo_b, eligible)
 
+    # 6.0.0-alpha.1: the first matchup is an agent against the bundled practice
+    # opponent, which plays to win (the teaching starters never fight each
+    # other). Only a selection that needs replacing is steered.
+    practice = PRACTICE_OPPONENT_NAME if PRACTICE_OPPONENT_NAME in eligible_ids else None
+    if practice is not None and previous_a not in eligible_ids and len(eligible) > 1:
+        for index in range(combo_a.count()):
+            if combo_a.itemData(index, _NAME_ROLE) != practice:
+                combo_a.setCurrentIndex(index)
+                break
     if previous_b not in eligible_ids and len(eligible) > 1:
         selected_a = selected_agent_name(combo_a)
-        for index in range(combo_b.count()):
-            if combo_b.itemData(index) != selected_a:
-                combo_b.setCurrentIndex(index)
-                break
+        preferred = combo_b.findData(practice, _NAME_ROLE) if practice not in (None, selected_a) else -1
+        if preferred >= 0:
+            combo_b.setCurrentIndex(preferred)
+        else:
+            for index in range(combo_b.count()):
+                if combo_b.itemData(index) != selected_a:
+                    combo_b.setCurrentIndex(index)
+                    break
 
 
 def repopulate_additional_agent_combo(

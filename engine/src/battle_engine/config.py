@@ -15,6 +15,16 @@ class Weights:
     territory_bucket: int = 64
 
 
+#: The arena size of a newly created normal product match (6.0.0-alpha.1):
+#: ``bytefray run``, ``bytefray agents test``, ``bytefray tournament``, the
+#: ``agents validate`` dry run, and every Designer surface, matching the
+#: 512-cell arena ``agents evaluate`` pins for Active Sensing. An explicit
+#: ``--arena`` always wins. ``Config.arena_size`` below keeps its historical
+#: 4096 default, which saved matches, recorded evaluations, research protocols
+#: and fixtures rely on; product surfaces pass this value explicitly instead.
+PRODUCT_ARENA_SIZE: int = 512
+
+
 @dataclass
 class Config:
     arena_size: int = 4096

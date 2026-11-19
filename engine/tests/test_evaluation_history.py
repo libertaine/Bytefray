@@ -969,6 +969,8 @@ def _v1_fixture(tmp_path: Path, *, complete: bool = True) -> Path:
 
     outcome = test_agent(
         "candidate",
+        # A v1 (pre-6.0) artifact ran at the then-default 4096-cell arena.
+        arena_size=4096,
         opponent="opponent",
         seed=1,
         ticks=10,
@@ -1071,6 +1073,8 @@ def _v1_fixture_two_cells(tmp_path: Path, *, tamper_second_cell_source_sha256: s
     for index, seed in enumerate((1, 2), start=1):
         outcome = test_agent(
             "candidate",
+            # A v1 (pre-6.0) artifact ran at the then-default 4096-cell arena.
+            arena_size=4096,
             opponent="opponent",
             seed=seed,
             ticks=10,

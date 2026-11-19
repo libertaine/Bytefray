@@ -7,7 +7,11 @@
   "source": {
     "repository": "libertaine/Bytefray-Spectator",
     "branch": "designer-integration",
-    "commit": "14089a7bf624a5974346306a277e307ea8f48c07"
+    "commit": "14089a7bf624a5974346306a277e307ea8f48c07",
+    "public_commit": "f62b0cb30a1b8dc95bfc58c76be6637c4ac3bbbc",
+    "public_branch": "main",
+    "tree": "9563b1b3de84a387cccd40bf911dfed59ab70e36",
+    "provenance_note": "The build commit 14089a7 is not on GitHub; its tree is byte-identical to the public commit f62b0cb on main."
   },
   "build": {
     "engine": "Godot 4.7.2.stable, official Windows x86_64 release export template",

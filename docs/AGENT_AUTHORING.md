@@ -187,6 +187,17 @@ absolute arena addresses for `READ`/`WRITE`/`SENSE` and signed relative
 deltas for `MOVE`. The Classic `v4_*` and `v5_*` starters of earlier
 releases are no longer installed.
 
+**Teaching agents and the practice opponent are different things.** The
+three starters above are *teaching agents*: each shows one Active Sensing
+idea against controlled fixtures, and none of them tries to win, so two of
+them matched against each other simply tie. Since 6.0.0-alpha.1 a fourth
+bundled agent, `v6_practice_hunter` (Practice Hunter), is a *practice
+opponent*: it searches with `SENSE`, takes over the cores it finds and
+repairs its own, using only what any agent can observe. It is the default
+opponent for `bytefray agents test` and Designer's first matchup. It makes
+no balance claim and is not tuned to be strong; a simple agent of your own
+can beat it.
+
 Together they demonstrate patterns worth reusing directly: tracking a
 pending `READ`'s address so a later call can act on `Observation.last_read`
 correctly (every agent beyond Claimer needs this, and Raider shows the
@@ -283,8 +294,9 @@ replay: none
 
 Only a problem that is *not* a fact about evaluated user code returns
 exit `2`: an unknown agent/opponent, a non-Python agent/opponent, or the
-**internal bundled `reference` opponent** (used when `--opponent` is
-omitted) failing to initialize. The reference opponent is Bytefray-owned
+**internal bundled reference opponent** (the practice opponent
+`v6_practice_hunter`, used when `--opponent` is omitted) failing to
+initialize. The reference opponent is Bytefray-owned
 infrastructure, not user code, so its own failure means the tool or its
 bundled fixture is broken -- not a result about your agent.
 

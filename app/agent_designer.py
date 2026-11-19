@@ -29,6 +29,7 @@ from battle_engine.paths import canonical_replay_directory, get_branding_icon_pa
 from battle_engine.project_info import get_project_info
 from battle_engine.replay_integrity import ResultReplayRequest, preflight_result_replay
 from battle_engine.starters import (
+    PRACTICE_OPPONENT_NAME,
     describe_bootstrap_errors,
     describe_starter_refresh,
     ensure_starter_agents,
@@ -1396,7 +1397,7 @@ class AgentDesigner(QMainWindow):
         self._test_agent_id = agent_id
         self._test_stdout = ""
         self._test_stderr = ""
-        self.development.showTesting(agent_id, opponent_id or "reference")
+        self.development.showTesting(agent_id, opponent_id or PRACTICE_OPPONENT_NAME)
         self.simple.setBusy(True)
         self.advanced.setBusy(True)
         self.development.setBusy(True)

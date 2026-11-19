@@ -136,7 +136,7 @@ jobs:
           or name.startswith('pygame.')]; assert not forbidden, forbidden"
       - name: Verify current compatibility record and protected evidence
         run: |
-          python tools/release_compatibility.py docs/releases/BYTEFRAY_DEVELOPMENT_COMPATIBILITY.json --check
+          python tools/release_compatibility.py docs/releases/BYTEFRAY_6_0_0_ALPHA_1_COMPATIBILITY.json --check
           python tools/qualification/frozen_science.py guard
       - name: Build wheel and source distribution with qualified backend
         env:
@@ -189,6 +189,15 @@ jobs:
           engine/tests/test_agent_test.py
           engine/tests/test_process_runtime_integration.py
           engine/tests/test_v6_alpha_m1_policy_capabilities.py -ra --junitxml=windows-process.xml
+      - name: Windows Replay History GUI, offscreen (issue #7)
+        timeout-minutes: 15
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: >-
+          python -X faulthandler -m pytest -m gui -o faulthandler_timeout=300 -p no:cacheprovider
+          tests/test_v5_replay_history_browser.py
+          tests/test_v5_replay_history_qualification.py
+          tests/test_designer_gui_object_finalization.py -ra --junitxml=windows-gui.xml
       - name: Windows NTFS junction containment
         run: >-
           python -m pytest engine/tests/test_agent_revisions.py

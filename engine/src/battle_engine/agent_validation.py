@@ -67,7 +67,7 @@ from battle_engine.agent_trace import (
 )
 from battle_engine.agent_worker import AgentWorkerHandle, WorkerCallStatus
 from battle_engine.agents import resolve_agent
-from battle_engine.config import Config
+from battle_engine.config import PRODUCT_ARENA_SIZE, Config
 from battle_engine.paths import get_data_root
 from battle_engine.process_runtime import ProcessMatchController
 from battle_engine.python_runtime import (
@@ -100,7 +100,7 @@ from battle_engine.supervised_runtime import diagnostic_for_worker_result
 # -- only the slot letter. See docs/specs/agent_validation.md §7.
 VALIDATION_AGENT_ID = "A"
 VALIDATION_SEED = Config().seed
-VALIDATION_ARENA_SIZE = Config().arena_size
+VALIDATION_ARENA_SIZE = PRODUCT_ARENA_SIZE
 VALIDATION_SLOT = 0
 DEFAULT_AGENT_TIMEOUT = 5.0
 MIN_AGENT_TIMEOUT = 0.1
@@ -310,7 +310,9 @@ def _validate_agent(
         raise AgentValidationFailedError(
             diagnose_load_failure(exc, agent_id=agent_id, slot=VALIDATION_SLOT)
         ) from exc
-    validation_policy = policy if ruleset_id is not None else None
+    # An omitted Ruleset means the product default (Active Sensing) for the dry
+    # run as well as for preflight, so SENSE validates without --ruleset.
+    validation_policy = policy
 
     trace_writer = _open_validation_trace_writer(
         trace_path, api_version=spec.api_version, timeout=timeout

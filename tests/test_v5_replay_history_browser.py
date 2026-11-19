@@ -1771,6 +1771,34 @@ def test_escape_closes_both_worker_threads(history_env):
 
 
 @pytest.mark.gui
+def test_shutdown_joins_the_workers_without_relying_on_thread_signals(history_env):
+    """Issue #7: the join must not depend on QThread.finished being delivered.
+
+    Shutdown used to wait in a local event loop quit by ``finished`` and then
+    disconnect that slot while the worker thread was still finishing; the GUI
+    thread could block in ``disconnect`` holding the GIL against it (a
+    permanent hang). With both threads' signals blocked, only a join that
+    waits on the threads themselves can complete; the safety timeout turns
+    the old behaviour into a loud failure instead of a hung run.
+    """
+
+    from engine.tests._hang_safety import hang_safety_timeout
+
+    window = _opened(history_env)
+    window.table.selectRow(0)
+    window._activateOpenReplay()  # leave a preflight queued on the reader
+    for thread in (window._reader_thread, window._thread):
+        thread.blockSignals(True)
+    with hang_safety_timeout(30):
+        window.shutdownWorker()
+    assert not window._thread.isRunning()
+    assert not window._reader_thread.isRunning()
+    assert all(service.closed for service in _FakeService.instances)
+    for thread in (window._reader_thread, window._thread):
+        thread.blockSignals(False)
+
+
+@pytest.mark.gui
 def test_fast_refresh_does_not_open_reader_twice(history_env, monkeypatch):
     original = _FakeService.open.__func__
     entered, release = threading.Event(), threading.Event()

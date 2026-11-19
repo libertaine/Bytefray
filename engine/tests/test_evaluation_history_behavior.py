@@ -188,6 +188,8 @@ def _v1_fixture_with_real_result(tmp_path: Path) -> Path:
 
     outcome = test_agent(
         "candidate", opponent="opponent", seed=1, ticks=10, timeout=None, trace=False,
+        # A v1 (pre-6.0) artifact ran at the then-default 4096-cell arena.
+        arena_size=4096,
         run_dir=tmp_path / "eval-out" / "matches" / "cell-1", data_root=tmp_path,
     )
     match_result = outcome.match_result

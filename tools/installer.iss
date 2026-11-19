@@ -1,22 +1,26 @@
-; Bytefray 5.1 Alpha Windows installer (Inno Setup 6.3 or later). Build from the
+; Bytefray 6 Alpha Windows installer (Inno Setup 6.3 or later). Build from the
 ; repository root, after tools\build_win.ps1 -SpectatorExe <reviewed build> has
 ; filled dist\windows, with:
 ;   ISCC.exe tools\installer.iss
 ;
-; Side-by-side with the stable release. Bytefray 5.0's installer is a
+; Side by side with the earlier releases. Bytefray 5.0's installer is a
 ; per-machine installation (AppId {A5B86D38-9A6C-4D7F-9B4E-BA7720000002},
 ; C:\Program Files\Bytefray, data in C:\ProgramData\Bytefray) that sets
-; BYTEFRAY_ROOT machine-wide. This 5.1 Alpha line is a separate product
-; identity: its own AppId, a per-user installation that never needs
-; administrator rights, its own Start Menu folder and its own data folder. It
-; writes no environment variable and nothing under HKLM, so it cannot
-; overwrite, upgrade, uninstall or redirect Bytefray 5.0. Every later 5.1 Alpha
-; build keeps this AppId and upgrades the previous one in place.
+; BYTEFRAY_ROOT machine-wide. Bytefray 5.1 Alpha is a per-user installation
+; (AppId {30F5713B-F69B-44F1-A759-AC43E33C0889}, data by default in
+; %LOCALAPPDATA%\Bytefray 5.1 Alpha) and is the last release that runs Classic.
+; This 6 Alpha line is a separate product identity: its own AppId, a per-user
+; installation that never needs administrator rights, its own installation
+; folder, Start Menu folder and data folder. It writes no environment variable
+; and nothing under HKLM, migrates nothing, and refuses installation or data
+; folders that overlap either earlier release, so it cannot overwrite, upgrade,
+; uninstall or redirect Bytefray 5.0 or 5.1 Alpha. Every later 6 Alpha build
+; keeps this AppId and upgrades the previous one in place.
 ;
 ; Data root. The installer records the data folder in
 ; {app}\bin\bytefray-install.json; tools\pyi_rth_bytefray_install.py makes every
 ; installed executable use it, ignoring a BYTEFRAY_ROOT inherited from
-; Bytefray 5.0. The default is %LOCALAPPDATA%\Bytefray 5.1 Alpha. An upgrade
+; Bytefray 5.0. The default is %LOCALAPPDATA%\Bytefray 6 Alpha. An upgrade
 ; keeps the previous installation's folder, and /BYTEFRAYDATAROOT=<folder>
 ; chooses another one (used for isolated validation installations). Nothing in
 ; the data folder is created or removed by the installer: uninstalling removes
@@ -38,19 +42,19 @@
 ; records how, by whom and when they were accepted with the uninstall entry. The
 ; compiler refuses a dist tree whose runtime was not replaced.
 
-#define AppName "Bytefray 5.1 Alpha"
+#define AppName "Bytefray 6 Alpha"
 #define ProductName "Bytefray"
-#define AppVersion "5.1.0-alpha.1"
-#define ReleaseTag "5.1.0-alpha.1"
-#define PackageVersion "5.1.0a1"
-#define FileVersion "5.1.0.1011"
-#define AppGuid "30F5713B-F69B-44F1-A759-AC43E33C0889"
+#define AppVersion "6.0.0-alpha.1"
+#define ReleaseTag "6.0.0-alpha.1"
+#define PackageVersion "6.0.0a1"
+#define FileVersion "6.0.0.1010"
+#define AppGuid "4F88A2CA-AAEA-438C-84CD-D9572327D48F"
 #define AppPublisher "Bytefray Project"
-#define DataFolderName "Bytefray 5.1 Alpha"
+#define DataFolderName "Bytefray 6 Alpha"
 #define DistRoot "..\dist\windows"
 #define OutputRoot "..\dist\installer"
-#define MsvcTermsFile "..\docs\releases\BYTEFRAY_5_1_0_ALPHA_1_MICROSOFT_RUNTIME_TERMS.txt"
-#define MsvcTermsId "BYTEFRAY-5.1-MSVC-RUNTIME-TERMS-1"
+#define MsvcTermsFile "..\docs\releases\BYTEFRAY_6_0_0_ALPHA_1_MICROSOFT_RUNTIME_TERMS.txt"
+#define MsvcTermsId "BYTEFRAY-6.0-MSVC-RUNTIME-TERMS-1"
 ; Written by tools\build_win.ps1 beside the installed copy of the terms.
 #define MsvcRuntimeFolder "licenses\microsoft-visual-cpp-runtime"
 
@@ -62,7 +66,7 @@
 #endif
 
 [Setup]
-; Bytefray 5.1 Alpha product identity. Keep this AppId unchanged across 5.1 Alpha builds.
+; Bytefray 6 Alpha product identity. Keep this AppId unchanged across 6 Alpha builds.
 AppId={{{#AppGuid}}
 AppName={#AppName}
 AppVersion={#AppVersion}
@@ -115,9 +119,9 @@ Source: "{#DistRoot}\licenses\*"; DestDir: "{app}\licenses"; Flags: ignoreversio
 Source: "..\README.md"; DestDir: "{app}\docs"; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}\docs"; Flags: ignoreversion
 Source: "..\CHANGELOG.md"; DestDir: "{app}\docs"; Flags: ignoreversion
-Source: "..\docs\releases\BYTEFRAY_5_1_0_ALPHA_1_RELEASE_NOTES.md"; DestDir: "{app}\docs"; Flags: ignoreversion
-Source: "..\docs\releases\BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md"; DestDir: "{app}\docs"; Flags: ignoreversion
-Source: "..\docs\releases\BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.json"; DestDir: "{app}\docs"; Flags: ignoreversion
+Source: "..\docs\releases\BYTEFRAY_6_0_0_ALPHA_1_RELEASE_NOTES.md"; DestDir: "{app}\docs"; Flags: ignoreversion
+Source: "..\docs\releases\BYTEFRAY_6_0_0_ALPHA_1_COMPATIBILITY.md"; DestDir: "{app}\docs"; Flags: ignoreversion
+Source: "..\docs\releases\BYTEFRAY_6_0_0_ALPHA_1_COMPATIBILITY.json"; DestDir: "{app}\docs"; Flags: ignoreversion
 ; bin\bytefray-files.txt lists every file above with its SHA-256 (tools\build_win.ps1
 ; writes it). After an upgrade has installed them, RemoveObsoleteFiles in [Code]
 ; deletes the files the previous build's list names that this build no longer
@@ -130,10 +134,10 @@ Source: "{#DistRoot}\bytefray-files.txt"; DestDir: "{app}\bin"; Flags: ignorever
 Type: files; Name: "{app}\bin\bytefray-install.json"
 
 [Icons]
-Name: "{group}\Bytefray Agent Designer (5.1 Alpha)"; Filename: "{app}\bin\bytefray-agent-designer\bytefray-agent-designer.exe"; WorkingDir: "{app}\bin"; Comment: "Create agents and run Bytefray matches"
-Name: "{group}\Bytefray Replay Viewer (5.1 Alpha)"; Filename: "{app}\bin\bytefray-replay-viewer\bytefray-replay-viewer.exe"; WorkingDir: "{app}\bin"; Comment: "Open Bytefray replays"
-Name: "{group}\Bytefray Spectator (5.1 Alpha)"; Filename: "{app}\bin\bytefray-spectator\bytefray-spectator.exe"; WorkingDir: "{app}\bin\bytefray-spectator"; Comment: "Watch verified Active Sensing presentations"
-Name: "{autodesktop}\Bytefray Agent Designer (5.1 Alpha)"; Filename: "{app}\bin\bytefray-agent-designer\bytefray-agent-designer.exe"; WorkingDir: "{app}\bin"; Tasks: desktopicon
+Name: "{group}\Bytefray Agent Designer (6 Alpha)"; Filename: "{app}\bin\bytefray-agent-designer\bytefray-agent-designer.exe"; WorkingDir: "{app}\bin"; Comment: "Create agents and run Bytefray matches"
+Name: "{group}\Bytefray Replay Viewer (6 Alpha)"; Filename: "{app}\bin\bytefray-replay-viewer\bytefray-replay-viewer.exe"; WorkingDir: "{app}\bin"; Comment: "Open Bytefray replays"
+Name: "{group}\Bytefray Spectator (6 Alpha)"; Filename: "{app}\bin\bytefray-spectator\bytefray-spectator.exe"; WorkingDir: "{app}\bin\bytefray-spectator"; Comment: "Watch verified Active Sensing presentations"
+Name: "{autodesktop}\Bytefray Agent Designer (6 Alpha)"; Filename: "{app}\bin\bytefray-agent-designer\bytefray-agent-designer.exe"; WorkingDir: "{app}\bin"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\bin\bytefray-agent-designer\bytefray-agent-designer.exe"; WorkingDir: "{app}\bin"; Description: "Start Bytefray Agent Designer"; Flags: nowait postinstall skipifsilent
@@ -188,6 +192,12 @@ end;
 function StableUninstallKey(): String;
 begin
   Result := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{A5B86D38-9A6C-4D7F-9B4E-BA7720000002}_is1';
+end;
+
+{ Bytefray 5.1 Alpha's (per-user) uninstall key; see the header comment. Only read. }
+function PreviousAlphaUninstallKey(): String;
+begin
+  Result := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{30F5713B-F69B-44F1-A759-AC43E33C0889}_is1';
 end;
 
 { The final path of an existing file or folder: 8.3 aliases expanded and
@@ -345,6 +355,31 @@ begin
     Result := True;
   if RegQueryStringValue(HKCU, StableUninstallKey(), 'InstallLocation', Location) and Overlaps(Location, App) then
     Result := True;
+  if RegQueryStringValue(HKCU, PreviousAlphaUninstallKey(), 'InstallLocation', Location) and Overlaps(Location, App) then
+    Result := True;
+end;
+
+{ True when Folder overlaps a folder Bytefray 5.0 or 5.1 Alpha owns: their
+  installation folders, the data folder 5.1 Alpha recorded with its uninstall
+  entry, 5.1 Alpha's default data folder and 5.0's data folder. Neither
+  installation's data is migrated, shared or touched, so 6 Alpha's own
+  installation and data folders must lie outside all of them. }
+function OverlapsEarlierRelease(Folder: String): Boolean;
+var
+  Location: String;
+begin
+  Result := Overlaps(ExpandConstant('{localappdata}\Bytefray 5.1 Alpha'), Folder);
+  if (GetEnv('ProgramData') <> '') and Overlaps(GetEnv('ProgramData') + '\Bytefray', Folder) then
+    Result := True;
+  if RegQueryStringValue(HKCU, PreviousAlphaUninstallKey(), 'InstallLocation', Location) and Overlaps(Location, Folder) then
+    Result := True;
+  if RegQueryStringValue(HKCU, PreviousAlphaUninstallKey(), 'Inno Setup CodeFile: DataRoot', Location) and
+     Overlaps(Location, Folder) then
+    Result := True;
+  if RegQueryStringValue(HKLM, StableUninstallKey(), 'InstallLocation', Location) and Overlaps(Location, Folder) then
+    Result := True;
+  if RegQueryStringValue(HKCU, StableUninstallKey(), 'InstallLocation', Location) and Overlaps(Location, Folder) then
+    Result := True;
 end;
 
 { The first junction or symbolic link (any reparse point) at or below Path, or ''.
@@ -470,10 +505,14 @@ begin
       'through a junction or symbolic link that Setup cannot follow, so Setup cannot check where it ' +
       'leads. Choose folders reached without such links.'
   else if HoldsAnotherInstallation(App) then
-    Result := 'The folder ' + App + ' already holds another installation (for example Bytefray 5.0). ' +
-      'Choose an empty folder for Bytefray 5.1 Alpha.'
+    Result := 'The folder ' + App + ' already holds another installation (for example Bytefray 5.0 or ' +
+      '5.1 Alpha). Choose an empty folder for Bytefray 6 Alpha.'
+  else if OverlapsEarlierRelease(App) or OverlapsEarlierRelease(DataRoot()) then
+    Result := 'The installation folder (' + App + ') or the data folder (' + DataRoot() + ') overlaps a ' +
+      'folder that belongs to Bytefray 5.0 or 5.1 Alpha. Bytefray 6 Alpha does not share or migrate their ' +
+      'data; choose separate folders.'
   else if IsUpgradeOfThisInstallation() and IsDowngrade() then
-    Result := 'A newer Bytefray 5.1 Alpha build (' + GetPreviousData('FileVersion', '') + ') is installed in ' +
+    Result := 'A newer Bytefray 6 Alpha build (' + GetPreviousData('FileVersion', '') + ') is installed in ' +
       App + '. Installing this older build ({#FileVersion}) over it is not supported; uninstall it first.'
   else if IsSameOrInside(DataRoot(), App) or IsSameOrInside(App, DataRoot()) then
     Result := 'The Bytefray data folder (' + DataRoot() + ') and the installation folder (' + App +
@@ -656,14 +695,14 @@ begin
   App := RemoveBackslashUnlessRoot(ExpandConstant('{app}'));
   Problem := '';
   if HasUnresolvedLink(App) or not HoldsThisInstallation(App) then
-    Problem := 'The folder ' + App + ' no longer holds this Bytefray 5.1 Alpha installation as it was ' +
+    Problem := 'The folder ' + App + ' no longer holds this Bytefray 6 Alpha installation as it was ' +
       'installed (it was moved, changed or redirected, or is reached through a link that cannot be ' +
-      'followed). Run the Bytefray 5.1 Alpha installer again to repair it, then uninstall.'
+      'followed). Run the Bytefray 6 Alpha installer again to repair it, then uninstall.'
   else
   begin
     Problem := LinkInInstalledFolders(App);
     if Problem <> '' then
-      Problem := 'The Bytefray 5.1 Alpha installation folder contains a link (junction or symbolic link) or a ' +
+      Problem := 'The Bytefray 6 Alpha installation folder contains a link (junction or symbolic link) or a ' +
         'folder that cannot be listed: ' + Problem + '. Remove it, then uninstall again.';
   end;
   Result := Problem = '';

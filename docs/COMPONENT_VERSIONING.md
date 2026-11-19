@@ -31,7 +31,7 @@ application's version number never implies them.
 
 | Component | Identity form | On this development line | Defined in | Changes when |
 | --- | --- | --- | --- | --- |
-| Bytefray application | SemVer `MAJOR.MINOR.PATCH[-PRERELEASE]` | `5.0.0` released; `5.1.0-alpha.1` release candidate (`5.1.0a1`) | `pyproject.toml`, `tools/installer.iss` | a user-visible product change ships (§4.1) |
+| Bytefray application | SemVer `MAJOR.MINOR.PATCH[-PRERELEASE]` | `5.0.0` released; `5.1.0-alpha.1` published preview; `6.0.0-alpha.1` release candidate (`6.0.0a1`) | `pyproject.toml`, `tools/installer.iss` | a user-visible product change ships (§4.1) |
 | Gameplay Ruleset | immutable ID + display name | `bytefray-rules-6-alpha1` **Active Sensing (Alpha)** (`bytefray-rules-4` **Classic** until its retirement after 5.1.0-alpha.1) | `battle_engine.rules`, `battle_engine.ruleset_policy`, `battle_engine.ruleset_names` | any gameplay-observable change → a new ID (§4.2) |
 | Agent API | integer `api_version` | 2 | `battle_engine.agent_api` | the agent programming contract changes incompatibly (§4.4) |
 | Agent manifest capabilities | integer `capabilities.version` | 1 (`sense`) | `battle_engine.agent_capabilities` | the capability block's shape changes |
@@ -344,7 +344,7 @@ release-candidate milestone bumps the runtime version) → **released**
 create a second manifest for the same release. README, CHANGELOG and release
 notes link to the record instead of restating it.
 
-Current record: [development line after 5.1.0-alpha.1 (proposed)](releases/BYTEFRAY_DEVELOPMENT_COMPATIBILITY.md).
+Current record: [6.0.0-alpha.1 (candidate)](releases/BYTEFRAY_6_0_0_ALPHA_1_COMPATIBILITY.md).
 Previous release: [5.1.0-alpha.1](releases/BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md).
 
 ## 7. Decisions reserved for the project lead
