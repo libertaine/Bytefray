@@ -1,9 +1,5 @@
 # Bytefray 6.0.0-alpha.1 — Release Notes (Windows Alpha)
 
-> **Draft for the release candidate.** Not yet qualified or published. The
-> installer qualification (gate G6), the first-use pass (G7) and the hashes
-> below are completed before publication, and this banner is removed then.
-
 **Download this:** `Bytefray-6.0.0-alpha.1-Windows-x64-Setup.exe` — the only
 file a Windows user needs. Everything else on the release page (the Python
 wheel and source distribution, `SHA256SUMS`, third-party notices and the
@@ -76,15 +72,20 @@ run under Active Sensing, but their contact finding never engages, so they
 mostly stand still.
 
 **Microsoft Visual C++ runtime terms.** Bytefray includes Microsoft Visual C++
-runtime files redistributed under Microsoft's Visual Studio Community 2026
-terms, which require everyone who installs them to agree to terms that protect
-them. Setup shows those terms on its License page and continues only after you
-select **I accept the agreement**. They apply only to the Microsoft files:
-Bytefray stays under the MIT License and every other component under its own
-license. An unattended installation (`/SILENT` or `/VERYSILENT`) shows no
-pages, so it is refused unless it also passes
+runtime files (`14.51.36247.0`, 24 Microsoft-signed copies) redistributed by Rod
+Satterfield under Microsoft's Visual Studio Community 2026 Distributable Code
+terms (`VS2026_Comm_ENU.1033`), which require everyone who installs them to
+agree to terms that protect them. Setup shows those terms on its License page
+and continues only after you select **I accept the agreement**; a copy is
+installed in `licenses\microsoft-visual-cpp-runtime\`. They apply only to the
+Microsoft files: Bytefray stays under the MIT License and every other component
+under its own license. An unattended installation (`/SILENT` or `/VERYSILENT`)
+shows no pages, so it is refused unless it also passes
 `/ACCEPTMICROSOFTRUNTIMETERMS=BYTEFRAY-6.0-MSVC-RUNTIME-TERMS-1`, which accepts
-those terms on behalf of the person the installation is for.
+those terms on behalf of the person the installation is for. The Visual Studio
+Community 2026 18.11.1 build providing this redistribution grant carries a
+license-grant expiration date of **January 13, 2027**; Visual Studio must be
+updated before that date for continued redistribution after January 13, 2027.
 
 **Windows SmartScreen.** The installer is not code-signed. Windows may show
 "Windows protected your PC"; choose **More info → Run anyway** only if you
@@ -150,13 +151,27 @@ byte-identical to the public commit
 [`f62b0cb`](https://github.com/libertaine/Bytefray-Spectator/commit/f62b0cb30a1b8dc95bfc58c76be6637c4ac3bbbc)
 on `main`.
 
-## Hashes
+## Hashes and build provenance
 
-Filled in from the release build (gate G5) before publication; `SHA256SUMS` on
-the release page is authoritative.
+The Windows installer (`Bytefray-6.0.0-alpha.1-Windows-x64-Setup.exe`, Windows
+file version `6.0.0.1010`, 114,120,685 bytes), Python wheel and source
+distribution were built and qualified from commit
+`8e574cb2d2789be18aebfe4196b520b5e131ffca`. Later release-metadata commits update
+only `docs/releases/` documentation to record these post-build hashes and
+final qualification status; all application, executable, runtime, license,
+wheel and source-distribution contents are byte-identical to `8e574cb`. Inside
+the `.1010` installer payload, `{app}\docs\BYTEFRAY_6_0_0_ALPHA_1_RELEASE_NOTES.md`
+(`bc9139c84ac7a9200caa7a0d9517a1d690b56df1c1eead741d552ff10859933e`),
+`{app}\docs\BYTEFRAY_6_0_0_ALPHA_1_COMPATIBILITY.md`
+(`8285a34c70f96c987db0aee24b058bd82af3cbeac03ced35aab780500e96015a`) and
+`{app}\docs\BYTEFRAY_6_0_0_ALPHA_1_COMPATIBILITY.json`
+(`e484232057ddafbd5b5e4b015e8b083111eb8050742312e8a88797059e1271ce`) are the
+`8e574cb` build-time copies listed in `bytefray-files.txt`
+(`af683eb7c31a22d6f04babadde7a42f2650d4fa8fb72e4ed587b363e0fdd9797`).
+`SHA256SUMS` on the release page is authoritative.
 
-| File | SHA-256 |
-| --- | --- |
-| `Bytefray-6.0.0-alpha.1-Windows-x64-Setup.exe` | *(from the release build)* |
-| `bytefray-6.0.0a1-py3-none-any.whl` | *(from the release build)* |
-| `bytefray-6.0.0a1.tar.gz` | *(from the release build)* |
+| File | Size (bytes) | SHA-256 |
+| --- | --- | --- |
+| `Bytefray-6.0.0-alpha.1-Windows-x64-Setup.exe` | 114,120,685 | `ad52c294b64b6a9089dba9d9892e1081d89f6e2547ae313879f153ed39adf1e4` |
+| `bytefray-6.0.0a1-py3-none-any.whl` | 1,054,343 | `26a794c8e7b130554821ce74b615715eff39310fdc8d5742b1dfe92335b63d52` |
+| `bytefray-6.0.0a1.tar.gz` | 997,459 | `c83a5717786c6de2b7cfaf215e3b03af00ed8fd0074b2ff9f8a25c2f0eb4934c` |

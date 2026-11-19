@@ -5,8 +5,14 @@ first release after `5.1.0-alpha.1`. On this line Classic (`bytefray-rules-4`)
 was retired and Active Sensing (`bytefray-rules-6-alpha1`) became Bytefray's
 only Ruleset. By [COMPONENT_VERSIONING.md](../COMPONENT_VERSIONING.md) §4.1,
 removing an executable stable Ruleset and changing the default Ruleset is a
-MAJOR change; the project lead designated `6.0.0-alpha.1` on 2026-11-16. It is
-not yet qualified or published. The published `5.1.0-alpha.1` keeps its own
+MAJOR change; the project lead designated `6.0.0-alpha.1` on 2026-11-16. The
+Windows 11 AMD64 installer (`Bytefray-6.0.0-alpha.1-Windows-x64-Setup.exe`,
+Windows file version `6.0.0.1010`, SHA-256
+`ad52c294b64b6a9089dba9d9892e1081d89f6e2547ae313879f153ed39adf1e4`) was built
+and qualified from `8e574cb2d2789be18aebfe4196b520b5e131ffca` (gates G1–G8);
+the copies of the release notes and compatibility record installed in
+`{app}\docs\` inside that installer are the `8e574cb` build-time copies listed
+in `bytefray-files.txt`. The published `5.1.0-alpha.1` keeps its own
 record,
 [`BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md`](BYTEFRAY_5_1_0_ALPHA_1_COMPATIBILITY.md),
 and remains the release that runs Classic. The Windows installer installs
@@ -31,7 +37,7 @@ The decision and its scope are recorded in
 <!-- BEGIN GENERATED: tools/release_compatibility.py -->
 | Component | Declaration |
 | --- | --- |
-| Status | **candidate** — Release-candidate record for Bytefray 6.0.0-alpha.1, the first release after 5.1.0-alpha.1. It retired Classic (bytefray-rules-4) and made Active Sensing the only Ruleset, which docs/COMPONENT_VERSIONING.md section 4.1 classes as MAJOR; the project lead designated 6.0.0-alpha.1 on 2026-11-16. It installs beside Bytefray 5.0 and 5.1 Alpha with its own product identity and data folder, and migrates nothing. Not yet qualified or published. |
+| Status | **candidate** — Release-candidate record for Bytefray 6.0.0-alpha.1, the first release after 5.1.0-alpha.1. It retired Classic (bytefray-rules-4) and made Active Sensing the only Ruleset, which docs/COMPONENT_VERSIONING.md section 4.1 classes as MAJOR; the project lead designated 6.0.0-alpha.1 on 2026-11-16. It installs beside Bytefray 5.0 and 5.1 Alpha with its own product identity and data folder, and migrates nothing. Qualified for Windows 11 AMD64 prerelease publication (Windows build 6.0.0.1010 from 8e574cb2d2789be18aebfe4196b520b5e131ffca; gates G1–G8). |
 | Application | Bytefray 6.0.0-alpha.1 (Python package `6.0.0a1`, tag `v6.0.0-alpha.1`); previous release 5.1.0-alpha.1; Python 3.11, 3.12, 3.13, 3.14 |
 | Default Ruleset | Active Sensing (Alpha) (`bytefray-rules-6-alpha1`) |
 | Offered Rulesets | Active Sensing (Alpha) (`bytefray-rules-6-alpha1`) — experimental, the only Ruleset; used when no Ruleset is chosen |
@@ -61,8 +67,8 @@ The decision and its scope are recorded in
 
 | Platform | Bytefray | Spectator |
 | --- | --- | --- |
-| Windows 11 AMD64 | Primary target. Automated suites pass on this line; not release-qualified. | 0.1.0-alpha.1, unchanged. |
-| Linux x86_64 | Headless-first wheel. Not qualified on this line. | Not qualified on this line. |
+| Windows 11 AMD64 | Primary target. Qualified for 6.0.0-alpha.1 (Windows build 6.0.0.1010 from 8e574cb2d2789be18aebfe4196b520b5e131ffca: automated suites, 135/135 Windows Sandbox installation/isolation/upgrade/uninstall checks and G7 human acceptance passed; distributed as Bytefray-6.0.0-alpha.1-Windows-x64-Setup.exe). | 0.1.0-alpha.1, unchanged. |
+| Linux x86_64 | Headless-first wheel. Automated CI (core suites, X11/Xvfb GUI smoke and Ubuntu 24.04 package baseline) passes on this line; native Linux desktop not release-qualified. | Not qualified on this line. |
 | macOS | Not qualified. | Not built or qualified. |
 | Windows ARM64 | Not supported (AMD64 packaging only). | Not built. |
 

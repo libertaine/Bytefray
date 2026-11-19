@@ -2,7 +2,7 @@
   "schema": "bytefray.release_compatibility",
   "schema_version": 1,
   "status": "candidate",
-  "status_note": "Release-candidate record for Bytefray 6.0.0-alpha.1, the first release after 5.1.0-alpha.1. It retired Classic (bytefray-rules-4) and made Active Sensing the only Ruleset, which docs/COMPONENT_VERSIONING.md section 4.1 classes as MAJOR; the project lead designated 6.0.0-alpha.1 on 2026-11-16. It installs beside Bytefray 5.0 and 5.1 Alpha with its own product identity and data folder, and migrates nothing. Not yet qualified or published.",
+  "status_note": "Release-candidate record for Bytefray 6.0.0-alpha.1, the first release after 5.1.0-alpha.1. It retired Classic (bytefray-rules-4) and made Active Sensing the only Ruleset, which docs/COMPONENT_VERSIONING.md section 4.1 classes as MAJOR; the project lead designated 6.0.0-alpha.1 on 2026-11-16. It installs beside Bytefray 5.0 and 5.1 Alpha with its own product identity and data folder, and migrates nothing. Qualified for Windows 11 AMD64 prerelease publication (Windows build 6.0.0.1010 from 8e574cb2d2789be18aebfe4196b520b5e131ffca; gates G1–G8).",
   "policy": "docs/COMPONENT_VERSIONING.md",
   "application": {
     "name": "Bytefray",
@@ -107,12 +107,12 @@
   "platforms": [
     {
       "platform": "Windows 11 AMD64",
-      "bytefray": "Primary target. Automated suites pass on this line; not release-qualified.",
+      "bytefray": "Primary target. Qualified for 6.0.0-alpha.1 (Windows build 6.0.0.1010 from 8e574cb2d2789be18aebfe4196b520b5e131ffca: automated suites, 135/135 Windows Sandbox installation/isolation/upgrade/uninstall checks and G7 human acceptance passed; distributed as Bytefray-6.0.0-alpha.1-Windows-x64-Setup.exe).",
       "spectator": "0.1.0-alpha.1, unchanged."
     },
     {
       "platform": "Linux x86_64",
-      "bytefray": "Headless-first wheel. Not qualified on this line.",
+      "bytefray": "Headless-first wheel. Automated CI (core suites, X11/Xvfb GUI smoke and Ubuntu 24.04 package baseline) passes on this line; native Linux desktop not release-qualified.",
       "spectator": "Not qualified on this line."
     },
     {
